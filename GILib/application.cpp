@@ -2,7 +2,7 @@
 #include <string>
 
 #include "application.h"
-#include "system_services.h"
+#include "services.h"
 #include "exceptions.h"
 
 using ::std::wstring;
@@ -136,11 +136,9 @@ LRESULT __stdcall Application::ReceiveMessage(HWND window_handle, unsigned int m
 
 HWND Application::CreateApplicationWindow(HINSTANCE application_instance, const IApplicationLogic & application_logic){
 
-	HICON icon_handle = ExtractIcon(application_instance, SystemServices::GetSingleton().GetApplicationPath().c_str(), 0);	//Extract the first icon found into the executable
+	HICON icon_handle = ExtractIcon(application_instance, Services::GetApplicationPath().c_str(), 0);	//Extract the first icon found into the executable
 
-	SystemServices & services = SystemServices::GetSingleton();
-
-	wstring application_name = services.GetApplicationName();
+	wstring application_name = Services::GetApplicationName();
 
 	//Register the window class
 	WNDCLASS window_description;

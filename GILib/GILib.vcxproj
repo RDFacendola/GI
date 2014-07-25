@@ -12,23 +12,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application.h" />
-    <ClInclude Include="event.h" />
+    <ClInclude Include="observable.h" />
     <ClInclude Include="hid_listener.h" />
-    <ClInclude Include="delete_guard.h" />
     <ClInclude Include="dx11graphics.h" />
     <ClInclude Include="exceptions.h" />
-    <ClInclude Include="iapplication_logic.h" />
     <ClInclude Include="igraphics.h" />
     <ClInclude Include="imessage_listener.h" />
-    <ClInclude Include="input_range.h" />
-    <ClInclude Include="observable.h" />
+    <ClInclude Include="raii.h" />
     <ClInclude Include="win_char_listener.h" />
     <ClInclude Include="win_keyboard_listener.h" />
-    <ClInclude Include="release_guard.h" />
     <ClInclude Include="StackWalker.h" />
     <ClInclude Include="stack_trace.h" />
-    <ClInclude Include="system_profiler.h" />
-    <ClInclude Include="system_services.h" />
+    <ClInclude Include="services.h" />
     <ClInclude Include="timer.h" />
     <ClInclude Include="win_mouse_listener.h" />
   </ItemGroup>
@@ -38,8 +33,7 @@
     <ClCompile Include="win_char_listener.cpp" />
     <ClCompile Include="win_keyboard_listener.cpp" />
     <ClCompile Include="StackWalker.cpp" />
-    <ClCompile Include="system_profiler.cpp" />
-    <ClCompile Include="system_services.cpp" />
+    <ClCompile Include="services.cpp" />
     <ClCompile Include="win_mouse_listener.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

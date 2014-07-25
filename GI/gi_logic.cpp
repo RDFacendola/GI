@@ -1,19 +1,14 @@
 #include "gi_logic.h"
 
-#include "system_profiler.h"
 #include "exceptions.h"
-#include "release_guard.h"
+#include "raii.h"
 #include "dx11graphics.h"
-
-#include "event.h"
 
 const unsigned int kWindowWidth = 1280;
 const unsigned int kWindowHeight = 768;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
 GILogic::GILogic(){}
-
-Event<int> e;
 
 void GILogic::Initialize(HWND window_handle){
 
@@ -22,34 +17,22 @@ void GILogic::Initialize(HWND window_handle){
 
 	GRAPHIC_MODE graphic_mode;
 
+	graphic_mode.video.horizontal_resolution = 1920;
+	graphic_mode.video.vertical_resolution = 1080;
+	graphic_mode.video.refresh_rate_Hz = 60;
 	graphic_mode.antialiasing = ANTIALIASING_MODE::NONE;
-	graphic_mode.horizontal_resolution = 1920;
-	graphic_mode.vertical_resolution = 1080;
 	graphic_mode.windowed = true;
 	graphic_mode.vsync = false;
 	
 	graphics_->CreateOrDie(window_handle,
 						   graphic_mode);
-
-	//Initialize the input
 	
-	auto handler = Observable<int>::MakeListener([](int value){ throw RuntimeException(std::to_wstring(value)); });
-
-	e.AddListener( handler );
-
 }
-
-
 
 void GILogic::Update(HWND window_handle, const APPLICATION_TIME & time){
 
-	
-	//Update and draw everything
-	e.Notify(10);
-
 	//End of frame
 	graphics_->Present();
-	
 	
 }
 

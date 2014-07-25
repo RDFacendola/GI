@@ -19,6 +19,15 @@
 								} \
 							}while (0)
 
+///Used to automatically return whenever a HRESULT function fails
+#define RETURN_ON_FAIL(expr) do \
+							 { \
+								HRESULT hr = expr; \
+								if (FAILED(hr)){ \
+									return hr; \
+								} \
+							 }while (0)
+
 ///Runtime exception with stack trace
 class RuntimeException{
 

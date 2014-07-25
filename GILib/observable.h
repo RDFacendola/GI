@@ -1,9 +1,9 @@
 #pragma once
 
-#include <memory>
+#include <set>
 #include <functional>
 
-using std::shared_ptr;
+using std::set;
 using std::function;
 
 ///Interface implemented by observable objects
@@ -11,22 +11,56 @@ template <class... TArguments>
 class Observable{
 
 public:
-
-	typedef function<void(TArguments...)> TFunctor;
-
-	typedef shared_ptr<TFunctor> TListener;
+	
+	typedef function<void(TArguments...)> TListener;
 
 	///Add a listener to this object
-	virtual void AddListener(TListener & listener) = 0;
+	virtual Observable & operator<<(TListener & listener) = 0;
 
 	///Remove a listener from this object
-	virtual void RemoveListener(TListener & listener) = 0;
+	virtual Observable & operator>>(TListener & listener) = 0;
 
-	template <class Functor>
-	static TListener MakeListener(Functor functor) {
+};
 
-		return TListener(new TFunctor(functor));
+///An event that can be observed and notify all its listeners
+template <class... TArguments>
+class Event : public Observable<TArguments...>
+{
+
+public:
+	
+	///Add a listener to this object
+	inline virtual Observable & operator<<(TListener & listener){
+
+		listeners_.insert(&listener);
+
+		return *this;
 
 	}
+
+	///Remove a listener from this object
+	inline virtual Observable & operator>>(TListener & listener){
+	
+		listeners_.erase(&listener);
+
+		return *this;
+
+	}
+
+	///Notify all the listeners
+	inline void Notify(TArguments... arguments){
+
+		for (auto & listener : listeners_){
+
+			(*listener)(arguments...);
+
+		}
+		
+	}
+
+private:
+
+	///List of the listeners
+	set<TListener *> listeners_;
 
 };

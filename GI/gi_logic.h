@@ -1,9 +1,10 @@
+#pragma once
 
 #include <d3d11.h>
 
-#include "iapplication_logic.h"
-#include "system_profiler.h"
-#include "igraphics.h"
+#include "application.h"
+
+class IGraphics;
 
 ///Application's logic
 class GILogic : public IApplicationLogic{
