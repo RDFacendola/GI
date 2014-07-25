@@ -12,14 +12,6 @@ public:
 	///Format used for the screen
 	static const DXGI_FORMAT kGraphicFormat;
 
-	///Multisample structure used to describe the antialiasing mode
-	struct MULTISAMPLE{
-
-		unsigned int count;
-		unsigned int quality;
-
-	};
-
 	///Get the default adapter's capabilities for this API
 	virtual ADAPTER_PROFILE GetAdapterProfile() const;
 	
@@ -30,10 +22,10 @@ public:
 	virtual void Present();
 
 	/// Convert a multisample structure to an antialiasing mode
-	virtual ANTIALIASING_MODE MultisampleToAntialiasing(const MULTISAMPLE & multisample) const;
+	virtual ANTIALIASING_MODE SampleToAntialiasing(const DXGI_SAMPLE_DESC & sample) const;
 
 	/// Convert an antialiasing mode to a multisample structure
-	virtual MULTISAMPLE AntialiasingToMultisample(const ANTIALIASING_MODE & antialiasing) const;
+	virtual DXGI_SAMPLE_DESC AntialiasingToSample(const ANTIALIASING_MODE & antialiasing) const;
 
 	/// Convert a video mode to a dxgi mode
 	virtual DXGI_MODE_DESC VideoModeToDXGIMode(const VIDEO_MODE & video) const;

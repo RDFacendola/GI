@@ -155,7 +155,7 @@ vector<const ANTIALIASING_MODE> DX11Graphics::EnumerateAntialiasingModes() const
 
 	ReleaseGuard<ID3D11Device> guard_device(device);
 
-	MULTISAMPLE multisample;
+	DXGI_SAMPLE_DESC sample;
 
 	D3D_FEATURE_LEVEL feature_level[]{ GetFeatureLevel() };
 
@@ -183,17 +183,17 @@ vector<const ANTIALIASING_MODE> DX11Graphics::EnumerateAntialiasingModes() const
 		if (sample_quality_max > 0){
 			
 			//Add the lowest quality for that amount of samples
-			multisample.count = sample_count;
-			multisample.quality = 0;
+			sample.Count = sample_count;
+			sample.Quality = 0;
 
-			antialiasing_modes.push_back(MultisampleToAntialiasing(multisample));
+			antialiasing_modes.push_back(SampleToAntialiasing(sample));
 
 			//Increase the quality exponentially through the maximum value
 			for (unsigned int current_quality = 1; current_quality < sample_quality_max; current_quality *= 2){
 
-				multisample.quality = current_quality;
+				sample.Quality = current_quality;
 
-				antialiasing_modes.push_back(MultisampleToAntialiasing(multisample));
+				antialiasing_modes.push_back(SampleToAntialiasing(sample));
 
 			}
 
@@ -212,59 +212,59 @@ vector<const ANTIALIASING_MODE> DX11Graphics::EnumerateAntialiasingModes() const
 }
 
 /// Convert a multisample structure to an antialiasing mode
-ANTIALIASING_MODE DX11Graphics::MultisampleToAntialiasing(const MULTISAMPLE & multisample) const{
+ANTIALIASING_MODE DX11Graphics::SampleToAntialiasing(const DXGI_SAMPLE_DESC & sample) const{
 
-	if (multisample.count == 1  && multisample.quality == 0)		return ANTIALIASING_MODE::NONE;
-	if (multisample.count == 2  && multisample.quality == 0)		return ANTIALIASING_MODE::MSAA_2X;
-	if (multisample.count == 4  && multisample.quality == 0)		return ANTIALIASING_MODE::MSAA_4X;
-	if (multisample.count == 8  && multisample.quality == 0)		return ANTIALIASING_MODE::MSAA_8X;
-	if (multisample.count == 16 && multisample.quality == 0)		return ANTIALIASING_MODE::MSAA_16X;
+	if (sample.Count == 1 && sample.Quality == 0)		return ANTIALIASING_MODE::NONE;
+	if (sample.Count == 2 && sample.Quality == 0)		return ANTIALIASING_MODE::MSAA_2X;
+	if (sample.Count == 4 && sample.Quality == 0)		return ANTIALIASING_MODE::MSAA_4X;
+	if (sample.Count == 8 && sample.Quality == 0)		return ANTIALIASING_MODE::MSAA_8X;
+	if (sample.Count == 16 && sample.Quality == 0)		return ANTIALIASING_MODE::MSAA_16X;
 
 	return ANTIALIASING_MODE::UNKNOWN;
 
 }
 
 /// Convert an antialiasing mode to a multisample structure
-DX11Graphics::MULTISAMPLE DX11Graphics::AntialiasingToMultisample(const ANTIALIASING_MODE & antialiasing) const{
+DXGI_SAMPLE_DESC DX11Graphics::AntialiasingToSample(const ANTIALIASING_MODE & antialiasing) const{
 
-	MULTISAMPLE multisample;
+	DXGI_SAMPLE_DESC sample;
 
 	switch (antialiasing)
 	{
 
 	case ANTIALIASING_MODE::NONE:
 
-		multisample.count = 1;
-		multisample.quality = 0;
+		sample.Count = 1;
+		sample.Quality = 0;
 		break;
 
 	case ANTIALIASING_MODE::MSAA_2X:
 
-		multisample.count = 2;
-		multisample.quality = 0;
+		sample.Count = 2;
+		sample.Quality = 0;
 		break;
 
 	case ANTIALIASING_MODE::MSAA_4X:
 
-		multisample.count = 4;
-		multisample.quality = 0;
+		sample.Count = 4;
+		sample.Quality = 0;
 		break;
 
 	case ANTIALIASING_MODE::MSAA_8X:
 
-		multisample.count = 8;
-		multisample.quality = 0;
+		sample.Count = 8;
+		sample.Quality = 0;
 		break;
 
 	case ANTIALIASING_MODE::MSAA_16X:
 
-		multisample.count = 16;
-		multisample.quality = 0;
+		sample.Count = 16;
+		sample.Quality = 0;
 		break;
 
 	}
 
-	return multisample;
+	return sample;
 
 }
 
@@ -312,7 +312,7 @@ void DX11Graphics::CreateOrDie(const HWND & window_handle, const GRAPHIC_MODE & 
 	dxgi_desc.Windowed = true;  //Change this using IDXGISwapChain::SetFullscreenState
 	dxgi_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	
-	//Back buffer description
+	//Back buffer
 	auto dxgi_mode = VideoModeToDXGIMode(graphic_mode.video);
 
 	memcpy_s(&dxgi_desc.BufferDesc,
@@ -321,11 +321,13 @@ void DX11Graphics::CreateOrDie(const HWND & window_handle, const GRAPHIC_MODE & 
 			 sizeof(dxgi_mode));
 
 	//Antialiasing
-	auto multisample = AntialiasingToMultisample(graphic_mode.antialiasing);
+	auto dxgi_sample = AntialiasingToSample(graphic_mode.antialiasing);
 
-	dxgi_desc.SampleDesc.Count = multisample.count;
-	dxgi_desc.SampleDesc.Quality = multisample.quality;
-
+	memcpy_s(&dxgi_desc.SampleDesc,
+			 sizeof(dxgi_desc.SampleDesc),
+			 &dxgi_sample,
+			 sizeof(dxgi_sample));
+	
 	D3D_FEATURE_LEVEL feature_levels[] = { GetFeatureLevel() };
 
 	//Create the device and the swapchain
