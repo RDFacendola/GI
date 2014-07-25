@@ -1,0 +1,117 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include">
+      <UniqueIdentifier>{98dd0702-966f-4eea-a935-e68b99ed9833}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{7df46c39-01bb-473b-af5a-8883a73bdb9d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="input">
+      <UniqueIdentifier>{954b6f8a-9569-425a-9872-7b013d2e6dbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="input\include">
+      <UniqueIdentifier>{1ab50030-fa39-4d49-8b49-acecf06682be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="input\src">
+      <UniqueIdentifier>{b8800f1d-6143-4925-9f1b-8dd575ae88a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pattern">
+      <UniqueIdentifier>{ccee2888-2df3-430d-ba05-49bd737850a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pattern\include">
+      <UniqueIdentifier>{0396a7bf-5964-4705-9e98-846395e51c49}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pattern\src">
+      <UniqueIdentifier>{4bf81649-b98a-49f0-815c-193246b00101}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="application.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="delete_guard.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="dx11graphics.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="exceptions.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="iapplication_logic.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="igraphics.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="imessage_listener.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="input_range.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="release_guard.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="stack_trace.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="StackWalker.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="system_profiler.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="system_services.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="timer.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="win_keyboard_listener.h">
+      <Filter>input\include</Filter>
+    </ClInclude>
+    <ClInclude Include="win_char_listener.h">
+      <Filter>input\include</Filter>
+    </ClInclude>
+    <ClInclude Include="win_mouse_listener.h">
+      <Filter>input\include</Filter>
+    </ClInclude>
+    <ClInclude Include="hid_listener.h">
+      <Filter>input\include</Filter>
+    </ClInclude>
+    <ClInclude Include="observable.h">
+      <Filter>pattern\include</Filter>
+    </ClInclude>
+    <ClInclude Include="event.h">
+      <Filter>pattern\include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="application.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="dx11graphics.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="StackWalker.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="system_profiler.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="system_services.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="win_keyboard_listener.cpp">
+      <Filter>input\src</Filter>
+    </ClCompile>
+    <ClCompile Include="win_char_listener.cpp">
+      <Filter>input\src</Filter>
+    </ClCompile>
+    <ClCompile Include="win_mouse_listener.cpp">
+      <Filter>input\src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
