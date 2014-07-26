@@ -13,26 +13,21 @@ GILogic::GILogic(){}
 void GILogic::Initialize(HWND window_handle){
 
 	//Initialize DirectX11
-	graphics_ = new DX11Graphics();
+	factory_ = new DX11Factory();
 
-	GRAPHIC_MODE graphic_mode;
+	auto profile = factory_->GetProfile();
+	
+	graphics_ = factory_->Create(window_handle);
 
-	graphic_mode.video.horizontal_resolution = 1920;
-	graphic_mode.video.vertical_resolution = 1080;
-	graphic_mode.video.refresh_rate_Hz = 60;
-	graphic_mode.antialiasing = ANTIALIASING_MODE::NONE;
-	graphic_mode.windowed = true;
-	graphic_mode.vsync = false;
-	
-	graphics_->CreateOrDie(window_handle,
-						   graphic_mode);
-	
+	graphics_->EnableVSync(false);
+	graphics_->EnableFullscreen(true);
+
 }
 
 void GILogic::Update(HWND window_handle, const APPLICATION_TIME & time){
 
-	//End of frame
-	graphics_->Present();
+	//Next frame
+	graphics_->NextFrame();
 	
 }
 
@@ -51,7 +46,13 @@ void GILogic::Destroy(){
 	if (graphics_ != nullptr){
 
 		delete graphics_;
-		
+
+	}
+
+	if (factory_ != nullptr){
+
+		delete factory_;
+
 	}
 
 }

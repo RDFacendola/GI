@@ -72,9 +72,6 @@
     <ClInclude Include="observable.h">
       <Filter>pattern\include</Filter>
     </ClInclude>
-    <ClInclude Include="igraphics.h">
-      <Filter>graphics\include</Filter>
-    </ClInclude>
     <ClInclude Include="StackWalker.h">
       <Filter>externals\stack walker</Filter>
     </ClInclude>
@@ -95,6 +92,9 @@
     </ClInclude>
     <ClInclude Include="timer.h">
       <Filter>application\include</Filter>
+    </ClInclude>
+    <ClInclude Include="igraphics.h">
+      <Filter>graphics\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

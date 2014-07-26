@@ -4,52 +4,127 @@
 
 #include "igraphics.h"
 
-///DirectX 11.0
-class DX11Graphics : public IGraphics{
+///DirectX 11 utility class
+class DX11Utils{
+
+	DX11Utils() = delete;
 
 public:
 
-	///Format used for the screen
-	static const DXGI_FORMAT kGraphicFormat;
-
-	///Get the default adapter's capabilities for this API
-	virtual ADAPTER_PROFILE GetAdapterProfile() const;
-	
-	///Create the graphic interface. Throws on failure
-	virtual void CreateOrDie(const HWND & window_handle, const GRAPHIC_MODE & graphic_mode);
-
-	///Finalize the current frame and present it to the screen
-	virtual void Present();
-
 	/// Convert a multisample structure to an antialiasing mode
-	virtual ANTIALIASING_MODE SampleToAntialiasing(const DXGI_SAMPLE_DESC & sample) const;
+	static ANTIALIASING_MODE SampleToAntialiasing(const DXGI_SAMPLE_DESC & sample);
 
 	/// Convert an antialiasing mode to a multisample structure
-	virtual DXGI_SAMPLE_DESC AntialiasingToSample(const ANTIALIASING_MODE & antialiasing) const;
+	static DXGI_SAMPLE_DESC AntialiasingToSample(const ANTIALIASING_MODE & antialiasing);
 
 	/// Convert a video mode to a dxgi mode
-	virtual DXGI_MODE_DESC VideoModeToDXGIMode(const VIDEO_MODE & video) const;
+	static DXGI_MODE_DESC VideoModeToDXGIMode(const VIDEO_MODE & video);
 
 	/// Convert a dxgi mode to a video mode
-	virtual VIDEO_MODE DXGIModeToVideoMode(const DXGI_MODE_DESC & dxgi) const;
+	static VIDEO_MODE DXGIModeToVideoMode(const DXGI_MODE_DESC & dxgi);
 
-	/// Return the feature level associated to this API
-	virtual D3D_FEATURE_LEVEL GetFeatureLevel() const;
+};
 
+///DirectX 11 Factory
+class DX11Factory : public IFactory{
+
+public:
+
+	///Create a new factory
+	DX11Factory();
+
+	///Destroy the factory
+	virtual ~DX11Factory();
+
+	///Get the capabilities for this API
+	virtual ADAPTER_PROFILE GetProfile() const;
+
+	///Create the graphic object
+	virtual BaseGraphics * Create(const HWND & window_handle);
+	
+	///Get the current device
+	inline ID3D11Device & GetDevice() const{
+
+		return *device_;
+
+	}
+
+	///Get the current dxgi factory
+	inline IDXGIFactory & GetFactory() const{
+
+		return *factory_;
+
+	}
+
+	///Get the default dxgi adapter
+	inline IDXGIAdapter & GetAdapter() const{
+
+		return *adapter_;
+
+	}
+	
 private:
 
 	/// Enumerate the supported antialiasing modes
 	vector<const ANTIALIASING_MODE> EnumerateAntialiasingModes() const;
 
 	/// Enumerate the supported video modes. Filters by resolution and refresh rate
-	vector<const VIDEO_MODE> EnumerateVideoModes(IDXGIAdapter * adapter) const;
+	vector<const VIDEO_MODE> EnumerateVideoModes() const;
 
 	/// Enumerate the supported DXGI video modes
-	vector<const DXGI_MODE_DESC> EnumerateDXGIModes(IDXGIAdapter * adapter) const;
+	vector<const DXGI_MODE_DESC> EnumerateDXGIModes() const;
 	
-	GRAPHIC_MODE graphic_mode_;
-
 	ID3D11Device * device_;
+	
+	IDXGIFactory * factory_;
+
+	IDXGIAdapter * adapter_;
+
+};
+
+///DirectX 11 Graphics
+class DX11Graphics : public BaseGraphics{
+
+public:
+
+	///Create a new graphics object
+	DX11Graphics(const HWND & window_handle, DX11Factory & factory);
+
+	///Destroy the graphic object
+	virtual ~DX11Graphics();
+
+	///Get the resources' loader
+	virtual IResources & GetResources();
+
+	///Get the renderer
+	virtual IRenderer & GetRenderer();
+
+	///Show the current frame and prepare the next one
+	virtual void NextFrame();
+
+	///Set the video mode
+	virtual void SetVideo(const VIDEO_MODE & video);
+
+	///Set the antialising mode
+	virtual void SetAntialising(const ANTIALIASING_MODE & antialiasing);
+
+	///Enable or disable the fullscreen state
+	virtual void EnableFullscreen(bool enable);
+	
+private:
+
+	///Return the default DXGI mode for the swap chain
+	DXGI_SWAP_CHAIN_DESC GetDefaultSwapchainMode();
+
+	const HWND & window_handle_;
+
+	ID3D11Device & device_;
+
+	DX11Factory & factory_;
+
+	IResources * resources_;
+
+	IRenderer * renderer_;
 
 	IDXGISwapChain * swap_chain_;
 

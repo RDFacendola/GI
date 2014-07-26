@@ -12,11 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application.h" />
+    <ClInclude Include="igraphics.h" />
     <ClInclude Include="observable.h" />
     <ClInclude Include="hid_listener.h" />
     <ClInclude Include="dx11graphics.h" />
     <ClInclude Include="exceptions.h" />
-    <ClInclude Include="igraphics.h" />
     <ClInclude Include="imessage_listener.h" />
     <ClInclude Include="raii.h" />
     <ClInclude Include="win_char_listener.h" />

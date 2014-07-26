@@ -3,8 +3,7 @@
 #include <d3d11.h>
 
 #include "application.h"
-
-class IGraphics;
+#include "igraphics.h"
 
 ///Application's logic
 class GILogic : public IApplicationLogic{
@@ -45,7 +44,10 @@ private:
 	///Is the application running?
 	bool is_running_;
 
-	///Base class for graphics
-	IGraphics * graphics_;
+	///API factory
+	IFactory * factory_;
+
+	///Graphic object
+	BaseGraphics * graphics_;
 
 };
