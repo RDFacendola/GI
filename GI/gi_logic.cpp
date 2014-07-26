@@ -8,7 +8,12 @@ const unsigned int kWindowWidth = 1280;
 const unsigned int kWindowHeight = 768;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
-GILogic::GILogic(){}
+GILogic::GILogic(){
+
+	factory_ = nullptr;
+	graphics_ = nullptr;
+	
+}
 
 void GILogic::Initialize(HWND window_handle){
 

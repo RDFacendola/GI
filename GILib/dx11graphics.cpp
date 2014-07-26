@@ -327,27 +327,7 @@ DX11Graphics::DX11Graphics(const HWND & window_handle, DX11Factory & factory):
 	device_(factory.GetDevice()),
 	factory_(factory){
 
-	auto dxgi_desc = GetDefaultSwapchainMode();
-
-	THROW_ON_FAIL(factory_.GetFactory().CreateSwapChain(&device_,
-														&dxgi_desc,
-														&swap_chain_));
-
-	/*
-	
-		//Save the backbuffer view
-
-		ID3D11Texture2D * backbuffer = nullptr;
-
-		ReleaseGuard<ID3D11Texture2D> guard(backbuffer);
-
-		THROW_ON_FAIL(swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backbuffer)));
-
-		THROW_ON_FAIL(device_->CreateRenderTargetView(backbuffer, nullptr, &backbuffer_view_));
-	
-		memcpy_s(&graphic_mode_, sizeof(graphic_mode_), &graphic_mode, sizeof(graphic_mode));
-
-	*/
+	CreateSwapChain(GetDefaultSwapchainMode());
 
 }
 
@@ -412,7 +392,7 @@ void DX11Graphics::EnableFullscreen(bool enable){
 }
 
 ///Return the default DXGI mode for the swap chain
-DXGI_SWAP_CHAIN_DESC DX11Graphics::GetDefaultSwapchainMode(){
+DXGI_SWAP_CHAIN_DESC DX11Graphics::GetDefaultSwapchainMode() const{
 
 	//Create the swapchain with default settings
 	DXGI_SWAP_CHAIN_DESC dxgi_desc;
@@ -422,17 +402,40 @@ DXGI_SWAP_CHAIN_DESC DX11Graphics::GetDefaultSwapchainMode(){
 	dxgi_desc.BufferCount = 3;	//Triple buffering only
 	dxgi_desc.OutputWindow = window_handle_;
 	dxgi_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-	dxgi_desc.Windowed = true;  //Change this using IDXGISwapChain::SetFullscreenState
+	dxgi_desc.Windowed = true;
 	dxgi_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 
-	//Back buffer
-	dxgi_desc.BufferDesc = DX11Utils::VideoModeToDXGIMode(factory_.GetProfile()
-																  .supported_video
-																  .back());
-
-	//Antialiasing
-	dxgi_desc.SampleDesc = DX11Utils::AntialiasingToSample(ANTIALIASING_MODE::NONE);
+	//Back buffer and antialiasing - Default
+	dxgi_desc.BufferDesc.Format = kGraphicFormat;
+	dxgi_desc.SampleDesc.Count = 1;
 
 	return dxgi_desc;
+
+}
+
+///Create a new swapchain given its description
+void DX11Graphics::CreateSwapChain(DXGI_SWAP_CHAIN_DESC & desc){
+
+	//TODO: Release the outstanding references
+
+	THROW_ON_FAIL(factory_.GetFactory().CreateSwapChain(&device_,
+														&desc,
+														&swap_chain_));
+	//TODO: Get the references to the backbuffer
+	/*
+
+	//Save the backbuffer view
+
+	ID3D11Texture2D * backbuffer = nullptr;
+
+	ReleaseGuard<ID3D11Texture2D> guard(backbuffer);
+
+	THROW_ON_FAIL(swap_chain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backbuffer)));
+
+	THROW_ON_FAIL(device_->CreateRenderTargetView(backbuffer, nullptr, &backbuffer_view_));
+
+	memcpy_s(&graphic_mode_, sizeof(graphic_mode_), &graphic_mode, sizeof(graphic_mode));
+
+	*/
 
 }

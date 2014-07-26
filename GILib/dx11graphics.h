@@ -114,7 +114,10 @@ public:
 private:
 
 	///Return the default DXGI mode for the swap chain
-	DXGI_SWAP_CHAIN_DESC GetDefaultSwapchainMode();
+	DXGI_SWAP_CHAIN_DESC GetDefaultSwapchainMode() const;
+
+	///Create a new swapchain given its description
+	void CreateSwapChain(DXGI_SWAP_CHAIN_DESC & desc);
 
 	const HWND & window_handle_;
 
