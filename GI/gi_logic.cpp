@@ -17,6 +17,11 @@ GILogic::GILogic(){
 
 void GILogic::Initialize(HWND window_handle){
 
+	//Setup the window
+	SetWindowText(window_handle, kWindowTitle.c_str());
+	
+	ShowWindow(window_handle, SW_SHOWDEFAULT);
+
 	//Initialize DirectX11
 	factory_ = new DX11Factory();
 
@@ -24,30 +29,11 @@ void GILogic::Initialize(HWND window_handle){
 	
 	graphics_ = factory_->Create(window_handle);
 
-	graphics_->EnableVSync(false);
-	graphics_->EnableFullscreen(true);
-
 }
-
-void GILogic::Update(HWND window_handle, const APPLICATION_TIME & time){
-
-	//Next frame
-	graphics_->NextFrame();
-	
-}
-
-LRESULT GILogic::ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const APPLICATION_TIME & time){
-
-	//Manage the message
-
-	//Default behavior
-	return DefWindowProc(window_handle, message_id, wparameter, lparameter);
-
-}
-
 
 void GILogic::Destroy(){
 
+	//Destroy everything
 	if (graphics_ != nullptr){
 
 		delete graphics_;
@@ -62,32 +48,18 @@ void GILogic::Destroy(){
 
 }
 
-bool GILogic::IsRunning() const{
+void GILogic::Update(HWND window_handle, const APPLICATION_TIME & time){
 
-	return is_running_;
-
-}
-
-void GILogic::Exit(){
-
-	is_running_ = false;
-
-}
-
-unsigned int GILogic::GetWindowWidth() const{
-
-	return kWindowWidth;
-
-}
-
-unsigned int GILogic::GetWindowHeight() const{
-
-	return kWindowHeight;
-
-}
-
-wstring GILogic::GetWindowTitle() const{
-
-	return kWindowTitle;
+	//Next frame
+	graphics_->NextFrame();
 	
+}
+
+LRESULT GILogic::ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
+
+	//Manage the message
+
+	//Default behavior
+	return DefWindowProc(window_handle, message_id, wparameter, lparameter);
+
 }

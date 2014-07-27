@@ -17,9 +17,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	try{
 
-		//Main loop
-		Application::GetSingleton()
-					.Run(hInstance, gi_logic);
+		Application::AddLogic(hInstance, gi_logic);
+
+		Application::Run();
 
 	}catch (const RuntimeException & e){
 

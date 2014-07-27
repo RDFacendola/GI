@@ -254,13 +254,11 @@ vector<const DXGI_MODE_DESC> DX11Factory::EnumerateDXGIModes() const{
 													  &output_mode_count,
 													  output_modes));
 
-	vector<const DXGI_MODE_DESC> dxgi_modes;
+	vector<const DXGI_MODE_DESC> dxgi_modes(output_mode_count);
 
-	for (unsigned int mode_index = 0; mode_index < output_mode_count; mode_index++){
-
-		dxgi_modes.push_back(output_modes[mode_index]);
-		
-	}
+	std::copy(&output_modes[0],
+			  &output_modes[output_mode_count],
+			  dxgi_modes.begin());
 
 	return dxgi_modes;
 

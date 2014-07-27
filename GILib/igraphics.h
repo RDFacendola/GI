@@ -78,10 +78,7 @@ public:
 	///Set the video mode
 	inline virtual void SetVideo(const VIDEO_MODE & video){
 
-		memcpy_s(&video_,
-				 sizeof(video_),
-				 &video,
-				 sizeof(video));
+		video_ = video;
 
 	}
 
@@ -95,10 +92,7 @@ public:
 	///Set the antialising mode
 	inline virtual void SetAntialising(const ANTIALIASING_MODE & antialiasing){
 
-		memcpy_s(&antialiasing_,
-				 sizeof(antialiasing_),
-				 &antialiasing,
-				 sizeof(antialiasing));
+		antialiasing_ = antialiasing;
 
 	}
 
