@@ -13,7 +13,7 @@ public:
 	GILogic();
 
 	///Initialize the logic
-	virtual void Initialize(HWND window_handle);
+	virtual void Initialize(Window & window);
 
 	///Destroy the logic
 	virtual void Destroy();

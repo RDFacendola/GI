@@ -15,9 +15,11 @@ GILogic::GILogic(){
 	
 }
 
-void GILogic::Initialize(HWND window_handle){
+void GILogic::Initialize(Window & window){
 
 	//Setup the window
+	auto window_handle = window.GetWindowHandle();
+
 	SetWindowText(window_handle, kWindowTitle.c_str());
 	
 	ShowWindow(window_handle, SW_SHOWDEFAULT);
@@ -25,10 +27,19 @@ void GILogic::Initialize(HWND window_handle){
 	//Initialize DirectX11
 	factory_ = new DX11Factory();
 
-	auto profile = factory_->GetProfile();
-	
-	graphics_ = factory_->Create(window_handle);
+	graphics_ = factory_->Create(window);
 
+	graphics_->EnableVSync(false);
+
+	VIDEO_MODE video;
+
+	video.horizontal_resolution = 1920;
+	video.vertical_resolution = 1080;
+	video.refresh_rate_Hz = 60;
+
+	graphics_->SetVideo(video);
+	//graphics_->EnableFullscreen(true);
+	
 }
 
 void GILogic::Destroy(){

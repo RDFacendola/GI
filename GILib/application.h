@@ -52,7 +52,7 @@ class IWindowProc{
 public:
 
 	///Initialize the logic
-	virtual void Initialize(HWND window_handle) = 0;
+	virtual void Initialize(Window & window) = 0;
 
 	///Destroy the logic
 	virtual void Destroy() = 0;
@@ -70,11 +70,16 @@ class Window{
 
 public:
 
+	typedef Observable<Window &, unsigned int, WPARAM, LPARAM> TMessageEvent;
+
 	///Create a new window
 	Window(HINSTANCE application_instance, WNDPROC dispatcher, IWindowProc & logic);
 
 	///Destroy this window
 	~Window();
+
+	///Initialize the logic
+	void Initialize();
 
 	///Receive a message from the OS
 	LRESULT ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
@@ -89,6 +94,13 @@ public:
 
 	}
 	
+	///Event raised whenever a message is received by the window
+	Observable<Window &, unsigned int, WPARAM, LPARAM> & OnMessage(){
+
+		return on_message_;
+
+	}
+
 private:
 
 	///Create a new window
@@ -100,4 +112,6 @@ private:
 
 	HICON icon_handle_;
 	
+	Event<Window &, unsigned int, WPARAM, LPARAM> on_message_;
+
 };

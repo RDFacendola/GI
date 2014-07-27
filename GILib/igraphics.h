@@ -1,9 +1,10 @@
 #pragma once
 
 #include <Windows.h>
-
 #include <vector>
 #include <string>
+
+#include "application.h"
 
 using ::std::vector;
 using ::std::wstring;
@@ -54,7 +55,7 @@ public:
 	virtual ADAPTER_PROFILE GetProfile() const = 0;
 
 	///Create the graphic object
-	virtual BaseGraphics * Create(const HWND & window_handle) = 0;
+	virtual BaseGraphics * Create(Window & window) = 0;
 
 };
 

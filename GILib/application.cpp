@@ -17,6 +17,8 @@ void Application::AddLogic(HINSTANCE application_instance, IWindowProc & logic){
 
 	GetWindows()[window->GetWindowHandle()] = window;
 
+	window->Initialize();
+
 }
 
 ///Remove an existing logic from the application
@@ -111,8 +113,11 @@ Window::Window(HINSTANCE application_instance, WNDPROC dispatcher, IWindowProc &
 
 	CreateNew(application_instance, dispatcher, window_handle_, icon_handle_);
 
-	///Initializes the logic
-	logic_.Initialize(window_handle_);
+}
+
+void Window::Initialize(){
+
+	logic_.Initialize(*this);
 
 }
 
@@ -129,6 +134,10 @@ Window::~Window(){
 ///Receive a message from the OS
 LRESULT Window::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
 
+	//Raise the vent
+	on_message_.Notify(*this, message_id, wparameter, lparameter);
+
+	//Call the logic
 	return logic_.ReceiveMessage(window_handle_, message_id, wparameter, lparameter);
 
 }

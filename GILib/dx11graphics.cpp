@@ -164,9 +164,9 @@ ADAPTER_PROFILE DX11Factory::GetProfile() const{
 }
 
 ///Create the graphic object
-BaseGraphics * DX11Factory::Create(const HWND & window_handle){
+BaseGraphics * DX11Factory::Create(Window & window){
 
-	return new DX11Graphics(window_handle,
+	return new DX11Graphics(window,
 							*this);
 	
 }
@@ -320,12 +320,27 @@ vector<const ANTIALIASING_MODE> DX11Factory::EnumerateAntialiasingModes() const{
 //DX11Graphics
 
 ///Create a new graphics object
-DX11Graphics::DX11Graphics(const HWND & window_handle, DX11Factory & factory):
-	window_handle_(window_handle),
+DX11Graphics::DX11Graphics(Window & window, DX11Factory & factory) :
+	window_(window),
 	device_(factory.GetDevice()),
 	factory_(factory){
 
 	CreateSwapChain(GetDefaultSwapchainMode());
+
+	//Listener used to resize the swapchain during the window resize
+	on_window_message_listener_ = new Window::TMessageEvent::TListener([this](Window & window, unsigned int message_id, WPARAM wparam, LPARAM lparam){
+
+		if (message_id == WM_SIZE){
+
+			//Resize the swapchain buffer
+			swap_chain_->ResizeBuffers(3, 0, 0, kGraphicFormat, 0);
+			
+
+		}
+
+	});
+
+	window_.OnMessage() << *on_window_message_listener_;
 
 }
 
@@ -368,6 +383,18 @@ void DX11Graphics::SetVideo(const VIDEO_MODE & video){
 
 	//ResizeTarget -> ResizeBuffers (on windowed)
 
+	DXGI_MODE_DESC dxgi_mode;
+
+	ZeroMemory(&dxgi_mode, sizeof(dxgi_mode));
+
+	dxgi_mode.Format = kGraphicFormat;
+	dxgi_mode.Width = video.horizontal_resolution;
+	dxgi_mode.Height = video.vertical_resolution;
+	dxgi_mode.RefreshRate.Denominator = 1000;
+	dxgi_mode.RefreshRate.Numerator = video.refresh_rate_Hz * dxgi_mode.RefreshRate.Denominator;
+	
+	swap_chain_->ResizeTarget(&dxgi_mode);
+
 }
 
 ///Set the antialising mode
@@ -398,7 +425,7 @@ DXGI_SWAP_CHAIN_DESC DX11Graphics::GetDefaultSwapchainMode() const{
 	ZeroMemory(&dxgi_desc, sizeof(dxgi_desc));
 
 	dxgi_desc.BufferCount = 3;	//Triple buffering only
-	dxgi_desc.OutputWindow = window_handle_;
+	dxgi_desc.OutputWindow = window_.GetWindowHandle();
 	dxgi_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	dxgi_desc.Windowed = true;
 	dxgi_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;

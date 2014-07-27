@@ -40,7 +40,7 @@ public:
 	virtual ADAPTER_PROFILE GetProfile() const;
 
 	///Create the graphic object
-	virtual BaseGraphics * Create(const HWND & window_handle);
+	virtual BaseGraphics * Create(Window & window);
 	
 	///Get the current device
 	inline ID3D11Device & GetDevice() const{
@@ -88,7 +88,7 @@ class DX11Graphics : public BaseGraphics{
 public:
 
 	///Create a new graphics object
-	DX11Graphics(const HWND & window_handle, DX11Factory & factory);
+	DX11Graphics(Window & window_handle, DX11Factory & factory);
 
 	///Destroy the graphic object
 	virtual ~DX11Graphics();
@@ -119,7 +119,7 @@ private:
 	///Create a new swapchain given its description
 	void CreateSwapChain(DXGI_SWAP_CHAIN_DESC & desc);
 
-	const HWND & window_handle_;
+	Window & window_;
 
 	ID3D11Device & device_;
 
@@ -131,8 +131,12 @@ private:
 
 	IDXGISwapChain * swap_chain_;
 
+	Window::TMessageEvent::TListener * on_window_message_listener_;
+
+	/*
 	ID3D11DeviceContext * immediate_context_;
 
 	ID3D11RenderTargetView * backbuffer_view_;
+	*/
 
 };
