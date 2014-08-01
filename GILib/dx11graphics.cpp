@@ -325,6 +325,10 @@ DX11Graphics::DX11Graphics(Window & window, DX11Factory & factory) :
 	device_(factory.GetDevice()),
 	factory_(factory){
 
+	///VSync disabled by default
+	EnableVSync(false);
+
+	//Create the swapchain with default parameters
 	CreateSwapChain(GetDefaultSwapchainMode());
 
 	//Listener used to resize the swapchain during the window resize
@@ -335,7 +339,6 @@ DX11Graphics::DX11Graphics(Window & window, DX11Factory & factory) :
 			//Resize the swapchain buffer
 			swap_chain_->ResizeBuffers(3, 0, 0, kGraphicFormat, 0);
 			
-
 		}
 
 	});
@@ -381,7 +384,7 @@ void DX11Graphics::SetVideo(const VIDEO_MODE & video){
 
 	BaseGraphics::SetVideo(video);
 
-	//ResizeTarget -> ResizeBuffers (on windowed)
+	//Resize the target window (this will cause the resize of the backbuffer)
 
 	DXGI_MODE_DESC dxgi_mode;
 
@@ -402,7 +405,14 @@ void DX11Graphics::SetAntialising(const ANTIALIASING_MODE & antialiasing){
 
 	BaseGraphics::SetAntialising(antialiasing);
 
-	//Create the swapchain again
+	//Create the swapchain again (keeps everything except the antialiasing)
+	DXGI_SWAP_CHAIN_DESC dxgi_desc;
+
+	swap_chain_->GetDesc(&dxgi_desc);
+
+	dxgi_desc.SampleDesc = DX11Utils::AntialiasingToSample(antialiasing);
+
+	CreateSwapChain(dxgi_desc);
 
 }
 
@@ -441,7 +451,7 @@ DXGI_SWAP_CHAIN_DESC DX11Graphics::GetDefaultSwapchainMode() const{
 ///Create a new swapchain given its description
 void DX11Graphics::CreateSwapChain(DXGI_SWAP_CHAIN_DESC & desc){
 
-	//TODO: Release the outstanding references
+	//TODO: Release the outstanding references to the backbuffer in the context
 
 	THROW_ON_FAIL(factory_.GetFactory().CreateSwapChain(&device_,
 														&desc,

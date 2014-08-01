@@ -27,19 +27,12 @@ void GILogic::Initialize(Window & window){
 	//Initialize DirectX11
 	factory_ = new DX11Factory();
 
+	auto p = factory_->GetProfile();
+
 	graphics_ = factory_->Create(window);
 
-	graphics_->EnableVSync(false);
+	//graphics_->EnableVSync(false);
 
-	VIDEO_MODE video;
-
-	video.horizontal_resolution = 1920;
-	video.vertical_resolution = 1080;
-	video.refresh_rate_Hz = 60;
-
-	graphics_->SetVideo(video);
-	//graphics_->EnableFullscreen(true);
-	
 }
 
 void GILogic::Destroy(){
@@ -62,6 +55,7 @@ void GILogic::Destroy(){
 void GILogic::Update(HWND window_handle, const APPLICATION_TIME & time){
 
 	//Next frame
+
 	graphics_->NextFrame();
 	
 }

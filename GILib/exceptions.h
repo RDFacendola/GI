@@ -12,7 +12,7 @@
 								if(FAILED(hr)) \
 								{ \
 									std::wstringstream stream; \
-									stream << "FAILED! " << #expr << " (0x" << std::hex << hr << ")" << std::endl \
+									stream << "FAILED! " << #expr << " (0x" << std::hex << hr << std::dec << ")" << std::endl \
 										   << __FILE__ << std::endl \
 										   << __FUNCTIONW__ << L" (" << __LINE__ << ")" << std::endl; \
 									throw RuntimeException(stream.str()); \
