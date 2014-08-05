@@ -49,12 +49,12 @@
     <Filter Include="application\src">
       <UniqueIdentifier>{f0cfef17-1601-4e25-9624-89e9403b4080}</UniqueIdentifier>
     </Filter>
+    <Filter Include="scene">
+      <UniqueIdentifier>{8d48d195-5273-46e3-8498-70667a83f177}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="exceptions.h">
-      <Filter>include</Filter>
-    </ClInclude>
-    <ClInclude Include="stack_trace.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="win_keyboard_listener.h">
@@ -95,6 +95,12 @@
     </ClInclude>
     <ClInclude Include="igraphics.h">
       <Filter>graphics\include</Filter>
+    </ClInclude>
+    <ClInclude Include="scene.h">
+      <Filter>scene</Filter>
+    </ClInclude>
+    <ClInclude Include="iterator.h">
+      <Filter>pattern\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

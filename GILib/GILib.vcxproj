@@ -12,6 +12,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application.h" />
+    <ClInclude Include="iterator.h" />
+    <ClInclude Include="scene.h" />
     <ClInclude Include="igraphics.h" />
     <ClInclude Include="observable.h" />
     <ClInclude Include="hid_listener.h" />
@@ -22,7 +24,6 @@
     <ClInclude Include="win_char_listener.h" />
     <ClInclude Include="win_keyboard_listener.h" />
     <ClInclude Include="StackWalker.h" />
-    <ClInclude Include="stack_trace.h" />
     <ClInclude Include="services.h" />
     <ClInclude Include="timer.h" />
     <ClInclude Include="win_mouse_listener.h" />

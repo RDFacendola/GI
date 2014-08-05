@@ -2,8 +2,13 @@
 
 #include <string>
 #include <iomanip>
+#include <string>
+#include <sstream>
 
-#include "stack_trace.h"
+#include "StackWalker.h"
+
+using ::std::wstring;
+using ::std::stringstream;
 
 ///Used to automatically throw whenever a HRESULT function fails
 #define THROW_ON_FAIL(expr) do \
@@ -27,6 +32,55 @@
 									return hr; \
 								} \
 							 }while (0)
+
+///Custom stack trace. Output to a string
+class StackTrace : public StackWalker{
+
+public:
+
+	StackTrace() : StackWalker(StackWalkOptions::RetrieveNone) {}
+
+	///Return the current stack trace
+	wstring GetStackTrace(){
+
+		//Remove the content of the stack trace
+		stack_trace.str("");
+
+		ShowCallstack();
+
+		auto trace = stack_trace.str();
+
+		return wstring(trace.begin(), trace.end());
+
+	}
+
+protected:
+
+	virtual void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &entry){
+
+		StackWalker::OnCallstackEntry(eType, entry);
+
+		if (entry.offset == 0){
+
+			return;	//Invalid entry
+
+		}
+
+		stack_trace << entry.moduleName
+			<< " - "
+			<< entry.undFullName
+			<< " ("
+			<< std::to_string(entry.lineNumber)
+			<< ")"
+			<< std::endl;
+
+	}
+
+private:
+
+	stringstream stack_trace;
+
+};
 
 ///Runtime exception with stack trace
 class RuntimeException{
@@ -65,14 +119,5 @@ private:
 
 	wstring stack_trace_;
 	
-};
-
-///Out of memory exception
-class OutOfMemoryException : public RuntimeException{
-
-public:
-
-	OutOfMemoryException() : RuntimeException(L"Out of memory"){}
-
 };
 
