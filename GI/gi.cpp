@@ -12,58 +12,7 @@ using ::std::wstringstream;
 
 void CopyToClipboard(const wstring &);
 
-class NullComponent : public Component{
-
-public:
-
-	NullComponent(int value){
-
-		value_ = value;
-
-	}
-
-	int value_;
-
-};
-
-class HuehueComponent : public NullComponent{
-
-public:
-
-	HuehueComponent() : NullComponent(42){}
-
-};
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd){
-
-	SceneObject so;
-
-	so.AddComponent<NullComponent>(47);
-	so.AddComponent<NullComponent>(52);
-	so.AddComponent<NullComponent>(96);
-	so.AddComponent<HuehueComponent>();
-
-	so.RemoveComponents<HuehueComponent>();
-
-	auto p = so.GetComponent<HuehueComponent>();
-
-	if (p != so.GetEnd<HuehueComponent>()){
-
-		int huehuheu = 89;
-
-	}
-	
-	auto q = so.GetComponent<NullComponent>();
-
-	if (q != so.GetEnd<NullComponent>()){
-
-		auto & x = *q;
-
-		int i = 0;
-
-		(++i)++;
-	}
-
 
 	GILogic gi_logic;
 

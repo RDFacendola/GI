@@ -101,6 +101,17 @@ public:
 
 	}
 
+	///Return the range of all components of type TComponent
+	template<class TComponent>
+	inline Range<TComponent, ComponentConstIterator<TComponent>> GetComponents() const{
+
+		auto range = components_.equal_range(typeid(TComponent).hash_code());
+
+		return Range<TComponent, ComponentConstIterator<TComponent>>(ComponentConstIterator<TComponent>(range.first),
+																	 ComponentConstIterator<TComponent>(range.second));
+
+	}
+
 	///Return an iterator pointing on the first occurence of a component of type TComponent. Return a pointer to an element past the end if no component is found.
 	template<class TComponent>
 	inline ComponentIterator<TComponent> GetComponent(){
@@ -109,11 +120,27 @@ public:
 
 	}
 
+	///Return an iterator pointing on the first occurence of a component of type TComponent. Return a pointer to an element past the end if no component is found.
+	template<class TComponent>
+	inline ComponentConstIterator<TComponent> GetComponent() const{
+
+		return ComponentConstIterator<TComponent>(components_.find(typeid(TComponent).hash_code()));
+
+	}
+	
 	///Points to an element past the last component stored
 	template<class TComponent>
 	inline ComponentIterator<TComponent> GetEnd(){
 
 		return ComponentIterator<TComponent>(components_.end());
+
+	}
+
+	///Points to an element past the last component stored
+	template<class TComponent>
+	inline ComponentConstIterator<TComponent> GetEnd() const{
+
+		return ComponentConstIterator<TComponent>(components_.end());
 
 	}
 	
@@ -153,7 +180,7 @@ public:
 		return static_cast<TComponent *>((*iterator_).second);
 
 	}
-
+	
 	//Equality
 	inline bool operator==(const ComponentIterator & other) const{
 
@@ -193,6 +220,66 @@ private:
 
 };
 
+template <class TComponent>
+class ComponentConstIterator{
+
+public:
+
+	ComponentConstIterator(SceneObject::ComponentMap::iterator iterator) :
+		iterator_(iterator){};
+
+	///Dereferencing
+	const TComponent & operator*() const{
+
+		return *static_cast<const TComponent *>((*iterator_).second);
+
+	}
+
+	const TComponent * operator->() const{
+
+		return static_cast<const TComponent *>((*iterator_).second);
+
+	}
+
+	//Equality
+	inline bool operator==(const ComponentConstIterator & other) const{
+
+		return iterator_ == other.iterator_;
+
+	}
+
+	inline bool operator!=(const ComponentConstIterator & other) const{
+
+		return iterator_ != other.iterator_;
+
+	}
+
+	//Forward
+	inline ComponentConstIterator & operator++() {
+
+		++iterator_;
+
+		return *this;
+
+	}
+
+	inline ComponentConstIterator operator++ (int)
+	{
+
+		ComponentIterator tmp(*this);
+
+		++iterator_;
+
+		return tmp;
+
+	}
+
+private:
+
+	SceneObject::ComponentMap::iterator iterator_;
+
+};
+
 ///A scene object's component
 class Component{
 
@@ -204,6 +291,13 @@ public:
 
 	///Get the owner of this component
 	inline SceneObject & GetOwner(){
+
+		return *scene_object_;
+
+	}
+
+	///Get the owner of this component
+	inline const SceneObject & GetOwner() const{
 
 		return *scene_object_;
 
