@@ -1,78 +1,45 @@
 #pragma once
 
-///RAII - Acquire an object and delete it upon destruction
-template <class TType>
-class DeleteGuard{
+///Guard that executes a functor upon destruction if not dismissed beforehand
+class ScopeGuard{
 
 public:
 
-	///Acquire the object
-	DeleteGuard(TType *& object){
+	template <class TFunctor>
+	ScopeGuard(TFunctor functor) :
+		functor_(functor),
+		dismissed_(false){}
 
-		this->object = &object;
+	ScopeGuard(ScopeGuard & other) :
+		functor_(other.functor_),
+		dismissed_(other.dismissed_){
+
+		other.Dismiss();
 
 	}
 
-	///Delete the object
-	~DeleteGuard(){
+	~ScopeGuard(){
 
-		if (object != nullptr){
+		if (!dismissed_){
 
-			delete (*object);
-			(*object) = nullptr;
+			///Call the functor if not dismissed
+			functor_();
 
 		}
 
 	}
 
-	///Free the object without deleting it
-	void Free(){
+	void Dismiss(){
 
-		object = nullptr;
-
-	}
-
-private:
-
-	TType ** object;
-
-};
-
-///RAII - Acquire an object and release it upon destruction
-template <class TType>
-class ReleaseGuard{
-
-public:
-
-	///Acquire the object
-	ReleaseGuard(TType *& object){
-
-		this->object = &object;
-
-	}
-
-	///Release the object
-	~ReleaseGuard(){
-
-		if (object != nullptr &&
-			(*object) != nullptr){
-
-			(*object)->Release();
-			(*object) = nullptr;
-
-		}
-
-	}
-
-	//Free the object without releasing it
-	void Free(){
-				
-		object = nullptr;
+		dismissed_ = true;
 
 	}
 
 private:
 
-	TType ** object;
+	///Called upon destruction, if not dismissed
+	std::function<void(void)> functor_;
+
+	bool dismissed_;
 
 };

@@ -1,6 +1,7 @@
 #include "dx11graphics.h"	
 
 #include <algorithm>
+#include <memory>
 
 #include "exceptions.h"
 #include "raii.h"
@@ -232,33 +233,25 @@ vector<const VIDEO_MODE> DX11Factory::EnumerateVideoModes() const{
 vector<const DXGI_MODE_DESC> DX11Factory::EnumerateDXGIModes() const{
 
 	IDXGIOutput * adapter_output = nullptr;
-	DXGI_MODE_DESC * output_modes = nullptr;
 	unsigned int output_mode_count;
 
-	//RAII
-	ReleaseGuard<IDXGIOutput> guard_adapter_output(adapter_output);
-	DeleteGuard<DXGI_MODE_DESC> guard_output_modes(output_modes);
-
 	THROW_ON_FAIL(GetAdapter().EnumOutputs(kPrimaryDisplayIndex,
-									   &adapter_output));
+										   &adapter_output));
+
+	//Release the output when the function returns or throws
+	auto guard = ScopeGuard([adapter_output](){ adapter_output->Release(); });
 
 	THROW_ON_FAIL(adapter_output->GetDisplayModeList(kGraphicFormat,
 													 0,
 													 &output_mode_count,
 													 nullptr));
 
-	output_modes = new DXGI_MODE_DESC[output_mode_count];
+	vector<const DXGI_MODE_DESC> dxgi_modes(output_mode_count);
 
 	THROW_ON_FAIL(adapter_output->GetDisplayModeList(kGraphicFormat,
 													  0,
 													  &output_mode_count,
-													  output_modes));
-
-	vector<const DXGI_MODE_DESC> dxgi_modes(output_mode_count);
-
-	std::copy(&output_modes[0],
-			  &output_modes[output_mode_count],
-			  dxgi_modes.begin());
+													  &dxgi_modes[0]));
 
 	return dxgi_modes;
 
