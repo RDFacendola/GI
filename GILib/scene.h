@@ -1,319 +1,437 @@
+/// \file scene.h
+/// \brief Defines the base classes used to manage the scene objects and their components.
+///
+/// \author Raffaele D. Facendola
+
 #pragma once
 
 #include <string>
 #include <unordered_map>
 #include <typeinfo>
+#include <type_traits>
+#include <memory>
 
 #include "iterator.h"
+#include "time.h"
 
 using std::wstring;
 using std::unordered_multimap;
+using std::shared_ptr;
+using std::weak_ptr;
 
-class Component;
+namespace gi_lib{
+	
+	/// \brief A scene object.
 
-template <class TComponent>
-class ComponentIterator;
+	/// A scene object may represents a camera, a light, a model and so on.
+	/// Components may be plugged to customize its behaviour
+	class SceneObject{
 
-template <class TComponent>
-class ComponentConstIterator;
-
-///Scene object such as an actor, a light, a camera and so on...
-class SceneObject{
-
-public:
-
-	typedef unordered_multimap<size_t, Component *> ComponentMap;
-
-	SceneObject() :
-		name_(L""){}
-
-	SceneObject(wstring name):
-		name_(name){}
-
-	///Create and add a new component to this object
-	template<class TComponent, class... TArgs>
-	inline ComponentIterator<TComponent> AddComponent(TArgs... args){
-
-		Component * component = new TComponent(args...);
-
-		///Set the owner of the component
-		component->SetOwner(*this);
-
-		return ComponentIterator<TComponent>(components_.insert(ComponentMap::value_type(typeid(TComponent).hash_code(),
-																						 component)));
-
-	}
-
-	///Create and add a new component to this object
-	template<class TComponent>
-	inline ComponentIterator<TComponent> AddComponent(){
-
-		Component * component = new TComponent();
-
-		///Set the owner of the component
-		component->SetOwner(*this);
+	public:
 		
-		return ComponentIterator<TComponent>(components_.insert(ComponentMap::value_type(typeid(TComponent).hash_code(),
-																						 component)));
+		class Component;
 
-	}
+		typedef unordered_multimap<size_t, shared_ptr<Component>> ComponentMap;
 
-	///Remove the component pointed by the iterator.
-	template<class TComponent>
-	void RemoveComponent(ComponentIterator<TComponent> & iterator){
+		/// \brief Scene object component.
+		class Component{
 
-		auto range = components_.equal_range(typeid(TComponent).hash_code());
+		public:
 
-		auto component_ptr = &(*iterator);
+			virtual ~Component(){}
 
-		for (auto & it = range.first; it != range.second; ++it){
+			/// \brief Get the component's owner.
 
-			if (component_ptr == (*it).second){
+			/// \return Returns the component's owner reference.
+			inline SceneObject & GetOwner(){
 
-				components_.erase(it);
+				return *scene_object_;
 
-				delete component_ptr;
+			}
 
-				return;
+			/// \brief Get the component's owner.
+
+			/// \return Returns the component's owner constant reference.
+			inline const SceneObject & GetOwner() const{
+
+				return *scene_object_;
+
+			}
+
+			/// \brief Update the component.
+
+			/// \param time The current application time.
+			virtual void Update(const Timer::Time & time) = 0;
+
+		private:
+
+			/// \brief Set the component's owner.
+
+			/// \param scene_object The owner of this instance.
+			inline void SetOwner(SceneObject & scene_object){
+
+				scene_object_ = &scene_object;
+
+			}
+
+			SceneObject * scene_object_;
+
+		};
+
+		/// \brief Iterator used to iterate through scene object's components.
+
+		/// \tparam TComponent Type of the component this iterator points to.
+		template <typename TComponent>
+		class ComponentIterator{
+
+		public:
+
+			ComponentIterator(SceneObject::ComponentMap::iterator iterator) :
+				iterator_(iterator){};
+
+			// Dereferencing
+
+			TComponent & operator*(){
+
+				return *static_cast<TComponent *>((*iterator_).second);
+
+			}
+
+			TComponent * operator->(){
+
+				return static_cast<TComponent *>((*iterator_).second);
+
+			}
+
+			// Equality
+
+			inline bool operator==(const ComponentIterator & other) const{
+
+				return iterator_ == other.iterator_;
+
+			}
+
+			inline bool operator==(const SceneObject::ComponentMap::iterator & other) const{
+
+				return iterator_ == other;
+
+			}
+
+			inline bool operator!=(const ComponentIterator & other) const{
+
+				return iterator_ != other.iterator_;
+
+			}
+
+			inline bool operator!=(const SceneObject::ComponentMap::iterator & other) const{
+
+				return iterator_ != other;
+
+			}
+
+			// Advance
+
+			inline ComponentIterator & operator++() {
+
+				++iterator_;
+
+				return *this;
+
+			}
+
+			inline ComponentIterator operator++ (int)
+			{
+
+				ComponentIterator tmp(*this);
+
+				++iterator_;
+
+				return tmp;
+
+			}
+
+		private:
+
+			SceneObject::ComponentMap::iterator iterator_;
+
+		};
+
+		/// \brief Constant iterator used to iterate through scene object's components.
+
+		/// \tparam TComponent Type of the component this iterator points to.
+		template <typename TComponent>
+		class ComponentConstIterator{
+
+		public:
+
+			ComponentConstIterator(SceneObject::ComponentMap::const_iterator iterator) :
+				iterator_(iterator){};
+
+			//Dereferencing
+
+			const TComponent & operator*() const{
+
+				return *static_cast<const TComponent *>((*iterator_).second);
+
+			}
+
+			const TComponent * operator->() const{
+
+				return static_cast<const TComponent *>((*iterator_).second);
+
+			}
+
+			//Equality
+
+			inline bool operator==(const ComponentConstIterator & other) const{
+
+				return iterator_ == other.iterator_;
+
+			}
+
+			inline bool operator==(const SceneObject::ComponentMap::const_iterator & other) const{
+
+				return iterator_ == other;
+
+			}
+
+			inline bool operator!=(const ComponentConstIterator & other) const{
+
+				return iterator_ != other.iterator_;
+
+			}
+
+			inline bool operator!=(const SceneObject::ComponentMap::const_iterator & other) const{
+
+				return iterator_ != other;
+
+			}
+
+			//Forward
+
+			inline ComponentConstIterator & operator++() {
+
+				++iterator_;
+
+				return *this;
+
+			}
+
+			inline ComponentConstIterator operator++ (int)
+			{
+
+				ComponentIterator tmp(*this);
+
+				++iterator_;
+
+				return tmp;
+
+			}
+
+		private:
+
+			SceneObject::ComponentMap::const_iterator iterator_;
+
+		};
+
+		/// \brief Create an unnamed scene object.
+		SceneObject() :
+			name_(L""){}
+
+		/// \brief Create a named scene object.
+
+		/// \param name The name of this instance.
+		SceneObject(wstring name) :
+			name_(name){}
+
+		/// \brief Add a new component to the instance.
+
+		/// The component to add is created inside the method as its lifecycle is entirely managed by its owner.
+		/// \tparam TComponent Type of the component to add. It must derive from Component.
+		/// \tparam TArgs Type of the arguments that will be passed to the component during its creation.
+		/// \param args Arguments that will be passed to the component during its creation.
+		/// \return Returns an iterator pointing to the new component.
+		template<typename TComponent, typename... TArgs>
+		inline ComponentIterator<TComponent> AddComponent(TArgs... args){
+
+			//Ensures that TComponent is derived from Component at compile time
+			static_assert(typename std::is_base_of<Component, TComponent>::value);
+
+			auto component = std::make_shared(new TComponent(args...));
+
+			///Set the owner of the component
+			component->SetOwner(*this);
+
+			return ComponentIterator<TComponent>(components_.insert(ComponentMap::value_type(typeid(TComponent).hash_code(),
+																							 component)));
+
+		}
+
+		/// \brief Add a new component to the instance.
+
+		/// The component to add is created inside the method as its lifecycle is entirely managed by its owner.
+		/// \tparam TComponent Type of the component to add. It must derive from Component.
+		/// \return Returns an iterator pointing to the new component.
+		template<typename TComponent>
+		inline ComponentIterator<TComponent> AddComponent(){
+
+			//Ensures that TComponent is derived from Component at compile time
+			static_assert(typename std::is_base_of<Component, TComponent>::value);
+
+			auto component = std::make_shared(new TComponent());
+
+			///Set the owner of the component
+			component->SetOwner(*this);
+
+			return ComponentIterator<TComponent>(components_.insert(ComponentMap::value_type(typeid(TComponent).hash_code(),
+																							 component)));
+
+		}
+
+		/// /brief Remove the component pointed by the iterator.
+
+		/// The component is destroyed and its destructor gets called accordingly.
+		/// The specified iterator is invalidated.
+		/// \tparam TComponent Type of the component to remove. It must derive from Component. 
+		/// \param iterator Iterator pointing to the component to be removed.
+		template<typename TComponent>
+		void RemoveComponent(ComponentIterator<TComponent> & iterator){
+
+			//Ensures that TComponent is derived from Component at compile time
+			static_assert(typename std::is_base_of<Component, TComponent>::value);
+
+			for (auto it = components_.find(typeid(TComponent).hash_code()); it != components_.end();){
+
+				if (it == iterator){
+
+					components_.erase(it++);
+
+					iterator = components_.end();
+
+					return;
+
+				}else{
+
+					++it;
+
+				}
 
 			}
 
 		}
+
+		/// \brief Remove all the components deriving from TComponent.
+
+		/// The removed components are destroyed and their destructors get called accordingly.
+		/// \tparam TComponent Type of the components to remove. It must derive from Component.
+		template<typename TComponent>
+		inline void RemoveComponents(){
+
+			//Ensures that TComponent is derived from Component at compile time
+			static_assert(typename std::is_base_of<Component, TComponent>::value);
+
+			components_.erase(typeid(TComponent).hash_code());
+
+		}
+
+		/// \brief Get all the components deriving from TComponent.
+
+		/// \tparam TComponent Type of the components to get. It must derive from Component.
+		/// \return Returns a range containing all the components that derive from TComponent.
+		template<typename TComponent>
+		inline Range<TComponent, ComponentIterator<TComponent>> GetComponents(){
+
+			auto range = components_.equal_range(typeid(TComponent).hash_code());
+
+			return Range<TComponent, ComponentIterator<TComponent>>(ComponentIterator<TComponent>(range.first),
+																	ComponentIterator<TComponent>(range.second));
+
+		}
+
+		/// \brief Get all the components deriving from TComponent.
+
+		/// \tparam TComponent Type of the components to get. It must derive from Component.
+		/// \return Returns a range containing all the components that derive from TComponent.
+		template<typename TComponent>
+		inline Range<TComponent, ComponentConstIterator<TComponent>> GetComponents() const{
+
+			auto range = components_.equal_range(typeid(TComponent).hash_code());
+
+			return Range<TComponent, ComponentConstIterator<TComponent>>(ComponentConstIterator<TComponent>(range.first),
+				ComponentConstIterator<TComponent>(range.second));
+
+		}
+
+		/// \brief Get the first component deriving from TComponent.
+
+		/// \tparam TComponent Type of the component to get. It must derive from Component.
+		/// \return Returns an iterator pointing to the first occurence found if any. Returns an iterator pointing to an element past the end otherwise.
+		template<typename TComponent>
+		inline ComponentIterator<TComponent> GetComponent(){
+
+			return ComponentIterator<TComponent>(components_.find(typeid(TComponent).hash_code()));
+
+		}
+
+		/// \brief Get the first component deriving from TComponent.
+
+		/// \tparam TComponent Type of the component to get. It must derive from Component.
+		/// \return Returns a constant iterator pointing to the first occurence found if any. Returns an iterator pointing to an element past the end otherwise.
+		template<typename TComponent>
+		inline ComponentConstIterator<TComponent> GetComponent() const{
+
+			return ComponentConstIterator<TComponent>(components_.find(typeid(TComponent).hash_code()));
+
+		}
+
+		/// \brief Get an iterator pointing to a component past the end.
+
+		/// \return Return an iterator pointing to a component past the end.
+		template<typename TComponent>
+		inline ComponentIterator<TComponent> GetEnd(){
+
+			return ComponentIterator<TComponent>(components_.end());
+
+		}
+
+		/// \brief Get a constant iterator pointing to a component past the end.
+
+		/// \return Return a constant iterator pointing to a component past the end.
+		template<typename TComponent>
+		inline ComponentConstIterator<TComponent> GetEnd() const{
+
+			return ComponentConstIterator<TComponent>(components_.end());
+
+		}
+
+		/// \brief Get the scene object's name.
+
+		/// \return Returns the scene object's name.
+		inline const wstring & GetName() const{
+
+			return name_;
+
+		}
+
+		/// \brief Updates the components of this scene object.
+
+		/// \param time The application time
+		inline void Update(const Timer::Time & time){
+
+			for (auto & it : components_){
+
+				it.second->Update(time);
+
+			}
+
+		}
+
+	private:
+
+		ComponentMap components_;
+
+		wstring name_;
+
+	};
 	
-	}
-
-	///Remove all the components whose type is TComponents
-	template<class TComponent>
-	inline void RemoveComponents(){
-
-		components_.erase(typeid(TComponent).hash_code());
-
-	}
-
-	///Return the range of all components of type TComponent
-	template<class TComponent>
-	inline Range<TComponent, ComponentIterator<TComponent>> GetComponents(){
-
-		auto range = components_.equal_range(typeid(TComponent).hash_code());
-
-		return Range<TComponent, ComponentIterator<TComponent>>(ComponentIterator<TComponent>(range.first),
-																ComponentIterator<TComponent>(range.second));
-
-	}
-
-	///Return the range of all components of type TComponent
-	template<class TComponent>
-	inline Range<TComponent, ComponentConstIterator<TComponent>> GetComponents() const{
-
-		auto range = components_.equal_range(typeid(TComponent).hash_code());
-
-		return Range<TComponent, ComponentConstIterator<TComponent>>(ComponentConstIterator<TComponent>(range.first),
-																	 ComponentConstIterator<TComponent>(range.second));
-
-	}
-
-	///Return an iterator pointing on the first occurence of a component of type TComponent. Return a pointer to an element past the end if no component is found.
-	template<class TComponent>
-	inline ComponentIterator<TComponent> GetComponent(){
-
-		return ComponentIterator<TComponent>(components_.find(typeid(TComponent).hash_code()));
-
-	}
-
-	///Return an iterator pointing on the first occurence of a component of type TComponent. Return a pointer to an element past the end if no component is found.
-	template<class TComponent>
-	inline ComponentConstIterator<TComponent> GetComponent() const{
-
-		return ComponentConstIterator<TComponent>(components_.find(typeid(TComponent).hash_code()));
-
-	}
-	
-	///Points to an element past the last component stored
-	template<class TComponent>
-	inline ComponentIterator<TComponent> GetEnd(){
-
-		return ComponentIterator<TComponent>(components_.end());
-
-	}
-
-	///Points to an element past the last component stored
-	template<class TComponent>
-	inline ComponentConstIterator<TComponent> GetEnd() const{
-
-		return ComponentConstIterator<TComponent>(components_.end());
-
-	}
-	
-	///Return the name of the object
-	inline const wstring & GetName() const{
-
-		return name_;
-
-	}
-
-private:
-
-	ComponentMap components_;
-
-	wstring name_;
-
-};
-
-///Iterates through components
-template <class TComponent>
-class ComponentIterator{
-
-public:
-
-	ComponentIterator(SceneObject::ComponentMap::iterator iterator) :
-		iterator_(iterator){};
-
-	///Dereferencing
-	TComponent & operator*(){
-
-		return *static_cast<TComponent *>((*iterator_).second);
-
-	}
-
-	TComponent * operator->(){
-
-		return static_cast<TComponent *>((*iterator_).second);
-
-	}
-	
-	//Equality
-	inline bool operator==(const ComponentIterator & other) const{
-
-		return iterator_ == other.iterator_;
-
-	}
-
-	inline bool operator!=(const ComponentIterator & other) const{
-
-		return iterator_ != other.iterator_;
-
-	}
-
-	//Forward
-	inline ComponentIterator & operator++() {
-		
-		++iterator_;
-
-		return *this; 
-	
-	}
-
-	inline ComponentIterator operator++ (int)
-	{
-
-		ComponentIterator tmp(*this);
-
-		++iterator_;
-
-		return tmp;
-
-	}
-
-private:
-
-	SceneObject::ComponentMap::iterator iterator_;
-
-};
-
-template <class TComponent>
-class ComponentConstIterator{
-
-public:
-
-	ComponentConstIterator(SceneObject::ComponentMap::iterator iterator) :
-		iterator_(iterator){};
-
-	///Dereferencing
-	const TComponent & operator*() const{
-
-		return *static_cast<const TComponent *>((*iterator_).second);
-
-	}
-
-	const TComponent * operator->() const{
-
-		return static_cast<const TComponent *>((*iterator_).second);
-
-	}
-
-	//Equality
-	inline bool operator==(const ComponentConstIterator & other) const{
-
-		return iterator_ == other.iterator_;
-
-	}
-
-	inline bool operator!=(const ComponentConstIterator & other) const{
-
-		return iterator_ != other.iterator_;
-
-	}
-
-	//Forward
-	inline ComponentConstIterator & operator++() {
-
-		++iterator_;
-
-		return *this;
-
-	}
-
-	inline ComponentConstIterator operator++ (int)
-	{
-
-		ComponentIterator tmp(*this);
-
-		++iterator_;
-
-		return tmp;
-
-	}
-
-private:
-
-	SceneObject::ComponentMap::iterator iterator_;
-
-};
-
-///A scene object's component
-class Component{
-
-	friend class SceneObject;
-
-public:
-
-	virtual ~Component(){}
-
-	///Get the owner of this component
-	inline SceneObject & GetOwner(){
-
-		return *scene_object_;
-
-	}
-
-	///Get the owner of this component
-	inline const SceneObject & GetOwner() const{
-
-		return *scene_object_;
-
-	}
-
-private:
-
-	///Set the owner of this component
-	inline void SetOwner(SceneObject & scene_object){
-
-		scene_object_ = &scene_object;
-
-	}
-
-	///Owner of the component
-	SceneObject * scene_object_;
-
-};
-
+}

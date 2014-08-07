@@ -1,8 +1,47 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="include">
+    <Filter Include="old">
+      <UniqueIdentifier>{9cd26542-c182-4637-b309-2a36fd32f5cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\include">
       <UniqueIdentifier>{98dd0702-966f-4eea-a935-e68b99ed9833}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\hid">
+      <UniqueIdentifier>{954b6f8a-9569-425a-9872-7b013d2e6dbf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\hid\include">
+      <UniqueIdentifier>{1ab50030-fa39-4d49-8b49-acecf06682be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\hid\src">
+      <UniqueIdentifier>{b8800f1d-6143-4925-9f1b-8dd575ae88a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\graphics">
+      <UniqueIdentifier>{0bf4e46e-31d3-4288-9240-c54e9169bafb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\graphics\include">
+      <UniqueIdentifier>{047270a7-5036-4670-9fc3-d10a88206d41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\graphics\src">
+      <UniqueIdentifier>{691a7c0f-3517-408a-8caf-1af0be77b31c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\externals">
+      <UniqueIdentifier>{99ae43cf-bf5c-4392-ad07-48ef368c79af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\externals\stack walker">
+      <UniqueIdentifier>{d74d2263-5c62-42c1-a810-ea790e43b641}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\application">
+      <UniqueIdentifier>{20d9b320-055a-46b1-84e8-749273044029}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\application\include">
+      <UniqueIdentifier>{25907963-76bd-452f-86cf-8ad5cf978164}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="old\application\src">
+      <UniqueIdentifier>{f0cfef17-1601-4e25-9624-89e9403b4080}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{8d6e244c-ba3e-4532-939b-79349da04ec3}</UniqueIdentifier>
     </Filter>
     <Filter Include="src">
       <UniqueIdentifier>{7df46c39-01bb-473b-af5a-8883a73bdb9d}</UniqueIdentifier>
@@ -13,88 +52,43 @@
     <Filter Include="pattern\include">
       <UniqueIdentifier>{0396a7bf-5964-4705-9e98-846395e51c49}</UniqueIdentifier>
     </Filter>
-    <Filter Include="pattern\src">
-      <UniqueIdentifier>{4bf81649-b98a-49f0-815c-193246b00101}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="graphics">
-      <UniqueIdentifier>{0bf4e46e-31d3-4288-9240-c54e9169bafb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="graphics\include">
-      <UniqueIdentifier>{047270a7-5036-4670-9fc3-d10a88206d41}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="graphics\src">
-      <UniqueIdentifier>{691a7c0f-3517-408a-8caf-1af0be77b31c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="hid">
-      <UniqueIdentifier>{954b6f8a-9569-425a-9872-7b013d2e6dbf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="hid\include">
-      <UniqueIdentifier>{1ab50030-fa39-4d49-8b49-acecf06682be}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="hid\src">
-      <UniqueIdentifier>{b8800f1d-6143-4925-9f1b-8dd575ae88a8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="externals">
-      <UniqueIdentifier>{99ae43cf-bf5c-4392-ad07-48ef368c79af}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="externals\stack walker">
-      <UniqueIdentifier>{d74d2263-5c62-42c1-a810-ea790e43b641}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="application">
-      <UniqueIdentifier>{20d9b320-055a-46b1-84e8-749273044029}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="application\include">
-      <UniqueIdentifier>{25907963-76bd-452f-86cf-8ad5cf978164}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="application\src">
-      <UniqueIdentifier>{f0cfef17-1601-4e25-9624-89e9403b4080}</UniqueIdentifier>
-    </Filter>
     <Filter Include="scene">
       <UniqueIdentifier>{8d48d195-5273-46e3-8498-70667a83f177}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="exceptions.h">
-      <Filter>include</Filter>
+      <Filter>old\include</Filter>
     </ClInclude>
     <ClInclude Include="win_keyboard_listener.h">
-      <Filter>hid\include</Filter>
+      <Filter>old\hid\include</Filter>
     </ClInclude>
     <ClInclude Include="win_char_listener.h">
-      <Filter>hid\include</Filter>
+      <Filter>old\hid\include</Filter>
     </ClInclude>
     <ClInclude Include="win_mouse_listener.h">
-      <Filter>hid\include</Filter>
+      <Filter>old\hid\include</Filter>
     </ClInclude>
     <ClInclude Include="hid_listener.h">
-      <Filter>hid\include</Filter>
+      <Filter>old\hid\include</Filter>
     </ClInclude>
     <ClInclude Include="observable.h">
       <Filter>pattern\include</Filter>
     </ClInclude>
     <ClInclude Include="StackWalker.h">
-      <Filter>externals\stack walker</Filter>
+      <Filter>old\externals\stack walker</Filter>
     </ClInclude>
     <ClInclude Include="application.h">
-      <Filter>application\include</Filter>
+      <Filter>old\application\include</Filter>
     </ClInclude>
     <ClInclude Include="imessage_listener.h">
-      <Filter>application\include</Filter>
-    </ClInclude>
-    <ClInclude Include="raii.h">
-      <Filter>pattern\include</Filter>
-    </ClInclude>
-    <ClInclude Include="services.h">
-      <Filter>application\include</Filter>
+      <Filter>old\application\include</Filter>
     </ClInclude>
     <ClInclude Include="dx11graphics.h">
-      <Filter>graphics\include</Filter>
-    </ClInclude>
-    <ClInclude Include="timer.h">
-      <Filter>application\include</Filter>
+      <Filter>old\graphics\include</Filter>
     </ClInclude>
     <ClInclude Include="igraphics.h">
-      <Filter>graphics\include</Filter>
+      <Filter>old\graphics\include</Filter>
     </ClInclude>
     <ClInclude Include="scene.h">
       <Filter>scene</Filter>
@@ -102,28 +96,37 @@
     <ClInclude Include="iterator.h">
       <Filter>pattern\include</Filter>
     </ClInclude>
+    <ClInclude Include="time.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="system.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="guard.h">
+      <Filter>pattern\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="win_keyboard_listener.cpp">
-      <Filter>hid\src</Filter>
+      <Filter>old\hid\src</Filter>
     </ClCompile>
     <ClCompile Include="win_char_listener.cpp">
-      <Filter>hid\src</Filter>
+      <Filter>old\hid\src</Filter>
     </ClCompile>
     <ClCompile Include="win_mouse_listener.cpp">
-      <Filter>hid\src</Filter>
+      <Filter>old\hid\src</Filter>
     </ClCompile>
     <ClCompile Include="StackWalker.cpp">
-      <Filter>externals\stack walker</Filter>
+      <Filter>old\externals\stack walker</Filter>
     </ClCompile>
     <ClCompile Include="application.cpp">
-      <Filter>application\src</Filter>
-    </ClCompile>
-    <ClCompile Include="services.cpp">
-      <Filter>application\src</Filter>
+      <Filter>old\application\src</Filter>
     </ClCompile>
     <ClCompile Include="dx11graphics.cpp">
-      <Filter>graphics\src</Filter>
+      <Filter>old\graphics\src</Filter>
+    </ClCompile>
+    <ClCompile Include="system.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

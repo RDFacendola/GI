@@ -22,7 +22,7 @@ public:
 	virtual LRESULT ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
 
 	///Run a "frame" of application logic
-	virtual void Update(HWND window_handle, const APPLICATION_TIME & time);
+	virtual void Update(HWND window_handle, const Timer::Time & time);
 
 private:
 

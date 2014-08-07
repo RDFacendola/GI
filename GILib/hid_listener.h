@@ -62,7 +62,7 @@ public:
 	}
 
 	///Receive a windows message
-	__forceinline LRESULT ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const APPLICATION_TIME & time){
+	__forceinline LRESULT ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const Timer::Time & time){
 
 		if (isActive()){
 
@@ -84,7 +84,7 @@ protected:
 	}
 
 	/// Process an incoming message
-	virtual LRESULT ProcessMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const APPLICATION_TIME & time) = 0;
+	virtual LRESULT ProcessMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const Timer::Time & time) = 0;
 
 private:
 

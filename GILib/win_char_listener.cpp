@@ -10,7 +10,7 @@ WinCharListener::WinCharListener() : HIDListener(){
 
 }
 
-LRESULT WinCharListener::ProcessMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const APPLICATION_TIME & time){
+LRESULT WinCharListener::ProcessMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const Timer::Time & time){
 
 	if (message_id == WM_CHAR){
 
@@ -20,7 +20,7 @@ LRESULT WinCharListener::ProcessMessage(HWND window_handle, unsigned int message
 
 		HID_CHAR_EVENT char_event;
 
-		char_event.time = time.totalSeconds;
+		char_event.time = time.GetTotalSeconds();
 		char_event.character = (char32_t)wparameter;
 		char_event.multiplicity = lparameter & kMultiplicityMask;
 

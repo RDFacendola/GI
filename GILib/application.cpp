@@ -44,11 +44,7 @@ void Application::Run(){
 	MSG message;
 	
 	Timer timer;
-	float time;
-	APPLICATION_TIME application_time;
 
-	application_time.totalSeconds = 0;
-			
 	//Loops while there are windows
 	while (GetWindows().size() > 0){
 
@@ -60,16 +56,10 @@ void Application::Run(){
 
 		}
 
-		//Update the application time
-		time = timer.GetTime();
-
-		application_time.deltaSeconds = time - application_time.totalSeconds;
-		application_time.totalSeconds = time;
-
 		//Update every window
 		for (auto & window : GetWindows()){
 
-			(window.second)->Update(application_time);
+			(window.second)->Update(timer.GetTime());
 
 		}
 
@@ -143,7 +133,7 @@ LRESULT Window::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARA
 }
 
 ///Run a "frame" of application logic
-void Window::Update(const APPLICATION_TIME & time){
+void Window::Update(const Timer::Time & time){
 
 	logic_.Update(window_handle_, time);
 

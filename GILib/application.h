@@ -61,7 +61,7 @@ public:
 	virtual LRESULT ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter) = 0;
 
 	///Run a "frame" of application logic
-	virtual void Update(HWND window_handle, const APPLICATION_TIME & time) = 0;
+	virtual void Update(HWND window_handle, const Timer::Time & time) = 0;
 
 };
 
@@ -85,7 +85,7 @@ public:
 	LRESULT ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
 
 	///Run a "frame" of application logic
-	void Update(const APPLICATION_TIME & time);
+	void Update(const Timer::Time & time);
 
 	///Get the window handle
 	HWND GetWindowHandle(){

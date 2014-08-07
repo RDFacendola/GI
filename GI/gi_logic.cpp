@@ -1,5 +1,7 @@
 #include "gi_logic.h"
 
+#include <string>
+
 #include "exceptions.h"
 #include "raii.h"
 #include "dx11graphics.h"
@@ -52,9 +54,15 @@ void GILogic::Destroy(){
 
 }
 
-void GILogic::Update(HWND window_handle, const APPLICATION_TIME & time){
+void GILogic::Update(HWND window_handle, const Timer::Time & time){
 
 	//Next frame
+
+	std::wstringstream builder;
+
+	builder << std::to_wstring(time.GetTotalSeconds()) << L" ; " << std::to_wstring(time.GetDeltaSeconds());
+
+	SetWindowText(window_handle, builder.str().c_str());
 
 	graphics_->NextFrame();
 	

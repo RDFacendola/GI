@@ -1,12 +1,43 @@
-#include "services.h"
+#include "system.h"
 
 #include <Windows.h>
 
 #include "exceptions.h"
 
-const int kUnitLabelLength = 3;
+#if defined(_WIN32) || defined(_WIN64)
 
-wstring Services::GetApplicationPath(){
+#define GI_LIB_WINDOWS
+
+#endif
+
+#ifdef GI_LIB_WINDOWS
+
+const int kUnitLabelLength = 3;
+const wchar_t * kExtensionSeparator = L".";
+const wchar_t * kPathSeparator = L"\\";
+
+#endif
+
+using namespace gi_lib;
+
+OperatingSystem System::GetOperatingSystem(){
+
+#ifdef GI_LIB_WINDOWS
+
+	return OperatingSystem::WINDOWS;
+
+#else
+
+	//Unsupported OS
+	static_assert(false);
+
+#endif 
+
+}
+
+wstring System::GetApplicationPath(){
+
+#ifdef GI_LIB_WINDOWS
 
 	wchar_t path_buffer[MAX_PATH + 1];
 
@@ -14,20 +45,29 @@ wstring Services::GetApplicationPath(){
 
 	return wstring(path_buffer);
 
+#else
+
+	//Unsupported OS
+	static_assert(false);
+
+#endif
+
 }
 
-wstring Services::GetApplicationName(bool extension){
+wstring System::GetApplicationName(bool extension){
 
 	auto  path = GetApplicationPath();
 
-	return path.substr(static_cast<unsigned int>(path.find_last_of(L".")),		//Extension separator
-						static_cast<unsigned int>(path.find_last_of(L"\\")));	//Path separator
+	return path.substr(static_cast<unsigned int>(path.find_last_of(kExtensionSeparator)),
+					   static_cast<unsigned int>(path.find_last_of(kPathSeparator)));
 
 }
 
-CPU_PROFILE Services::GetCPUProfile(){
+CpuProfile System::GetCPUProfile(){
 
-	CPU_PROFILE cpu_profile;
+#ifdef GI_LIB_WINDOWS
+
+	CpuProfile cpu_profile;
 
 	LARGE_INTEGER frequency;
 	SYSTEM_INFO system_info;
@@ -45,11 +85,20 @@ CPU_PROFILE Services::GetCPUProfile(){
 
 	return cpu_profile;
 
+#else
+
+	//Unsupported OS
+	static_assert(false);
+
+#endif
+
 }
 
-MEMORY_PROFILE Services::GetMemoryProfile(){
+MemoryProfile System::GetMemoryProfile(){
 
-	MEMORY_PROFILE memory_profile;
+#ifdef GI_LIB_WINDOWS
+
+	MemoryProfile memory_profile;
 
 	MEMORYSTATUSEX memory_status;
 
@@ -66,31 +115,40 @@ MEMORY_PROFILE Services::GetMemoryProfile(){
 
 	return memory_profile;
 
+#else
+
+	//Unsupported OS
+	static_assert(false);
+
+#endif
+
 }
 
-STORAGE_PROFILE Services::GetStorageProfile(){
+StorageProfile System::GetStorageProfile(){
 
-	STORAGE_PROFILE storage_profile;
+#ifdef GI_LIB_WINDOWS
+
+	StorageProfile storage_profile;
 
 	unsigned long drive_mask = GetLogicalDrives();
 	wchar_t unit_letter = L'A';
 
 	ULARGE_INTEGER size, available_space;
-	DRIVE_PROFILE drive;
+	DriveProfile drive_profile;
 
 	while (drive_mask != 0){
 
-		drive.label = wstring(1, unit_letter).append(L":\\");
+		drive_profile.unit_letter = wstring(1, unit_letter).append(L":\\");
 
 		if ((drive_mask & 1) &&
-			GetDriveType(drive.label.c_str()) == DRIVE_FIXED){
+			GetDriveType(drive_profile.unit_letter.c_str()) == DRIVE_FIXED){
 
-			GetDiskFreeSpaceEx(drive.label.c_str(), NULL, &size, &available_space);
+			GetDiskFreeSpaceEx(drive_profile.unit_letter.c_str(), NULL, &size, &available_space);
 
-			drive.size = size.QuadPart;
-			drive.available_space = available_space.QuadPart;
+			drive_profile.size = size.QuadPart;
+			drive_profile.available_space = available_space.QuadPart;
 
-			storage_profile.fixed_drives.push_back(drive);
+			storage_profile.fixed_drives.push_back(drive_profile);
 
 		}
 
@@ -101,11 +159,20 @@ STORAGE_PROFILE Services::GetStorageProfile(){
 
 	return storage_profile;
 
+#else
+
+	//Unsupported OS
+	static_assert(false);
+
+#endif
+
 }
 
-DESKTOP_PROFILE Services::GetDesktopProfile(){
+DesktopProfile System::GetDesktopProfile(){
 
-	DESKTOP_PROFILE desktop_profile;
+#ifdef GI_LIB_WINDOWS
+
+	DesktopProfile desktop_profile;
 
 	RECT desktop_rectangle;
 	HWND desktop_handle = GetDesktopWindow();
@@ -120,5 +187,12 @@ DESKTOP_PROFILE Services::GetDesktopProfile(){
 	desktop_profile.height = desktop_rectangle.bottom;
 
 	return desktop_profile;
+
+#else
+
+	//Unsupported OS
+	static_assert(false);
+
+#endif
 
 }

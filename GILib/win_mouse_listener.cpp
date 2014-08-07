@@ -26,7 +26,7 @@ WinMouseListener::WinMouseListener() : HIDListener(){
 
 }
 
-LRESULT WinMouseListener::ProcessMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const APPLICATION_TIME & time){
+LRESULT WinMouseListener::ProcessMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const Timer::Time & time){
 
 	if (message_id == WM_INPUT){
 
@@ -54,7 +54,7 @@ LRESULT WinMouseListener::ProcessMessage(HWND window_handle, unsigned int messag
 
 			ZeroMemory(&mouse_event, sizeof(mouse_event));
 
-			mouse_event.time = time.totalSeconds;
+			mouse_event.time = time.GetTotalSeconds();
 			mouse_event.movement_x = raw_mouse.lLastX - last_x;
 			mouse_event.movement_y = raw_mouse.lLastY - last_y;
 

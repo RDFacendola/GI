@@ -1,6 +1,6 @@
 #pragma once
 
-#include "timer.h"
+#include "time.h"
 #include "hid_listener.h"
 
 /// Describes a mouse event
@@ -33,6 +33,6 @@ public:
 protected:
 
 	/// Process an incoming message
-	virtual LRESULT ProcessMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const APPLICATION_TIME & time);
+	virtual LRESULT ProcessMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const Timer::Time & time);
 
 };

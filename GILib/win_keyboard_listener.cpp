@@ -25,7 +25,7 @@ WinKeyboardListener::WinKeyboardListener() : HIDListener(){
 
 }
 
-LRESULT WinKeyboardListener::ProcessMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const APPLICATION_TIME & time){
+LRESULT WinKeyboardListener::ProcessMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter, const Timer::Time & time){
 
 	if (message_id == WM_INPUT){
 
@@ -48,7 +48,7 @@ LRESULT WinKeyboardListener::ProcessMessage(HWND window_handle, unsigned int mes
 			ZeroMemory(&keyboard_event, sizeof(keyboard_event));
 
 			// Fill the event
-			keyboard_event.time = time.totalSeconds;
+			keyboard_event.time = time.GetTotalSeconds();
 			keyboard_event.scan_code = raw_keyboard.MakeCode;
 
 			if (raw_keyboard.Flags & RI_KEY_BREAK){

@@ -1,41 +1,65 @@
+/// \file iterator.h
+/// \brief Defines utility classes to use with iterators.
+///
+/// \author Raffaele D. Facendola
+
 #pragma once
 
-///Two iterators packed together
-template <class TValue, class TIterator>
-class Range{
+namespace gi_lib{
 
-public:
+	/// \brief Packs two iterators together to iterate through a subset of a container.
+	/// \tparam TValue Type of the objects drescribed by the range.
+	/// \tparam TIterator Type of the iterator used to point to the objects.
+	template <typename TValue, typename TIterator>
+	class Range{
 
-	///STL typedef for containers
-	typedef TIterator iterator;
-	typedef ptrdiff_t difference_type;
-	typedef size_t size_type;
-	typedef TValue value_type;
-	typedef TValue * pointer;
-	typedef TValue & reference;
+	public:
 
-	Range(iterator begin_it, iterator end_it):
-		begin_(begin_it),
-		end_(end_it){}
+		/// \brief Iterator type.
+		typedef TIterator iterator;
+		typedef ptrdiff_t difference_type;
+		typedef size_t size_type;
+		typedef TValue value_type;
+		typedef TValue * pointer;
+		typedef TValue & reference;
 
-	///Begin of the range
-	iterator begin(){
-		
-		return begin_;
+		/// \brief Constructor.
+		/// \param begin_it Iterator which points to the first element of the range.
+		/// \param end_it Iterator which points to the element past the end of the range.
+		Range(iterator begin_it, iterator end_it) :
+			begin_(begin_it),
+			end_(end_it){}
 
-	}
+		/// \brief Begin of the range.
+		/// \return Returns an iterator pointing to the first element of the range.
+		inline iterator begin(){
 
-	///End of the range
-	iterator end() { 
-		
-		return end_;
-	
-	}
+			return begin_;
 
-private:
+		}
 
-	iterator begin_;
+		/// \brief One element past to the end of the range.
+		/// \return Returns an iterator pointing to the element past the end of the range.
+		inline iterator end() {
 
-	iterator end_;
+			return end_;
 
-};
+		}
+
+		/// \brief Tells whether the range is empty or not.
+		/// \return Returns true if the range is empty, false otherwise
+		inline bool empty(){
+
+			return begin_ == end_;
+
+		}
+
+	private:
+
+		iterator begin_;
+
+		iterator end_;
+
+	};
+
+}
