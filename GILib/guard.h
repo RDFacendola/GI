@@ -39,7 +39,7 @@ namespace gi_lib{
 
 			if (!dismissed_){
 
-				///Call the functor if not dismissed
+				//Call the functor if not dismissed
 				functor_();
 
 			}

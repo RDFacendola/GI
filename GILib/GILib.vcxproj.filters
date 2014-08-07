@@ -4,9 +4,6 @@
     <Filter Include="old">
       <UniqueIdentifier>{9cd26542-c182-4637-b309-2a36fd32f5cb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="old\include">
-      <UniqueIdentifier>{98dd0702-966f-4eea-a935-e68b99ed9833}</UniqueIdentifier>
-    </Filter>
     <Filter Include="old\hid">
       <UniqueIdentifier>{954b6f8a-9569-425a-9872-7b013d2e6dbf}</UniqueIdentifier>
     </Filter>
@@ -24,12 +21,6 @@
     </Filter>
     <Filter Include="old\graphics\src">
       <UniqueIdentifier>{691a7c0f-3517-408a-8caf-1af0be77b31c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="old\externals">
-      <UniqueIdentifier>{99ae43cf-bf5c-4392-ad07-48ef368c79af}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="old\externals\stack walker">
-      <UniqueIdentifier>{d74d2263-5c62-42c1-a810-ea790e43b641}</UniqueIdentifier>
     </Filter>
     <Filter Include="old\application">
       <UniqueIdentifier>{20d9b320-055a-46b1-84e8-749273044029}</UniqueIdentifier>
@@ -55,11 +46,14 @@
     <Filter Include="scene">
       <UniqueIdentifier>{8d48d195-5273-46e3-8498-70667a83f177}</UniqueIdentifier>
     </Filter>
+    <Filter Include="externals">
+      <UniqueIdentifier>{99ae43cf-bf5c-4392-ad07-48ef368c79af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="externals\stack walker">
+      <UniqueIdentifier>{d74d2263-5c62-42c1-a810-ea790e43b641}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="exceptions.h">
-      <Filter>old\include</Filter>
-    </ClInclude>
     <ClInclude Include="win_keyboard_listener.h">
       <Filter>old\hid\include</Filter>
     </ClInclude>
@@ -76,7 +70,7 @@
       <Filter>pattern\include</Filter>
     </ClInclude>
     <ClInclude Include="StackWalker.h">
-      <Filter>old\externals\stack walker</Filter>
+      <Filter>externals\stack walker</Filter>
     </ClInclude>
     <ClInclude Include="application.h">
       <Filter>old\application\include</Filter>
@@ -105,6 +99,9 @@
     <ClInclude Include="guard.h">
       <Filter>pattern\include</Filter>
     </ClInclude>
+    <ClInclude Include="exceptions.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="win_keyboard_listener.cpp">
@@ -117,7 +114,7 @@
       <Filter>old\hid\src</Filter>
     </ClCompile>
     <ClCompile Include="StackWalker.cpp">
-      <Filter>old\externals\stack walker</Filter>
+      <Filter>externals\stack walker</Filter>
     </ClCompile>
     <ClCompile Include="application.cpp">
       <Filter>old\application\src</Filter>

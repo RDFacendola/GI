@@ -1,3 +1,8 @@
+/// \file exceptions.h
+/// \brief Defines classes and macros used for exception handling.
+///
+/// \author Raffaele D. Facendola
+
 #pragma once
 
 #include <string>
@@ -10,7 +15,7 @@
 using ::std::wstring;
 using ::std::stringstream;
 
-///Used to automatically throw whenever a HRESULT function fails
+/// If expr fails throws a runtime exception with detailed informations
 #define THROW_ON_FAIL(expr) do \
 							{ \
 								HRESULT hr = expr; \
@@ -24,7 +29,7 @@ using ::std::stringstream;
 								} \
 							}while (0)
 
-///Used to automatically return whenever a HRESULT function fails
+/// If expr fails returns from the routine with the fail code
 #define RETURN_ON_FAIL(expr) do \
 							 { \
 								HRESULT hr = expr; \
@@ -33,91 +38,100 @@ using ::std::stringstream;
 								} \
 							 }while (0)
 
-///Custom stack trace. Output to a string
-class StackTrace : public StackWalker{
+namespace gi_lib{
 
-public:
+	/// \brief Manages the stack trace.
+	class StackTrace : public StackWalker{
 
-	StackTrace() : StackWalker(StackWalkOptions::RetrieveNone) {}
+	public:
 
-	///Return the current stack trace
-	wstring GetStackTrace(){
+		/// \brief Default constructor.
+		StackTrace() : StackWalker(StackWalkOptions::RetrieveNone) {}
 
-		//Remove the content of the stack trace
-		stack_trace.str("");
+		/// \brief Get the current stack trace.
+		/// \return Returns the current stack trace as a string.
+		inline wstring GetStackTrace(){
 
-		ShowCallstack();
+			//Remove the content of the stack trace
+			stack_trace.str("");
 
-		auto trace = stack_trace.str();
+			ShowCallstack();
 
-		return wstring(trace.begin(), trace.end());
+			auto trace = stack_trace.str();
 
-	}
-
-protected:
-
-	virtual void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &entry){
-
-		StackWalker::OnCallstackEntry(eType, entry);
-
-		if (entry.offset == 0){
-
-			return;	//Invalid entry
+			return wstring(trace.begin(), trace.end());
 
 		}
 
-		stack_trace << entry.moduleName
-			<< " - "
-			<< entry.undFullName
-			<< " ("
-			<< std::to_string(entry.lineNumber)
-			<< ")"
-			<< std::endl;
+	protected:
 
-	}
+		/// \brief Callback used to log each stack entry.
+		/// \param eType Type of the entry.
+		/// \param entry Details about the entry.
+		virtual void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &entry){
 
-private:
+			StackWalker::OnCallstackEntry(eType, entry);
 
-	stringstream stack_trace;
+			if (entry.offset == 0){
 
-};
+				return;	//Invalid entry
 
-///Runtime exception with stack trace
-class RuntimeException{
+			}
 
-public:
+			stack_trace << entry.moduleName
+						<< " - "
+						<< entry.undFullName
+						<< " ("
+						<< std::to_string(entry.lineNumber)
+						<< ")"
+						<< std::endl;
 
-	/// Creates a new exception
-	/** \param error_message The error message associated to the exception
-	\param where Where the exception has been thrown from */
-	RuntimeException(const wstring & error_message){
-		
-		StackTrace e;
+		}
 
-		stack_trace_ = e.GetStackTrace();
-		error_message_ = error_message;
+	private:
 
-	}
+		stringstream stack_trace;
 
-	/// Get the error message
-	const wstring & GetErrorMessage() const{
+	};
 
-		return error_message_;
+	/// \brief Runtime exception
+	class RuntimeException{
 
-	}
+	public:
 
-	/// Get the stack trace
-	const wstring & GetStackTrace() const{
+		/// \brief Creates a new exception.
+		/// \param error_message The error message associated to the exception
+		RuntimeException(const wstring & error_message){
 
-		return stack_trace_;
+			StackTrace e;
 
-	}
+			stack_trace_ = e.GetStackTrace();
+			error_message_ = error_message;
 
-private:
+		}
 
-	wstring error_message_;
+		/// \brief Get the error message.
+		/// \return Returns the error message.
+		const wstring & GetErrorMessage() const{
 
-	wstring stack_trace_;
-	
-};
+			return error_message_;
 
+		}
+
+		/// \brief Get the stack trace.
+		/// \return Returns the stack trace.
+		const wstring & GetStackTrace() const{
+
+			return stack_trace_;
+
+		}
+
+	private:
+
+		wstring error_message_;
+
+		wstring stack_trace_;
+
+	};
+
+}
