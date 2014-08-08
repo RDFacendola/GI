@@ -8,14 +8,13 @@ using namespace gi_lib;
 
 OperatingSystem System::GetOperatingSystem(){
 
-#ifdef GI_LIB_WINDOWS
+#ifdef _WIN32
 
 	return OperatingSystem::WINDOWS;
 
 #else
 
-	//Unsupported OS
-	static_assert(false);
+	static_assert(false, "Unsupported OS");
 
 #endif 
 
@@ -23,7 +22,7 @@ OperatingSystem System::GetOperatingSystem(){
 
 CpuProfile System::GetCPUProfile(){
 
-#ifdef GI_LIB_WINDOWS
+#ifdef _WIN32
 
 	CpuProfile cpu_profile;
 
@@ -45,8 +44,7 @@ CpuProfile System::GetCPUProfile(){
 
 #else
 
-	//Unsupported OS
-	static_assert(false);
+	static_assert(false, "Unsupported OS");
 
 #endif
 
@@ -54,7 +52,7 @@ CpuProfile System::GetCPUProfile(){
 
 MemoryProfile System::GetMemoryProfile(){
 
-#ifdef GI_LIB_WINDOWS
+#ifdef _WIN32
 
 	MemoryProfile memory_profile;
 
@@ -75,8 +73,7 @@ MemoryProfile System::GetMemoryProfile(){
 
 #else
 
-	//Unsupported OS
-	static_assert(false);
+	static_assert(false, "Unsupported OS");
 
 #endif
 
@@ -84,7 +81,7 @@ MemoryProfile System::GetMemoryProfile(){
 
 StorageProfile System::GetStorageProfile(){
 
-#ifdef GI_LIB_WINDOWS
+#ifdef _WIN32
 
 	StorageProfile storage_profile;
 
@@ -119,8 +116,7 @@ StorageProfile System::GetStorageProfile(){
 
 #else
 
-	//Unsupported OS
-	static_assert(false);
+	static_assert(false, "Unsupported OS");
 
 #endif
 
@@ -128,7 +124,7 @@ StorageProfile System::GetStorageProfile(){
 
 DesktopProfile System::GetDesktopProfile(){
 
-#ifdef GI_LIB_WINDOWS
+#ifdef _WIN32
 
 	DesktopProfile desktop_profile;
 
@@ -148,8 +144,7 @@ DesktopProfile System::GetDesktopProfile(){
 
 #else
 
-	//Unsupported OS
-	static_assert(false);
+	static_assert(false, "Unsupported OS");
 
 #endif
 

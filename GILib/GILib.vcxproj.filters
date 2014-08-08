@@ -4,15 +4,6 @@
     <Filter Include="old">
       <UniqueIdentifier>{9cd26542-c182-4637-b309-2a36fd32f5cb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="old\hid">
-      <UniqueIdentifier>{954b6f8a-9569-425a-9872-7b013d2e6dbf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="old\hid\include">
-      <UniqueIdentifier>{1ab50030-fa39-4d49-8b49-acecf06682be}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="old\hid\src">
-      <UniqueIdentifier>{b8800f1d-6143-4925-9f1b-8dd575ae88a8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="old\graphics">
       <UniqueIdentifier>{0bf4e46e-31d3-4288-9240-c54e9169bafb}</UniqueIdentifier>
     </Filter>
@@ -21,15 +12,6 @@
     </Filter>
     <Filter Include="old\graphics\src">
       <UniqueIdentifier>{691a7c0f-3517-408a-8caf-1af0be77b31c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="old\application">
-      <UniqueIdentifier>{20d9b320-055a-46b1-84e8-749273044029}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="old\application\include">
-      <UniqueIdentifier>{25907963-76bd-452f-86cf-8ad5cf978164}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="old\application\src">
-      <UniqueIdentifier>{f0cfef17-1601-4e25-9624-89e9403b4080}</UniqueIdentifier>
     </Filter>
     <Filter Include="include">
       <UniqueIdentifier>{8d6e244c-ba3e-4532-939b-79349da04ec3}</UniqueIdentifier>
@@ -51,23 +33,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="win_keyboard_listener.h">
-      <Filter>old\hid\include</Filter>
-    </ClInclude>
-    <ClInclude Include="win_char_listener.h">
-      <Filter>old\hid\include</Filter>
-    </ClInclude>
-    <ClInclude Include="win_mouse_listener.h">
-      <Filter>old\hid\include</Filter>
-    </ClInclude>
-    <ClInclude Include="hid_listener.h">
-      <Filter>old\hid\include</Filter>
-    </ClInclude>
     <ClInclude Include="observable.h">
       <Filter>pattern\include</Filter>
-    </ClInclude>
-    <ClInclude Include="imessage_listener.h">
-      <Filter>old\application\include</Filter>
     </ClInclude>
     <ClInclude Include="dx11graphics.h">
       <Filter>old\graphics\include</Filter>
@@ -93,31 +60,16 @@
     <ClInclude Include="scene.h">
       <Filter>scene\include</Filter>
     </ClInclude>
-    <ClInclude Include="_application.h">
-      <Filter>old\application\include</Filter>
-    </ClInclude>
     <ClInclude Include="application.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="win_keyboard_listener.cpp">
-      <Filter>old\hid\src</Filter>
-    </ClCompile>
-    <ClCompile Include="win_char_listener.cpp">
-      <Filter>old\hid\src</Filter>
-    </ClCompile>
-    <ClCompile Include="win_mouse_listener.cpp">
-      <Filter>old\hid\src</Filter>
-    </ClCompile>
     <ClCompile Include="dx11graphics.cpp">
       <Filter>old\graphics\src</Filter>
     </ClCompile>
     <ClCompile Include="system.cpp">
       <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="_application.cpp">
-      <Filter>old\application\src</Filter>
     </ClCompile>
     <ClCompile Include="application.cpp">
       <Filter>src</Filter>

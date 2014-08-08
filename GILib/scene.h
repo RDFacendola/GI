@@ -257,7 +257,7 @@ namespace gi_lib{
 			//Ensures that TComponent is derived from Component at compile time
 			static_assert(typename std::is_base_of<Component, TComponent>::value);
 
-			auto component = std::make_shared(new TComponent(args...));
+			auto component = std::make_shared<TComponent>(args...);
 
 			///Set the owner of the component
 			component->SetOwner(*this);
@@ -278,7 +278,7 @@ namespace gi_lib{
 			//Ensures that TComponent is derived from Component at compile time
 			static_assert(typename std::is_base_of<Component, TComponent>::value);
 
-			auto component = std::make_shared(new TComponent());
+			auto component = std::make_shared<TComponent>();
 
 			///Set the owner of the component
 			component->SetOwner(*this);

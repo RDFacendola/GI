@@ -20,30 +20,20 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="application.h" />
-    <ClInclude Include="_application.h" />
     <ClInclude Include="iterator.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="igraphics.h" />
     <ClInclude Include="observable.h" />
-    <ClInclude Include="hid_listener.h" />
     <ClInclude Include="dx11graphics.h" />
     <ClInclude Include="exceptions.h" />
-    <ClInclude Include="imessage_listener.h" />
     <ClInclude Include="guard.h" />
-    <ClInclude Include="win_char_listener.h" />
-    <ClInclude Include="win_keyboard_listener.h" />
     <ClInclude Include="system.h" />
     <ClInclude Include="time.h" />
-    <ClInclude Include="win_mouse_listener.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="application.cpp" />
-    <ClCompile Include="_application.cpp" />
     <ClCompile Include="dx11graphics.cpp" />
-    <ClCompile Include="win_char_listener.cpp" />
-    <ClCompile Include="win_keyboard_listener.cpp" />
     <ClCompile Include="system.cpp" />
-    <ClCompile Include="win_mouse_listener.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{21C15D82-5532-4597-B69C-EA2ECFA64DF4}</ProjectGuid>
