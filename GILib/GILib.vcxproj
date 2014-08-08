@@ -28,7 +28,7 @@
     <ClInclude Include="exceptions.h" />
     <ClInclude Include="guard.h" />
     <ClInclude Include="system.h" />
-    <ClInclude Include="time.h" />
+    <ClInclude Include="timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="application.cpp" />

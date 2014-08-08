@@ -76,30 +76,7 @@ wstring Application::GetName(bool extension) const{
 
 }
 
-weak_ptr<Application::Window> Application::CreateWindow(WindowProcedure & procedure){
-
-#ifdef _WIN32
-
-	// Register the window class
-	RegisterWindowClass();
-
-	auto window = std::make_shared<Window>(procedure);
-
-	windows_[window->GetHandle()] = window;
-
-	window->Initialize();
-
-	return window;
-
-#else
-
-	static_assert(false, "Unsupported OS");
-
-#endif
-
-}
-
-void Application::DisposeWindow(Window::Handle & handle){
+void Application::DisposeWindow(const Window::Handle & handle){
 
 	//The shared pointer's destructor will take care of destroying the window correctly
 	auto window = windows_.find(handle);
@@ -112,7 +89,7 @@ void Application::DisposeWindow(Window::Handle & handle){
 	
 }
 
-weak_ptr<Application::Window> Application::GetWindow(const Window::Handle & handle){
+weak_ptr<Window> Application::GetWindow(const Window::Handle & handle){
 
 	auto window = windows_.find(handle);
 
@@ -121,23 +98,6 @@ weak_ptr<Application::Window> Application::GetWindow(const Window::Handle & hand
 		return window->second;
 
 	}else{
-
-		return weak_ptr<Window>();
-
-	}
-
-}
-
-weak_ptr<const Application::Window> Application::GetWindow(const Window::Handle & handle) const{
-
-	auto window = windows_.find(handle);
-
-	if (window != windows_.end()){
-
-		return window->second;
-
-	}
-	else{
 
 		return weak_ptr<Window>();
 
@@ -201,34 +161,35 @@ LRESULT __stdcall Application::ReceiveMessage(HWND window_handle, unsigned int m
 
 void Application::RegisterWindowClass(){
 
-	//If the icon is null, we have not yet registered the class
-	if (window_icon_ == nullptr){
+	auto instance = GetModuleHandle(nullptr);
 
-		auto instance = GetModuleHandle(nullptr);
+	//Extract the first icon found into the executable
+	window_icon_ = ExtractIcon(instance,
+								Application::GetInstance().GetPath().c_str(), 0);
 
-		//Extract the first icon found into the executable
-		window_icon_ = ExtractIcon(instance,
-								   Application::GetInstance().GetPath().c_str(), 0);
+	WNDCLASS window_description;
 
-		shared_ptr<int> gw;
+	ZeroMemory(&window_description, sizeof(WNDCLASS));
 
-		WNDCLASS window_description;
+	window_description.lpszClassName = kWindowClassName;
+	window_description.style = CS_VREDRAW | CS_HREDRAW;
+	window_description.hIcon = window_icon_;
+	window_description.hCursor = LoadCursor(NULL, IDC_ARROW);
+	window_description.hInstance = instance;
+	window_description.lpfnWndProc = Application::ReceiveMessage;
 
-		ZeroMemory(&window_description, sizeof(WNDCLASS));
+	SetLastError(0);
 
-		window_description.lpszClassName = kWindowClassName;
-		window_description.style = CS_VREDRAW | CS_HREDRAW;
-		window_description.hIcon = window_icon_;
-		window_description.hCursor = LoadCursor(NULL, IDC_ARROW);
-		window_description.hInstance = instance;
-		window_description.lpfnWndProc = Application::ReceiveMessage;
+	//Attempt to register the class
+	if (!RegisterClass(&window_description)){
 
-		//Attempt to register the class
-		if (!RegisterClass(&window_description)){
+		wstringstream message;
 
-			throw RuntimeException(L"Unable to register the window class");
+		message << L"Unable to register the window class (Error: "
+				<< std::to_wstring(GetLastError())
+				<< L")";
 
-		}
+		throw RuntimeException(message.str());
 
 	}
 
@@ -240,12 +201,12 @@ void Application::UnregisterWindowClass(){
 
 		DestroyIcon(window_icon_);
 
-		UnregisterClass(kWindowClassName,
-						GetModuleHandle(nullptr));
-
 		window_icon_ = nullptr;
 
 	}
+
+	UnregisterClass(kWindowClassName,
+					GetModuleHandle(nullptr));
 
 }
 
@@ -253,8 +214,7 @@ void Application::UnregisterWindowClass(){
 
 // Application::Window
 
-Application::Window::Window(WindowProcedure & procedure) :
-	procedure_(procedure){
+Window::Window(){
 
 #ifdef _WIN32
 		
@@ -285,7 +245,7 @@ Application::Window::Window(WindowProcedure & procedure) :
 
 }
 
-Application::Window::~Window(){
+Window::~Window(){
 
 #ifdef _WIN32
 
@@ -297,12 +257,9 @@ Application::Window::~Window(){
 
 #endif
 
-	// Destroy the procedure
-	procedure_.Dispose();
-
 }
 
-void Application::Window::SetTitle(const wstring & title){
+void Window::SetTitle(const wstring & title){
 
 #ifdef _WIN32
 
@@ -314,4 +271,20 @@ void Application::Window::SetTitle(const wstring & title){
 
 #endif
 
+}
+
+void Window::Show(bool show){
+
+#ifdef _WIN32
+
+	ShowWindow(handle_, 
+			   show ? SW_SHOW : SW_HIDE);
+
+
+#else
+
+	static_assert(false, "Unsupported OS");
+
+#endif
+	
 }

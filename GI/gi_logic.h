@@ -1,35 +1,34 @@
 #pragma once
 
-#include <d3d11.h>
-
 #include "application.h"
-#include "igraphics.h"
+
+using ::gi_lib::Window;
+using ::gi_lib::Timer;
+
+class Timer;
 
 ///Application's logic
-class GILogic : public IWindowProc{
+class GILogic : public Window{
 
 public:
 
 	GILogic();
 
-	///Initialize the logic
-	virtual void Initialize(Window & window);
+	virtual ~GILogic();
 
-	///Destroy the logic
-	virtual void Destroy();
+	/// \brief Update the window logic.
+	/// \param time The application-coherent time.
+	virtual void Update(const Timer::Time & time);
 
-	///Receive a message from the OS
-	virtual LRESULT ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
+#ifdef _WIN32
 
-	///Run a "frame" of application logic
-	virtual void Update(HWND window_handle, const Timer::Time & time);
+	/// \brief Handle a Windows message.
+	/// \param message_id The message.
+	/// \param wparameter Additional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
+	/// \param lparameterAdditional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
+	/// \return The return value specifies the result of the message processing and depends on the message sent.
+	virtual LRESULT ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
 
-private:
-
-	///API factory
-	IFactory * factory_;
-
-	///Graphic object
-	BaseGraphics * graphics_;
+#endif
 
 };

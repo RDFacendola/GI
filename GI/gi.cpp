@@ -10,17 +10,20 @@
 using ::std::wstring;
 using ::std::wstringstream;
 
+using ::gi_lib::Application;
+using ::gi_lib::RuntimeException;
+
 void CopyToClipboard(const wstring &);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd){
 
-	GILogic gi_logic;
-
 	try{
 
-		Application::AddLogic(hInstance, gi_logic);
+		auto & app = Application::GetInstance();
+		
+		app.CreateWindow<GILogic>();
 
-		Application::Run();
+		app.Join();
 
 	}catch (const RuntimeException & e){
 

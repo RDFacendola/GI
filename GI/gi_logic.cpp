@@ -2,9 +2,11 @@
 
 #include <string>
 
+#include "application.h"
 #include "exceptions.h"
-#include "raii.h"
-#include "dx11graphics.h"
+#include "timer.h"
+
+using namespace ::std;
 
 const unsigned int kWindowWidth = 1280;
 const unsigned int kWindowHeight = 768;
@@ -12,67 +14,40 @@ const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
 GILogic::GILogic(){
 
-	factory_ = nullptr;
-	graphics_ = nullptr;
-	
-}
+	SetTitle(kWindowTitle);
 
-void GILogic::Initialize(Window & window){
-
-	//Setup the window
-	auto window_handle = window.GetWindowHandle();
-
-	SetWindowText(window_handle, kWindowTitle.c_str());
-	
-	ShowWindow(window_handle, SW_SHOWDEFAULT);
-
-	//Initialize DirectX11
-	factory_ = new DX11Factory();
-
-	auto p = factory_->GetProfile();
-
-	graphics_ = factory_->Create(window);
-
-	//graphics_->EnableVSync(false);
+	Show();
 
 }
 
-void GILogic::Destroy(){
+GILogic::~GILogic(){
 
-	//Destroy everything
-	if (graphics_ != nullptr){
+}
 
-		delete graphics_;
+void GILogic::Update(const Timer::Time & time){
 
+	wstringstream message;
+
+	message << std::to_wstring(time.GetTotalSeconds())
+			<< " ; "
+			<< std::to_wstring(time.GetDeltaSeconds());
+
+	SetTitle(message.str());
+
+	Sleep(1);
+
+}
+
+LRESULT GILogic::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
+
+	if (message_id == WM_CLOSE){
+
+		gi_lib::Application::GetInstance()
+							.DisposeWindow(GetHandle());
+		
 	}
-
-	if (factory_ != nullptr){
-
-		delete factory_;
-
-	}
-
-}
-
-void GILogic::Update(HWND window_handle, const Timer::Time & time){
-
-	//Next frame
-
-	std::wstringstream builder;
-
-	builder << std::to_wstring(time.GetTotalSeconds()) << L" ; " << std::to_wstring(time.GetDeltaSeconds());
-
-	SetWindowText(window_handle, builder.str().c_str());
-
-	graphics_->NextFrame();
-	
-}
-
-LRESULT GILogic::ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
-
-	//Manage the message
 
 	//Default behavior
-	return DefWindowProc(window_handle, message_id, wparameter, lparameter);
+	return DefWindowProc(GetHandle(), message_id, wparameter, lparameter);
 
 }

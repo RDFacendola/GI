@@ -16,7 +16,7 @@
 #include <memory>
 #include <functional>
 
-#include "time.h"
+#include "timer.h"
 
 using ::std::wstring;
 using ::std::map;
@@ -32,18 +32,44 @@ using ::std::function;
 #endif
 
 namespace gi_lib{
-	
-	/// \brief Expose methods to intialize, finalize and update a window.
-	/// \remarks Interface.
-	class WindowProcedure{
+
+	/// \brief A window.
+	class Window{
+
+		friend class Application;
 
 	public:
 
-		/// \brief Initialize the window logic.
-		virtual void Initialize() = 0;
+#ifdef _WIN32
 
-		/// \brief Finalize the window logic.
-		virtual void Dispose() = 0;
+		/// \brief Window handle type under Windows.
+		typedef HWND Handle;
+
+#endif
+
+		/// \brief Create a new window.
+		/// \remarks The window is created with default style and dimensions.
+		Window();
+
+		virtual ~Window();
+
+		/// \brief Get the window's handle.
+		/// \return Returns a constant reference to the window's handle.
+		inline const Handle & GetHandle() const{
+
+			return handle_;
+
+		}
+
+		/// \brief Set the window's title.
+		/// \param title The title to show in the title bar.
+		void SetTitle(const wstring & title);
+
+		/// \brief Show or hide the window.
+		/// \param show Shows the window if "true", hides it otherwise.
+		void Show(bool show = true);
+
+	private:
 
 		/// \brief Update the window logic.
 		/// \param time The application-coherent time.
@@ -60,83 +86,14 @@ namespace gi_lib{
 
 #endif
 
-	};
+		Handle handle_;
 
+	};
+	
 	/// \brief The application singleton
 	class Application{
 
 	public:
-
-		/// \brief A window.
-		class Window{
-
-			friend class Application;
-
-		public:
-
-#ifdef _WIN32
-
-			/// \brief Window handle type under Windows.
-			typedef HWND Handle;
-
-#endif
-
-			/// \brief Create a new window.
-			/// \param procedure The procedure which manages the window's logic.
-			/// \remarks The window is created with default style and dimensions.
-			Window(WindowProcedure & procedure);
-
-			~Window();
-
-			/// \brief Get the window's handle.
-			/// \return Returns a constant reference to the window's handle.
-			inline const Handle & GetHandle() const{
-
-				return handle_;
-
-			}
-
-			/// \brief Set the window's title.
-			/// \param title The title to show in the title bar.
-			void SetTitle(const wstring & title);
-
-		private:
-
-			/// \brief Initialize the window logic.
-			inline void Initialize(){
-
-				procedure_.Initialize();
-
-			}
-
-			/// \brief Update the window logic.
-			/// \param time The application-coherent time.
-			inline void Update(const Timer::Time & time){
-
-				procedure_.Update(time);
-
-			}
-
-			WindowProcedure & procedure_;
-
-			Handle handle_;
-
-#ifdef _WIN32
-
-			/// \brief Handle a Windows message.
-			/// \param message_id The message.
-			/// \param wparameter Additional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
-			/// \param lparameterAdditional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
-			/// \return The return value specifies the result of the message processing and depends on the message sent.
-			inline LRESULT ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
-
-				return procedure_.ReceiveMessage(message_id, wparameter, lparameter);
-
-			}
-
-#endif
-
-		};
 
 		/// \brief Default destructor.
 		~Application();
@@ -163,26 +120,62 @@ namespace gi_lib{
 		/// \brief Create a new window.
 
 		/// Create a new window with default style and dimensions.
-		/// The new window instance is initialized as well.
-		/// \param procedure The procedure to bind to the new window.
+		/// \tparam TWindow Type of the window to create. It must derive from Window.
+		/// \tparam TArgs Type of the arguments to pass to the new instance's constructor.
+		/// \param arguments Arguments to pass to the new instance's constructor.
 		/// \return Returns a weak pointer to the new window.
-		weak_ptr<Window> CreateWindow(WindowProcedure & procedure);
+		template<typename TWindow, typename... TArgs>
+		weak_ptr<TWindow> CreateWindow(TArgs&&... arguments){
+
+			//Ensures that TWindow is derived from Window at compile time
+			static_assert(typename std::is_base_of<Window, TWindow>::value, "TWindow must inherit from Window");
+
+#ifdef _WIN32
+
+			auto window = std::make_shared<TWindow>(arguments);
+
+			windows_[window->GetHandle()] = window;
+
+			return window;
+
+#else
+
+			static_assert(false, "Unsupported OS");
+
+#endif
+		}
+
+		/// \brief Create a new window.
+
+		/// Create a new window with default style and dimensions.
+		/// \tparam TWindow Type of the window to create. It must derive from Window.
+		/// \return Returns a weak pointer to the new window.
+		template<typename TWindow>
+		weak_ptr<TWindow> CreateWindow(){
+
+			//Ensures that TWindow is derived from Window at compile time
+			static_assert(typename std::is_base_of<Window, TWindow>::value, "TWindow must inherit from Window");
+
+#ifdef _WIN32
+
+			auto window = std::make_shared<TWindow>();
+
+			windows_[window->GetHandle()] = window;
+
+			return window;
+
+#else
+
+			static_assert(false, "Unsupported OS");
+
+#endif
+		}
 
 		/// /brief Dispose an existing window.
 
-		/// If a window is destroyed, handle is invalidated.
+		/// If a window is destroyed the handle is no longer valid.
 		/// /param handle The handle of the window do dispose
-		void DisposeWindow(Window::Handle & handle);
-
-		/// \brief Get a window by handle.
-		/// \param handle The handle of the window to find.
-		/// \return Returns a weak pointer to the matching window. Returns an empty pointer if no match was found.
-		weak_ptr<Window> GetWindow(const Window::Handle & handle);
-
-		/// \brief Get a window by handle.
-		/// \param handle The handle of the window to find.
-		/// \return Returns a constant weak pointer to the matching window. Returns an empty pointer if no match was found.
-		weak_ptr<const Window> GetWindow(const Window::Handle & handle) const;
+		void DisposeWindow(const Window::Handle & handle);
 
 		/// \brief Wait until all the windows get closed.
 		void Join();
@@ -191,7 +184,10 @@ namespace gi_lib{
 
 		Application();
 
-		map<Window::Handle, shared_ptr<Window>> windows_;
+		/// \brief Get a window by handle.
+		/// \param handle The handle of the window to find.
+		/// \return Returns a weak pointer to the matching window. Returns an empty pointer if no match was found.
+		weak_ptr<Window> GetWindow(const Window::Handle & handle);
 		
 #ifdef _WIN32
 
@@ -205,6 +201,8 @@ namespace gi_lib{
 
 #endif
 
+		map<Window::Handle, shared_ptr<Window>> windows_;
+		
 	};
 
 }

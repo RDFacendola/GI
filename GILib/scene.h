@@ -12,7 +12,7 @@
 #include <memory>
 
 #include "iterator.h"
-#include "time.h"
+#include "timer.h"
 
 using std::wstring;
 using std::unordered_multimap;
@@ -252,10 +252,10 @@ namespace gi_lib{
 		/// \param args Arguments that will be passed to the component during its creation.
 		/// \return Returns an iterator pointing to the new component.
 		template<typename TComponent, typename... TArgs>
-		inline ComponentIterator<TComponent> AddComponent(TArgs... args){
+		inline ComponentIterator<TComponent> AddComponent(TArgs&&... args){
 
 			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value);
+			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
 			auto component = std::make_shared<TComponent>(args...);
 
@@ -276,7 +276,7 @@ namespace gi_lib{
 		inline ComponentIterator<TComponent> AddComponent(){
 
 			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value);
+			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
 			auto component = std::make_shared<TComponent>();
 
@@ -298,7 +298,7 @@ namespace gi_lib{
 		void RemoveComponent(ComponentIterator<TComponent> & iterator){
 
 			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value);
+			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
 			for (auto it = components_.find(typeid(TComponent).hash_code()); it != components_.end();){
 
@@ -328,7 +328,7 @@ namespace gi_lib{
 		inline void RemoveComponents(){
 
 			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value);
+			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
 			components_.erase(typeid(TComponent).hash_code());
 
@@ -340,6 +340,9 @@ namespace gi_lib{
 		/// \return Returns a range containing all the components that derive from TComponent.
 		template<typename TComponent>
 		inline Range<TComponent, ComponentIterator<TComponent>> GetComponents(){
+
+			//Ensures that TComponent is derived from Component at compile time
+			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
 			auto range = components_.equal_range(typeid(TComponent).hash_code());
 
@@ -355,6 +358,9 @@ namespace gi_lib{
 		template<typename TComponent>
 		inline Range<TComponent, ComponentConstIterator<TComponent>> GetComponents() const{
 
+			//Ensures that TComponent is derived from Component at compile time
+			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
+
 			auto range = components_.equal_range(typeid(TComponent).hash_code());
 
 			return Range<TComponent, ComponentConstIterator<TComponent>>(ComponentConstIterator<TComponent>(range.first),
@@ -369,6 +375,9 @@ namespace gi_lib{
 		template<typename TComponent>
 		inline ComponentIterator<TComponent> GetComponent(){
 
+			//Ensures that TComponent is derived from Component at compile time
+			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
+
 			return ComponentIterator<TComponent>(components_.find(typeid(TComponent).hash_code()));
 
 		}
@@ -380,6 +389,9 @@ namespace gi_lib{
 		template<typename TComponent>
 		inline ComponentConstIterator<TComponent> GetComponent() const{
 
+			//Ensures that TComponent is derived from Component at compile time
+			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
+
 			return ComponentConstIterator<TComponent>(components_.find(typeid(TComponent).hash_code()));
 
 		}
@@ -390,6 +402,9 @@ namespace gi_lib{
 		template<typename TComponent>
 		inline ComponentIterator<TComponent> GetEnd(){
 
+			//Ensures that TComponent is derived from Component at compile time
+			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
+
 			return ComponentIterator<TComponent>(components_.end());
 
 		}
@@ -399,6 +414,9 @@ namespace gi_lib{
 		/// \return Return a constant iterator pointing to a component past the end.
 		template<typename TComponent>
 		inline ComponentConstIterator<TComponent> GetEnd() const{
+
+			//Ensures that TComponent is derived from Component at compile time
+			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
 			return ComponentConstIterator<TComponent>(components_.end());
 

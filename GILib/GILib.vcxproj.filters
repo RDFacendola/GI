@@ -45,9 +45,6 @@
     <ClInclude Include="iterator.h">
       <Filter>pattern\include</Filter>
     </ClInclude>
-    <ClInclude Include="time.h">
-      <Filter>include</Filter>
-    </ClInclude>
     <ClInclude Include="system.h">
       <Filter>include</Filter>
     </ClInclude>
@@ -61,6 +58,9 @@
       <Filter>scene\include</Filter>
     </ClInclude>
     <ClInclude Include="application.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="timer.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
