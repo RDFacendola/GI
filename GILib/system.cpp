@@ -4,20 +4,6 @@
 
 #include "exceptions.h"
 
-#if defined(_WIN32) || defined(_WIN64)
-
-#define GI_LIB_WINDOWS
-
-#endif
-
-#ifdef GI_LIB_WINDOWS
-
-const int kUnitLabelLength = 3;
-const wchar_t * kExtensionSeparator = L".";
-const wchar_t * kPathSeparator = L"\\";
-
-#endif
-
 using namespace gi_lib;
 
 OperatingSystem System::GetOperatingSystem(){
@@ -32,34 +18,6 @@ OperatingSystem System::GetOperatingSystem(){
 	static_assert(false);
 
 #endif 
-
-}
-
-wstring System::GetApplicationPath(){
-
-#ifdef GI_LIB_WINDOWS
-
-	wchar_t path_buffer[MAX_PATH + 1];
-
-	GetModuleFileName(0, path_buffer, sizeof(path_buffer));
-
-	return wstring(path_buffer);
-
-#else
-
-	//Unsupported OS
-	static_assert(false);
-
-#endif
-
-}
-
-wstring System::GetApplicationName(bool extension){
-
-	auto  path = GetApplicationPath();
-
-	return path.substr(static_cast<unsigned int>(path.find_last_of(kExtensionSeparator)),
-					   static_cast<unsigned int>(path.find_last_of(kPathSeparator)));
 
 }
 

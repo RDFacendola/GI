@@ -46,11 +46,8 @@
     <Filter Include="scene">
       <UniqueIdentifier>{8d48d195-5273-46e3-8498-70667a83f177}</UniqueIdentifier>
     </Filter>
-    <Filter Include="externals">
-      <UniqueIdentifier>{99ae43cf-bf5c-4392-ad07-48ef368c79af}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="externals\stack walker">
-      <UniqueIdentifier>{d74d2263-5c62-42c1-a810-ea790e43b641}</UniqueIdentifier>
+    <Filter Include="scene\include">
+      <UniqueIdentifier>{8a5de385-f4bc-42fa-8bf9-8e0767401b11}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -69,12 +66,6 @@
     <ClInclude Include="observable.h">
       <Filter>pattern\include</Filter>
     </ClInclude>
-    <ClInclude Include="StackWalker.h">
-      <Filter>externals\stack walker</Filter>
-    </ClInclude>
-    <ClInclude Include="application.h">
-      <Filter>old\application\include</Filter>
-    </ClInclude>
     <ClInclude Include="imessage_listener.h">
       <Filter>old\application\include</Filter>
     </ClInclude>
@@ -83,9 +74,6 @@
     </ClInclude>
     <ClInclude Include="igraphics.h">
       <Filter>old\graphics\include</Filter>
-    </ClInclude>
-    <ClInclude Include="scene.h">
-      <Filter>scene</Filter>
     </ClInclude>
     <ClInclude Include="iterator.h">
       <Filter>pattern\include</Filter>
@@ -102,6 +90,15 @@
     <ClInclude Include="exceptions.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="scene.h">
+      <Filter>scene\include</Filter>
+    </ClInclude>
+    <ClInclude Include="_application.h">
+      <Filter>old\application\include</Filter>
+    </ClInclude>
+    <ClInclude Include="application.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="win_keyboard_listener.cpp">
@@ -113,16 +110,16 @@
     <ClCompile Include="win_mouse_listener.cpp">
       <Filter>old\hid\src</Filter>
     </ClCompile>
-    <ClCompile Include="StackWalker.cpp">
-      <Filter>externals\stack walker</Filter>
-    </ClCompile>
-    <ClCompile Include="application.cpp">
-      <Filter>old\application\src</Filter>
-    </ClCompile>
     <ClCompile Include="dx11graphics.cpp">
       <Filter>old\graphics\src</Filter>
     </ClCompile>
     <ClCompile Include="system.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="_application.cpp">
+      <Filter>old\application\src</Filter>
+    </ClCompile>
+    <ClCompile Include="application.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

@@ -10,7 +10,7 @@
 #include <string>
 #include <sstream>
 
-#include "StackWalker.h"
+#include <StackWalker.h>
 
 using ::std::wstring;
 using ::std::stringstream;

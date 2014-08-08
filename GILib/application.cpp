@@ -1,187 +1,50 @@
-#include <exception>
+#include "application.h"
+
 #include <string>
 
-#include "application.h"
-#include "services.h"
-#include "exceptions.h"
-#include "raii.h"
+#ifdef _WIN32
 
-using ::std::wstring;
+#include <Windows.h>
 
-///Application
+#endif
 
-///Add a new windowed logic to the application
-void Application::AddLogic(HINSTANCE application_instance, IWindowProc & logic){
+#include "system.h"
 
-	auto window = new Window(application_instance, ReceiveMessage, logic);
+using namespace gi_lib;
+using namespace std;
 
-	GetWindows()[window->GetWindowHandle()] = window;
+#ifdef _WIN32
 
-	window->Initialize();
+const int kUnitLabelLength = 3;
+const wchar_t * kExtensionSeparator = L".";
+const wchar_t * kPathSeparator = L"\\";
 
-}
+#endif
 
-///Remove an existing logic from the application
-void Application::RemoveLogic(HWND & window_handle){
+wstring Application::GetPath() const{
 
-	auto & windows = GetWindows();
+#ifdef _WIN32
 
-	auto window = windows.find(window_handle);
+	wchar_t path_buffer[MAX_PATH + 1];
 
-	if (window != windows.end()){
+	GetModuleFileName(0, path_buffer, sizeof(path_buffer));
 
-		///Delete the window
-		delete window->second;
+	return wstring(path_buffer);
 
-		windows.erase(window);
+#else
 
-	}
+	//Unsupported OS
+	static_assert(false);
 
-}
-
-void Application::Run(){
-
-	MSG message;
-	
-	Timer timer;
-
-	//Loops while there are windows
-	while (GetWindows().size() > 0){
-
-		while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE) == TRUE){
-
-			//Handle the OS message
-			TranslateMessage(&message);
-			DispatchMessage(&message);
-
-		}
-
-		//Update every window
-		for (auto & window : GetWindows()){
-
-			(window.second)->Update(timer.GetTime());
-
-		}
-
-	}
+#endif
 
 }
 
-LRESULT __stdcall Application::ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
+wstring Application::GetName(bool extension) const{
 
-	auto & windows = GetWindows();
+	auto  path = GetPath();
 
-	auto window_iterator = windows.find(window_handle);
-
-	if (window_iterator != windows.end()){
-
-		if (message_id == WM_CLOSE){
-
-			//Destroy the window
-			Application::RemoveLogic(window_handle);
-
-		}
-		else{
-		
-			//Dispatch the message to the proper window
-			return window_iterator->second->ReceiveMessage(message_id, wparameter, lparameter);
-
-		}
-		
-	}
-
-	//Default behavior
-	return DefWindowProc(window_handle, message_id, wparameter, lparameter);
-		
-}
-
-//Window
-
-///Create a new window
-Window::Window(HINSTANCE application_instance, WNDPROC dispatcher, IWindowProc & logic) :
-	logic_(logic){
-
-	CreateNew(application_instance, dispatcher, window_handle_, icon_handle_);
-
-}
-
-void Window::Initialize(){
-
-	logic_.Initialize(*this);
-
-}
-
-///Destroy this window
-Window::~Window(){
-
-	DestroyWindow(window_handle_);
-	DestroyIcon(icon_handle_);
-
-	logic_.Destroy();
-
-}
-
-///Receive a message from the OS
-LRESULT Window::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
-
-	//Raise the vent
-	on_message_.Notify(*this, message_id, wparameter, lparameter);
-
-	//Call the logic
-	return logic_.ReceiveMessage(window_handle_, message_id, wparameter, lparameter);
-
-}
-
-///Run a "frame" of application logic
-void Window::Update(const Timer::Time & time){
-
-	logic_.Update(window_handle_, time);
-
-}
-
-///Create a new window
-void Window::CreateNew(HINSTANCE application_instance, WNDPROC dispatcher, HWND & window_handle, HICON & icon_handle){
-
-	icon_handle = ExtractIcon(application_instance, Services::GetApplicationPath().c_str(), 0);	//Extract the first icon found into the executable
-
-	wstring application_name = Services::GetApplicationName();
-
-	//Register the window class
-	WNDCLASS window_description;
-
-	ZeroMemory(&window_description, sizeof(WNDCLASS));
-
-	window_description.lpszClassName = application_name.c_str();
-	window_description.style = CS_VREDRAW | CS_HREDRAW;
-	window_description.hIcon = icon_handle;
-	window_description.hCursor = LoadCursor(NULL, IDC_ARROW);
-	window_description.hInstance = application_instance;
-	window_description.lpfnWndProc = dispatcher;	//Callback for windows messages
-
-	//Attempt to register the class
-	if (!RegisterClass(&window_description)){
-
-		throw RuntimeException(L"Unable to register the window class");
-
-	}
-
-	//Create the window
-	window_handle = CreateWindow(application_name.c_str(),
-								 L"",
-								 WS_OVERLAPPEDWINDOW,
-								 CW_USEDEFAULT,
-								 CW_USEDEFAULT,
-								 CW_USEDEFAULT,
-								 CW_USEDEFAULT,
-								 NULL,
-								 NULL,
-								 application_instance,
-								 NULL);
-
-	if (!window_handle){
-
-		throw RuntimeException(L"Unable to create the window");
-
-	}
+	return path.substr(static_cast<unsigned int>(path.find_last_of(kExtensionSeparator)),
+					   static_cast<unsigned int>(path.find_last_of(kPathSeparator)));
 
 }

@@ -1,117 +1,237 @@
+/// \file application.h
+/// \brief 
+///
+/// \author Raffaele D. Facendola
+
 #pragma once
 
-#include <map>
-#include <string>
+#ifdef _WIN32
+
 #include <Windows.h>
 
-#include "observable.h"
-#include "imessage_listener.h"
-#include "timer.h"
+#endif
 
-using ::std::map;
+#include <string>
+#include <map>
+#include <memory>
+
+#include "time.h"
+
 using ::std::wstring;
+using ::std::map;
+using ::std::unique_ptr;
 
-class IWindowProc;
-class Window;
+#ifdef _WIN32
 
-///
-class Application{
+// Under Windows this is a macro which clashes with Application::CreateWindow method. Just disable it.
+#undef CreateWindow
 
-public:
+#endif
 
-	///Add a new windowed logic to the application
-	static void AddLogic(HINSTANCE application_instance, IWindowProc & logic);
+namespace gi_lib{
 
-	///Remove an existing window and its logic
-	static void RemoveLogic(HWND & window_handle);
+	class WindowProcedure;
 
-	///Starts the application's loop
-	static void Run();
+	/// \brief The application singleton
+	class Application{
 
-private:
+	public:
 
-	Application(){}
+		/// \brief An application window
+		class Window{
 
-	///Manages the incoming windows messages
-	static LRESULT __stdcall ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
+		public:
 
-	///Collections of windows inside this application
-	static map<HWND, Window *> & GetWindows(){
+#ifdef _WIN32
 
-		static map<HWND, Window *> windows;
+			/// \brief Window handle type under Windows.
+			typedef HWND Handle;
 
-		return windows;
+#else
 
-	}
-	
-};
+			///
 
-///Interface for the application logic
-class IWindowProc{
+#endif
 
-public:
+#ifdef _WIN32
 
-	///Initialize the logic
-	virtual void Initialize(Window & window) = 0;
+			/// \brief Create a new named window.
+			/// \param procedure 
+			/// \param instance A handle to the instance of the module to be associated with the window.
+			/// \param name Window's name. It must be unique.
+			/// \remarks The window is created with default style and dimensions.
+			Window(WindowProcedure & procedure, HINSTANCE instance, wstring name);
 
-	///Destroy the logic
-	virtual void Destroy() = 0;
-	
-	///Receive a message from the OS
-	virtual LRESULT ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter) = 0;
+			/// \brief Create a new named window.
+			/// \param instance A handle to the instance of the module to be associated with the window.
+			/// \param name Window's name. It must be unique.
+			/// \param width The width of the window, in pixel.
+			/// \param height The height of the window, in pixel.
+			/// \remarks The window is created with a default style.
+			Window(WindowProcedure & procedure, HINSTANCE instance, wstring name, unsigned int width, unsigned int height);
 
-	///Run a "frame" of application logic
-	virtual void Update(HWND window_handle, const Timer::Time & time) = 0;
+#else
 
-};
+			///
 
-///Window
-class Window{
+#endif
 
-public:
+			virtual ~Window();
 
-	typedef Observable<Window &, unsigned int, WPARAM, LPARAM> TMessageEvent;
+			/// \brief Get the window's handle.
+			/// \return Returns a constant reference to the window's handle.
+			inline const Handle & GetHandle() const{
 
-	///Create a new window
-	Window(HINSTANCE application_instance, WNDPROC dispatcher, IWindowProc & logic);
+				return handle_;
+				
+			}
 
-	///Destroy this window
-	~Window();
+			/// \brief Get the window name.
+			/// \return Returns a constant reference to the window's name.
+			inline const wstring & GetName() const{
 
-	///Initialize the logic
-	void Initialize();
+				return name_;
 
-	///Receive a message from the OS
-	LRESULT ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
+			}
 
-	///Run a "frame" of application logic
-	void Update(const Timer::Time & time);
+			/// \brief Set the window's title.
+			/// \param title The title to show in the title bar.
+			void SetTitle(const wstring & title);
 
-	///Get the window handle
-	HWND GetWindowHandle(){
+			/// \brief Close the window.
+			void Close();
 
-		return window_handle_;
+		private:
 
-	}
-	
-	///Event raised whenever a message is received by the window
-	Observable<Window &, unsigned int, WPARAM, LPARAM> & OnMessage(){
+			/// \brief Initialize the window logic.
+			inline void Initialize(){
 
-		return on_message_;
+				procedure_.Initialize();
 
-	}
+			}
 
-private:
+			/// \brief Update the window logic.
+			/// \param time The application-coherent time.
+			inline void Update(const Timer::Time & time){
 
-	///Create a new window
-	static void CreateNew(HINSTANCE application_instance, WNDPROC dispatcher, HWND & window_handle, HICON & icon_handle);
+				procedure_.Update(time);
 
-	IWindowProc & logic_;
+			}
 
-	HWND window_handle_;
+#ifdef _WIN32
 
-	HICON icon_handle_;
-	
-	Event<Window &, unsigned int, WPARAM, LPARAM> on_message_;
+			/// \brief Handle a Windows message.
+			/// \param message_id The message.
+			/// \param wparameter Additional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
+			/// \param lparameterAdditional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
+			/// \return The return value specifies the result of the message processing and depends on the message sent.
+			inline LRESULT ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
+		
+				return procedure_.ReceiveMessage(message_id, wparameter, lparameter);
+		
+			}
 
-};
+#else
+
+			///
+
+#endif
+
+			WindowProcedure & procedure_;
+
+			Handle handle_;
+
+			wstring name_;
+			
+		};
+
+		/// \brief Get the application singleton
+		/// \return Returns a reference to the application singleton
+		inline Application & GetInstance(){
+
+			static Application application;
+
+			return application;
+
+		}
+
+		/// \brief Get the full application path.
+		/// \return Returns the full application path.
+		wstring GetPath() const;
+
+		/// \brief Get the application name.
+		/// \param extension Set whether the extension should be returned or not.
+		/// \return Returns the application name including its extension eventually.
+		wstring GetName(bool extension = true) const;
+
+		/// \brief Create a new window.
+		/// \param procedure The procedure to bind to the new window.
+		/// \return Returns the reference to the created window.
+		template <typename TWindow>
+		TWindow & CreateWindow(WindowProcedure & procedure);
+
+		/// \brief Get a window by handle.
+		/// \param handle The handle of the window to find.
+		/// \return Returns a reference to the window matching the given handle.
+		Window & GetWindow(const Window::Handle & handle);
+
+		/// \brief Get a window by name.
+		/// \param name The name of the window to find.
+		/// \return Returns a reference to the window matching the given name.
+		Window & GetWindow(const wstring & name);
+
+		/// \brief Get a window by handle.
+		/// \param handle The handle of the window to find.
+		/// \return Returns a constant reference to the window matching the given handle.
+		const Window & GetWindow(const Window::Handle & handle) const;
+
+		/// \brief Get a window by name.
+		/// \param name The name of the window to find.
+		/// \return Returns a constant reference to the window matching the given name.
+		const Window & GetWindow(const wstring & name) const;
+
+		/// \brief Wait until all the windows get closed.
+		void Join();
+
+	private:
+
+		Application(){}
+
+		map<Window::Handle, unique_ptr<Window>> windows_;
+
+	};
+
+	/// \brief Expose methods to intialize, finalize and update a window.
+	/// \remarks Interface.
+	class WindowProcedure{
+
+	public:
+
+		/// \brief Initialize the window logic.
+		virtual void Initialize() = 0;
+
+		/// \brief Finalize the window logic.
+		virtual void Dispose() = 0;
+
+		/// \brief Update the window logic.
+		/// \param time The application-coherent time.
+		virtual void Update(const Timer::Time & time) = 0;
+
+#ifdef _WIN32
+
+		/// \brief Handle a Windows message.
+		/// \param message_id The message.
+		/// \param wparameter Additional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
+		/// \param lparameterAdditional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
+		/// \return The return value specifies the result of the message processing and depends on the message sent.
+		LRESULT ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
+
+#else
+
+		///
+
+#endif
+
+	};
+
+}

@@ -79,17 +79,6 @@ namespace gi_lib{
 		/// \return Returns the current operating system
 		static OperatingSystem GetOperatingSystem();
 
-		/// \brief Get the full application path.
-
-		/// \return Returns the full application path.
-		static wstring GetApplicationPath();
-
-		/// \brief Get the application name.
-
-		/// \param extension Set this parameter to "true" to include the extension, "false" otherwise.
-		/// \return Returns the application name, excluding the extension if not specified otherwise.
-		static wstring GetApplicationName(bool extension = true);
-
 		/// \brief Get the CPU capabilities.
 
 		/// \return Returns the CPU capabilities.
