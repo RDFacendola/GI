@@ -132,33 +132,7 @@ namespace gi_lib{
 
 #ifdef _WIN32
 
-			auto window = std::make_shared<TWindow>(arguments);
-
-			windows_[window->GetHandle()] = window;
-
-			return window;
-
-#else
-
-			static_assert(false, "Unsupported OS");
-
-#endif
-		}
-
-		/// \brief Create a new window.
-
-		/// Create a new window with default style and dimensions.
-		/// \tparam TWindow Type of the window to create. It must derive from Window.
-		/// \return Returns a weak pointer to the new window.
-		template<typename TWindow>
-		weak_ptr<TWindow> CreateWindow(){
-
-			//Ensures that TWindow is derived from Window at compile time
-			static_assert(typename std::is_base_of<Window, TWindow>::value, "TWindow must inherit from Window");
-
-#ifdef _WIN32
-
-			auto window = std::make_shared<TWindow>();
+			auto window = std::make_shared<TWindow>(std::forward<TArgs>(arguments)...);
 
 			windows_[window->GetHandle()] = window;
 

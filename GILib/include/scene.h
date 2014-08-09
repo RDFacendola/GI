@@ -258,28 +258,7 @@ namespace gi_lib{
 			//Ensures that TComponent is derived from Component at compile time
 			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
-			auto component = std::make_shared<TComponent>(args...);
-
-			///Set the owner of the component
-			component->SetOwner(*this);
-
-			return ComponentIterator<TComponent>(components_.insert(ComponentMap::value_type(typeid(TComponent).hash_code(),
-																							 component)));
-
-		}
-
-		/// \brief Add a new component to the instance.
-
-		/// The component to add is created inside the method as its lifecycle is entirely managed by its owner.
-		/// \tparam TComponent Type of the component to add. It must derive from Component.
-		/// \return Returns an iterator pointing to the new component.
-		template<typename TComponent>
-		inline ComponentIterator<TComponent> AddComponent(){
-
-			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
-
-			auto component = std::make_shared<TComponent>();
+			auto component = std::make_shared<TComponent>(std::forward<TArgs>(args)...);
 
 			///Set the owner of the component
 			component->SetOwner(*this);
