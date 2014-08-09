@@ -1,4 +1,4 @@
-/// \file time.h
+/// \file timer.h
 /// \brief Defines classes used to manage the application's time.
 ///
 /// \author Raffaele D. Facendola
@@ -36,7 +36,7 @@ namespace gi_lib{
 			/// \brief Class constructor.
 
 			/// \param total_seconds Seconds passed since the beginning of the application.
-			/// \param delta_deconds Seconds passed since the last update.
+			/// \param delta_seconds Seconds passed since the last update.
 			Time(Seconds total_seconds, Seconds delta_seconds) :
 				total_seconds_(total_seconds),
 				delta_seconds_(delta_seconds){}

@@ -17,10 +17,20 @@ namespace gi_lib{
 
 		/// \brief Iterator type.
 		typedef TIterator iterator;
+
+		/// \brief Type of the difference between iterators.
 		typedef ptrdiff_t difference_type;
+
+		/// \brief Type of the size.
 		typedef size_t size_type;
+
+		/// \brief Value type.
 		typedef TValue value_type;
+
+		/// \brief Pointer type.
 		typedef TValue * pointer;
+
+		/// \brief Reference type.
 		typedef TValue & reference;
 
 		/// \brief Constructor.

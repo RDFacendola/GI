@@ -5,38 +5,59 @@
 
 #pragma once
 
+#ifdef _WIN32
+
+#include <Windows.h>
+
+#endif
+
 #include <string>
 #include <iomanip>
 #include <string>
 #include <sstream>
+#include <map>
 
 #include <StackWalker.h>
 
 using ::std::wstring;
 using ::std::stringstream;
+using ::std::map;
 
-/// If expr fails throws a runtime exception with detailed informations
-#define THROW_ON_FAIL(expr) do \
-							{ \
+#ifdef _WIN32
+
+/// If expr fails, throws a runtime exception with detailed informations. "expr" must be of type "HRESULT"; the error code is defined by the value of the expression itself.
+#define THROW_ON_FAIL(expr) do{ \
 								HRESULT hr = expr; \
-								if(FAILED(hr)) \
-								{ \
+								if(FAILED(hr)) { \
 									std::wstringstream stream; \
-									stream << "FAILED! " << #expr << " (0x" << std::hex << hr << std::dec << ")" << std::endl \
+									stream << L"\"" << #expr << "\" failed with 0x" << std::hex << hr << std::dec << std::endl \
 										   << __FILE__ << std::endl \
-										   << __FUNCTIONW__ << L" (" << __LINE__ << ")" << std::endl; \
-									throw RuntimeException(stream.str()); \
+										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
+									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(hr)}}); \
 								} \
 							}while (0)
 
+
+/// If "expr" raises an error, throws a runtime exception with detailed informations. "expr" must support the unary operator "!"; the error code must be returned by GetLastError().
+#define THROW_ON_ERROR(expr) do { \
+								auto hr = expr; \
+								if(!hr){ \
+									std::wstringstream stream; \
+									stream << L"\"" << #expr << "\" failed with 0x" << std::hex << GetLastError() << std::dec << std::endl \
+										   << __FILE__ << std::endl \
+										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
+									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(GetLastError())}}); } \
+							}while (0)
+
 /// If expr fails returns from the routine with the fail code
-#define RETURN_ON_FAIL(expr) do \
-							 { \
+#define RETURN_ON_FAIL(expr) do{ \
 								HRESULT hr = expr; \
 								if (FAILED(hr)){ \
 									return hr; \
 								} \
 							 }while (0)
+
+#endif
 
 namespace gi_lib{
 
@@ -95,9 +116,16 @@ namespace gi_lib{
 	};
 
 	/// \brief Runtime exception
+	/// \note A convenient way to throw a runtime exception is the following:
+	/// \code {.cpp}
+	/// throw RuntimeException("message", {{L"arg0", L"value0"}, {L"arg1", L"value1"}})
+	/// \endcode
 	class RuntimeException{
 
 	public:
+
+		/// \brief Type of the extra arguments.
+		typedef map<wstring, wstring> TErrorArgs;
 
 		/// \brief Creates a new exception.
 		/// \param error_message The error message associated to the exception
@@ -107,6 +135,20 @@ namespace gi_lib{
 
 			stack_trace_ = e.GetStackTrace();
 			error_message_ = error_message;
+
+		}
+
+		/// \brief Creates a new exception.
+		/// \param error_message The error message associated to the exception
+		/// \param extras Extra arguments to store within the exception
+		RuntimeException(const wstring & error_message, TErrorArgs && extras){
+
+			StackTrace e;
+
+			stack_trace_ = e.GetStackTrace();
+			error_message_ = error_message;
+			
+			extras_ = std::move(extras);
 
 		}
 
@@ -126,11 +168,33 @@ namespace gi_lib{
 
 		}
 
+		/// \brief Get an extra value by key.
+		/// \param key Key of the extra to retrieve.
+		/// \return Returns a value corresponding to the extra whose key is the specified one. If no extra is found, an empty string is returned instead.
+		inline const wstring & GetExtra(wstring key) const{
+
+			auto it = extras_.find(key);
+
+			if (it != extras_.end()){
+
+				return it->second;
+
+			}else{
+
+				return kEmptyExtra;
+
+			}
+
+		}
 	private:
+
+		const wstring kEmptyExtra = L"";
 
 		wstring error_message_;
 
 		wstring stack_trace_;
+
+		TErrorArgs extras_;
 
 	};
 

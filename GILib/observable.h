@@ -24,12 +24,12 @@ namespace gi_lib{
 		typedef function<void(TArguments...)> TListener;
 
 		/// \brief Add a new observer to this instace.
-		/// \param TListener Reference to the observer instace that should be notified.
+		/// \param listener Reference to the observer instace that should be notified.
 		/// \return Returns a reference to this instance.
 		virtual Observable & operator<<(TListener & listener) = 0;
 
 		/// \brief Remove a new observer from this instace.
-		/// \param TListener Reference to the observer instace that should be removed.
+		/// \param listener Reference to the observer instace that should be removed.
 		/// \return Returns a reference to this instance.
 		virtual Observable & operator>>(TListener & listener) = 0;
 
@@ -43,9 +43,6 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Add a new observer to this instace.
-		/// \param TListener Reference to the observer instace that should be notified.
-		/// \return Returns a reference to this instance.
 		inline virtual Observable & operator<<(TListener & listener){
 
 			listeners_.insert(&listener);
@@ -54,9 +51,6 @@ namespace gi_lib{
 
 		}
 
-		/// \brief Remove a new observer from this instace.
-		/// \param TListener Reference to the observer instace that should be removed.
-		/// \return Returns a reference to this instance.
 		inline virtual Observable & operator>>(TListener & listener){
 
 			listeners_.erase(&listener);

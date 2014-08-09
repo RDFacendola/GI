@@ -16,36 +16,36 @@ namespace gi_lib{
 	/// \brief Describes the CPU.
 	struct CpuProfile{
 
-		unsigned int cores;			/// Number of logical cores.
-		unsigned __int64 frequency; /// Frequency of each core in Hz.
+		unsigned int cores;			///< Number of logical cores.
+		unsigned __int64 frequency; ///< Frequency of each core in Hz.
 
 	};
 
 	/// \brief Describes a particular drive.
 	struct DriveProfile{
 
-		unsigned long long size;			/// Total space, in bytes.
-		unsigned long long available_space; /// Available space, in bytes.
-		wstring unit_letter;				/// Unit letter.
+		unsigned long long size;			///< Total space, in bytes.
+		unsigned long long available_space; ///< Available space, in bytes.
+		wstring unit_letter;				///< Unit letter.
 
 	};
 
 	/// \brief Describes the storage capabilities.
 	struct StorageProfile{
 
-		vector<DriveProfile> fixed_drives;	/// Vector of all fixed drives' profiles.
+		vector<DriveProfile> fixed_drives;	///< Vector of all fixed drives' profiles.
 
 	};
 
 	/// \brief Describes the system memory.
 	struct MemoryProfile{
 
-		unsigned long long total_physical_memory;		/// Total physical memory, in bytes.
-		unsigned long long total_virtual_memory;		/// Total virtual address space for the current process, in bytes.
-		unsigned long long total_page_memory;			/// Total page memory, in bytes.
-		unsigned long long available_physical_memory;	/// Available physical memory, in bytes.
-		unsigned long long available_virtual_memory;	/// Available virtual address space for the current process, in bytes.
-		unsigned long long available_page_memory;		/// Available page memory, in bytes.
+		unsigned long long total_physical_memory;		///< Total physical memory, in bytes.
+		unsigned long long total_virtual_memory;		///< Total virtual address space for the current process, in bytes.
+		unsigned long long total_page_memory;			///< Total page memory, in bytes.
+		unsigned long long available_physical_memory;	///< Available physical memory, in bytes.
+		unsigned long long available_virtual_memory;	///< Available virtual address space for the current process, in bytes.
+		unsigned long long available_page_memory;		///< Available page memory, in bytes.
 
 	};
 
@@ -53,15 +53,15 @@ namespace gi_lib{
 	/// \brief Describes the desktop.
 	struct DesktopProfile{
 
-		unsigned int width;		/// Horizontal resolution of the dekstop.
-		unsigned int height;	/// Vertical resolution of the desktop.
+		unsigned int width;		///< Horizontal resolution of the dekstop.
+		unsigned int height;	///< Vertical resolution of the desktop.
 
 	};
 
 	/// \brief Operating system.
 	enum class OperatingSystem{
 
-		WINDOWS		/// Windows OS
+		WINDOWS		///< Windows OS
 
 	};
 

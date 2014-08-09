@@ -31,6 +31,7 @@ namespace gi_lib{
 		
 		class Component;
 
+		/// \brief Type of the component map
 		typedef unordered_multimap<size_t, shared_ptr<Component>> ComponentMap;
 
 		/// \brief Scene object component.

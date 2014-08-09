@@ -159,6 +159,8 @@ LRESULT __stdcall Application::ReceiveMessage(HWND window_handle, unsigned int m
 
 }
 
+#include <map>
+
 void Application::RegisterWindowClass(){
 
 	auto instance = GetModuleHandle(nullptr);
@@ -181,17 +183,7 @@ void Application::RegisterWindowClass(){
 	SetLastError(0);
 
 	//Attempt to register the class
-	if (!RegisterClass(&window_description)){
-
-		wstringstream message;
-
-		message << L"Unable to register the window class (Error: "
-				<< std::to_wstring(GetLastError())
-				<< L")";
-
-		throw RuntimeException(message.str());
-
-	}
+	THROW_ON_ERROR(RegisterClass(&window_description));
 
 }
 
@@ -219,23 +211,17 @@ Window::Window(){
 #ifdef _WIN32
 		
 	//Create the window
-	handle_ = CreateWindowW(kWindowClassName,
-							L"",
-							WS_OVERLAPPEDWINDOW,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							CW_USEDEFAULT,
-							NULL,
-							NULL,
-							GetModuleHandle(nullptr),
-							NULL);
-
-	if (!handle_){
-
-		throw RuntimeException(L"Unable to create the window");
-
-	}
+	THROW_ON_ERROR( handle_ = CreateWindowW(kWindowClassName,
+											L"",
+											WS_OVERLAPPEDWINDOW,
+											CW_USEDEFAULT,
+											CW_USEDEFAULT,
+											CW_USEDEFAULT,
+											CW_USEDEFAULT,
+											NULL,
+											NULL,
+											GetModuleHandle(nullptr),
+											NULL));
 
 #else
 
