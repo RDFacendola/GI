@@ -31,4 +31,8 @@ public:
 
 #endif
 
+private:
+
+	unsigned long counter;
+
 };

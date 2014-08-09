@@ -1,24 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="gi_logic.h">
-      <Filter>include</Filter>
-    </ClInclude>
+    <ClCompile Include="src\gi_logic.cpp" />
+    <ClCompile Include="src\gi.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="include">
-      <UniqueIdentifier>{bdf7ee54-1d52-4ee4-811c-035a9a57004b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src">
-      <UniqueIdentifier>{6a1f399f-c783-45eb-911f-45468f3d36f1}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="gi.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="gi_logic.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
+    <ClInclude Include="include\gi_logic.h" />
   </ItemGroup>
 </Project>

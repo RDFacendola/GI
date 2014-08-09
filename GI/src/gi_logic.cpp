@@ -19,6 +19,7 @@ GILogic::GILogic(){
 
 	Show();
 
+	counter = 0;
 }
 
 GILogic::~GILogic(){
@@ -27,15 +28,24 @@ GILogic::~GILogic(){
 
 void GILogic::Update(const Timer::Time & time){
 
-	wstringstream message;
+	
 
-	message << std::to_wstring(time.GetTotalSeconds())
-			<< " ; "
-			<< std::to_wstring(time.GetDeltaSeconds());
+	if (time.GetTotalSeconds() >= 10){
 
-	SetTitle(message.str());
+		wstringstream message;
 
-	Sleep(1);
+		message << std::to_wstring(counter);
+
+		SetTitle(message.str());
+
+		Sleep(10);
+
+	}else{
+		
+		++counter;
+
+	}
+
 
 }
 
