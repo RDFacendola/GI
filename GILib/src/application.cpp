@@ -1,6 +1,7 @@
 #include "application.h"	
 
 #include <string>
+#include <algorithm>
 
 #ifdef _WIN32
 
@@ -57,11 +58,18 @@ wstring Application::GetPath() const{
 
 #ifdef _WIN32
 
-	wchar_t path_buffer[MAX_PATH + 1];
+	wstring path(MAX_PATH + 1, 0);
 
-	GetModuleFileName(0, path_buffer, sizeof(path_buffer));
+	GetModuleFileName(0, &path[0], path.length());
 
-	return wstring(path_buffer);
+	path.erase(std::remove(path.begin(),
+						   path.end(),
+						   0),
+			   path.end());
+
+	path.shrink_to_fit();
+
+	return path;
 
 #else
 
@@ -73,10 +81,13 @@ wstring Application::GetPath() const{
 
 wstring Application::GetName(bool extension) const{
 
-	auto  path = GetPath();
+	auto path = GetPath();
 
-	return path.substr(static_cast<unsigned int>(path.find_last_of(kExtensionSeparator)),
-					   static_cast<unsigned int>(path.find_last_of(kPathSeparator)));
+	auto path_index = static_cast<unsigned int>(path.find_last_of(kPathSeparator));
+	auto extension_index = static_cast<unsigned int>(path.find_last_of(kExtensionSeparator));
+
+	return path.substr(path_index + 1,
+					   extension ? path.npos : extension_index - path_index - 1);
 
 }
 
