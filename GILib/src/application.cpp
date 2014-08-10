@@ -45,8 +45,12 @@ Application::Application(){
 
 Application::~Application(){
 
+#ifdef _WIN32
+
 	UnregisterWindowClass();
 
+#endif
+	
 }
 
 wstring Application::GetPath() const{
@@ -245,32 +249,39 @@ Window::~Window(){
 
 }
 
-void Window::SetTitle(const wstring & title){
 
 #ifdef _WIN32
 
-	SetWindowText(handle_, title.c_str());
+LRESULT Window::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
 
-#else
+	switch (message_id)
+	{
+	case WM_CLOSE:
 
-	static_assert(false, "Unsupported OS");
+		//Dispose this window
+		gi_lib::Application::GetInstance().DisposeWindow(GetHandle());
 
-#endif
+		on_closed_.Notify(*this);
 
-}
+		break;
 
-void Window::Show(bool show){
+	case WM_SIZE:
 
-#ifdef _WIN32
+		//The window has been resized
+		on_resized_.Notify(*this, 
+						   LOWORD(lparameter), 
+						   HIWORD(lparameter));
 
-	ShowWindow(handle_, 
-			   show ? SW_SHOW : SW_HIDE);
+		break;
 
+	default:
+		break;
 
-#else
+	}
 
-	static_assert(false, "Unsupported OS");
-
-#endif
+	return DefWindowProc(GetHandle(), message_id, wparameter, lparameter);
 	
+
 }
+
+#endif

@@ -17,6 +17,7 @@
 #include <functional>
 
 #include "timer.h"
+#include "observable.h"
 
 using ::std::wstring;
 using ::std::map;
@@ -63,12 +64,83 @@ namespace gi_lib{
 
 		/// \brief Set the window's title.
 		/// \param title The title to show in the title bar.
-		void SetTitle(const wstring & title);
+		inline void SetTitle(const wstring & title){
+
+#ifdef _WIN32
+
+			SetWindowText(handle_, title.c_str());
+
+#else
+
+			static_assert(false, "Unsupported OS");
+
+#endif
+
+		}
 
 		/// \brief Show or hide the window.
 		/// \param show Shows the window if "true", hides it otherwise.
-		void Show(bool show = true);
+		void Show(bool show = true){
 
+#ifdef _WIN32
+
+			ShowWindow(handle_,
+					   show ? SW_SHOW : SW_HIDE);
+
+#else
+
+			static_assert(false, "Unsupported OS");
+
+#endif
+
+		}
+
+		/// \brief Check whether this windows is visible or not.
+		/// \return Returns true if the window is not minimized, false otherwise.
+		bool IsVisible(){
+
+#ifdef _WIN32
+			
+			return IsWindowVisible(GetHandle()) != 0;
+
+#else
+
+			static_assert(false, "Unsupported OS");
+
+#endif
+
+		}
+
+		/// \brief Type of the event OnClosed.
+		typedef Observable<Window &> TOnClosed;
+
+		/// \brief Type of the event OnResized.
+		typedef Observable<Window &, unsigned int, unsigned int> TOnResized;
+
+		/// \brief Event fired when the window has been closed.
+		/// \return Returns an observable event which notifies when the window is closed.
+		inline TOnClosed & OnClosed(){
+
+			return on_closed_;
+
+		}
+
+		/// \brief Event fired when the window has been resized.
+		/// \return Returns an observable event which notifies when the window is resized.
+		inline TOnResized & OnResized(){
+
+			return on_resized_;
+
+		}
+
+	protected:
+
+		/// \brief Event fired when the window has been closed.
+		Event<Window &> on_closed_;
+
+		/// \brief Event fired when the window has been resized.
+		Event<Window &, unsigned int, unsigned int> on_resized_;
+			
 	private:
 
 		/// \brief Update the window logic.
@@ -82,7 +154,7 @@ namespace gi_lib{
 		/// \param wparameter Additional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
 		/// \param lparameterAdditional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
 		/// \return The return value specifies the result of the message processing and depends on the message sent.
-		virtual LRESULT ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter) = 0;
+		virtual LRESULT ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
 
 #endif
 

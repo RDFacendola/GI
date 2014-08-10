@@ -15,52 +15,24 @@ const unsigned int kWindowWidth = 1280;
 const unsigned int kWindowHeight = 768;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
-SceneObject so;
+auto lambda = Window::TOnResized::TListener([](Window & win, unsigned int w, unsigned int h){
 
-class FooComponent : public SceneObject::Component{
+	wstringstream wss;
 
-public:
+	wss << std::to_wstring(w) << L" x " << std::to_wstring(h);
 
-	void do_foo(){}
+	SetWindowText(win.GetHandle(), wss.str().c_str() );
 
-	void do_cfoo() const{}
-
-protected:
-
-	virtual void Update(const Timer::Time & time){
-
-		//Do nothing
-
-	}
-
-};
-
-class BarComponent : public SceneObject::Component{
-
-public:
-
-	void do_bar(){}
-
-	void do_cbar() const{}
-
-protected:
-
-	virtual void Update(const Timer::Time & time){
-
-		//Do nothing
-
-	}
-
-};
+});
 
 GILogic::GILogic(){
 
 	SetTitle(kWindowTitle);
 
 	Show();
-
-	counter = 0;
 	
+	OnResized() << lambda;
+
 }
 
 GILogic::~GILogic(){
@@ -70,36 +42,4 @@ GILogic::~GILogic(){
 void GILogic::Update(const Timer::Time & time){
 
 	
-
-	if (time.GetTotalSeconds() >= 10){
-
-		wstringstream message;
-
-		message << std::to_wstring(counter);
-
-		SetTitle(message.str());
-
-		Sleep(10);
-
-	}else{
-		
-		++counter;
-
-	}
-
-
-}
-
-LRESULT GILogic::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
-
-	if (message_id == WM_CLOSE){
-
-		gi_lib::Application::GetInstance()
-							.DisposeWindow(GetHandle());
-		
-	}
-
-	//Default behavior
-	return DefWindowProc(GetHandle(), message_id, wparameter, lparameter);
-
 }
