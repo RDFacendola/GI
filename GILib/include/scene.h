@@ -7,9 +7,12 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include <typeinfo>
 #include <type_traits>
 #include <memory>
+#include <algorithm>
+#include <iterator>
 
 #include "iterator.h"
 #include "timer.h"
@@ -18,6 +21,7 @@ using std::wstring;
 using std::unordered_multimap;
 using std::shared_ptr;
 using std::weak_ptr;
+using std::vector;
 
 namespace gi_lib{
 	
@@ -36,6 +40,8 @@ namespace gi_lib{
 
 		/// \brief Scene object component.
 		class Component{
+
+			friend class SceneObject;
 
 		public:
 
@@ -59,6 +65,8 @@ namespace gi_lib{
 
 			}
 
+		protected:
+
 			/// \brief Update the component.
 
 			/// \param time The current application time.
@@ -68,170 +76,14 @@ namespace gi_lib{
 
 			/// \brief Set the component's owner.
 
-			/// \param scene_object The owner of this instance.
-			inline void SetOwner(SceneObject & scene_object){
+			/// \param scene_object Pointer to the owner of this instance.
+			inline void SetOwner(SceneObject * scene_object){
 
-				scene_object_ = &scene_object;
+				scene_object_ = scene_object;
 
 			}
 
 			SceneObject * scene_object_;
-
-		};
-
-		/// \brief Iterator used to iterate through scene object's components.
-
-		/// \tparam TComponent Type of the component this iterator points to.
-		template <typename TComponent>
-		class ComponentIterator{
-
-		public:
-
-			ComponentIterator(SceneObject::ComponentMap::iterator iterator) :
-				iterator_(iterator){};
-
-			// Dereferencing
-
-			TComponent & operator*(){
-
-				return *static_cast<TComponent *>((*iterator_).second);
-
-			}
-
-			TComponent * operator->(){
-
-				return static_cast<TComponent *>((*iterator_).second);
-
-			}
-
-			// Equality
-
-			inline bool operator==(const ComponentIterator & other) const{
-
-				return iterator_ == other.iterator_;
-
-			}
-
-			inline bool operator==(const SceneObject::ComponentMap::iterator & other) const{
-
-				return iterator_ == other;
-
-			}
-
-			inline bool operator!=(const ComponentIterator & other) const{
-
-				return iterator_ != other.iterator_;
-
-			}
-
-			inline bool operator!=(const SceneObject::ComponentMap::iterator & other) const{
-
-				return iterator_ != other;
-
-			}
-
-			// Advance
-
-			inline ComponentIterator & operator++() {
-
-				++iterator_;
-
-				return *this;
-
-			}
-
-			inline ComponentIterator operator++ (int)
-			{
-
-				ComponentIterator tmp(*this);
-
-				++iterator_;
-
-				return tmp;
-
-			}
-
-		private:
-
-			SceneObject::ComponentMap::iterator iterator_;
-
-		};
-
-		/// \brief Constant iterator used to iterate through scene object's components.
-
-		/// \tparam TComponent Type of the component this iterator points to.
-		template <typename TComponent>
-		class ComponentConstIterator{
-
-		public:
-
-			ComponentConstIterator(SceneObject::ComponentMap::const_iterator iterator) :
-				iterator_(iterator){};
-
-			//Dereferencing
-
-			const TComponent & operator*() const{
-
-				return *static_cast<const TComponent *>((*iterator_).second);
-
-			}
-
-			const TComponent * operator->() const{
-
-				return static_cast<const TComponent *>((*iterator_).second);
-
-			}
-
-			//Equality
-
-			inline bool operator==(const ComponentConstIterator & other) const{
-
-				return iterator_ == other.iterator_;
-
-			}
-
-			inline bool operator==(const SceneObject::ComponentMap::const_iterator & other) const{
-
-				return iterator_ == other;
-
-			}
-
-			inline bool operator!=(const ComponentConstIterator & other) const{
-
-				return iterator_ != other.iterator_;
-
-			}
-
-			inline bool operator!=(const SceneObject::ComponentMap::const_iterator & other) const{
-
-				return iterator_ != other;
-
-			}
-
-			//Forward
-
-			inline ComponentConstIterator & operator++() {
-
-				++iterator_;
-
-				return *this;
-
-			}
-
-			inline ComponentConstIterator operator++ (int)
-			{
-
-				ComponentIterator tmp(*this);
-
-				++iterator_;
-
-				return tmp;
-
-			}
-
-		private:
-
-			SceneObject::ComponentMap::const_iterator iterator_;
 
 		};
 
@@ -243,17 +95,17 @@ namespace gi_lib{
 
 		/// \param name The name of this instance.
 		SceneObject(wstring name) :
-			name_(name){}
+			name_(std::move(name)){}
 
 		/// \brief Add a new component to the instance.
 
-		/// The component to add is created inside the method as its lifecycle is entirely managed by its owner.
+		/// SceneObject owns the created component.
 		/// \tparam TComponent Type of the component to add. It must derive from Component.
 		/// \tparam TArgs Type of the arguments that will be passed to the component during its creation.
 		/// \param args Arguments that will be passed to the component during its creation.
-		/// \return Returns an iterator pointing to the new component.
+		/// \return Returns a weak pointer to the created component.
 		template<typename TComponent, typename... TArgs>
-		inline ComponentIterator<TComponent> AddComponent(TArgs&&... args){
+		inline weak_ptr<TComponent> AddComponent(TArgs&&... args){
 
 			//Ensures that TComponent is derived from Component at compile time
 			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
@@ -261,38 +113,45 @@ namespace gi_lib{
 			auto component = std::make_shared<TComponent>(std::forward<TArgs>(args)...);
 
 			///Set the owner of the component
-			component->SetOwner(*this);
+			component->SetOwner(this);
 
-			return ComponentIterator<TComponent>(components_.insert(ComponentMap::value_type(typeid(TComponent).hash_code(),
-																							 component)));
+			components_.insert(ComponentMap::value_type(typeid(TComponent).hash_code(),
+														component));
+
+			return component;
 
 		}
 
-		/// /brief Remove the component pointed by the iterator.
+		/// /brief Remove a given component.
 
-		/// The component is destroyed and its destructor gets called accordingly.
-		/// The specified iterator is invalidated.
+		/// The component is destroyed and its destructor called accordingly.
 		/// \tparam TComponent Type of the component to remove. It must derive from Component. 
-		/// \param iterator Iterator pointing to the component to be removed.
+		/// \param component Weak pointer to the component to delete.
 		template<typename TComponent>
-		void RemoveComponent(ComponentIterator<TComponent> & iterator){
+		void RemoveComponent(weak_ptr<TComponent> & component){
 
 			//Ensures that TComponent is derived from Component at compile time
 			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
-			for (auto it = components_.find(typeid(TComponent).hash_code()); it != components_.end();){
+			if (auto temp_component = component.lock()){
 
-				if (it == iterator){
+				// Null out the owner
+				temp_component->SetOwner(nullptr);
 
-					components_.erase(it++);
+				for (auto it = components_.find(typeid(TComponent).hash_code()); it != components_.end();){
 
-					iterator = components_.end();
+					if (it->second == temp_component){
 
-					return;
+						components_.erase(it++);
+						
+						return;
 
-				}else{
+					}
+					else{
 
-					++it;
+						++it;
+
+					}
 
 				}
 
@@ -317,88 +176,95 @@ namespace gi_lib{
 		/// \brief Get all the components deriving from TComponent.
 
 		/// \tparam TComponent Type of the components to get. It must derive from Component.
-		/// \return Returns a range containing all the components that derive from TComponent.
+		/// \return Returns a vector containing weak pointer to the components that derive from TComponent.
 		template<typename TComponent>
-		inline Range<TComponent, ComponentIterator<TComponent>> GetComponents(){
+		inline vector<weak_ptr<TComponent>> GetComponents(){
 
 			//Ensures that TComponent is derived from Component at compile time
 			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
 			auto range = components_.equal_range(typeid(TComponent).hash_code());
 
-			return Range<TComponent, ComponentIterator<TComponent>>(ComponentIterator<TComponent>(range.first),
-																	ComponentIterator<TComponent>(range.second));
+			auto components = vector<weak_ptr<TComponent>>(std::distance(range.first, range.second));
+
+			std::transform(range.first,
+						   range.second,
+						   components.begin(),
+						   [](const ComponentMap::value_type & value){ return std::static_pointer_cast<TComponent>(value.second); });
+
+			return components;
 
 		}
 
 		/// \brief Get all the components deriving from TComponent.
 
 		/// \tparam TComponent Type of the components to get. It must derive from Component.
-		/// \return Returns a range containing all the components that derive from TComponent.
+		/// \return Returns a vector containing weak pointer to the components that derive from TComponent.
 		template<typename TComponent>
-		inline Range<TComponent, ComponentConstIterator<TComponent>> GetComponents() const{
+		inline vector<weak_ptr<const TComponent>> GetComponents() const{
 
 			//Ensures that TComponent is derived from Component at compile time
 			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
 			auto range = components_.equal_range(typeid(TComponent).hash_code());
 
-			return Range<TComponent, ComponentConstIterator<TComponent>>(ComponentConstIterator<TComponent>(range.first),
-				ComponentConstIterator<TComponent>(range.second));
+			auto components = vector<weak_ptr<const TComponent>>(std::distance(range.first, range.second));
+
+			std::transform(range.first,
+						   range.second,
+						   components.begin(),
+						   [](const ComponentMap::value_type & value){ return std::static_pointer_cast<const TComponent>(value.second); });
+
+			return components;
 
 		}
 
 		/// \brief Get the first component deriving from TComponent.
 
 		/// \tparam TComponent Type of the component to get. It must derive from Component.
-		/// \return Returns an iterator pointing to the first occurence found if any. Returns an iterator pointing to an element past the end otherwise.
+		/// \return Return a weak pointer to the component found. Returns an empty pointer if no component was found.
 		template<typename TComponent>
-		inline ComponentIterator<TComponent> GetComponent(){
+		inline weak_ptr<TComponent> GetComponent(){
 
 			//Ensures that TComponent is derived from Component at compile time
 			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
-			return ComponentIterator<TComponent>(components_.find(typeid(TComponent).hash_code()));
+			auto it = components_.find(typeid(TComponent).hash_code());
 
+			if (it != components_.end()){
+
+				return std::static_pointer_cast<TComponent>(it->second);
+
+			}else{
+
+				return weak_ptr<TComponent>();
+
+			}
+			
 		}
 
 		/// \brief Get the first component deriving from TComponent.
 
 		/// \tparam TComponent Type of the component to get. It must derive from Component.
-		/// \return Returns a constant iterator pointing to the first occurence found if any. Returns an iterator pointing to an element past the end otherwise.
+		/// \return Return a weak pointer to the component found. Returns an empty pointer if no component was found.
 		template<typename TComponent>
-		inline ComponentConstIterator<TComponent> GetComponent() const{
+		inline weak_ptr<const TComponent> GetComponent() const{
 
 			//Ensures that TComponent is derived from Component at compile time
 			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
-			return ComponentConstIterator<TComponent>(components_.find(typeid(TComponent).hash_code()));
+			auto it = components_.find(typeid(TComponent).hash_code());
 
-		}
+			if (it != components_.end()){
 
-		/// \brief Get an iterator pointing to a component past the end.
+				return std::static_pointer_cast<const TComponent>(it->second);
 
-		/// \return Return an iterator pointing to a component past the end.
-		template<typename TComponent>
-		inline ComponentIterator<TComponent> GetEnd(){
+			}
+			else{
 
-			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
+				return weak_ptr<const TComponent>();
 
-			return ComponentIterator<TComponent>(components_.end());
-
-		}
-
-		/// \brief Get a constant iterator pointing to a component past the end.
-
-		/// \return Return a constant iterator pointing to a component past the end.
-		template<typename TComponent>
-		inline ComponentConstIterator<TComponent> GetEnd() const{
-
-			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
-
-			return ComponentConstIterator<TComponent>(components_.end());
+			}
 
 		}
 

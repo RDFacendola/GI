@@ -8,30 +8,22 @@
 namespace gi_lib{
 
 	/// \brief Packs two iterators together to iterate through a subset of a container.
-	/// \tparam TValue Type of the objects drescribed by the range.
-	/// \tparam TIterator Type of the iterator used to point to the objects.
-	template <typename TValue, typename TIterator>
+	/// \tparam TContainer Type of the container the iterators have been generated from. It must be STL-compliant container.
+	template <typename TContainer>
 	class Range{
 
 	public:
 
-		/// \brief Iterator type.
-		typedef TIterator iterator;
-
-		/// \brief Type of the difference between iterators.
-		typedef ptrdiff_t difference_type;
-
-		/// \brief Type of the size.
-		typedef size_t size_type;
-
-		/// \brief Value type.
-		typedef TValue value_type;
-
-		/// \brief Pointer type.
-		typedef TValue * pointer;
-
-		/// \brief Reference type.
-		typedef TValue & reference;
+		typedef typename TContainer::allocator_type allocator_type;
+		typedef typename TContainer::size_type size_type;
+		typedef typename TContainer::difference_type difference_type;
+		typedef typename TContainer::pointer pointer;
+		typedef typename TContainer::const_pointer const_pointer;
+		typedef typename TContainer::reference reference;
+		typedef typename TContainer::const_reference const_reference;
+		typedef typename TContainer::iterator iterator;
+		typedef typename TContainer::const_iterator const_iterator;
+		typedef typename TContainer::value_type value_type;
 
 		/// \brief Constructor.
 		/// \param begin_it Iterator which points to the first element of the range.
@@ -56,11 +48,19 @@ namespace gi_lib{
 
 		}
 
-		/// \brief Tells whether the range is empty or not.
-		/// \return Returns true if the range is empty, false otherwise
-		inline bool empty(){
+		/// \brief Begin of the range.
+		/// \return Returns an iterator pointing to the first element of the range.
+		inline const_iterator cbegin() const{
 
-			return begin_ == end_;
+			return begin_;
+
+		}
+
+		/// \brief One element past to the end of the range.
+		/// \return Returns an iterator pointing to the element past the end of the range.
+		inline const_iterator cend() const {
+
+			return end_;
 
 		}
 
