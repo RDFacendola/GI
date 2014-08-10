@@ -202,19 +202,12 @@ namespace gi_lib{
 			//Ensures that TWindow is derived from Window at compile time
 			static_assert(typename std::is_base_of<Window, TWindow>::value, "TWindow must inherit from Window");
 
-#ifdef _WIN32
-
 			auto window = std::make_shared<TWindow>(std::forward<TArgs>(arguments)...);
 
 			windows_[window->GetHandle()] = window;
 
 			return window;
 
-#else
-
-			static_assert(false, "Unsupported OS");
-
-#endif
 		}
 
 		/// /brief Dispose an existing window.
