@@ -129,170 +129,211 @@ $(document).ready(function(){initNavTree('exceptions_8h_source.html','');});
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;</div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#ifdef _WIN32</span></div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
-<div class="line"><a name="l00029"></a><span class="lineno"><a class="line" href="exceptions_8h.html#a5c7aeefc3de8b2dc5089a61381611c9b">   29</a></span>&#160;<span class="preprocessor">#define THROW_ON_FAIL(expr) do{ \</span></div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">                                HRESULT hr = expr; \</span></div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">                                if(FAILED(hr)) { \</span></div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">                                    std::wstringstream stream; \</span></div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<span class="preprocessor">                                    stream &lt;&lt; L&quot;\&quot;&quot; &lt;&lt; #expr &lt;&lt; &quot;\&quot; failed with 0x&quot; &lt;&lt; std::hex &lt;&lt; hr &lt;&lt; std::dec &lt;&lt; std::endl \</span></div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">                                           &lt;&lt; __FILE__ &lt;&lt; std::endl \</span></div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="preprocessor">                                           &lt;&lt; __FUNCTION__ &lt;&lt; L&quot; @ &quot; &lt;&lt; __LINE__ &lt;&lt; std::endl; \</span></div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="preprocessor">                                    throw RuntimeException(stream.str(), {{L&quot;error_code&quot;, std::to_wstring(hr)}}); \</span></div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="preprocessor">                                } \</span></div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="preprocessor">                            }while (0)</span></div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor">#if _MSC_VER &gt;= 1500</span></div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="comment">//Disable this warning (Only for VS 2008+)</span></div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor">#define WHILE0 __pragma(warning(push)) \</span></div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">               __pragma(warning(disable:4127)) \</span></div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;<span class="preprocessor">                           while(0) \</span></div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="preprocessor">               __pragma(warning(pop))</span></div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="preprocessor">#define WHILE0 while(0)</span></div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;</div>
-<div class="line"><a name="l00042"></a><span class="lineno"><a class="line" href="exceptions_8h.html#a327e270316af41b131296b3723a03b4f">   42</a></span>&#160;<span class="preprocessor">#define THROW_ON_ERROR(expr) do { \</span></div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;<span class="preprocessor">                                auto hr = expr; \</span></div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="preprocessor">                                if(!hr){ \</span></div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="preprocessor">                                    std::wstringstream stream; \</span></div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="preprocessor">                                    stream &lt;&lt; L&quot;\&quot;&quot; &lt;&lt; #expr &lt;&lt; &quot;\&quot; failed with 0x&quot; &lt;&lt; std::hex &lt;&lt; GetLastError() &lt;&lt; std::dec &lt;&lt; std::endl \</span></div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;<span class="preprocessor">                                           &lt;&lt; __FILE__ &lt;&lt; std::endl \</span></div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;<span class="preprocessor">                                           &lt;&lt; __FUNCTION__ &lt;&lt; L&quot; @ &quot; &lt;&lt; __LINE__ &lt;&lt; std::endl; \</span></div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;<span class="preprocessor">                                    throw RuntimeException(stream.str(), {{L&quot;error_code&quot;, std::to_wstring(GetLastError())}}); } \</span></div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="preprocessor">                            }while (0)</span></div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;</div>
-<div class="line"><a name="l00053"></a><span class="lineno"><a class="line" href="exceptions_8h.html#ac98287e45885f8d838a1726eec3c4ca5">   53</a></span>&#160;<span class="preprocessor">#define RETURN_ON_FAIL(expr) do{ \</span></div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;<span class="preprocessor">                                HRESULT hr = expr; \</span></div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;<span class="preprocessor">                                if (FAILED(hr)){ \</span></div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;<span class="preprocessor">                                    return hr; \</span></div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<span class="preprocessor">                                } \</span></div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;<span class="preprocessor">                             }while (0)</span></div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;<span class="keyword">namespace </span>gi_lib{</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;</div>
-<div class="line"><a name="l00065"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_stack_trace.html">   65</a></span>&#160;    <span class="keyword">class </span><a class="code" href="classgi__lib_1_1_stack_trace.html">StackTrace</a> : <span class="keyword">public</span> StackWalker{</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
-<div class="line"><a name="l00070"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_stack_trace.html#a2d701e9fe53c3888ef57da895f82db22">   70</a></span>&#160;        <a class="code" href="classgi__lib_1_1_stack_trace.html#a2d701e9fe53c3888ef57da895f82db22">StackTrace</a>() : StackWalker(StackWalkOptions::RetrieveNone) {}</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;</div>
-<div class="line"><a name="l00074"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_stack_trace.html#a989977a4490c89eb5d125d63820d67d3">   74</a></span>&#160;        <span class="keyword">inline</span> wstring <a class="code" href="classgi__lib_1_1_stack_trace.html#a989977a4490c89eb5d125d63820d67d3">GetStackTrace</a>(){</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;</div>
+<div class="line"><a name="l00043"></a><span class="lineno"><a class="line" href="exceptions_8h.html#a5c7aeefc3de8b2dc5089a61381611c9b">   43</a></span>&#160;<span class="preprocessor">#define THROW_ON_FAIL(expr) do{ \</span></div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="preprocessor">                                HRESULT hr = expr; \</span></div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="preprocessor">                                if(FAILED(hr)) { \</span></div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="preprocessor">                                    std::wstringstream stream; \</span></div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;<span class="preprocessor">                                    stream &lt;&lt; L&quot;\&quot;&quot; &lt;&lt; #expr &lt;&lt; &quot;\&quot; failed with 0x&quot; &lt;&lt; std::hex &lt;&lt; hr &lt;&lt; std::dec &lt;&lt; std::endl \</span></div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;<span class="preprocessor">                                           &lt;&lt; __FILE__ &lt;&lt; std::endl \</span></div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;<span class="preprocessor">                                           &lt;&lt; __FUNCTION__ &lt;&lt; L&quot; @ &quot; &lt;&lt; __LINE__ &lt;&lt; std::endl; \</span></div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="preprocessor">                                    throw RuntimeException(stream.str(), {{L&quot;error_code&quot;, std::to_wstring(hr)}}); \</span></div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;<span class="preprocessor">                                } \</span></div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;<span class="preprocessor">                            }WHILE0</span></div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;</div>
+<div class="line"><a name="l00056"></a><span class="lineno"><a class="line" href="exceptions_8h.html#a327e270316af41b131296b3723a03b4f">   56</a></span>&#160;<span class="preprocessor">#define THROW_ON_ERROR(expr) do { \</span></div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<span class="preprocessor">                                auto hr = expr; \</span></div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;<span class="preprocessor">                                if(!hr){ \</span></div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;<span class="preprocessor">                                    std::wstringstream stream; \</span></div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;<span class="preprocessor">                                    stream &lt;&lt; L&quot;\&quot;&quot; &lt;&lt; #expr &lt;&lt; &quot;\&quot; failed with 0x&quot; &lt;&lt; std::hex &lt;&lt; GetLastError() &lt;&lt; std::dec &lt;&lt; std::endl \</span></div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;<span class="preprocessor">                                           &lt;&lt; __FILE__ &lt;&lt; std::endl \</span></div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;<span class="preprocessor">                                           &lt;&lt; __FUNCTION__ &lt;&lt; L&quot; @ &quot; &lt;&lt; __LINE__ &lt;&lt; std::endl; \</span></div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;<span class="preprocessor">                                    throw RuntimeException(stream.str(), {{L&quot;error_code&quot;, std::to_wstring(GetLastError())}}); } \</span></div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;<span class="preprocessor">                             }WHILE0</span></div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
+<div class="line"><a name="l00067"></a><span class="lineno"><a class="line" href="exceptions_8h.html#ac98287e45885f8d838a1726eec3c4ca5">   67</a></span>&#160;<span class="preprocessor">#define RETURN_ON_FAIL(expr) do{ \</span></div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;<span class="preprocessor">                                HRESULT hr = expr; \</span></div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;<span class="preprocessor">                                if (FAILED(hr)){ \</span></div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;<span class="preprocessor">                                    return hr; \</span></div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;<span class="preprocessor">                                } \</span></div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;<span class="preprocessor">                             }WHILE0</span></div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;            <span class="comment">//Remove the content of the stack trace</span></div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;            stack_trace.str(<span class="stringliteral">&quot;&quot;</span>);</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;            ShowCallstack();</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;<span class="keyword">namespace </span>gi_lib{</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;</div>
+<div class="line"><a name="l00079"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_stack_trace.html">   79</a></span>&#160;    <span class="keyword">class </span><a class="code" href="classgi__lib_1_1_stack_trace.html">StackTrace</a> : <span class="keyword">public</span> StackWalker{</div>
 <div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;            <span class="keyword">auto</span> trace = stack_trace.str();</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;    <span class="keyword">public</span>:</div>
 <div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;            <span class="keywordflow">return</span> wstring(trace.begin(), trace.end());</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;        }</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    <span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;</div>
-<div class="line"><a name="l00092"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_stack_trace.html#ab7c5955833484affb8fb0fd09aa95b95">   92</a></span>&#160;        <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classgi__lib_1_1_stack_trace.html#ab7c5955833484affb8fb0fd09aa95b95">OnCallstackEntry</a>(CallstackEntryType eType, CallstackEntry &amp;entry){</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;            StackWalker::OnCallstackEntry(eType, entry);</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;            <span class="keywordflow">if</span> (entry.offset == 0){</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;                <span class="keywordflow">return</span>; <span class="comment">//Invalid entry</span></div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;            }</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;            stack_trace &lt;&lt; entry.moduleName</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;                        &lt;&lt; <span class="stringliteral">&quot; - &quot;</span></div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;                        &lt;&lt; entry.undFullName</div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;                        &lt;&lt; <span class="stringliteral">&quot; (&quot;</span></div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;                        &lt;&lt; std::to_string(entry.lineNumber)</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;                        &lt;&lt; <span class="stringliteral">&quot;)&quot;</span></div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;                        &lt;&lt; std::endl;</div>
+<div class="line"><a name="l00084"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_stack_trace.html#a2d701e9fe53c3888ef57da895f82db22">   84</a></span>&#160;        <a class="code" href="classgi__lib_1_1_stack_trace.html#a2d701e9fe53c3888ef57da895f82db22">StackTrace</a>() : StackWalker(StackWalkOptions::RetrieveNone) {}</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;</div>
+<div class="line"><a name="l00088"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_stack_trace.html#a989977a4490c89eb5d125d63820d67d3">   88</a></span>&#160;        <span class="keyword">inline</span> wstring <a class="code" href="classgi__lib_1_1_stack_trace.html#a989977a4490c89eb5d125d63820d67d3">GetStackTrace</a>(){</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;            <span class="comment">//Remove the content of the stack trace</span></div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;            stack_trace.str(<span class="stringliteral">&quot;&quot;</span>);</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;            ShowCallstack();</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;            <span class="keyword">auto</span> trace = stack_trace.str();</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;            <span class="keywordflow">return</span> wstring(trace.begin(), trace.end());</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;        }</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;    <span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;</div>
+<div class="line"><a name="l00106"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_stack_trace.html#ab7c5955833484affb8fb0fd09aa95b95">  106</a></span>&#160;        <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code" href="classgi__lib_1_1_stack_trace.html#ab7c5955833484affb8fb0fd09aa95b95">OnCallstackEntry</a>(CallstackEntryType eType, CallstackEntry &amp;entry){</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;            StackWalker::OnCallstackEntry(eType, entry);</div>
 <div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;        }</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;            <span class="keywordflow">if</span> (entry.offset == 0){</div>
 <div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;</div>
-<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;    <span class="keyword">private</span>:</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;                <span class="keywordflow">return</span>; <span class="comment">//Invalid entry</span></div>
 <div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;</div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;        stringstream stack_trace;</div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;            }</div>
 <div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;</div>
-<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;    };</div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;</div>
-<div class="line"><a name="l00123"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html">  123</a></span>&#160;    <span class="keyword">class </span><a class="code" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a>{</div>
-<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;</div>
-<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;    <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;</div>
-<div class="line"><a name="l00128"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#af3ab1d65b6f9453d6b81ec3c771d9916">  128</a></span>&#160;        <span class="keyword">typedef</span> map&lt;wstring, wstring&gt; <a class="code" href="classgi__lib_1_1_runtime_exception.html#af3ab1d65b6f9453d6b81ec3c771d9916">TErrorArgs</a>;</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;            stack_trace &lt;&lt; entry.moduleName</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;                        &lt;&lt; <span class="stringliteral">&quot; - &quot;</span></div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;                        &lt;&lt; entry.undFullName</div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;                        &lt;&lt; <span class="stringliteral">&quot; (&quot;</span></div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;                        &lt;&lt; std::to_string(entry.lineNumber)</div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;                        &lt;&lt; <span class="stringliteral">&quot;)&quot;</span></div>
+<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;                        &lt;&lt; std::endl;</div>
+<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;</div>
+<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;        }</div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;</div>
+<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;    <span class="keyword">private</span>:</div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;</div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;        stringstream stack_trace;</div>
 <div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;</div>
-<div class="line"><a name="l00132"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#aa367d169fcedd76f81f87a039f526ff7">  132</a></span>&#160;        <a class="code" href="classgi__lib_1_1_runtime_exception.html#aa367d169fcedd76f81f87a039f526ff7">RuntimeException</a>(<span class="keyword">const</span> wstring &amp; error_message){</div>
-<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;</div>
-<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;            <a class="code" href="classgi__lib_1_1_stack_trace.html">StackTrace</a> e;</div>
-<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;</div>
-<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;            stack_trace_ = e.<a class="code" href="classgi__lib_1_1_stack_trace.html#a989977a4490c89eb5d125d63820d67d3">GetStackTrace</a>();</div>
-<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;            error_message_ = error_message;</div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;    };</div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;</div>
+<div class="line"><a name="l00137"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html">  137</a></span>&#160;    <span class="keyword">class </span><a class="code" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a>{</div>
 <div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;</div>
-<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;        }</div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;    <span class="keyword">public</span>:</div>
 <div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;</div>
-<div class="line"><a name="l00144"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#a18292dd8b066cce3743697154afee1cc">  144</a></span>&#160;        <a class="code" href="classgi__lib_1_1_runtime_exception.html#a18292dd8b066cce3743697154afee1cc">RuntimeException</a>(<span class="keyword">const</span> wstring &amp; error_message, <a class="code" href="classgi__lib_1_1_runtime_exception.html#af3ab1d65b6f9453d6b81ec3c771d9916">TErrorArgs</a> &amp;&amp; extras){</div>
-<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;</div>
-<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;            <a class="code" href="classgi__lib_1_1_stack_trace.html">StackTrace</a> e;</div>
+<div class="line"><a name="l00142"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#af3ab1d65b6f9453d6b81ec3c771d9916">  142</a></span>&#160;        <span class="keyword">typedef</span> map&lt;wstring, wstring&gt; <a class="code" href="classgi__lib_1_1_runtime_exception.html#af3ab1d65b6f9453d6b81ec3c771d9916">TErrorArgs</a>;</div>
+<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;</div>
+<div class="line"><a name="l00146"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#ad53cc95b65c41a25fe675e21e0b9f1dc">  146</a></span>&#160;        <a class="code" href="classgi__lib_1_1_runtime_exception.html#ad53cc95b65c41a25fe675e21e0b9f1dc">RuntimeException</a>(<a class="code" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a> &amp;&amp; other){</div>
 <div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;</div>
-<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;            stack_trace_ = e.<a class="code" href="classgi__lib_1_1_stack_trace.html#a989977a4490c89eb5d125d63820d67d3">GetStackTrace</a>();</div>
-<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;            error_message_ = error_message;</div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;            </div>
-<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;            extras_ = std::move(extras);</div>
-<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;</div>
-<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;        }</div>
-<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;</div>
-<div class="line"><a name="l00157"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#a15047c9cc0834f955666c7c69d364384">  157</a></span>&#160;        <span class="keyword">const</span> wstring &amp; <a class="code" href="classgi__lib_1_1_runtime_exception.html#a15047c9cc0834f955666c7c69d364384">GetErrorMessage</a>()<span class="keyword"> const</span>{</div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;</div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;            <span class="keywordflow">return</span> error_message_;</div>
-<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;</div>
-<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;        }</div>
+<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;            error_message_ = std::move(other.error_message_);</div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;            stack_trace_ = std::move(other.stack_trace_);</div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;            extras_ = std::move(other.extras_);</div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;        }</div>
+<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;</div>
+<div class="line"><a name="l00156"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#aa367d169fcedd76f81f87a039f526ff7">  156</a></span>&#160;        <a class="code" href="classgi__lib_1_1_runtime_exception.html#aa367d169fcedd76f81f87a039f526ff7">RuntimeException</a>(<span class="keyword">const</span> wstring &amp; error_message){</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;</div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;            <a class="code" href="classgi__lib_1_1_stack_trace.html">StackTrace</a> e;</div>
+<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;</div>
+<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;            stack_trace_ = e.<a class="code" href="classgi__lib_1_1_stack_trace.html#a989977a4490c89eb5d125d63820d67d3">GetStackTrace</a>();</div>
+<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;            error_message_ = error_message;</div>
 <div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;</div>
-<div class="line"><a name="l00165"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#ad0eb04fd657474afd6aecf9b0ec76e22">  165</a></span>&#160;        <span class="keyword">const</span> wstring &amp; <a class="code" href="classgi__lib_1_1_runtime_exception.html#ad0eb04fd657474afd6aecf9b0ec76e22">GetStackTrace</a>()<span class="keyword"> const</span>{</div>
-<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;</div>
-<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;            <span class="keywordflow">return</span> stack_trace_;</div>
-<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;</div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;        }</div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;</div>
-<div class="line"><a name="l00174"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#a5f85fe554e49215a86f2881c6a9440fc">  174</a></span>&#160;        <span class="keyword">inline</span> <span class="keyword">const</span> wstring &amp; <a class="code" href="classgi__lib_1_1_runtime_exception.html#a5f85fe554e49215a86f2881c6a9440fc">GetExtra</a>(wstring key)<span class="keyword"> const</span>{</div>
-<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;</div>
-<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;            <span class="keyword">auto</span> it = extras_.find(key);</div>
-<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;</div>
-<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;            <span class="keywordflow">if</span> (it != extras_.end()){</div>
-<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;</div>
-<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;                <span class="keywordflow">return</span> it-&gt;second;</div>
-<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;</div>
-<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;            }<span class="keywordflow">else</span>{</div>
-<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;</div>
-<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;                <span class="keywordflow">return</span> kEmptyExtra;</div>
-<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;</div>
-<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;            }</div>
-<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;</div>
-<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;        }</div>
-<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;    <span class="keyword">private</span>:</div>
-<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;</div>
-<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;        <span class="keyword">const</span> wstring kEmptyExtra = L<span class="stringliteral">&quot;&quot;</span>;</div>
+<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;        }</div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;</div>
+<div class="line"><a name="l00168"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#a18292dd8b066cce3743697154afee1cc">  168</a></span>&#160;        <a class="code" href="classgi__lib_1_1_runtime_exception.html#a18292dd8b066cce3743697154afee1cc">RuntimeException</a>(<span class="keyword">const</span> wstring &amp; error_message, <a class="code" href="classgi__lib_1_1_runtime_exception.html#af3ab1d65b6f9453d6b81ec3c771d9916">TErrorArgs</a> &amp;&amp; extras){</div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;</div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;            <a class="code" href="classgi__lib_1_1_stack_trace.html">StackTrace</a> e;</div>
+<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;</div>
+<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;            stack_trace_ = e.<a class="code" href="classgi__lib_1_1_stack_trace.html#a989977a4490c89eb5d125d63820d67d3">GetStackTrace</a>();</div>
+<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;            error_message_ = error_message;</div>
+<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;            </div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;            extras_ = std::move(extras);</div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;        }</div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;</div>
+<div class="line"><a name="l00181"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#a140a93c38d7adf394db055dcaeb485ce">  181</a></span>&#160;        <span class="keyword">inline</span> <a class="code" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a> &amp; <a class="code" href="classgi__lib_1_1_runtime_exception.html#a140a93c38d7adf394db055dcaeb485ce">operator=</a>(<a class="code" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a> other){</div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;</div>
+<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;            other.Swap(*<span class="keyword">this</span>);</div>
+<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;</div>
+<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;            <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;</div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;        }</div>
+<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;</div>
+<div class="line"><a name="l00191"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#a15047c9cc0834f955666c7c69d364384">  191</a></span>&#160;        <span class="keyword">const</span> wstring &amp; <a class="code" href="classgi__lib_1_1_runtime_exception.html#a15047c9cc0834f955666c7c69d364384">GetErrorMessage</a>()<span class="keyword"> const</span>{</div>
 <div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;</div>
-<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;        wstring error_message_;</div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;            <span class="keywordflow">return</span> error_message_;</div>
 <div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;</div>
-<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;        wstring stack_trace_;</div>
+<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;        }</div>
 <div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;</div>
-<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;        <a class="code" href="classgi__lib_1_1_runtime_exception.html#af3ab1d65b6f9453d6b81ec3c771d9916">TErrorArgs</a> extras_;</div>
-<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;</div>
-<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;    };</div>
+<div class="line"><a name="l00199"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#ad0eb04fd657474afd6aecf9b0ec76e22">  199</a></span>&#160;        <span class="keyword">const</span> wstring &amp; <a class="code" href="classgi__lib_1_1_runtime_exception.html#ad0eb04fd657474afd6aecf9b0ec76e22">GetStackTrace</a>()<span class="keyword"> const</span>{</div>
 <div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;</div>
-<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;}</div>
-<div class="ttc" id="classgi__lib_1_1_stack_trace_html_a989977a4490c89eb5d125d63820d67d3"><div class="ttname"><a href="classgi__lib_1_1_stack_trace.html#a989977a4490c89eb5d125d63820d67d3">gi_lib::StackTrace::GetStackTrace</a></div><div class="ttdeci">wstring GetStackTrace()</div><div class="ttdoc">Get the current stack trace. </div><div class="ttdef"><b>Definition:</b> exceptions.h:74</div></div>
-<div class="ttc" id="classgi__lib_1_1_stack_trace_html_a2d701e9fe53c3888ef57da895f82db22"><div class="ttname"><a href="classgi__lib_1_1_stack_trace.html#a2d701e9fe53c3888ef57da895f82db22">gi_lib::StackTrace::StackTrace</a></div><div class="ttdeci">StackTrace()</div><div class="ttdoc">Default constructor. </div><div class="ttdef"><b>Definition:</b> exceptions.h:70</div></div>
-<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_a18292dd8b066cce3743697154afee1cc"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#a18292dd8b066cce3743697154afee1cc">gi_lib::RuntimeException::RuntimeException</a></div><div class="ttdeci">RuntimeException(const wstring &amp;error_message, TErrorArgs &amp;&amp;extras)</div><div class="ttdoc">Creates a new exception. </div><div class="ttdef"><b>Definition:</b> exceptions.h:144</div></div>
-<div class="ttc" id="classgi__lib_1_1_stack_trace_html_ab7c5955833484affb8fb0fd09aa95b95"><div class="ttname"><a href="classgi__lib_1_1_stack_trace.html#ab7c5955833484affb8fb0fd09aa95b95">gi_lib::StackTrace::OnCallstackEntry</a></div><div class="ttdeci">virtual void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &amp;entry)</div><div class="ttdoc">Callback used to log each stack entry. </div><div class="ttdef"><b>Definition:</b> exceptions.h:92</div></div>
-<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_a15047c9cc0834f955666c7c69d364384"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#a15047c9cc0834f955666c7c69d364384">gi_lib::RuntimeException::GetErrorMessage</a></div><div class="ttdeci">const wstring &amp; GetErrorMessage() const </div><div class="ttdoc">Get the error message. </div><div class="ttdef"><b>Definition:</b> exceptions.h:157</div></div>
-<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_ad0eb04fd657474afd6aecf9b0ec76e22"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#ad0eb04fd657474afd6aecf9b0ec76e22">gi_lib::RuntimeException::GetStackTrace</a></div><div class="ttdeci">const wstring &amp; GetStackTrace() const </div><div class="ttdoc">Get the stack trace. </div><div class="ttdef"><b>Definition:</b> exceptions.h:165</div></div>
-<div class="ttc" id="classgi__lib_1_1_stack_trace_html"><div class="ttname"><a href="classgi__lib_1_1_stack_trace.html">gi_lib::StackTrace</a></div><div class="ttdoc">Manages the stack trace. </div><div class="ttdef"><b>Definition:</b> exceptions.h:65</div></div>
-<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_af3ab1d65b6f9453d6b81ec3c771d9916"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#af3ab1d65b6f9453d6b81ec3c771d9916">gi_lib::RuntimeException::TErrorArgs</a></div><div class="ttdeci">map&lt; wstring, wstring &gt; TErrorArgs</div><div class="ttdoc">Type of the extra arguments. </div><div class="ttdef"><b>Definition:</b> exceptions.h:128</div></div>
-<div class="ttc" id="classgi__lib_1_1_runtime_exception_html"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html">gi_lib::RuntimeException</a></div><div class="ttdoc">Runtime exception. </div><div class="ttdef"><b>Definition:</b> exceptions.h:123</div></div>
-<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_aa367d169fcedd76f81f87a039f526ff7"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#aa367d169fcedd76f81f87a039f526ff7">gi_lib::RuntimeException::RuntimeException</a></div><div class="ttdeci">RuntimeException(const wstring &amp;error_message)</div><div class="ttdoc">Creates a new exception. </div><div class="ttdef"><b>Definition:</b> exceptions.h:132</div></div>
-<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_a5f85fe554e49215a86f2881c6a9440fc"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#a5f85fe554e49215a86f2881c6a9440fc">gi_lib::RuntimeException::GetExtra</a></div><div class="ttdeci">const wstring &amp; GetExtra(wstring key) const </div><div class="ttdoc">Get an extra value by key. </div><div class="ttdef"><b>Definition:</b> exceptions.h:174</div></div>
+<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;            <span class="keywordflow">return</span> stack_trace_;</div>
+<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;</div>
+<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;        }</div>
+<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;</div>
+<div class="line"><a name="l00208"></a><span class="lineno"><a class="line" href="classgi__lib_1_1_runtime_exception.html#a5f85fe554e49215a86f2881c6a9440fc">  208</a></span>&#160;        <span class="keyword">inline</span> <span class="keyword">const</span> wstring &amp; <a class="code" href="classgi__lib_1_1_runtime_exception.html#a5f85fe554e49215a86f2881c6a9440fc">GetExtra</a>(wstring key)<span class="keyword"> const</span>{</div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;</div>
+<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;            <span class="keyword">auto</span> it = extras_.find(key);</div>
+<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;</div>
+<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;            <span class="keywordflow">if</span> (it != extras_.end()){</div>
+<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;</div>
+<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;                <span class="keywordflow">return</span> it-&gt;second;</div>
+<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;</div>
+<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;            }<span class="keywordflow">else</span>{</div>
+<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;</div>
+<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;                <span class="keywordflow">return</span> kEmptyExtra;</div>
+<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;</div>
+<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;            }</div>
+<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;</div>
+<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;        }</div>
+<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;    </div>
+<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;    <span class="keyword">private</span>:</div>
+<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;</div>
+<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;        <span class="keyword">inline</span> <span class="keywordtype">void</span> Swap(<a class="code" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a> &amp; other){</div>
+<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;</div>
+<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;            std::swap(error_message_, other.error_message_);</div>
+<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;            std::swap(stack_trace_, other.stack_trace_);</div>
+<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;            std::swap(extras_, other.extras_);</div>
+<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;</div>
+<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;        }</div>
+<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;</div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;        <span class="keyword">const</span> wstring kEmptyExtra = L<span class="stringliteral">&quot;&quot;</span>;</div>
+<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;</div>
+<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;        wstring error_message_;</div>
+<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;</div>
+<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;        wstring stack_trace_;</div>
+<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;</div>
+<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;        <a class="code" href="classgi__lib_1_1_runtime_exception.html#af3ab1d65b6f9453d6b81ec3c771d9916">TErrorArgs</a> extras_;</div>
+<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;</div>
+<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;    };</div>
+<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;</div>
+<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;}</div>
+<div class="ttc" id="classgi__lib_1_1_stack_trace_html_a989977a4490c89eb5d125d63820d67d3"><div class="ttname"><a href="classgi__lib_1_1_stack_trace.html#a989977a4490c89eb5d125d63820d67d3">gi_lib::StackTrace::GetStackTrace</a></div><div class="ttdeci">wstring GetStackTrace()</div><div class="ttdoc">Get the current stack trace. </div><div class="ttdef"><b>Definition:</b> exceptions.h:88</div></div>
+<div class="ttc" id="classgi__lib_1_1_stack_trace_html_a2d701e9fe53c3888ef57da895f82db22"><div class="ttname"><a href="classgi__lib_1_1_stack_trace.html#a2d701e9fe53c3888ef57da895f82db22">gi_lib::StackTrace::StackTrace</a></div><div class="ttdeci">StackTrace()</div><div class="ttdoc">Default constructor. </div><div class="ttdef"><b>Definition:</b> exceptions.h:84</div></div>
+<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_a18292dd8b066cce3743697154afee1cc"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#a18292dd8b066cce3743697154afee1cc">gi_lib::RuntimeException::RuntimeException</a></div><div class="ttdeci">RuntimeException(const wstring &amp;error_message, TErrorArgs &amp;&amp;extras)</div><div class="ttdoc">Creates a new exception. </div><div class="ttdef"><b>Definition:</b> exceptions.h:168</div></div>
+<div class="ttc" id="classgi__lib_1_1_stack_trace_html_ab7c5955833484affb8fb0fd09aa95b95"><div class="ttname"><a href="classgi__lib_1_1_stack_trace.html#ab7c5955833484affb8fb0fd09aa95b95">gi_lib::StackTrace::OnCallstackEntry</a></div><div class="ttdeci">virtual void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &amp;entry)</div><div class="ttdoc">Callback used to log each stack entry. </div><div class="ttdef"><b>Definition:</b> exceptions.h:106</div></div>
+<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_a15047c9cc0834f955666c7c69d364384"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#a15047c9cc0834f955666c7c69d364384">gi_lib::RuntimeException::GetErrorMessage</a></div><div class="ttdeci">const wstring &amp; GetErrorMessage() const </div><div class="ttdoc">Get the error message. </div><div class="ttdef"><b>Definition:</b> exceptions.h:191</div></div>
+<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_ad0eb04fd657474afd6aecf9b0ec76e22"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#ad0eb04fd657474afd6aecf9b0ec76e22">gi_lib::RuntimeException::GetStackTrace</a></div><div class="ttdeci">const wstring &amp; GetStackTrace() const </div><div class="ttdoc">Get the stack trace. </div><div class="ttdef"><b>Definition:</b> exceptions.h:199</div></div>
+<div class="ttc" id="classgi__lib_1_1_stack_trace_html"><div class="ttname"><a href="classgi__lib_1_1_stack_trace.html">gi_lib::StackTrace</a></div><div class="ttdoc">Manages the stack trace. </div><div class="ttdef"><b>Definition:</b> exceptions.h:79</div></div>
+<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_af3ab1d65b6f9453d6b81ec3c771d9916"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#af3ab1d65b6f9453d6b81ec3c771d9916">gi_lib::RuntimeException::TErrorArgs</a></div><div class="ttdeci">map&lt; wstring, wstring &gt; TErrorArgs</div><div class="ttdoc">Type of the extra arguments. </div><div class="ttdef"><b>Definition:</b> exceptions.h:142</div></div>
+<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_a140a93c38d7adf394db055dcaeb485ce"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#a140a93c38d7adf394db055dcaeb485ce">gi_lib::RuntimeException::operator=</a></div><div class="ttdeci">RuntimeException &amp; operator=(RuntimeException other)</div><div class="ttdoc">Unified assigment operator. </div><div class="ttdef"><b>Definition:</b> exceptions.h:181</div></div>
+<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_ad53cc95b65c41a25fe675e21e0b9f1dc"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#ad53cc95b65c41a25fe675e21e0b9f1dc">gi_lib::RuntimeException::RuntimeException</a></div><div class="ttdeci">RuntimeException(RuntimeException &amp;&amp;other)</div><div class="ttdoc">Move ctor. </div><div class="ttdef"><b>Definition:</b> exceptions.h:146</div></div>
+<div class="ttc" id="classgi__lib_1_1_runtime_exception_html"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html">gi_lib::RuntimeException</a></div><div class="ttdoc">Runtime exception. </div><div class="ttdef"><b>Definition:</b> exceptions.h:137</div></div>
+<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_aa367d169fcedd76f81f87a039f526ff7"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#aa367d169fcedd76f81f87a039f526ff7">gi_lib::RuntimeException::RuntimeException</a></div><div class="ttdeci">RuntimeException(const wstring &amp;error_message)</div><div class="ttdoc">Creates a new exception. </div><div class="ttdef"><b>Definition:</b> exceptions.h:156</div></div>
+<div class="ttc" id="classgi__lib_1_1_runtime_exception_html_a5f85fe554e49215a86f2881c6a9440fc"><div class="ttname"><a href="classgi__lib_1_1_runtime_exception.html#a5f85fe554e49215a86f2881c6a9440fc">gi_lib::RuntimeException::GetExtra</a></div><div class="ttdeci">const wstring &amp; GetExtra(wstring key) const </div><div class="ttdoc">Get an extra value by key. </div><div class="ttdef"><b>Definition:</b> exceptions.h:208</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="exceptions_8h.html">exceptions.h</a></li>
-    <li class="footer">Generated on Sun Aug 10 2014 16:50:14 for GILib by
+    <li class="footer">Generated on Mon Aug 11 2014 21:35:24 for GILib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

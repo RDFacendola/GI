@@ -103,7 +103,8 @@ $(document).ready(function(){initNavTree('guard_8h.html','');});
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">guard.h File Reference</div>  </div>
 </div><!--header-->
@@ -117,9 +118,16 @@ $(document).ready(function(){initNavTree('guard_8h.html','');});
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_scope_guard.html">gi_lib::ScopeGuard</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">/brief Guards that executes a routine upon destruction unless it was dismissed.  <a href="classgi__lib_1_1_scope_guard.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_scope_guard.html">gi_lib::ScopeGuard&lt; TFunctor &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Guards that executes a routine upon destruction unless it was dismissed.  <a href="classgi__lib_1_1_scope_guard.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ad4d3e19ef3ad3b8e647826b39d675b84"><td class="memTemplParams" colspan="2">template&lt;typename TFunctor &gt; </td></tr>
+<tr class="memitem:ad4d3e19ef3ad3b8e647826b39d675b84"><td class="memTemplItemLeft" align="right" valign="top">ScopeGuard&lt; TFunctor &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>gi_lib::MakeScopeGuard</b> (TFunctor functor)</td></tr>
+<tr class="memdesc:ad4d3e19ef3ad3b8e647826b39d675b84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a new scope guard.  <a href="#ad4d3e19ef3ad3b8e647826b39d675b84">More...</a><br /></td></tr>
+<tr class="separator:ad4d3e19ef3ad3b8e647826b39d675b84"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Defines guards that wraps various RAII functionalities. </p>
@@ -130,7 +138,7 @@ Classes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="guard_8h.html">guard.h</a></li>
-    <li class="footer">Generated on Sun Aug 10 2014 16:50:14 for GILib by
+    <li class="footer">Generated on Mon Aug 11 2014 21:35:24 for GILib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

@@ -9,6 +9,8 @@ var searchData=
   ['timer',['Timer',['../classgi__lib_1_1_timer.html#acb44dbaebe2ef52aff7b3e0d216bd3fa',1,'gi_lib::Timer']]],
   ['timer_2eh',['timer.h',['../timer_8h.html',1,'']]],
   ['tlistener',['TListener',['../classgi__lib_1_1_observable.html#a0d45d2f9aa14a29b39865745da8852ce',1,'gi_lib::Observable']]],
+  ['tonclosed',['TOnClosed',['../classgi__lib_1_1_window.html#ac96da50c3f7be2803a12b4339c8da582',1,'gi_lib::Window']]],
+  ['tonresized',['TOnResized',['../classgi__lib_1_1_window.html#a9333c2f76d5431f329bb87be19cccd09',1,'gi_lib::Window']]],
   ['total_5fpage_5fmemory',['total_page_memory',['../structgi__lib_1_1_memory_profile.html#a3e7d90cf516d0d07e0bfcdfc2368315b',1,'gi_lib::MemoryProfile']]],
   ['total_5fphysical_5fmemory',['total_physical_memory',['../structgi__lib_1_1_memory_profile.html#a7f0091c4ca89a0d2e3a9f6a4597b5851',1,'gi_lib::MemoryProfile']]],
   ['total_5fvirtual_5fmemory',['total_virtual_memory',['../structgi__lib_1_1_memory_profile.html#afed02859747e340dab5a783e8e927c48',1,'gi_lib::MemoryProfile']]]

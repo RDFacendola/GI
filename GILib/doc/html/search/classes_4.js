@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['memoryprofile',['MemoryProfile',['../structgi__lib_1_1_memory_profile.html',1,'gi_lib']]]
+  ['ifactory',['IFactory',['../classgi__lib_1_1_i_factory.html',1,'gi_lib']]],
+  ['igraphics',['IGraphics',['../classgi__lib_1_1_i_graphics.html',1,'gi_lib']]]
 ];

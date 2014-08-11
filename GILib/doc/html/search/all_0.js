@@ -1,6 +1,8 @@
 var searchData=
 [
+  ['adapterprofile',['AdapterProfile',['../structgi__lib_1_1_adapter_profile.html',1,'gi_lib']]],
   ['addcomponent',['AddComponent',['../classgi__lib_1_1_scene_object.html#a473e03a32095aa0124b8b814cb3adcbd',1,'gi_lib::SceneObject']]],
+  ['antialiasing_5fmodes',['antialiasing_modes',['../structgi__lib_1_1_adapter_profile.html#aa4a68d82305ee2bb14bf5f9f6ecd39e0',1,'gi_lib::AdapterProfile']]],
   ['application',['Application',['../classgi__lib_1_1_application.html',1,'gi_lib']]],
   ['application_2eh',['application.h',['../application_8h.html',1,'']]],
   ['available_5fpage_5fmemory',['available_page_memory',['../structgi__lib_1_1_memory_profile.html#a994286a84e4c25994b0498e98aa90e4d',1,'gi_lib::MemoryProfile']]],

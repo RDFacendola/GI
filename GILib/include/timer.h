@@ -15,12 +15,14 @@ using ::std::chrono::duration;
 namespace gi_lib{
 
 	/// \brief High resolution timer.
+	/// \author Raffaele D. Facendola
 	class Timer
 	{
 
 	public:
 
 		/// \brief Hold informations about the application time.
+		/// \author Raffaele D. Facendola
 		class Time{
 
 		public:

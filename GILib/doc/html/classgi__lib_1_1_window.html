@@ -107,6 +107,7 @@ $(document).ready(function(){initNavTree('classgi__lib_1_1_window.html','');});
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="#friends">Friends</a> &#124;
 <a href="classgi__lib_1_1_window-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -125,6 +126,15 @@ Public Types</h2></td></tr>
 typedef HWND&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#a34dd77a8fb53ede9aa188451d5790c7f">Handle</a></td></tr>
 <tr class="memdesc:a34dd77a8fb53ede9aa188451d5790c7f"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classgi__lib_1_1_window.html" title="A window. ">Window</a> handle type under Windows. <br /></td></tr>
 <tr class="separator:a34dd77a8fb53ede9aa188451d5790c7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac96da50c3f7be2803a12b4339c8da582"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac96da50c3f7be2803a12b4339c8da582"></a>
+typedef <a class="el" href="classgi__lib_1_1_observable.html">Observable</a>&lt; <a class="el" href="classgi__lib_1_1_window.html">Window</a> &amp; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#ac96da50c3f7be2803a12b4339c8da582">TOnClosed</a></td></tr>
+<tr class="memdesc:ac96da50c3f7be2803a12b4339c8da582"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of the event OnClosed. <br /></td></tr>
+<tr class="separator:ac96da50c3f7be2803a12b4339c8da582"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9333c2f76d5431f329bb87be19cccd09"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9333c2f76d5431f329bb87be19cccd09"></a>
+typedef <a class="el" href="classgi__lib_1_1_observable.html">Observable</a>&lt; <a class="el" href="classgi__lib_1_1_window.html">Window</a> <br class="typebreak" />
+&amp;, unsigned int, unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#a9333c2f76d5431f329bb87be19cccd09">TOnResized</a></td></tr>
+<tr class="memdesc:a9333c2f76d5431f329bb87be19cccd09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Type of the event OnResized. <br /></td></tr>
+<tr class="separator:a9333c2f76d5431f329bb87be19cccd09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -134,12 +144,33 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa5c057bda6d7b183c0bc03939420047b"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="classgi__lib_1_1_window.html#a34dd77a8fb53ede9aa188451d5790c7f">Handle</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#aa5c057bda6d7b183c0bc03939420047b">GetHandle</a> () const </td></tr>
 <tr class="memdesc:aa5c057bda6d7b183c0bc03939420047b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the window's handle.  <a href="#aa5c057bda6d7b183c0bc03939420047b">More...</a><br /></td></tr>
 <tr class="separator:aa5c057bda6d7b183c0bc03939420047b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa550cc92aab47c14f85687d77c8c0ee4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#aa550cc92aab47c14f85687d77c8c0ee4">SetTitle</a> (const wstring &amp;title)</td></tr>
-<tr class="memdesc:aa550cc92aab47c14f85687d77c8c0ee4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the window's title.  <a href="#aa550cc92aab47c14f85687d77c8c0ee4">More...</a><br /></td></tr>
-<tr class="separator:aa550cc92aab47c14f85687d77c8c0ee4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae46d7987b79879d8aa504818ea03d0cb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#ae46d7987b79879d8aa504818ea03d0cb">Show</a> (bool show=true)</td></tr>
-<tr class="memdesc:ae46d7987b79879d8aa504818ea03d0cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Show or hide the window.  <a href="#ae46d7987b79879d8aa504818ea03d0cb">More...</a><br /></td></tr>
-<tr class="separator:ae46d7987b79879d8aa504818ea03d0cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd8cba3337340c7556d1d8b3448917a3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#acd8cba3337340c7556d1d8b3448917a3">SetTitle</a> (const wstring &amp;title)</td></tr>
+<tr class="memdesc:acd8cba3337340c7556d1d8b3448917a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the window's title.  <a href="#acd8cba3337340c7556d1d8b3448917a3">More...</a><br /></td></tr>
+<tr class="separator:acd8cba3337340c7556d1d8b3448917a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba9129217e083813d5e036318ac1488f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#aba9129217e083813d5e036318ac1488f">Show</a> (bool show=true)</td></tr>
+<tr class="memdesc:aba9129217e083813d5e036318ac1488f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Show or hide the window.  <a href="#aba9129217e083813d5e036318ac1488f">More...</a><br /></td></tr>
+<tr class="separator:aba9129217e083813d5e036318ac1488f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b90d2e4c427a41156186d0bcef0bd16"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#a1b90d2e4c427a41156186d0bcef0bd16">IsVisible</a> ()</td></tr>
+<tr class="memdesc:a1b90d2e4c427a41156186d0bcef0bd16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check whether this windows is visible or not.  <a href="#a1b90d2e4c427a41156186d0bcef0bd16">More...</a><br /></td></tr>
+<tr class="separator:a1b90d2e4c427a41156186d0bcef0bd16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43c6d1c4c9121186621946f3655f675a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classgi__lib_1_1_window.html#ac96da50c3f7be2803a12b4339c8da582">TOnClosed</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#a43c6d1c4c9121186621946f3655f675a">OnClosed</a> ()</td></tr>
+<tr class="memdesc:a43c6d1c4c9121186621946f3655f675a"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classgi__lib_1_1_event.html" title="Observable event with the ability to notify all its observers. ">Event</a> fired when the window has been closed.  <a href="#a43c6d1c4c9121186621946f3655f675a">More...</a><br /></td></tr>
+<tr class="separator:a43c6d1c4c9121186621946f3655f675a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae0e4e531e456b16b468c8e6041a10a8b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classgi__lib_1_1_window.html#a9333c2f76d5431f329bb87be19cccd09">TOnResized</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#ae0e4e531e456b16b468c8e6041a10a8b">OnResized</a> ()</td></tr>
+<tr class="memdesc:ae0e4e531e456b16b468c8e6041a10a8b"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classgi__lib_1_1_event.html" title="Observable event with the ability to notify all its observers. ">Event</a> fired when the window has been resized.  <a href="#ae0e4e531e456b16b468c8e6041a10a8b">More...</a><br /></td></tr>
+<tr class="separator:ae0e4e531e456b16b468c8e6041a10a8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
+Protected Attributes</h2></td></tr>
+<tr class="memitem:a635e20e96f0165826d4279f33dac67de"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a635e20e96f0165826d4279f33dac67de"></a>
+<a class="el" href="classgi__lib_1_1_event.html">Event</a>&lt; <a class="el" href="classgi__lib_1_1_window.html">Window</a> &amp; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#a635e20e96f0165826d4279f33dac67de">on_closed_</a></td></tr>
+<tr class="memdesc:a635e20e96f0165826d4279f33dac67de"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classgi__lib_1_1_event.html" title="Observable event with the ability to notify all its observers. ">Event</a> fired when the window has been closed. <br /></td></tr>
+<tr class="separator:a635e20e96f0165826d4279f33dac67de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98efcd7bc4f29a7313a94acdbfe01b50"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a98efcd7bc4f29a7313a94acdbfe01b50"></a>
+<a class="el" href="classgi__lib_1_1_event.html">Event</a>&lt; <a class="el" href="classgi__lib_1_1_window.html">Window</a> &amp;, unsigned int, <br class="typebreak" />
+unsigned int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_window.html#a98efcd7bc4f29a7313a94acdbfe01b50">on_resized_</a></td></tr>
+<tr class="memdesc:a98efcd7bc4f29a7313a94acdbfe01b50"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classgi__lib_1_1_event.html" title="Observable event with the ability to notify all its observers. ">Event</a> fired when the window has been resized. <br /></td></tr>
+<tr class="separator:a98efcd7bc4f29a7313a94acdbfe01b50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
@@ -195,18 +226,104 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Application</b></td>
 
 </div>
 </div>
-<a class="anchor" id="aa550cc92aab47c14f85687d77c8c0ee4"></a>
+<a class="anchor" id="a1b90d2e4c427a41156186d0bcef0bd16"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void Window::SetTitle </td>
+          <td class="memname">bool gi_lib::Window::IsVisible </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check whether this windows is visible or not. </p>
+<dl class="section return"><dt>Returns</dt><dd>Returns true if the window is not minimized, false otherwise. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a43c6d1c4c9121186621946f3655f675a"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classgi__lib_1_1_window.html#ac96da50c3f7be2803a12b4339c8da582">TOnClosed</a>&amp; gi_lib::Window::OnClosed </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classgi__lib_1_1_event.html" title="Observable event with the ability to notify all its observers. ">Event</a> fired when the window has been closed. </p>
+<dl class="section return"><dt>Returns</dt><dd>Returns an observable event which notifies when the window is closed. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ae0e4e531e456b16b468c8e6041a10a8b"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classgi__lib_1_1_window.html#a9333c2f76d5431f329bb87be19cccd09">TOnResized</a>&amp; gi_lib::Window::OnResized </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p><a class="el" href="classgi__lib_1_1_event.html" title="Observable event with the ability to notify all its observers. ">Event</a> fired when the window has been resized. </p>
+<dl class="section return"><dt>Returns</dt><dd>Returns an observable event which notifies when the window is resized. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="acd8cba3337340c7556d1d8b3448917a3"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void gi_lib::Window::SetTitle </td>
           <td>(</td>
           <td class="paramtype">const wstring &amp;&#160;</td>
           <td class="paramname"><em>title</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Set the window's title. </p>
@@ -219,18 +336,26 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Application</b></td>
 
 </div>
 </div>
-<a class="anchor" id="ae46d7987b79879d8aa504818ea03d0cb"></a>
+<a class="anchor" id="aba9129217e083813d5e036318ac1488f"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void Window::Show </td>
+          <td class="memname">void gi_lib::Window::Show </td>
           <td>(</td>
           <td class="paramtype">bool&#160;</td>
           <td class="paramname"><em>show</em> = <code>true</code></td><td>)</td>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Show or hide the window. </p>
@@ -253,7 +378,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>Application</b></td>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>gi_lib</b></li><li class="navelem"><a class="el" href="classgi__lib_1_1_window.html">Window</a></li>
-    <li class="footer">Generated on Sun Aug 10 2014 16:50:14 for GILib by
+    <li class="footer">Generated on Mon Aug 11 2014 21:35:24 for GILib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

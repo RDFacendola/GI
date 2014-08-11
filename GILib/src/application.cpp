@@ -60,7 +60,9 @@ wstring Application::GetPath() const{
 
 	wstring path(MAX_PATH + 1, 0);
 
-	GetModuleFileName(0, &path[0], path.length());
+	GetModuleFileName(0, 
+					  &path[0], 
+					  static_cast<DWORD>(path.length()));
 
 	path.erase(std::remove(path.begin(),
 						   path.end(),
@@ -174,8 +176,6 @@ LRESULT __stdcall Application::ReceiveMessage(HWND window_handle, unsigned int m
 
 }
 
-#include <map>
-
 void Application::RegisterWindowClass(){
 
 	auto instance = GetModuleHandle(nullptr);
@@ -198,6 +198,7 @@ void Application::RegisterWindowClass(){
 	SetLastError(0);
 
 	//Attempt to register the class
+	
 	THROW_ON_ERROR(RegisterClass(&window_description));
 
 }
@@ -292,7 +293,6 @@ LRESULT Window::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARA
 
 	return DefWindowProc(GetHandle(), message_id, wparameter, lparameter);
 	
-
 }
 
 #endif

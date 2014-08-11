@@ -14,7 +14,6 @@
 #include <algorithm>
 #include <iterator>
 
-#include "iterator.h"
 #include "timer.h"
 
 using std::wstring;
@@ -29,6 +28,7 @@ namespace gi_lib{
 
 	/// A scene object may represents a camera, a light, a model and so on.
 	/// Components may be plugged to customize its behaviour
+	/// \author Raffaele D. Facendola
 	class SceneObject{
 
 	public:
@@ -39,6 +39,7 @@ namespace gi_lib{
 		typedef unordered_multimap<size_t, shared_ptr<Component>> ComponentMap;
 
 		/// \brief Scene object component.
+		/// \author Raffaele D. Facendola
 		class Component{
 
 			friend class SceneObject;

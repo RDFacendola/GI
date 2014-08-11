@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['sceneobject',['SceneObject',['../classgi__lib_1_1_scene_object.html#a584d4de1c15868869a52d344780f042b',1,'gi_lib::SceneObject::SceneObject()'],['../classgi__lib_1_1_scene_object.html#ab64385c4b7e4d8f3713576773d00b4ff',1,'gi_lib::SceneObject::SceneObject(wstring name)']]],
-  ['scopeguard',['ScopeGuard',['../classgi__lib_1_1_scope_guard.html#a7c6345171b080c73be7976806c9ab9cd',1,'gi_lib::ScopeGuard::ScopeGuard(TFunctor functor)'],['../classgi__lib_1_1_scope_guard.html#a7049cb2128089942c1342c2a9d7f4b5b',1,'gi_lib::ScopeGuard::ScopeGuard(ScopeGuard &amp;other)']]],
-  ['settitle',['SetTitle',['../classgi__lib_1_1_window.html#aa550cc92aab47c14f85687d77c8c0ee4',1,'gi_lib::Window']]],
-  ['show',['Show',['../classgi__lib_1_1_window.html#ae46d7987b79879d8aa504818ea03d0cb',1,'gi_lib::Window']]],
-  ['stacktrace',['StackTrace',['../classgi__lib_1_1_stack_trace.html#a2d701e9fe53c3888ef57da895f82db22',1,'gi_lib::StackTrace']]]
+  ['range',['Range',['../classgi__lib_1_1_range.html#a3b27996f493d9f13cc4e939baaa77123',1,'gi_lib::Range']]],
+  ['removecomponent',['RemoveComponent',['../classgi__lib_1_1_scene_object.html#aaa5930d286651df4ed99c53cf5059116',1,'gi_lib::SceneObject']]],
+  ['removecomponents',['RemoveComponents',['../classgi__lib_1_1_scene_object.html#a83e38da66d497fc2d47fe4c97823488c',1,'gi_lib::SceneObject']]],
+  ['restart',['Restart',['../classgi__lib_1_1_timer.html#a63ef2b8ced2779fa8c8599bbcbef95a8',1,'gi_lib::Timer']]],
+  ['runtimeexception',['RuntimeException',['../classgi__lib_1_1_runtime_exception.html#ad53cc95b65c41a25fe675e21e0b9f1dc',1,'gi_lib::RuntimeException::RuntimeException(RuntimeException &amp;&amp;other)'],['../classgi__lib_1_1_runtime_exception.html#aa367d169fcedd76f81f87a039f526ff7',1,'gi_lib::RuntimeException::RuntimeException(const wstring &amp;error_message)'],['../classgi__lib_1_1_runtime_exception.html#a18292dd8b066cce3743697154afee1cc',1,'gi_lib::RuntimeException::RuntimeException(const wstring &amp;error_message, TErrorArgs &amp;&amp;extras)']]]
 ];

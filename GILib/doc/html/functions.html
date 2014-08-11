@@ -92,6 +92,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="#index_f"><span>f</span></a></li>
       <li><a href="#index_g"><span>g</span></a></li>
       <li><a href="#index_h"><span>h</span></a></li>
+      <li><a href="#index_i"><span>i</span></a></li>
       <li><a href="#index_j"><span>j</span></a></li>
       <li><a href="#index_n"><span>n</span></a></li>
       <li><a href="#index_o"><span>o</span></a></li>
@@ -99,6 +100,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="#index_s"><span>s</span></a></li>
       <li><a href="#index_t"><span>t</span></a></li>
       <li><a href="#index_u"><span>u</span></a></li>
+      <li><a href="#index_v"><span>v</span></a></li>
       <li><a href="#index_w"><span>w</span></a></li>
       <li class="current"><a href="#index_~"><span>~</span></a></li>
     </ul>
@@ -139,6 +141,9 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <li>AddComponent()
 : <a class="el" href="classgi__lib_1_1_scene_object.html#a473e03a32095aa0124b8b814cb3adcbd">gi_lib::SceneObject</a>
 </li>
+<li>antialiasing_modes
+: <a class="el" href="structgi__lib_1_1_adapter_profile.html#aa4a68d82305ee2bb14bf5f9f6ecd39e0">gi_lib::AdapterProfile</a>
+</li>
 <li>available_page_memory
 : <a class="el" href="structgi__lib_1_1_memory_profile.html#a994286a84e4c25994b0498e98aa90e4d">gi_lib::MemoryProfile</a>
 </li>
@@ -168,11 +173,19 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <li>cend()
 : <a class="el" href="classgi__lib_1_1_range.html#a794167bdf43aedb4641a8f73ea347494">gi_lib::Range&lt; TContainer &gt;</a>
 </li>
+<li>Commit()
+: <a class="el" href="classgi__lib_1_1_d_x11_graphics.html#a90833a33e471d3ddd108758c3cc5d106">gi_lib::DX11Graphics</a>
+, <a class="el" href="classgi__lib_1_1_i_graphics.html#a323b7d75de426e943f47f8cba4d7f3c4">gi_lib::IGraphics</a>
+</li>
 <li>ComponentMap
 : <a class="el" href="classgi__lib_1_1_scene_object.html#afc508bd3abfdec5f307b041338bd5541">gi_lib::SceneObject</a>
 </li>
 <li>cores
 : <a class="el" href="structgi__lib_1_1_cpu_profile.html#a525439a525618fa88a9bbcd25c4b8b73">gi_lib::CpuProfile</a>
+</li>
+<li>CreateGraphics()
+: <a class="el" href="classgi__lib_1_1_d_x11_factory.html#a08174be2ccbe46b933bf21831bc584c1">gi_lib::DX11Factory</a>
+, <a class="el" href="classgi__lib_1_1_i_factory.html#a052f608a05a67855a8fe632244a162c6">gi_lib::IFactory</a>
 </li>
 <li>CreateWindow()
 : <a class="el" href="classgi__lib_1_1_application.html#a8ad8cbb37d18c1f0591bcea8d6f51aec">gi_lib::Application</a>
@@ -181,11 +194,17 @@ $(document).ready(function(){initNavTree('functions.html','');});
 
 
 <h3><a class="anchor" id="index_d"></a>- d -</h3><ul>
+<li>dedicated_memory
+: <a class="el" href="structgi__lib_1_1_adapter_profile.html#ad5d2407f3c83bec8b10de12da0c3ee65">gi_lib::AdapterProfile</a>
+</li>
 <li>Dismiss()
-: <a class="el" href="classgi__lib_1_1_scope_guard.html#afabd26237cf8155a23f802d371f4c9b8">gi_lib::ScopeGuard</a>
+: <a class="el" href="classgi__lib_1_1_scope_guard.html#a55fcc396b4522bcfd28d63976f514d09">gi_lib::ScopeGuard&lt; TFunctor &gt;</a>
 </li>
 <li>DisposeWindow()
 : <a class="el" href="classgi__lib_1_1_application.html#a0903b4ad7c1d42b2f9e9f852218b9312">gi_lib::Application</a>
+</li>
+<li>DX11Graphics()
+: <a class="el" href="classgi__lib_1_1_d_x11_graphics.html#aef669c5e60eeeb87a6deb0d6a92375a3">gi_lib::DX11Graphics</a>
 </li>
 </ul>
 
@@ -208,6 +227,14 @@ $(document).ready(function(){initNavTree('functions.html','');});
 
 
 <h3><a class="anchor" id="index_g"></a>- g -</h3><ul>
+<li>GetAdapterProfile()
+: <a class="el" href="classgi__lib_1_1_d_x11_factory.html#ab593b2e31484934e6beaf5e86fe8f96d">gi_lib::DX11Factory</a>
+, <a class="el" href="classgi__lib_1_1_i_factory.html#a7c99cdf13d8b9159a71431c38cacd237">gi_lib::IFactory</a>
+</li>
+<li>GetAntialisingMode()
+: <a class="el" href="classgi__lib_1_1_d_x11_graphics.html#a2d700c985cab70159315e7786e3a2e6e">gi_lib::DX11Graphics</a>
+, <a class="el" href="classgi__lib_1_1_i_graphics.html#ab09e413d017f9425002a816c3adcc745">gi_lib::IGraphics</a>
+</li>
 <li>GetComponent()
 : <a class="el" href="classgi__lib_1_1_scene_object.html#ab61bc272150d525c0dc23d5df030075d">gi_lib::SceneObject</a>
 </li>
@@ -234,6 +261,7 @@ $(document).ready(function(){initNavTree('functions.html','');});
 </li>
 <li>GetInstance()
 : <a class="el" href="classgi__lib_1_1_application.html#afcf418a9d501a9e663ce5f3c23ab270c">gi_lib::Application</a>
+, <a class="el" href="classgi__lib_1_1_d_x11_factory.html#aa7f41eb36c81ec85fb449f1964764e35">gi_lib::DX11Factory</a>
 </li>
 <li>GetMemoryProfile()
 : <a class="el" href="classgi__lib_1_1_system.html#a4dfe1f99812fdcebf9c0a7e6b32d4c17">gi_lib::System</a>
@@ -246,7 +274,7 @@ $(document).ready(function(){initNavTree('functions.html','');});
 : <a class="el" href="classgi__lib_1_1_system.html#a27ed2b9f07d8f23b6d4bf31830ade92d">gi_lib::System</a>
 </li>
 <li>GetOwner()
-: <a class="el" href="classgi__lib_1_1_scene_object_1_1_component.html#a142b2d262d72aca07b7a9eedb2d7c1ca">gi_lib::SceneObject::Component</a>
+: <a class="el" href="classgi__lib_1_1_scene_object_1_1_component.html#abcb068b7d6015e59896cc6389f76306a">gi_lib::SceneObject::Component</a>
 </li>
 <li>GetPath()
 : <a class="el" href="classgi__lib_1_1_application.html#ae079dde2b70cc1d731f95ef0d99bcfc0">gi_lib::Application</a>
@@ -264,6 +292,10 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <li>GetTotalSeconds()
 : <a class="el" href="classgi__lib_1_1_timer_1_1_time.html#ac870a596bc2e6ec7893f551b91379ced">gi_lib::Timer::Time</a>
 </li>
+<li>GetVideoMode()
+: <a class="el" href="classgi__lib_1_1_d_x11_graphics.html#aae7c762572f0bf0b4961f45c212e1670">gi_lib::DX11Graphics</a>
+, <a class="el" href="classgi__lib_1_1_i_graphics.html#a16eaba8cf1a081b0f6515d267885827e">gi_lib::IGraphics</a>
+</li>
 </ul>
 
 
@@ -273,6 +305,24 @@ $(document).ready(function(){initNavTree('functions.html','');});
 </li>
 <li>height
 : <a class="el" href="structgi__lib_1_1_desktop_profile.html#a333262f88325d2c364097be23117e296">gi_lib::DesktopProfile</a>
+</li>
+<li>horizontal_resolution
+: <a class="el" href="structgi__lib_1_1_video_mode.html#afb332147feafb68425fcf2076a960aaf">gi_lib::VideoMode</a>
+</li>
+</ul>
+
+
+<h3><a class="anchor" id="index_i"></a>- i -</h3><ul>
+<li>IsFullscreen()
+: <a class="el" href="classgi__lib_1_1_d_x11_graphics.html#ac1264dc8c8c65fcc8f810ccb4b1f82e4">gi_lib::DX11Graphics</a>
+, <a class="el" href="classgi__lib_1_1_i_graphics.html#aea1cbcd562d4b9829e47b94ef5712ca3">gi_lib::IGraphics</a>
+</li>
+<li>IsVisible()
+: <a class="el" href="classgi__lib_1_1_window.html#a1b90d2e4c427a41156186d0bcef0bd16">gi_lib::Window</a>
+</li>
+<li>IsVSync()
+: <a class="el" href="classgi__lib_1_1_d_x11_graphics.html#a1e79c720fd52b99e6cbd29cb74662d67">gi_lib::DX11Graphics</a>
+, <a class="el" href="classgi__lib_1_1_i_graphics.html#abe1ca60934283f61e3a584a97374d773">gi_lib::IGraphics</a>
 </li>
 </ul>
 
@@ -285,6 +335,9 @@ $(document).ready(function(){initNavTree('functions.html','');});
 
 
 <h3><a class="anchor" id="index_n"></a>- n -</h3><ul>
+<li>name
+: <a class="el" href="structgi__lib_1_1_adapter_profile.html#a9036606b89179beab6195968c50f79fa">gi_lib::AdapterProfile</a>
+</li>
 <li>Notify()
 : <a class="el" href="classgi__lib_1_1_event.html#ace6d04b14e7003b1dbee9e42d73245f7">gi_lib::Event&lt; TArguments &gt;</a>
 </li>
@@ -292,12 +345,27 @@ $(document).ready(function(){initNavTree('functions.html','');});
 
 
 <h3><a class="anchor" id="index_o"></a>- o -</h3><ul>
+<li>on_closed_
+: <a class="el" href="classgi__lib_1_1_window.html#a635e20e96f0165826d4279f33dac67de">gi_lib::Window</a>
+</li>
+<li>on_resized_
+: <a class="el" href="classgi__lib_1_1_window.html#a98efcd7bc4f29a7313a94acdbfe01b50">gi_lib::Window</a>
+</li>
 <li>OnCallstackEntry()
 : <a class="el" href="classgi__lib_1_1_stack_trace.html#ab7c5955833484affb8fb0fd09aa95b95">gi_lib::StackTrace</a>
+</li>
+<li>OnClosed()
+: <a class="el" href="classgi__lib_1_1_window.html#a43c6d1c4c9121186621946f3655f675a">gi_lib::Window</a>
+</li>
+<li>OnResized()
+: <a class="el" href="classgi__lib_1_1_window.html#ae0e4e531e456b16b468c8e6041a10a8b">gi_lib::Window</a>
 </li>
 <li>operator&lt;&lt;()
 : <a class="el" href="classgi__lib_1_1_event.html#ab892a8c6843b37ef18bf79f00c2c2b4a">gi_lib::Event&lt; TArguments &gt;</a>
 , <a class="el" href="classgi__lib_1_1_observable.html#a4a9711a0f5d4bddcb636d42a9cfdb365">gi_lib::Observable&lt; TArguments &gt;</a>
+</li>
+<li>operator=()
+: <a class="el" href="classgi__lib_1_1_runtime_exception.html#a140a93c38d7adf394db055dcaeb485ce">gi_lib::RuntimeException</a>
 </li>
 <li>operator&gt;&gt;()
 : <a class="el" href="classgi__lib_1_1_event.html#a922897880308c4211b7824f20dd4d5d4">gi_lib::Event&lt; TArguments &gt;</a>
@@ -310,6 +378,9 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <li>Range()
 : <a class="el" href="classgi__lib_1_1_range.html#a3b27996f493d9f13cc4e939baaa77123">gi_lib::Range&lt; TContainer &gt;</a>
 </li>
+<li>refresh_rate
+: <a class="el" href="structgi__lib_1_1_video_mode.html#a944532cab3cb36bf13154720d328681e">gi_lib::VideoMode</a>
+</li>
 <li>RemoveComponent()
 : <a class="el" href="classgi__lib_1_1_scene_object.html#aaa5930d286651df4ed99c53cf5059116">gi_lib::SceneObject</a>
 </li>
@@ -320,7 +391,7 @@ $(document).ready(function(){initNavTree('functions.html','');});
 : <a class="el" href="classgi__lib_1_1_timer.html#a63ef2b8ced2779fa8c8599bbcbef95a8">gi_lib::Timer</a>
 </li>
 <li>RuntimeException()
-: <a class="el" href="classgi__lib_1_1_runtime_exception.html#aa367d169fcedd76f81f87a039f526ff7">gi_lib::RuntimeException</a>
+: <a class="el" href="classgi__lib_1_1_runtime_exception.html#a18292dd8b066cce3743697154afee1cc">gi_lib::RuntimeException</a>
 </li>
 </ul>
 
@@ -330,16 +401,35 @@ $(document).ready(function(){initNavTree('functions.html','');});
 : <a class="el" href="classgi__lib_1_1_scene_object.html#a584d4de1c15868869a52d344780f042b">gi_lib::SceneObject</a>
 </li>
 <li>ScopeGuard()
-: <a class="el" href="classgi__lib_1_1_scope_guard.html#a7049cb2128089942c1342c2a9d7f4b5b">gi_lib::ScopeGuard</a>
+: <a class="el" href="classgi__lib_1_1_scope_guard.html#a8f5a04034bc0accb538ba73b0a168ee1">gi_lib::ScopeGuard&lt; TFunctor &gt;</a>
 </li>
 <li>Seconds
 : <a class="el" href="classgi__lib_1_1_timer_1_1_time.html#ad8a807d33c4085672a08b32179d0c0f0">gi_lib::Timer::Time</a>
 </li>
+<li>SetAntialisingMode()
+: <a class="el" href="classgi__lib_1_1_d_x11_graphics.html#af82985a6b90760bb2318b6bea270c6df">gi_lib::DX11Graphics</a>
+, <a class="el" href="classgi__lib_1_1_i_graphics.html#aae00ddaeee1d6ffa5093f09b39f79336">gi_lib::IGraphics</a>
+</li>
+<li>SetFullscreen()
+: <a class="el" href="classgi__lib_1_1_d_x11_graphics.html#adefec899845f102e18fe2798f38da2e8">gi_lib::DX11Graphics</a>
+, <a class="el" href="classgi__lib_1_1_i_graphics.html#a4567b45c5637497bb49e05c0a5594262">gi_lib::IGraphics</a>
+</li>
 <li>SetTitle()
-: <a class="el" href="classgi__lib_1_1_window.html#aa550cc92aab47c14f85687d77c8c0ee4">gi_lib::Window</a>
+: <a class="el" href="classgi__lib_1_1_window.html#acd8cba3337340c7556d1d8b3448917a3">gi_lib::Window</a>
+</li>
+<li>SetVideoMode()
+: <a class="el" href="classgi__lib_1_1_d_x11_graphics.html#af3c7f118b5f2372abeb5c96a334204de">gi_lib::DX11Graphics</a>
+, <a class="el" href="classgi__lib_1_1_i_graphics.html#a8db9708a22733846159fba11ce0f3040">gi_lib::IGraphics</a>
+</li>
+<li>SetVSync()
+: <a class="el" href="classgi__lib_1_1_d_x11_graphics.html#ac4a3614c8c5772f49bfc0aa56efc3488">gi_lib::DX11Graphics</a>
+, <a class="el" href="classgi__lib_1_1_i_graphics.html#a8a2e3c37a3eb5ef0eb72979ffed2ec00">gi_lib::IGraphics</a>
+</li>
+<li>shared_memory
+: <a class="el" href="structgi__lib_1_1_adapter_profile.html#a244f91fe8f0e1d346b938365262ead95">gi_lib::AdapterProfile</a>
 </li>
 <li>Show()
-: <a class="el" href="classgi__lib_1_1_window.html#ae46d7987b79879d8aa504818ea03d0cb">gi_lib::Window</a>
+: <a class="el" href="classgi__lib_1_1_window.html#aba9129217e083813d5e036318ac1488f">gi_lib::Window</a>
 </li>
 <li>size
 : <a class="el" href="structgi__lib_1_1_drive_profile.html#ad7bf505c32f131ac06ed392b706d1d4b">gi_lib::DriveProfile</a>
@@ -362,6 +452,12 @@ $(document).ready(function(){initNavTree('functions.html','');});
 </li>
 <li>TListener
 : <a class="el" href="classgi__lib_1_1_observable.html#a0d45d2f9aa14a29b39865745da8852ce">gi_lib::Observable&lt; TArguments &gt;</a>
+</li>
+<li>TOnClosed
+: <a class="el" href="classgi__lib_1_1_window.html#ac96da50c3f7be2803a12b4339c8da582">gi_lib::Window</a>
+</li>
+<li>TOnResized
+: <a class="el" href="classgi__lib_1_1_window.html#a9333c2f76d5431f329bb87be19cccd09">gi_lib::Window</a>
 </li>
 <li>total_page_memory
 : <a class="el" href="structgi__lib_1_1_memory_profile.html#a3e7d90cf516d0d07e0bfcdfc2368315b">gi_lib::MemoryProfile</a>
@@ -386,6 +482,16 @@ $(document).ready(function(){initNavTree('functions.html','');});
 </ul>
 
 
+<h3><a class="anchor" id="index_v"></a>- v -</h3><ul>
+<li>vertical_resolution
+: <a class="el" href="structgi__lib_1_1_video_mode.html#a6b94af39fc90613185849d633e9fdbeb">gi_lib::VideoMode</a>
+</li>
+<li>video_modes
+: <a class="el" href="structgi__lib_1_1_adapter_profile.html#ab4b631b42cdd370c555aa433ee2c3c90">gi_lib::AdapterProfile</a>
+</li>
+</ul>
+
+
 <h3><a class="anchor" id="index_w"></a>- w -</h3><ul>
 <li>width
 : <a class="el" href="structgi__lib_1_1_desktop_profile.html#a0b0e041a89617ee9069e9d3941d5beaa">gi_lib::DesktopProfile</a>
@@ -400,8 +506,14 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <li>~Application()
 : <a class="el" href="classgi__lib_1_1_application.html#a748bca84fefb9c12661cfaa2f623748d">gi_lib::Application</a>
 </li>
+<li>~DX11Factory()
+: <a class="el" href="classgi__lib_1_1_d_x11_factory.html#ac6f7e09d7019edadaf305860d152132c">gi_lib::DX11Factory</a>
+</li>
+<li>~DX11Graphics()
+: <a class="el" href="classgi__lib_1_1_d_x11_graphics.html#a51e8fcf57b11d96d228f01578fe300e1">gi_lib::DX11Graphics</a>
+</li>
 <li>~ScopeGuard()
-: <a class="el" href="classgi__lib_1_1_scope_guard.html#a0d6f6a44c3571e348420df918397b87f">gi_lib::ScopeGuard</a>
+: <a class="el" href="classgi__lib_1_1_scope_guard.html#a284f457c944fbba942935faf038bce1c">gi_lib::ScopeGuard&lt; TFunctor &gt;</a>
 </li>
 </ul>
 </div><!-- contents -->
@@ -409,7 +521,7 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Sun Aug 10 2014 16:50:14 for GILib by
+    <li class="footer">Generated on Mon Aug 11 2014 21:35:24 for GILib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

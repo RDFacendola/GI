@@ -25,6 +25,20 @@ using ::std::map;
 
 #ifdef _WIN32
 
+#if _MSC_VER >= 1500
+
+//Disable this warning (Only for VS 2008+)
+#define WHILE0 __pragma(warning(push)) \
+			   __pragma(warning(disable:4127)) \
+			   			   while(0) \
+               __pragma(warning(pop))
+
+#else
+
+#define WHILE0 while(0)
+
+#endif
+
 /// If expr fails, throws a runtime exception with detailed informations. "expr" must be of type "HRESULT"; the error code is defined by the value of the expression itself.
 #define THROW_ON_FAIL(expr) do{ \
 								HRESULT hr = expr; \
@@ -35,7 +49,7 @@ using ::std::map;
 										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
 									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(hr)}}); \
 								} \
-							}while (0)
+							}WHILE0
 
 
 /// If "expr" raises an error, throws a runtime exception with detailed informations. "expr" must support the unary operator "!"; the error code must be returned by GetLastError().
@@ -47,7 +61,7 @@ using ::std::map;
 										   << __FILE__ << std::endl \
 										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
 									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(GetLastError())}}); } \
-							}while (0)
+							 }WHILE0
 
 /// If expr fails returns from the routine with the fail code
 #define RETURN_ON_FAIL(expr) do{ \
@@ -55,13 +69,14 @@ using ::std::map;
 								if (FAILED(hr)){ \
 									return hr; \
 								} \
-							 }while (0)
+							 }WHILE0
 
 #endif
 
 namespace gi_lib{
 
 	/// \brief Manages the stack trace.
+	/// \author Raffaele D. Facendola
 	class StackTrace : public StackWalker{
 
 	public:
@@ -120,12 +135,23 @@ namespace gi_lib{
 	/// \code {.cpp}
 	/// throw RuntimeException("message", {{L"arg0", L"value0"}, {L"arg1", L"value1"}})
 	/// \endcode
+	/// \author Raffaele D. Facendola
 	class RuntimeException{
 
 	public:
 
 		/// \brief Type of the extra arguments.
 		typedef map<wstring, wstring> TErrorArgs;
+
+		/// \brief Move ctor.
+		/// \param other The r-value reference to the object to move.
+		RuntimeException(RuntimeException && other){
+
+			error_message_ = std::move(other.error_message_);
+			stack_trace_ = std::move(other.stack_trace_);
+			extras_ = std::move(other.extras_);
+
+		}
 
 		/// \brief Creates a new exception.
 		/// \param error_message The error message associated to the exception
@@ -149,6 +175,16 @@ namespace gi_lib{
 			error_message_ = error_message;
 			
 			extras_ = std::move(extras);
+
+		}
+
+		/// \brief Unified assigment operator.
+		/// \param other The value to assign to this object.
+		inline RuntimeException & operator=(RuntimeException other){
+
+			other.Swap(*this);
+
+			return *this;
 
 		}
 
@@ -186,7 +222,17 @@ namespace gi_lib{
 			}
 
 		}
+	
 	private:
+
+		/// \brief Swap routine
+		inline void Swap(RuntimeException & other){
+
+			std::swap(error_message_, other.error_message_);
+			std::swap(stack_trace_, other.stack_trace_);
+			std::swap(extras_, other.extras_);
+
+		}
 
 		const wstring kEmptyExtra = L"";
 

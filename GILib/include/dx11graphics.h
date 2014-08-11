@@ -1,142 +1,161 @@
-//#pragma once
-//
-//#include <d3d11.h>
-//
-//#include "igraphics.h"
-//
-/////DirectX 11 utility class
-//class DX11Utils{
-//
-//	DX11Utils() = delete;
-//
-//public:
-//
-//	/// Convert a multisample structure to an antialiasing mode
-//	static ANTIALIASING_MODE SampleToAntialiasing(const DXGI_SAMPLE_DESC & sample);
-//
-//	/// Convert an antialiasing mode to a multisample structure
-//	static DXGI_SAMPLE_DESC AntialiasingToSample(const ANTIALIASING_MODE & antialiasing);
-//
-//	/// Convert a video mode to a dxgi mode
-//	static DXGI_MODE_DESC VideoModeToDXGIMode(const VIDEO_MODE & video);
-//
-//	/// Convert a dxgi mode to a video mode
-//	static VIDEO_MODE DXGIModeToVideoMode(const DXGI_MODE_DESC & dxgi);
-//
-//};
-//
-/////DirectX 11 Factory
-//class DX11Factory : public IFactory{
-//
-//public:
-//
-//	///Create a new factory
-//	DX11Factory();
-//
-//	///Destroy the factory
-//	virtual ~DX11Factory();
-//
-//	///Get the capabilities for this API
-//	virtual ADAPTER_PROFILE GetProfile() const;
-//
-//	///Create the graphic object
-//	virtual BaseGraphics * Create(Window & window);
-//	
-//	///Get the current device
-//	inline ID3D11Device & GetDevice() const{
-//
-//		return *device_;
-//
-//	}
-//
-//	///Get the current dxgi factory
-//	inline IDXGIFactory & GetFactory() const{
-//
-//		return *factory_;
-//
-//	}
-//
-//	///Get the default dxgi adapter
-//	inline IDXGIAdapter & GetAdapter() const{
-//
-//		return *adapter_;
-//
-//	}
-//	
-//private:
-//
-//	/// Enumerate the supported antialiasing modes
-//	vector<const ANTIALIASING_MODE> EnumerateAntialiasingModes() const;
-//
-//	/// Enumerate the supported video modes. Filters by resolution and refresh rate
-//	vector<const VIDEO_MODE> EnumerateVideoModes() const;
-//
-//	/// Enumerate the supported DXGI video modes
-//	vector<const DXGI_MODE_DESC> EnumerateDXGIModes() const;
-//	
-//	ID3D11Device * device_;
-//	
-//	IDXGIFactory * factory_;
-//
-//	IDXGIAdapter * adapter_;
-//
-//};
-//
-/////DirectX 11 Graphics
-//class DX11Graphics : public BaseGraphics{
-//
-//public:
-//
-//	///Create a new graphics object
-//	DX11Graphics(Window & window_handle, DX11Factory & factory);
-//
-//	///Destroy the graphic object
-//	virtual ~DX11Graphics();
-//
-//	///Get the resources' loader
-//	virtual IResources & GetResources();
-//
-//	///Get the renderer
-//	virtual IRenderer & GetRenderer();
-//
-//	///Show the current frame and prepare the next one
-//	virtual void NextFrame();
-//
-//	///Set the video mode
-//	virtual void SetVideo(const VIDEO_MODE & video);
-//
-//	///Set the antialising mode
-//	virtual void SetAntialising(const ANTIALIASING_MODE & antialiasing);
-//
-//	///Enable or disable the fullscreen state
-//	virtual void EnableFullscreen(bool enable);
-//	
-//private:
-//
-//	///Return the default DXGI mode for the swap chain
-//	DXGI_SWAP_CHAIN_DESC GetDefaultSwapchainMode() const;
-//
-//	///Create a new swapchain given its description
-//	void CreateSwapChain(DXGI_SWAP_CHAIN_DESC & desc);
-//
-//	Window & window_;
-//
-//	ID3D11Device & device_;
-//
-//	DX11Factory & factory_;
-//
-//	IResources * resources_;
-//
-//	IRenderer * renderer_;
-//
-//	IDXGISwapChain * swap_chain_;
-//
-//	Window::TMessageEvent::TListener * on_window_message_listener_;
-//
-//	/*
-//	ID3D11DeviceContext * immediate_context_;
-//
-//	ID3D11RenderTargetView * backbuffer_view_;
-//	*/
-//
-//};
+/// \file dx11graphics.h
+/// \brief Declare classes and interfaces used to manage the core of DirectX 11 API.
+///
+/// \author Raffaele D. Facendola
+
+#pragma once
+
+#ifdef _WIN32
+
+#include <d3d11.h>
+
+#include "graphics.h"
+
+namespace gi_lib{
+
+	/// \brief DirectX11 factory class.
+	/// \author Raffaele D. Facendola
+	class DX11Factory: public IFactory{
+
+	public:
+
+		/// \brief Get the DirectX11 factory singleton.
+		/// \return Returns a reference to the DirectX11 factory singleton.
+		static inline DX11Factory & GetInstance(){
+
+			static DX11Factory factory;
+
+			return factory;
+
+		}
+
+		/// \brief Default destructor
+		~DX11Factory();
+
+		virtual AdapterProfile GetAdapterProfile() const;
+
+		virtual shared_ptr<IGraphics> CreateGraphics(Window & window);
+
+	private:
+		
+		/// \brief Hidden constructor.
+		DX11Factory();
+
+		/// Enumerate the supported antialiasing modes
+		vector<AntialiasingMode> EnumerateAntialiasingModes() const;
+
+		/// Enumerate the supported video modes. Filters by resolution and refresh rate
+		vector<VideoMode> EnumerateVideoModes() const;
+
+		/// Enumerate the supported DXGI video modes
+		vector<DXGI_MODE_DESC> EnumerateDXGIModes() const;
+
+		ID3D11Device * device_;
+
+		IDXGIFactory * factory_;
+
+		IDXGIAdapter * adapter_;
+
+	};
+
+
+	/// \brief DirectX object used to display an image to an output.
+	/// \author Raffaele D. Facendola
+	class DX11Graphics: public IGraphics{
+
+	public:
+
+		// Non copyable class
+		DX11Graphics(const DX11Graphics &) = delete;
+		DX11Graphics & operator=(const DX11Graphics &) = delete;
+
+		/// \brief Create a new DirectX11 graphics object.
+		/// \param window The window where the final image will be displayed.
+		/// \param device The device used to create the resources.
+		/// \param factory The factory used to create the swapchain.
+		DX11Graphics(Window & window, ID3D11Device & device, IDXGIFactory & factory);
+
+		/// \brief Default destructor.
+		~DX11Graphics();
+
+		virtual void SetVideoMode(const VideoMode & video_mode);
+
+		inline virtual const VideoMode & GetVideoMode() const{
+
+			return video_mode_;
+
+		}
+
+		virtual void SetAntialisingMode(const AntialiasingMode & antialiasing_mode);
+
+		inline virtual const AntialiasingMode & GetAntialisingMode() const{
+
+			return antialiasing_mode_;
+
+		}
+
+		virtual void SetFullscreen(bool fullscreen);
+
+		inline virtual bool IsFullscreen() const{
+
+			return fullscreen_;
+
+		}
+
+		inline virtual void SetVSync(bool vsync){
+
+			vsync_ = vsync;
+
+		}
+
+		virtual bool IsVSync() const{
+
+			return vsync_;
+
+		}
+
+		virtual void Commit();
+
+	private:
+
+		/// \brief Get the default swapchain mode description. 
+		/// \return Returns the default swapchain mode description.
+		DXGI_SWAP_CHAIN_DESC GetDefaultSwapchainMode() const;
+
+		/// \brief Create a new swapchain
+		/// \param desc The description of the swapchain.
+		void CreateSwapChain(DXGI_SWAP_CHAIN_DESC desc);
+
+		VideoMode video_mode_;
+
+		AntialiasingMode antialiasing_mode_;
+
+		bool fullscreen_;
+
+		bool vsync_;
+
+		// DirectX stuffs
+
+		Window & window_;
+
+		ID3D11Device & device_;
+
+		IDXGIFactory & factory_;
+
+		IDXGISwapChain * swap_chain_;
+
+		/*
+		ID3D11DeviceContext * immediate_context_;
+
+		ID3D11RenderTargetView * backbuffer_view_;
+		*/
+
+	};
+
+}
+
+#else
+
+static_assert(false, "DirectX is not supported outside Windows OS");
+
+#endif

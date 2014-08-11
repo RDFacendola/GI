@@ -132,6 +132,9 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
+<tr class="memitem:a53c23369af9b81ab3fec5724316eb05c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a53c23369af9b81ab3fec5724316eb05c"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>WHILE0</b>&#160;&#160;&#160;while(0)</td></tr>
+<tr class="separator:a53c23369af9b81ab3fec5724316eb05c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c7aeefc3de8b2dc5089a61381611c9b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="exceptions_8h.html#a5c7aeefc3de8b2dc5089a61381611c9b">THROW_ON_FAIL</a>(expr)</td></tr>
 <tr class="memdesc:a5c7aeefc3de8b2dc5089a61381611c9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">If expr fails, throws a runtime exception with detailed informations. "expr" must be of type "HRESULT"; the error code is defined by the value of the expression itself.  <a href="#a5c7aeefc3de8b2dc5089a61381611c9b">More...</a><br /></td></tr>
 <tr class="separator:a5c7aeefc3de8b2dc5089a61381611c9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -164,7 +167,7 @@ Macros</h2></td></tr>
 <div class="line">                                if (FAILED(hr)){ \</div>
 <div class="line">                                    return hr; \</div>
 <div class="line">                                } \</div>
-<div class="line">                             }<span class="keywordflow">while</span> (0)</div>
+<div class="line">                             }WHILE0</div>
 </div><!-- fragment -->
 <p>If expr fails returns from the routine with the fail code. </p>
 
@@ -191,7 +194,7 @@ Macros</h2></td></tr>
 <div class="line">                                           &lt;&lt; __FILE__ &lt;&lt; std::endl \</div>
 <div class="line">                                           &lt;&lt; __FUNCTION__ &lt;&lt; L<span class="stringliteral">&quot; @ &quot;</span> &lt;&lt; __LINE__ &lt;&lt; std::endl; \</div>
 <div class="line">                                    throw RuntimeException(stream.str(), {{L<span class="stringliteral">&quot;error_code&quot;</span>, std::to_wstring(GetLastError())}}); } \</div>
-<div class="line">                            }<span class="keywordflow">while</span> (0)</div>
+<div class="line">                             }WHILE0</div>
 </div><!-- fragment -->
 <p>If "expr" raises an error, throws a runtime exception with detailed informations. "expr" must support the unary operator "!"; the error code must be returned by GetLastError(). </p>
 
@@ -219,7 +222,7 @@ Macros</h2></td></tr>
 <div class="line">                                           &lt;&lt; __FUNCTION__ &lt;&lt; L<span class="stringliteral">&quot; @ &quot;</span> &lt;&lt; __LINE__ &lt;&lt; std::endl; \</div>
 <div class="line">                                    throw RuntimeException(stream.str(), {{L<span class="stringliteral">&quot;error_code&quot;</span>, std::to_wstring(hr)}}); \</div>
 <div class="line">                                } \</div>
-<div class="line">                            }<span class="keywordflow">while</span> (0)</div>
+<div class="line">                            }WHILE0</div>
 </div><!-- fragment -->
 <p>If expr fails, throws a runtime exception with detailed informations. "expr" must be of type "HRESULT"; the error code is defined by the value of the expression itself. </p>
 
@@ -231,7 +234,7 @@ Macros</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="exceptions_8h.html">exceptions.h</a></li>
-    <li class="footer">Generated on Sun Aug 10 2014 16:50:14 for GILib by
+    <li class="footer">Generated on Mon Aug 11 2014 21:35:24 for GILib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

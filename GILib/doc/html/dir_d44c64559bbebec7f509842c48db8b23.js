@@ -4,12 +4,13 @@ var dir_d44c64559bbebec7f509842c48db8b23 =
       [ "Window", "classgi__lib_1_1_window.html", "classgi__lib_1_1_window" ],
       [ "Application", "classgi__lib_1_1_application.html", "classgi__lib_1_1_application" ]
     ] ],
-    [ "dx11graphics.h", "dx11graphics_8h_source.html", null ],
-    [ "exceptions.h", "exceptions_8h.html", "exceptions_8h" ],
-    [ "guard.h", "guard_8h.html", [
-      [ "ScopeGuard", "classgi__lib_1_1_scope_guard.html", "classgi__lib_1_1_scope_guard" ]
+    [ "dx11graphics.h", "dx11graphics_8h.html", [
+      [ "DX11Factory", "classgi__lib_1_1_d_x11_factory.html", "classgi__lib_1_1_d_x11_factory" ],
+      [ "DX11Graphics", "classgi__lib_1_1_d_x11_graphics.html", "classgi__lib_1_1_d_x11_graphics" ]
     ] ],
-    [ "igraphics.h", "igraphics_8h_source.html", null ],
+    [ "exceptions.h", "exceptions_8h.html", "exceptions_8h" ],
+    [ "graphics.h", "graphics_8h.html", "graphics_8h" ],
+    [ "guard.h", "guard_8h.html", "guard_8h" ],
     [ "iterator.h", "iterator_8h.html", [
       [ "Range", "classgi__lib_1_1_range.html", "classgi__lib_1_1_range" ]
     ] ],

@@ -14,6 +14,7 @@ using ::std::vector;
 namespace gi_lib{
 
 	/// \brief Describes the CPU.
+	/// \author Raffaele D. Facendola
 	struct CpuProfile{
 
 		unsigned int cores;			///< Number of logical cores.
@@ -22,6 +23,7 @@ namespace gi_lib{
 	};
 
 	/// \brief Describes a particular drive.
+	/// \author Raffaele D. Facendola
 	struct DriveProfile{
 
 		unsigned long long size;			///< Total space, in bytes.
@@ -31,6 +33,7 @@ namespace gi_lib{
 	};
 
 	/// \brief Describes the storage capabilities.
+	/// \author Raffaele D. Facendola
 	struct StorageProfile{
 
 		vector<DriveProfile> fixed_drives;	///< Vector of all fixed drives' profiles.
@@ -38,6 +41,7 @@ namespace gi_lib{
 	};
 
 	/// \brief Describes the system memory.
+	/// \author Raffaele D. Facendola
 	struct MemoryProfile{
 
 		unsigned long long total_physical_memory;		///< Total physical memory, in bytes.
@@ -51,6 +55,7 @@ namespace gi_lib{
 
 
 	/// \brief Describes the desktop.
+	/// \author Raffaele D. Facendola
 	struct DesktopProfile{
 
 		unsigned int width;		///< Horizontal resolution of the dekstop.
@@ -59,6 +64,7 @@ namespace gi_lib{
 	};
 
 	/// \brief Operating system.
+	/// \author Raffaele D. Facendola
 	enum class OperatingSystem{
 
 		WINDOWS		///< Windows OS
@@ -68,6 +74,7 @@ namespace gi_lib{
 	/// \brief Used to query the system about its capabilities.
 
 	/// \remarks Static class.
+	/// \author Raffaele D. Facendola
 	class System{
 
 	public:

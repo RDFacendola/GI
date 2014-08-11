@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.7"/>
-<title>GILib: gi_lib::ScopeGuard Class Reference</title>
+<title>GILib: gi_lib::ScopeGuard&lt; TFunctor &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -108,37 +108,46 @@ $(document).ready(function(){initNavTree('classgi__lib_1_1_scope_guard.html','')
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="classgi__lib_1_1_scope_guard-members.html">List of all members</a>  </div>
   <div class="headertitle">
-<div class="title">gi_lib::ScopeGuard Class Reference</div>  </div>
+<div class="title">gi_lib::ScopeGuard&lt; TFunctor &gt; Class Template Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 
-<p>/brief Guards that executes a routine upon destruction unless it was dismissed.  
+<p>Guards that executes a routine upon destruction unless it was dismissed.  
  <a href="classgi__lib_1_1_scope_guard.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="guard_8h_source.html">guard.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a7c6345171b080c73be7976806c9ab9cd"><td class="memTemplParams" colspan="2">template&lt;typename TFunctor &gt; </td></tr>
-<tr class="memitem:a7c6345171b080c73be7976806c9ab9cd"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_scope_guard.html#a7c6345171b080c73be7976806c9ab9cd">ScopeGuard</a> (TFunctor functor)</td></tr>
-<tr class="memdesc:a7c6345171b080c73be7976806c9ab9cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a new scope guard.  <a href="#a7c6345171b080c73be7976806c9ab9cd">More...</a><br /></td></tr>
-<tr class="separator:a7c6345171b080c73be7976806c9ab9cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7049cb2128089942c1342c2a9d7f4b5b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_scope_guard.html#a7049cb2128089942c1342c2a9d7f4b5b">ScopeGuard</a> (<a class="el" href="classgi__lib_1_1_scope_guard.html">ScopeGuard</a> &amp;other)</td></tr>
-<tr class="memdesc:a7049cb2128089942c1342c2a9d7f4b5b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor. The original copy gets dismissed.  <a href="#a7049cb2128089942c1342c2a9d7f4b5b">More...</a><br /></td></tr>
-<tr class="separator:a7049cb2128089942c1342c2a9d7f4b5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0d6f6a44c3571e348420df918397b87f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0d6f6a44c3571e348420df918397b87f"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_scope_guard.html#a0d6f6a44c3571e348420df918397b87f">~ScopeGuard</a> ()</td></tr>
-<tr class="memdesc:a0d6f6a44c3571e348420df918397b87f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy this instance and calls the functor it wraps unless the guard has been dismissed. <br /></td></tr>
-<tr class="separator:a0d6f6a44c3571e348420df918397b87f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afabd26237cf8155a23f802d371f4c9b8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afabd26237cf8155a23f802d371f4c9b8"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_scope_guard.html#afabd26237cf8155a23f802d371f4c9b8">Dismiss</a> ()</td></tr>
-<tr class="memdesc:afabd26237cf8155a23f802d371f4c9b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dismiss the scope guard. The routine won't be called upon guard's destruction anymore. <br /></td></tr>
-<tr class="separator:afabd26237cf8155a23f802d371f4c9b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2fcaa48d41e848478f8a84b1ef5803a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad2fcaa48d41e848478f8a84b1ef5803a"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>ScopeGuard</b> (const <a class="el" href="classgi__lib_1_1_scope_guard.html">ScopeGuard</a> &amp;)=delete</td></tr>
+<tr class="separator:ad2fcaa48d41e848478f8a84b1ef5803a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43f98f99a96b6ad709217bdb361568c3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a43f98f99a96b6ad709217bdb361568c3"></a>
+<a class="el" href="classgi__lib_1_1_scope_guard.html">ScopeGuard</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classgi__lib_1_1_scope_guard.html">ScopeGuard</a> &amp;)=delete</td></tr>
+<tr class="separator:a43f98f99a96b6ad709217bdb361568c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5451cc87b22b0707154eb585cf58cfac"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_scope_guard.html#a5451cc87b22b0707154eb585cf58cfac">ScopeGuard</a> (TFunctor functor)</td></tr>
+<tr class="memdesc:a5451cc87b22b0707154eb585cf58cfac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create a new scope guard.  <a href="#a5451cc87b22b0707154eb585cf58cfac">More...</a><br /></td></tr>
+<tr class="separator:a5451cc87b22b0707154eb585cf58cfac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f5a04034bc0accb538ba73b0a168ee1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_scope_guard.html#a8f5a04034bc0accb538ba73b0a168ee1">ScopeGuard</a> (<a class="el" href="classgi__lib_1_1_scope_guard.html">ScopeGuard</a> &amp;&amp;other)</td></tr>
+<tr class="memdesc:a8f5a04034bc0accb538ba73b0a168ee1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructor. The original copy gets dismissed.  <a href="#a8f5a04034bc0accb538ba73b0a168ee1">More...</a><br /></td></tr>
+<tr class="separator:a8f5a04034bc0accb538ba73b0a168ee1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a284f457c944fbba942935faf038bce1c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a284f457c944fbba942935faf038bce1c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_scope_guard.html#a284f457c944fbba942935faf038bce1c">~ScopeGuard</a> ()</td></tr>
+<tr class="memdesc:a284f457c944fbba942935faf038bce1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy this instance and calls the functor unless the guard has been dismissed. <br /></td></tr>
+<tr class="separator:a284f457c944fbba942935faf038bce1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55fcc396b4522bcfd28d63976f514d09"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55fcc396b4522bcfd28d63976f514d09"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_scope_guard.html#a55fcc396b4522bcfd28d63976f514d09">Dismiss</a> ()</td></tr>
+<tr class="memdesc:a55fcc396b4522bcfd28d63976f514d09"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dismiss the scope guard. The routine won't be called upon guard's destruction anymore. <br /></td></tr>
+<tr class="separator:a55fcc396b4522bcfd28d63976f514d09"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>/brief Guards that executes a routine upon destruction unless it was dismissed. </p>
+<div class="textblock"><h3>template&lt;typename TFunctor&gt;<br />
+class gi_lib::ScopeGuard&lt; TFunctor &gt;</h3>
+
+<p>Guards that executes a routine upon destruction unless it was dismissed. </p>
+<p>C++ and Beyond 2012: Systematic Error Handling in C++ - Andrei Alexandrescu <a href="http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Andrei-Alexandrescu-Systematic-Error-Handling-in-C">http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Andrei-Alexandrescu-Systematic-Error-Handling-in-C</a> </p><dl class="section author"><dt>Author</dt><dd>Andrei Alexandrescu </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="a7c6345171b080c73be7976806c9ab9cd"></a>
+<a class="anchor" id="a5451cc87b22b0707154eb585cf58cfac"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
@@ -148,7 +157,7 @@ template&lt;typename TFunctor &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">gi_lib::ScopeGuard::ScopeGuard </td>
+          <td class="memname"><a class="el" href="classgi__lib_1_1_scope_guard.html">gi_lib::ScopeGuard</a>&lt; TFunctor &gt;::<a class="el" href="classgi__lib_1_1_scope_guard.html">ScopeGuard</a> </td>
           <td>(</td>
           <td class="paramtype">TFunctor&#160;</td>
           <td class="paramname"><em>functor</em></td><td>)</td>
@@ -178,17 +187,19 @@ template&lt;typename TFunctor &gt; </div>
 
 </div>
 </div>
-<a class="anchor" id="a7049cb2128089942c1342c2a9d7f4b5b"></a>
+<a class="anchor" id="a8f5a04034bc0accb538ba73b0a168ee1"></a>
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;typename TFunctor &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">gi_lib::ScopeGuard::ScopeGuard </td>
+          <td class="memname"><a class="el" href="classgi__lib_1_1_scope_guard.html">gi_lib::ScopeGuard</a>&lt; TFunctor &gt;::<a class="el" href="classgi__lib_1_1_scope_guard.html">ScopeGuard</a> </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classgi__lib_1_1_scope_guard.html">ScopeGuard</a> &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classgi__lib_1_1_scope_guard.html">ScopeGuard</a>&lt; TFunctor &gt; &amp;&amp;&#160;</td>
           <td class="paramname"><em>other</em></td><td>)</td>
           <td></td>
         </tr>
@@ -200,10 +211,10 @@ template&lt;typename TFunctor &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Copy constructor. The original copy gets dismissed. </p>
+<p>Move constructor. The original copy gets dismissed. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">other</td><td>Original scope guard to copy from. </td></tr>
+    <tr><td class="paramname">other</td><td>Original scope guard to move. </td></tr>
   </table>
   </dd>
 </dl>
@@ -219,7 +230,7 @@ template&lt;typename TFunctor &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>gi_lib</b></li><li class="navelem"><a class="el" href="classgi__lib_1_1_scope_guard.html">ScopeGuard</a></li>
-    <li class="footer">Generated on Sun Aug 10 2014 16:50:14 for GILib by
+    <li class="footer">Generated on Mon Aug 11 2014 21:35:24 for GILib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

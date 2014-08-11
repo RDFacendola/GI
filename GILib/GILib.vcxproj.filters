@@ -13,6 +13,9 @@
     <Filter Include="!old">
       <UniqueIdentifier>{9cd26542-c182-4637-b309-2a36fd32f5cb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="graphics">
+      <UniqueIdentifier>{9b367e73-ee71-4afa-bd92-b013a0aa5432}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\timer.h">
@@ -27,23 +30,20 @@
     <ClInclude Include="include\application.h">
       <Filter>gilib</Filter>
     </ClInclude>
-    <ClInclude Include="include\igraphics.h">
-      <Filter>!old</Filter>
-    </ClInclude>
-    <ClInclude Include="include\dx11graphics.h">
-      <Filter>!old</Filter>
-    </ClInclude>
     <ClInclude Include="include\observable.h">
       <Filter>pattern</Filter>
     </ClInclude>
     <ClInclude Include="include\guard.h">
       <Filter>pattern</Filter>
     </ClInclude>
-    <ClInclude Include="include\iterator.h">
-      <Filter>pattern</Filter>
-    </ClInclude>
     <ClInclude Include="include\scene.h">
       <Filter>scene</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11graphics.h">
+      <Filter>graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -54,7 +54,7 @@
       <Filter>gilib</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11graphics.cpp">
-      <Filter>!old</Filter>
+      <Filter>graphics</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

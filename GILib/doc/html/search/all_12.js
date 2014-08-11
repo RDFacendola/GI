@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['_7eapplication',['~Application',['../classgi__lib_1_1_application.html#a748bca84fefb9c12661cfaa2f623748d',1,'gi_lib::Application']]],
-  ['_7escopeguard',['~ScopeGuard',['../classgi__lib_1_1_scope_guard.html#a0d6f6a44c3571e348420df918397b87f',1,'gi_lib::ScopeGuard']]]
+  ['width',['width',['../structgi__lib_1_1_desktop_profile.html#a0b0e041a89617ee9069e9d3941d5beaa',1,'gi_lib::DesktopProfile']]],
+  ['window',['Window',['../classgi__lib_1_1_window.html#a74e6087da23d3c24e9fac0245e5ec92c',1,'gi_lib::Window']]],
+  ['window',['Window',['../classgi__lib_1_1_window.html',1,'gi_lib']]]
 ];

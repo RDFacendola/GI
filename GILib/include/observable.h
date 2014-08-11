@@ -15,6 +15,7 @@ namespace gi_lib{
 
 	/// \brief Interface that should be inherited by any observable object.
 	/// \tparam TArguments Types of the arguments passed to the observers when the observable object notifies them.
+	/// \author Raffaele D. Facendola
 	template <typename... TArguments>
 	class Observable{
 
@@ -37,6 +38,7 @@ namespace gi_lib{
 
 	/// \brief Observable event with the ability to notify all its observers.
 	/// \tparam TArguments Types of the arguments passed to the observers when the observable object notifies them.
+	/// \author Raffaele D. Facendola
 	template <typename... TArguments>
 	class Event : public Observable<TArguments...>
 	{

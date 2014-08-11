@@ -35,6 +35,7 @@ using ::std::function;
 namespace gi_lib{
 
 	/// \brief A window.
+	/// \author Raffaele D. Facendola
 	class Window{
 
 		friend class Application;
@@ -163,6 +164,7 @@ namespace gi_lib{
 	};
 	
 	/// \brief The application singleton
+	/// \author Raffaele D. Facendola
 	class Application{
 
 	public:

@@ -127,12 +127,18 @@ typedef map&lt; wstring, wstring &gt;&#160;</td><td class="memItemRight" valign=
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:ad53cc95b65c41a25fe675e21e0b9f1dc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_runtime_exception.html#ad53cc95b65c41a25fe675e21e0b9f1dc">RuntimeException</a> (<a class="el" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a> &amp;&amp;other)</td></tr>
+<tr class="memdesc:ad53cc95b65c41a25fe675e21e0b9f1dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move ctor.  <a href="#ad53cc95b65c41a25fe675e21e0b9f1dc">More...</a><br /></td></tr>
+<tr class="separator:ad53cc95b65c41a25fe675e21e0b9f1dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa367d169fcedd76f81f87a039f526ff7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_runtime_exception.html#aa367d169fcedd76f81f87a039f526ff7">RuntimeException</a> (const wstring &amp;error_message)</td></tr>
 <tr class="memdesc:aa367d169fcedd76f81f87a039f526ff7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new exception.  <a href="#aa367d169fcedd76f81f87a039f526ff7">More...</a><br /></td></tr>
 <tr class="separator:aa367d169fcedd76f81f87a039f526ff7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a18292dd8b066cce3743697154afee1cc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_runtime_exception.html#a18292dd8b066cce3743697154afee1cc">RuntimeException</a> (const wstring &amp;error_message, <a class="el" href="classgi__lib_1_1_runtime_exception.html#af3ab1d65b6f9453d6b81ec3c771d9916">TErrorArgs</a> &amp;&amp;extras)</td></tr>
 <tr class="memdesc:a18292dd8b066cce3743697154afee1cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a new exception.  <a href="#a18292dd8b066cce3743697154afee1cc">More...</a><br /></td></tr>
 <tr class="separator:a18292dd8b066cce3743697154afee1cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a140a93c38d7adf394db055dcaeb485ce"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_runtime_exception.html#a140a93c38d7adf394db055dcaeb485ce">operator=</a> (<a class="el" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a> other)</td></tr>
+<tr class="memdesc:a140a93c38d7adf394db055dcaeb485ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unified assigment operator.  <a href="#a140a93c38d7adf394db055dcaeb485ce">More...</a><br /></td></tr>
+<tr class="separator:a140a93c38d7adf394db055dcaeb485ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a15047c9cc0834f955666c7c69d364384"><td class="memItemLeft" align="right" valign="top">const wstring &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classgi__lib_1_1_runtime_exception.html#a15047c9cc0834f955666c7c69d364384">GetErrorMessage</a> () const </td></tr>
 <tr class="memdesc:a15047c9cc0834f955666c7c69d364384"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the error message.  <a href="#a15047c9cc0834f955666c7c69d364384">More...</a><br /></td></tr>
 <tr class="separator:a15047c9cc0834f955666c7c69d364384"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -145,9 +151,41 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Runtime exception. </p>
-<dl class="section note"><dt>Note</dt><dd>A convenient way to throw a runtime exception is the following: <div class="fragment"><div class="line"><span class="keywordflow">throw</span> <a class="code" href="classgi__lib_1_1_runtime_exception.html#aa367d169fcedd76f81f87a039f526ff7">RuntimeException</a>(<span class="stringliteral">&quot;message&quot;</span>, {{L<span class="stringliteral">&quot;arg0&quot;</span>, L<span class="stringliteral">&quot;value0&quot;</span>}, {L<span class="stringliteral">&quot;arg1&quot;</span>, L<span class="stringliteral">&quot;value1&quot;</span>}})</div>
+<dl class="section note"><dt>Note</dt><dd>A convenient way to throw a runtime exception is the following: <div class="fragment"><div class="line"><span class="keywordflow">throw</span> <a class="code" href="classgi__lib_1_1_runtime_exception.html#ad53cc95b65c41a25fe675e21e0b9f1dc">RuntimeException</a>(<span class="stringliteral">&quot;message&quot;</span>, {{L<span class="stringliteral">&quot;arg0&quot;</span>, L<span class="stringliteral">&quot;value0&quot;</span>}, {L<span class="stringliteral">&quot;arg1&quot;</span>, L<span class="stringliteral">&quot;value1&quot;</span>}})</div>
 </div><!-- fragment --> </dd></dl>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a class="anchor" id="ad53cc95b65c41a25fe675e21e0b9f1dc"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">gi_lib::RuntimeException::RuntimeException </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Move ctor. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>The r-value reference to the object to move. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a class="anchor" id="aa367d169fcedd76f81f87a039f526ff7"></a>
 <div class="memitem">
 <div class="memproto">
@@ -309,6 +347,38 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a140a93c38d7adf394db055dcaeb485ce"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a>&amp; gi_lib::RuntimeException::operator= </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a>&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Unified assigment operator. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>The value to assign to this object. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>C:/Users/Daniele/Documents/GI/GILib/include/<a class="el" href="exceptions_8h_source.html">exceptions.h</a></li>
 </ul>
@@ -318,7 +388,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><b>gi_lib</b></li><li class="navelem"><a class="el" href="classgi__lib_1_1_runtime_exception.html">RuntimeException</a></li>
-    <li class="footer">Generated on Sun Aug 10 2014 16:50:14 for GILib by
+    <li class="footer">Generated on Mon Aug 11 2014 21:35:24 for GILib by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.7 </li>
   </ul>

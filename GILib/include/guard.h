@@ -11,30 +11,40 @@ using ::std::function;
 
 namespace gi_lib{
 
-	/// /brief Guards that executes a routine upon destruction unless it was dismissed.
+	/// \brief Guards that executes a routine upon destruction unless it was dismissed.
+
+	/// C++ and Beyond 2012: Systematic Error Handling in C++ - Andrei Alexandrescu
+	/// http://channel9.msdn.com/Shows/Going+Deep/C-and-Beyond-2012-Andrei-Alexandrescu-Systematic-Error-Handling-in-C
+	/// \author Andrei Alexandrescu
+	template <typename TFunctor>
 	class ScopeGuard{
 
 	public:
 
+		// No need for those operators and ctors.
+
+		ScopeGuard() = delete;
+		ScopeGuard(const ScopeGuard &) = delete;
+		ScopeGuard & operator=(const ScopeGuard &) = delete;
+
 		/// \brief Create a new scope guard.
 		/// \tparam TFunctor Type of the functor.
 		/// \param functor Functor that wraps the routine to be executed upon this instance's destruction.
-		template <typename TFunctor>
 		ScopeGuard(TFunctor functor) :
-			functor_(functor),
+			functor_(std::move(functor)),
 			dismissed_(false){}
 
-		/// \brief Copy constructor. The original copy gets dismissed.
-		/// \param other Original scope guard to copy from.
-		ScopeGuard(ScopeGuard & other) :
-			functor_(other.functor_),
+		/// \brief Move constructor. The original copy gets dismissed.
+		/// \param other Original scope guard to move.
+		ScopeGuard(ScopeGuard && other) :
+			functor_(std::move(other.functor_)),
 			dismissed_(other.dismissed_){
 
 			other.Dismiss();
 
 		}
 
-		/// \brief Destroy this instance and calls the functor it wraps unless the guard has been dismissed.
+		/// \brief Destroy this instance and calls the functor unless the guard has been dismissed.
 		~ScopeGuard(){
 
 			if (!dismissed_){
@@ -50,15 +60,24 @@ namespace gi_lib{
 		inline void Dismiss(){
 
 			dismissed_ = true;
-
+			
 		}
 
 	private:
 
-		std::function<void(void)> functor_;
+		TFunctor functor_;
 
 		bool dismissed_;
-
+		
 	};
+
+	/// \brief Create a new scope guard.
+	/// \tparam TFunctor Type of the functor the ScopeGuard will call upon destruction.
+	template <typename TFunctor>
+	ScopeGuard<TFunctor> MakeScopeGuard(TFunctor functor){
+
+		return ScopeGuard<TFunctor>(std::move(functor));
+
+	}
 
 }

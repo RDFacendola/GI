@@ -1,11 +1,13 @@
 #pragma once
 
+#include <memory>
+
 #include "application.h"
 
-using ::gi_lib::Window;
-using ::gi_lib::Timer;
+#include "graphics.h"
 
-class Timer;
+using namespace gi_lib;
+using namespace std;
 
 ///Application's logic
 class GILogic : public Window{
@@ -22,6 +24,8 @@ public:
 
 private:
 
-	unsigned long counter;
+	IFactory & factory_;
+
+	shared_ptr<IGraphics> graphics_;
 
 };
