@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <atomic>
+
 namespace gi_lib{
 
 	/// \brief Class of unique instances.
@@ -17,17 +19,22 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Create a new unique instance.
-		Unique(){
+		/// \brief Null object associated to the unique class.
+		static const Unique kNull;
 
-			key_ = ++counter_;
+		/// \brief Create a new unique instance.
+		static Unique MakeUnique(){
+
+			static std::atomic_uint counter_{ 0 };
+
+			return Unique(counter_.fetch_add(1, std::memory_order_relaxed));
 
 		}
-
+		
 		/// \brief Tests for equality.
 		/// \param other The other instance to test against.
 		/// \return Returns true if this object and "other" are the same, returns false otherwise.
-		bool operator==(const Unique & other) const{
+		inline bool operator==(const Unique & other) const{
 
 			return key_ == other.key_;
 
@@ -36,7 +43,7 @@ namespace gi_lib{
 		/// \brief Tests for inequality.
 		/// \param other The other instance to test against.
 		/// \return Returns true if this object and "other" are NOT the same, returns false otherwise.
-		bool operator!=(const Unique & other) const{
+		inline bool operator!=(const Unique & other) const{
 
 			return key_ != other.key_;
 
@@ -44,15 +51,18 @@ namespace gi_lib{
 
 	private:
 
-		// Counter used to generate unique instances.
-		static unsigned int counter_;
+		Unique(unsigned int key){
+
+			key_ = key;
+
+		}
 
 		// Key of this instance.
 		unsigned int key_;
 
 	};
 
-	template <typename TTag>
-	unsigned int Unique<TTag>::counter_ = 0;
+	template<typename TTag>
+	const Unique<TTag> Unique<TTag>::kNull = Unique<TTag>::MakeUnique();
 
 }

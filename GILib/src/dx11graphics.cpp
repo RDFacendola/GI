@@ -320,7 +320,8 @@ DX11Graphics::DX11Graphics(Window & window, ID3D11Device & device, IDXGIFactory 
 	window_(window),
 	device_(device),
 	factory_(factory),
-	swap_chain_(nullptr){
+	swap_chain_(nullptr),
+	on_window_resized_(ListenerHandle::kNull){
 
 	///VSync disabled by default
 	SetVSync(false);

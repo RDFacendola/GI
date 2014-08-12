@@ -41,7 +41,7 @@ namespace gi_lib{
 		template<typename TFunctor>
 		ListenerHandle AddListener(TFunctor&& functor){
 
-			ListenerHandle handle;
+			ListenerHandle handle = ListenerHandle::MakeUnique();
 
 			listeners_.push_back(std::make_pair(handle, std::forward<TFunctor>(functor)));
 
