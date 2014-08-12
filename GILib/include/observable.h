@@ -8,8 +8,12 @@
 #include <functional>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 #include "unique.h"
+
+using ::std::shared_ptr;
+using ::std::weak_ptr;
 
 namespace gi_lib{
 
@@ -44,11 +48,11 @@ namespace gi_lib{
 
 		/// \brief Remove a listener object from this observable.
 		/// \param handle Handle associated to the listener object.
-		void RemoveListener(ListenerKey & key){
+		void RemoveListener(const ListenerKey & key){
 
 			listeners_.erase(std::remove_if(listeners_.begin(),
 											listeners_.end(),
-											[&handle](const Listener & listener){
+											[&key](const Listener & listener){
 
 												return listener.first == key;
 
@@ -79,7 +83,7 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Observable event.
+	/// \brief Event object.
 	/// \tparam TArguments Type of arguments this observable delivers to the listeners during notification.
 	/// \author Raffaele D. Facendola
 	template <typename... TArguments>
@@ -97,6 +101,5 @@ namespace gi_lib{
 		}
 
 	};
-
-
+	
 }

@@ -339,7 +339,6 @@ DX11Graphics::DX11Graphics(Window & window, ID3D11Device & device, IDXGIFactory 
 																							   0);
 
 																 });
-
 }
 
 ///Destroy the graphic object

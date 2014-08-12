@@ -21,10 +21,13 @@ namespace gi_lib{
 
 	public:
 
-		// No need for those operators and ctors.
-
+		/// \brief No default constructor.
 		ScopeGuard() = delete;
+
+		/// \brief No copy constructor.
 		ScopeGuard(const ScopeGuard &) = delete;
+
+		/// \brief No assignment operator.
 		ScopeGuard & operator=(const ScopeGuard &) = delete;
 
 		/// \brief Create a new scope guard.

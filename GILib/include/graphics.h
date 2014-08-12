@@ -78,6 +78,8 @@ namespace gi_lib{
 
 	public:
 
+		virtual ~IGraphics(){}
+
 		/// \brief Set the video mode.
 		/// \param video_mode The video mode to set.
 		virtual void SetVideoMode(const VideoMode & video_mode) = 0;
