@@ -135,7 +135,7 @@ namespace gi_lib{
 
 		bool vsync_;
 
-		ListenerHandle on_window_resized_;
+		ListenerKey on_window_resized_listener_;
 
 		// DirectX stuffs
 

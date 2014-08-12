@@ -22,6 +22,9 @@ namespace gi_lib{
 		/// \brief Null object associated to the unique class.
 		static const Unique kNull;
 
+		Unique() :
+			Unique(kNull){}
+
 		/// \brief Create a new unique instance.
 		static Unique MakeUnique(){
 

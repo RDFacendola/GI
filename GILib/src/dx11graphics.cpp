@@ -320,8 +320,7 @@ DX11Graphics::DX11Graphics(Window & window, ID3D11Device & device, IDXGIFactory 
 	window_(window),
 	device_(device),
 	factory_(factory),
-	swap_chain_(nullptr),
-	on_window_resized_(ListenerHandle::kNull){
+	swap_chain_(nullptr){
 
 	///VSync disabled by default
 	SetVSync(false);
@@ -330,16 +329,16 @@ DX11Graphics::DX11Graphics(Window & window, ID3D11Device & device, IDXGIFactory 
 	CreateSwapChain(GetDefaultSwapchainMode());
 
 	//Listeners
-	on_window_resized_ = window_.OnResized().AddListener([this](Window &, unsigned int, unsigned int){
+	on_window_resized_listener_ = window_.OnResized().AddListener([this](Window &, unsigned int, unsigned int){
 
-															//Resize the swapchain buffer
-															swap_chain_->ResizeBuffers(kBuffersCount,
-																					   0,	//Will fit the client width
-																					   0,	//Will fit the client height
-																					   kGraphicFormat,
-																					   0);
+																	//Resize the swapchain buffer
+																	swap_chain_->ResizeBuffers(kBuffersCount,
+																							   0,	//Will fit the client width
+																							   0,	//Will fit the client height
+																							   kGraphicFormat,
+																							   0);
 
-														 });
+																 });
 
 }
 
