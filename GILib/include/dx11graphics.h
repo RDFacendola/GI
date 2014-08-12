@@ -10,6 +10,7 @@
 #include <d3d11.h>
 
 #include "graphics.h"
+#include "observable.h"
 
 namespace gi_lib{
 
@@ -133,6 +134,8 @@ namespace gi_lib{
 		bool fullscreen_;
 
 		bool vsync_;
+
+		ListenerHandle on_window_resized_;
 
 		// DirectX stuffs
 

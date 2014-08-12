@@ -112,15 +112,9 @@ namespace gi_lib{
 
 		}
 
-		/// \brief Type of the event OnClosed.
-		typedef Observable<Window &> TOnClosed;
-
-		/// \brief Type of the event OnResized.
-		typedef Observable<Window &, unsigned int, unsigned int> TOnResized;
-
 		/// \brief Event fired when the window has been closed.
 		/// \return Returns an observable event which notifies when the window is closed.
-		inline TOnClosed & OnClosed(){
+		inline Observable<Window> & OnClosed(){
 
 			return on_closed_;
 
@@ -128,7 +122,7 @@ namespace gi_lib{
 
 		/// \brief Event fired when the window has been resized.
 		/// \return Returns an observable event which notifies when the window is resized.
-		inline TOnResized & OnResized(){
+		inline Observable<Window, unsigned int, unsigned int> & OnResized(){
 
 			return on_resized_;
 
@@ -136,11 +130,11 @@ namespace gi_lib{
 
 	protected:
 
-		/// \brief Event fired when the window has been closed.
-		Event<Window &> on_closed_;
+		/// \brief The window has been closed.
+		Observable<Window> on_closed_;
 
-		/// \brief Event fired when the window has been resized.
-		Event<Window &, unsigned int, unsigned int> on_resized_;
+		/// \brief The window has been resized.
+		Observable<Window, unsigned int, unsigned int> on_resized_;
 			
 	private:
 

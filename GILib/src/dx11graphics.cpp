@@ -319,7 +319,8 @@ shared_ptr<IGraphics> DX11Factory::CreateGraphics(Window & window){
 DX11Graphics::DX11Graphics(Window & window, ID3D11Device & device, IDXGIFactory & factory) :
 	window_(window),
 	device_(device),
-	factory_(factory){
+	factory_(factory),
+	swap_chain_(nullptr){
 
 	///VSync disabled by default
 	SetVSync(false);
@@ -328,18 +329,16 @@ DX11Graphics::DX11Graphics(Window & window, ID3D11Device & device, IDXGIFactory 
 	CreateSwapChain(GetDefaultSwapchainMode());
 
 	//Listeners
-	static auto on_resized_listener = Window::TOnResized::TListener([this](Window &, unsigned int, unsigned int){
+	on_window_resized_ = window_.OnResized().AddListener([this](Window &, unsigned int, unsigned int){
 
-																		//Resize the swapchain buffer
-																		swap_chain_->ResizeBuffers(kBuffersCount, 
-																								   0,	//Will fit the client width
-																								   0,	//Will fit the client height
-																								   kGraphicFormat, 
-																								   0);
+															//Resize the swapchain buffer
+															swap_chain_->ResizeBuffers(kBuffersCount,
+																					   0,	//Will fit the client width
+																					   0,	//Will fit the client height
+																					   kGraphicFormat,
+																					   0);
 
-																	});
-
-	window_.OnResized() << on_resized_listener;
+														 });
 
 }
 
@@ -422,6 +421,14 @@ DXGI_SWAP_CHAIN_DESC DX11Graphics::GetDefaultSwapchainMode() const{
 void DX11Graphics::CreateSwapChain(DXGI_SWAP_CHAIN_DESC desc){
 
 	//TODO: Release the outstanding references to the backbuffer in the context
+
+	//Release the old swapchain
+	if (swap_chain_ != nullptr){
+
+		swap_chain_->Release();
+		swap_chain_ = nullptr;
+
+	}
 
 	THROW_ON_FAIL(factory_.CreateSwapChain(&device_,
 										   &desc,

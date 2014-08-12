@@ -35,7 +35,7 @@ GILogic::~GILogic(){
 }
 
 void GILogic::Update(const Timer::Time & time){
-
+	
 	graphics_->Commit();
 	
 }

@@ -1,81 +1,85 @@
 /// \file observable.h
-/// \brief Classes used to implement and manage the observer pattern and its variations.
+/// \brief Classes used to implement and manage the observer pattern.
 ///
 /// \author Raffaele D. Facendola
 
 #pragma once
 
-#include <set>
 #include <functional>
+#include <vector>
+#include <algorithm>
 
-using std::set;
-using std::function;
+#include "unique.h"
 
 namespace gi_lib{
 
-	/// \brief Interface that should be inherited by any observable object.
-	/// \tparam TArguments Types of the arguments passed to the observers when the observable object notifies them.
+	/// \brief Tag associated to obserable objects's handle.
+	struct ListenerTag{};
+
+	/// \brief Handle associated to each listener.
+	using ListenerHandle = Unique<ListenerTag>;
+
+	/// \brief Observable event.
+	/// \tparam TSubject Concrete type of the subject this observable refers to.
+	/// \tparam TArguments Type of arguments this observable delivers to the listeners during notification.
 	/// \author Raffaele D. Facendola
-	template <typename... TArguments>
+	template <typename TSubject, typename... TArguments>
 	class Observable{
 
-	public:
-
-		/// \brief Type of the observers.
-		typedef function<void(TArguments...)> TListener;
-
-		/// \brief Add a new observer to this instace.
-		/// \param listener Reference to the observer instace that should be notified.
-		/// \return Returns a reference to this instance.
-		virtual Observable & operator<<(TListener & listener) = 0;
-
-		/// \brief Remove a new observer from this instace.
-		/// \param listener Reference to the observer instace that should be removed.
-		/// \return Returns a reference to this instance.
-		virtual Observable & operator>>(TListener & listener) = 0;
-
-	};
-
-	/// \brief Observable event with the ability to notify all its observers.
-	/// \tparam TArguments Types of the arguments passed to the observers when the observable object notifies them.
-	/// \author Raffaele D. Facendola
-	template <typename... TArguments>
-	class Event : public Observable<TArguments...>
-	{
+		/// The subject this observable refers to is the only one who should be able to notify the observers
+		friend typename TSubject;
 
 	public:
 
-		inline virtual Observable & operator<<(TListener & listener){
+		/// \brief Type of the listener used by this observable.
+		using Listener = std::pair < ListenerHandle, std::function<void(TSubject &, TArguments...)> >;
 
-			listeners_.insert(&listener);
+		/// \brief Add a new listener to this observable.
+		/// \tparam TFunctor Type of listener object.
+		/// \param functor Actual listener object.
+		/// \return Returns an handle that associate the listener object to this observable.
+		template<typename TFunctor>
+		ListenerHandle AddListener(TFunctor&& functor){
 
-			return *this;
+			ListenerHandle handle;
+
+			listeners_.push_back(std::make_pair(handle, std::forward<TFunctor>(functor)));
+
+			return handle;
 
 		}
 
-		inline virtual Observable & operator>>(TListener & listener){
+		/// \brief Remove a listener object from this observable.
+		/// \param handle Handle associated to the listener object.
+		void RemoveListener(ListenerHandle & handle){
 
-			listeners_.erase(&listener);
+			listeners_.erase(std::remove_if(listeners_.begin(),
+											listeners_.end(),
+											[&handle](const Listener & ref){
 
-			return *this;
+												return ref.first == handle;
+
+											}),
+							 listeners_.end());
 
 		}
 
-		/// \brief Notify all the observers.
-		/// \param arguments List of the arguments that will be passed to the observers.
-		inline void Notify(TArguments... arguments){
+	protected:
 
-			for (auto & listener : listeners_){
+		/// \brief Notify all the listener objects.
+		/// \param subject Subject who have requested the notification.
+		/// \param args Arguments that will be delivered to each listener object.
+		void Notify(TSubject & subject, TArguments&&... args){
 
-				(*listener)(arguments...);
+			for (auto it : listeners_){
+
+				it.second(subject, std::forward<TArguments>(args)...);
 
 			}
 
 		}
 
-	private:
-
-		set<TListener *> listeners_;
+		std::vector<Listener> listeners_;
 
 	};
 

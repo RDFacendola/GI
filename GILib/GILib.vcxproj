@@ -28,6 +28,7 @@
     <ClInclude Include="include\guard.h" />
     <ClInclude Include="include\system.h" />
     <ClInclude Include="include\timer.h" />
+    <ClInclude Include="include\unique.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\application.cpp" />

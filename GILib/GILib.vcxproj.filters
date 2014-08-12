@@ -45,6 +45,7 @@
     <ClInclude Include="include\dx11graphics.h">
       <Filter>graphics</Filter>
     </ClInclude>
+    <ClInclude Include="include\unique.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\system.cpp">
