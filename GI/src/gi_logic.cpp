@@ -19,6 +19,12 @@ const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
 class ComponentFoo : public SceneObject::Component{
 
+public:
+
+	ComponentFoo(int v): value(v){}
+
+	int value = 0;
+
 protected:
 
 	virtual void Update(const Timer::Time & time){
@@ -40,7 +46,25 @@ GILogic::GILogic():
 
 	SceneObject so;
 
-	auto s = so.AddComponent<ComponentFoo>();
+	ComponentFoo& x = so.AddComponent<ComponentFoo>(7);
+	
+	x.value = 47;
+
+	ComponentFoo zzz(1);
+
+	zzz = x;
+
+	so.RemoveComponent(zzz);
+
+	ComponentFoo& y = so.GetComponent<ComponentFoo>();
+
+	if (&x == &y){
+
+		bool yay;
+
+		yay = true;
+
+	}
 
 	SetTitle(kWindowTitle);
 

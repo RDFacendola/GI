@@ -3,48 +3,29 @@
 ///
 /// \author Raffaele D. Facendola
 
-#include <utility>
+#include <iterator>
 
 namespace gi_lib{
 
-	/// \brief Range class.
-	/// \author Alisdair Meredith
-	/// \remarks Based on http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2009/n2977.pdf
-	template<typename Iter>
-	struct range : pair<Iter, Iter> {
-		
-		using pair::pair;
-
-	};
-
-	/// \brief Begin of a range.
+	/// \brief Begin of a pair-range.
+	/// \tparam TIterator Type of iterator used by the range.
 	/// \return Returns the begin of a range.
-	/// \author Alisdair Meredith
-	template<typename Iter>
-	Iter begin(const range<Iter> & p){
+	template<typename TIterator>
+	TIterator begin(const std::pair<TIterator, TIterator> & p){
 
 		return p.first;
 
 	}
 
-	/// \brief End of a range.
+	/// \brief End of a pair-range.
+	/// \tparam TIterator Type of iterator used by the range.
 	/// \return Returns the end of a range.
-	/// \author Alisdair Meredith
-	template<typename Iter>
-	Iter end(const range<Iter> & p){
+	template<typename TIterator>
+	TIterator end(const std::pair<TIterator, TIterator> & p){
 		
 		return p.second;
 
 	}
 	 
-	/// \brief Create a range.
-	/// \return Returns the range
-	/// \author Alisdair Meredith
-	template<typename T>
-	auto make_range(T & t)->range<decltype(begin(t))>{
 
-		return range<decltype(begin(t))>{ begin(t), end(t) };
-
-	}
-		  
 }
