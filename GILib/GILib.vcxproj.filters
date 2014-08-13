@@ -46,6 +46,7 @@
       <Filter>graphics</Filter>
     </ClInclude>
     <ClInclude Include="include\unique.h" />
+    <ClInclude Include="include\iterator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\system.cpp">

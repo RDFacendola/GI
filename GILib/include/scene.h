@@ -15,6 +15,8 @@
 #include <iterator>
 
 #include "timer.h"
+#include "iterator.h"
+#include "exceptions.h"
 
 using std::wstring;
 using std::unordered_multimap;
@@ -36,7 +38,7 @@ namespace gi_lib{
 		class Component;
 
 		/// \brief Type of the component map
-		typedef unordered_multimap<size_t, shared_ptr<Component>> ComponentMap;
+		typedef unordered_multimap<size_t, Component*> ComponentMap;
 
 		/// \brief Scene object component.
 		/// \author Raffaele D. Facendola
@@ -78,9 +80,9 @@ namespace gi_lib{
 			/// \brief Set the component's owner.
 
 			/// \param scene_object Pointer to the owner of this instance.
-			inline void SetOwner(SceneObject * scene_object){
+			inline void SetOwner(SceneObject & scene_object){
 
-				scene_object_ = scene_object;
+				scene_object_ = &scene_object;
 
 			}
 
@@ -104,22 +106,19 @@ namespace gi_lib{
 		/// \tparam TComponent Type of the component to add. It must derive from Component.
 		/// \tparam TArgs Type of the arguments that will be passed to the component during its creation.
 		/// \param args Arguments that will be passed to the component during its creation.
-		/// \return Returns a weak pointer to the created component.
+		/// \return Returns a reference to the created component.
 		template<typename TComponent, typename... TArgs>
-		inline weak_ptr<TComponent> AddComponent(TArgs&&... args){
+		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, TComponent&> AddComponent(TArgs&&... args){
 
-			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
-
-			auto component = std::make_shared<TComponent>(std::forward<TArgs>(args)...);
+			auto component = new TComponent(std::forward<TArgs>(args)...);
 
 			///Set the owner of the component
-			component->SetOwner(this);
+			component->SetOwner(*this);
 
 			components_.insert(ComponentMap::value_type(typeid(TComponent).hash_code(),
 														component));
 
-			return component;
+			return *component;
 
 		}
 
@@ -127,32 +126,25 @@ namespace gi_lib{
 
 		/// The component is destroyed and its destructor called accordingly.
 		/// \tparam TComponent Type of the component to remove. It must derive from Component. 
-		/// \param component Weak pointer to the component to delete.
-		template<typename TComponent>
-		void RemoveComponent(weak_ptr<TComponent> & component){
+		/// \param component Component to delete.
+		template<typename TComponent, typename std::enable_if<std::is_base_of<Component, TComponent>::value>::type * = nullptr>
+		void RemoveComponent(TComponent & component){
 
-			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
+			// Null out the owner
+			component.SetOwner(nullptr);
 
-			if (auto temp_component = component.lock()){
+			for (auto it = components_.find(typeid(TComponent).hash_code()); it != components_.end();){
 
-				// Null out the owner
-				temp_component->SetOwner(nullptr);
+				if (it->second == &component){
 
-				for (auto it = components_.find(typeid(TComponent).hash_code()); it != components_.end();){
-
-					if (it->second == temp_component){
-
-						components_.erase(it++);
+					components_.erase(it++);
 						
-						return;
+					return;
 
-					}
-					else{
+				}
+				else{
 
-						++it;
-
-					}
+					++it;
 
 				}
 
@@ -164,22 +156,20 @@ namespace gi_lib{
 
 		/// The removed components are destroyed and their destructors get called accordingly.
 		/// \tparam TComponent Type of the components to remove. It must derive from Component.
-		template<typename TComponent>
+		template<typename TComponent, typename std::enable_if<std::is_base_of<Component, TComponent>::value>::type * = nullptr>
 		inline void RemoveComponents(){
-
-			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
 
 			components_.erase(typeid(TComponent).hash_code());
 
 		}
 
+		/*
 		/// \brief Get all the components deriving from TComponent.
 
 		/// \tparam TComponent Type of the components to get. It must derive from Component.
 		/// \return Returns a vector containing weak pointer to the components that derive from TComponent.
 		template<typename TComponent>
-		inline vector<weak_ptr<TComponent>> GetComponents(){
+		inline auto GetComponents(){
 
 			//Ensures that TComponent is derived from Component at compile time
 			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
@@ -219,28 +209,23 @@ namespace gi_lib{
 			return components;
 
 		}
-
+		*/
 		/// \brief Get the first component deriving from TComponent.
 
 		/// \tparam TComponent Type of the component to get. It must derive from Component.
 		/// \return Return a weak pointer to the component found. Returns an empty pointer if no component was found.
-		template<typename TComponent>
-		inline weak_ptr<TComponent> GetComponent(){
-
-			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
+		template<typename TComponent, typename std::enable_if<std::is_base_of<Component, TComponent>::value>::type * = nullptr>
+		inline TComponent & GetComponent(){
 
 			auto it = components_.find(typeid(TComponent).hash_code());
 
 			if (it != components_.end()){
 
-				return std::static_pointer_cast<TComponent>(it->second);
-
-			}else{
-
-				return weak_ptr<TComponent>();
+				return *static_cast<TComponent*>(it->second);
 
 			}
+
+			throw RuntimeException(L"No component found with type " + typeid(TComponent).name());
 			
 		}
 
@@ -248,25 +233,19 @@ namespace gi_lib{
 
 		/// \tparam TComponent Type of the component to get. It must derive from Component.
 		/// \return Return a weak pointer to the component found. Returns an empty pointer if no component was found.
-		template<typename TComponent>
-		inline weak_ptr<const TComponent> GetComponent() const{
-
-			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
+		template<typename TComponent, typename std::enable_if<std::is_base_of<Component, TComponent>::value>::type * = nullptr>
+		inline const TComponent & GetComponent() const{
 
 			auto it = components_.find(typeid(TComponent).hash_code());
 
 			if (it != components_.end()){
 
-				return std::static_pointer_cast<const TComponent>(it->second);
-
-			}
-			else{
-
-				return weak_ptr<const TComponent>();
+				return *static_cast<TComponent*>(it->second);
 
 			}
 
+			throw RuntimeException(L"No component found with type " + typeid(TComponent).name());
+			
 		}
 
 		/// \brief Get the scene object's name.

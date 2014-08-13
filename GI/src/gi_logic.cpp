@@ -17,8 +17,30 @@ const unsigned int kWindowWidth = 1280;
 const unsigned int kWindowHeight = 768;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
+class ComponentFoo : public SceneObject::Component{
+
+protected:
+
+	virtual void Update(const Timer::Time & time){
+
+		//Do nothing
+
+	}
+
+};
+
+class Bar{
+
+public:
+
+};
+
 GILogic::GILogic():
 	factory_(DX11Factory::GetInstance()){
+
+	SceneObject so;
+
+	auto s = so.AddComponent<ComponentFoo>();
 
 	SetTitle(kWindowTitle);
 
