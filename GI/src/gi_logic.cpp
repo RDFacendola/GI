@@ -17,13 +17,15 @@ const unsigned int kWindowWidth = 1280;
 const unsigned int kWindowHeight = 768;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
-class ComponentFoo : public SceneObject::Component{
+class ComponentFoo : public Component{
 
 public:
 
+	ComponentFoo() : value(0){}
+
 	ComponentFoo(int v): value(v){}
 
-	int value = 0;
+	int value;
 
 protected:
 
@@ -44,27 +46,10 @@ public:
 GILogic::GILogic():
 	factory_(DX11Factory::GetInstance()){
 
-	SceneObject so;
+	SceneObject so(L"Scene!", { L"Caio", L"Cmoe", L"Tsai?" });
 
-	ComponentFoo& x = so.AddComponent<ComponentFoo>(7);
-	
-	x.value = 47;
-
-	ComponentFoo zzz(1);
-
-	zzz = x;
-
-	so.RemoveComponent(zzz);
-
-	ComponentFoo& y = so.GetComponent<ComponentFoo>();
-
-	if (&x == &y){
-
-		bool yay;
-
-		yay = true;
-
-	}
+	auto a = so.HasTag(L"Scene!");
+	auto b = so.HasTag(L"Cmoe");
 
 	SetTitle(kWindowTitle);
 

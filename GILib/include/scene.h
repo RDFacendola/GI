@@ -6,25 +6,110 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
-#include <vector>
+#include <map>
 #include <typeinfo>
 #include <type_traits>
 #include <memory>
-#include <algorithm>
-#include <iterator>
+#include <set>
+#include <initializer_list>
 
 #include "timer.h"
-#include "iterator.h"
+#include "nullable.h"
 #include "exceptions.h"
 
 using std::wstring;
-using std::unordered_multimap;
+using std::map;
 using std::unique_ptr;
-using std::vector;
+using std::set;
+using std::initializer_list;
 
 namespace gi_lib{
 	
+	class SceneObject;
+	class Component;
+
+	/// \brief Scene object component.
+	/// \author Raffaele D. Facendola
+	class Component{
+
+		friend class SceneObject;
+
+	public:
+
+		/// \brief Default constructor.
+		Component() :
+			owner_(nullptr),
+			enabled_(true){}
+
+		/// \brief Copy constructor. The owner cannot be copyed in the new instance.
+		/// \param other The instance to copy.
+		Component(const Component & other){
+
+			enabled_ = other.enabled_;
+
+		}
+
+		/// \brief Assignment operator. The owner cannot be assigned in this instance.
+		/// \param other The instance to copy.
+		Component & operator=(const Component & other){
+
+			enabled_ = other.enabled_;
+
+			return *this;
+
+		}
+
+		virtual ~Component(){}
+
+		/// \brief Get the component's owner.
+
+		/// \return Returns the component's owner reference.
+		inline SceneObject & GetOwner(){
+
+			return *owner_;
+
+		}
+
+		/// \brief Get the component's owner.
+
+		/// \return Returns the component's owner constant reference.
+		inline const SceneObject & GetOwner() const{
+
+			return *owner_;
+
+		}
+
+		/// \brief Check wheter this component is enabled.
+		/// \return Returns true if the component is enabled, false otherwise.
+		inline bool IsEnabled() const{
+
+			return enabled_;
+
+		}
+
+		/// \brief Enable or disable the component.
+		/// \param enabled Specify true to enable the component, false to disable it.
+		inline void SetEnabled(bool enabled){
+
+			enabled_ = enabled;
+
+		}
+
+	protected:
+
+		/// \brief Update the component.
+
+		/// \param time The current application time.
+		virtual void Update(const Timer::Time & time) = 0;
+
+	private:
+
+		bool enabled_;
+
+		SceneObject * owner_;
+
+	};
+
 	/// \brief A scene object.
 
 	/// A scene object may represents a camera, a light, a model and so on.
@@ -34,78 +119,39 @@ namespace gi_lib{
 
 	public:
 		
-		class Component;
-
 		/// \brief Type of the component map.
-		typedef unordered_multimap<size_t, Component*> ComponentMap;
+		typedef map<size_t, std::unique_ptr<Component>> ComponentMap;
 
-		/// \brief Scene object component.
-		/// \author Raffaele D. Facendola
-		class Component{
+		/// \brief Type of the tag set.
+		typedef set<wstring> TagSet;
 
-			friend class SceneObject;
-
-		public:
-
-			/// \brief Default constructor.
-			Component() :
-				owner_(nullptr){}
-
-			virtual ~Component(){}
-
-			/// \brief Get the component's owner.
-
-			/// \return Returns the component's owner reference.
-			inline SceneObject & GetOwner(){
-
-				return *owner_;
-
-			}
-
-			/// \brief Get the component's owner.
-
-			/// \return Returns the component's owner constant reference.
-			inline const SceneObject & GetOwner() const{
-
-				return *owner_;
-
-			}
-
-		protected:
-
-			/// \brief Update the component.
-
-			/// \param time The current application time.
-			virtual void Update(const Timer::Time & time) = 0;
-
-		private:
-
-			/// \brief Set the component's owner.
-
-			/// \param scene_object Pointer to the owner of this instance.
-			inline void SetOwner(SceneObject & owner){
-
-				owner_ = &owner;
-
-			}
-
-			SceneObject * owner_;
-
-		};
-
-		/// \brief Create an unnamed scene object.
+		/// \brief Create an unnamed scene object with no tags.
 		SceneObject() :
 			name_(L""){}
 
-		/// \brief Create a named scene object.
+		/// \brief Create an unnamed scene object with tags.
+		/// \param tags List of tags to associate to this scene object.
+		SceneObject(initializer_list<wstring> tags) :
+			name_(L""),
+			tags_(tags.begin(), tags.end()){}
 
+		/// \brief Create a named scene object with no tags.
 		/// \param name The name of this instance.
 		SceneObject(wstring name) :
 			name_(std::move(name)){}
 
+		/// \brief Create a named scene object with tags.
+		/// \param name The name of this instance.
+		/// \param tags List of tags to associate to this scene object.
+		SceneObject(wstring name, initializer_list<wstring> tags) :
+			name_(std::move(name)),
+			tags_(tags.begin(), tags.end()){}
+
+		/// TODO copy-ctor, assignment & move (+swap)
+
 		/// \brief Add a new component to the instance.
 
-		/// SceneObject owns the created component.
+		/// If a component of the same type exists, it is overwritten and the previous one is destroyed.
 		/// \tparam TComponent Type of the component to add. It must derive from Component.
 		/// \tparam TArgs Type of the arguments that will be passed to the component during its creation.
 		/// \param args Arguments that will be passed to the component during its creation.
@@ -113,94 +159,26 @@ namespace gi_lib{
 		template<typename TComponent, typename... TArgs>
 		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, TComponent &> AddComponent(TArgs&&... args){
 			
-			auto iterator = components_.insert(ComponentMap::value_type(typeid(TComponent).hash_code(),
-																		new TComponent(std::forward<TArgs>(args)...)));
+			auto key = typeid(TComponent).hash_code();
 
-			iterator->second->SetOwner(*this);
+			auto & ret =(components_[key] = std::make_unique<TComponent>(std::forward<TArgs>(args)...));
 
-			return *static_cast<TComponent*>(iterator->second);
+			// Set the owner.
+			ret->owner_ = this;
 
-		}
-
-		/// /brief Remove a given component.
-
-		/// The component is destroyed and its destructor called accordingly.
-		/// \tparam TComponent Type of the component to remove. It must derive from Component. 
-		/// \param component Component to delete.
-		template<typename TComponent, typename std::enable_if<std::is_base_of<Component, TComponent>::value>::type * = nullptr>
-		void RemoveComponent(const TComponent & component){
-
-			for (auto it = components_.find(typeid(TComponent).hash_code()); it != components_.end();){
-
-				if (it->second == &component){
-
-					components_.erase(it++);
-						
-					return;
-
-				}else{
-
-					++it;
-
-				}
-
-			}
+			return *static_cast<ComponentFoo*>(ret.get());
 
 		}
 
-		/// \brief Remove all the components deriving from TComponent.
+		/// \brief Remove a component by type.
 
-		/// The removed components are destroyed and their destructors get called accordingly.
-		/// \tparam TComponent Type of the components to remove. It must derive from Component.
-		template<typename TComponent, typename std::enable_if<std::is_base_of<Component, TComponent>::value>::type * = nullptr>
-		inline void RemoveComponents(){
-
-			components_.erase(typeid(TComponent).hash_code());
-
-		}
-
-		/// \brief Get all the components deriving from TComponent.
-
-		/// \tparam TComponent Type of the components to get. It must derive from Component.
-		/// \return Returns a vector containing weak pointer to the components that derive from TComponent.
+		/// \tparam TComponent Type of the component to remove. It must derive from Component.
 		template<typename TComponent>
-		inline void GetComponents(){
+		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, void> RemoveComponent(){
 
-			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
+			auto key = typeid(TComponent).hash_code();
 
-			auto range = components_.equal_range(typeid(TComponent).hash_code());
-
-			Component;
-
-
-			auto components = vector<weak_ptr<TComponent>>(std::distance(range.first, range.second));
-
-			std::transform(range.first,
-				range.second,
-				components.begin(),
-				[](const ComponentMap::value_type & value){ return std::static_pointer_cast<TComponent>(value.second); });
-
-		}
-
-		/// \brief Get all the components deriving from TComponent.
-
-		/// \tparam TComponent Type of the components to get. It must derive from Component.
-		/// \return Returns a vector containing weak pointer to the components that derive from TComponent.
-		template<typename TComponent>
-		inline void GetComponents() const{
-
-			//Ensures that TComponent is derived from Component at compile time
-			static_assert(typename std::is_base_of<Component, TComponent>::value, "TComponent must inherit from Component");
-
-			auto range = components_.equal_range(typeid(TComponent).hash_code());
-
-			auto components = vector<weak_ptr<const TComponent>>(std::distance(range.first, range.second));
-
-			std::transform(range.first,
-						   range.second,
-						   components.begin(),
-						   [](const ComponentMap::value_type & value){ return std::static_pointer_cast<const TComponent>(value.second); });
+			components_.erase(key);
 
 		}
 
@@ -208,38 +186,48 @@ namespace gi_lib{
 
 		/// \tparam TComponent Type of the component to get. It must derive from Component.
 		/// \return Return a weak pointer to the component found. Returns an empty pointer if no component was found.
-		template<typename TComponent, typename std::enable_if<std::is_base_of<Component, TComponent>::value>::type * = nullptr>
-		inline TComponent & GetComponent(){
+		template<typename TComponent>
+		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Nullable<TComponent>> GetComponent() const{
 
-			auto it = components_.find(typeid(TComponent).hash_code());
+			auto key = typeid(TComponent).hash_code();
+
+			auto it = components_.find(key);
 
 			if (it != components_.end()){
 
-				return *static_cast<TComponent*>(it->second);
+				return make_nullable(*(static_cast<TComponent *>(it->second.get())));
+
+			}else{
+
+				return Nullable<TComponent>();
 
 			}
-
-			throw RuntimeException(L"Could not find any component of the specified type");
 			
 		}
 
-		/// \brief Get the first component deriving from TComponent.
+		/// \brief Add a new tag to the scene object.
+		/// \param tag The new tag to add.
+		inline void AddTag(const wstring & tag){
 
-		/// \tparam TComponent Type of the component to get. It must derive from Component.
-		/// \return Return a weak pointer to the component found. Returns an empty pointer if no component was found.
-		template<typename TComponent, typename std::enable_if<std::is_base_of<Component, TComponent>::value>::type * = nullptr>
-		inline const TComponent & GetComponent() const{
+			tags_.insert(tag);
 
-			auto it = components_.find(typeid(TComponent).hash_code());
+		}
 
-			if (it != components_.end()){
+		/// \brief Remove an existing tag.
+		/// \param tag The tag to remove.
+		inline void RemoveTag(const wstring & tag){
 
-				return *static_cast<TComponent*>(it->second);
+			tags_.erase(tag);
 
-			}
+		}
 
-			throw RuntimeException(L"Could not find any component of the specified type");
-			
+		/// \brief Check whether the object has a particular tag.
+		/// \param tag The tag to match.
+		/// \return Returns true if the tag is found, false otherwise.
+		inline bool HasTag(const wstring & tag){
+
+			return tags_.find(tag) != tags_.end();
+
 		}
 
 		/// \brief Get the scene object's name.
@@ -251,15 +239,19 @@ namespace gi_lib{
 
 		}
 
-		/// \brief Updates the components of this scene object.
+		/// \brief Updates the enabled components.
 
 		/// \param time The application time
 		inline void Update(const Timer::Time & time){
 
 			for (auto & it : components_){
 
-				it.second->Update(time);
+				if (it.second->IsEnabled()){
 
+					it.second->Update(time);
+
+				}
+				
 			}
 
 		}
@@ -267,6 +259,8 @@ namespace gi_lib{
 	private:
 
 		ComponentMap components_;
+
+		TagSet tags_;
 
 		wstring name_;
 
