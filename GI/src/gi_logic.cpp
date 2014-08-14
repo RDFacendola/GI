@@ -46,10 +46,11 @@ public:
 GILogic::GILogic():
 	factory_(DX11Factory::GetInstance()){
 
-	SceneObject so(L"Scene!", { L"Caio", L"Cmoe", L"Tsai?" });
+	int j = 47;
 
-	auto a = so.HasTag(L"Scene!");
-	auto b = so.HasTag(L"Cmoe");
+
+
+
 
 	SetTitle(kWindowTitle);
 

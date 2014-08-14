@@ -157,7 +157,7 @@ namespace gi_lib{
 		/// \param args Arguments that will be passed to the component during its creation.
 		/// \return Returns a reference to the created component.
 		template<typename TComponent, typename... TArgs>
-		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, TComponent &> AddComponent(TArgs&&... args){
+		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Nullable<TComponent>> AddComponent(TArgs&&... args){
 			
 			auto key = typeid(TComponent).hash_code();
 
@@ -166,7 +166,7 @@ namespace gi_lib{
 			// Set the owner.
 			ret->owner_ = this;
 
-			return *static_cast<ComponentFoo*>(ret.get());
+			return make_nullable(*(static_cast<TComponent *>(ret.get())));
 
 		}
 
@@ -187,7 +187,7 @@ namespace gi_lib{
 		/// \tparam TComponent Type of the component to get. It must derive from Component.
 		/// \return Return a weak pointer to the component found. Returns an empty pointer if no component was found.
 		template<typename TComponent>
-		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Nullable<TComponent>> GetComponent() const{
+		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Nullable<TComponent>> GetComponent(){
 
 			auto key = typeid(TComponent).hash_code();
 
@@ -203,6 +203,30 @@ namespace gi_lib{
 
 			}
 			
+		}
+
+		/// \brief Get the first component deriving from TComponent.
+
+		/// \tparam TComponent Type of the component to get. It must derive from Component.
+		/// \return Return a weak pointer to the component found. Returns an empty pointer if no component was found.
+		template<typename TComponent>
+		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Nullable<const TComponent>> GetComponent() const{
+
+			auto key = typeid(TComponent).hash_code();
+
+			auto it = components_.find(key);
+
+			if (it != components_.end()){
+
+				return make_nullable(*(static_cast<const TComponent *>(it->second.get())));
+
+			}
+			else{
+
+				return Nullable<const TComponent>();
+
+			}
+
 		}
 
 		/// \brief Add a new tag to the scene object.

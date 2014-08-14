@@ -23,11 +23,11 @@ namespace gi_lib{
 		Nullable():
 			object_(nullptr){}
 
-		/// \brief Get a pointer to the object.
-		/// return Returns a pointer to the object.
-		TType * operator->() const{
-		
-			return object_;
+		/// \brief Get a reference to the object.
+		/// return Returns a reference to the object.
+		TType & Value() const{
+
+			return *object_;
 
 		}
 
@@ -36,6 +36,14 @@ namespace gi_lib{
 		TType & operator*() const{
 
 			return *object_;
+
+		}
+
+		/// \brief Get a pointer to the object.
+		/// return Returns a pointer to the object.
+		TType * operator->() const{
+
+			return object_;
 
 		}
 
