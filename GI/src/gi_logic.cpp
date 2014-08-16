@@ -37,20 +37,15 @@ protected:
 
 };
 
-class Bar{
+const int fun(){
 
-public:
+	return 42;
 
-};
+}
+
 
 GILogic::GILogic():
 	factory_(DX11Factory::GetInstance()){
-
-	int j = 47;
-
-
-
-
 
 	SetTitle(kWindowTitle);
 

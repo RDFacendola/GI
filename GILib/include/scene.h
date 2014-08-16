@@ -14,7 +14,7 @@
 #include <initializer_list>
 
 #include "timer.h"
-#include "nullable.h"
+#include "maybe.h"
 #include "exceptions.h"
 
 using std::wstring;
@@ -155,9 +155,9 @@ namespace gi_lib{
 		/// \tparam TComponent Type of the component to add. It must derive from Component.
 		/// \tparam TArgs Type of the arguments that will be passed to the component during its creation.
 		/// \param args Arguments that will be passed to the component during its creation.
-		/// \return Returns a reference to the created component.
+		/// \return Returns a reference to the added component.
 		template<typename TComponent, typename... TArgs>
-		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Nullable<TComponent>> AddComponent(TArgs&&... args){
+		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Maybe<TComponent&>> AddComponent(TArgs&&... args){
 			
 			auto key = typeid(TComponent).hash_code();
 
@@ -166,12 +166,11 @@ namespace gi_lib{
 			// Set the owner.
 			ret->owner_ = this;
 
-			return make_nullable(*(static_cast<TComponent *>(ret.get())));
+			return Maybe<TComponent&>(*(static_cast<TComponent *>(ret.get())));
 
 		}
 
 		/// \brief Remove a component by type.
-
 		/// \tparam TComponent Type of the component to remove. It must derive from Component.
 		template<typename TComponent>
 		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, void> RemoveComponent(){
@@ -182,12 +181,11 @@ namespace gi_lib{
 
 		}
 
-		/// \brief Get the first component deriving from TComponent.
-
+		/// \brief Get the component whose type is equal to TComponent.
 		/// \tparam TComponent Type of the component to get. It must derive from Component.
-		/// \return Return a weak pointer to the component found. Returns an empty pointer if no component was found.
+		/// \return Returns a reference to the found object, if any. Returns an empty reference otherwise.
 		template<typename TComponent>
-		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Nullable<TComponent>> GetComponent(){
+		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Maybe<TComponent &>> GetComponent(){
 
 			auto key = typeid(TComponent).hash_code();
 
@@ -195,22 +193,21 @@ namespace gi_lib{
 
 			if (it != components_.end()){
 
-				return make_nullable(*(static_cast<TComponent *>(it->second.get())));
+				return Maybe<TComponent &>(*(static_cast<TComponent *>(it->second.get())));
 
 			}else{
 
-				return Nullable<TComponent>();
+				return Maybe<TComponent &>();
 
 			}
 			
 		}
 
-		/// \brief Get the first component deriving from TComponent.
-
+		/// \brief Get the component whose type is equal to TComponent.
 		/// \tparam TComponent Type of the component to get. It must derive from Component.
-		/// \return Return a weak pointer to the component found. Returns an empty pointer if no component was found.
+		/// \return Returns a reference to the found object, if any. Returns an empty reference otherwise.
 		template<typename TComponent>
-		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Nullable<const TComponent>> GetComponent() const{
+		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Maybe<const TComponent &>> GetComponent() const{
 
 			auto key = typeid(TComponent).hash_code();
 
@@ -218,12 +215,12 @@ namespace gi_lib{
 
 			if (it != components_.end()){
 
-				return make_nullable(*(static_cast<const TComponent *>(it->second.get())));
+				return const Maybe<const TComponent &>(*(static_cast<TComponent *>(it->second.get())));
 
 			}
 			else{
 
-				return Nullable<const TComponent>();
+				return const Maybe<const TComponent &>();
 
 			}
 

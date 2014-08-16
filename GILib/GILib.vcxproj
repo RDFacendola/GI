@@ -22,7 +22,7 @@
     <ClInclude Include="include\application.h" />
     <ClInclude Include="include\dx11graphics.h" />
     <ClInclude Include="include\graphics.h" />
-    <ClInclude Include="include\nullable.h" />
+    <ClInclude Include="include\maybe.h" />
     <ClInclude Include="include\scene.h" />
     <ClInclude Include="include\observable.h" />
     <ClInclude Include="include\exceptions.h" />
