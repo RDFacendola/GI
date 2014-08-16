@@ -17,32 +17,11 @@ const unsigned int kWindowWidth = 1280;
 const unsigned int kWindowHeight = 768;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
-class ComponentFoo : public Component{
-
-public:
-
-	ComponentFoo() : value(0){}
-
-	ComponentFoo(int v): value(v){}
-
-	int value;
-
-protected:
-
-	virtual void Update(const Timer::Time & time){
-
-		//Do nothing
-
-	}
-
-};
-
 const int fun(){
 
 	return 42;
 
 }
-
 
 GILogic::GILogic():
 	factory_(DX11Factory::GetInstance()){

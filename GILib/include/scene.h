@@ -41,24 +41,12 @@ namespace gi_lib{
 			owner_(nullptr),
 			enabled_(true){}
 
-		/// \brief Copy constructor. The owner cannot be copyed in the new instance.
-		/// \param other The instance to copy.
-		Component(const Component & other){
+		/// \brief No copy constructor.
+		Component(const Component & other) = delete;
 
-			enabled_ = other.enabled_;
-
-		}
-
-		/// \brief Assignment operator. The owner cannot be assigned in this instance.
-		/// \param other The instance to copy.
-		Component & operator=(const Component & other){
-
-			enabled_ = other.enabled_;
-
-			return *this;
-
-		}
-
+		/// \brief No assignment operator.
+		Component & operator=(const Component & other) = delete;
+	
 		virtual ~Component(){}
 
 		/// \brief Get the component's owner.
@@ -146,8 +134,27 @@ namespace gi_lib{
 		SceneObject(wstring name, initializer_list<wstring> tags) :
 			name_(std::move(name)),
 			tags_(tags.begin(), tags.end()){}
+		
+		/// \brief No copy constructor.
+		SceneObject(const SceneObject & other) = delete;
 
-		/// TODO copy-ctor, assignment & move (+swap)
+		/// \brief No assignment operator.
+		SceneObject & operator=(const SceneObject & other) = delete;
+		
+		/// \brief Move constructor.
+		SceneObject(SceneObject && other):
+			name_(std::move(other.name_)),
+			tags_(std::move(other.tags_)),
+			components_(std::move(other.components_)){
+
+			// Change components' ownership
+			for (auto & pair : components_){
+
+				pair.second->owner_ = this;
+
+			}
+
+		}
 
 		/// \brief Add a new component to the instance.
 
