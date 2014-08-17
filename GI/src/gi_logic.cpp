@@ -13,17 +13,35 @@
 
 using namespace ::std;
 using namespace ::gi_lib;
+using namespace ::gi_lib::dx11;
 
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
+
+class Foo{
+public:
+
+	void foo(){}
+
+};
 
 GILogic::GILogic():
 	factory_(DX11Factory::GetInstance()){
 
 	/////////////////////////////////////
 
-	DX11Resources res;
+	ID3D11Device * dev;
 
-	auto k = res.Get<ITexture3D>();
+	DX11Resources res(*dev);
+
+	auto p = std::make_shared<Foo>();
+
+	auto h = ::Handle<Foo>(p);
+
+	h->foo();
+
+	auto ahah = ::Handle<Texture2D>();
+
+	auto k = res.Get(ahah);
 
 	
 

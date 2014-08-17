@@ -24,8 +24,8 @@ public:
 
 private:
 
-	IFactory & factory_;
+	Factory & factory_;
 
-	unique_ptr<IGraphics> graphics_;
+	unique_ptr<Graphics> graphics_;
 
 };

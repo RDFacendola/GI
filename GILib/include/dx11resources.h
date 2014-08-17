@@ -8,81 +8,99 @@
 #ifdef _WIN32
 
 #include <d3d11.h>
+#include <memory>
 
 #include "resources.h"
+#include "handle.h"
+
+using ::std::shared_ptr;
 
 namespace gi_lib{
 
-	class DX11Texture2D;
-	class DX11Texture3D;
-	class DX11Mesh;
+	namespace dx11{
 
-	/// \brief Resource manager interface for DirectX11.
-	/// \author Raffaele D. Facendola.
-	class DX11Resources: public IResources{
-
-	public:
+		class DX11Texture2D;
+		class DX11Texture3D;
+		class DX11Mesh;
 
 		template <typename TResource>
 		struct resource_traits;
 
 		template <>
-		struct resource_traits < ITexture2D > {
+		struct resource_traits < Texture2D > {
 
 			using type = DX11Texture2D;
 
 		};
 
 		template <>
-		struct resource_traits < ITexture3D > {
+		struct resource_traits < Texture3D > {
 
 			using type = DX11Texture3D;
 
 		};
 
 		template <>
-		struct resource_traits < IMesh > {
+		struct resource_traits < Mesh > {
 
 			using type = DX11Mesh;
 
 		};
 
-		template <typename TResource>
-		typename resource_traits<TResource>::type * Get(){
+		/// \brief Resource manager interface for DirectX11.
+		/// \author Raffaele D. Facendola.
+		class DX11Resources: public Resources{
 
-			return nullptr;
+		public:
 
-		}
+			/// \brief Create a new instance of DirectX11 resource manager.
+			/// \param device The device used to create the actual resources.
+			DX11Resources(ID3D11Device & device) :
+				device_(device){}
 
-	private:
+			/// \brief Get a resource by handle.
+			/// \tparam Type of resource to get.
+			/// \param handle The handle of the resource to get.
+			/// \return Returns a pointer to the given resource if any. Returns null if the specified handle was invalid.
+			template <typename TResource>
+			typename shared_ptr<typename resource_traits<TResource>::type> Get(const Handle<TResource> & handle){
+
+				return nullptr;
+
+			}
+
+		private:
+
+			ID3D11Device & device_;
+
+		};
 
 
-	};
+		/// \brief DirectX 11 plain texture interface.
+		/// \author Raffaele D. Facendola.
+		class DX11Texture2D: public Texture2D{
 
+		public:
 
-	/// \brief DirectX 11 plain texture interface.
-	/// \author Raffaele D. Facendola.
-	class DX11Texture2D: public ITexture2D{
+		};
 
-	public:
+		/// \brief DirectX 11 volumetric texture interface.
+		/// \author Raffaele D. Facendola.
+		class DX11Texture3D: public Texture3D{
 
-	};
+		public:
 
-	/// \brief DirectX 11 volumetric texture interface.
-	/// \author Raffaele D. Facendola.
-	class DX11Texture3D: public ITexture3D{
+		};
 
-	public:
+		/// \brief DirectX11 3D model interface.
+		/// \author Raffaele D. Facendola.
+		class DX11Mesh: public Mesh{
 
-	};
+		public:
 
-	/// \brief DirectX11 3D model interface.
-	/// \author Raffaele D. Facendola.
-	class DX11Mesh: public IMesh{
+		};
 
-	public:
-
-	};
+	}
 
 }
 

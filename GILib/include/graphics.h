@@ -17,7 +17,7 @@ using ::std::unique_ptr;
 
 namespace gi_lib{
 	
-	class IGraphics;
+	class Graphics;
 	class Window;
 
 	/// \brief Describes a video mode.
@@ -59,7 +59,7 @@ namespace gi_lib{
 	/// A factory is used to instantiate the basic objects needed by various API.
 	/// \remarks Interface.
 	/// \author Raffaele D. Facendola
-	class IFactory{
+	class Factory{
 
 	public:
 
@@ -69,7 +69,7 @@ namespace gi_lib{
 		/// \brief Create a graphics subsystem.
 		/// \param window The window used to display the frames.
 		/// \return Returns a reference to the graphic subsystem.
-		virtual unique_ptr<IGraphics> CreateGraphics(Window & window) = 0;
+		virtual unique_ptr<Graphics> CreateGraphics(Window & window) = 0;
 
 		/// \brief Get the resource manager.
 		/// \return Returns a reference to the resource mananger.
@@ -80,11 +80,11 @@ namespace gi_lib{
 	/// \brief Interface used to display an image to an output.
 	/// \remarks Interface.
 	/// \author Raffaele D. Facendola
-	class IGraphics{
+	class Graphics{
 
 	public:
 
-		virtual ~IGraphics(){}
+		virtual ~Graphics(){}
 
 		/// \brief Set the video mode.
 		/// \param video_mode The video mode to set.

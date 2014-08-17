@@ -54,6 +54,7 @@
     <ClInclude Include="include\dx11resources.h">
       <Filter>graphics</Filter>
     </ClInclude>
+    <ClInclude Include="include\handle.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\system.cpp">

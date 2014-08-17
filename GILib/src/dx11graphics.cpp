@@ -11,6 +11,7 @@
 #include <map>
 
 using namespace gi_lib;
+using namespace gi_lib::dx11;
 using namespace std;
 
 //Global stuffs
@@ -311,15 +312,17 @@ AdapterProfile DX11Factory::GetAdapterProfile() const{
 
 }
 
-unique_ptr<IGraphics> DX11Factory::CreateGraphics(Window & window){
+unique_ptr<Graphics> DX11Factory::CreateGraphics(Window & window){
 
 	return std::make_unique<DX11Graphics>(window, *device_, *factory_);
 	
 }
 
-IResources & DX11Factory::GetResources(){
+Resources & DX11Factory::GetResources(){
 
-	return DX11Resources();
+	static DX11Resources resources(*device_);
+
+	return resources;
 
 }
 

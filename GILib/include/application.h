@@ -45,7 +45,7 @@ namespace gi_lib{
 #ifdef _WIN32
 
 		/// \brief Window handle type under Windows.
-		typedef HWND Handle;
+		using Handle = HWND;
 
 #endif
 
