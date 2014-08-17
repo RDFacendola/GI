@@ -9,22 +9,25 @@
 #include "scene.h"
 #include "graphics.h"
 #include "dx11graphics.h"
+#include "dx11resources.h"
 
 using namespace ::std;
 using namespace ::gi_lib;
 
-const unsigned int kWindowWidth = 1280;
-const unsigned int kWindowHeight = 768;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
-
-const int fun(){
-
-	return 42;
-
-}
 
 GILogic::GILogic():
 	factory_(DX11Factory::GetInstance()){
+
+	/////////////////////////////////////
+
+	DX11Resources res;
+
+	auto k = res.Get<ITexture3D>();
+
+	
+
+	/////////////////////////////////////
 
 	SetTitle(kWindowTitle);
 

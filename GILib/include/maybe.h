@@ -15,6 +15,7 @@ namespace gi_lib{
 
 		/// \brief Create a maybe object.
 		/// \param value The value to store inside the maybe object.
+		template <typename TValue>
 		Maybe(TValue&& value) :
 			value_(std::forward<TValue>(value)),
 			is_null_(false){}

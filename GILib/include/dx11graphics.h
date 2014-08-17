@@ -35,7 +35,9 @@ namespace gi_lib{
 
 		virtual AdapterProfile GetAdapterProfile() const;
 
-		virtual shared_ptr<IGraphics> CreateGraphics(Window & window);
+		virtual unique_ptr<IGraphics> CreateGraphics(Window & window);
+
+		virtual IResources & GetResources();
 
 	private:
 		
@@ -135,6 +137,8 @@ namespace gi_lib{
 
 		bool vsync_;
 
+		// Listeners
+
 		ListenerKey on_window_resized_listener_;
 
 		// DirectX stuffs
@@ -159,6 +163,6 @@ namespace gi_lib{
 
 #else
 
-static_assert(false, "DirectX is not supported outside Windows OS");
+static_assert(false, "DirectX is not supported");
 
 #endif

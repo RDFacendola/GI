@@ -26,6 +26,6 @@ private:
 
 	IFactory & factory_;
 
-	shared_ptr<IGraphics> graphics_;
+	unique_ptr<IGraphics> graphics_;
 
 };

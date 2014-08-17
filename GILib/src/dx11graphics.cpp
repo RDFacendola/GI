@@ -2,13 +2,16 @@
 
 #include "dx11graphics.h"
 
+#include "dx11resources.h"
 #include "exceptions.h"
 #include "guard.h"
 #include "application.h"
 
 #include <algorithm>
+#include <map>
 
 using namespace gi_lib;
+using namespace std;
 
 //Global stuffs
 
@@ -308,9 +311,15 @@ AdapterProfile DX11Factory::GetAdapterProfile() const{
 
 }
 
-shared_ptr<IGraphics> DX11Factory::CreateGraphics(Window & window){
+unique_ptr<IGraphics> DX11Factory::CreateGraphics(Window & window){
 
-	return std::make_shared<DX11Graphics>(window, *device_, *factory_);
+	return std::make_unique<DX11Graphics>(window, *device_, *factory_);
+	
+}
+
+IResources & DX11Factory::GetResources(){
+
+	return DX11Resources();
 
 }
 
@@ -339,6 +348,7 @@ DX11Graphics::DX11Graphics(Window & window, ID3D11Device & device, IDXGIFactory 
 																							   0);
 
 																 });
+
 }
 
 ///Destroy the graphic object

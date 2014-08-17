@@ -48,6 +48,12 @@
     <ClInclude Include="include\maybe.h">
       <Filter>pattern</Filter>
     </ClInclude>
+    <ClInclude Include="include\resources.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11resources.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\system.cpp">

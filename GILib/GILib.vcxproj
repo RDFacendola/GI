@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\dx11resources.h" />
     <ClInclude Include="include\application.h" />
     <ClInclude Include="include\dx11graphics.h" />
     <ClInclude Include="include\graphics.h" />
@@ -30,6 +31,7 @@
     <ClInclude Include="include\system.h" />
     <ClInclude Include="include\timer.h" />
     <ClInclude Include="include\unique.h" />
+    <ClInclude Include="include\resources.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\application.cpp" />

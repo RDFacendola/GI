@@ -9,9 +9,11 @@
 #include <vector>
 #include <memory>
 
+#include "resources.h"
+
 using ::std::wstring;
 using ::std::vector;
-using ::std::shared_ptr;
+using ::std::unique_ptr;
 
 namespace gi_lib{
 	
@@ -64,10 +66,14 @@ namespace gi_lib{
 		/// \brief Get the video card's parameters and capabilities.
 		virtual AdapterProfile GetAdapterProfile() const = 0;
 
-		/// \brief Create a graphics subsystem inside a window.
+		/// \brief Create a graphics subsystem.
 		/// \param window The window used to display the frames.
-		/// \return Returns a pointer to the created graphics subsystem.
-		virtual shared_ptr<IGraphics> CreateGraphics(Window & window) = 0;
+		/// \return Returns a reference to the graphic subsystem.
+		virtual unique_ptr<IGraphics> CreateGraphics(Window & window) = 0;
+
+		/// \brief Get the resource manager.
+		/// \return Returns a reference to the resource mananger.
+		virtual Resources & GetResources() = 0;
 
 	};
 
