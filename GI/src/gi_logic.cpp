@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "dx11factory.h"
 #include "dx11graphics.h"
 #include "dx11resources.h"
 

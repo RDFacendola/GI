@@ -16,11 +16,9 @@ namespace{
 		
 		static const wchar_t * kWindowClassName;
 
-		static WindowsShared & GetInstance(){
+		static void Initialize(){
 
 			static WindowsShared instance;
-
-			return instance;
 
 		}
 
@@ -138,6 +136,8 @@ bool Window::IsVisible(){
 Window::Window(){
 
 #ifdef _WIN32
+
+	WindowsShared::Initialize();
 
 	//Create the window
 	THROW_ON_ERROR(handle_ = CreateWindow(WindowsShared::kWindowClassName,

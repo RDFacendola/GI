@@ -57,6 +57,8 @@
     <ClInclude Include="include\window.h">
       <Filter>gilib</Filter>
     </ClInclude>
+    <ClInclude Include="include\factory.h" />
+    <ClInclude Include="include\dx11factory.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\system.cpp">
@@ -77,5 +79,6 @@
     <ClCompile Include="src\timer.cpp">
       <Filter>gilib</Filter>
     </ClCompile>
+    <ClCompile Include="src\dx11factory.cpp" />
   </ItemGroup>
 </Project>

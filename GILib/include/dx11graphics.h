@@ -7,62 +7,20 @@
 
 #ifdef _WIN32
 
-#include <d3d11.h>
-
+#include "factory.h"
 #include "graphics.h"
 #include "observable.h"
 
+struct ID3D11Device;
+struct IDXGIFactory;
+struct DXGI_SWAP_CHAIN_DESC;
+struct IDXGISwapChain;
+
 namespace gi_lib{
 
+	class Window;
+
 	namespace dx11{
-
-		/// \brief DirectX11 factory class.
-		/// \author Raffaele D. Facendola
-		class DX11Factory : public Factory{
-
-		public:
-
-			/// \brief Get the DirectX11 factory singleton.
-			/// \return Returns a reference to the DirectX11 factory singleton.
-			static inline DX11Factory & GetInstance(){
-
-				static DX11Factory factory;
-
-				return factory;
-
-			}
-
-			/// \brief Default destructor
-			~DX11Factory();
-
-			virtual AdapterProfile GetAdapterProfile() const;
-
-			virtual unique_ptr<Graphics> CreateGraphics(Window & window);
-
-			virtual Resources & GetResources();
-
-		private:
-
-			/// \brief Hidden constructor.
-			DX11Factory();
-
-			/// Enumerate the supported antialiasing modes
-			vector<AntialiasingMode> EnumerateAntialiasingModes() const;
-
-			/// Enumerate the supported video modes. Filters by resolution and refresh rate
-			vector<VideoMode> EnumerateVideoModes() const;
-
-			/// Enumerate the supported DXGI video modes
-			vector<DXGI_MODE_DESC> EnumerateDXGIModes() const;
-
-			ID3D11Device * device_;
-
-			IDXGIFactory * factory_;
-
-			IDXGIAdapter * adapter_;
-
-		};
-
 
 		/// \brief DirectX object used to display an image to an output.
 		/// \author Raffaele D. Facendola
