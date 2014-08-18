@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <typeinfo>
+#include <typeindex>
 #include <type_traits>
 #include <memory>
 #include <set>
@@ -88,7 +89,7 @@ namespace gi_lib{
 		/// \brief Update the component.
 
 		/// \param time The current application time.
-		virtual void Update(const Timer::Time & time) = 0;
+		virtual void Update(const Time & time) = 0;
 
 	private:
 
@@ -108,7 +109,7 @@ namespace gi_lib{
 	public:
 		
 		/// \brief Type of the component map.
-		typedef map<size_t, std::unique_ptr<Component>> ComponentMap;
+		typedef map<std::type_index, std::unique_ptr<Component>> ComponentMap;
 
 		/// \brief Type of the tag set.
 		typedef set<wstring> TagSet;
@@ -166,7 +167,7 @@ namespace gi_lib{
 		template<typename TComponent, typename... TArgs>
 		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Maybe<TComponent&>> AddComponent(TArgs&&... args){
 			
-			auto key = typeid(TComponent).hash_code();
+			auto key = std::type_index(typeid(TComponent));
 
 			auto & ret =(components_[key] = std::make_unique<TComponent>(std::forward<TArgs>(args)...));
 
@@ -182,7 +183,7 @@ namespace gi_lib{
 		template<typename TComponent>
 		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, void> RemoveComponent(){
 
-			auto key = typeid(TComponent).hash_code();
+			auto key = std::type_index(typeid(TComponent));
 
 			components_.erase(key);
 
@@ -194,7 +195,7 @@ namespace gi_lib{
 		template<typename TComponent>
 		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Maybe<TComponent &>> GetComponent(){
 
-			auto key = typeid(TComponent).hash_code();
+			auto key = std::type_index(typeid(TComponent));
 
 			auto it = components_.find(key);
 
@@ -216,8 +217,8 @@ namespace gi_lib{
 		template<typename TComponent>
 		inline std::enable_if_t<std::is_base_of<Component, TComponent>::value, Maybe<const TComponent &>> GetComponent() const{
 
-			auto key = typeid(TComponent).hash_code();
-
+			auto key = std::type_index(typeid(TComponent));
+			
 			auto it = components_.find(key);
 
 			if (it != components_.end()){
@@ -270,7 +271,7 @@ namespace gi_lib{
 		/// \brief Updates the enabled components.
 
 		/// \param time The application time
-		inline void Update(const Timer::Time & time){
+		inline void Update(const Time & time){
 
 			for (auto & it : components_){
 

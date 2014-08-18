@@ -54,7 +54,9 @@
     <ClInclude Include="include\dx11resources.h">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\handle.h" />
+    <ClInclude Include="include\window.h">
+      <Filter>gilib</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\system.cpp">
@@ -65,6 +67,15 @@
     </ClCompile>
     <ClCompile Include="src\dx11graphics.cpp">
       <Filter>graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11resources.cpp">
+      <Filter>gilib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\window.cpp">
+      <Filter>gilib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\timer.cpp">
+      <Filter>gilib</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

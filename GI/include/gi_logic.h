@@ -20,7 +20,7 @@ public:
 
 	/// \brief Update the window logic.
 	/// \param time The application-coherent time.
-	virtual void Update(const Timer::Time & time);
+	virtual void Update(const Time & time);
 
 private:
 

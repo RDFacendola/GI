@@ -23,7 +23,6 @@
     <ClInclude Include="include\application.h" />
     <ClInclude Include="include\dx11graphics.h" />
     <ClInclude Include="include\graphics.h" />
-    <ClInclude Include="include\handle.h" />
     <ClInclude Include="include\maybe.h" />
     <ClInclude Include="include\scene.h" />
     <ClInclude Include="include\observable.h" />
@@ -33,11 +32,15 @@
     <ClInclude Include="include\timer.h" />
     <ClInclude Include="include\unique.h" />
     <ClInclude Include="include\resources.h" />
+    <ClInclude Include="include\window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\application.cpp" />
     <ClCompile Include="src\dx11graphics.cpp" />
+    <ClCompile Include="src\dx11resources.cpp" />
     <ClCompile Include="src\system.cpp" />
+    <ClCompile Include="src\timer.cpp" />
+    <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{21C15D82-5532-4597-B69C-EA2ECFA64DF4}</ProjectGuid>

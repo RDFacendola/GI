@@ -9,14 +9,11 @@
 
 #endif
 
-#include "time.h"
-#include "system.h"
+#include "timer.h"
 #include "exceptions.h"
 
 using namespace gi_lib;
 using namespace std;
-
-// Global stuffs
 
 namespace{
 
@@ -25,34 +22,14 @@ namespace{
 	const int kUnitLabelLength = 3;
 	const wchar_t * kExtensionSeparator = L".";
 	const wchar_t * kPathSeparator = L"\\";
-	const wchar_t * kWindowClassName = L"GiLibWindow";
 
 #endif
 
 }
 
-// Application
+Application::Application(){}
 
-Application::Application(){
-
-#ifdef _WIN32
-
-	//The used memory should be low enough to keep these data in memory...
-	RegisterWindowClass();
-	
-#endif
-
-}
-
-Application::~Application(){
-
-#ifdef _WIN32
-
-	UnregisterWindowClass();
-
-#endif
-	
-}
+Application::~Application(){}
 
 wstring Application::GetPath() const{
 
@@ -93,7 +70,7 @@ wstring Application::GetName(bool extension) const{
 
 }
 
-void Application::DisposeWindow(const Window::Handle & handle){
+void Application::DisposeWindow(const WindowHandle & handle){
 
 	//The shared pointer's destructor will take care of destroying the window correctly
 	auto window = windows_.find(handle);
@@ -106,7 +83,7 @@ void Application::DisposeWindow(const Window::Handle & handle){
 	
 }
 
-weak_ptr<Window> Application::GetWindow(const Window::Handle & handle){
+weak_ptr<Window> Application::GetWindow(const WindowHandle & handle){
 
 	auto window = windows_.find(handle);
 
@@ -157,142 +134,3 @@ void Application::Join(){
 #endif
 
 }
-
-#ifdef _WIN32
-
-LRESULT __stdcall Application::ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
-
-	auto window = Application::GetInstance().GetWindow(window_handle);
-
-	// Proper receiver.
-	if (auto temp_window = window.lock()){
-
-		return temp_window->ReceiveMessage(message_id, wparameter, lparameter);
-
-	}
-
-	// Default behavior when no receiver is found.
-	return DefWindowProc(window_handle, message_id, wparameter, lparameter);
-
-}
-
-void Application::RegisterWindowClass(){
-
-	auto instance = GetModuleHandle(nullptr);
-
-	//Extract the first icon found into the executable
-	window_icon_ = ExtractIcon(instance,
-								Application::GetInstance().GetPath().c_str(), 0);
-
-	WNDCLASS window_description;
-
-	ZeroMemory(&window_description, sizeof(WNDCLASS));
-
-	window_description.lpszClassName = kWindowClassName;
-	window_description.style = CS_VREDRAW | CS_HREDRAW;
-	window_description.hIcon = window_icon_;
-	window_description.hCursor = LoadCursor(NULL, IDC_ARROW);
-	window_description.hInstance = instance;
-	window_description.lpfnWndProc = Application::ReceiveMessage;
-
-	SetLastError(0);
-
-	//Attempt to register the class
-	
-	THROW_ON_ERROR(RegisterClass(&window_description));
-
-}
-
-void Application::UnregisterWindowClass(){
-
-	if (window_icon_ != nullptr){
-
-		DestroyIcon(window_icon_);
-
-		window_icon_ = nullptr;
-
-	}
-
-	UnregisterClass(kWindowClassName,
-					GetModuleHandle(nullptr));
-
-}
-
-#endif
-
-// Application::Window
-
-Window::Window(){
-
-#ifdef _WIN32
-		
-	//Create the window
-	THROW_ON_ERROR( handle_ = CreateWindowW(kWindowClassName,
-											L"",
-											WS_OVERLAPPEDWINDOW,
-											CW_USEDEFAULT,
-											CW_USEDEFAULT,
-											CW_USEDEFAULT,
-											CW_USEDEFAULT,
-											NULL,
-											NULL,
-											GetModuleHandle(nullptr),
-											NULL));
-
-#else
-
-	static_assert(false, "Unsupported OS");
-
-#endif
-
-}
-
-Window::~Window(){
-
-#ifdef _WIN32
-
-	DestroyWindow(handle_);
-
-#else
-
-	static_assert(false, "Destroy the window here");
-
-#endif
-
-}
-
-
-#ifdef _WIN32
-
-LRESULT Window::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
-
-	switch (message_id)
-	{
-	case WM_CLOSE:
-
-		//Dispose this window
-		gi_lib::Application::GetInstance().DisposeWindow(GetHandle());
-
-		on_closed_.Notify(*this);
-
-		break;
-
-	case WM_SIZE:
-
-		//The window has been resized
-		on_resized_.Notify(*this, 
-						   LOWORD(lparameter), 
-						   HIWORD(lparameter));
-
-		break;
-
-	default:
-		break;
-
-	}
-
-	return DefWindowProc(GetHandle(), message_id, wparameter, lparameter);
-	
-}
-
-#endif
