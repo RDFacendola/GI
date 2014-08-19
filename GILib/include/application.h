@@ -26,13 +26,7 @@ namespace gi_lib{
 
 		/// \brief Get the application singleton.
 		/// \return Returns a reference to the application singleton.
-		static inline Application & GetInstance(){
-
-			static Application application;
-
-			return application;
-
-		}
+		static Application & GetInstance();
 
 		/// \brief Get the full application path.
 		/// \return Returns the full application path.
@@ -51,15 +45,7 @@ namespace gi_lib{
 		/// \param arguments Arguments to pass to the new instance's constructor.
 		/// \return Returns a weak pointer to the new window.
 		template<typename TWindow, typename... TArgs>
-		inline typename std::enable_if_t< std::is_base_of<Window, TWindow>::value, weak_ptr<TWindow>> AddWindow(TArgs&&... arguments){
-
-			auto window = std::make_shared<TWindow>(std::forward<TArgs>(arguments)...);
-
-			windows_[window->GetHandle()] = window;
-
-			return window;
-
-		}
+		typename std::enable_if_t< std::is_base_of<Window, TWindow>::value, weak_ptr<TWindow>> AddWindow(TArgs&&... arguments);
 
 		/// \brief Get a window by handle.
 		/// \param handle The handle of the window to find.
@@ -82,5 +68,18 @@ namespace gi_lib{
 		map<WindowHandle, shared_ptr<Window>> windows_;
 		
 	};
+
+	//
+
+	template<typename TWindow, typename... TArgs>
+	typename std::enable_if_t< std::is_base_of<Window, TWindow>::value, weak_ptr<TWindow>> Application::AddWindow(TArgs&&... arguments){
+
+		auto window = std::make_shared<TWindow>(std::forward<TArgs>(arguments)...);
+
+		windows_[window->GetHandle()] = window;
+
+		return window;
+
+	}
 
 }

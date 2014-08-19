@@ -14,7 +14,7 @@ OperatingSystem System::GetOperatingSystem(){
 
 #else
 
-	static_assert(false, "Unsupported OS");
+#error "Unsupported platform"
 
 #endif 
 
@@ -44,7 +44,7 @@ CpuProfile System::GetCPUProfile(){
 
 #else
 
-	static_assert(false, "Unsupported OS");
+#error "Unsupported platform"
 
 #endif
 
@@ -73,7 +73,7 @@ MemoryProfile System::GetMemoryProfile(){
 
 #else
 
-	static_assert(false, "Unsupported OS");
+#error "Unsupported platform"
 
 #endif
 
@@ -116,7 +116,7 @@ StorageProfile System::GetStorageProfile(){
 
 #else
 
-	static_assert(false, "Unsupported OS");
+#error "Unsupported platform"
 
 #endif
 
@@ -144,7 +144,7 @@ DesktopProfile System::GetDesktopProfile(){
 
 #else
 
-	static_assert(false, "Unsupported OS");
+#error "Unsupported platform"
 
 #endif
 

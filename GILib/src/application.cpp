@@ -31,6 +31,14 @@ Application::Application(){}
 
 Application::~Application(){}
 
+Application & Application::GetInstance(){
+
+	static Application application;
+
+	return application;
+
+}
+
 wstring Application::GetPath() const{
 
 #ifdef _WIN32
@@ -52,7 +60,7 @@ wstring Application::GetPath() const{
 
 #else
 
-	static_assert(false, "Unsupported OS");
+#error "Unsupported platform"
 
 #endif
 
@@ -129,7 +137,7 @@ void Application::Join(){
 
 #else
 
-	static_assert(false, "Unsupported OS");
+#error "Unsupported platform"
 
 #endif
 

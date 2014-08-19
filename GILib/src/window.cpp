@@ -5,24 +5,24 @@
 
 using namespace gi_lib;
 
-namespace{
-
 #ifdef _WIN32
 
-	// Shared methods under windows OS
-	class WindowsShared{
+	// Inner class of Window, used internally.
+	class Window::WindowClass{
 
 	public:
 		
-		static const wchar_t * kWindowClassName;
+		const wchar_t * kWindowClassName = L"GiLibWindow";
 
-		static void Initialize(){
+		static WindowClass & GetInstance(){
 
-			static WindowsShared instance;
+			static WindowClass instance;
+
+			return instance;
 
 		}
 
-		~WindowsShared(){
+		~WindowClass(){
 
 			if (window_icon_ != nullptr){
 
@@ -38,7 +38,7 @@ namespace{
 
 	private:
 
-		WindowsShared(){
+		WindowClass(){
 		
 			auto instance = GetModuleHandle(nullptr);
 
@@ -55,7 +55,21 @@ namespace{
 			window_description.hIcon = window_icon_;
 			window_description.hCursor = LoadCursor(NULL, IDC_ARROW);
 			window_description.hInstance = instance;
-			window_description.lpfnWndProc = ReceiveMessage;
+			window_description.lpfnWndProc = [](HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
+
+												auto window = Application::GetInstance().GetWindow(window_handle);
+
+												// Proper receiver
+												if (auto temp_window = window.lock()){
+
+													return temp_window->ReceiveMessage(message_id, wparameter, lparameter);
+
+												}
+
+												// Default behavior when no receiver is found.
+												return DefWindowProc(window_handle, message_id, wparameter, lparameter);
+
+											 };
 
 			SetLastError(0);
 
@@ -65,32 +79,12 @@ namespace{
 
 		}
 
-		static LRESULT __stdcall ReceiveMessage(HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
-
-			auto window = Application::GetInstance().GetWindow(window_handle);
-
-			// Proper receiver
-			if (auto temp_window = window.lock()){
-
-				return temp_window->ReceiveMessage(message_id, wparameter, lparameter);
-
-			}
-
-			// Default behavior when no receiver is found.
-			return DefWindowProc(window_handle, message_id, wparameter, lparameter);
-
-		}
-
 		HICON window_icon_;
 
 	};
 
-	const wchar_t * WindowsShared::kWindowClassName = L"GiLibWindow";
-
 #endif
-
-}
-
+	
 void Window::SetTitle(const wstring & title){
 
 #ifdef _WIN32
@@ -99,7 +93,7 @@ void Window::SetTitle(const wstring & title){
 
 #else
 
-	static_assert(false, "Unsupported OS");
+#error "Unsupported platform"
 
 #endif
 
@@ -113,7 +107,7 @@ void Window::Show(bool show){
 
 #else
 
-	static_assert(false, "Unsupported OS");
+#error "Unsupported platform"
 
 #endif
 
@@ -127,7 +121,7 @@ bool Window::IsVisible(){
 
 #else
 
-	static_assert(false, "Unsupported OS");
+#error "Unsupported platform"
 
 #endif
 
@@ -137,10 +131,8 @@ Window::Window(){
 
 #ifdef _WIN32
 
-	WindowsShared::Initialize();
-
 	//Create the window
-	THROW_ON_ERROR(handle_ = CreateWindow(WindowsShared::kWindowClassName,
+	THROW_ON_ERROR(handle_ = CreateWindow(WindowClass::GetInstance().kWindowClassName,
 										  L"",
 										  WS_OVERLAPPEDWINDOW,
 										  CW_USEDEFAULT,
@@ -154,7 +146,7 @@ Window::Window(){
 
 #else
 
-	static_assert(false, "Unsupported OS");
+#error "Unsupported platform"
 
 #endif
 
@@ -168,7 +160,7 @@ Window::~Window(){
 
 #else
 
-	static_assert(false, "Destroy the window here");
+#error "Unsupported platform"
 
 #endif
 

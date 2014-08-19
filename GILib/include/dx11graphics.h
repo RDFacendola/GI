@@ -125,6 +125,6 @@ namespace gi_lib{
 
 #else
 
-static_assert(false, "DirectX is not supported");
+#error "Unsupported platform"
 
 #endif
