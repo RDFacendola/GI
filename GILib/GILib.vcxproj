@@ -23,6 +23,8 @@
     <ClInclude Include="include\dx11\dx11resources.h" />
     <ClInclude Include="include\application.h" />
     <ClInclude Include="include\dx11\dx11graphics.h" />
+    <ClInclude Include="include\dx11\dx11resource_traits.h" />
+    <ClInclude Include="include\dx11\dx11texture.h" />
     <ClInclude Include="include\factory.h" />
     <ClInclude Include="include\graphics.h" />
     <ClInclude Include="include\maybe.h" />
@@ -31,12 +33,14 @@
     <ClInclude Include="include\exceptions.h" />
     <ClInclude Include="include\guard.h" />
     <ClInclude Include="include\system.h" />
+    <ClInclude Include="include\texture.h" />
     <ClInclude Include="include\timer.h" />
     <ClInclude Include="include\unique.h" />
     <ClInclude Include="include\resources.h" />
     <ClInclude Include="include\window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="include\dx11\resources.cpp" />
     <ClCompile Include="src\application.cpp" />
     <ClCompile Include="src\dx11\dx11factory.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />

@@ -51,6 +51,8 @@ namespace gi_lib{
 		vector<VideoMode> video_modes;						///< List of supported video modes.
 		vector<AntialiasingMode> antialiasing_modes;		///< List of supported antialiasing modes.
 
+		unsigned int max_anisotropy;						///< Maximum level of anisotropy.
+
 	};
 
 	/// \brief Common interface for graphics API.

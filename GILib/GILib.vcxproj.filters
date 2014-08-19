@@ -13,6 +13,9 @@
     <Filter Include="graphics">
       <UniqueIdentifier>{9b367e73-ee71-4afa-bd92-b013a0aa5432}</UniqueIdentifier>
     </Filter>
+    <Filter Include="graphics\dx11">
+      <UniqueIdentifier>{7f63097a-8a40-48d6-9d15-deb875f0b168}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\timer.h">
@@ -51,13 +54,26 @@
     <ClInclude Include="include\window.h">
       <Filter>gilib</Filter>
     </ClInclude>
-    <ClInclude Include="include\factory.h" />
-    <ClInclude Include="include\dx11\dx11factory.h" />
-    <ClInclude Include="include\dx11\dx11graphics.h">
+    <ClInclude Include="include\factory.h">
       <Filter>graphics</Filter>
     </ClInclude>
+    <ClInclude Include="include\dx11\dx11factory.h">
+      <Filter>graphics\dx11</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11graphics.h">
+      <Filter>graphics\dx11</Filter>
+    </ClInclude>
     <ClInclude Include="include\dx11\dx11resources.h">
+      <Filter>graphics\dx11</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11resource_traits.h">
+      <Filter>graphics\dx11</Filter>
+    </ClInclude>
+    <ClInclude Include="include\texture.h">
       <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11texture.h">
+      <Filter>graphics\dx11</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -73,12 +89,17 @@
     <ClCompile Include="src\timer.cpp">
       <Filter>gilib</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11\dx11resources.cpp">
-      <Filter>gilib</Filter>
+    <ClCompile Include="src\dx11\dx11factory.cpp">
+      <Filter>graphics\dx11</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\dx11graphics.cpp">
+      <Filter>graphics\dx11</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11resources.cpp">
+      <Filter>graphics\dx11</Filter>
+    </ClCompile>
+    <ClCompile Include="include\dx11\resources.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11\dx11factory.cpp" />
   </ItemGroup>
 </Project>

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <string>
 #include <map>
 #include <memory>
@@ -19,9 +20,6 @@ using ::std::shared_ptr;
 namespace gi_lib{
 
 	class Resource;
-	class Texture2D;
-	class Texture3D;
-	class Mesh;
 	
 	/// \brief Resource manager interface.
 	/// \author Raffaele D. Facendola.
@@ -38,6 +36,9 @@ namespace gi_lib{
 		template <typename TResource>
 		shared_ptr<TResource> Load(const wstring & path, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type* = nullptr);
 
+		/// \brief Get the amount of memory used by the resources loaded.
+		size_t GetSize();
+
 	protected:
 
 		/// \brief Load a resource.
@@ -49,9 +50,23 @@ namespace gi_lib{
 		/// \brief Type of the key associated to resources' path.
 		using PathKey = wstring;
 
-		// Map of the immutable resources
-		map < PathKey, weak_ptr < Resource > > resources_;
+		/// \brief Type of the map used to store the cached resources.
+		using ResourceMap = map < PathKey, weak_ptr < Resource > > ;
 
+		// Map of the immutable resources
+		ResourceMap resources_;
+
+	};
+
+	/// \brief Describe the priority of the resources.
+	enum class ResourcePriority{
+
+		MINIMUM,		///< Lowest priority. These resources will be the first one to be freed when the system will run out of memory.
+		LOW,			///< Low priority.
+		NORMAL,			///< Normal priority. Default value.
+		HIGH,			///< High priority.
+		CRITICAL		///< Highest priority. These resources will be kept in memory at any cost.
+		
 	};
 
 	/// \brief Base interface for graphical resources.
@@ -60,35 +75,19 @@ namespace gi_lib{
 
 	public:
 
-	};
+		/// \brief Get the memory footprint of this resource.
+		/// \return Returns the size of the resource, in bytes.
+		virtual size_t GetSize() = 0;
 
-	/// \brief Plain texture interface.
-	/// \author Raffaele D. Facendola.
-	class Texture2D: public Resource{
+		/// \brief Get the priority of the resource.
+		/// \return Returns the resource priority.
+		virtual ResourcePriority GetPriority() = 0;
 
-	public:
-
-		int value;
-
-	};
-
-	/// \brief Volumetric texture interface.
-	/// \author Raffaele D. Facendola.
-	class Texture3D{
-
-	public:
+		/// \brief Set the priority of the resource.
+		/// \param priority The new priority.
+		virtual void SetPriority(ResourcePriority priority) = 0;
 
 	};
-
-	/// \brief 3D model interface.
-	/// \author Raffaele D. Facendola.
-	class Mesh{
-
-	public:
-
-	};
-
-	//
 
 	template <typename TResource>
 	shared_ptr<TResource> Resources::Load(const wstring & path, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type*){

@@ -315,6 +315,8 @@ AdapterProfile DX11Factory::GetAdapterProfile() const{
 	adapter_profile.shared_memory = adapter_desc.SharedSystemMemory;
 	adapter_profile.video_modes = EnumerateVideoModes(*adapter_);
 	adapter_profile.antialiasing_modes = EnumerateAntialiasingModes(*device_);
+	
+	adapter_profile.max_anisotropy = D3D11_MAX_MAXANISOTROPY;
 
 	//
 	return adapter_profile;
