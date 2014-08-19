@@ -1,4 +1,6 @@
-#include "dx11resources.h"
+#ifdef _WIN32
+
+#include "dx11/dx11resources.h"
 
 using namespace gi_lib;
 using namespace gi_lib::dx11;
@@ -8,3 +10,5 @@ shared_ptr<Resource> DX11Resources::Load(const wstring & path, const std::type_i
 	return shared_ptr<Resource>(nullptr);
 
 }
+
+#endif

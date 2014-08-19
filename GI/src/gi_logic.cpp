@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include "dx11factory.h"
-#include "dx11graphics.h"
-#include "dx11resources.h"
+#include <dx11/dx11factory.h>
+#include <dx11/dx11graphics.h>
+#include <dx11/dx11resources.h>
 
 using namespace ::std;
 using namespace ::gi_lib;

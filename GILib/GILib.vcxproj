@@ -19,10 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\dx11factory.h" />
-    <ClInclude Include="include\dx11resources.h" />
+    <ClInclude Include="include\dx11\dx11factory.h" />
+    <ClInclude Include="include\dx11\dx11resources.h" />
     <ClInclude Include="include\application.h" />
-    <ClInclude Include="include\dx11graphics.h" />
+    <ClInclude Include="include\dx11\dx11graphics.h" />
     <ClInclude Include="include\factory.h" />
     <ClInclude Include="include\graphics.h" />
     <ClInclude Include="include\maybe.h" />
@@ -38,9 +38,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\application.cpp" />
-    <ClCompile Include="src\dx11factory.cpp" />
-    <ClCompile Include="src\dx11graphics.cpp" />
-    <ClCompile Include="src\dx11resources.cpp" />
+    <ClCompile Include="src\dx11\dx11factory.cpp" />
+    <ClCompile Include="src\dx11\dx11graphics.cpp" />
+    <ClCompile Include="src\dx11\dx11resources.cpp" />
     <ClCompile Include="src\system.cpp" />
     <ClCompile Include="src\timer.cpp" />
     <ClCompile Include="src\window.cpp" />
@@ -133,7 +133,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
-      <AdditionalIncludeDirectories>.\include;.\..\include;E:\libs\stack_walker\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Daniele\Documents\GI\GILib\include;E:\libs\stack_walker\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
@@ -180,7 +180,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\include;.\..\include;E:\libs\stack_walker\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Daniele\Documents\GI\GILib\include;E:\libs\stack_walker\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>

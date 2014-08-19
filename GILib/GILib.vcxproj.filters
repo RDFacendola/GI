@@ -39,9 +39,6 @@
     <ClInclude Include="include\graphics.h">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\dx11graphics.h">
-      <Filter>graphics</Filter>
-    </ClInclude>
     <ClInclude Include="include\unique.h">
       <Filter>pattern</Filter>
     </ClInclude>
@@ -51,14 +48,17 @@
     <ClInclude Include="include\resources.h">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\dx11resources.h">
-      <Filter>graphics</Filter>
-    </ClInclude>
     <ClInclude Include="include\window.h">
       <Filter>gilib</Filter>
     </ClInclude>
     <ClInclude Include="include\factory.h" />
-    <ClInclude Include="include\dx11factory.h" />
+    <ClInclude Include="include\dx11\dx11factory.h" />
+    <ClInclude Include="include\dx11\dx11graphics.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11resources.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\system.cpp">
@@ -67,18 +67,18 @@
     <ClCompile Include="src\application.cpp">
       <Filter>gilib</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11graphics.cpp">
-      <Filter>graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\dx11resources.cpp">
-      <Filter>gilib</Filter>
-    </ClCompile>
     <ClCompile Include="src\window.cpp">
       <Filter>gilib</Filter>
     </ClCompile>
     <ClCompile Include="src\timer.cpp">
       <Filter>gilib</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11factory.cpp" />
+    <ClCompile Include="src\dx11\dx11resources.cpp">
+      <Filter>gilib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11graphics.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11factory.cpp" />
   </ItemGroup>
 </Project>

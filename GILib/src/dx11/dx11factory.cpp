@@ -2,9 +2,9 @@
 
 #include <d3d11.h>
 
-#include "dx11factory.h"
-#include "dx11graphics.h"
-#include "dx11resources.h"
+#include "dx11/dx11factory.h"
+#include "dx11/dx11graphics.h"
+#include "dx11/dx11resources.h"
 #include "exceptions.h"
 #include "guard.h"
 
@@ -259,6 +259,14 @@ namespace{
 		return antialiasing_modes;
 
 	}
+
+}
+
+DX11Factory & DX11Factory::GetInstance(){
+
+	static DX11Factory factory;
+
+	return factory;
 
 }
 

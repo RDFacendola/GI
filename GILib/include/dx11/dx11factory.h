@@ -26,13 +26,7 @@ namespace gi_lib{
 
 			/// \brief Get the DirectX11 factory singleton.
 			/// \return Returns a reference to the DirectX11 factory singleton.
-			static inline DX11Factory & GetInstance(){
-
-				static DX11Factory factory;
-
-				return factory;
-
-			}
+			static DX11Factory & GetInstance();
 
 			/// \brief Default destructor
 			~DX11Factory();

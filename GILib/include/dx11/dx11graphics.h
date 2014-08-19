@@ -43,39 +43,19 @@ namespace gi_lib{
 
 			virtual void SetVideoMode(const VideoMode & video_mode);
 
-			inline virtual const VideoMode & GetVideoMode() const{
-
-				return video_mode_;
-
-			}
+			virtual const VideoMode & GetVideoMode() const;
 
 			virtual void SetAntialisingMode(const AntialiasingMode & antialiasing_mode);
 
-			inline virtual const AntialiasingMode & GetAntialisingMode() const{
-
-				return antialiasing_mode_;
-
-			}
+			virtual const AntialiasingMode & GetAntialisingMode() const;
 
 			virtual void SetFullscreen(bool fullscreen);
 
-			inline virtual bool IsFullscreen() const{
+			virtual bool IsFullscreen() const;
 
-				return fullscreen_;
+			virtual void SetVSync(bool vsync);
 
-			}
-
-			inline virtual void SetVSync(bool vsync){
-
-				vsync_ = vsync;
-
-			}
-
-			virtual bool IsVSync() const{
-
-				return vsync_;
-
-			}
+			virtual bool IsVSync() const;
 
 			virtual void Commit();
 
@@ -118,6 +98,38 @@ namespace gi_lib{
 			*/
 
 		};
+
+		//
+
+		inline const VideoMode & DX11Graphics::GetVideoMode() const{
+
+			return video_mode_;
+
+		}
+
+		inline const AntialiasingMode & DX11Graphics::GetAntialisingMode() const{
+
+			return antialiasing_mode_;
+
+		}
+
+		inline bool DX11Graphics::IsFullscreen() const{
+
+			return fullscreen_;
+
+		}
+
+		inline void DX11Graphics::SetVSync(bool vsync){
+
+			vsync_ = vsync;
+
+		}
+
+		inline bool DX11Graphics::IsVSync() const{
+
+			return vsync_;
+
+		}
 
 	}
 
