@@ -24,6 +24,7 @@
     <ClInclude Include="include\application.h" />
     <ClInclude Include="include\dx11\dx11graphics.h" />
     <ClInclude Include="include\dx11\dx11resource_traits.h" />
+    <ClInclude Include="include\dx11\dx11shared.h" />
     <ClInclude Include="include\dx11\dx11texture.h" />
     <ClInclude Include="include\factory.h" />
     <ClInclude Include="include\graphics.h" />
@@ -40,7 +41,8 @@
     <ClInclude Include="include\window.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include\dx11\resources.cpp" />
+    <ClCompile Include="src\dx11\dx11texture.cpp" />
+    <ClCompile Include="src\resources.cpp" />
     <ClCompile Include="src\application.cpp" />
     <ClCompile Include="src\dx11\dx11factory.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
@@ -53,6 +55,7 @@
     <ProjectGuid>{21C15D82-5532-4597-B69C-EA2ECFA64DF4}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>GILib</RootNamespace>
+    <ProjectName>gi_lib</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -99,14 +102,14 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TargetName>gilib-d</TargetName>
-    <OutDir>.\lib\</OutDir>
-    <IntDir>.\obj\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <TargetName>gilib</TargetName>
-    <OutDir>.\lib\</OutDir>
-    <IntDir>.\obj\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -137,7 +140,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
-      <AdditionalIncludeDirectories>C:\Users\Daniele\Documents\GI\GILib\include;E:\libs\stack_walker\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Daniele\Documents\GI\GILib\include;E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
@@ -147,8 +150,8 @@
       <AdditionalDependencies>d3d11.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>stack_walker_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>E:\libs\stack_walker\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\libs\stack_walker\lib\$(Configuration);E:\libs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);E:\libs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -184,7 +187,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Daniele\Documents\GI\GILib\include;E:\libs\stack_walker\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Daniele\Documents\GI\GILib\include;E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -195,8 +198,8 @@
       <AdditionalDependencies>d3d11.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>stack_walker_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>E:\libs\stack_walker\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>E:\libs\stack_walker\lib\$(Configuration);E:\libs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);E:\libs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
