@@ -9,11 +9,11 @@
 #include <string>
 #include <map>
 #include <memory>
-#include <type_traits>
 #include <typeindex>
 
 using ::std::wstring;
 using ::std::map;
+using ::std::unique_ptr;
 using ::std::weak_ptr;
 using ::std::shared_ptr;
 
@@ -21,6 +21,17 @@ namespace gi_lib{
 
 	class Resource;
 	
+	/// \brief Describe the priority of the resources.
+	enum class ResourcePriority{
+
+		MINIMUM,		///< Lowest priority. These resources will be the first one to be freed when the system will run out of memory.
+		LOW,			///< Low priority.
+		NORMAL,			///< Normal priority. Default value.
+		HIGH,			///< High priority.
+		CRITICAL		///< Highest priority. These resources will be kept in memory at any cost.
+
+	};
+
 	/// \brief Resource manager interface.
 	/// \author Raffaele D. Facendola.
 	class Resources{
@@ -41,32 +52,20 @@ namespace gi_lib{
 
 	protected:
 
+		using ResourceKey = std::pair < std::type_index, wstring >;
+		using ResourceMap = map < ResourceKey, weak_ptr<Resource> >;
+
+	protected:
+
 		/// \brief Load a resource.
 		
-		/// \param path The path of the resource.
-		/// \param type_index Type of the resource to create.
-		virtual shared_ptr<Resource> Load(const wstring & path, const std::type_index & type_index) = 0;
-
-		/// \brief Type of the key associated to resources' path.
-		using PathKey = wstring;
-
-		/// \brief Type of the map used to store the cached resources.
-		using ResourceMap = map < PathKey, weak_ptr < Resource > > ;
+		/// \param key Unique key of the resource to load.
+		/// \return Returns a pointer to the loaded resource
+		virtual unique_ptr<Resource> LoadDirect(const ResourceKey & key) = 0;
 
 		// Map of the immutable resources
 		ResourceMap resources_;
 
-	};
-
-	/// \brief Describe the priority of the resources.
-	enum class ResourcePriority{
-
-		MINIMUM,		///< Lowest priority. These resources will be the first one to be freed when the system will run out of memory.
-		LOW,			///< Low priority.
-		NORMAL,			///< Normal priority. Default value.
-		HIGH,			///< High priority.
-		CRITICAL		///< Highest priority. These resources will be kept in memory at any cost.
-		
 	};
 
 	/// \brief Base interface for graphical resources.
@@ -77,11 +76,11 @@ namespace gi_lib{
 
 		/// \brief Get the memory footprint of this resource.
 		/// \return Returns the size of the resource, in bytes.
-		virtual size_t GetSize() = 0;
+		virtual size_t GetSize() const = 0;
 
 		/// \brief Get the priority of the resource.
 		/// \return Returns the resource priority.
-		virtual ResourcePriority GetPriority() = 0;
+		virtual ResourcePriority GetPriority() const = 0;
 
 		/// \brief Set the priority of the resource.
 		/// \param priority The new priority.
@@ -93,7 +92,9 @@ namespace gi_lib{
 	shared_ptr<TResource> Resources::Load(const wstring & path, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type*){
 
 		//Check if the resource exists inside the map
-		auto it = resources_.find(path);
+		auto key = make_pair(std::type_index(typeid(TResource)), path);
+
+		auto it = resources_.find(key);
 
 		if (it != resources_.end()){
 
@@ -107,7 +108,7 @@ namespace gi_lib{
 
 		}
 
-		auto resource = Load(path, std::type_index(typeid(TResource)));
+		auto resource = shared_ptr<TResource>(std::move(LoadDirect(key)));
 
 		resources_[path] = resource;	// Conversion to weak_ptr
 

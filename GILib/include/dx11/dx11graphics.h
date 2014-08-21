@@ -5,8 +5,6 @@
 
 #pragma once
 
-#ifdef _WIN32
-
 #include "factory.h"
 #include "graphics.h"
 #include "observable.h"
@@ -134,9 +132,3 @@ namespace gi_lib{
 	}
 
 }
-
-#else
-
-#error "Unsupported platform"
-
-#endif

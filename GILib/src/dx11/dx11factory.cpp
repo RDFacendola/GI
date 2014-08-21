@@ -1,5 +1,3 @@
-#ifdef _WIN32
-
 #include <d3d11.h>
 
 #include "dx11/dx11factory.h"
@@ -336,5 +334,3 @@ Resources & DX11Factory::GetResources(){
 	return resources;
 
 }
-
-#endif

@@ -1,5 +1,3 @@
-#ifdef _WIN32
-
 #include "dx11/dx11graphics.h"
 
 #include <d3d11.h>
@@ -271,5 +269,3 @@ void DX11Graphics::Commit(){
 						 0);
 
 }
-
-#endif

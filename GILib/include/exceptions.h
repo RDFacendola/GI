@@ -5,6 +5,8 @@
 
 #pragma once
 
+#pragma comment(lib, "StackWalker")
+
 #ifdef _WIN32
 
 #include <Windows.h>

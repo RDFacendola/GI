@@ -5,15 +5,14 @@
 
 #pragma once
 
-#ifdef _WIN32
-
-#include <d3d11.h>
 #include <memory>
-#include <type_traits>
 
 #include "resources.h"
 
+using ::std::weak_ptr;
 using ::std::shared_ptr;
+
+struct ID3D11Device;
 
 namespace gi_lib{
 
@@ -38,7 +37,7 @@ namespace gi_lib{
 
 		protected:
 
-			virtual shared_ptr<Resource> Load(const wstring & path, const std::type_index & type_index);
+			virtual unique_ptr<Resource> LoadDirect(const ResourceKey & key);
 
 		private:
 
@@ -49,9 +48,3 @@ namespace gi_lib{
 	}
 
 }
-
-#else
-
-#error "Unsupported platform"
-
-#endif

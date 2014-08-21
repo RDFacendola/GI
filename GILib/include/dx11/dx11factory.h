@@ -5,7 +5,8 @@
 
 #pragma once
 
-#ifdef _WIN32
+#pragma comment(lib, "d3d11")
+#pragma comment(lib, "dxgi")
 
 #include "factory.h"
 
@@ -53,9 +54,3 @@ namespace gi_lib{
 	}
 
 }
-
-#else
-
-#error "Unsupported platform"
-
-#endif
