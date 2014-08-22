@@ -27,7 +27,7 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const wstring & path){
 	auto resource = static_cast<ID3D11Resource *>(texture_);
 
 	DDS_ALPHA_MODE alpha_mode;
-
+	
 	THROW_ON_FAIL( CreateDDSTextureFromFileEx(&device, 
 											  path.c_str(), 
 											  0,							// Load everything.

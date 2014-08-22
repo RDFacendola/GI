@@ -38,6 +38,11 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Folder where the resources are stored.
+		static const wstring kResourceFolder;
+
+		Resources();
+
 		/// \brief Load a resource.
 
 		/// Once loaded, a resource is immutable.
@@ -66,6 +71,9 @@ namespace gi_lib{
 		// Map of the immutable resources
 		ResourceMap resources_;
 
+		// Base path for the resources
+		wstring base_path_;
+
 	};
 
 	/// \brief Base interface for graphical resources.
@@ -92,7 +100,7 @@ namespace gi_lib{
 	shared_ptr<TResource> Resources::Load(const wstring & path, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type*){
 
 		//Check if the resource exists inside the map
-		auto key = make_pair(std::type_index(typeid(TResource)), path);
+		auto key = make_pair(std::type_index(typeid(TResource)), base_path_ + path);
 
 		auto it = resources_.find(key);
 
@@ -108,11 +116,11 @@ namespace gi_lib{
 
 		}
 
-		auto resource = shared_ptr<TResource>(std::move(LoadDirect(key)));
+		auto resource = shared_ptr<Resource>(std::move(LoadDirect(key)));		// To shared ptr
 
-		resources_[path] = resource;	// Conversion to weak_ptr
+		resources_[key] = resource;												// To weak ptr
 
-		return resource;
+		return static_pointer_cast<TResource>(resource);						// To shared ptr (of the requested type). Evil downcasting :D
 
 	}
 

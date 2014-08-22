@@ -7,11 +7,13 @@
 
 #include <memory>
 #include <map>
+#include <string>
 
 #include "window.h"
 
 using ::std::shared_ptr;
 using ::std::map;
+using ::std::wstring;
 
 namespace gi_lib{
 	
@@ -21,12 +23,22 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief String used to separate a file from its extension.
+		static const wstring kExtensionSeparator;
+
+			/// \brief String used as path separator.
+		static const wstring kPathSeparator;
+		
 		/// \brief Default destructor.
 		~Application();
 
 		/// \brief Get the application singleton.
 		/// \return Returns a reference to the application singleton.
 		static Application & GetInstance();
+
+		/// \brief Get the application directory.
+		/// \return Returns the application directory.
+		wstring GetDirectory() const;
 
 		/// \brief Get the full application path.
 		/// \return Returns the full application path.

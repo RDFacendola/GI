@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include <texture.h>
+
 #include <dx11/dx11factory.h>
 #include <dx11/dx11graphics.h>
 #include <dx11/dx11resources.h>
@@ -17,6 +19,9 @@ GILogic::GILogic():
 
 	/////////////////////////////////////
 
+	auto & r = factory_.GetResources();
+
+	auto p = r.Load<Texture2D>(L"huehuehue");
 
 
 	/////////////////////////////////////

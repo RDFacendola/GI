@@ -20,12 +20,20 @@ namespace{
 #ifdef _WIN32
 
 	const int kUnitLabelLength = 3;
-	const wchar_t * kExtensionSeparator = L".";
-	const wchar_t * kPathSeparator = L"\\";
-
+	
 #endif
 
 }
+
+#ifdef _WIN32
+
+/// \brief String used to separate a file from its extension.
+const wstring Application::kExtensionSeparator = L".";
+
+/// \brief String used as path separator.
+const wstring Application::kPathSeparator = L"\\";
+
+#endif
 
 Application::Application(){}
 
@@ -36,6 +44,16 @@ Application & Application::GetInstance(){
 	static Application application;
 
 	return application;
+
+}
+
+wstring Application::GetDirectory() const{
+
+	auto path = GetPath();
+
+	auto path_index = static_cast<unsigned int>(path.find_last_of(kPathSeparator));
+
+	return path.substr(0, path_index + 1);
 
 }
 

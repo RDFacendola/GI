@@ -1,9 +1,19 @@
 #include "resources.h"
 
+#include "application.h"
+
 #include <numeric>
 
 using namespace std;
 using namespace gi_lib;
+
+const wstring Resources::kResourceFolder = L"Data";
+
+Resources::Resources(){
+
+	base_path_ = Application::GetInstance().GetDirectory() + kResourceFolder + Application::kPathSeparator;
+
+}
 
 size_t Resources::GetSize(){
 
