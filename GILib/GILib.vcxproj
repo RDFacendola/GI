@@ -24,7 +24,6 @@
     <ClInclude Include="include\application.h" />
     <ClInclude Include="include\dx11\dx11graphics.h" />
     <ClInclude Include="include\dx11\dx11resource_traits.h" />
-    <ClInclude Include="include\dx11\dx11shared.h" />
     <ClInclude Include="include\dx11\dx11texture.h" />
     <ClInclude Include="include\factory.h" />
     <ClInclude Include="include\graphics.h" />
@@ -41,6 +40,7 @@
     <ClInclude Include="include\window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\dx11\dx11shared.cpp" />
     <ClCompile Include="src\dx11\dx11texture.cpp" />
     <ClCompile Include="src\resources.cpp" />
     <ClCompile Include="src\application.cpp" />

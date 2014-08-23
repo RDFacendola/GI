@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include "exceptions.h"
+#include "guard.h"
 #include "dx11/dx11shared.h"
 
 using namespace std;
@@ -24,22 +25,20 @@ namespace{
 
 DX11Texture2D::DX11Texture2D(ID3D11Device & device, const wstring & path){
 	
-	auto resource = static_cast<ID3D11Resource *>(texture_);
-
 	DDS_ALPHA_MODE alpha_mode;
 	
 	THROW_ON_FAIL( CreateDDSTextureFromFileEx(&device, 
 											  path.c_str(), 
-											  0,							// Load everything.
+											  0,									// Load everything.
 											  D3D11_USAGE_IMMUTABLE, 
 											  D3D11_BIND_SHADER_RESOURCE, 
-											  0,							// No CPU access.
-											  0, 
-											  false,						// No forced sRGB
-											  &resource, 
+											  0,									// No CPU access.
+											  0,
+											  false,								// No forced sRGB
+											  (ID3D11Resource **)&texture_,			// Bad C-style cast.
 											  &view_, 
-											  &alpha_mode));				//Alpha informations
-
+											  &alpha_mode));						//Alpha informations
+											  
 
 	D3D11_TEXTURE2D_DESC description;
 
@@ -49,7 +48,7 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const wstring & path){
 	height_ = description.Height;
 	mip_levels_ = description.MipLevels;
 	bits_per_pixel_ = BitsPerPixel(description.Format);
-	alpha_ = alpha_mode != DDS_ALPHA_MODE_OPAQUE;							//If it is not opaque, it should have an alpha channel
+	alpha_ = alpha_mode != DDS_ALPHA_MODE_OPAQUE;									//If it is not opaque, it should have an alpha channel
 
 }
 

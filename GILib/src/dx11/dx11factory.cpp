@@ -3,6 +3,7 @@
 #include "dx11/dx11factory.h"
 #include "dx11/dx11graphics.h"
 #include "dx11/dx11resources.h"
+#include "dx11/dx11shared.h"
 #include "exceptions.h"
 #include "guard.h"
 
@@ -134,7 +135,7 @@ namespace{
 			&adapter_output));
 
 		//Release the output when the function returns or throws
-		auto guard = MakeScopeGuard([adapter_output]{ adapter_output->Release(); });
+		auto guard = ReleaseGuard(*adapter_output);
 
 		THROW_ON_FAIL(adapter_output->GetDisplayModeList(kGraphicFormat,
 			0,

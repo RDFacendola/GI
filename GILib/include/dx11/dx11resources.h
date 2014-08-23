@@ -16,6 +16,8 @@ struct ID3D11Device;
 
 namespace gi_lib{
 
+	enum class ResourcePriority;
+
 	namespace dx11{
 
 		/// \brief Resource manager interface for DirectX11.

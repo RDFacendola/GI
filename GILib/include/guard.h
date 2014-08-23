@@ -77,7 +77,7 @@ namespace gi_lib{
 	/// \brief Create a new scope guard.
 	/// \tparam TFunctor Type of the functor the ScopeGuard will call upon destruction.
 	template <typename TFunctor>
-	ScopeGuard<TFunctor> MakeScopeGuard(TFunctor functor){
+	ScopeGuard<TFunctor> make_scope_guard(TFunctor functor){
 
 		return ScopeGuard<TFunctor>(std::move(functor));
 

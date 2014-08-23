@@ -21,7 +21,7 @@ GILogic::GILogic():
 
 	auto & r = factory_.GetResources();
 
-	auto p = r.Load<Texture2D>(L"huehuehue");
+	auto p = r.Load<Texture2D>(L"femalehead4K.dds");
 
 
 	/////////////////////////////////////
