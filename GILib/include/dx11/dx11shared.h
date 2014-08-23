@@ -70,7 +70,7 @@ namespace gi_lib{
 			IUnknown * unknown_;
 
 		};
-		
+
 	}
 
 }

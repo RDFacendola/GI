@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\dx11\dx11shared.h" />
     <ClInclude Include="include\dx11\dx11factory.h" />
     <ClInclude Include="include\dx11\dx11resources.h" />
     <ClInclude Include="include\application.h" />
@@ -50,6 +51,9 @@
     <ClCompile Include="src\system.cpp" />
     <ClCompile Include="src\timer.cpp" />
     <ClCompile Include="src\window.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{21C15D82-5532-4597-B69C-EA2ECFA64DF4}</ProjectGuid>

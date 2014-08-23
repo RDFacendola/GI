@@ -75,6 +75,7 @@
     <ClInclude Include="include\dx11\dx11texture.h">
       <Filter>graphics\dx11</Filter>
     </ClInclude>
+    <ClInclude Include="include\dx11\dx11shared.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\system.cpp">
@@ -105,5 +106,8 @@
       <Filter>graphics\dx11</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\dx11shared.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>
