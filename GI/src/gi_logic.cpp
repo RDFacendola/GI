@@ -23,7 +23,6 @@ GILogic::GILogic():
 
 	auto p = r.Load<Texture2D>(L"femalehead4K.dds");
 
-
 	/////////////////////////////////////
 
 	SetTitle(kWindowTitle);

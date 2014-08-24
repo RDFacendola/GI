@@ -48,9 +48,27 @@ namespace gi_lib{
 		/// Once loaded, a resource is immutable.
 		/// \tparam Type of resource to load.
 		/// \param path The path of the resource.
+		/// \param extra Extra loading parameters.
 		/// \return Return an handle to the specified resource. Throws if no resource is found.
-		template <typename TResource>
-		shared_ptr<TResource> Load(const wstring & path, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type* = nullptr);
+		template <typename TResource, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type* = nullptr>
+		shared_ptr<TResource> Load(const wstring & path, const typename TResource::Extra & extras){
+
+			return LoadExtra<TResource>(path, &extras);
+
+		}
+		
+		/// \brief Load a resource.
+
+		/// Once loaded, a resource is immutable.
+		/// \tparam Type of resource to load.
+		/// \param path The path of the resource.
+		/// \return Return an handle to the specified resource. Throws if no resource is found.
+		template <typename TResource, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type* = nullptr>
+		shared_ptr<TResource> Load(const wstring & path){
+
+			return LoadExtra<TResource>(path, nullptr);
+
+		}
 
 		/// \brief Get the amount of memory used by the resources loaded.
 		size_t GetSize();
@@ -60,13 +78,17 @@ namespace gi_lib{
 		using ResourceKey = std::pair < std::type_index, wstring >;
 		using ResourceMap = map < ResourceKey, weak_ptr<Resource> >;
 
-	protected:
-
 		/// \brief Load a resource.
 		
 		/// \param key Unique key of the resource to load.
+		/// \param extras Extra parameters.
 		/// \return Returns a pointer to the loaded resource
-		virtual unique_ptr<Resource> LoadDirect(const ResourceKey & key) = 0;
+		virtual unique_ptr<Resource> LoadDirect(const ResourceKey & key, const void * extras) = 0;
+
+	private:
+
+		template <typename TResource>
+		shared_ptr<TResource> LoadExtra(const wstring & path, const void * extras);
 
 		// Map of the immutable resources
 		ResourceMap resources_;
@@ -97,7 +119,7 @@ namespace gi_lib{
 	};
 
 	template <typename TResource>
-	shared_ptr<TResource> Resources::Load(const wstring & path, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type*){
+	shared_ptr<TResource> Resources::LoadExtra(const wstring & path, const void * extras){
 
 		//Check if the resource exists inside the map
 		auto key = make_pair(std::type_index(typeid(TResource)), base_path_ + path);
@@ -116,11 +138,11 @@ namespace gi_lib{
 
 		}
 
-		auto resource = shared_ptr<Resource>(std::move(LoadDirect(key)));		// To shared ptr
+		auto resource = shared_ptr<Resource>(std::move(LoadDirect(key, extras)));		// To shared ptr
 
-		resources_[key] = resource;												// To weak ptr
+		resources_[key] = resource;														// To weak ptr
 
-		return static_pointer_cast<TResource>(resource);						// To shared ptr (of the requested type). Evil downcasting :D
+		return static_pointer_cast<TResource>(resource);								// To shared ptr (of the requested type). Evil downcasting :D
 
 	}
 

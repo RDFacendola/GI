@@ -13,10 +13,10 @@ using namespace gi_lib::dx11;
 namespace{
 
 	template <typename TResource>
-	unique_ptr<Resource> LoadResource(ID3D11Device &, const wstring &);
+	unique_ptr<Resource> LoadResource(ID3D11Device &, const wstring &, const void * extras);
 
 	template <typename Texture2D>
-	unique_ptr<Resource> LoadResource(ID3D11Device & device, const wstring & path) {
+	unique_ptr<Resource> LoadResource(ID3D11Device & device, const wstring & path, const void *) {
 
 		return make_unique<DX11Texture2D>(device, path);
 
@@ -25,7 +25,7 @@ namespace{
 	// Loader class. Maps every resource with their respective loader.
 	class Loader{
 
-		using LoaderFunction = unique_ptr<Resource>(*)(ID3D11Device &, const wstring &);
+		using LoaderFunction = unique_ptr<Resource>(*)(ID3D11Device &, const wstring &, const void * extras);
 		using LoaderMap = unordered_map < std::type_index, LoaderFunction >;
 
 	public:
@@ -43,7 +43,7 @@ namespace{
 		/// \param device Device used to create the resource.
 		/// \param path Path of the resource.
 		/// \return Returns a shared pointer to the loaded resource
-		unique_ptr<Resource> Load(const std::type_index & type_index, ID3D11Device & device, const wstring & path){
+		unique_ptr<Resource> Load(const std::type_index & type_index, ID3D11Device & device, const wstring & path, const void * extras){
 
 			auto it = loader_map_.find(type_index);
 
@@ -53,7 +53,7 @@ namespace{
 
 			}
 				
-			return it->second(device, path);
+			return it->second(device, path, extras);
 			
 		}
 
@@ -80,8 +80,8 @@ namespace{
 
 }
 
-unique_ptr<Resource> DX11Resources::LoadDirect(const ResourceKey & key){
+unique_ptr<Resource> DX11Resources::LoadDirect(const ResourceKey & key, const void * extras){
 
-	return Loader::GetInstance().Load(key.first, device_, key.second);
+	return Loader::GetInstance().Load(key.first, device_, key.second, extras);
 
 }

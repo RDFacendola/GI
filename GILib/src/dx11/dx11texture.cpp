@@ -27,6 +27,8 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const wstring & path){
 	
 	DDS_ALPHA_MODE alpha_mode;
 	
+	ScratchImage immy;
+
 	THROW_ON_FAIL( CreateDDSTextureFromFileEx(&device, 
 											  path.c_str(), 
 											  0,									// Load everything.
@@ -38,7 +40,6 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const wstring & path){
 											  (ID3D11Resource **)&texture_,			// Bad C-style cast.
 											  &view_, 
 											  &alpha_mode));						//Alpha informations
-											  
 
 	D3D11_TEXTURE2D_DESC description;
 

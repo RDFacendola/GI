@@ -39,7 +39,7 @@ namespace gi_lib{
 
 		protected:
 
-			virtual unique_ptr<Resource> LoadDirect(const ResourceKey & key);
+			virtual unique_ptr<Resource> LoadDirect(const ResourceKey & key, const void * extras);
 
 		private:
 
