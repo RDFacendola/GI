@@ -135,7 +135,7 @@ namespace{
 			&adapter_output));
 
 		//Release the output when the function returns or throws
-		auto guard = ReleaseGuard(*adapter_output);
+		auto guard = unique_ptr<IDXGIOutput, COMDeleter>(adapter_output);
 
 		THROW_ON_FAIL(adapter_output->GetDisplayModeList(kGraphicFormat,
 			0,
