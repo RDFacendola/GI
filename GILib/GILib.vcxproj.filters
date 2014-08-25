@@ -33,9 +33,6 @@
     <ClInclude Include="include\observable.h">
       <Filter>pattern</Filter>
     </ClInclude>
-    <ClInclude Include="include\guard.h">
-      <Filter>pattern</Filter>
-    </ClInclude>
     <ClInclude Include="include\scene.h">
       <Filter>scene</Filter>
     </ClInclude>
@@ -47,9 +44,6 @@
     </ClInclude>
     <ClInclude Include="include\maybe.h">
       <Filter>pattern</Filter>
-    </ClInclude>
-    <ClInclude Include="include\resources.h">
-      <Filter>graphics</Filter>
     </ClInclude>
     <ClInclude Include="include\window.h">
       <Filter>core</Filter>
@@ -78,6 +72,15 @@
     <ClInclude Include="include\dx11\dx11shared.h">
       <Filter>graphics\dx11</Filter>
     </ClInclude>
+    <ClInclude Include="include\guard.h">
+      <Filter>pattern</Filter>
+    </ClInclude>
+    <ClInclude Include="include\resource.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\resource_manager.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\system.cpp">
@@ -101,14 +104,14 @@
     <ClCompile Include="src\dx11\dx11resources.cpp">
       <Filter>graphics\dx11</Filter>
     </ClCompile>
-    <ClCompile Include="src\resources.cpp">
-      <Filter>graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\dx11\dx11texture.cpp">
       <Filter>graphics\dx11</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\dx11shared.cpp">
       <Filter>graphics\dx11</Filter>
+    </ClCompile>
+    <ClCompile Include="src\resource_manager.cpp">
+      <Filter>graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

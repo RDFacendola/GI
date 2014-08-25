@@ -8,7 +8,6 @@
 #include <math.h>
 
 #include "exceptions.h"
-#include "guard.h"
 #include "dx11/dx11shared.h"
 
 using namespace std;
@@ -60,7 +59,7 @@ size_t DX11Texture2D::GetSize() const{
 
 	auto level_size = width_ * height_ * bits_per_pixel_ * kBitOverByte;	//Size of the most detailed level.
 
-	// MIP map footprint -> Sum of a geometrical series...
+	// MIP map footprint -> Sum of a geometrical serie...
 
 	return static_cast<size_t>( level_size * ((1.0f - std::powf(kMIPRatio, static_cast<float>(mip_levels_))) / (1.0f - kMIPRatio)) );
 

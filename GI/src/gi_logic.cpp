@@ -19,7 +19,7 @@ GILogic::GILogic():
 
 	/////////////////////////////////////
 
-	auto & r = factory_.GetResources();
+	auto & r = factory_.GetResourceManager();
 
 	size_t s1, s2;
 

@@ -37,13 +37,14 @@
     <ClInclude Include="include\texture.h" />
     <ClInclude Include="include\timer.h" />
     <ClInclude Include="include\unique.h" />
-    <ClInclude Include="include\resources.h" />
+    <ClInclude Include="include\resource_manager.h" />
     <ClInclude Include="include\window.h" />
+    <ClInclude Include="include\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11shared.cpp" />
     <ClCompile Include="src\dx11\dx11texture.cpp" />
-    <ClCompile Include="src\resources.cpp" />
+    <ClCompile Include="src\resource_manager.cpp" />
     <ClCompile Include="src\application.cpp" />
     <ClCompile Include="src\dx11\dx11factory.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />

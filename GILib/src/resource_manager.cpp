@@ -1,21 +1,22 @@
-#include "resources.h"
+#include "resource_manager.h"
 
 #include "application.h"
+#include "resource.h"
 
 #include <numeric>
 
 using namespace std;
 using namespace gi_lib;
 
-const wstring Resources::kResourceFolder = L"Data";
+const wstring ResourceManager::kResourceFolder = L"Data";
 
-Resources::Resources(){
+ResourceManager::ResourceManager(){
 
 	base_path_ = Application::GetInstance().GetDirectory() + kResourceFolder + Application::kPathSeparator;
 
 }
 
-size_t Resources::GetSize(){
+size_t ResourceManager::GetSize(){
 
 	return accumulate(resources_.begin(),
 		resources_.end(),

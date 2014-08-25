@@ -17,7 +17,7 @@ namespace gi_lib{
 
 	class Window;
 	class Graphics;
-	class Resources;
+	class ResourceManager;
 
 	/// \brief Describes a video mode.
 	/// \author Raffaele D. Facendola
@@ -74,7 +74,7 @@ namespace gi_lib{
 
 		/// \brief Get the resource manager.
 		/// \return Returns a reference to the resource mananger.
-		virtual Resources & GetResources() = 0;
+		virtual ResourceManager & GetResourceManager() = 0;
 
 	};
 

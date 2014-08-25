@@ -5,8 +5,6 @@
 #include "dx11/dx11resources.h"
 #include "dx11/dx11shared.h"
 #include "exceptions.h"
-#include "guard.h"
-
 #include <algorithm>
 #include <memory>
 
@@ -328,9 +326,9 @@ unique_ptr<Graphics> DX11Factory::CreateGraphics(Window & window){
 
 }
 
-Resources & DX11Factory::GetResources(){
+ResourceManager & DX11Factory::GetResourceManager(){
 
-	static DX11Resources resources(*device_);
+	static DX11ResourceManager resources(*device_);
 
 	return resources;
 

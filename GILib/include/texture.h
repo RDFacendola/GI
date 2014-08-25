@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "resources.h"
+#include "resource.h"
 
 namespace gi_lib{
 

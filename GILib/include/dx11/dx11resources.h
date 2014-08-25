@@ -7,7 +7,7 @@
 
 #include <memory>
 
-#include "resources.h"
+#include "resource_manager.h"
 
 using ::std::weak_ptr;
 using ::std::shared_ptr;
@@ -22,19 +22,19 @@ namespace gi_lib{
 
 		/// \brief Resource manager interface for DirectX11.
 		/// \author Raffaele D. Facendola.
-		class DX11Resources: public Resources{
+		class DX11ResourceManager : public ResourceManager{
 
 		public:
 
 			/// \brief No copy constructor.
-			DX11Resources(const DX11Resources &) = delete;
+			DX11ResourceManager(const DX11ResourceManager &) = delete;
 
 			/// \brief No assignment operator.
-			DX11Resources & operator=(const DX11Resources &) = delete;
+			DX11ResourceManager & operator=(const DX11ResourceManager &) = delete;
 
 			/// \brief Create a new instance of DirectX11 resource manager.
 			/// \param device The device used to create the actual resources.
-			DX11Resources(ID3D11Device & device) :
+			DX11ResourceManager(ID3D11Device & device) :
 				device_(device){}
 
 		protected:

@@ -36,7 +36,7 @@ namespace gi_lib{
 
 			virtual unique_ptr<Graphics> CreateGraphics(Window & window);
 
-			virtual Resources & GetResources();
+			virtual ResourceManager & GetResourceManager();
 
 		private:
 

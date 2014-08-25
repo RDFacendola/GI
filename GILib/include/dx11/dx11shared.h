@@ -9,8 +9,7 @@
 #include <memory>
 #include <type_traits>
 
-#include "resources.h"
-#include "guard.h"
+#include "resource.h"
 #include "exceptions.h"
 
 using ::std::unique_ptr;
@@ -31,7 +30,7 @@ namespace gi_lib{
 
 			/// \brief Release the given resource.
 			/// \param ptr Pointer to the resource to delete.
-			void operator()(IUnknown * ptr){
+			inline void operator()(IUnknown * ptr){
 
 				ptr->Release();
 

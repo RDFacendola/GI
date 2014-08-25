@@ -1,4 +1,4 @@
-/// \file resources.h
+/// \file resource_manager.h
 /// \brief Declare classes and interfaces used to manage graphical resources.
 ///
 /// \author Raffaele D. Facendola
@@ -20,28 +20,17 @@ using ::std::shared_ptr;
 namespace gi_lib{
 
 	class Resource;
-	
-	/// \brief Describe the priority of the resources.
-	enum class ResourcePriority{
-
-		MINIMUM,		///< Lowest priority. These resources will be the first one to be freed when the system will run out of memory.
-		LOW,			///< Low priority.
-		NORMAL,			///< Normal priority. Default value.
-		HIGH,			///< High priority.
-		CRITICAL		///< Highest priority. These resources will be kept in memory at any cost.
-
-	};
 
 	/// \brief Resource manager interface.
 	/// \author Raffaele D. Facendola.
-	class Resources{
+	class ResourceManager{
 
 	public:
 
 		/// \brief Folder where the resources are stored.
 		static const wstring kResourceFolder;
 
-		Resources();
+		ResourceManager();
 
 		/// \brief Load a resource.
 
@@ -98,30 +87,10 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Base interface for graphical resources.
-	/// \author Raffaele D. Facendola.
-	class Resource{
-
-	public:
-
-		virtual ~Resource(){}
-
-		/// \brief Get the memory footprint of this resource.
-		/// \return Returns the size of the resource, in bytes.
-		virtual size_t GetSize() const = 0;
-
-		/// \brief Get the priority of the resource.
-		/// \return Returns the resource priority.
-		virtual ResourcePriority GetPriority() const = 0;
-
-		/// \brief Set the priority of the resource.
-		/// \param priority The new priority.
-		virtual void SetPriority(ResourcePriority priority) = 0;
-
-	};
+	//
 
 	template <typename TResource>
-	shared_ptr<TResource> Resources::LoadExtra(const wstring & path, const void * extras){
+	shared_ptr<TResource> ResourceManager::LoadExtra(const wstring & path, const void * extras){
 
 		//Check if the resource exists inside the map
 		auto key = make_pair(std::type_index(typeid(TResource)), base_path_ + path);

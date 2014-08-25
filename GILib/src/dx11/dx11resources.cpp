@@ -80,7 +80,7 @@ namespace{
 
 }
 
-unique_ptr<Resource> DX11Resources::LoadDirect(const ResourceKey & key, const void * extras){
+unique_ptr<Resource> DX11ResourceManager::LoadDirect(const ResourceKey & key, const void * extras){
 
 	return Loader::GetInstance().Load(key.first, device_, key.second, extras);
 
