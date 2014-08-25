@@ -7,28 +7,28 @@
     <Filter Include="scene">
       <UniqueIdentifier>{8d48d195-5273-46e3-8498-70667a83f177}</UniqueIdentifier>
     </Filter>
-    <Filter Include="gilib">
-      <UniqueIdentifier>{8d6e244c-ba3e-4532-939b-79349da04ec3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="graphics">
       <UniqueIdentifier>{9b367e73-ee71-4afa-bd92-b013a0aa5432}</UniqueIdentifier>
     </Filter>
     <Filter Include="graphics\dx11">
       <UniqueIdentifier>{7f63097a-8a40-48d6-9d15-deb875f0b168}</UniqueIdentifier>
     </Filter>
+    <Filter Include="core">
+      <UniqueIdentifier>{8d6e244c-ba3e-4532-939b-79349da04ec3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\timer.h">
-      <Filter>gilib</Filter>
+      <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\system.h">
-      <Filter>gilib</Filter>
+      <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\exceptions.h">
-      <Filter>gilib</Filter>
+      <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\application.h">
-      <Filter>gilib</Filter>
+      <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\observable.h">
       <Filter>pattern</Filter>
@@ -52,7 +52,7 @@
       <Filter>graphics</Filter>
     </ClInclude>
     <ClInclude Include="include\window.h">
-      <Filter>gilib</Filter>
+      <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\factory.h">
       <Filter>graphics</Filter>
@@ -75,20 +75,22 @@
     <ClInclude Include="include\dx11\dx11texture.h">
       <Filter>graphics\dx11</Filter>
     </ClInclude>
-    <ClInclude Include="include\dx11\dx11shared.h" />
+    <ClInclude Include="include\dx11\dx11shared.h">
+      <Filter>graphics\dx11</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\system.cpp">
-      <Filter>gilib</Filter>
+      <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\application.cpp">
-      <Filter>gilib</Filter>
+      <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\window.cpp">
-      <Filter>gilib</Filter>
+      <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\timer.cpp">
-      <Filter>gilib</Filter>
+      <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\dx11factory.cpp">
       <Filter>graphics\dx11</Filter>
@@ -105,7 +107,9 @@
     <ClCompile Include="src\dx11\dx11texture.cpp">
       <Filter>graphics\dx11</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11\dx11shared.cpp" />
+    <ClCompile Include="src\dx11\dx11shared.cpp">
+      <Filter>graphics\dx11</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
