@@ -10,6 +10,9 @@
 #include <memory>
 
 #include "texture.h"
+#include "dx11shared.h"
+
+using ::std::unique_ptr;
 
 namespace gi_lib{
 
@@ -27,8 +30,6 @@ namespace gi_lib{
 			/// param device The device used to create the texture.
 			/// \param path The path of the texture to load.
 			DX11Texture2D(ID3D11Device & device, const wstring & path);
-
-			~DX11Texture2D();
 
 			virtual size_t GetSize() const;
 
@@ -48,10 +49,9 @@ namespace gi_lib{
 
 		private:
 
-			ID3D11Texture2D * texture_;
+			unique_ptr<ID3D11Texture2D, COMDeleter> texture_;
 
-			// Used to bind the texture to the shader.
-			ID3D11ShaderResourceView * view_;
+			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;
 
 			// This texture has an alpha channel.
 			bool alpha_;

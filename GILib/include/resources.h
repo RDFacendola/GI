@@ -48,7 +48,7 @@ namespace gi_lib{
 		/// Once loaded, a resource is immutable.
 		/// \tparam Type of resource to load.
 		/// \param path The path of the resource.
-		/// \param extra Extra loading parameters.
+		/// \param extras Extra loading parameters.
 		/// \return Return an handle to the specified resource. Throws if no resource is found.
 		template <typename TResource, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type* = nullptr>
 		shared_ptr<TResource> Load(const wstring & path, const typename TResource::Extra & extras){
@@ -103,6 +103,8 @@ namespace gi_lib{
 	class Resource{
 
 	public:
+
+		virtual ~Resource(){}
 
 		/// \brief Get the memory footprint of this resource.
 		/// \return Returns the size of the resource, in bytes.

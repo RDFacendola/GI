@@ -3,10 +3,18 @@
 ///
 /// \author Raffaele D. Facendola
 
+#pragma once
+
 #include <dxgi.h>
+#include <memory>
+#include <type_traits>
 
 #include "resources.h"
 #include "guard.h"
+#include "exceptions.h"
+
+using ::std::unique_ptr;
+using ::std::shared_ptr;
 
 namespace gi_lib{
 
@@ -18,6 +26,19 @@ namespace gi_lib{
 		/// \brief Convert a resource priority to an eviction priority (DirectX11)
 		ResourcePriority EvictionPriorityToResourcePriority(unsigned int priority);
 
+		/// \brief Deleter used by COM IUnknown interface.
+		struct COMDeleter{
+
+			/// \brief Release the given resource.
+			/// \param ptr Pointer to the resource to delete.
+			void operator()(IUnknown * ptr){
+
+				ptr->Release();
+
+			}
+
+		};
+		
 		/// \brief Guard used to release the DirectX11 resources.
 		class ReleaseGuard{
 

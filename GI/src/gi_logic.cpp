@@ -21,7 +21,16 @@ GILogic::GILogic():
 
 	auto & r = factory_.GetResources();
 
-	auto p = r.Load<Texture2D>(L"femalehead4K.dds");
+	size_t s1, s2;
+
+	{
+		auto p = r.Load<Texture2D>(L"femalehead4K.dds");
+
+		s1 = r.GetSize();
+
+	}
+	
+	//Texture now should have been destroyed
 
 	/////////////////////////////////////
 

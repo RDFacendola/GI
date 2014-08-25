@@ -26,8 +26,8 @@ namespace{
 DX11Texture2D::DX11Texture2D(ID3D11Device & device, const wstring & path){
 	
 	DDS_ALPHA_MODE alpha_mode;
-	
-	ScratchImage immy;
+	ID3D11Resource * resource;
+	ID3D11ShaderResourceView * shader_view;
 
 	THROW_ON_FAIL( CreateDDSTextureFromFileEx(&device, 
 											  path.c_str(), 
@@ -37,9 +37,12 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const wstring & path){
 											  0,									// No CPU access.
 											  0,
 											  false,								// No forced sRGB
-											  (ID3D11Resource **)&texture_,			// Bad C-style cast.
-											  &view_, 
-											  &alpha_mode));						//Alpha informations
+											  &resource,
+											  &shader_view, 
+											  &alpha_mode) );						//Alpha informations
+
+	texture_.reset(static_cast<ID3D11Texture2D*>(resource));	
+	shader_view_.reset(shader_view);
 
 	D3D11_TEXTURE2D_DESC description;
 
@@ -50,16 +53,6 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const wstring & path){
 	mip_levels_ = description.MipLevels;
 	bits_per_pixel_ = BitsPerPixel(description.Format);
 	alpha_ = alpha_mode != DDS_ALPHA_MODE_OPAQUE;									//If it is not opaque, it should have an alpha channel
-
-}
-
-DX11Texture2D::~DX11Texture2D(){
-
-	view_->Release();
-	texture_->Release();
-
-	view_ = nullptr;
-	texture_ = nullptr;
 
 }
 

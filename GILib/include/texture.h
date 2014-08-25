@@ -23,6 +23,8 @@ namespace gi_lib{
 
 	public:
 
+		virtual ~Texture2D(){}
+
 		/// \brief Get the width of the texture.
 		/// \return Returns the width of the texture, in pixel.
 		virtual size_t GetWidth() const = 0;
