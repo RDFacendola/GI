@@ -30,20 +30,11 @@
     <ClInclude Include="include\scene.h">
       <Filter>scene</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics.h">
-      <Filter>graphics</Filter>
-    </ClInclude>
     <ClInclude Include="include\unique.h">
       <Filter>pattern</Filter>
     </ClInclude>
     <ClInclude Include="include\maybe.h">
       <Filter>pattern</Filter>
-    </ClInclude>
-    <ClInclude Include="include\factory.h">
-      <Filter>graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="include\dx11\dx11factory.h">
-      <Filter>graphics\dx11</Filter>
     </ClInclude>
     <ClInclude Include="include\dx11\dx11graphics.h">
       <Filter>graphics\dx11</Filter>
@@ -60,17 +51,8 @@
     <ClInclude Include="include\dx11\dx11shared.h">
       <Filter>graphics\dx11</Filter>
     </ClInclude>
-    <ClInclude Include="include\guard.h">
-      <Filter>pattern</Filter>
-    </ClInclude>
     <ClInclude Include="include\resource.h">
       <Filter>graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="include\resource_manager.h">
-      <Filter>graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="include\dx11\dx11resource_manager.h">
-      <Filter>graphics\dx11</Filter>
     </ClInclude>
     <ClInclude Include="include\macros.h">
       <Filter>core</Filter>
@@ -78,13 +60,11 @@
     <ClInclude Include="include\core.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="include\graphics.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
       <Filter>core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\dx11\dx11factory.cpp">
-      <Filter>graphics\dx11</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\dx11graphics.cpp">
       <Filter>graphics\dx11</Filter>
@@ -95,17 +75,11 @@
     <ClCompile Include="src\dx11\dx11shared.cpp">
       <Filter>graphics\dx11</Filter>
     </ClCompile>
-    <ClCompile Include="src\resource_manager.cpp">
-      <Filter>graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\dx11\dx11resource_manager.cpp">
-      <Filter>graphics\dx11</Filter>
-    </ClCompile>
     <ClCompile Include="src\core.cpp">
       <Filter>core</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ClassDiagram.cd" />
+    <ClCompile Include="src\graphics.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "core.h"
-#include "factory.h"
 #include "graphics.h"
 
 using namespace gi_lib;
@@ -24,8 +23,8 @@ public:
 
 private:
 
-	Factory & factory_;
+	Graphics & graphics_;
 
-	unique_ptr<Graphics> graphics_;
+	unique_ptr<Output> output_;
 
 };

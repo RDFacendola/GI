@@ -1,22 +1,24 @@
-#include "resource_manager.h"
+#include "graphics.h"
+
+#include <numeric>
 
 #include "core.h"
 #include "resource.h"
 
-#include <numeric>
-
 using namespace std;
 using namespace gi_lib;
 
-const wstring ResourceManager::kResourceFolder = L"Data";
+const wstring Manager::kResourceFolder = L"Data";
 
-ResourceManager::ResourceManager(){
+Manager::Manager(){
 
 	base_path_ = Application::GetInstance().GetDirectory() + kResourceFolder + kPathSeparator;
 
 }
 
-size_t ResourceManager::GetSize(){
+size_t Manager::GetSize(){
+
+	// Runs trough every resource and sum its memory footprint.
 
 	return accumulate(resources_.begin(),
 		resources_.end(),

@@ -38,10 +38,10 @@ namespace gi_lib{
 #endif
 
 	/// \brief Separator used to separate a file name from its extension.
-	const wstring kExtensionSeparator;
+	extern const wstring kExtensionSeparator;
 
 	/// \brief Separator used to separate different directory's levels.
-	const wstring kPathSeparator;
+	extern const wstring kPathSeparator;
 
 	/// \brief Maximum length for an unit label.
 	extern const unsigned int kUnitLabelLength;

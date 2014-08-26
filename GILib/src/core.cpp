@@ -10,11 +10,11 @@ using namespace std;
 
 #ifdef _WIN32
 
-const wstring kExtensionSeparator = L".";
+const wstring gi_lib::kExtensionSeparator = L".";
 
-const wstring kPathSeparator = L"\\";
+const wstring gi_lib::kPathSeparator = L"\\";
 
-const unsigned int kUnitLabelLength = 3;
+const unsigned int gi_lib::kUnitLabelLength = 3;
 
 #endif
 

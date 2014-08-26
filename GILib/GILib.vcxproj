@@ -20,38 +20,28 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\dx11\dx11shared.h" />
-    <ClInclude Include="include\dx11\dx11factory.h" />
-    <ClInclude Include="include\dx11\dx11resource_manager.h" />
     <ClInclude Include="include\core.h" />
     <ClInclude Include="include\dx11\dx11graphics.h" />
     <ClInclude Include="include\dx11\dx11resource_traits.h" />
     <ClInclude Include="include\dx11\dx11texture.h" />
-    <ClInclude Include="include\factory.h" />
     <ClInclude Include="include\graphics.h" />
     <ClInclude Include="include\maybe.h" />
     <ClInclude Include="include\scene.h" />
     <ClInclude Include="include\observable.h" />
     <ClInclude Include="include\exceptions.h" />
-    <ClInclude Include="include\guard.h" />
     <ClInclude Include="include\texture.h" />
     <ClInclude Include="include\timer.h" />
     <ClInclude Include="include\unique.h" />
-    <ClInclude Include="include\resource_manager.h" />
     <ClInclude Include="include\resource.h" />
     <ClInclude Include="include\macros.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11shared.cpp" />
     <ClCompile Include="src\dx11\dx11texture.cpp" />
-    <ClCompile Include="src\resource_manager.cpp" />
+    <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\core.cpp" />
-    <ClCompile Include="src\dx11\dx11factory.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
-    <ClCompile Include="src\dx11\dx11resource_manager.cpp" />
     <ClCompile Include="src\timer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{21C15D82-5532-4597-B69C-EA2ECFA64DF4}</ProjectGuid>
