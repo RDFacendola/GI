@@ -24,23 +24,114 @@ using namespace gi_lib::dx11;
 
 namespace{
 
-	/// Index of the primary output.
+	/// \brief Index of the primary output.
 	const unsigned int kPrimaryOutputIndex = 0;
 
-	/// Index of the default video card.
+	/// \brief Index of the default video card.
 	const unsigned int kDefaultAdapterIndex = 0;
 
-	/// Pointer to the default video card.
+	/// \brief Pointer to the default video card.
 	IDXGIAdapter * const kDefaultAdapter = nullptr;
 
-	/// Number of buffers used by the swapchain.
+	/// \brief Number of buffers used by the swapchain.
 	const unsigned int kBuffersCount = 3;
 
-	/// Minimum resolution allowed, in pixels.
+	/// \brief Minimum resolution allowed, in pixels.
 	const unsigned int kMinimumResolution = 1024 * 768;
 
-	/// DirectX 11 API support.
+	/// \brief DirectX 11 API support.
 	const D3D_FEATURE_LEVEL kFeatureLevel = D3D_FEATURE_LEVEL_11_0;
+
+	/// \brief Default video format for the back buffer.
+	const DXGI_FORMAT kVideoFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+
+	/// \brief Convert a dxgi sample desc to an antialiasing mode.
+	AntialiasingMode SampleDescToAntialiasingMode(const DXGI_SAMPLE_DESC & sample_desc){
+
+		if (sample_desc.Count == 1 && sample_desc.Quality == 0)		return AntialiasingMode::NONE;
+		if (sample_desc.Count == 2 && sample_desc.Quality == 0)		return AntialiasingMode::MSAA_2X;
+		if (sample_desc.Count == 4 && sample_desc.Quality == 0)		return AntialiasingMode::MSAA_4X;
+		if (sample_desc.Count == 8 && sample_desc.Quality == 0)		return AntialiasingMode::MSAA_8X;
+		if (sample_desc.Count == 16 && sample_desc.Quality == 0)	return AntialiasingMode::MSAA_16X;
+
+		return AntialiasingMode::NONE;
+
+	}
+
+	/// \brief Convert an antialiasing mode to a sample desc.
+	DXGI_SAMPLE_DESC AntialiasingModeToSampleDesc(const AntialiasingMode & antialiasing_mode){
+
+		DXGI_SAMPLE_DESC sample_desc;
+
+		switch (antialiasing_mode)
+		{
+
+		case AntialiasingMode::MSAA_2X:
+
+			sample_desc.Count = 2;
+			sample_desc.Quality = 0;
+			break;
+
+		case AntialiasingMode::MSAA_4X:
+
+			sample_desc.Count = 4;
+			sample_desc.Quality = 0;
+			break;
+
+		case AntialiasingMode::MSAA_8X:
+
+			sample_desc.Count = 8;
+			sample_desc.Quality = 0;
+			break;
+
+		case AntialiasingMode::MSAA_16X:
+
+			sample_desc.Count = 16;
+			sample_desc.Quality = 0;
+			break;
+
+		case AntialiasingMode::NONE:
+		default:
+
+			sample_desc.Count = 1;
+			sample_desc.Quality = 0;
+			break;
+
+		}
+
+		return sample_desc;
+
+	}
+
+	/// \brief Convert a video mode to a dxgi mode.
+	DXGI_MODE_DESC VideoModeToDXGIMode(const VideoMode & video_mode){
+
+		DXGI_MODE_DESC dxgi_mode;
+
+		ZeroMemory(&dxgi_mode, sizeof(dxgi_mode));
+
+		dxgi_mode.Width = video_mode.horizontal_resolution;
+		dxgi_mode.Height = video_mode.vertical_resolution;
+		dxgi_mode.RefreshRate.Denominator = 1000;
+		dxgi_mode.RefreshRate.Numerator = static_cast<unsigned int>(video_mode.refresh_rate * dxgi_mode.RefreshRate.Denominator);
+		dxgi_mode.Format = kVideoFormat;
+
+		return dxgi_mode;
+
+	}
+
+	/// Convert a dxgi mode to a video mode.
+	VideoMode DXGIModeToVideoMode(const DXGI_MODE_DESC & dxgi_mode){
+
+		VideoMode video_mode;
+
+		video_mode.horizontal_resolution = dxgi_mode.Width;
+		video_mode.vertical_resolution = dxgi_mode.Height;
+		video_mode.refresh_rate = static_cast<unsigned int>(std::round(static_cast<float>(dxgi_mode.RefreshRate.Numerator) / dxgi_mode.RefreshRate.Denominator));
+
+		return video_mode;
+
+	}
 
 	/// Enumerate the supported DXGI video modes
 	vector<DXGI_MODE_DESC> EnumerateDXGIModes(IDXGIAdapter & adapter){

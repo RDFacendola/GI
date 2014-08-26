@@ -55,7 +55,7 @@ namespace gi_lib{
 
 		};
 
-		/// \brief DirectX object used to display an image to an output.
+		/// \brief DirectX11 object used to display an image to an output.
 		/// \author Raffaele D. Facendola
 		class DX11Output : public Output{
 
