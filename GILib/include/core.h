@@ -1,4 +1,4 @@
-/// \file application.h
+/// \file core.h
 /// \brief Classes and methods to manage the backbone of an application.
 ///
 /// \author Raffaele D. Facendola
@@ -32,6 +32,7 @@ namespace gi_lib{
 	
 #ifdef _WIN32
 
+	/// \brief Type used to identify univocally a window instance.
 	using WindowHandle = HWND;
 
 #endif
@@ -84,7 +85,6 @@ namespace gi_lib{
 		unsigned long long available_page_memory;		///< Available page memory, in bytes.
 
 	};
-
 
 	/// \brief Describes the desktop.
 	/// \author Raffaele D. Facendola

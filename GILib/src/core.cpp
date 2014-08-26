@@ -6,89 +6,6 @@
 using namespace gi_lib;
 using namespace std;
 
-/////////////////////////////////// INTERNAL ////////////////////////////////////////
-
-#ifdef _WIN32
-
-// Inner class of Window, used internally.
-class Window::WindowClass{
-
-public:
-
-	const wchar_t * kWindowClassName = L"GiLibWindow";
-
-	static WindowClass & GetInstance(){
-
-		static WindowClass instance;
-
-		return instance;
-
-	}
-
-	~WindowClass(){
-
-		if (window_icon_ != nullptr){
-
-			DestroyIcon(window_icon_);
-
-			window_icon_ = nullptr;
-
-		}
-
-		UnregisterClass(kWindowClassName, GetModuleHandle(nullptr));
-
-	}
-
-private:
-
-	WindowClass(){
-
-		auto instance = GetModuleHandle(nullptr);
-
-		//Extract the first icon found into the executable
-		window_icon_ = ExtractIcon(instance,
-			Application::GetInstance().GetPath().c_str(), 0);
-
-		WNDCLASS window_description;
-
-		ZeroMemory(&window_description, sizeof(WNDCLASS));
-
-		window_description.lpszClassName = kWindowClassName;
-		window_description.style = CS_VREDRAW | CS_HREDRAW;
-		window_description.hIcon = window_icon_;
-		window_description.hCursor = LoadCursor(NULL, IDC_ARROW);
-		window_description.hInstance = instance;
-		window_description.lpfnWndProc = [](HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
-
-			auto window = Application::GetInstance().GetWindow(window_handle);
-
-			// Proper receiver
-			if (auto temp_window = window.lock()){
-
-				return temp_window->ReceiveMessage(message_id, wparameter, lparameter);
-
-			}
-
-			// Default behavior when no receiver is found.
-			return DefWindowProc(window_handle, message_id, wparameter, lparameter);
-
-		};
-
-		SetLastError(0);
-
-		//Attempt to register the class
-
-		THROW_ON_ERROR(RegisterClass(&window_description));
-
-	}
-
-	HICON window_icon_;
-
-};
-
-#endif
-
-
 /////////////////////////////////// GLOBALS /////////////////////////////////////////
 
 #ifdef _WIN32
@@ -376,6 +293,95 @@ void Application::Join(){
 }
 
 //////////////////////////////////////// WINDOW //////////////////////////////////////////////
+
+#ifdef _WIN32
+
+/// \brief Internal class used to register window classes under Windows.
+class Window::WindowClass{
+
+public:
+
+	/// \brief Class name used by the windows.
+	const wchar_t * kWindowClassName = L"GiLibWindow";
+
+	/// \brief Get the WindowClass singleton.
+	static WindowClass & GetInstance();
+
+	/// \brief Default destructor
+	~WindowClass();
+
+private:
+
+	WindowClass();
+
+	HICON window_icon_;
+
+};
+
+Window::WindowClass & Window::WindowClass::GetInstance(){
+
+	static WindowClass instance;
+
+	return instance;
+
+}
+
+Window::WindowClass::~WindowClass(){
+
+	if (window_icon_ != nullptr){
+
+		DestroyIcon(window_icon_);
+
+		window_icon_ = nullptr;
+
+	}
+
+	UnregisterClass(kWindowClassName, GetModuleHandle(nullptr));
+
+}
+
+Window::WindowClass::WindowClass(){
+
+	auto instance = GetModuleHandle(nullptr);
+
+	//Extract the first icon found into the executable
+	window_icon_ = ExtractIcon(instance,
+		Application::GetInstance().GetPath().c_str(), 0);
+
+	WNDCLASS window_description;
+
+	ZeroMemory(&window_description, sizeof(WNDCLASS));
+
+	window_description.lpszClassName = kWindowClassName;
+	window_description.style = CS_VREDRAW | CS_HREDRAW;
+	window_description.hIcon = window_icon_;
+	window_description.hCursor = LoadCursor(NULL, IDC_ARROW);
+	window_description.hInstance = instance;
+	window_description.lpfnWndProc = [](HWND window_handle, unsigned int message_id, WPARAM wparameter, LPARAM lparameter){
+
+		auto window = Application::GetInstance().GetWindow(window_handle);
+
+		// Proper receiver
+		if (auto temp_window = window.lock()){
+
+			return temp_window->ReceiveMessage(message_id, wparameter, lparameter);
+
+		}
+
+		// Default behavior when no receiver is found.
+		return DefWindowProc(window_handle, message_id, wparameter, lparameter);
+
+	};
+
+	SetLastError(0);
+
+	//Attempt to register the class
+
+	THROW_ON_ERROR(RegisterClass(&window_description));
+
+}
+
+#endif
 
 void Window::SetTitle(const wstring & title){
 

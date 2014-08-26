@@ -17,8 +17,6 @@ const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 GILogic::GILogic():
 	factory_(DX11Factory::GetInstance()){
 
-	auto p = System::GetCPUProfile();
-
 	/////////////////////////////////////
 
 	auto & r = factory_.GetResourceManager();
