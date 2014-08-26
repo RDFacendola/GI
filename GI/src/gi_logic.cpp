@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include <texture.h>
+#include <resources.h>
 
 #include <dx11/dx11graphics.h>
 

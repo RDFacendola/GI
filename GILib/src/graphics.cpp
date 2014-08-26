@@ -3,7 +3,7 @@
 #include <numeric>
 
 #include "core.h"
-#include "resource.h"
+#include "resources.h"
 
 using namespace std;
 using namespace gi_lib;

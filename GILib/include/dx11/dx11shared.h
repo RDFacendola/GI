@@ -26,11 +26,13 @@ namespace gi_lib{
 
 		};
 
-		/// \brief Convert a resource priority to an eviction priority (DirectX11)
-		unsigned int ResourcePriorityToEvictionPriority(ResourcePriority priority);
+		//
 
-		/// \brief Convert a resource priority to an eviction priority (DirectX11)
-		ResourcePriority EvictionPriorityToResourcePriority(unsigned int priority);
+		inline void COMDeleter::operator()(IUnknown * ptr){
+
+			ptr->Release();
+
+		}
 
 	}
 

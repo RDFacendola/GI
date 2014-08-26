@@ -1,14 +1,13 @@
 #pragma comment(lib,"DirectXTK")
 #pragma comment(lib,"DirectXTex")
 
-#include "dx11/dx11texture.h"
+#include "dx11/dx11resources.h"
 
 #include <DDSTextureLoader.h>
 #include <DirectXTex.h>
 #include <math.h>
 
 #include "exceptions.h"
-#include "dx11/dx11shared.h"
 
 using namespace std;
 using namespace gi_lib;
@@ -17,9 +16,46 @@ using namespace DirectX;
 
 namespace{
 
+	/// \brief Ratio between a Bit and a Byte size.
 	const float kBitOverByte = 1.0f / 8.0f;
-	const float kMIPRatio = 1.0f / 4.0f;
+
+	/// \brief Size ration between two consecutive MIP levels of a texture 2D.
+	const float kMIPRatio2D = 1.0f / 4.0f;
 	
+	/// \brief Convert a resource priority to an eviction priority
+	unsigned int ResourcePriorityToEvictionPriority(ResourcePriority priority){
+
+		switch (priority){
+
+		case ResourcePriority::MINIMUM:			return DXGI_RESOURCE_PRIORITY_MINIMUM;
+		case ResourcePriority::LOW:				return DXGI_RESOURCE_PRIORITY_LOW;
+		case ResourcePriority::NORMAL:			return DXGI_RESOURCE_PRIORITY_NORMAL;
+		case ResourcePriority::HIGH:			return DXGI_RESOURCE_PRIORITY_HIGH;
+		case ResourcePriority::CRITICAL:		return DXGI_RESOURCE_PRIORITY_MAXIMUM;
+
+		}
+
+		throw RuntimeException(L"Unrecognized priority level.");
+
+	}
+
+	/// \brief Convert a resource priority to an eviction priority (DirectX11)
+	ResourcePriority EvictionPriorityToResourcePriority(unsigned int priority){
+
+		switch (priority){
+
+		case DXGI_RESOURCE_PRIORITY_MINIMUM:	return ResourcePriority::MINIMUM;
+		case DXGI_RESOURCE_PRIORITY_LOW:		return ResourcePriority::LOW;
+		case DXGI_RESOURCE_PRIORITY_NORMAL:		return ResourcePriority::NORMAL;
+		case DXGI_RESOURCE_PRIORITY_HIGH:		return ResourcePriority::HIGH;
+		case DXGI_RESOURCE_PRIORITY_MAXIMUM:	return ResourcePriority::CRITICAL;
+
+		}
+
+		throw RuntimeException(L"Unrecognized priority level.");
+
+	}
+
 }
 
 DX11Texture2D::DX11Texture2D(ID3D11Device & device, const wstring & path){
@@ -61,7 +97,7 @@ size_t DX11Texture2D::GetSize() const{
 
 	// MIP map footprint -> Sum of a geometrical serie...
 
-	return static_cast<size_t>( level_size * ((1.0f - std::powf(kMIPRatio, static_cast<float>(mip_levels_))) / (1.0f - kMIPRatio)) );
+	return static_cast<size_t>( level_size * ((1.0f - std::powf(kMIPRatio2D, static_cast<float>(mip_levels_))) / (1.0f - kMIPRatio2D)) );
 
 }
 

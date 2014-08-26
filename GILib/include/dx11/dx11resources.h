@@ -1,4 +1,4 @@
-/// \file dx11texture.h
+/// \file dx11resources.h
 /// \brief Classes and methods for DirectX11 texture management.
 ///
 /// \author Raffaele D. Facendola
@@ -9,15 +9,36 @@
 #include <string>
 #include <memory>
 
-#include "texture.h"
+#include "resources.h"
 #include "dx11shared.h"
 
-using ::std::unique_ptr;
 using ::std::wstring;
+using ::std::unique_ptr;
+using ::std::shared_ptr;
 
 namespace gi_lib{
 
 	namespace dx11{
+
+		class DX11Texture2D;
+
+		/// \brief DirectX11 resource traits
+		template<typename TResource> struct resource_traits;
+
+		/// \brief DirectX11 resource traits
+		template<> struct resource_traits < Texture2D > {
+
+			/// \brief Concreate type associated to a Texture2D.
+			using type = DX11Texture2D;
+
+		};
+
+		/// \brief Performs a resource cast from an abstract type to a concrete type.
+		/// \tparam TResource Type of the resource to cast.
+		/// \param resource The shared pointer to the resource to cast.
+		/// \return Returns a shared pointer to the casted resource.
+		template <typename TResource, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type* = nullptr>
+		typename shared_ptr<typename resource_traits<TResource>::type> resource_cast(shared_ptr<TResource> & resource);
 
 		/// \brief DirectX11 plain texture.
 
@@ -68,6 +89,15 @@ namespace gi_lib{
 			WrapMode wrap_mode_;
 
 		};
+
+		//
+
+		template <typename TResource, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type*>
+		typename shared_ptr<typename resource_traits<TResource>::type> resource_cast(shared_ptr<TResource> & resource){
+
+			return static_pointer_cast<typename resource_traits<TResource>::type> (resource.operator->());
+
+		}
 
 		inline size_t DX11Texture2D::GetWidth() const{
 

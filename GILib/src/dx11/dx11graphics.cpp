@@ -8,8 +8,7 @@
 #include "core.h"
 #include "exceptions.h"
 
-#include "texture.h"
-#include "dx11/dx11texture.h"
+#include "dx11/dx11resources.h"
 
 #include "dx11/dx11shared.h"
 

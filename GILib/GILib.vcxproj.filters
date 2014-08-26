@@ -39,20 +39,8 @@
     <ClInclude Include="include\dx11\dx11graphics.h">
       <Filter>graphics\dx11</Filter>
     </ClInclude>
-    <ClInclude Include="include\dx11\dx11resource_traits.h">
-      <Filter>graphics\dx11</Filter>
-    </ClInclude>
-    <ClInclude Include="include\texture.h">
-      <Filter>graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="include\dx11\dx11texture.h">
-      <Filter>graphics\dx11</Filter>
-    </ClInclude>
     <ClInclude Include="include\dx11\dx11shared.h">
       <Filter>graphics\dx11</Filter>
-    </ClInclude>
-    <ClInclude Include="include\resource.h">
-      <Filter>graphics</Filter>
     </ClInclude>
     <ClInclude Include="include\macros.h">
       <Filter>core</Filter>
@@ -61,6 +49,12 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics.h" />
+    <ClInclude Include="include\resources.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11resources.h">
+      <Filter>graphics\dx11</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -69,17 +63,14 @@
     <ClCompile Include="src\dx11\dx11graphics.cpp">
       <Filter>graphics\dx11</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11\dx11texture.cpp">
-      <Filter>graphics\dx11</Filter>
-    </ClCompile>
-    <ClCompile Include="src\dx11\dx11shared.cpp">
-      <Filter>graphics\dx11</Filter>
-    </ClCompile>
     <ClCompile Include="src\core.cpp">
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics.cpp">
       <Filter>graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11resources.cpp">
+      <Filter>graphics\dx11</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
