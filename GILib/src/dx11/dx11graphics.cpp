@@ -399,9 +399,9 @@ AdapterProfile DX11Graphics::GetAdapterProfile() const{
 
 }
 
-unique_ptr<Output> DX11Graphics::CreateOutput(Window & window){
+unique_ptr<Output> DX11Graphics::CreateOutput(Window & window, const VideoMode & video_mode){
 
-	return std::make_unique<DX11Output>(window, *device_, *factory_);
+	return std::make_unique<DX11Output>(window, *device_, *factory_, video_mode);
 
 }
 
@@ -415,16 +415,17 @@ Manager & DX11Graphics::GetManager(){
 
 //////////////////////////////////// OUTPUT //////////////////////////////////////////
 
-DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & factory) :
+DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & factory, const VideoMode & video_mode) :
 	window_(window),
 	device_(device),
 	factory_(factory){
 
-	///VSync disabled by default
-	SetVSync(false);
+	fullscreen_ = false;							//Windowed
+	vsync_ = false;									//Disabled by default
+	antialiasing_mode_ = AntialiasingMode::NONE;	//Disabled by default
+	video_mode_ = video_mode;
 
-	//Create the swapchain with default parameters
-	CreateSwapChain(GetDefaultSwapchainMode());
+	UpdateSwapChain();
 
 	//Listeners
 	on_window_resized_listener_ = window_.OnResized().AddListener([this](Window &, unsigned int, unsigned int){
@@ -435,6 +436,12 @@ DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & fa
 																							   0,	//Will fit the client height
 																							   kVideoFormat,
 																							   0);
+
+																	DXGI_SWAP_CHAIN_DESC desc;
+
+																	swap_chain_->GetDesc(&desc);
+
+																	video_mode_ = DXGIModeToVideoMode(desc.BufferDesc);
 
 																 });
 
@@ -462,14 +469,7 @@ void DX11Output::SetAntialisingMode(const AntialiasingMode & antialiasing_mode){
 
 	antialiasing_mode_ = antialiasing_mode;
 
-	//Create the swapchain again (keeps everything except the antialiasing)
-	DXGI_SWAP_CHAIN_DESC dxgi_desc;
-
-	swap_chain_->GetDesc(&dxgi_desc);
-
-	dxgi_desc.SampleDesc = AntialiasingModeToSampleDesc(antialiasing_mode);
-
-	CreateSwapChain(dxgi_desc);
+	UpdateSwapChain();	//Swapchain needs to be recreated
 
 }
 
@@ -482,10 +482,12 @@ void DX11Output::SetFullscreen(bool fullscreen){
 
 }
 
-///Return the default DXGI mode for the swap chain
-DXGI_SWAP_CHAIN_DESC DX11Output::GetDefaultSwapchainMode() const{
+///Create a new swapchain given its description
+void DX11Output::UpdateSwapChain(){
 
-	//Create the swapchain with default settings
+	//TODO: Release the outstanding references to the backbuffer in the context
+
+	// Description from video mode and antialiasing mode
 	DXGI_SWAP_CHAIN_DESC dxgi_desc;
 
 	ZeroMemory(&dxgi_desc, sizeof(dxgi_desc));
@@ -496,28 +498,23 @@ DXGI_SWAP_CHAIN_DESC DX11Output::GetDefaultSwapchainMode() const{
 	dxgi_desc.Windowed = true;
 	dxgi_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 
-	//Back buffer and antialiasing - Default
-	dxgi_desc.BufferDesc.Format = kVideoFormat;
-	dxgi_desc.SampleDesc.Count = 1;
+	dxgi_desc.BufferDesc = VideoModeToDXGIMode(video_mode_);
+	dxgi_desc.SampleDesc = AntialiasingModeToSampleDesc(antialiasing_mode_);
 
-	return dxgi_desc;
-
-}
-
-///Create a new swapchain given its description
-void DX11Output::CreateSwapChain(DXGI_SWAP_CHAIN_DESC desc){
-
-	//TODO: Release the outstanding references to the backbuffer in the context
+	// Create the actual swap chain
 
 	IDXGISwapChain * swap_chain;
-
+		
 	THROW_ON_FAIL(factory_.CreateSwapChain(&device_,
-										   &desc,
+										   &dxgi_desc,
 										   &swap_chain));
 
 	swap_chain_.reset(swap_chain);
 
 	//TODO: Get the references to the backbuffer
+
+	// Restore the fullscreen state
+	SetFullscreen(fullscreen_);
 
 }
 

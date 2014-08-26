@@ -90,8 +90,9 @@ namespace gi_lib{
 	/// \author Raffaele D. Facendola
 	struct DesktopProfile{
 
-		unsigned int width;		///< Horizontal resolution of the dekstop.
-		unsigned int height;	///< Vertical resolution of the desktop.
+		unsigned int width;			///< Horizontal resolution of the dekstop.
+		unsigned int height;		///< Vertical resolution of the desktop.
+		unsigned int refresh_rate;	///< Refresh rate, in Hz.
 
 	};
 

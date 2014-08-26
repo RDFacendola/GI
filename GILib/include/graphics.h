@@ -77,8 +77,9 @@ namespace gi_lib{
 
 		/// \brief Initialize an output.
 		/// \param window The window used to display the output.
+		/// \param video_mode The initial window mode.
 		/// \return Returns a pointer to the new output.
-		virtual unique_ptr<Output> CreateOutput(Window & window) = 0;
+		virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode) = 0;
 
 		/// \brief Get the resource manager.
 		/// \return Returns the resource manager.

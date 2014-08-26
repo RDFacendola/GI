@@ -39,7 +39,7 @@ namespace gi_lib{
 
 			virtual AdapterProfile GetAdapterProfile() const;
 
-			virtual unique_ptr<Output> CreateOutput(Window & window);
+			virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode);
 
 			virtual Manager & GetManager();
 
@@ -71,7 +71,7 @@ namespace gi_lib{
 			/// \param window The window where the final image will be displayed.
 			/// \param device The device used to create the resources.
 			/// \param factory The factory used to create the swapchain.
-			DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & factory);
+			DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & factory, const VideoMode & video_mode);
 
 			/// \brief Default destructor.
 			~DX11Output();
@@ -96,13 +96,7 @@ namespace gi_lib{
 
 		private:
 
-			/// \brief Get the default swapchain mode description. 
-			/// \return Returns the default swapchain mode description.
-			DXGI_SWAP_CHAIN_DESC GetDefaultSwapchainMode() const;
-
-			/// \brief Create a new swapchain
-			/// \param desc The description of the swapchain.
-			void CreateSwapChain(DXGI_SWAP_CHAIN_DESC desc);
+			void UpdateSwapChain();
 
 			VideoMode video_mode_;
 

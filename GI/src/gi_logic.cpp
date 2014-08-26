@@ -36,7 +36,9 @@ GILogic::GILogic():
 
 	Show();
 	
-	output_ = graphics_.CreateOutput(*this);
+	auto p = graphics_.GetAdapterProfile();
+
+	output_ = graphics_.CreateOutput(*this, p.video_modes[0]);
 
 }
 
@@ -46,6 +48,8 @@ GILogic::~GILogic(){
 
 void GILogic::Update(const Time & time){
 	
+	auto c = output_->GetAntialisingMode();
+
 	output_->Commit();
 	
 }

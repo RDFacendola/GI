@@ -41,6 +41,17 @@ using ::std::map;
 								} \
 							}WHILE0
 
+/// If expr is 0, throws a runtime exception. "expr" must be of type "bool".
+#define THROW_ON_ZERO(expr) do{ \
+								auto b = expr; \
+								if( b == 0) { \
+									std::wstringstream stream; \
+									stream << L"\"" << #expr << "\" failed" << std::endl \
+										   << __FILE__ << std::endl \
+										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
+									throw RuntimeException(stream.str()); \
+																} \
+						   }WHILE0
 
 /// If "expr" raises an error, throws a runtime exception with detailed informations. "expr" must support the unary operator "!"; the error code must be returned by GetLastError().
 #define THROW_ON_ERROR(expr) do { \

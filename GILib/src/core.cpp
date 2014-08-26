@@ -140,20 +140,19 @@ DesktopProfile System::GetDesktopProfile(){
 
 #ifdef _WIN32
 
+	
+	DEVMODE devmode;
+
+	devmode.dmSize = sizeof(DEVMODE);
+	
+	THROW_ON_ZERO(EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devmode));
+		
 	DesktopProfile desktop_profile;
 
-	RECT desktop_rectangle;
-	HWND desktop_handle = GetDesktopWindow();
-
-	if (!GetWindowRect(desktop_handle, &desktop_rectangle)){
-
-		throw RuntimeException(L"Invalid argument exception");
-
-	}
-
-	desktop_profile.width = desktop_rectangle.right;
-	desktop_profile.height = desktop_rectangle.bottom;
-
+	desktop_profile.width = devmode.dmPelsWidth;
+	desktop_profile.height = devmode.dmPelsHeight;
+	desktop_profile.refresh_rate = devmode.dmDisplayFrequency;
+	
 	return desktop_profile;
 
 #else

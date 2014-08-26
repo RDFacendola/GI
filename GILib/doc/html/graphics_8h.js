@@ -2,8 +2,9 @@ var graphics_8h =
 [
     [ "VideoMode", "structgi__lib_1_1_video_mode.html", "structgi__lib_1_1_video_mode" ],
     [ "AdapterProfile", "structgi__lib_1_1_adapter_profile.html", "structgi__lib_1_1_adapter_profile" ],
-    [ "IFactory", "classgi__lib_1_1_i_factory.html", "classgi__lib_1_1_i_factory" ],
-    [ "IGraphics", "classgi__lib_1_1_i_graphics.html", "classgi__lib_1_1_i_graphics" ],
+    [ "Graphics", "classgi__lib_1_1_graphics.html", "classgi__lib_1_1_graphics" ],
+    [ "Output", "classgi__lib_1_1_output.html", "classgi__lib_1_1_output" ],
+    [ "Manager", "classgi__lib_1_1_manager.html", "classgi__lib_1_1_manager" ],
     [ "AntialiasingMode", "graphics_8h.html#ab0415b65688dd683c60dfb788853b9c1", [
       [ "NONE", "graphics_8h.html#ab0415b65688dd683c60dfb788853b9c1ab50339a10e1de285ac99d4c3990b8693", null ],
       [ "MSAA_2X", "graphics_8h.html#ab0415b65688dd683c60dfb788853b9c1a9d93266057d761f912bf44b093133295", null ],
