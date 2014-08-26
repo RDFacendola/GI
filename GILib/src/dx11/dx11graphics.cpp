@@ -3,7 +3,7 @@
 #include <d3d11.h>
 #include <dxgi.h>
 
-#include "window.h"
+#include "core.h"
 #include "exceptions.h"
 
 using namespace gi_lib;

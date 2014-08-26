@@ -47,7 +47,7 @@ namespace gi_lib{
 		}
 
 		/// \brief Remove a listener object from this observable.
-		/// \param handle Handle associated to the listener object.
+		/// \param key Listener key associated to the listener object.
 		void RemoveListener(const ListenerKey & key){
 
 			listeners_.erase(std::remove_if(listeners_.begin(),
@@ -67,7 +67,6 @@ namespace gi_lib{
 		using Listener = std::pair < ListenerKey, std::function<void(TArguments...)> >;
 
 		/// \brief Notify all the listener objects.
-		/// \param subject Subject who have requested the notification.
 		/// \param args Arguments that will be delivered to each listener object.
 		void Notify(TArguments&&... args){
 
@@ -79,6 +78,7 @@ namespace gi_lib{
 
 		}
 
+		/// \brief List of listeners bound to this observable.
 		std::vector<Listener> listeners_;
 
 	};
@@ -92,7 +92,6 @@ namespace gi_lib{
 	public:
 
 		/// \brief Notify all the listener objects.
-		/// \param subject Subject who have requested the notification.
 		/// \param args Arguments that will be delivered to each listener object.
 		void Notify(TArguments&&... args){
 

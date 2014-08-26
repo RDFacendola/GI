@@ -24,6 +24,7 @@ namespace gi_lib{
 		/// \brief DirectX11 resource traits
 		template<> struct resource_traits < Texture2D > {
 
+			/// \brief Concreate type associated to a Texture2D.
 			using type = DX11Texture2D;
 
 		};

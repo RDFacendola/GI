@@ -1,4 +1,4 @@
-/// \file resources.h
+/// \file dx11resource_manager.h
 /// \brief Declare classes and interfaces used to manage directx11 graphical resources.
 ///
 /// \author Raffaele D. Facendola

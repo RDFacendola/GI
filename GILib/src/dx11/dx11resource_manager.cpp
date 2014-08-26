@@ -1,4 +1,4 @@
-#include "dx11/dx11resources.h"
+#include "dx11/dx11resource_manager.h"
 
 #include <typeindex>
 #include <typeinfo>

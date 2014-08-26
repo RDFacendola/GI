@@ -6,14 +6,8 @@
 #pragma once
 
 #include <dxgi.h>
-#include <memory>
-#include <type_traits>
 
 #include "resource.h"
-#include "exceptions.h"
-
-using ::std::unique_ptr;
-using ::std::shared_ptr;
 
 namespace gi_lib{
 

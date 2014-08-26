@@ -6,7 +6,7 @@
 
 #include <dx11/dx11factory.h>
 #include <dx11/dx11graphics.h>
-#include <dx11/dx11resources.h>
+#include <dx11/dx11resource_manager.h>
 
 using namespace ::std;
 using namespace ::gi_lib;
@@ -16,6 +16,8 @@ const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
 GILogic::GILogic():
 	factory_(DX11Factory::GetInstance()){
+
+	auto p = System::GetCPUProfile();
 
 	/////////////////////////////////////
 

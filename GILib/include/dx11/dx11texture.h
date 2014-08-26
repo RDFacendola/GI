@@ -6,13 +6,14 @@
 #pragma once
 
 #include <d3d11.h>
-#include <string.h>
+#include <string>
 #include <memory>
 
 #include "texture.h"
 #include "dx11shared.h"
 
 using ::std::unique_ptr;
+using ::std::wstring;
 
 namespace gi_lib{
 
@@ -27,7 +28,7 @@ namespace gi_lib{
 		public:
 			
 			/// \brief Create a new texture from file.
-			/// param device The device used to create the texture.
+			/// \param device The device used to create the texture.
 			/// \param path The path of the texture to load.
 			DX11Texture2D(ID3D11Device & device, const wstring & path);
 

@@ -2,7 +2,7 @@
 #include <string>
 #include <sstream>
 
-#include "application.h"
+#include "core.h"
 #include "gi_logic.h"
 #include "exceptions.h"
 #include "scene.h"

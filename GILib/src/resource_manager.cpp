@@ -1,6 +1,6 @@
 #include "resource_manager.h"
 
-#include "application.h"
+#include "core.h"
 #include "resource.h"
 
 #include <numeric>
@@ -12,7 +12,7 @@ const wstring ResourceManager::kResourceFolder = L"Data";
 
 ResourceManager::ResourceManager(){
 
-	base_path_ = Application::GetInstance().GetDirectory() + kResourceFolder + Application::kPathSeparator;
+	base_path_ = Application::GetInstance().GetDirectory() + kResourceFolder + kPathSeparator;
 
 }
 

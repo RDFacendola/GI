@@ -26,8 +26,10 @@ namespace gi_lib{
 
 		public:
 
-			// Non copyable class
+			/// \brief No copy-constructor.
 			DX11Graphics(const DX11Graphics &) = delete;
+
+			/// \brief No assignment operator.
 			DX11Graphics & operator=(const DX11Graphics &) = delete;
 
 			/// \brief Create a new DirectX11 graphics object.

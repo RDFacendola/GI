@@ -21,8 +21,8 @@
   <ItemGroup>
     <ClInclude Include="include\dx11\dx11shared.h" />
     <ClInclude Include="include\dx11\dx11factory.h" />
-    <ClInclude Include="include\dx11\dx11resources.h" />
-    <ClInclude Include="include\application.h" />
+    <ClInclude Include="include\dx11\dx11resource_manager.h" />
+    <ClInclude Include="include\core.h" />
     <ClInclude Include="include\dx11\dx11graphics.h" />
     <ClInclude Include="include\dx11\dx11resource_traits.h" />
     <ClInclude Include="include\dx11\dx11texture.h" />
@@ -33,25 +33,22 @@
     <ClInclude Include="include\observable.h" />
     <ClInclude Include="include\exceptions.h" />
     <ClInclude Include="include\guard.h" />
-    <ClInclude Include="include\system.h" />
     <ClInclude Include="include\texture.h" />
     <ClInclude Include="include\timer.h" />
     <ClInclude Include="include\unique.h" />
     <ClInclude Include="include\resource_manager.h" />
-    <ClInclude Include="include\window.h" />
     <ClInclude Include="include\resource.h" />
+    <ClInclude Include="include\macros.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11shared.cpp" />
     <ClCompile Include="src\dx11\dx11texture.cpp" />
     <ClCompile Include="src\resource_manager.cpp" />
-    <ClCompile Include="src\application.cpp" />
+    <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\dx11\dx11factory.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
-    <ClCompile Include="src\dx11\dx11resources.cpp" />
-    <ClCompile Include="src\system.cpp" />
+    <ClCompile Include="src\dx11\dx11resource_manager.cpp" />
     <ClCompile Include="src\timer.cpp" />
-    <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
@@ -145,7 +142,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
-      <AdditionalIncludeDirectories>C:\Users\Daniele\Documents\GI\GILib\include;E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;E:\libs\FBX SDK\2015.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;E:\libs\FBX SDK\2015.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -194,7 +191,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\Daniele\Documents\GI\GILib\include;E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;E:\libs\FBX SDK\2015.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;E:\libs\FBX SDK\2015.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>

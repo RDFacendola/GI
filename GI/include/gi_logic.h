@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "application.h"
+#include "core.h"
 #include "factory.h"
 #include "graphics.h"
 

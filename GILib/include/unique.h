@@ -53,7 +53,7 @@ namespace gi_lib{
 		}
 
 		/// \brief Less-than operator.
-		/// \param The other instance to test against.
+		/// \param other The other instance to test against.
 		/// \return Returns true if this object's key is lesser than other's key. Returns false otherwise.
 		inline bool operator <(const Unique & other) const{
 

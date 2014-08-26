@@ -64,7 +64,10 @@ namespace gi_lib{
 
 	protected:
 
+		/// \brief Type of resources' keys.
 		using ResourceKey = std::pair < std::type_index, wstring >;
+
+		/// \brief Type of resources' map.
 		using ResourceMap = map < ResourceKey, weak_ptr<Resource> >;
 
 		/// \brief Load a resource.

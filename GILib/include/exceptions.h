@@ -21,25 +21,13 @@
 
 #include <StackWalker.h>
 
+#include "macros.h"
+
 using ::std::wstring;
 using ::std::stringstream;
 using ::std::map;
 
 #ifdef _WIN32
-
-#if _MSC_VER >= 1500
-
-//Disable this warning (Only for VS 2008+)
-#define WHILE0 __pragma(warning(push)) \
-			   __pragma(warning(disable:4127)) \
-			   			   while(0) \
-               __pragma(warning(pop))
-
-#else
-
-#define WHILE0 while(0)
-
-#endif
 
 /// If expr fails, throws a runtime exception with detailed informations. "expr" must be of type "HRESULT"; the error code is defined by the value of the expression itself.
 #define THROW_ON_FAIL(expr) do{ \
