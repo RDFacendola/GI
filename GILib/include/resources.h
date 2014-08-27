@@ -80,4 +80,28 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Base interface for static meshes.
+	/// \author Raffaele D. Facendola.
+	class Mesh : public Resource{
+
+	public:
+
+		virtual ~Mesh(){}
+
+		/// \brief Get the vertices count.
+		/// \return Returns the vertices count.
+		virtual unsigned int GetVertexCount() const = 0;
+
+		/// \brief Get the polygons count.
+
+		/// A polygon is a triangle.
+		/// \return Returns the polygons count.
+		virtual unsigned int GetPolygonCount() const = 0;
+
+		/// \brief Get the level of detail count.
+		/// \return Returns the level of detail count.
+		virtual unsigned int GetLODCount() const = 0;
+
+	};
+
 }

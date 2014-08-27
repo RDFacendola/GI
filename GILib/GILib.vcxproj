@@ -23,9 +23,10 @@
     <ClInclude Include="include\core.h" />
     <ClInclude Include="include\dx11\dx11graphics.h" />
     <ClInclude Include="include\dx11\dx11resources.h" />
+    <ClInclude Include="src\fbx\fbx.h" />
     <ClInclude Include="include\graphics.h" />
     <ClInclude Include="include\maybe.h" />
-    <ClInclude Include="include\scene.h" />
+    <ClInclude Include="include\scene\scene.h" />
     <ClInclude Include="include\observable.h" />
     <ClInclude Include="include\exceptions.h" />
     <ClInclude Include="include\timer.h" />
@@ -35,9 +36,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11resources.cpp" />
+    <ClCompile Include="src\fbx\fbx.cpp" />
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
+    <ClCompile Include="src\scene\scene.cpp" />
     <ClCompile Include="src\timer.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -129,7 +132,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;E:\libs\FBX SDK\2015.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;E:\libs\FBX SDK\2015.1\include;E:\libs\Eigen\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -140,7 +143,7 @@
       <AdditionalDependencies>d3d11.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>libfbxsdk-md.lib;wininet.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>E:\libs\stack_walker\lib\$(Configuration);E:\libs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);E:\libs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);E:\libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Lib>
@@ -178,7 +181,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;E:\libs\FBX SDK\2015.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)src;E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;E:\libs\FBX SDK\2015.1\include;E:\libs\Eigen\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
@@ -190,7 +193,7 @@
       <AdditionalDependencies>d3d11.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>libfbxsdk-md.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>E:\libs\stack_walker\lib\$(Configuration);E:\libs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);E:\libs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);E:\libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>

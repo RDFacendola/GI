@@ -27,9 +27,6 @@
     <ClInclude Include="include\observable.h">
       <Filter>pattern</Filter>
     </ClInclude>
-    <ClInclude Include="include\scene.h">
-      <Filter>scene</Filter>
-    </ClInclude>
     <ClInclude Include="include\unique.h">
       <Filter>pattern</Filter>
     </ClInclude>
@@ -55,6 +52,10 @@
     <ClInclude Include="include\dx11\dx11resources.h">
       <Filter>graphics\dx11</Filter>
     </ClInclude>
+    <ClInclude Include="include\scene\scene.h">
+      <Filter>scene</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fbx\fbx.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -72,5 +73,7 @@
     <ClCompile Include="src\dx11\dx11resources.cpp">
       <Filter>graphics\dx11</Filter>
     </ClCompile>
+    <ClCompile Include="src\fbx\fbx.cpp" />
+    <ClCompile Include="src\scene\scene.cpp" />
   </ItemGroup>
 </Project>

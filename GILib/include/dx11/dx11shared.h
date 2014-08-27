@@ -7,13 +7,7 @@
 
 struct IUnknown;
 
-struct DXGI_SAMPLE_DESC;
-struct DXGI_MODE_DESC;
-enum DXGI_FORMAT;
-
 namespace gi_lib{
-
-	enum class ResourcePriority;
 
 	namespace dx11{
 		

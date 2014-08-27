@@ -5,7 +5,6 @@
 #include "core.h"
 #include "gi_logic.h"
 #include "exceptions.h"
-#include "scene.h"
 
 using ::std::wstring;
 using ::std::wstringstream;

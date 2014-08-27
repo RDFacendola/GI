@@ -27,34 +27,6 @@ namespace gi_lib{
 
 	namespace dx11{
 
-		/// \brief DirectX11 graphics class.
-		/// \author Raffaele D. Facendola
-		class DX11Graphics : public Graphics{
-
-		public:
-
-			/// \brief Get the DirectX11 graphics singleton.
-			/// \return Returns a reference to the DirectX11 factory singleton.
-			static DX11Graphics & GetInstance();
-
-			virtual AdapterProfile GetAdapterProfile() const;
-
-			virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode);
-
-			virtual Manager & GetManager();
-
-		private:
-
-			DX11Graphics();
-
-			unique_ptr<ID3D11Device, COMDeleter> device_;
-
-			unique_ptr<IDXGIFactory, COMDeleter> factory_;
-
-			unique_ptr<IDXGIAdapter, COMDeleter> adapter_;
-
-		};
-
 		/// \brief DirectX11 object used to display an image to an output.
 		/// \author Raffaele D. Facendola
 		class DX11Output : public Output{
@@ -146,6 +118,34 @@ namespace gi_lib{
 		private:
 
 			ID3D11Device & device_;
+
+		};
+
+		/// \brief DirectX11 graphics class.
+		/// \author Raffaele D. Facendola
+		class DX11Graphics : public Graphics{
+
+		public:
+
+			/// \brief Get the DirectX11 graphics singleton.
+			/// \return Returns a reference to the DirectX11 factory singleton.
+			static DX11Graphics & GetInstance();
+
+			virtual AdapterProfile GetAdapterProfile() const;
+
+			virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode);
+
+			virtual DX11Manager & GetManager();
+
+		private:
+
+			DX11Graphics();
+
+			unique_ptr<ID3D11Device, COMDeleter> device_;
+
+			unique_ptr<IDXGIFactory, COMDeleter> factory_;
+
+			unique_ptr<IDXGIAdapter, COMDeleter> adapter_;
 
 		};
 

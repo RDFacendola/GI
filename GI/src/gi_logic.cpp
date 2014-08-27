@@ -22,7 +22,7 @@ GILogic::GILogic():
 	size_t s1, s2;
 
 	{
-		auto p = r.Load<Texture2D>(L"femalehead4K.dds");
+		auto p = r.Load<Mesh>(L"crysponza.fbx");
 
 		s1 = r.GetSize();
 

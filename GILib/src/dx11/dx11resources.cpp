@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include "exceptions.h"
+#include "fbx\fbx.h"
 
 using namespace std;
 using namespace gi_lib;
@@ -56,7 +57,11 @@ namespace{
 
 	}
 
+
+
 }
+
+////////////////////////////// TEXTURE 2D //////////////////////////////////////////
 
 DX11Texture2D::DX11Texture2D(ID3D11Device & device, const wstring & path){
 	
@@ -110,5 +115,36 @@ ResourcePriority DX11Texture2D::GetPriority() const{
 void DX11Texture2D::SetPriority(ResourcePriority priority){
 
 	texture_->SetEvictionPriority(ResourcePriorityToEvictionPriority(priority));
+
+}
+
+///////////////////////////// MESH ////////////////////////////////////////////////
+
+DX11Mesh::DX11Mesh(ID3D11Device & device, const wstring & path){
+
+	FBX::GetInstance().Import(path);
+
+}
+
+DX11Mesh::DX11Mesh(ID3D11Device & device, const wstring & path, const Extra & extra){
+
+	FBX::GetInstance().Import(path);
+
+}
+
+size_t DX11Mesh::GetSize() const{
+
+	return 0;
+
+}
+
+ResourcePriority DX11Mesh::GetPriority() const{
+
+	return ResourcePriority::NORMAL;
+
+}
+
+void DX11Mesh::SetPriority(ResourcePriority priority){
+
 
 }

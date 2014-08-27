@@ -25,10 +25,6 @@ namespace gi_lib{
 	class Window;
 	class Resource;
 
-	class Graphics;
-	class Output;
-	class Manager;
-
 	/// \brief Describes a video mode.
 	struct VideoMode{
 
@@ -60,30 +56,6 @@ namespace gi_lib{
 
 		unsigned int max_anisotropy;						///< Maximum level of anisotropy.
 		unsigned int max_mips;								///< Maximum number of MIP levels.
-
-	};
-
-	/// \brief Factory interface used to create and initialize the graphical subsystem.
-	/// \author Raffaele D. Facendola
-	class Graphics{
-
-	public:
-
-		/// \brief Default destructor;
-		virtual ~Graphics(){}
-
-		/// \brief Get the video card's parameters and capabilities.
-		virtual AdapterProfile GetAdapterProfile() const = 0;
-
-		/// \brief Initialize an output.
-		/// \param window The window used to display the output.
-		/// \param video_mode The initial window mode.
-		/// \return Returns a pointer to the new output.
-		virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode) = 0;
-
-		/// \brief Get the resource manager.
-		/// \return Returns the resource manager.
-		virtual Manager & GetManager() = 0;
 
 	};
 
@@ -191,6 +163,30 @@ namespace gi_lib{
 
 		// Base path for the resources
 		wstring base_path_;
+
+	};
+
+	/// \brief Factory interface used to create and initialize the graphical subsystem.
+	/// \author Raffaele D. Facendola
+	class Graphics{
+
+	public:
+
+		/// \brief Default destructor;
+		virtual ~Graphics(){}
+
+		/// \brief Get the video card's parameters and capabilities.
+		virtual AdapterProfile GetAdapterProfile() const = 0;
+
+		/// \brief Initialize an output.
+		/// \param window The window used to display the output.
+		/// \param video_mode The initial window mode.
+		/// \return Returns a pointer to the new output.
+		virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode) = 0;
+
+		/// \brief Get the resource manager.
+		/// \return Returns the resource manager.
+		virtual Manager & GetManager() = 0;
 
 	};
 
