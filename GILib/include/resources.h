@@ -5,6 +5,13 @@
 
 #pragma once
 
+#include <vector>
+#include <Eigen/Core>
+
+using ::std::vector;
+using ::Eigen::Vector2f;
+using ::Eigen::Vector3f;
+
 namespace gi_lib{
 	
 	/// \brief Describe the priority of the resources.
@@ -23,6 +30,22 @@ namespace gi_lib{
 
 		WRAP,		///< Texture coordinates are repeated with a period of 1.
 		CLAMP		///< Texture coordinates are clamped inside the range [0, 1]
+
+	};
+
+	/// \brief Mapping mode between attributes and polygons.
+	enum class AttributeMappingMode{
+
+		/// \brief Unknown mapping. Mesh does not support this mode.
+		UNKNOWN,
+
+		/// \brief Attributes are mapped to vertices.
+		/// A vertex shared among different polygons is guaranteed to have the same attribute.
+		BY_VERTEX,	 
+
+		/// \brief Attributes are mapped to indices.
+		/// A vertex shared among different polygons may have different attributes.
+		BY_INDEX,
 
 	};
 
@@ -85,6 +108,41 @@ namespace gi_lib{
 	class Mesh : public Resource{
 
 	public:
+
+		/// \brief Settings used during mesh creation.
+		struct CreationSettings{
+
+			/// \brief Position of each vertex.
+			vector<Vector3f> positions;
+
+			/// \brief Indices of the mesh.
+			vector<unsigned int> indices;
+
+			/// \brief Normal of each vertex. Optional.
+			vector<Vector3f> normals;
+
+			/// \brief Binormals of each vertex. Optional.
+			vector<Vector3f> binormals;
+
+			/// \brief Tangents of each vertex. Optional.
+			vector<Vector3f> tangents;
+
+			/// \brief UV coordinates of each vertex. Optional.
+			vector<Vector2f> UVs;
+
+			/// \brief Specified how the normals are mapped against the mesh.
+			AttributeMappingMode normal_mapping;
+
+			/// \brief Specified how the binormals are mapped against the mesh.
+			AttributeMappingMode binormal_mapping;
+
+			/// \brief Specified how the tangents are mapped against the mesh.
+			AttributeMappingMode tangent_mapping;
+
+			/// \brief Specified how the UV coordinates are mapped against the mesh.
+			AttributeMappingMode UV_mapping;
+			
+		};
 
 		virtual ~Mesh(){}
 

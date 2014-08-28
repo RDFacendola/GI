@@ -56,9 +56,7 @@ namespace{
 		throw RuntimeException(L"Unrecognized priority level.");
 
 	}
-
-
-
+	
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
@@ -120,15 +118,7 @@ void DX11Texture2D::SetPriority(ResourcePriority priority){
 
 ///////////////////////////// MESH ////////////////////////////////////////////////
 
-DX11Mesh::DX11Mesh(ID3D11Device & device, const wstring & path){
-
-	FBX::GetInstance().Import(path);
-
-}
-
-DX11Mesh::DX11Mesh(ID3D11Device & device, const wstring & path, const Extra & extra){
-
-	FBX::GetInstance().Import(path);
+DX11Mesh::DX11Mesh(ID3D11Device & device, const CreationSettings & settings){
 
 }
 

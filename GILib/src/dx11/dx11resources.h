@@ -103,17 +103,7 @@ namespace gi_lib{
 
 		public:
 
-			/// \brief Defines extra parameters to used during a mesh loading
-			struct Extra{
-
-				/// \brief Name of the submesh to load, if any.
-				wstring submesh_name;
-
-			};
-
-			DX11Mesh(ID3D11Device & device, const wstring & path);
-
-			DX11Mesh(ID3D11Device & device, const wstring & path, const Extra & extra);
+			DX11Mesh(ID3D11Device & device, const CreationSettings & settings);
 
 			virtual size_t GetSize() const override;
 

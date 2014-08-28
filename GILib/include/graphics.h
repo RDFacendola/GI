@@ -25,12 +25,10 @@ namespace gi_lib{
 	class Window;
 	class Resource;
 
-	/// \brief Describes a video mode.
-	struct VideoMode{
+	/// \brief Enumeration of all supported graphical API.
+	enum class API{
 
-		unsigned int horizontal_resolution;		///< Horizontal resolution, in pixels.
-		unsigned int vertical_resolution;		///< Vertical resolution, in pixels.
-		unsigned int refresh_rate;				///< Refresh rate, in Hz.
+		DIRECTX_11,
 
 	};
 
@@ -42,6 +40,15 @@ namespace gi_lib{
 		MSAA_4X,		///< Multisample antialiasing, 4X.
 		MSAA_8X,		///< Multisample antialiasing, 8X.
 		MSAA_16X,		///< Multisample antialiasing, 16X.
+
+	};
+
+	/// \brief Describes a video mode.
+	struct VideoMode{
+
+		unsigned int horizontal_resolution;		///< Horizontal resolution, in pixels.
+		unsigned int vertical_resolution;		///< Vertical resolution, in pixels.
+		unsigned int refresh_rate;				///< Refresh rate, in Hz.
 
 	};
 
@@ -123,17 +130,24 @@ namespace gi_lib{
 		/// \brief Load an immutable resource.
 		/// \tparam Type of resource to load.
 		/// \param path The path of the resource.
-		/// \param extras Extra loading parameters.
+		/// \param settings The load settings.
 		/// \return Return an handle to the specified resource. Throws if no resource is found.
 		template <typename TResource, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type* = nullptr>
-		shared_ptr<TResource> Load(const wstring & path, const typename TResource::Extra & extras);
+		shared_ptr<TResource> Load(const wstring & path, const typename TResource::LoadSettings & settings);
 
 		/// \brief Load an immutable resource.
-		/// \tparam Type of resource to load.
+		/// \tparam TResource Type of the resource to load.
 		/// \param path The path of the resource.
 		/// \return Return an handle to the specified resource. Throws if no resource is found.
 		template <typename TResource, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type* = nullptr>
 		shared_ptr<TResource> Load(const wstring & path);
+
+		/// \brief Create a resource.
+		/// \tparam TResource Type of the resource to load.
+		/// \param settings The creation settings.
+		/// \return Returns a pointer to the new resource.
+		template <typename TResource, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type* = nullptr>
+		unique_ptr<TResource> Create(const typename TResource::CreationSettings & settings);
 
 		/// \brief Get the amount of memory used by the resources loaded.
 		size_t GetSize();
@@ -172,6 +186,9 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Get a reference to a specific graphical subsystem.
+		static Graphics & GetAPI(API api);
+
 		/// \brief Default destructor;
 		virtual ~Graphics(){}
 
@@ -193,7 +210,7 @@ namespace gi_lib{
 	//
 
 	template <typename TResource, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type*>
-	inline shared_ptr<TResource> Manager::Load(const wstring & path, const typename TResource::Extra & extras){
+	inline shared_ptr<TResource> Manager::Load(const wstring & path, const typename TResource::LoadSettings & extras){
 
 		return LoadExtra<TResource>(path, &extras);
 

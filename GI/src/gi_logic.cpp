@@ -4,16 +4,16 @@
 
 #include <resources.h>
 
-#include <dx11/dx11graphics.h>
+#include <test.h>
 
 using namespace ::std;
 using namespace ::gi_lib;
-using namespace ::gi_lib::dx11;
 
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
 GILogic::GILogic():
-	graphics_(DX11Graphics::GetInstance()){
+	graphics_(Graphics::GetAPI(API::DIRECTX_11))
+{
 
 	/////////////////////////////////////
 
@@ -21,14 +21,7 @@ GILogic::GILogic():
 
 	size_t s1, s2;
 
-	{
-		auto p = r.Load<Mesh>(L"crysponza.fbx");
-
-		s1 = r.GetSize();
-
-	}
-	
-	//Texture now should have been destroyed
+	fbxImport(L"crysponza.fbx");
 
 	/////////////////////////////////////
 

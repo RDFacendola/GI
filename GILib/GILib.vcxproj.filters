@@ -33,12 +33,6 @@
     <ClInclude Include="include\maybe.h">
       <Filter>pattern</Filter>
     </ClInclude>
-    <ClInclude Include="include\dx11\dx11graphics.h">
-      <Filter>graphics\dx11</Filter>
-    </ClInclude>
-    <ClInclude Include="include\dx11\dx11shared.h">
-      <Filter>graphics\dx11</Filter>
-    </ClInclude>
     <ClInclude Include="include\macros.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -49,13 +43,20 @@
     <ClInclude Include="include\resources.h">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\dx11\dx11resources.h">
-      <Filter>graphics\dx11</Filter>
-    </ClInclude>
     <ClInclude Include="include\scene\scene.h">
       <Filter>scene</Filter>
     </ClInclude>
+    <ClInclude Include="src\dx11\dx11graphics.h">
+      <Filter>graphics\dx11</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dx11\dx11resources.h">
+      <Filter>graphics\dx11</Filter>
+    </ClInclude>
+    <ClInclude Include="src\dx11\dx11shared.h">
+      <Filter>graphics\dx11</Filter>
+    </ClInclude>
     <ClInclude Include="src\fbx\fbx.h" />
+    <ClInclude Include="include\test.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -75,5 +76,6 @@
     </ClCompile>
     <ClCompile Include="src\fbx\fbx.cpp" />
     <ClCompile Include="src\scene\scene.cpp" />
+    <ClCompile Include="src\test.cpp" />
   </ItemGroup>
 </Project>

@@ -267,7 +267,7 @@ namespace{
 	}
 
 	template <typename TResource>
-	unique_ptr<Resource> LoadResource(ID3D11Device &, const wstring &, const void * extras);
+	unique_ptr<Resource> LoadResource(ID3D11Device &, const wstring &, const void * settings);
 
 	template <> unique_ptr<Resource> LoadResource<Texture2D>(ID3D11Device & device, const wstring & path, const void *) {
 
@@ -275,19 +275,15 @@ namespace{
 
 	};
 
-	template <> unique_ptr<Resource> LoadResource<Mesh>(ID3D11Device & device, const wstring & path, const void * extras) {
 
-		if (extras != nullptr){
+	template <typename TResource>
+	unique_ptr<Resource> CreateResource(ID3D11Device & device, const void * settings);
 
-			return make_unique<DX11Mesh>(device, path, *static_cast<const DX11Mesh::Extra*>(extras));
+	template <> unique_ptr<Resource> CreateResource<Mesh>(ID3D11Device & device, const void * settings){
 
-		}else{
+		return make_unique<DX11Mesh>(device, *static_cast<const Mesh::CreationSettings*>(settings));
 
-			return make_unique<DX11Mesh>(device, path);
-
-		}
-		
-	};
+	}
 
 	// Loader class. Maps every resource with their respective loader.
 	class Loader{
@@ -329,7 +325,6 @@ namespace{
 		Loader(){
 
 			loader_map_.insert(MakeSupport<Texture2D>());
-			loader_map_.insert(MakeSupport<Mesh>());
 
 		}
 
