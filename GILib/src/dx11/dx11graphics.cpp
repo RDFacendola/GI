@@ -1,16 +1,15 @@
-#include "dx11/dx11graphics.h"
+#include "dx11graphics.h"
 
 #include <unordered_map>
 
 #include <d3d11.h>
 #include <dxgi.h>
 
-#include "core.h"
-#include "exceptions.h"
+#include "..\..\include\core.h"
+#include "..\..\include\exceptions.h"
 
-#include "dx11/dx11resources.h"
-
-#include "dx11/dx11shared.h"
+#include "dx11resources.h"
+#include "dx11shared.h"
 
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d11.lib")

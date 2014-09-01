@@ -14,9 +14,9 @@
 #include <set>
 #include <initializer_list>
 
-#include "timer.h"
-#include "maybe.h"
-#include "exceptions.h"
+#include "..\timer.h"
+#include "..\maybe.h"
+#include "..\exceptions.h"
 
 using std::wstring;
 using std::map;

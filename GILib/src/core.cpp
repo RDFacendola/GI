@@ -1,7 +1,7 @@
-#include "core.h"
+#include "..\include\core.h"
 
-#include "exceptions.h"
-#include "timer.h"
+#include "..\include\exceptions.h"
+#include "..\include\timer.h"
 
 using namespace gi_lib;
 using namespace std;

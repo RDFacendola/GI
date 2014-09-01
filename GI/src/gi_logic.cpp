@@ -1,4 +1,4 @@
-#include "gi_logic.h"
+#include "..\include\gi_logic.h"
 
 #include <string>
 
@@ -21,7 +21,7 @@ GILogic::GILogic():
 
 	size_t s1, s2;
 
-	fbxImport(L"crysponza.fbx");
+	fbxImport(L"sponza_t.fbx");
 
 	/////////////////////////////////////
 

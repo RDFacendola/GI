@@ -2,9 +2,11 @@
 #include <string>
 #include <sstream>
 
-#include "core.h"
-#include "gi_logic.h"
-#include "exceptions.h"
+#include <core.h>
+#include <exceptions.h>
+
+#include "..\include\gi_logic.h"
+
 
 using ::std::wstring;
 using ::std::wstringstream;

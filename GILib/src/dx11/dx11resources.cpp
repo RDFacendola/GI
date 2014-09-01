@@ -1,14 +1,14 @@
 #pragma comment(lib,"DirectXTK")
 #pragma comment(lib,"DirectXTex")
 
-#include "dx11/dx11resources.h"
+#include "dx11resources.h"
 
 #include <DDSTextureLoader.h>
 #include <DirectXTex.h>
 #include <math.h>
 
-#include "exceptions.h"
-#include "fbx\fbx.h"
+#include "..\..\include\exceptions.h"
+#include "..\fbx\fbx.h"
 
 using namespace std;
 using namespace gi_lib;

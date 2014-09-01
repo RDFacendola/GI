@@ -1,4 +1,4 @@
-#include "timer.h"
+#include "..\include\timer.h"
 
 using namespace gi_lib;
 

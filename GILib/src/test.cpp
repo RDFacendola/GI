@@ -1,9 +1,9 @@
-#include "test.h"
+#include "..\include\test.h"
+
+#include "..\include\resources.h"
+#include "..\include\core.h"
 
 #include "fbx/fbx.h"
-
-#include "resources.h"
-#include "core.h"
 
 using namespace gi_lib;
 

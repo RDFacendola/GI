@@ -9,6 +9,8 @@
 
 #include <fbxsdk.h>
 
+#include "..\..\include\resources.h"
+
 using ::std::wstring;
 
 namespace gi_lib{
@@ -28,6 +30,11 @@ namespace gi_lib{
 
 		void Import(const wstring & path);
 
+		/// \brief Parse a FBX mesh.
+		/// \param mesh Mesh to parse.
+		/// \return Returns a description of the parsed mesh
+		Mesh::CreationSettings Parse(const FbxMesh & mesh);
+
 	private:
 
 		FBX();
@@ -35,6 +42,8 @@ namespace gi_lib{
 		FbxManager * manager_;
 
 		FbxIOSettings * settings_;
+
+		FbxGeometryConverter * converter_;
 
 	};
 

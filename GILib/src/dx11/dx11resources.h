@@ -9,7 +9,7 @@
 #include <string>
 #include <memory>
 
-#include "resources.h"
+#include "..\..\include\resources.h"
 #include "dx11shared.h"
 
 using ::std::wstring;

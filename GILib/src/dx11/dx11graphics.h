@@ -10,8 +10,8 @@
 
 #include <memory>
 
-#include "observable.h"
-#include "graphics.h"
+#include "..\..\include\observable.h"
+#include "..\..\include\graphics.h"
 #include "dx11shared.h"
 
 using ::std::unique_ptr;

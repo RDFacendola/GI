@@ -1,4 +1,4 @@
-#include "scene/scene.h"
+#include "..\..\include\scene\scene.h"
 
 using namespace gi_lib;
 

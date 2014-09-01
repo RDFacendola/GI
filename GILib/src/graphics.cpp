@@ -1,10 +1,10 @@
-#include "graphics.h"
+#include "..\include\graphics.h"
 
 #include <numeric>
 
-#include "exceptions.h"
-#include "core.h"
-#include "resources.h"
+#include "..\include\exceptions.h"
+#include "..\include\core.h"
+#include "..\include\resources.h"
 
 #include "dx11\dx11graphics.h"
 
