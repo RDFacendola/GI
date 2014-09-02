@@ -77,6 +77,14 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Enumeration of all possible load modes.
+		enum class LoadMode{
+
+			kFromDDS,				///< The resource is loaded from a DDS file.
+
+		};
+
+		/// \brief Interface destructor.
 		virtual ~Texture2D(){}
 
 		/// \brief Get the width of the texture.
@@ -109,39 +117,18 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Settings used during mesh creation.
-		struct CreationSettings{
+		/// \brief Enumeration of all possible load modes.
+		enum class LoadMode{
 
-			/// \brief Position of each vertex.
-			vector<Vector3f> positions;
+			kFromFBX,				///< The resource is loaded from a FBX file.
 
-			/// \brief Indices of the mesh.
-			vector<unsigned int> indices;
+		};
 
-			/// \brief Normal of each vertex. Optional.
-			vector<Vector3f> normals;
+		/// \brief Enumeration of all possible build modes.
+		enum class BuildMode{
 
-			/// \brief Binormals of each vertex. Optional.
-			vector<Vector3f> binormals;
+			kFromAttributes,		///< Build a mesh from its attributes' description.
 
-			/// \brief Tangents of each vertex. Optional.
-			vector<Vector3f> tangents;
-
-			/// \brief UV coordinates of each vertex. Optional.
-			vector<Vector2f> UVs;
-
-			/// \brief Specified how the normals are mapped against the mesh.
-			AttributeMappingMode normal_mapping;
-
-			/// \brief Specified how the binormals are mapped against the mesh.
-			AttributeMappingMode binormal_mapping;
-
-			/// \brief Specified how the tangents are mapped against the mesh.
-			AttributeMappingMode tangent_mapping;
-
-			/// \brief Specified how the UV coordinates are mapped against the mesh.
-			AttributeMappingMode UV_mapping;
-			
 		};
 
 		virtual ~Mesh(){}

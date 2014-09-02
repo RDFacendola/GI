@@ -57,6 +57,7 @@
     </ClInclude>
     <ClInclude Include="src\fbx\fbx.h" />
     <ClInclude Include="include\test.h" />
+    <ClInclude Include="include\resource_traits.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">

@@ -9,7 +9,7 @@
 
 #include <fbxsdk.h>
 
-#include "..\..\include\resources.h"
+#include "..\..\include\resource_traits.h"
 
 using ::std::wstring;
 
@@ -33,7 +33,7 @@ namespace gi_lib{
 		/// \brief Parse a FBX mesh.
 		/// \param mesh Mesh to parse.
 		/// \return Returns a description of the parsed mesh
-		Mesh::CreationSettings Parse(const FbxMesh & mesh);
+		BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> Parse(const FbxMesh & mesh);
 
 	private:
 

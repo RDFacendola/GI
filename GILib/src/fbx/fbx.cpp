@@ -260,7 +260,7 @@ void FBX::Import(const wstring & path){
 
 }
 
-Mesh::CreationSettings FBX::Parse(const FbxMesh & mesh){
+BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> FBX::Parse(const FbxMesh & mesh){
 
 	if (!mesh.IsTriangleMesh()){
 
@@ -268,7 +268,7 @@ Mesh::CreationSettings FBX::Parse(const FbxMesh & mesh){
 
 	}
 
-	Mesh::CreationSettings settings;
+	BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> settings;
 
 	// Vertices aka Control Points
 

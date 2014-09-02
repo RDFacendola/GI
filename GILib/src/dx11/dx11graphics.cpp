@@ -274,20 +274,10 @@ namespace{
 
 	};
 
-
-	template <typename TResource>
-	unique_ptr<Resource> CreateResource(ID3D11Device & device, const void * settings);
-
-	template <> unique_ptr<Resource> CreateResource<Mesh>(ID3D11Device & device, const void * settings){
-
-		return make_unique<DX11Mesh>(device, *static_cast<const Mesh::CreationSettings*>(settings));
-
-	}
-
 	// Loader class. Maps every resource with their respective loader.
 	class Loader{
 
-		using LoaderFunction = unique_ptr<Resource>(*)(ID3D11Device &, const wstring &, const void * extras);
+		using LoaderFunction = unique_ptr<Resource>(*)(ID3D11Device &, const wstring &, const void * settings);
 		using LoaderMap = unordered_map < std::type_index, LoaderFunction >;
 
 	public:
@@ -305,7 +295,7 @@ namespace{
 		/// \param device Device used to create the resource.
 		/// \param path Path of the resource.
 		/// \return Returns a shared pointer to the loaded resource
-		unique_ptr<Resource> Load(const std::type_index & type_index, ID3D11Device & device, const wstring & path, const void * extras){
+		unique_ptr<Resource> Load(const std::type_index & type_index, ID3D11Device & device, const wstring & path, const void * settings){
 
 			auto it = loader_map_.find(type_index);
 
@@ -315,7 +305,7 @@ namespace{
 
 			}
 
-			return it->second(device, path, extras);
+			return it->second(device, path, settings);
 
 		}
 
@@ -535,8 +525,9 @@ void DX11Output::Commit(){
 
 /////////////////////////////////// MANAGER ///////////////////////////////////////////
 
-unique_ptr<Resource> DX11Manager::LoadDirect(const ResourceKey & key, const void * extras){
+unique_ptr<Resource> DX11Manager::LoadResource(const type_index & resource_type, const wstring & file_name, const void * settings){
 
-	return Loader::GetInstance().Load(key.first, device_, key.second, extras);
+	//return Loader::GetInstance().Load(key.first, device_, key.second, settings);
+	return nullptr;
 
 }

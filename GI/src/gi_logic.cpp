@@ -15,13 +15,12 @@ GILogic::GILogic():
 	graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {
 
+
 	/////////////////////////////////////
 
 	auto & r = graphics_.GetManager();
 
-	size_t s1, s2;
-
-	fbxImport(L"sponza_t.fbx");
+	auto ahah = r.Load<Mesh, Mesh::LoadMode::kFromFBX>({ L"crysponza.fbx", L"crysponza_00" });
 
 	/////////////////////////////////////
 

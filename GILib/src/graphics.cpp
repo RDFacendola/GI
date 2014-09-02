@@ -30,7 +30,7 @@ size_t Manager::GetSize(){
 		static_cast<size_t>(0),
 		[](size_t accumulator, const ResourceMap::value_type & it){
 
-			if (auto resource = it.second.lock()){
+			if (auto resource = std::get<1>(it.second).lock()){
 
 				accumulator += resource->GetSize();
 
