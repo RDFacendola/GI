@@ -118,6 +118,7 @@
       <AdditionalIncludeDirectories>C:\Users\Daniele\Documents\GI\GILib\include;E:\libs\stack_walker\include;E:\libs\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

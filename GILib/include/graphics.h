@@ -122,9 +122,6 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Folder where the resources are stored.
-		static const wstring kResourceFolder;
-
 		/// \brief Default constructor.
 		Manager();
 
@@ -151,7 +148,7 @@ namespace gi_lib{
 	protected:
 
 		/// \brief Type of resource map keys.
-		using ResourceMapKey = wstring;
+		using ResourceMapKey = long;
 
 		/// \brief Type of resource map values.
 		using ResourceMapValue =  tuple<type_index, weak_ptr < Resource > >;
@@ -161,10 +158,10 @@ namespace gi_lib{
 
 		/// \brief Load a resource.
 		/// \param resource_type Resource's type index.
-		/// \param file_name File to load.
-		/// \param setting Load settings. Optional.
+		/// \param load_mode Raw pointer to the load mode.
+		/// \param settings Raw pointer to the load settings.
 		/// \return Returns a pointer to the loaded resource
-		virtual unique_ptr<Resource> LoadResource(const type_index & resource_type, const wstring & file_name, const void * settings) = 0;
+		virtual unique_ptr<Resource> LoadResource(const type_index & resource_type, int load_mode, const void * settings) = 0;
 
 	private:
 
@@ -208,7 +205,6 @@ namespace gi_lib{
 	template <typename TResource, typename TResource::LoadMode kLoadMode>
 	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Manager::Load(const typename LoadSettings<TResource, kLoadMode> & settings){
 
-
 		/*
 		//Check if the resource exists inside the map
 		auto key = make_pair(std::type_index(typeid(TResource)), base_path_ + path);
@@ -226,16 +222,18 @@ namespace gi_lib{
 			//Resource was expired...
 
 		}
-
-		auto resource = shared_ptr<Resource>(std::move(LoadDirect(key, extras)));		// To shared ptr
-
-		resources_[key] = resource;														// To weak ptr
-
-		return static_pointer_cast<TResource>(resource);								// To shared ptr (of the requested type). Evil downcasting :D
 		*/
 
-		return nullptr;
+		// Load the actual resource
+		auto resource = shared_ptr<Resource>(std::move(LoadResource(type_index(typeid(TResource)),
+																	static_cast<int>(kLoadMode), 
+																	&settings)));
 
+		//resources_[key] = resource;														// To weak ptr
+
+		//  This cast should be safe...
+		return static_pointer_cast<TResource>(resource);
+		
 	}
 
 }

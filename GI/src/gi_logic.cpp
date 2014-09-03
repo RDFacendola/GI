@@ -21,6 +21,7 @@ GILogic::GILogic():
 	auto & r = graphics_.GetManager();
 
 	auto ahah = r.Load<Mesh, Mesh::LoadMode::kFromFBX>({ L"crysponza.fbx", L"crysponza_00" });
+	//auto t = r.Load<Texture2D, Texture2D::LoadMode::kFromDDS>({ L"Data\\femalehead4K.dds" });
 
 	/////////////////////////////////////
 

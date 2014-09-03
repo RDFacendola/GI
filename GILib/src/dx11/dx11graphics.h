@@ -113,7 +113,7 @@ namespace gi_lib{
 
 		protected:
 
-			virtual unique_ptr<Resource> LoadResource(const type_index & resource_type, const wstring & file_name, const void * settings);
+			virtual unique_ptr<Resource> LoadResource(const type_index & resource_type, int load_mode, const void * settings);
 
 		private:
 

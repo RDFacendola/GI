@@ -80,7 +80,7 @@ namespace gi_lib{
 		/// \brief Enumeration of all possible load modes.
 		enum class LoadMode{
 
-			kFromDDS,				///< The resource is loaded from a DDS file.
+			kFromDDS = 0,				///< The resource is loaded from a DDS file.
 
 		};
 
@@ -120,14 +120,14 @@ namespace gi_lib{
 		/// \brief Enumeration of all possible load modes.
 		enum class LoadMode{
 
-			kFromFBX,				///< The resource is loaded from a FBX file.
+			kFromFBX = 0,				///< The resource is loaded from a FBX file.
 
 		};
 
 		/// \brief Enumeration of all possible build modes.
 		enum class BuildMode{
 
-			kFromAttributes,		///< Build a mesh from its attributes' description.
+			kFromAttributes = 0,		///< Build a mesh from its attributes' description.
 
 		};
 

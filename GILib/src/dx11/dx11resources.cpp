@@ -7,6 +7,7 @@
 #include <DirectXTex.h>
 #include <math.h>
 
+#include "..\..\include\core.h"
 #include "..\..\include\exceptions.h"
 #include "..\fbx\fbx.h"
 
@@ -61,14 +62,18 @@ namespace{
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
 
-DX11Texture2D::DX11Texture2D(ID3D11Device & device, const wstring & path){
+DX11Texture2D::DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D, Texture2D::LoadMode::kFromDDS> & settings){
 	
 	DDS_ALPHA_MODE alpha_mode;
 	ID3D11Resource * resource;
 	ID3D11ShaderResourceView * shader_view;
 
+	wstringstream path;
+
+	path << Application::GetInstance().GetDirectory() << settings.file_name;
+
 	THROW_ON_FAIL( CreateDDSTextureFromFileEx(&device, 
-											  path.c_str(), 
+											  path.str().c_str(), 
 											  0,									// Load everything.
 											  D3D11_USAGE_IMMUTABLE, 
 											  D3D11_BIND_SHADER_RESOURCE, 

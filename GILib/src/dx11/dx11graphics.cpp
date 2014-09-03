@@ -1,12 +1,14 @@
 #include "dx11graphics.h"
 
-#include <unordered_map>
+#include <map>
 
 #include <d3d11.h>
 #include <dxgi.h>
 
 #include "..\..\include\core.h"
 #include "..\..\include\exceptions.h"
+#include "..\..\include\resources.h"
+#include "..\..\include\resource_traits.h"
 
 #include "dx11resources.h"
 #include "dx11shared.h"
@@ -265,70 +267,62 @@ namespace{
 
 	}
 
-	template <typename TResource>
-	unique_ptr<Resource> LoadResource(ID3D11Device &, const wstring &, const void * settings);
-
-	template <> unique_ptr<Resource> LoadResource<Texture2D>(ID3D11Device & device, const wstring & path, const void *) {
-
-		return make_unique<DX11Texture2D>(device, path);
-
-	};
-
 	// Loader class. Maps every resource with their respective loader.
 	class Loader{
 
-		using LoaderFunction = unique_ptr<Resource>(*)(ID3D11Device &, const wstring &, const void * settings);
-		using LoaderMap = unordered_map < std::type_index, LoaderFunction >;
+		using LoaderFunction = unique_ptr<Resource>(*)(ID3D11Device &, const void *);
+		using LoaderKey = pair < std::type_index, int > ;
+		using LoaderMap = map < LoaderKey, LoaderFunction >;
 
 	public:
-
-		static Loader GetInstance(){
-
-			static Loader loader;
-
-			return loader;
-
-		}
 
 		/// \brief Load a resource.
 		/// \param type_index Type of the resource to load.
 		/// \param device Device used to create the resource.
 		/// \param path Path of the resource.
 		/// \return Returns a shared pointer to the loaded resource
-		unique_ptr<Resource> Load(const std::type_index & type_index, ID3D11Device & device, const wstring & path, const void * settings){
+		static unique_ptr<Resource> Load(const std::type_index & resource_type, int load_mode, ID3D11Device & device, const void * settings){
 
-			auto it = loader_map_.find(type_index);
+			auto key = make_pair(resource_type, load_mode);
 
-			if (it == loader_map_.end()){
+			auto it = loader_map_.find(key);
 
-				return unique_ptr<Resource>();	// Empty pointer
-
-			}
-
-			return it->second(device, path, settings);
-
+			return it == loader_map_.end() ?
+				unique_ptr<Resource>() :			// Not supported
+				it->second(device, settings);
+			
 		}
 
 	private:
 
-		Loader(){
+		/// \brief Load routine dispatcher.
+		template <typename TResource, typename TResource::LoadMode kLoadMode>
+		static unique_ptr<Resource> LoadResource(ID3D11Device & device, const void * settings){
 
-			loader_map_.insert(MakeSupport<Texture2D>());
-
-		}
-
-		template <typename TResource>
-		LoaderMap::value_type MakeSupport(){
-
-			// Declare the support for the resources...
-
-			return LoaderMap::value_type(type_index(typeid(TResource)), LoadResource<TResource>);
+			// The resource created is the mapped type of TResource (eg: Texture2D => DX11Texture2D)
+			return make_unique<typename ResourceMapping<TResource>::TMapped>(device,
+				*static_cast<const LoadSettings<TResource, kLoadMode>*>(settings));
 
 		}
 
-		LoaderMap loader_map_;
+		/// \brief Register the support for a resource type.
+		template <typename TResource, typename TResource::LoadMode kLoadMode>
+		static LoaderMap::value_type Register(){
+
+			auto key = make_pair(std::type_index(typeid(TResource)), static_cast<int>(kLoadMode));
+			auto value = LoadResource < TResource, kLoadMode > ;
+
+			return LoaderMap::value_type(key, value);
+
+		}
+			
+		static const LoaderMap loader_map_;
 
 	};
+
+	// Add support for new resources HERE!
+
+	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, Texture2D::LoadMode::kFromDDS>() };
 
 }
 
@@ -525,9 +519,8 @@ void DX11Output::Commit(){
 
 /////////////////////////////////// MANAGER ///////////////////////////////////////////
 
-unique_ptr<Resource> DX11Manager::LoadResource(const type_index & resource_type, const wstring & file_name, const void * settings){
+unique_ptr<Resource> DX11Manager::LoadResource(const type_index & resource_type, int load_mode, const void * settings){
 
-	//return Loader::GetInstance().Load(key.first, device_, key.second, settings);
-	return nullptr;
+	return Loader::Load(resource_type, load_mode, device_, settings);
 
 }

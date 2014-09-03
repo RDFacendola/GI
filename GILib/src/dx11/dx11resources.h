@@ -30,10 +30,10 @@ namespace gi_lib{
 
 		public:
 			
-			/// \brief Create a new texture from file.
+			/// \brief Create a new texture from DDS file.
 			/// \param device The device used to create the texture.
-			/// \param path The path of the texture to load.
-			DX11Texture2D(ID3D11Device & device, const wstring & path);
+			/// \param settings The load settings
+			DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D, Texture2D::LoadMode::kFromDDS> & settings);
 
 			virtual size_t GetSize() const override;
 

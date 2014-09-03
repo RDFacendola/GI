@@ -13,13 +13,7 @@ using namespace gi_lib;
 
 //////////////////////// MANAGER //////////////////////////////
 
-const wstring Manager::kResourceFolder = L"Data";
-
-Manager::Manager(){
-
-	base_path_ = Application::GetInstance().GetDirectory() + kResourceFolder + kPathSeparator;
-
-}
+Manager::Manager(){}
 
 size_t Manager::GetSize(){
 
