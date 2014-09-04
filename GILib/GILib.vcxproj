@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\components.h" />
     <ClInclude Include="include\resource_traits.h" />
     <ClInclude Include="include\test.h" />
     <ClInclude Include="src\dx11\dx11shared.h" />
@@ -28,7 +29,7 @@
     <ClInclude Include="src\fbx\fbx.h" />
     <ClInclude Include="include\graphics.h" />
     <ClInclude Include="include\maybe.h" />
-    <ClInclude Include="include\scene\scene.h" />
+    <ClInclude Include="include\scene.h" />
     <ClInclude Include="include\observable.h" />
     <ClInclude Include="include\exceptions.h" />
     <ClInclude Include="include\timer.h" />
@@ -42,7 +43,7 @@
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
-    <ClCompile Include="src\scene\scene.cpp" />
+    <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\test.cpp" />
     <ClCompile Include="src\timer.cpp" />
   </ItemGroup>

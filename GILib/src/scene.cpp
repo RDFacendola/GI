@@ -1,8 +1,8 @@
-#include "..\..\include\scene\scene.h"
+#include "..\include\scene.h"
 
 using namespace gi_lib;
 
-void SceneObject::Update(const Time & time){
+void SceneNode::Update(const Time & time){
 
 	for (auto & it : components_){
 
