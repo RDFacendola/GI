@@ -3,52 +3,44 @@
 ///
 /// \author Raffaele D. Facendola
 
+#pragma once
 
 namespace gi_lib{
 
-	/// \brief Maybe<TValue> is either a TValue or nothing.
-	/// \author Raffaele D. Facendola
-	template <typename TValue>
-	class Maybe{
+	/// \brief Maybe is either TType or nothing.
+	template<typename TType> class Maybe{};
+
+	/// \brief L-value reference maybe specialization.
+	/// \author Raffaele D. Facendola.
+	template<typename TType>
+	class Maybe < TType& > {
 
 	public:
 
 		/// \brief Create a maybe object.
 		/// \param value The value to store inside the maybe object.
-		template <typename TValue>
-		Maybe(TValue&& value) :
-			value_(std::forward<TValue>(value)),
+		Maybe(TType & value) :
+			value_ptr_(&value),
 			is_null_(false){}
-		
-		/// \brief Copy constructor.
-		/// \param other The object to copy.
-		Maybe(const Maybe & other) :
-			is_null_(other.is_null_){
-
-			if (!is_null_){
-
-				value_ = other.value_;
-
-			}
-
-		}
-
-		/// \brief Move constructor.
-		/// \param other The object to move.
-		Maybe(Maybe && other) :
-			is_null_(other.is_null_){
-
-			if (!is_null_){
-
-				value_ = std::move(other.value_);
-
-			}
-
-		}
 
 		/// \brief Create an empty object.
 		Maybe() :
-			is_null_(true){}
+			is_null_(true),
+			value_ptr_(nullptr){}
+
+		/// \brief Copy constructor.
+		/// \param other The object to copy.
+		Maybe(const Maybe & other) :
+			is_null_(other.is_null_),
+			value_ptr_(other.value_ptr_){}
+		
+		/// \brief Assignment operator.
+		Maybe & operator=(const Maybe & other){
+
+			is_null_ = other.is_null_;
+			value_ptr_ = other.value_ptr_;
+
+		}
 
 		/// \brief Check whether the object stores a value or not.
 		/// \return Returns true if the object can be dereferenced. Returns false otherwise.
@@ -60,17 +52,17 @@ namespace gi_lib{
 
 		/// \brief Dereferencing operator.
 		/// \return Returns a reference to the stored value.
-		TValue& operator*(){
+		TType & operator*(){
 
-			return value_;
+			return *value_ptr_;
 
 		}
-
+		
 		/// \brief Dereferencing operator.
-		/// \return Returns a pointer to the stored value.
-		auto operator->() -> decltype(&(operator*())){
+		/// \return Returns a pointer to the value.
+		TType * operator->(){
 
-			return &value_;
+			return value_ptr_;
 
 		}
 
@@ -78,13 +70,10 @@ namespace gi_lib{
 
 		bool is_null_;
 
-		union
-		{
+		TType * value_ptr_;
 
-			TValue value_;
-
-		};
-		
 	};
+
+
 
 }
