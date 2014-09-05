@@ -27,46 +27,48 @@ using std::initializer_list;
 
 namespace gi_lib{
 	
-	/// \brief A scene node.
+	/// \brief Represents an entire scene.
+	class Scene{
 
-	/// A scene object may represents a camera, a light, a model and so on.
+	};
+
+	/// \brief Represents a scene node.
+
+	/// A node may represents a camera, a light, a model and so on.
 	/// NodeComponents may be plugged to customize its behaviour
 	/// \author Raffaele D. Facendola
 	class SceneNode{
 
+		friend class Scene;
+
 	public:
 		
 		/// \brief Type of the component map.
-		typedef map<std::type_index, std::unique_ptr<NodeComponent>> NodeComponentMap;
+		typedef map<std::type_index, std::unique_ptr<NodeComponent>> ComponentMap;
 
 		/// \brief Type of the tag set.
 		typedef set<wstring> TagSet;
 
-		/// \brief Create an unnamed scene object with no tags.
+		/// \brief Create a default scene node.
+
+		/// The node won't have any name or tags and its local transformation matrix will be the identity matrix.
 		SceneNode();
 
-		/// \brief Create an unnamed scene object with tags.
-		/// \param tags List of tags to associate to this scene object.
-		SceneNode(initializer_list<wstring> tags);
-
-		/// \brief Create a named scene object with no tags.
-		/// \param name The name of this instance.
-		SceneNode(wstring name);
-
-		/// \brief Create a named scene object with tags.
-		/// \param name The name of this instance.
-		/// \param tags List of tags to associate to this scene object.
-		SceneNode(wstring name, initializer_list<wstring> tags);
+		/// \brief Create a scene node.
+		/// \param name Name of the scene node. It may not be unique.
+		/// \param local_transform Affine transformation in local space.
+		/// \param tags List of tags associated to the scene node.
+		SceneNode(const wstring & name, const Affine3f & local_transform, initializer_list<wstring> tags);
 		
+		/// \brief Move constructor.
+		SceneNode(SceneNode && other);
+
 		/// \brief No copy constructor.
 		SceneNode(const SceneNode & other) = delete;
 
 		/// \brief No assignment operator.
 		SceneNode & operator=(const SceneNode & other) = delete;
 		
-		/// \brief Move constructor.
-		SceneNode(SceneNode && other);
-
 		/// \brief Add a new component to the instance.
 
 		/// If a component of the same type exists, it is overwritten and the previous one is destroyed.
@@ -75,51 +77,64 @@ namespace gi_lib{
 		/// \param args Arguments that will be passed to the component during its creation.
 		/// \return Returns a reference to the added component.
 		template<typename TNodeComponent, typename... TArgs>
-		inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<TNodeComponent&>> AddNodeComponent(TArgs&&... args);
+		std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<TNodeComponent&>> Add(TArgs&&... args);
 
 		/// \brief Remove a component by type.
 		/// \tparam TNodeComponent Type of the component to remove. It must derive from NodeComponent.
 		template<typename TNodeComponent>
-		inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, void> RemoveNodeComponent();
+		std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, void> Remove();
 
 		/// \brief Get the component whose type is equal to TNodeComponent.
 		/// \tparam TNodeComponent Type of the component to get. It must derive from NodeComponent.
 		/// \return Returns a reference to the found object, if any. Returns an empty reference otherwise.
 		template<typename TNodeComponent>
-		inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<TNodeComponent &>> GetNodeComponent();
+		std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<TNodeComponent &>> Get();
 
 		/// \brief Get the component whose type is equal to TNodeComponent.
 		/// \tparam TNodeComponent Type of the component to get. It must derive from NodeComponent.
 		/// \return Returns a reference to the found object, if any. Returns an empty reference otherwise.
 		template<typename TNodeComponent>
-		inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<const TNodeComponent &>> GetNodeComponent() const;
+		std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<const TNodeComponent &>> Get() const;
 
 		/// \brief Add a new tag to the scene object.
 		/// \param tag The new tag to add.
-		inline void AddTag(const wstring & tag);
+		void AddTag(const wstring & tag);
 
 		/// \brief Remove an existing tag.
 		/// \param tag The tag to remove.
-		inline void RemoveTag(const wstring & tag);
+		void RemoveTag(const wstring & tag);
 
 		/// \brief Check whether the object has a particular tag.
 		/// \param tag The tag to match.
 		/// \return Returns true if the tag is found, false otherwise.
-		inline bool HasTag(const wstring & tag);
+		bool HasTag(const wstring & tag);
 
 		/// \brief Get the scene object's name.
 
 		/// \return Returns the scene object's name.
-		inline const wstring & GetName() const;
+		const wstring & GetName() const;
 
+		/// \brief Get the transform component of the node.
+		/// \return Returns a reference to the transform component.
+		Transform & GetTransform();
+
+		/// \brief Get the transform component of the node.
+		/// \return Returns a constant reference to the transform component.
+		const Transform & GetTransform() const;
+		
 		/// \brief Updates the enabled components.
 
 		/// \param time The application time
-		inline void Update(const Time & time);
+		void Update(const Time & time);
 
 	private:
 
-		NodeComponentMap components_;
+		/// \brief Updates the hierarchy of scene nodes.
+		void UpdateHierarchy(const Time & time);
+
+		ComponentMap components_;
+
+		Transform & transform_;
 
 		TagSet tags_;
 
@@ -129,36 +144,8 @@ namespace gi_lib{
 
 	//
 
-	SceneNode::SceneNode() :
-		name_(L""){}
-
-	SceneNode::SceneNode(initializer_list<wstring> tags) :
-		name_(L""),
-		tags_(tags.begin(), tags.end()){}
-
-	SceneNode::SceneNode(wstring name) :
-		name_(std::move(name)){}
-
-	SceneNode::SceneNode(wstring name, initializer_list<wstring> tags) :
-		name_(std::move(name)),
-		tags_(tags.begin(), tags.end()){}
-
-	SceneNode::SceneNode(SceneNode && other) :
-		name_(std::move(other.name_)),
-		tags_(std::move(other.tags_)),
-		components_(std::move(other.components_)){
-
-		// Change components' ownership
-		for (auto & pair : components_){
-
-			pair.second->owner_ = this;
-
-		}
-
-	}
-
 	template<typename TNodeComponent, typename... TArgs>
-	inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<TNodeComponent&>> SceneNode::AddNodeComponent(TArgs&&... args){
+	inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<TNodeComponent&>> SceneNode::Add(TArgs&&... args){
 
 		auto key = std::type_index(typeid(TNodeComponent));
 
@@ -172,7 +159,7 @@ namespace gi_lib{
 	}
 
 	template<typename TNodeComponent>
-	inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, void> SceneNode::RemoveNodeComponent(){
+	inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, void> SceneNode::Remove(){
 
 		auto key = std::type_index(typeid(TNodeComponent));
 
@@ -181,7 +168,7 @@ namespace gi_lib{
 	}
 
 	template<typename TNodeComponent>
-	inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<TNodeComponent &>> SceneNode::GetNodeComponent(){
+	inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<TNodeComponent &>> SceneNode::Get(){
 
 		auto key = std::type_index(typeid(TNodeComponent));
 
@@ -201,7 +188,7 @@ namespace gi_lib{
 	}
 
 	template<typename TNodeComponent>
-	inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<const TNodeComponent &>> SceneNode::GetNodeComponent() const{
+	inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, Maybe<const TNodeComponent &>> SceneNode::Get() const{
 
 		auto key = std::type_index(typeid(TNodeComponent));
 
@@ -241,6 +228,18 @@ namespace gi_lib{
 	inline const wstring & SceneNode::GetName() const{
 
 		return name_;
+
+	}
+
+	inline Transform & SceneNode::GetTransform(){
+
+		return transform_;
+
+	}
+
+	inline const Transform & SceneNode::GetTransform() const{
+
+		return transform_;
 
 	}
 

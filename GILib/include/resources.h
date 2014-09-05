@@ -6,7 +6,8 @@
 #pragma once
 
 #include <vector>
-#include <Eigen/Core>
+
+#include "gimath.h"
 
 using ::std::vector;
 using ::Eigen::Vector2f;

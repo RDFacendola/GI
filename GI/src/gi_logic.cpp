@@ -4,7 +4,7 @@
 
 #include <resources.h>
 
-#include <test.h>
+#include <scene.h>
 
 using namespace ::std;
 using namespace ::gi_lib;
@@ -22,6 +22,12 @@ GILogic::GILogic():
 
 	auto ahah = r.Load<Mesh, Mesh::LoadMode::kFromFBX>({ L"crysponza.fbx", L"crysponza_00" });
 	//auto t = r.Load<Texture2D, Texture2D::LoadMode::kFromDDS>({ L"Data\\femalehead4K.dds" });
+
+	SceneNode n = SceneNode(L"My node", Affine3f::Identity(), {});
+
+	auto & q = n.GetTransform();
+
+	
 
 	/////////////////////////////////////
 

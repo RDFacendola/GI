@@ -5,13 +5,14 @@
 
 #pragma once
 
-#include <Eigen\Geometry>
 #include <vector>
 
+#include "gimath.h"
 #include "timer.h"
+#include "maybe.h"
 
-using Eigen::Affine3f;
-using std::vector;
+using ::Eigen::Affine3f;
+using ::std::vector;
 
 namespace gi_lib{
 
@@ -20,6 +21,7 @@ namespace gi_lib{
 	class NodeComponent{
 
 		friend class SceneNode;
+
 	public:
 
 		/// \brief Default constructor.
@@ -71,78 +73,97 @@ namespace gi_lib{
 	/// \brief Represents a 3D transformation.
 	class Transform: public NodeComponent{
 
+		friend class SceneNode;
+
 	public:
 
 		/// \brief Initialize the transform component with an identity matrix.
 		Transform();
 
+		/// \brief Destroy the transfom.
+
+		/// \brief Child transforms are attached to the current parent of this instance.
+		~Transform();
+
 		/// \brief Initialize the transform component with a transformation matrix.
 		Transform(const Affine3f & local_transform);
 
-		/// \brief Copy-constructor.
+		/// \brief No copy constructor.
+		/// A node may have one parent at maximum, copying would require for them to have more than one.
+		Transform(const Transform & other) = delete;
 
-		/// The constructor copy the matrix value and the relationships with other transforms.
-		Transform(const Transform & other);
+		/// \brief No assignment operator.
+		/// A node may have one parent at maximum, assignment would require for them to have more than one.
+		Transform & operator=(const Transform & other) = delete;
 
 		/// \brief Move-constructor.
 
 		/// The constructor moves the matrix value and the relationship with other transforms.
 		Transform(Transform && other);
 
+		/// \brief Get the local transfom.
+		/// \return Returns the local transform matrix.
+		Affine3f & GetLocalTransform();
+		
+		/// \brief Get the local transfom.
+		/// \return Returns the local transform matrix.
+		const Affine3f & GetLocalTransform() const;
+
+		/// \brief Get the global transfom.
+		/// \return Returns the global transform matrix.
+		Affine3f & GetWorldTransform();
+		
+		/// \brief Get the global transfom.
+		/// \return Returns the global transform matrix.
+		const Affine3f & GetWorldTransform() const;
+
 		/// \brief Add a new child to this transform.
 
 		/// If the child has a different parent, the relationship is deleted.
 		/// \param child The child transformation.
 		/// \return Returns a reference to this instance.
-		Transform & AddChild(const Transform & child);
-
-		/// \brief Remove a child transformation.
+		Transform & AddChild(Transform & child);
 		
-		/// The child's parent becomes null.
-		/// \param child The child to remove.
-		/// \return Returns a reference to this instance.
-		Transform & RemoveChild(const Transform & child);
+		/// \brief Detach the transform from its current parent.
+		void Detach();
 
 		/// \brief Get the parent transform.
 
 		/// \return Returns the transform's parent if present. Returns nullptr if this component has no parent transform.
-		Transform * GetParent();
+		Maybe<Transform&> GetParent();
 
 		/// \brief Get the parent transform.
 
 		/// \return Returns the transform's parent if present. Returns nullptr if this component has no parent transform.
-		const Transform * GetParent() const;
+		Maybe<const Transform&> GetParent() const;
 
-		/// \brief Get an iterator to the transform's childs.
-		/// \return Returns an iterator pointing to the beginning of the transform's child collection.
-		vector<Transform *>::iterator GetChildBegin();
+		/// \brief Get a child transform by index.
+		/// \param index Index of the child.
+		/// \return Returns a reference to the child transform.
+		Transform & GetChildAt(unsigned int index);
 
-		/// \brief Get an iterator to the transform's childs.
-		/// \return Returns an iterator pointing past the end of the transform's child collection.
-		vector<Transform *>::iterator GetChildEnd();
-
-		/// \brief Get an iterator to the transform's childs.
-		/// \return Returns an iterator pointing to the beginning of the transform's child collection.
-		vector<Transform *>::const_iterator GetChildBegin() const;
-
-		/// \brief Get an iterator to the transform's childs.
-		/// \return Returns an iterator pointing past the end of the transform's child collection.
-		vector<Transform *>::const_iterator GetChildEnd() const;
+		/// \brief Get a child transform by index.
+		/// \param index Index of the child.
+		/// \return Returns a const reference to the child transform.
+		const Transform & GetChildAt(unsigned int index) const;
 
 		/// \brief Get the current number of child transforms attached to this component.
 		/// \return Returns the number of the child transforms attached to this component.
-		unsigned int GetChildCount() const;
+		size_t GetChildCount() const;
 
 	protected:
 
-		/// \brief Update the components recursively
-		virtual void Update(const Time & time);
+		virtual void Update(const Time & time) override;
 
 	private:
+		
+		void UpdateOwner(const Time & time);
+
+		void RemoveChild(Transform & child);
 
 		Transform * parent_;			//Parent of the transformation.
 
-		vector<Transform *> childs_;	//Child of the transformation.
+		vector<Transform *> children_;	//Children of the transformation.
 
 		Affine3f local_transform_;
 
@@ -151,12 +172,6 @@ namespace gi_lib{
 	};
 
 	//
-
-	NodeComponent::NodeComponent() :
-		owner_(nullptr),
-		enabled_(true){}
-
-	NodeComponent::~NodeComponent(){}
 
 	inline SceneNode & NodeComponent::GetOwner(){
 
@@ -182,4 +197,48 @@ namespace gi_lib{
 
 	}
 
+	//
+
+	inline Affine3f & Transform::GetLocalTransform(){
+
+		return local_transform_;
+
+	}
+
+	inline const Affine3f & Transform::GetLocalTransform() const{
+
+		return local_transform_;
+
+	}
+	
+	inline Affine3f & Transform::GetWorldTransform(){
+
+		return world_transform_;
+
+	}
+
+	inline const Affine3f & Transform::GetWorldTransform() const{
+
+		return world_transform_;
+
+	}
+	
+	inline Transform & Transform::GetChildAt(unsigned int index){
+
+		return *children_[index];
+
+	}
+
+	inline const Transform & Transform::GetChildAt(unsigned int index) const{
+
+		return *children_[index];
+
+	}
+
+	inline size_t Transform::GetChildCount() const{
+
+		return children_.size();
+
+	}
+	
 }
