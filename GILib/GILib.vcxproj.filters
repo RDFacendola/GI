@@ -16,6 +16,9 @@
     <Filter Include="core">
       <UniqueIdentifier>{8d6e244c-ba3e-4532-939b-79349da04ec3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FBX">
+      <UniqueIdentifier>{7dc001f6-c62b-471a-a501-1aa07ce6de85}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\timer.h">
@@ -39,7 +42,6 @@
     <ClInclude Include="include\core.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics.h" />
     <ClInclude Include="include\resources.h">
       <Filter>graphics</Filter>
     </ClInclude>
@@ -52,13 +54,22 @@
     <ClInclude Include="src\dx11\dx11shared.h">
       <Filter>graphics\dx11</Filter>
     </ClInclude>
-    <ClInclude Include="src\fbx\fbx.h" />
-    <ClInclude Include="include\test.h" />
-    <ClInclude Include="include\resource_traits.h" />
     <ClInclude Include="include\scene.h">
       <Filter>scene</Filter>
     </ClInclude>
-    <ClInclude Include="include\components.h" />
+    <ClInclude Include="include\components.h">
+      <Filter>scene</Filter>
+    </ClInclude>
+    <ClInclude Include="include\resource_traits.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\fbx\fbx.h">
+      <Filter>FBX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\gimath.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -76,8 +87,14 @@
     <ClCompile Include="src\dx11\dx11resources.cpp">
       <Filter>graphics\dx11</Filter>
     </ClCompile>
-    <ClCompile Include="src\fbx\fbx.cpp" />
-    <ClCompile Include="src\test.cpp" />
-    <ClCompile Include="src\scene.cpp" />
+    <ClCompile Include="src\components.cpp">
+      <Filter>scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scene.cpp">
+      <Filter>scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fbx\fbx.cpp">
+      <Filter>FBX</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

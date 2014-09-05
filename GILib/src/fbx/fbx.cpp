@@ -8,10 +8,10 @@
 
 #include <vector>
 #include <algorithm>
-#include <Eigen\Core>
 
 #include "fbx.h"
 
+#include "..\..\include\gimath.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\resources.h"
 

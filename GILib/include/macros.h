@@ -3,6 +3,8 @@
 ///
 /// \author Raffaele D. Facendola
 
+#pragma once 
+
 #ifdef _WIN32
 
 #if _MSC_VER >= 1500
