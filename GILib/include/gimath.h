@@ -1,4 +1,4 @@
-/// \file math.h
+/// \file gimath.h
 /// \brief Mathematical and geometrical classes and methods.
 ///
 /// \author Raffaele D. Facendola
