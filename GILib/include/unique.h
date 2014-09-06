@@ -22,44 +22,30 @@ namespace gi_lib{
 		/// \brief Null object associated to the unique class.
 		static const Unique kNull;
 
-		Unique() :
-			Unique(kNull){}
+		/// \brief Default constructor.
+		Unique();
+
+		/// \brief Copy constructor.
+		/// \param other The unique object to move
+		Unique(const Unique & other);
 
 		/// \brief Create a new unique instance.
-		static Unique MakeUnique(){
+		static Unique MakeUnique();
 
-			static std::atomic_uint counter_{ 0 };
-
-			return Unique(counter_.fetch_add(1, std::memory_order_relaxed));
-
-		}
-		
 		/// \brief Tests for equality.
 		/// \param other The other instance to test against.
 		/// \return Returns true if this object and "other" are the same, returns false otherwise.
-		inline bool operator==(const Unique & other) const{
-
-			return key_ == other.key_;
-
-		}
+		bool operator==(const Unique & other) const;
 
 		/// \brief Tests for inequality.
 		/// \param other The other instance to test against.
 		/// \return Returns true if this object and "other" are NOT the same, returns false otherwise.
-		inline bool operator!=(const Unique & other) const{
-
-			return key_ != other.key_;
-
-		}
+		bool operator!=(const Unique & other) const;
 
 		/// \brief Less-than operator.
 		/// \param other The other instance to test against.
 		/// \return Returns true if this object's key is lesser than other's key. Returns false otherwise.
-		inline bool operator <(const Unique & other) const{
-
-			return key_ < other.key_;
-
-		}
+		bool operator <(const Unique & other) const;
 
 	private:
 
@@ -74,7 +60,50 @@ namespace gi_lib{
 
 	};
 
+	//
+
+	template<typename TTag>
+	static Unique<TTag> Unique<TTag>::MakeUnique(){
+
+		static std::atomic_uint counter_{ 0 };
+
+		return Unique(counter_.fetch_add(1, std::memory_order_relaxed));
+
+	}
+
 	template<typename TTag>
 	const Unique<TTag> Unique<TTag>::kNull = Unique<TTag>::MakeUnique();
 
+	template<typename TTag>
+	Unique<TTag>::Unique() :
+		Unique(kNull){}
+
+	template<typename TTag>
+	Unique<TTag>::Unique(const Unique<TTag> & other){
+	
+		key_ = other.key_;
+	
+	}
+
+	template<typename TTag>
+	inline bool Unique<TTag>::operator==(const Unique<TTag> & other) const{
+
+		return key_ == other.key_;
+
+	}
+
+	template<typename TTag>
+	inline bool Unique<TTag>::operator!=(const Unique<TTag> & other) const{
+
+		return key_ != other.key_;
+
+	}
+
+	template<typename TTag>
+	inline bool Unique<TTag>::operator <(const Unique<TTag> & other) const{
+
+		return key_ < other.key_;
+
+	}
+	
 }
