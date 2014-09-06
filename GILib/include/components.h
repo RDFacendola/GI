@@ -77,15 +77,8 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Initialize the transform component with an identity matrix.
-		Transform();
-
-		/// \brief Destroy the transfom.
-
-		/// \brief Child transforms are attached to the current parent of this instance.
-		~Transform();
-
 		/// \brief Initialize the transform component with a transformation matrix.
+		/// \param local_transform Transformation in local space.
 		Transform(const Affine3f & local_transform);
 
 		/// \brief No copy constructor.
@@ -100,6 +93,11 @@ namespace gi_lib{
 
 		/// The constructor moves the matrix value and the relationship with other transforms.
 		Transform(Transform && other);
+
+		/// \brief Destroy the transfom.
+
+		/// \brief Child transforms are attached to the current parent of this instance.
+		~Transform();
 
 		/// \brief Get the local transfom.
 		/// \return Returns the local transform matrix.
@@ -117,25 +115,24 @@ namespace gi_lib{
 		/// \return Returns the global transform matrix.
 		const Affine3f & GetWorldTransform() const;
 
-		/// \brief Add a new child to this transform.
+		/// \brief Assign this transform to a new parent.
 
-		/// If the child has a different parent, the relationship is deleted.
-		/// \param child The child transformation.
-		/// \return Returns a reference to this instance.
-		Transform & AddChild(Transform & child);
-		
-		/// \brief Detach the transform from its current parent.
-		void Detach();
+		/// The transform is detached first and its previous parent is updated accordingly.
+		void Attach(Transform & parent);
+
+		/// \brief Get the parent transform.
+
+		/// \return Returns the transform's parent.
+		Transform & GetParent();
 
 		/// \brief Get the parent transform.
 
 		/// \return Returns the transform's parent if present. Returns nullptr if this component has no parent transform.
-		Maybe<Transform&> GetParent();
+		const Transform & GetParent() const;
 
-		/// \brief Get the parent transform.
-
-		/// \return Returns the transform's parent if present. Returns nullptr if this component has no parent transform.
-		Maybe<const Transform&> GetParent() const;
+		/// \brief Check wether this node is a root.
+		/// \return Returns true if the node is a root, false otherwise.
+		bool IsRoot() const;
 
 		/// \brief Get a child transform by index.
 		/// \param index Index of the child.
@@ -160,6 +157,8 @@ namespace gi_lib{
 		void UpdateOwner(const Time & time);
 
 		void RemoveChild(Transform & child);
+
+		void AddChild(Transform & child);
 
 		Transform * parent_;			//Parent of the transformation.
 
@@ -220,6 +219,12 @@ namespace gi_lib{
 	inline const Affine3f & Transform::GetWorldTransform() const{
 
 		return world_transform_;
+
+	}
+
+	inline bool Transform::IsRoot() const{
+
+		return parent_ == nullptr;
 
 	}
 	

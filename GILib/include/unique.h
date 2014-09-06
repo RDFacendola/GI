@@ -63,7 +63,7 @@ namespace gi_lib{
 	//
 
 	template<typename TTag>
-	static Unique<TTag> Unique<TTag>::MakeUnique(){
+	Unique<TTag> Unique<TTag>::MakeUnique(){
 
 		static std::atomic_uint counter_{ 0 };
 

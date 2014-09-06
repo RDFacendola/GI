@@ -18,6 +18,7 @@
 #include "timer.h"
 #include "maybe.h"
 #include "exceptions.h"
+#include "unique.h"
 
 using std::wstring;
 using std::map;
@@ -27,8 +28,51 @@ using std::initializer_list;
 
 namespace gi_lib{
 	
+	class SceneNode;
+
 	/// \brief Represents an entire scene.
 	class Scene{
+
+	public:
+
+		/// \brief Create a new scene.
+		Scene();
+
+		/// \brief No assignment operator.
+		Scene & operator=(const Scene &) = delete;
+
+		/// \brief Create a new scene node.
+
+		/// The scene node is attached to the root by default.
+		/// \param name The name of the node
+		/// \param local_transform The transform of the node in local space.
+		/// \param tags Tags associated to the node.
+		/// \return Returns a reference to the new node.
+		template <typename... TArgs>
+		SceneNode & CreateNode(TArgs&&... args);
+
+		/// \brief Destroy an existing node.
+
+		/// \param node The node to destroy. <b>Do not attempt to use the node afterwards!.</b>
+		void DestroyNode(SceneNode & node);
+
+		/// \brief Update the entire scene.
+		/// \param time The current application time.
+		void Update(const Time & time);
+
+		/// \brief Attach a scene node to the scene root.
+
+		/// \param node The node to attach to the scene root.
+		void AttachToRoot(SceneNode & node);
+
+	private:
+
+		/// \brief Type of the node map.
+		using NodeMap = map<Unique<SceneNode>, unique_ptr<SceneNode>>;
+
+		unique_ptr<SceneNode> root_;	// Root of the scene
+
+		NodeMap nodes_;					// Nodes inside the scene
 
 	};
 
@@ -43,22 +87,18 @@ namespace gi_lib{
 
 	public:
 		
-		/// \brief Type of the component map.
-		typedef map<std::type_index, std::unique_ptr<NodeComponent>> ComponentMap;
-
-		/// \brief Type of the tag set.
-		typedef set<wstring> TagSet;
-
 		/// \brief Create a default scene node.
 
 		/// The node won't have any name or tags and its local transformation matrix will be the identity matrix.
-		SceneNode();
+		/// \param scene The scene who owns this node.
+		SceneNode(Scene & scene);
 
 		/// \brief Create a scene node.
+		/// \param scene The scene who owns this node.
 		/// \param name Name of the scene node. It may not be unique.
 		/// \param local_transform Affine transformation in local space.
 		/// \param tags List of tags associated to the scene node.
-		SceneNode(const wstring & name, const Affine3f & local_transform, initializer_list<wstring> tags);
+		SceneNode(Scene & scene, const wstring & name, const Affine3f & local_transform, initializer_list<wstring> tags);
 		
 		/// \brief Move constructor.
 		SceneNode(SceneNode && other);
@@ -121,6 +161,14 @@ namespace gi_lib{
 		/// \brief Get the transform component of the node.
 		/// \return Returns a constant reference to the transform component.
 		const Transform & GetTransform() const;
+
+		/// \brief Assign this instance transform to another parent.
+		/// \param parent The node who contains the new parent transform.
+		void Attach(SceneNode & parent);
+
+		/// \brief Get the unique ID identifying this scene node.
+		/// \return Returns an unique object which is guaranteed to be unique among other scene nodes.
+		const Unique<SceneNode> & GetUniqueID() const;
 		
 		/// \brief Updates the enabled components.
 
@@ -129,6 +177,14 @@ namespace gi_lib{
 
 	private:
 
+
+
+		/// \brief Type of the component map.
+		using ComponentMap = map<std::type_index, std::unique_ptr<NodeComponent>>;
+
+		/// \brief Type of the tag set.
+		using TagSet = set<wstring>;
+
 		/// \brief Updates the hierarchy of scene nodes.
 		void UpdateHierarchy(const Time & time);
 
@@ -136,11 +192,32 @@ namespace gi_lib{
 
 		Transform & transform_;
 
+		Scene & scene_;
+
 		TagSet tags_;
 
 		wstring name_;
 
+		Unique<SceneNode> unique_;
+
 	};
+
+	//
+
+	template <typename... TArgs>
+	SceneNode & Scene::CreateNode(TArgs&&... args){
+
+		auto node = std::make_unique<SceneNode>(*this, std::forward<TArgs>(args)...);
+
+		AttachToRoot(*node);
+
+		auto key = node->GetUniqueID();
+
+		auto & ret = (nodes_[key] = std::move(node));
+
+		return *ret;
+
+	}
 
 	//
 
@@ -240,6 +317,18 @@ namespace gi_lib{
 	inline const Transform & SceneNode::GetTransform() const{
 
 		return transform_;
+
+	}
+
+	inline const Unique<SceneNode> & SceneNode::GetUniqueID() const{
+
+		return unique_;
+
+	}
+
+	inline void SceneNode::Attach(SceneNode & parent){
+
+		transform_.Attach(parent.GetTransform());
 
 	}
 

@@ -39,10 +39,11 @@ namespace gi_lib{
 			/// \brief No assignment operator.
 			DX11Output & operator=(const DX11Output &) = delete;
 
-			/// \brief Create a new DirectX11 graphics object.
+			/// \brief Create a new DirectX11 output window.
 			/// \param window The window where the final image will be displayed.
 			/// \param device The device used to create the resources.
 			/// \param factory The factory used to create the swapchain.
+			/// \param video_mode Video mode used to initialize the output.
 			DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & factory, const VideoMode & video_mode);
 
 			/// \brief Default destructor.

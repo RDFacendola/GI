@@ -15,28 +15,48 @@ NodeComponent::~NodeComponent(){}
 
 //////////////////// TRANSFORM ////////////////////////
 
-Transform::Transform() : Transform(Affine3f::Identity()){}
+Transform::Transform(const Affine3f & local_transform) :
+	local_transform_(local_transform),
+	world_transform_(Affine3f::Identity()),
+	parent_(nullptr){
+	
+}
+
+Transform::Transform(Transform && other) :
+	local_transform_(std::move(other.local_transform_)),
+	world_transform_(std::move(other.world_transform_)),
+	parent_(other.parent_),
+	children_(std::move(other.children_)){
+
+	//Remove "other" from the parent and add "this"
+	
+	if (parent_ != nullptr){
+
+		parent_->RemoveChild(other);
+
+		parent_->AddChild(*this);
+
+	}
+	
+}
 
 Transform::~Transform(){
 
-	auto parent = parent_;
+	if (parent_ != nullptr){
 
-	Detach();
+		parent_->RemoveChild(*this);
 
-	if (parent != nullptr){
-
-		for (auto child : children_){
+		for (auto & child : children_){
 
 			child->parent_ = nullptr;
-			parent->AddChild(*child);
+			child->Attach(*parent_);
 
 		}
 
 	}
-	else
-	{
+	else{
 
-		for (auto child : children_){
+		for (auto & child : children_){
 
 			child->parent_ = nullptr;
 
@@ -48,79 +68,41 @@ Transform::~Transform(){
 
 }
 
-Transform::Transform(const Affine3f & local_transform) :
-	local_transform_(local_transform),
-	world_transform_(Affine3f::Identity()),
-	parent_(nullptr){}
-
-Transform::Transform(Transform && other) :
-	local_transform_(std::move(other.local_transform_)),
-	world_transform_(std::move(other.world_transform_)),
-	parent_(other.parent_),
-	children_(std::move(other.children_)){
-
-	//Remove "other" from the parent and add "this"
-
-	if (parent_ != nullptr){
-
-		parent_->RemoveChild(other);
-
-		parent_->AddChild(*this);
-
-	}
-	
-}
-
-Transform & Transform::AddChild(Transform & child){
-
-	child.Detach();
-
-	children_.push_back(&child);
-
-	child.parent_ = this;
-
-	return *this;
-	
-}
-
-void Transform::Detach(){
+void Transform::Attach(Transform & parent){
 
 	if (parent_ != nullptr){
 
 		parent_->RemoveChild(*this);
-		parent_ = nullptr;
 
 	}
+	
+	parent.AddChild(*this);
+	
+	parent_ = &parent;
 
 }
 
-Maybe<Transform&> Transform::GetParent(){
+Transform& Transform::GetParent(){
 
-	if (parent_ != nullptr){
+	if (parent_ == nullptr){
 
-		return Maybe<Transform&>(*parent_);
-
-	}
-	else{
-
-		return Maybe<Transform&>();
+		throw RuntimeException(L"Transform::GetParent() failed: The node is a root");
 
 	}
+
+	return *parent_;
 
 }
 
-Maybe<const Transform&> Transform::GetParent() const{
+const Transform& Transform::GetParent() const{
 
-	if (parent_ != nullptr){
+	if (parent_ == nullptr){
 
-		return Maybe<const Transform&>(*parent_);
-
-	}
-	else{
-
-		return Maybe<const Transform&>();
+		throw RuntimeException(L"Transform::GetParent() failed: The node is a root");
 
 	}
+
+	return *parent_;
 
 }
 
@@ -144,6 +126,12 @@ void Transform::Update(const Time &){
 void Transform::UpdateOwner(const Time & time){
 
 	GetOwner().Update(time);
+
+}
+
+void Transform::AddChild(Transform & child){
+
+	children_.push_back(&child);
 
 }
 
