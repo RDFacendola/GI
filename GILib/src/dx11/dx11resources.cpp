@@ -9,7 +9,6 @@
 
 #include "..\..\include\core.h"
 #include "..\..\include\exceptions.h"
-#include "..\fbx\fbx.h"
 
 using namespace std;
 using namespace gi_lib;

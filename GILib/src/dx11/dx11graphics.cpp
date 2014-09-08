@@ -524,3 +524,9 @@ unique_ptr<Resource> DX11Manager::LoadResource(const type_index & resource_type,
 	return Loader::Load(resource_type, load_mode, device_, settings);
 
 }
+
+unique_ptr<Resource> DX11Manager::BuildResource(const type_index & resource_type, int build_mode, const void * settings){
+
+	return nullptr;
+
+}

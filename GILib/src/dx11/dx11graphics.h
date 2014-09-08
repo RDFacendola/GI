@@ -116,6 +116,8 @@ namespace gi_lib{
 
 			virtual unique_ptr<Resource> LoadResource(const type_index & resource_type, int load_mode, const void * settings);
 
+			virtual unique_ptr<Resource> BuildResource(const type_index & resource_type, int build_mode, const void * settings);
+
 		private:
 
 			ID3D11Device & device_;

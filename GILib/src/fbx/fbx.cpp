@@ -8,12 +8,16 @@
 
 #include <vector>
 #include <algorithm>
+#include <fbxsdk.h>
 
-#include "fbx.h"
-
+#include "..\..\include\fbx\fbx.h"
 #include "..\..\include\gimath.h"
 #include "..\..\include\exceptions.h"
+#include "..\..\include\graphics.h"
 #include "..\..\include\resources.h"
+#include "..\..\include\resource_traits.h"
+#include "..\..\include\scene.h"
+#include "..\..\include\components.h"
 
 using namespace std;
 using namespace gi_lib;
@@ -21,7 +25,7 @@ using namespace Eigen;
 
 namespace{
 
-	/// \brief Map a 4-element fbx vector to a 3-element eigen one.
+	/// \brief Map a 4-element fbx vector to a 3-element Eigen one.
 	/// \param src The source vector to convert.
 	/// \return Returns a 3-element vector. The last element of the source is discarded.
 	inline Vector3f FbxVector4ToEigenVector3f(const FbxVector4 & src){
@@ -32,13 +36,36 @@ namespace{
 
 	}
 
-	/// \brief Map a 2-element fbx vector to a 2-element eigen one.
+	/// \brief Map a 2-element fbx vector to a 2-element Eigen one.
 	/// \param src The source vector to convert.
 	/// \return Returns a 2-element vector.
 	inline Vector2f FbxVector2ToEigenVector2f(const FbxVector2 & src){
 
 		return Vector2f(static_cast<float>(src.mData[0]),
 			static_cast<float>(src.mData[1]));
+
+	}
+
+	/// \brief Map a fbx matrix to an Eigen 4x4 affine transformation.
+	inline Affine3f FbxMatrixToEigenAffine3f(const FbxMatrix & matrix){
+
+		Affine3f affine;
+
+		auto data = affine.data();
+
+		for (int column_index = 0; column_index < 4; ++column_index){
+
+			for (int row_index = 0; row_index < 4; ++row_index){
+
+				*data = static_cast<float>(matrix.Get(row_index, column_index));
+				
+				++data;
+
+			}
+			
+		}
+		
+		return affine;
 
 	}
 
@@ -145,34 +172,95 @@ namespace{
 		
 	}
 
-	void Visit(FbxNode * node, FbxGeometryConverter & converter){
+	BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> Parse(const FbxMesh & mesh){
+
+		if (!mesh.IsTriangleMesh()){
+
+			throw RuntimeException(L"Polygons other than triangles are not supported!");
+
+		}
+
+		BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> settings;
+
+		// Vertices aka Control Points
+
+		auto control_points = mesh.GetControlPoints();
+		auto vertex_count = mesh.GetControlPointsCount();
+
+		settings.positions.resize(vertex_count);
+
+		std::transform(&control_points[0],
+			&control_points[0] + vertex_count,
+			settings.positions.begin(),
+			FbxVector4ToEigenVector3f);
+
+		//Indices aka Polygon Vertices
+
+		auto polygon_vertices = mesh.GetPolygonVertices();
+		auto index_count = mesh.GetPolygonVertexCount();
+
+		settings.indices.resize(index_count);
+
+		std::copy(&polygon_vertices[0],
+			&polygon_vertices[0] + index_count,
+			settings.indices.begin());
+
+		//First layer of the mesh
+		if (mesh.GetLayerCount() > 0){
+
+			auto layer = mesh.GetLayer(0);
+
+			// Normals, Binormals, Tangents and UVs.
+			settings.normal_mapping = MapFbxLayerElement(layer->GetNormals(), settings.normals, FbxVector4ToEigenVector3f);
+			settings.binormal_mapping = MapFbxLayerElement(layer->GetBinormals(), settings.binormals, FbxVector4ToEigenVector3f);
+			settings.tangent_mapping = MapFbxLayerElement(layer->GetTangents(), settings.tangents, FbxVector4ToEigenVector3f);
+			settings.UV_mapping = MapFbxLayerElement(layer->GetUVs(), settings.UVs, FbxVector2ToEigenVector2f);
+
+		}
+
+		return settings;
+
+	}
+
+	/// \brief Walk the fbx scene and imports the nodes to a scene.
+	/// \param fbx_node Current fbx scene node.
+	/// \param scene_root Scene root where to import the nodes to.
+	/// \param resources Manager used to load various resources.
+	void WalkFbxScene(FbxNode * fbx_node, SceneNode & scene_root, Manager & resources){
 
 		// Node data
-		string name = node->GetName();
+		string name = fbx_node->GetName();
+		wstring wname = wstring(name.begin(), name.end());
 
-		auto transform = node->EvaluateLocalTransform();
+		//Create a new node and attack it to the scene
+		auto & scene_node = scene_root.GetScene().CreateNode(wname, FbxMatrixToEigenAffine3f(fbx_node->EvaluateLocalTransform()));
+
+		scene_node.SetParent(scene_root);
 
 		FbxNodeAttribute * attribute;
 
 		// Attributes
-		for (int attribute_index = 0; attribute_index < node->GetNodeAttributeCount(); ++attribute_index){
+		for (int attribute_index = 0; attribute_index < fbx_node->GetNodeAttributeCount(); ++attribute_index){
 
-			attribute = node->GetNodeAttributeByIndex(attribute_index);
+			attribute = fbx_node->GetNodeAttributeByIndex(attribute_index);
 
-				if (attribute->GetAttributeType() == FbxNodeAttribute::EType::eMesh){
+			if (attribute->GetAttributeType() == FbxNodeAttribute::EType::eMesh){
 
-					//Parse mesh
-					FBX::GetInstance().Parse(*static_cast<FbxMesh*>(attribute));
+				//Builds the mesh found
+				auto build_settings = Parse(*static_cast<FbxMesh*>(attribute));
 					
-				}
+				scene_node.Add<StaticGeometry>(resources.Build<Mesh, Mesh::BuildMode::kFromAttributes>(build_settings));
+
+			}
 				
 		}
 
 		// Recursion - Depth-first
 
-		for (int child_index = 0; child_index < node->GetChildCount(); ++child_index){
+		for (int child_index = 0; child_index < fbx_node->GetChildCount(); ++child_index){
 
-			Visit(node->GetChild(child_index), converter);
+			// The instantiated scene node becomes the root of the next level.
+			WalkFbxScene(fbx_node->GetChild(child_index), scene_node, resources);
 
 		}
 
@@ -182,46 +270,68 @@ namespace{
 
 /////////////////////// FBX IMPORTER ///////////////////////
 
-FBX::FBX(){
+/// \brief Deleter used by COM IUnknown interface.
 
-	manager_ = FbxManager::Create();
+struct FBXImporter::FbxSDK{
 
-	settings_ = FbxIOSettings::Create(manager_, IOSROOT);
+	FbxManager * manager;
 
-	converter_ = new FbxGeometryConverter(manager_);
+	FbxIOSettings * settings;
+
+	FbxGeometryConverter * converter;
+
+	~FbxSDK(){
+
+		if (converter){
+
+			delete converter;
+
+		}
+
+		if (settings){
+
+			settings->Destroy();
+
+		}
+
+		if (manager){
+
+			manager->Destroy();
+
+		}
+
+	}
+
+};
+
+FBXImporter::FBXImporter(){
+
+	// Pimpl FBX objects
+
+	fbx_sdk_ = new FbxSDK();
+
+	fbx_sdk_->manager = FbxManager::Create();
+
+	fbx_sdk_->settings = FbxIOSettings::Create(fbx_sdk_->manager, IOSROOT);
+
+	fbx_sdk_->converter = new FbxGeometryConverter(fbx_sdk_->manager);
 
 }
 
-FBX::~FBX(){
+FBXImporter::~FBXImporter(){
 
-	if (converter_){
+	delete fbx_sdk_;
 
-		delete converter_;
-
-	}
-	
-	if (settings_){
-
-		settings_->Destroy();
-
-	}
-	
-	if (manager_){
-
-		manager_->Destroy();
-
-	}
-	
 }
 
-void FBX::Import(const wstring & path){
+void FBXImporter::ImportScene(const wstring & file_name, SceneNode & scene_root, Manager & resources){
 
 	// Create the importer
-	string fbx_path = string(path.begin(), path.end());
+	string fbx_path = string(file_name.begin(), file_name.end());
 	
-	auto fbx_importer = FbxImporter::Create(manager_, "");
+	auto fbx_importer = FbxImporter::Create(fbx_sdk_->manager, "");
 
-	if (!fbx_importer->Initialize(fbx_path.c_str(), -1, manager_->GetIOSettings())) {
+	if (!fbx_importer->Initialize(fbx_path.c_str(), -1, fbx_sdk_->manager->GetIOSettings())) {
 
 		string error = fbx_importer->GetStatus().GetErrorString();
 
@@ -232,14 +342,14 @@ void FBX::Import(const wstring & path){
 	}
 
 	// Populate a new scene object.
-	auto fbx_scene = FbxScene::Create(manager_, "");
+	auto fbx_scene = FbxScene::Create(fbx_sdk_->manager, "");
 
 	fbx_importer->Import(fbx_scene);
 
 	fbx_importer->Destroy();
 
 	// Triangulate the scene (Better to do this offline, as it is heavily time-consuming)
-	if (!converter_->Triangulate(fbx_scene, true)){
+	if (!fbx_sdk_->converter->Triangulate(fbx_scene, true)){
 
 		throw RuntimeException(L"FbxGeometryConverter::Triangulate() failed.\n");
 
@@ -252,60 +362,12 @@ void FBX::Import(const wstring & path){
 
 		for (int child_index = 0; child_index < root_node->GetChildCount(); ++child_index){
 
-			Visit(root_node->GetChild(child_index), *converter_);
+			WalkFbxScene(root_node->GetChild(child_index), scene_root, resources);
 
 		}
 
 	}
 
-}
-
-BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> FBX::Parse(const FbxMesh & mesh){
-
-	if (!mesh.IsTriangleMesh()){
-
-		throw RuntimeException(L"Polygons other than triangles are not supported!");
-
-	}
-
-	BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> settings;
-
-	// Vertices aka Control Points
-
-	auto control_points = mesh.GetControlPoints();
-	auto vertex_count = mesh.GetControlPointsCount();
-
-	settings.positions.resize(vertex_count);
-
-	std::transform(&control_points[0],
-		&control_points[0] + vertex_count,
-		settings.positions.begin(),
-		FbxVector4ToEigenVector3f);
-
-	//Indices aka Polygon Vertices
-
-	auto polygon_vertices = mesh.GetPolygonVertices();
-	auto index_count = mesh.GetPolygonVertexCount();
-
-	settings.indices.resize(index_count);
-
-	std::copy(&polygon_vertices[0],
-		&polygon_vertices[0] + index_count,
-		settings.indices.begin());
-
-	//First layer of the mesh
-	if (mesh.GetLayerCount() > 0){
-
-		auto layer = mesh.GetLayer(0);
-
-		// Normals, Binormals, Tangents and UVs.
-		settings.normal_mapping = MapFbxLayerElement(layer->GetNormals(), settings.normals, FbxVector4ToEigenVector3f);
-		settings.binormal_mapping = MapFbxLayerElement(layer->GetBinormals(), settings.binormals, FbxVector4ToEigenVector3f);
-		settings.tangent_mapping = MapFbxLayerElement(layer->GetTangents(), settings.tangents, FbxVector4ToEigenVector3f);
-		settings.UV_mapping = MapFbxLayerElement(layer->GetUVs(), settings.UVs, FbxVector2ToEigenVector2f);
-
-	}
-
-	return settings;
+	fbx_scene->Destroy();
 
 }

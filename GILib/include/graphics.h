@@ -140,7 +140,7 @@ namespace gi_lib{
 		/// \param settings The creation settings.
 		/// \return Returns a pointer to the new resource.
 		template <typename TResource, typename TResource::BuildMode kLoadMode>
-		std::enable_if_t<std::is_base_of<Resource, TResource>::value, unique_ptr<TResource> > Build(const typename BuildSettings<TResource, kLoadMode> & settings);
+		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Build(const typename BuildSettings<TResource, kLoadMode> & settings);
 
 		/// \brief Get the amount of memory used by the resources loaded.
 		size_t GetSize();
@@ -158,10 +158,17 @@ namespace gi_lib{
 
 		/// \brief Load a resource.
 		/// \param resource_type Resource's type index.
-		/// \param load_mode Raw pointer to the load mode.
+		/// \param load_mode Load mode index.
 		/// \param settings Raw pointer to the load settings.
 		/// \return Returns a pointer to the loaded resource
 		virtual unique_ptr<Resource> LoadResource(const type_index & resource_type, int load_mode, const void * settings) = 0;
+
+		/// \brief Build a resource.
+		/// \param resource_type Resource's type index.
+		/// \param build_mode Build mode index.
+		/// \param settings Raw pointer to the build settings.
+		/// \return Returns a pointer to the built resource
+		virtual unique_ptr<Resource> BuildResource(const type_index & resource_type, int build_mode, const void * settings) = 0;
 
 	private:
 
@@ -234,6 +241,20 @@ namespace gi_lib{
 		//  This cast should be safe...
 		return static_pointer_cast<TResource>(resource);
 		
+	}
+
+	template <typename TResource, typename TResource::BuildMode kLoadMode>
+	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Manager::Build(const typename BuildSettings<TResource, kLoadMode> & settings){
+		
+		// Load the actual resource
+		auto resource = shared_ptr<Resource>(std::move(BuildResource(type_index(typeid(TResource)),
+													   static_cast<int>(kLoadMode),
+													   &settings)));
+
+		//resources_[key] = resource;														// To weak ptr
+
+		//  This cast should be safe...
+		return static_pointer_cast<TResource>(resource);
 	}
 
 }

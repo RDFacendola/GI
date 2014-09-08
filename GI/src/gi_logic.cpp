@@ -5,6 +5,7 @@
 #include <resources.h>
 
 #include <scene.h>
+#include <fbx\fbx.h>
 #include <Eigen/Geometry>
 
 using namespace ::std;
@@ -17,17 +18,14 @@ GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11)),
 scene_(make_unique<Scene>())
 {
-
-
+	
 	/////////////////////////////////////
 
 	auto & r = graphics_.GetManager();
-	
-	auto & f = scene_->CreateNode(L"First level", Affine3f(Translation3f(Vector3f(10.0f, 0.0f, 0.0f))));
 
-	auto & s = scene_->CreateNode(L"Second level", Affine3f(AngleAxisf(3.14159f, Vector3f::UnitZ())));
+	auto & node = scene_->CreateNode();
 
-	s.SetParent(f);
+	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\crysponza_tri.fbx", node, graphics_.GetManager());
 
 	/////////////////////////////////////
 

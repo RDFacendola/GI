@@ -66,10 +66,10 @@
     <ClInclude Include="include\graphics.h">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\fbx\fbx.h">
+    <ClInclude Include="include\gimath.h" />
+    <ClInclude Include="include\fbx\fbx.h">
       <Filter>FBX</Filter>
     </ClInclude>
-    <ClInclude Include="include\gimath.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">

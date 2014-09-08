@@ -26,7 +26,7 @@
     <ClInclude Include="include\core.h" />
     <ClInclude Include="src\dx11\dx11graphics.h" />
     <ClInclude Include="src\dx11\dx11resources.h" />
-    <ClInclude Include="src\fbx\fbx.h" />
+    <ClInclude Include="include\fbx\fbx.h" />
     <ClInclude Include="include\graphics.h" />
     <ClInclude Include="include\maybe.h" />
     <ClInclude Include="include\scene.h" />

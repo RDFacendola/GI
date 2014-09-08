@@ -307,6 +307,6 @@ namespace gi_lib{
 
 	}
 
-	inline void StaticGeometry::Update(const Time & time){}
+	inline void StaticGeometry::Update(const Time &){}
 	
 }
