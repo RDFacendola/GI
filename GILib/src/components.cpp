@@ -111,7 +111,7 @@ void Transform::Update(const Time &){
 	if (parent_ != nullptr)
 	{
 
-		world_transform_ = parent_->GetWorldTransform() * local_transform_;
+		world_transform_ = local_transform_ * parent_->GetWorldTransform();
 
 	}
 	else

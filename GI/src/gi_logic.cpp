@@ -19,12 +19,7 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	/////////////////////////////////////
 
 	auto & r = graphics_.GetManager();
-
-	auto ahah = r.Load<Mesh, Mesh::LoadMode::kFromFBX>({ L"crysponza.fbx", L"crysponza_00" });
-	//auto t = r.Load<Texture2D, Texture2D::LoadMode::kFromDDS>({ L"Data\\femalehead4K.dds" });
-
-
-
+	
 	/////////////////////////////////////
 
 	SetTitle(kWindowTitle);
@@ -43,11 +38,23 @@ GILogic::~GILogic(){
 
 void GILogic::Update(const Time & time){
 	
-	Scene s;
 
-	SceneNode & node = s.CreateNode(L"", Affine3f::Identity(), initializer_list<wstring>());
 
-	s.Update(time);
+	auto & n = Scene();
+
+	auto & f = n.CreateNode(L"First level", Affine3f(Eigen::Translation3f(Vector3f(10.0f, 0.0f, 0.0f))), initializer_list<wstring>{});
+
+	auto & s = n.CreateNode(L"Second level", Affine3f(Eigen::AngleAxisf(3.14159f, Vector3f::UnitZ())), initializer_list<wstring>{});
+
+	s.Attach(f);
+
+	n.Update(time);
+
+	auto wt = s.GetTransform().GetWorldTransform();
+
+	auto v = Vector3f(0.0f, 0.0f, 0.0f);
+
+	auto t = wt * v;
 
 	auto c = output_->GetAntialisingMode();
 
