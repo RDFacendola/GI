@@ -60,10 +60,11 @@ namespace gi_lib{
 		/// \param time The current application time.
 		void Update(const Time & time);
 
-		/// \brief Attach a scene node to the scene root.
+		/// \brief The provided node becomes a transform root.
 
+		/// The node is detached from the previous parent, if any.
 		/// \param node The node to attach to the scene root.
-		void AttachToRoot(SceneNode & node);
+		void SetRoot(SceneNode & node);
 
 	private:
 
@@ -98,7 +99,7 @@ namespace gi_lib{
 		/// \param name Name of the scene node. It may not be unique.
 		/// \param local_transform Affine transformation in local space.
 		/// \param tags List of tags associated to the scene node.
-		SceneNode(Scene & scene, const wstring & name, const Affine3f & local_transform, initializer_list<wstring> tags);
+		SceneNode(Scene & scene, const wstring & name, const Affine3f & local_transform, initializer_list<wstring> tags = {});
 		
 		/// \brief Move constructor.
 		SceneNode(SceneNode && other);
@@ -164,12 +165,24 @@ namespace gi_lib{
 
 		/// \brief Assign this instance transform to another parent.
 		/// \param parent The node who contains the new parent transform.
-		void Attach(SceneNode & parent);
+		void SetParent(SceneNode & parent);
+
+		/// \brief Check whether this node is a root.
+		/// \return Returns true if the node is a root, false otherwise.
+		bool IsRoot();
 
 		/// \brief Get the unique ID identifying this scene node.
 		/// \return Returns an unique object which is guaranteed to be unique among other scene nodes.
 		const Unique<SceneNode> & GetUniqueID() const;
 		
+		/// \brief Get the scene this node belongs to.
+		/// \return Returns the scene this node belongs to.
+		Scene & GetScene();
+
+		/// \brief Get the scene this node belongs to.
+		/// \return Returns the scene this node belongs to.
+		const Scene & GetScene() const;
+
 		/// \brief Updates the enabled components.
 
 		/// \param time The application time
@@ -209,7 +222,7 @@ namespace gi_lib{
 
 		auto node = std::make_unique<SceneNode>(*this, std::forward<TArgs>(args)...);
 
-		AttachToRoot(*node);
+		SetRoot(*node);
 
 		auto key = node->GetUniqueID();
 
@@ -326,9 +339,27 @@ namespace gi_lib{
 
 	}
 
-	inline void SceneNode::Attach(SceneNode & parent){
+	inline void SceneNode::SetParent(SceneNode & parent){
 
-		transform_.Attach(parent.GetTransform());
+		transform_.SetParent(parent.GetTransform());
+
+	}
+
+	inline bool SceneNode::IsRoot(){
+
+		return transform_.IsRoot();
+
+	}
+
+	Scene & SceneNode::GetScene(){
+
+		return scene_;
+
+	}
+
+	const Scene & SceneNode::GetScene() const{
+
+		return scene_;
 
 	}
 

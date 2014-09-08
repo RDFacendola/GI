@@ -96,7 +96,7 @@ namespace gi_lib{
 
 		/// \brief Destroy the transfom.
 
-		/// \brief Child transforms are attached to the current parent of this instance.
+		/// \brief Child transforms become roots.
 		~Transform();
 
 		/// \brief Get the local transfom.
@@ -118,7 +118,7 @@ namespace gi_lib{
 		/// \brief Assign this transform to a new parent.
 
 		/// The transform is detached first and its previous parent is updated accordingly.
-		void Attach(Transform & parent);
+		void SetParent(Transform & parent);
 
 		/// \brief Get the parent transform.
 
@@ -130,7 +130,7 @@ namespace gi_lib{
 		/// \return Returns the transform's parent if present. Returns nullptr if this component has no parent transform.
 		const Transform & GetParent() const;
 
-		/// \brief Check wether this node is a root.
+		/// \brief Check whether this node is a root.
 		/// \return Returns true if the node is a root, false otherwise.
 		bool IsRoot() const;
 

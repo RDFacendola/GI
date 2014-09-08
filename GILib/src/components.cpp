@@ -42,25 +42,10 @@ Transform::Transform(Transform && other) :
 
 Transform::~Transform(){
 
-	if (parent_ != nullptr){
+	for (auto & child : children_){
 
-		parent_->RemoveChild(*this);
-
-		for (auto & child : children_){
-
-			child->parent_ = nullptr;
-			child->Attach(*parent_);
-
-		}
-
-	}
-	else{
-
-		for (auto & child : children_){
-
-			child->parent_ = nullptr;
-
-		}
+		child->parent_ = nullptr; // Klever optimization to prevent numerous this->RemoveChild(.)
+		GetOwner().GetScene().SetRoot(child->GetOwner());
 
 	}
 
@@ -68,7 +53,7 @@ Transform::~Transform(){
 
 }
 
-void Transform::Attach(Transform & parent){
+void Transform::SetParent(Transform & parent){
 
 	if (parent_ != nullptr){
 

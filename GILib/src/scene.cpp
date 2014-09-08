@@ -25,9 +25,9 @@ void Scene::Update(const Time & time){
 
 }
 
-void Scene::AttachToRoot(SceneNode & node){
+void Scene::SetRoot(SceneNode & node){
 
-	node.Attach(*root_);
+	node.SetParent(*root_);
 
 }
 
@@ -61,7 +61,7 @@ SceneNode::SceneNode(SceneNode && other) :
 
 	}
 
-	scene_.AttachToRoot(*this);
+	scene_.SetRoot(*this);
 
 }
 
