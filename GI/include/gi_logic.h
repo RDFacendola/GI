@@ -4,6 +4,7 @@
 
 #include "core.h"
 #include "graphics.h"
+#include "scene.h"
 
 using namespace gi_lib;
 using namespace std;
@@ -26,5 +27,7 @@ private:
 	Graphics & graphics_;
 
 	unique_ptr<Output> output_;
+
+	unique_ptr<Scene> scene_;
 
 };

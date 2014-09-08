@@ -44,13 +44,19 @@ Transform::~Transform(){
 
 	for (auto & child : children_){
 
-		child->parent_ = nullptr; // Klever optimization to prevent numerous this->RemoveChild(.)
+		child->parent_ = nullptr;
 		GetOwner().GetScene().SetRoot(child->GetOwner());
 
 	}
 
 	children_.clear();
 
+	if (parent_ != nullptr){
+
+		parent_->RemoveChild(*this);
+
+	}
+	
 }
 
 void Transform::SetParent(Transform & parent){

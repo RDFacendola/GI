@@ -10,6 +10,12 @@ using namespace ::std;
 Scene::Scene():
 	root_( std::make_unique<SceneNode>(*this) ){}
 
+Scene::~Scene(){
+
+	nodes_.clear();
+
+}
+
 void Scene::DestroyNode(SceneNode & node){
 
 	auto key = node.GetUniqueID();

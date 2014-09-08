@@ -14,7 +14,8 @@ using namespace ::Eigen;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
 GILogic::GILogic() :
-graphics_(Graphics::GetAPI(API::DIRECTX_11))
+graphics_(Graphics::GetAPI(API::DIRECTX_11)),
+scene_(make_unique<Scene>())
 {
 
 
@@ -22,6 +23,12 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 
 	auto & r = graphics_.GetManager();
 	
+	auto & f = scene_->CreateNode(L"First level", Affine3f(Translation3f(Vector3f(10.0f, 0.0f, 0.0f))));
+
+	auto & s = scene_->CreateNode(L"Second level", Affine3f(AngleAxisf(3.14159f, Vector3f::UnitZ())));
+
+	s.SetParent(f);
+
 	/////////////////////////////////////
 
 	SetTitle(kWindowTitle);
@@ -40,25 +47,7 @@ GILogic::~GILogic(){
 
 void GILogic::Update(const Time & time){
 	
-
-
-	auto & n = Scene();
-
-	auto & f = n.CreateNode(L"First level", Affine3f(Translation3f(Vector3f(10.0f, 0.0f, 0.0f))));
-
-	auto & s = n.CreateNode(L"Second level", Affine3f(AngleAxisf(3.14159f, Vector3f::UnitZ())));
-
-	s.SetParent(f);
-
-	n.Update(time);
-
-	auto wt = s.GetTransform().GetWorldTransform();
-
-	auto v = Vector3f(0.0f, 0.0f, 0.0f);
-
-	auto t = wt * v;
-
-	auto c = output_->GetAntialisingMode();
+	scene_->Update(time);
 
 	output_->Commit();
 	

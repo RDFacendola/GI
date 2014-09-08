@@ -38,6 +38,9 @@ namespace gi_lib{
 		/// \brief Create a new scene.
 		Scene();
 
+		/// Destroy all the nodes.
+		~Scene();
+
 		/// \brief No assignment operator.
 		Scene & operator=(const Scene &) = delete;
 
@@ -351,13 +354,13 @@ namespace gi_lib{
 
 	}
 
-	Scene & SceneNode::GetScene(){
+	inline Scene & SceneNode::GetScene(){
 
 		return scene_;
 
 	}
 
-	const Scene & SceneNode::GetScene() const{
+	inline const Scene & SceneNode::GetScene() const{
 
 		return scene_;
 
