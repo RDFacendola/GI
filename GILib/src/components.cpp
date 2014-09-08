@@ -99,6 +99,9 @@ const Transform& Transform::GetParent() const{
 
 void Transform::Update(const Time &){
 
+	// TODO: Implementing some "dirty" flag will prevent useless matrix products that do not change.
+	// TODO: It may be useful using some "static" flag somewhere...
+
 	if (parent_ != nullptr)
 	{
 
