@@ -6,13 +6,16 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
+#include "resources.h"
 #include "gimath.h"
 #include "timer.h"
 #include "maybe.h"
 
 using ::Eigen::Affine3f;
 using ::std::vector;
+using ::std::shared_ptr;
 
 namespace gi_lib{
 
@@ -170,6 +173,40 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Contains informations about static geometry.
+	class StaticGeometry : public NodeComponent{
+
+	public:
+
+		/// \brief Create a new geometry component.
+		/// \param mesh Pointer to the mesh bound to this component.
+		StaticGeometry(const shared_ptr<Mesh> & mesh);
+
+		/// \brief Set a new mesh.
+		/// \param mesh Pointer to the mesh to set.
+		void SetMesh(const shared_ptr<Mesh> & mesh);
+
+		/// \brief Get a pointer to this component's mesh.
+		/// \return Return a pointer to this component's mesh.
+		shared_ptr<Mesh> GetMesh();
+
+		/// \brief Get a pointer to this component's mesh.
+		/// \return Return a pointer to this component's mesh.
+		shared_ptr<const Mesh> GetMesh() const;
+
+	protected:
+
+		/// \brief Update the component.
+
+		/// \param time The current application time.
+		virtual void Update(const Time & time);
+
+	private:
+
+		shared_ptr<Mesh> mesh_;
+		
+	};
+
 	//
 
 	inline SceneNode & NodeComponent::GetOwner(){
@@ -245,5 +282,31 @@ namespace gi_lib{
 		return children_.size();
 
 	}
+	
+	//
+
+	inline StaticGeometry::StaticGeometry(const shared_ptr<Mesh> & mesh):
+		mesh_(mesh){}
+
+
+	inline void StaticGeometry::SetMesh(const shared_ptr<Mesh> & mesh){
+
+		mesh_ = mesh;
+
+	} 
+
+	inline shared_ptr<Mesh> StaticGeometry::GetMesh(){
+
+		return mesh_;
+
+	}
+		
+	inline shared_ptr<const Mesh> StaticGeometry::GetMesh() const{
+
+		return std::static_pointer_cast<const Mesh>(mesh_);
+
+	}
+
+	inline void StaticGeometry::Update(const Time & time){}
 	
 }
