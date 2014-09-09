@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\components.h" />
+    <ClInclude Include="include\functional.h" />
     <ClInclude Include="include\gimath.h" />
     <ClInclude Include="include\resource_traits.h" />
     <ClInclude Include="src\dx11\dx11shared.h" />

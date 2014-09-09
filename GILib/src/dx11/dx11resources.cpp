@@ -5,10 +5,14 @@
 
 #include <DDSTextureLoader.h>
 #include <DirectXTex.h>
+#include <DirectXMath.h>
+#include <Eigen/Core>
+
 #include <math.h>
 
 #include "..\..\include\core.h"
 #include "..\..\include\exceptions.h"
+#include "..\..\include\functional.h"
 
 using namespace std;
 using namespace gi_lib;
@@ -57,6 +61,33 @@ namespace{
 
 	}
 	
+	/// \brief Convert an Eigen Vector3f to an XMFLOAT3
+	XMFLOAT3 EigenVector3fToXMFLOAT3(const Eigen::Vector3f & vector){
+
+		return XMFLOAT3(vector.x(), 
+						vector.y(), 
+						vector.z());
+
+	}
+
+	/// \brief Convert an Eigen Vector2f to an XMFLOAT2
+	XMFLOAT2 EigenVector2fToXMFLOAT2(const Eigen::Vector2f & vector){
+
+		return XMFLOAT2(vector.x(),
+						vector.y());
+
+	}
+
+	struct NormalTexturedVertex{
+
+		XMFLOAT3 position;
+		XMFLOAT3 normal;
+		XMFLOAT3 binormal;
+		XMFLOAT3 target;
+		XMFLOAT2 UV;
+
+	};
+
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
@@ -124,8 +155,85 @@ void DX11Texture2D::SetPriority(ResourcePriority priority){
 
 DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings){
 
-	vertex_count_ = settings.positions.size();
+	//If exists some attribute which is defined BY_INDEX, the mesh won't used indexing
 
+	if (settings.normal_mapping == AttributeMappingMode::BY_INDEX ||
+		settings.binormal_mapping == AttributeMappingMode::BY_INDEX ||
+		settings.tangent_mapping == AttributeMappingMode::BY_INDEX ||
+		settings.UV_mapping == AttributeMappingMode::BY_INDEX ||
+		settings.indices.size() == 0){
+
+		LoadUnindexed(device, settings);
+
+	}
+	else
+	{
+
+		LoadIndexed(device, settings);
+
+	}
+
+}
+
+void DX11Mesh::LoadIndexed(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings){
+
+	throw RuntimeException(L"Not implemented yet!");
+
+}
+
+void DX11Mesh::LoadUnindexed(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings){
+
+#pragma push_macro("max")
+#undef max
+
+	//Zip position, normals, binormals, tangents and uvs together.
+
+	vector<NormalTexturedVertex> vertices(std::max(settings.positions.size(),
+		settings.normals.size()));
+
+	if (settings.indices.size() > 0){
+
+		// Use the indices to address the components.
+
+	}
+	else
+	{
+
+		// i-th element of each attribute belongs to the i-th vertex. (everything should be mapped by index).
+
+		auto begin = make_zip(settings.positions.begin(),
+							  settings.normals.begin());
+
+		auto end = make_zip(settings.positions.end(),
+							settings.normals.end());
+		
+	}
+
+	// Create the vertex buffer
+
+	// Fill in a buffer description.
+	D3D11_BUFFER_DESC bufferDesc;
+	bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+	bufferDesc.ByteWidth = sizeof(NormalTexturedVertex) * vertices.size();
+	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bufferDesc.CPUAccessFlags = 0;
+	bufferDesc.MiscFlags = 0;
+
+	// Fill in the subresource data.
+	D3D11_SUBRESOURCE_DATA InitData;
+	InitData.pSysMem = &vertices[0];
+	InitData.SysMemPitch = 0;
+	InitData.SysMemSlicePitch = 0;
+
+	// Create the vertex buffer.
+	ID3D11Buffer * vertex_buffer;
+
+	THROW_ON_FAIL(device.CreateBuffer(&bufferDesc, &InitData, &vertex_buffer));
+
+	vertex_buffer_.reset(vertex_buffer);
+
+	
+#pragma pop_macro("max")
 
 }
 

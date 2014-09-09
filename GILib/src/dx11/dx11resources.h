@@ -94,9 +94,13 @@ namespace gi_lib{
 
 		private:
 
-			unique_ptr<ID3D11Buffer, COMDeleter> vertex_buffer;
+			void LoadIndexed(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings);
 
-			unique_ptr<ID3D11Buffer, COMDeleter> index_buffer;
+			void LoadUnindexed(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings);
+
+			unique_ptr<ID3D11Buffer, COMDeleter> vertex_buffer_;
+
+			unique_ptr<ID3D11Buffer, COMDeleter> index_buffer_;
 
 			unsigned int vertex_count_;
 
