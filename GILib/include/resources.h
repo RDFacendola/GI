@@ -120,9 +120,7 @@ namespace gi_lib{
 
 		/// \brief Enumeration of all possible load modes.
 		enum class LoadMode{
-
-			kFromFBX = 0,				///< The resource is loaded from a FBX file.
-
+		
 		};
 
 		/// \brief Enumeration of all possible build modes.

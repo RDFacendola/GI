@@ -120,7 +120,7 @@ namespace{
 
 	}
 
-	/// Convert a dxgi mode to a video mode.
+	/// \brief Convert a dxgi mode to a video mode.
 	VideoMode DXGIModeToVideoMode(const DXGI_MODE_DESC & dxgi_mode){
 
 		VideoMode video_mode;
@@ -133,7 +133,7 @@ namespace{
 
 	}
 
-	/// Enumerate the supported DXGI video modes
+	/// \brief Enumerate the supported DXGI video modes
 	vector<DXGI_MODE_DESC> EnumerateDXGIModes(IDXGIAdapter & adapter){
 
 		IDXGIOutput * adapter_output = nullptr;
@@ -161,7 +161,7 @@ namespace{
 
 	}
 
-	/// Enumerate the supported video modes. Filters by resolution and refresh rate
+	/// \brief Enumerate the supported video modes. Filters by resolution and refresh rate
 	vector<VideoMode> EnumerateVideoModes(IDXGIAdapter & adapter){
 
 		auto dxgi_modes = EnumerateDXGIModes(adapter);
@@ -217,7 +217,7 @@ namespace{
 
 	}
 
-	/// Enumerate the supported antialiasing modes
+	/// \brief Enumerate the supported antialiasing modes
 	vector<AntialiasingMode> EnumerateAntialiasingModes(ID3D11Device & device){
 
 		vector<AntialiasingMode> antialiasing_modes;
@@ -267,7 +267,7 @@ namespace{
 
 	}
 
-	// Loader class. Maps every resource with their respective loader.
+	/// \brief Loader class. Maps every resource with their respective loader.
 	class Loader{
 
 		using LoaderFunction = unique_ptr<Resource>(*)(ID3D11Device &, const void *);
@@ -278,9 +278,10 @@ namespace{
 
 		/// \brief Load a resource.
 		/// \param type_index Type of the resource to load.
+		/// \param load_mode Index of the load mode.
 		/// \param device Device used to create the resource.
-		/// \param path Path of the resource.
-		/// \return Returns a shared pointer to the loaded resource
+		/// \param settings Settings used to load the resource.
+		/// \return Returns a shared pointer to the loaded resource.
 		static unique_ptr<Resource> Load(const std::type_index & resource_type, int load_mode, ID3D11Device & device, const void * settings){
 
 			auto key = make_pair(resource_type, load_mode);
@@ -320,10 +321,66 @@ namespace{
 
 	};
 
+	/// \brief Builder class. Maps every resource with their respective builder.
+	class Builder{
+
+		using BuilderFunction = unique_ptr<Resource>(*)(ID3D11Device &, const void *);
+		using BuilderKey = pair < std::type_index, int >;
+		using BuilderMap = map < BuilderKey, BuilderFunction >;
+
+	public:
+
+		/// \brief Build a resource.
+		/// \param type_index Type of the resource to load.
+		/// \param build_mode Index of the build mode.
+		/// \param device Device used to create the resource.
+		/// \param settings Settings used to build the resource.
+		/// \return Returns a shared pointer to the built resource.
+		static unique_ptr<Resource> Build(const std::type_index & resource_type, int build_mode, ID3D11Device & device, const void * settings){
+
+			auto key = make_pair(resource_type, build_mode);
+
+			auto it = builder_map_.find(key);
+
+			return it == builder_map_.end() ?
+				unique_ptr<Resource>() :			// Not supported
+				it->second(device, settings);
+
+		}
+
+	private:
+
+		/// \brief Build routine dispatcher.
+		template <typename TResource, typename TResource::BuildMode kBuildMode>
+		static unique_ptr<Resource> BuildResource(ID3D11Device & device, const void * settings){
+
+			// The resource created is the mapped type of TResource (eg: Texture2D => DX11Texture2D)
+			return make_unique<typename ResourceMapping<TResource>::TMapped>(device, 
+				*static_cast<const BuildSettings<TResource, kBuildMode>*>(settings));
+
+		}
+
+		/// \brief Register the support for a resource type.
+		template <typename TResource, typename TResource::BuildMode kBuildMode>
+		static BuilderMap::value_type Register(){
+
+			auto key = make_pair(std::type_index(typeid(TResource)), static_cast<int>(kBuildMode));
+			auto value = BuildResource < TResource, kBuildMode >;
+
+			return BuilderMap::value_type(key, value);
+
+		}
+
+		static const BuilderMap builder_map_;
+
+	};
+
 	// Add support for new resources HERE!
 
 	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, Texture2D::LoadMode::kFromDDS>() };
 
+	const Builder::BuilderMap Builder::builder_map_{ Builder::Register<Mesh, Mesh::BuildMode::kFromAttributes>() };
+	
 }
 
 //////////////////////////////////// GRAPHICS ////////////////////////////////////
@@ -527,6 +584,6 @@ unique_ptr<Resource> DX11Manager::LoadResource(const type_index & resource_type,
 
 unique_ptr<Resource> DX11Manager::BuildResource(const type_index & resource_type, int build_mode, const void * settings){
 
-	return nullptr;
+	return Builder::Build(resource_type, build_mode, device_, settings);
 
 }

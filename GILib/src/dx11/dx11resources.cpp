@@ -122,7 +122,10 @@ void DX11Texture2D::SetPriority(ResourcePriority priority){
 
 ///////////////////////////// MESH ////////////////////////////////////////////////
 
-DX11Mesh::DX11Mesh(ID3D11Device & device, const LoadSettings<Mesh, Mesh::LoadMode::kFromFBX> & settings){
+DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings){
+
+	vertex_count_ = settings.positions.size();
+
 
 }
 

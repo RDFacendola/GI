@@ -78,7 +78,7 @@ namespace gi_lib{
 
 		public:
 
-			DX11Mesh(ID3D11Device & device, const LoadSettings<Mesh, Mesh::LoadMode::kFromFBX> & settings);
+			DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings);
 
 			virtual size_t GetSize() const override;
 

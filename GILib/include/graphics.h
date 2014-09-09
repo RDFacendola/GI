@@ -251,8 +251,6 @@ namespace gi_lib{
 													   static_cast<int>(kLoadMode),
 													   &settings)));
 
-		//resources_[key] = resource;														// To weak ptr
-
 		//  This cast should be safe...
 		return static_pointer_cast<TResource>(resource);
 	}

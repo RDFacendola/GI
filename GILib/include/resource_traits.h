@@ -22,14 +22,6 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Settings used to load a Mesh from a FBX file.
-	template <> struct LoadSettings < Mesh, Mesh::LoadMode::kFromFBX > {
-
-		wchar_t * file_name;		///< \brief Name of the scene file relative to the resource folder.
-		wchar_t * mesh_name;		///< \brief Mesh node name.
-
-	};
-
 	/// \brief Settings used to build a mesh from its attributes' description.
 	template <> struct BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes>{
 
