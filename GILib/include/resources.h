@@ -37,15 +37,24 @@ namespace gi_lib{
 	/// \brief The vertex declares its position only.
 	struct VertexFormatPosition{
 
-		Vector3f position;			///< Position of the vertex
+		Vector3f position;			///< Position of the vertex.
 
 	};
 
 	/// \brief The vertex declares both its position and texture coordinates.
 	struct VertexFormatTextured{
 
-		Vector3f position;			///< Position of the vertex
-		Vector2f tex_coord;			///< Texture coordinates
+		Vector3f position;			///< Position of the vertex.
+		Vector2f tex_coord;			///< Texture coordinates.
+
+	};
+
+	/// \brief The vertex declares position, texture coordinates and normals.
+	struct VertexFormatNormalTextured{
+
+		Vector3f position;			///< Position of the vertex.
+		Vector3f normal;			///< Vertex normal.
+		Vector2f tex_coord;			///< Texture coordinates.
 
 	};
 	
@@ -125,8 +134,9 @@ namespace gi_lib{
 		/// \brief Enumeration of all possible build modes.
 		enum class BuildMode{
 
-			kPosition = 0,		///< The mesh declares the vertices' coordinates.
-			kTextured,			///< The mesh declares the vertices' coordinates ans texture coordinates.
+			kPosition = 0,		///< The mesh declares vertex coordinates only.
+			kTextured,			///< The mesh declares vertex coordinates and texture coordinates.
+			kNormalTextured,	///< The mesh declares vertex coordinates, texture coordinates and vertex normal.
 
 		};
 

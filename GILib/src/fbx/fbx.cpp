@@ -80,6 +80,17 @@ namespace{
 
 	}
 
+	/// \brief Check whether the mesh defines normals.
+	bool HasNormals(const FbxMesh & mesh){
+
+		auto layer = mesh.GetLayer(0);
+
+		return layer != nullptr &&
+			layer->GetNormals() != nullptr &&
+			layer->GetNormals()->GetMappingMode() == FbxLayerElement::EMappingMode::eByControlPoint;
+
+	}
+
 	/// \brief Read the vertices from a fbx mesh.
 	template <typename TFormat>
 	vector<TFormat> ReadVertices(const FbxMesh & mesh);
@@ -237,8 +248,17 @@ namespace{
 
 		if (HasTextureCoordinates(mesh)){
 
-			BuildMesh<VertexFormatTextured>(mesh, scene_root, resources);
+			if (HasNormals(mesh)){
 
+				BuildMesh<VertexFormatNormalTextured>(mesh, scene_root, resources);
+
+			}
+			else{
+
+				BuildMesh<VertexFormatTextured>(mesh, scene_root, resources);
+
+			}
+			
 		}
 		else{
 

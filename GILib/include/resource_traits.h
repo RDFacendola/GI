@@ -22,7 +22,7 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Settings used to build a mesh from its attributes' description.
+	/// \brief Build settings for position-only meshes.
 	template <> struct BuildSettings<Mesh, Mesh::BuildMode::kPosition>{
 
 		/// \brief Indices' data.
@@ -33,7 +33,7 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Settings used to build a mesh from its attributes' description.
+	/// \brief Build settings for textured meshes.
 	template <> struct BuildSettings<Mesh, Mesh::BuildMode::kTextured>{
 
 		/// \brief Indices' data.
@@ -41,6 +41,17 @@ namespace gi_lib{
 
 		/// \brief Vertices' data.
 		vector<VertexFormatTextured> vertices;
+
+	};
+
+	/// \brief Build settings for normal textured meshes..
+	template <> struct BuildSettings<Mesh, Mesh::BuildMode::kNormalTextured>{
+
+		/// \brief Indices' data.
+		vector<unsigned int> indices;
+
+		/// \brief Vertices' data.
+		vector<VertexFormatNormalTextured> vertices;
 
 	};
 	

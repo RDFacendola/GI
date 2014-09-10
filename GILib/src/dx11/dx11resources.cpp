@@ -207,13 +207,13 @@ DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildM
 	if (settings.indices.size() > 0){
 
 		index_buffer_.reset(MakeIndexBuffer(device, settings.indices));
-
-		polygon_count_ = settings.indices.size() / 3;
+		
+		polygon_count_ = settings.indices.size();
 
 	}
 	else{
 
-		polygon_count_ = vertex_count_ / 3;
+		polygon_count_ = settings.vertices.size() / 3;
 
 	}
 
@@ -232,12 +232,36 @@ DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildM
 
 		index_buffer_.reset(MakeIndexBuffer(device, settings.indices));
 
-		polygon_count_ = settings.indices.size() / 3;
+		polygon_count_ = settings.indices.size();
 
 	}
 	else{
 
-		polygon_count_ = vertex_count_ / 3;
+		polygon_count_ = settings.vertices.size() / 3;
+
+	}
+
+	vertex_count_ = settings.vertices.size();
+	LOD_count_ = 1;
+
+}
+
+DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kNormalTextured> & settings){
+
+	// Normal, textured mesh.
+
+	vertex_buffer_.reset(MakeVertexBuffer(device, settings.vertices));
+
+	if (settings.indices.size() > 0){
+
+		index_buffer_.reset(MakeIndexBuffer(device, settings.indices));
+	
+		polygon_count_ = settings.indices.size();
+
+	}
+	else{
+
+		polygon_count_ = settings.vertices.size() / 3;
 
 	}
 

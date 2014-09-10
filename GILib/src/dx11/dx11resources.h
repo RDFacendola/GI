@@ -82,6 +82,8 @@ namespace gi_lib{
 
 			DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kTextured> & settings);
 
+			DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kNormalTextured> & settings);
+
 			virtual size_t GetSize() const override;
 
 			virtual ResourcePriority GetPriority() const override;
@@ -105,7 +107,7 @@ namespace gi_lib{
 			size_t polygon_count_;
 
 			size_t LOD_count_;
-
+			
 		};
 
 		/// \brief DirectX11 resource mapping template.
