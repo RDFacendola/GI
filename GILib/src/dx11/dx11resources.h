@@ -45,7 +45,7 @@ namespace gi_lib{
 
 			virtual size_t GetHeight() const override;
 
-			virtual unsigned int GetMipMapCount() const override;
+			virtual size_t GetMipMapCount() const override;
 
 			virtual WrapMode GetWrapMode() const override;
 
@@ -66,7 +66,7 @@ namespace gi_lib{
 
 			size_t bits_per_pixel_;
 
-			unsigned int mip_levels_;
+			size_t mip_levels_;
 			
 			WrapMode wrap_mode_;
 
@@ -78,7 +78,9 @@ namespace gi_lib{
 
 		public:
 
-			DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings);
+			DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kPosition> & settings);
+
+			DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kTextured> & settings);
 
 			virtual size_t GetSize() const override;
 
@@ -86,27 +88,23 @@ namespace gi_lib{
 
 			virtual void SetPriority(ResourcePriority priority) override;
 
-			virtual unsigned int GetVertexCount() const override;
+			virtual size_t GetVertexCount() const override;
 
-			virtual unsigned int GetPolygonCount() const override;
+			virtual size_t GetPolygonCount() const override;
 
-			virtual unsigned int GetLODCount() const override;
+			virtual size_t GetLODCount() const override;
 
 		private:
-
-			void LoadIndexed(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings);
-
-			void LoadUnindexed(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings);
 
 			unique_ptr<ID3D11Buffer, COMDeleter> vertex_buffer_;
 
 			unique_ptr<ID3D11Buffer, COMDeleter> index_buffer_;
 
-			unsigned int vertex_count_;
+			size_t vertex_count_;
 
-			unsigned int polygon_count_;
+			size_t polygon_count_;
 
-			unsigned int LOD_count_;
+			size_t LOD_count_;
 
 		};
 
@@ -154,7 +152,7 @@ namespace gi_lib{
 
 		}
 
-		inline unsigned int DX11Texture2D::GetMipMapCount() const{
+		inline size_t DX11Texture2D::GetMipMapCount() const{
 
 			return mip_levels_;
 
@@ -174,19 +172,19 @@ namespace gi_lib{
 
 		//
 
-		inline unsigned int DX11Mesh::GetVertexCount() const{
+		inline size_t DX11Mesh::GetVertexCount() const{
 
 			return vertex_count_;
 
 		}
 
-		inline unsigned int DX11Mesh::GetPolygonCount() const{
+		inline size_t DX11Mesh::GetPolygonCount() const{
 
 			return polygon_count_;
 
 		}
 
-		inline unsigned int DX11Mesh::GetLODCount() const{
+		inline size_t DX11Mesh::GetLODCount() const{
 
 			return LOD_count_;
 

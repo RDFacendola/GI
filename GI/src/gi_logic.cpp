@@ -19,6 +19,8 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11)),
 scene_(make_unique<Scene>())
 {
 	
+	auto k = sizeof(VertexFormatTextured);
+
 	/////////////////////////////////////
 
 	auto & r = graphics_.GetManager();

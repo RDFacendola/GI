@@ -34,22 +34,21 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Mapping mode between attributes and polygons.
-	enum class AttributeMappingMode{
+	/// \brief The vertex declares its position only.
+	struct VertexFormatPosition{
 
-		/// \brief Unknown mapping. Mesh does not support this mode.
-		UNKNOWN,
-
-		/// \brief Attributes are mapped to vertices.
-		/// A vertex shared among different polygons is guaranteed to have the same attribute.
-		BY_VERTEX,	 
-
-		/// \brief Attributes are mapped to indices.
-		/// A vertex shared among different polygons may have different attributes.
-		BY_INDEX,
+		Vector3f position;			///< Position of the vertex
 
 	};
 
+	/// \brief The vertex declares both its position and texture coordinates.
+	struct VertexFormatTextured{
+
+		Vector3f position;			///< Position of the vertex
+		Vector2f tex_coord;			///< Texture coordinates
+
+	};
+	
 	/// \brief Base interface for graphical resources.
 	/// \author Raffaele D. Facendola.
 	class Resource{
@@ -98,7 +97,7 @@ namespace gi_lib{
 
 		/// \brief Get the mip map level count.
 		/// \return Returns the mip map level count.
-		virtual unsigned int GetMipMapCount() const = 0;
+		virtual size_t GetMipMapCount() const = 0;
 
 		/// \brief Get the wrap mode.
 
@@ -126,7 +125,8 @@ namespace gi_lib{
 		/// \brief Enumeration of all possible build modes.
 		enum class BuildMode{
 
-			kFromAttributes = 0,		///< Build a mesh from its attributes' description.
+			kPosition = 0,		///< The mesh declares the vertices' coordinates.
+			kTextured,			///< The mesh declares the vertices' coordinates ans texture coordinates.
 
 		};
 
@@ -134,17 +134,17 @@ namespace gi_lib{
 
 		/// \brief Get the vertices count.
 		/// \return Returns the vertices count.
-		virtual unsigned int GetVertexCount() const = 0;
+		virtual size_t GetVertexCount() const = 0;
 
 		/// \brief Get the polygons count.
 
 		/// A polygon is a triangle.
 		/// \return Returns the polygons count.
-		virtual unsigned int GetPolygonCount() const = 0;
+		virtual size_t GetPolygonCount() const = 0;
 
 		/// \brief Get the level of detail count.
 		/// \return Returns the level of detail count.
-		virtual unsigned int GetLODCount() const = 0;
+		virtual size_t GetLODCount() const = 0;
 
 	};
 

@@ -78,16 +78,61 @@ namespace{
 
 	}
 
-	struct NormalTexturedVertex{
+	/// \brief Create an index buffer
+	template <typename TVertexFormat>
+	ID3D11Buffer * MakeVertexBuffer(ID3D11Device & device, const vector<TVertexFormat> & vertices){
 
-		XMFLOAT3 position;
-		XMFLOAT3 normal;
-		XMFLOAT3 binormal;
-		XMFLOAT3 target;
-		XMFLOAT2 UV;
+		ID3D11Buffer * vertex_buffer = nullptr;
 
-	};
+		// Fill in a buffer description.
+		D3D11_BUFFER_DESC buffer_desc;
 
+		buffer_desc.Usage = D3D11_USAGE_IMMUTABLE;
+		buffer_desc.ByteWidth = static_cast<UINT>(sizeof(TVertexFormat) * vertices.size());
+		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		buffer_desc.CPUAccessFlags = 0;
+		buffer_desc.MiscFlags = 0;
+
+		// Fill in the subresource data.
+		D3D11_SUBRESOURCE_DATA init_data;
+
+		init_data.pSysMem = &vertices[0];
+		init_data.SysMemPitch = 0;
+		init_data.SysMemSlicePitch = 0;
+
+		THROW_ON_FAIL(device.CreateBuffer(&buffer_desc, &init_data, &vertex_buffer));
+
+		return vertex_buffer;
+
+	}
+
+	/// \brief Create an index buffer
+	ID3D11Buffer * MakeIndexBuffer(ID3D11Device & device, const vector<unsigned int> & indices){
+
+		ID3D11Buffer * index_buffer = nullptr;
+
+		// Fill in a buffer description.
+		D3D11_BUFFER_DESC buffer_desc;
+
+		buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+		buffer_desc.ByteWidth = static_cast<UINT>( sizeof(unsigned int) * indices.size() );
+		buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		buffer_desc.CPUAccessFlags = 0;
+		buffer_desc.MiscFlags = 0;
+
+		// Define the resource data.
+		D3D11_SUBRESOURCE_DATA init_data;
+		init_data.pSysMem = &indices[0];
+		init_data.SysMemPitch = 0;
+		init_data.SysMemSlicePitch = 0;
+
+		// Create the buffer with the device.
+		THROW_ON_FAIL(device.CreateBuffer(&buffer_desc, &init_data, &index_buffer));
+
+		return index_buffer;
+
+	}
+	
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
@@ -153,87 +198,51 @@ void DX11Texture2D::SetPriority(ResourcePriority priority){
 
 ///////////////////////////// MESH ////////////////////////////////////////////////
 
-DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings){
+DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kPosition> & settings){
 
-	//If exists some attribute which is defined BY_INDEX, the mesh won't used indexing
+	// Position-only mesh
 
-	if (settings.normal_mapping == AttributeMappingMode::BY_INDEX ||
-		settings.binormal_mapping == AttributeMappingMode::BY_INDEX ||
-		settings.tangent_mapping == AttributeMappingMode::BY_INDEX ||
-		settings.UV_mapping == AttributeMappingMode::BY_INDEX ||
-		settings.indices.size() == 0){
-
-		LoadUnindexed(device, settings);
-
-	}
-	else
-	{
-
-		LoadIndexed(device, settings);
-
-	}
-
-}
-
-void DX11Mesh::LoadIndexed(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings){
-
-	throw RuntimeException(L"Not implemented yet!");
-
-}
-
-void DX11Mesh::LoadUnindexed(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> & settings){
-
-#pragma push_macro("max")
-#undef max
-
-	//Zip position, normals, binormals, tangents and uvs together.
-
-	vector<NormalTexturedVertex> vertices(std::max(settings.positions.size(),
-		settings.normals.size()));
+	vertex_buffer_.reset(MakeVertexBuffer(device, settings.vertices));
 
 	if (settings.indices.size() > 0){
 
-		// Use the indices to address the components.
+		index_buffer_.reset(MakeIndexBuffer(device, settings.indices));
+
+		polygon_count_ = settings.indices.size() / 3;
 
 	}
-	else
-	{
+	else{
 
-		// i-th element of each attribute belongs to the i-th vertex. (everything should be mapped by index).
+		polygon_count_ = vertex_count_ / 3;
 
-		auto begin = make_zip(settings.positions.begin(),
-							  settings.normals.begin());
-
-		auto end = make_zip(settings.positions.end(),
-							settings.normals.end());
-		
 	}
 
-	// Create the vertex buffer
+	vertex_count_ = settings.vertices.size();
+	LOD_count_ = 1;
 
-	// Fill in a buffer description.
-	D3D11_BUFFER_DESC bufferDesc;
-	bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-	bufferDesc.ByteWidth = sizeof(NormalTexturedVertex) * vertices.size();
-	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bufferDesc.CPUAccessFlags = 0;
-	bufferDesc.MiscFlags = 0;
+}
 
-	// Fill in the subresource data.
-	D3D11_SUBRESOURCE_DATA InitData;
-	InitData.pSysMem = &vertices[0];
-	InitData.SysMemPitch = 0;
-	InitData.SysMemSlicePitch = 0;
+DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kTextured> & settings){
 
-	// Create the vertex buffer.
-	ID3D11Buffer * vertex_buffer;
+	// Textured mesh.
 
-	THROW_ON_FAIL(device.CreateBuffer(&bufferDesc, &InitData, &vertex_buffer));
+	vertex_buffer_.reset(MakeVertexBuffer(device, settings.vertices));
 
-	vertex_buffer_.reset(vertex_buffer);
+	if (settings.indices.size() > 0){
 
-	
-#pragma pop_macro("max")
+		index_buffer_.reset(MakeIndexBuffer(device, settings.indices));
+
+		polygon_count_ = settings.indices.size() / 3;
+
+	}
+	else{
+
+		polygon_count_ = vertex_count_ / 3;
+
+	}
+
+	vertex_count_ = settings.vertices.size();
+	LOD_count_ = 1;
 
 }
 
@@ -249,7 +258,7 @@ ResourcePriority DX11Mesh::GetPriority() const{
 
 }
 
-void DX11Mesh::SetPriority(ResourcePriority priority){
+void DX11Mesh::SetPriority(ResourcePriority){
 
 
 }

@@ -69,110 +69,163 @@ namespace{
 
 	}
 
-	/// \brief Map a fbx mapping mode to a mesh attribute mapping mode
-	/// \param mapping_mode The mapping mode to convert.
-	/// \return Returns the mapped mapping mode.
-	inline AttributeMappingMode FbxMappingModeToAttributeMappingNode(FbxLayerElement::EMappingMode mapping_mode){
+	/// \brief Check whether the mesh defines UV coordinates.
+	bool HasTextureCoordinates(const FbxMesh & mesh){
 
-		switch (mapping_mode)
-		{
-		case fbxsdk_2015_1::FbxLayerElement::eByControlPoint:
-			
-			return AttributeMappingMode::BY_VERTEX;
-			break;
+		auto layer = mesh.GetLayer(0);
 
-		case fbxsdk_2015_1::FbxLayerElement::eByPolygonVertex:
+		return layer != nullptr &&
+			layer->GetUVs() != nullptr &&
+			layer->GetUVs()->GetMappingMode() == FbxLayerElement::EMappingMode::eByControlPoint;
 
-			return AttributeMappingMode::BY_INDEX;
-			break;
-
-		default:
-
-			return AttributeMappingMode::UNKNOWN;
-			break;
-
-		}
-		
 	}
 
-	/// \brief Map a layer element to a plain vector.
-	/// \tparam TSource Type of the elements inside the layer element.
-	/// \tparam TDestination Tyype of the elements inside the destination vector.
-	/// \tparam TMap Type of the mapping function that will be used to convert the elements.
-	/// \param source The layer element to convert.
-	/// \param destination The vector where the mapped data will be stored.
-	/// \param map The mapping function.
-	/// \return Returns the mapping mode assiciated to the layer element.
-	template <typename TSource, typename TDestination, typename TMap>
-	AttributeMappingMode MapFbxLayerElement(const FbxLayerElementTemplate<TSource> * source, vector<TDestination> & destination, TMap map){
-		
-		destination.clear();
+	/// \brief Read the vertices from a fbx mesh.
+	template <typename TFormat>
+	vector<TFormat> ReadVertices(const FbxMesh & mesh);
 
-		if (!source){
+	/// \brief Read texture vertex from a fbx mesh.
+	template <> vector<VertexFormatTextured> ReadVertices<VertexFormatTextured>(const FbxMesh & mesh){
 
-			return AttributeMappingMode::UNKNOWN;
+		// Position + Texture Coordinates
 
-		}
+		auto position_buffer = &mesh.GetControlPoints()[0];
 
-		// Fills the buffer attribute
+		auto & uv_array = mesh.GetLayer(0)->GetUVs()->GetDirectArray();
+		auto & uv_index_array = mesh.GetLayer(0)->GetUVs()->GetIndexArray();
 
-		FbxLayerElementArrayTemplate<TSource> & direct_array = source->GetDirectArray();
-		FbxLayerElementArrayTemplate<int> & index_array = source->GetIndexArray();
+		// Resize the vertex buffer
+		vector<VertexFormatTextured> vertices;
 
-		switch (source->GetReferenceMode()){
+		vertices.resize(mesh.GetControlPointsCount());
 
-		case FbxLayerElement::EReferenceMode::eDirect:
-		{
+		// Copy everything inside the vertex buffer
 
-			// Direct mapping, each element inside the direct array is mapped 1-to-1 to the destination array.
-			destination.resize(direct_array.GetCount());
+		switch (mesh.GetLayer(0)->GetUVs()->GetReferenceMode()){
 
-			TSource * direct_buffer = static_cast<TSource *>(direct_array.GetLocked(FbxLayerElementArray::eReadLock));
+			case FbxLayerElement::EReferenceMode::eIndex:
+			case FbxLayerElement::EReferenceMode::eIndexToDirect:
+			{
 
-			std::transform(&direct_buffer[0],
-				&direct_buffer[0] + direct_array.GetCount(),
-				destination.begin(),
-				map);
+				auto uv_buffer = static_cast<FbxVector2 *>(uv_array.GetLocked(FbxLayerElementArray::eReadLock));
+				auto uv_index_buffer = static_cast<int *>(uv_index_array.GetLocked(FbxLayerElementArray::eReadLock));
 
-			direct_array.ReadUnlock();
+				for (auto & it : vertices){
 
-			break;
+					it.position = FbxVector4ToEigenVector3f(*position_buffer);
+					it.tex_coord = FbxVector2ToEigenVector2f(uv_buffer[*uv_index_buffer]);
 
-		}
-		case FbxLayerElement::EReferenceMode::eIndex:
-		case FbxLayerElement::EReferenceMode::eIndexToDirect:
-		{
+					++position_buffer;
+					++uv_index_buffer;
 
-			// Indirect mapping, each element inside the index array points to the actual vertex to be mapped inside the destination array.
+				}
 
-			destination.resize(index_array.GetCount());
+				uv_array.ReadUnlock();
+				uv_index_array.ReadUnlock();
 
-			TSource * direct_buffer = static_cast<TSource *>(direct_array.GetLocked(FbxLayerElementArray::eReadLock));
-			int * index_buffer = static_cast<int *>(index_array.GetLocked(FbxLayerElementArray::eReadLock));
+				break;
 
-			std::transform(&index_buffer[0],
-				&index_buffer[0] + index_array.GetCount(),
-				destination.begin(),
-				[&](int index){
 
-					return map(direct_buffer[index]);
+			}
 
-				});
+			default:
+			{
 
-			direct_array.ReadUnlock();
-			index_array.ReadUnlock();
+				auto uv_buffer = static_cast<FbxVector2 *>(uv_array.GetLocked(FbxLayerElementArray::eReadLock));
 
-			break;
+				for (auto & it : vertices){
 
-		}
+					it.position = FbxVector4ToEigenVector3f(*position_buffer);
+					it.tex_coord = FbxVector2ToEigenVector2f(*uv_buffer);
+
+					++position_buffer;
+					++uv_buffer;
+
+				}
+
+				uv_array.ReadUnlock();
+
+				break;
+
+			}
 
 		}
 
-		return FbxMappingModeToAttributeMappingNode(source->GetMappingMode());
-		
+		return vertices;
+
 	}
 
-	BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> Parse(const FbxMesh & mesh){
+	/// \brief Read texture vertex from a fbx mesh.
+	template <> vector<VertexFormatPosition> ReadVertices<VertexFormatPosition>(const FbxMesh & mesh){
+
+		// Position + Texture Coordinates
+
+		auto position_buffer = &mesh.GetControlPoints()[0];
+
+		// Resize the vertex buffer
+		vector<VertexFormatPosition> vertices;
+
+		vertices.resize(mesh.GetControlPointsCount());
+
+		std::transform(&position_buffer[0],
+			&position_buffer[0] + vertices.size(),
+			vertices.begin(),
+			[](const FbxVector4 & position){ return VertexFormatPosition{ FbxVector4ToEigenVector3f(position) }; });
+
+		return vertices;
+
+	}
+
+	/// \brief Read the indices of a fbx mesh.
+	vector<unsigned int> ReadIndices(const FbxMesh & mesh){
+	
+		auto index_buffer = mesh.GetPolygonVertices();
+
+		// Resize the vertex buffer
+		vector<unsigned int> indices;
+
+		indices.resize(mesh.GetPolygonVertexCount());
+
+		std::copy(&index_buffer[0],
+			&index_buffer[0] + indices.size(),
+			indices.begin());
+
+		return indices;
+
+	}
+
+	/// \brief Build mesh method template. Used to dispatch different build methods.
+	template<typename TVertexFormat>
+	void BuildMesh(const FbxMesh & mesh, SceneNode & node, Manager & resources);
+
+	/// \brief Builds an indexed mesh with texture coordinates.
+	template<> void BuildMesh<VertexFormatPosition>(const FbxMesh & mesh, SceneNode & node, Manager & resources){
+		
+		BuildSettings<Mesh, Mesh::BuildMode::kPosition> settings;
+
+		settings.indices = ReadIndices(mesh);
+
+		settings.vertices = ReadVertices<VertexFormatPosition>(mesh);
+		
+		node.Add<StaticGeometry>(resources.Build<Mesh, Mesh::BuildMode::kPosition>(settings));
+
+	}
+
+	/// \brief Builds an indexed mesh with texture coordinates.
+	template<> void BuildMesh<VertexFormatTextured>(const FbxMesh & mesh, SceneNode & node, Manager & resources){
+
+		BuildSettings<Mesh, Mesh::BuildMode::kTextured> settings;
+
+		settings.indices = ReadIndices(mesh);
+
+		settings.vertices = ReadVertices<VertexFormatTextured>(mesh);
+
+		node.Add<StaticGeometry>(resources.Build<Mesh, Mesh::BuildMode::kTextured>(settings));
+
+	}
+
+
+	void BuildMesh(const FbxMesh & mesh, SceneNode & scene_root, Manager & resources){
 
 		if (!mesh.IsTriangleMesh()){
 
@@ -180,45 +233,18 @@ namespace{
 
 		}
 
-		BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes> settings;
+		//Assumptions: byControlPoint is the only mapping mode supported (other are just ignored).
 
-		// Vertices aka Control Points
+		if (HasTextureCoordinates(mesh)){
 
-		auto control_points = mesh.GetControlPoints();
-		auto vertex_count = mesh.GetControlPointsCount();
-
-		settings.positions.resize(vertex_count);
-
-		std::transform(&control_points[0],
-			&control_points[0] + vertex_count,
-			settings.positions.begin(),
-			FbxVector4ToEigenVector3f);
-
-		//Indices aka Polygon Vertices
-
-		auto polygon_vertices = mesh.GetPolygonVertices();
-		auto index_count = mesh.GetPolygonVertexCount();
-
-		settings.indices.resize(index_count);
-
-		std::copy(&polygon_vertices[0],
-			&polygon_vertices[0] + index_count,
-			settings.indices.begin());
-
-		//First layer of the mesh
-		if (mesh.GetLayerCount() > 0){
-
-			auto layer = mesh.GetLayer(0);
-
-			// Normals, Binormals, Tangents and UVs.
-			settings.normal_mapping = MapFbxLayerElement(layer->GetNormals(), settings.normals, FbxVector4ToEigenVector3f);
-			settings.binormal_mapping = MapFbxLayerElement(layer->GetBinormals(), settings.binormals, FbxVector4ToEigenVector3f);
-			settings.tangent_mapping = MapFbxLayerElement(layer->GetTangents(), settings.tangents, FbxVector4ToEigenVector3f);
-			settings.UV_mapping = MapFbxLayerElement(layer->GetUVs(), settings.UVs, FbxVector2ToEigenVector2f);
+			BuildMesh<VertexFormatTextured>(mesh, scene_root, resources);
 
 		}
+		else{
 
-		return settings;
+			BuildMesh<VertexFormatPosition>(mesh, scene_root, resources);
+
+		}
 
 	}
 
@@ -247,10 +273,8 @@ namespace{
 			if (attribute->GetAttributeType() == FbxNodeAttribute::EType::eMesh){
 
 				//Builds the mesh found
-				auto build_settings = Parse(*static_cast<FbxMesh*>(attribute));
-					
-				scene_node.Add<StaticGeometry>(resources.Build<Mesh, Mesh::BuildMode::kFromAttributes>(build_settings));
-
+				BuildMesh(*static_cast<FbxMesh*>(attribute), scene_node, resources);
+				
 			}
 				
 		}

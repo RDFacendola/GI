@@ -379,7 +379,8 @@ namespace{
 
 	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, Texture2D::LoadMode::kFromDDS>() };
 
-	const Builder::BuilderMap Builder::builder_map_{ Builder::Register<Mesh, Mesh::BuildMode::kFromAttributes>() };
+	const Builder::BuilderMap Builder::builder_map_{ Builder::Register<Mesh, Mesh::BuildMode::kPosition>(),
+													 Builder::Register<Mesh, Mesh::BuildMode::kTextured>() };
 	
 }
 

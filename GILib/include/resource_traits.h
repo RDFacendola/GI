@@ -23,38 +23,25 @@ namespace gi_lib{
 	};
 
 	/// \brief Settings used to build a mesh from its attributes' description.
-	template <> struct BuildSettings<Mesh, Mesh::BuildMode::kFromAttributes>{
+	template <> struct BuildSettings<Mesh, Mesh::BuildMode::kPosition>{
 
-		/// \brief Position of each vertex.
-		vector<Vector3f> positions;
-
-		/// \brief Indices of the mesh.
+		/// \brief Indices' data.
 		vector<unsigned int> indices;
 
-		/// \brief Normal of each vertex. Optional.
-		vector<Vector3f> normals;
-
-		/// \brief Binormals of each vertex. Optional.
-		vector<Vector3f> binormals;
-
-		/// \brief Tangents of each vertex. Optional.
-		vector<Vector3f> tangents;
-
-		/// \brief UV coordinates of each vertex. Optional.
-		vector<Vector2f> UVs;
-
-		/// \brief Specified how the normals are mapped against the mesh.
-		AttributeMappingMode normal_mapping;
-
-		/// \brief Specified how the binormals are mapped against the mesh.
-		AttributeMappingMode binormal_mapping;
-
-		/// \brief Specified how the tangents are mapped against the mesh.
-		AttributeMappingMode tangent_mapping;
-
-		/// \brief Specified how the UV coordinates are mapped against the mesh.
-		AttributeMappingMode UV_mapping;
+		/// \brief Vertices' data.
+		vector<VertexFormatPosition> vertices;
 
 	};
 
+	/// \brief Settings used to build a mesh from its attributes' description.
+	template <> struct BuildSettings<Mesh, Mesh::BuildMode::kTextured>{
+
+		/// \brief Indices' data.
+		vector<unsigned int> indices;
+
+		/// \brief Vertices' data.
+		vector<VertexFormatTextured> vertices;
+
+	};
+	
 }
