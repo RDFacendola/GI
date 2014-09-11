@@ -91,97 +91,98 @@ namespace{
 
 	}
 
-	/// \brief Read the vertices from a fbx mesh.
-	template <typename TFormat>
-	vector<TFormat> ReadVertices(const FbxMesh & mesh);
+	/// \brief Write some attributes inside the provided vertex buffer.
+	/// \tparam TVertexFormat Type of vertex.
+	/// \tparam TAttributeFormat Type of attributes.
+	/// \tparam TWriter Type of the writer.
+	/// \param attributes Buffer containing the attributes to write.
+	/// \param vertices Vertex buffer the attributes will be written to.
+	/// \param Writer used to write the attribute inside the vertex
+	template <typename TVertexFormat, typename TAttributeFormat, typename TWriter>
+	void WriteAttribute(const TAttributeFormat * attributes, vector<TVertexFormat> & vertices, TWriter writer){
 
-	/// \brief Read texture vertex from a fbx mesh.
-	template <> vector<VertexFormatTextured> ReadVertices<VertexFormatTextured>(const FbxMesh & mesh){
+		for (auto & vertex : vertices){
 
-		// Position + Texture Coordinates
+			writer(vertex, *attributes);
 
-		auto position_buffer = &mesh.GetControlPoints()[0];
+			attributes++;
 
-		auto & uv_array = mesh.GetLayer(0)->GetUVs()->GetDirectArray();
-		auto & uv_index_array = mesh.GetLayer(0)->GetUVs()->GetIndexArray();
+		}
 
-		// Resize the vertex buffer
-		vector<VertexFormatTextured> vertices;
+	}
 
-		vertices.resize(mesh.GetControlPointsCount());
+	/// \brief Write some attributes inside the provided vertex buffer.
+	/// \tparam TVertexFormat Type of vertex.
+	/// \tparam TAttributeFormat Type of attributes.
+	/// \tparam TWriter Type of the writer.
+	/// \param attributes Layer element containing the attributes to write.
+	/// \param vertices Vertex buffer the attributes will be written to.
+	/// \param Writer used to write the attribute inside the vertex
+	template <typename TVertexFormat, typename TAttributeFormat, typename TWriter>
+	void WriteAttribute(const FbxLayerElementTemplate<TAttributeFormat> & attributes, vector<TVertexFormat> & vertices, TWriter writer){
 
-		// Copy everything inside the vertex buffer
+		auto & direct_array = attributes.GetDirectArray();
+		auto & index_array = attributes.GetIndexArray();
 
-		switch (mesh.GetLayer(0)->GetUVs()->GetReferenceMode()){
+		switch (attributes.GetReferenceMode()){
 
 			case FbxLayerElement::EReferenceMode::eIndex:
 			case FbxLayerElement::EReferenceMode::eIndexToDirect:
 			{
 
-				auto uv_buffer = static_cast<FbxVector2 *>(uv_array.GetLocked(FbxLayerElementArray::eReadLock));
-				auto uv_index_buffer = static_cast<int *>(uv_index_array.GetLocked(FbxLayerElementArray::eReadLock));
+				auto direct_buffer = static_cast<TAttributeFormat*>(direct_array.GetLocked(FbxLayerElementArray::eReadLock));
+				auto index_buffer = static_cast<int*>(index_array.GetLocked(FbxLayerElementArray::eReadLock));
 
-				for (auto & it : vertices){
+				for (auto & vertex : vertices){
 
-					it.position = FbxVector4ToEigenVector3f(*position_buffer);
-					it.tex_coord = FbxVector2ToEigenVector2f(uv_buffer[*uv_index_buffer]);
+					writer(vertex, direct_buffer[*index_buffer]);
 
-					++position_buffer;
-					++uv_index_buffer;
+					index_buffer++;
 
 				}
 
-				uv_array.ReadUnlock();
-				uv_index_array.ReadUnlock();
-
-				break;
-
+				direct_array.ReadUnlock();
+				index_array.ReadUnlock();
 
 			}
 
-			default:
+			case FbxLayerElement::EReferenceMode::eDirect:
 			{
 
-				auto uv_buffer = static_cast<FbxVector2 *>(uv_array.GetLocked(FbxLayerElementArray::eReadLock));
+				auto direct_buffer = static_cast<TAttributeFormat*>(direct_array.GetLocked(FbxLayerElementArray::eReadLock));
 
-				for (auto & it : vertices){
+				for (auto & vertex : vertices){
 
-					it.position = FbxVector4ToEigenVector3f(*position_buffer);
-					it.tex_coord = FbxVector2ToEigenVector2f(*uv_buffer);
+					writer(vertex, *direct_buffer);
 
-					++position_buffer;
-					++uv_buffer;
+					direct_buffer++;
 
 				}
 
-				uv_array.ReadUnlock();
-
-				break;
-
+				direct_array.ReadUnlock();
+				
 			}
 
 		}
 
-		return vertices;
-
 	}
 
-	/// \brief Read texture vertex from a fbx mesh.
-	template <> vector<VertexFormatPosition> ReadVertices<VertexFormatPosition>(const FbxMesh & mesh){
+	/// \brief Read the vertices from a fbx mesh.
+	template <typename TFormat>
+	vector<TFormat> ReadVertices(const FbxMesh & mesh);
+
+	/// \brief Read normal texture vertex from a fbx mesh.
+	template <> vector<VertexFormatNormalTextured> ReadVertices<VertexFormatNormalTextured>(const FbxMesh & mesh){
 
 		// Position + Texture Coordinates
 
-		auto position_buffer = &mesh.GetControlPoints()[0];
-
-		// Resize the vertex buffer
-		vector<VertexFormatPosition> vertices;
+		vector<VertexFormatNormalTextured> vertices;
 
 		vertices.resize(mesh.GetControlPointsCount());
 
-		std::transform(&position_buffer[0],
-			&position_buffer[0] + vertices.size(),
-			vertices.begin(),
-			[](const FbxVector4 & position){ return VertexFormatPosition{ FbxVector4ToEigenVector3f(position) }; });
+		WriteAttribute(&mesh.GetControlPoints()[0], vertices, [](VertexFormatNormalTextured & vertex, const FbxVector4 position){ vertex.position = FbxVector4ToEigenVector3f(position); });
+		WriteAttribute(*mesh.GetLayer(0)->GetNormals(), vertices, [](VertexFormatNormalTextured & vertex, const FbxVector4 normal){ vertex.normal = FbxVector4ToEigenVector3f(normal); });
+		WriteAttribute(*mesh.GetLayer(0)->GetUVs(), vertices, [](VertexFormatNormalTextured & vertex, const FbxVector2 tex_coord){ vertex.tex_coord = FbxVector2ToEigenVector2f(tex_coord); });
 
 		return vertices;
 
@@ -205,67 +206,44 @@ namespace{
 
 	}
 
-	/// \brief Build mesh method template. Used to dispatch different build methods.
+	/// \brief Build mesh method template. Used to dispatch different build methods. 
 	template<typename TVertexFormat>
 	void BuildMesh(const FbxMesh & mesh, SceneNode & node, Manager & resources);
 
 	/// \brief Builds an indexed mesh with texture coordinates.
-	template<> void BuildMesh<VertexFormatPosition>(const FbxMesh & mesh, SceneNode & node, Manager & resources){
+	template<> void BuildMesh<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, Manager & resources){
 		
-		BuildSettings<Mesh, Mesh::BuildMode::kPosition> settings;
+		BuildSettings<Mesh, Mesh::BuildMode::kNormalTextured> settings;
 
 		settings.indices = ReadIndices(mesh);
 
-		settings.vertices = ReadVertices<VertexFormatPosition>(mesh);
+		settings.vertices = ReadVertices<VertexFormatNormalTextured>(mesh);
 		
-		node.Add<StaticGeometry>(resources.Build<Mesh, Mesh::BuildMode::kPosition>(settings));
+		node.Add<StaticGeometry>(resources.Build<Mesh, Mesh::BuildMode::kNormalTextured>(settings));
 
 	}
 
-	/// \brief Builds an indexed mesh with texture coordinates.
-	template<> void BuildMesh<VertexFormatTextured>(const FbxMesh & mesh, SceneNode & node, Manager & resources){
+	/// \brief Attempts to load a mesh inside a scene.
 
-		BuildSettings<Mesh, Mesh::BuildMode::kTextured> settings;
-
-		settings.indices = ReadIndices(mesh);
-
-		settings.vertices = ReadVertices<VertexFormatTextured>(mesh);
-
-		node.Add<StaticGeometry>(resources.Build<Mesh, Mesh::BuildMode::kTextured>(settings));
-
-	}
-
-
+	/// The methods load the mesh from fbx and loads it inside the scene. If the original mesh is not supported this method does nothing.
 	void BuildMesh(const FbxMesh & mesh, SceneNode & scene_root, Manager & resources){
 
 		if (!mesh.IsTriangleMesh()){
 
-			throw RuntimeException(L"Polygons other than triangles are not supported!");
+			//throw RuntimeException(L"Polygons other than triangles are not supported!");
+			return;
 
 		}
 
 		//Assumptions: byControlPoint is the only mapping mode supported (other are just ignored).
 
-		if (HasTextureCoordinates(mesh)){
+		if (HasTextureCoordinates(mesh)  &&
+			HasNormals(mesh)){
 
-			if (HasNormals(mesh)){
-
-				BuildMesh<VertexFormatNormalTextured>(mesh, scene_root, resources);
-
-			}
-			else{
-
-				BuildMesh<VertexFormatTextured>(mesh, scene_root, resources);
-
-			}
-			
-		}
-		else{
-
-			BuildMesh<VertexFormatPosition>(mesh, scene_root, resources);
+			BuildMesh<VertexFormatNormalTextured>(mesh, scene_root, resources);
 
 		}
-
+				
 	}
 
 	/// \brief Walk the fbx scene and imports the nodes to a scene.

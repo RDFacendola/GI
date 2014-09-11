@@ -97,6 +97,12 @@ void FBX::Triangulate(FbxScene & scene){
 
 }
 
+void FBX::Remap(FbxScene & scene, FbxLayerElement::EMappingMode mapping_mode){
+
+
+
+}
+
 void FBX::Export(FbxScene & scene, const string & path, bool binary){
 
 	auto fbx_exporter = FbxExporter::Create(manager_, "");

@@ -5,15 +5,17 @@
 
 #pragma once
 
+#include <Eigen/Core>
+
 #include "resources.h"
+
+using Eigen::Vector3f;
+using Eigen::Vector2f;
 
 namespace gi_lib{
 
 	/// \brief Resources' load setting's template.
 	template <typename TResource, typename TResource::LoadMode kLoadMode> struct LoadSettings;
-
-	/// \brief Resources' build setting's template.
-	template <typename TResource, typename TResource::BuildMode kBuildMode> struct BuildSettings;
 
 	/// \brief Settings used to load a Texture2D from a DDS file.
 	template <> struct LoadSettings < Texture2D, Texture2D::LoadMode::kFromDDS > {
@@ -22,27 +24,8 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Build settings for position-only meshes.
-	template <> struct BuildSettings<Mesh, Mesh::BuildMode::kPosition>{
-
-		/// \brief Indices' data.
-		vector<unsigned int> indices;
-
-		/// \brief Vertices' data.
-		vector<VertexFormatPosition> vertices;
-
-	};
-
-	/// \brief Build settings for textured meshes.
-	template <> struct BuildSettings<Mesh, Mesh::BuildMode::kTextured>{
-
-		/// \brief Indices' data.
-		vector<unsigned int> indices;
-
-		/// \brief Vertices' data.
-		vector<VertexFormatTextured> vertices;
-
-	};
+	/// \brief Resources' build setting's template.
+	template <typename TResource, typename TResource::BuildMode kBuildMode> struct BuildSettings;
 
 	/// \brief Build settings for normal textured meshes..
 	template <> struct BuildSettings<Mesh, Mesh::BuildMode::kNormalTextured>{

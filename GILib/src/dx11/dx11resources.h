@@ -78,10 +78,6 @@ namespace gi_lib{
 
 		public:
 
-			DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kPosition> & settings);
-
-			DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kTextured> & settings);
-
 			DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kNormalTextured> & settings);
 
 			virtual size_t GetSize() const override;

@@ -198,54 +198,6 @@ void DX11Texture2D::SetPriority(ResourcePriority priority){
 
 ///////////////////////////// MESH ////////////////////////////////////////////////
 
-DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kPosition> & settings){
-
-	// Position-only mesh
-
-	vertex_buffer_.reset(MakeVertexBuffer(device, settings.vertices));
-
-	if (settings.indices.size() > 0){
-
-		index_buffer_.reset(MakeIndexBuffer(device, settings.indices));
-		
-		polygon_count_ = settings.indices.size();
-
-	}
-	else{
-
-		polygon_count_ = settings.vertices.size() / 3;
-
-	}
-
-	vertex_count_ = settings.vertices.size();
-	LOD_count_ = 1;
-
-}
-
-DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kTextured> & settings){
-
-	// Textured mesh.
-
-	vertex_buffer_.reset(MakeVertexBuffer(device, settings.vertices));
-
-	if (settings.indices.size() > 0){
-
-		index_buffer_.reset(MakeIndexBuffer(device, settings.indices));
-
-		polygon_count_ = settings.indices.size();
-
-	}
-	else{
-
-		polygon_count_ = settings.vertices.size() / 3;
-
-	}
-
-	vertex_count_ = settings.vertices.size();
-	LOD_count_ = 1;
-
-}
-
 DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kNormalTextured> & settings){
 
 	// Normal, textured mesh.

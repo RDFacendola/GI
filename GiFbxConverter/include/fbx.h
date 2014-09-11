@@ -33,8 +33,12 @@ namespace gi_lib{
 		FbxScene * Import(const string & path);
 
 		/// \brief Triangulate a scene in-place.
-		/// \param The scene to be triangulated.
+		/// \param scene The scene to be triangulated.
 		void Triangulate(FbxScene & scene);
+
+		/// \brief Remaps the attributes of the scene.
+		/// \param scene The scene to remap the attributes of.
+		void Remap(FbxScene & scene, FbxLayerElement::EMappingMode mapping_mode);
 
 		/// \brief Export a fbx scene into a file.
 		/// \param scene The scene to export.

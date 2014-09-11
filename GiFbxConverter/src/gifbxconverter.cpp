@@ -20,6 +20,7 @@ const char kCommandToken = '-';
 const string kGlobalCommand = "$Global";				// Commandless arguments
 const string kHelpCommand = "-?";						// Halp!
 const string kTriangulateCommand = "-triangulate";		// Triangulate
+const string kReMapControlPoints = "-remapcp";			// Remaps the attributes by control point
 const string kOutputCommand = "-o";						// Mandatory
 const string kInputCommand = "-i";						// Mandatory
 
@@ -135,7 +136,8 @@ void ShowHelp(){
 	// Commands
 	cout << std::endl;
 
-	cout << "-triangulate: Triangulate the mesh." << std::endl;
+	cout << kTriangulateCommand << ": Triangulate the mesh." << std::endl;
+	cout << kReMapControlPoints << ": Remap the attributes by control point." << std::endl;
 
 }
 
@@ -173,6 +175,14 @@ void Run(CommandMap & commands){
 			cout << "Triangulating (this could take a couple of minutes)..." << std::endl;
 
 			fbx.Triangulate(*scene);
+
+		}
+
+		if (commands.find(kReMapControlPoints) != commands.end()){
+
+			cout << "Remapping by control point..." << std::endl;
+
+			fbx.Remap(*scene, FbxLayerElement::EMappingMode::eByControlPoint);
 
 		}
 
