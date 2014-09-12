@@ -40,6 +40,11 @@ namespace gi_lib{
 		/// \param scene The scene to remap the attributes of.
 		void RollAttributes(FbxScene & scene);
 
+		/// \brief Unrolls the attributes of the scene.
+		/// \param scene The scene to remap the attributes of.
+		void UnrollAttributes(FbxScene & scene);
+
+
 		/// \brief Export a fbx scene into a file.
 		/// \param scene The scene to export.
 		/// \param path The output path.

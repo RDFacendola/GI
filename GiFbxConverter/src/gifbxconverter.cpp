@@ -21,6 +21,7 @@ const string kGlobalCommand = "$Global";				// Commandless arguments
 const string kHelpCommand = "-?";						// Halp!
 const string kTriangulateCommand = "-triangulate";		// Triangulate
 const string kRollAttributes = "-roll";					// Rolls the attributes
+const string kUnrollAttributes = "-unroll";				// Unrolls the attribtes
 const string kOutputCommand = "-o";						// Mandatory
 const string kInputCommand = "-i";						// Mandatory
 
@@ -137,7 +138,8 @@ void ShowHelp(){
 	cout << std::endl;
 
 	cout << kTriangulateCommand << ": Triangulate the mesh." << std::endl;
-	cout << kRollAttributes << ": Rolls the attributes (byIndex attributes are re-mapped to byControlPoints, eIndex is remapped to eDirect)." << std::endl;
+	cout << kRollAttributes << ": Rolls the attributes (byPolygonVertex attributes are re-mapped to byControlPoints, eIndex is remapped to eDirect)." << std::endl;
+	cout << kUnrollAttributes << ": Unrolls the attributes (byPolygonVertex attributes are re-mapped to byControlPoints, index buffer is discarded, eIndex is remapped to eDirect)." << std::endl;
 
 }
 
@@ -183,6 +185,14 @@ void Run(CommandMap & commands){
 			cout << "Rolling attributes..." << std::endl;
 
 			fbx.RollAttributes(*scene);
+
+		}
+
+		if (commands.find(kUnrollAttributes) != commands.end()){
+
+			cout << "Unrolling attributes..." << std::endl;
+
+			fbx.UnrollAttributes(*scene);
 
 		}
 

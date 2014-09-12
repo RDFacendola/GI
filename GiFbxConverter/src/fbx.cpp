@@ -145,13 +145,11 @@ namespace{
 
 			auto * buffer = static_cast<TType *>(elements.GetDirectArray().GetLocked(FbxLayerElementArray::ELockMode::eReadLock));
 
-			for (int index = 0; index < dst.size(); ++index){
+			std::copy(dst.begin(),
+				dst.end(),
+				&buffer[0]);
 
-				*buffer = dst[index];
-
-				++buffer;
-
-			}
+			elements.GetDirectArray().ReadUnlock();
 
 			// Done!
 
@@ -169,6 +167,119 @@ namespace{
 
 		}
 				
+	}
+
+	template <class TType>
+	bool Unroll(FbxMesh & mesh, FbxLayerElementTemplate<TType> * elements_ptr){
+
+		if (elements_ptr == nullptr){
+
+			return true;	//The element does not exist.
+
+		}
+
+		auto & elements = *elements_ptr;
+
+		vector<TType> dst(mesh.GetPolygonVertexCount());
+
+		switch (elements.GetMappingMode()){
+
+		case FbxLayerElement::EMappingMode::eByControlPoint:
+		{
+
+			//Unroll the attribute
+
+			auto count = mesh.GetPolygonVertexCount();
+
+			int * index_buffer = mesh.GetPolygonVertices();
+
+			int vertex_index;
+
+			for (int index = 0; index < count; index++){
+
+				vertex_index = index_buffer[index];
+
+				dst[index] = GetFbxArrayElement(elements, vertex_index);
+
+			}
+
+			// Resize and remap the elements array.
+
+			elements.SetReferenceMode(FbxLayerElement::EReferenceMode::eDirect);
+
+			elements.GetIndexArray().Clear();									//Not needed anymore.
+
+			elements.GetDirectArray().Resize(static_cast<int>(dst.size()));		//Resize the attribute buffer
+
+			auto * buffer = static_cast<TType *>(elements.GetDirectArray().GetLocked(FbxLayerElementArray::ELockMode::eReadLock));
+
+			std::copy(dst.begin(),
+				dst.end(),
+				buffer);
+
+			elements.GetDirectArray().ReadUnlock();
+
+			// Done!
+
+			return true;
+
+		}
+		case FbxLayerElement::EMappingMode::eByPolygonVertex:{
+
+			//Change the mapping mode only
+
+			elements.SetMappingMode(FbxLayerElement::EMappingMode::eByControlPoint);
+
+			return true;
+
+		}
+
+		case FbxLayerElement::EMappingMode::eNone:
+
+			return true;	//The attribute does not exist.
+
+		default:
+
+			return false;
+
+		}
+
+	}
+
+	void UnrollVertices(FbxMesh & mesh){
+
+		vector<FbxVector4> vertices(mesh.GetPolygonVertexCount());
+
+		auto control_points = mesh.GetControlPoints();
+		auto polygon_vertices = mesh.GetPolygonVertices();
+
+		// Unroll the vertex buffer
+
+		for (int i = 0; i < mesh.GetPolygonVertexCount(); i++){
+
+			vertices[i] = control_points[polygon_vertices[i]];
+
+		}
+
+		// Replace the old vertex buffer
+
+		mesh.InitControlPoints(static_cast<int>(vertices.size()));
+
+		control_points = mesh.GetControlPoints();
+
+		std::copy(vertices.begin(),
+			vertices.end(),
+			control_points);
+
+		// Delete the index buffer
+		
+		// Ok let's just put as 1-2-3-blah
+		for (int i = 0; i < mesh.GetPolygonVertexCount(); i++){
+
+			polygon_vertices[i] = i;
+
+		}
+
 	}
 
 	// Processors
@@ -189,6 +300,38 @@ namespace{
 
 		}
 
+	}
+
+	void UnrollAttributes(FbxMesh & mesh){
+
+		if (mesh.GetPolygonVertices() == nullptr){
+
+			cout << "The mesh is already non-indexed" << std::endl;
+
+			return;
+
+		}
+
+		for (int layer_index = 0; layer_index < mesh.GetLayerCount(); ++layer_index){
+
+			auto & layer = *mesh.GetLayer(layer_index);
+
+			cout << "Layer " << layer_index << std::endl;
+
+			cout << "Processing normals..." << (Unroll(mesh, layer.GetNormals()) ? "done" : "fail") << std::endl;
+			cout << "Processing binormals..." << (Unroll(mesh, layer.GetBinormals()) ? "done" : "fail") << std::endl;
+			cout << "Processing tangents..." << (Unroll(mesh, layer.GetTangents()) ? "done" : "fail") << std::endl;
+			cout << "Processing uvs..." << (Unroll(mesh, layer.GetUVs()) ? "done" : "fail") << std::endl;
+
+			cout << std::endl;
+
+		}
+
+		//Discards the index buffer and unrolls the vertices.
+		cout << "Unrolling vertices..." << std::endl;
+
+		UnrollVertices(mesh);
+		
 	}
 
 	// Filters
@@ -344,6 +487,13 @@ void FBX::RollAttributes(FbxScene & scene){
 	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::RollAttributes));
 
 }
+
+void FBX::UnrollAttributes(FbxScene & scene){
+
+	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::UnrollAttributes));
+
+}
+
 
 void FBX::Export(FbxScene & scene, const string & path, bool){
 
