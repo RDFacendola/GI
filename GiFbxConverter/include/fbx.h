@@ -36,9 +36,9 @@ namespace gi_lib{
 		/// \param scene The scene to be triangulated.
 		void Triangulate(FbxScene & scene);
 
-		/// \brief Remaps the attributes of the scene.
+		/// \brief Rolls the attributes of the scene.
 		/// \param scene The scene to remap the attributes of.
-		void Remap(FbxScene & scene, FbxLayerElement::EMappingMode mapping_mode);
+		void RollAttributes(FbxScene & scene);
 
 		/// \brief Export a fbx scene into a file.
 		/// \param scene The scene to export.

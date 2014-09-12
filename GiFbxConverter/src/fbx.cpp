@@ -9,11 +9,253 @@
 #include <exception>
 #include <string>
 #include <sstream>
+#include <utility>
+#include <iostream>
 
 #include "..\include\fbx.h"
 
 using namespace ::gi_lib;
 using namespace ::std;
+
+namespace{
+
+	const double epsilon = 2.0 / 128.0;
+	const double theta_epsilon = 3.141592653 / 6;
+
+	template <typename T>
+	bool Equals(const T & left, const T & right);
+
+	template <> bool Equals<FbxVector4>(const FbxVector4 & left, const FbxVector4 & right){
+
+		return abs(left[0] - right[0]) < epsilon &&
+			abs(left[1] - right[1]) < epsilon &&
+			abs(left[2] - right[2]) < epsilon &&
+			abs(left[3] - right[3]) < epsilon;
+
+	}
+
+	template <> bool Equals<FbxVector2>(const FbxVector2 & left, const FbxVector2 & right){
+
+		return abs(left[0] - right[0]) < epsilon &&
+			abs(left[1] - right[1]) < epsilon;
+
+	}
+
+	template <typename T>
+	bool DotEquals(const T & left, const T & right);
+
+	template <> bool DotEquals<FbxVector4>(const FbxVector4 & left, const FbxVector4 & right){
+
+		auto left_len = sqrt(left[0] * left[0] + left[1] * left[1] + left[2] * left[2] + left[3] * left[3]);
+		auto right_len = sqrt(right[0] * right[0] + right[1] * right[1] + right[2] * right[2] + right[3] * right[3]);
+
+		auto dot = (left[0] * right[0] + left[1] * right[1] + left[2] * right[2] + left[3] * right[3]);
+		auto len = left_len * right_len;
+
+		auto norm_dot = dot / len;
+		auto cos_theta = cos(theta_epsilon);
+
+		return norm_dot > cos_theta;
+
+	}
+
+	/// \brief Get an element from a FbxLayerElementTemplate by index.
+	template <typename TType>
+	TType GetFbxArrayElement(const FbxLayerElementTemplate<TType> & elements, int index){
+
+		auto & direct = elements.GetDirectArray();
+
+		if (elements.GetReferenceMode() == FbxLayerElement::EReferenceMode::eDirect){
+
+			return direct[index];
+
+		}
+		else{
+
+			auto & indices = elements.GetIndexArray();
+
+			return direct[indices[index]];
+
+		}
+		
+	}
+
+	/// \brief Rolls a layer element and change the mapping mode to "byControlPoint".
+
+	/// If the conversion fails nothing is changed.
+	/// \return Returns true if the roll succeeded, false otherwise.
+	template <class TType, typename TComparer>
+	bool Roll(FbxMesh & mesh, FbxLayerElementTemplate<TType> * elements_ptr, TComparer compare){
+
+		if (elements_ptr == nullptr){
+
+			return true;	//The element does not exist.
+
+		}
+
+		auto & elements = *elements_ptr;
+
+		vector<TType> dst(mesh.GetControlPointsCount());
+
+		vector<bool> flag(mesh.GetControlPointsCount());
+
+		std::fill(flag.begin(), flag.end(), false);
+
+		switch (elements.GetMappingMode()){
+
+		case FbxLayerElement::EMappingMode::eByControlPoint:
+
+			return true;
+
+		case FbxLayerElement::EMappingMode::eByPolygonVertex:{
+
+			auto count = mesh.GetPolygonVertexCount();
+
+			int * index_buffer = mesh.GetPolygonVertices();
+
+			int vertex_index;
+
+			// One element for each index
+			for (int index = 0; index < count; index++){
+
+				vertex_index = index_buffer[index];
+
+				if (!flag[vertex_index]){
+
+					dst[vertex_index] = GetFbxArrayElement(elements, index);
+					flag[vertex_index] = true;	//Written
+
+				}
+				else if (!compare(GetFbxArrayElement(elements, index), dst[vertex_index])){
+
+					return false;	// The same vertex is associated to different attribute's value.
+
+				}
+
+			}
+
+			// rolled contains the rolled informations. Resize and remap the elements array.
+
+			elements.SetMappingMode(FbxLayerElement::EMappingMode::eByControlPoint);
+			elements.SetReferenceMode(FbxLayerElement::EReferenceMode::eDirect);
+
+			elements.GetIndexArray().Clear();									//Not needed anymore.
+
+			elements.GetDirectArray().Resize(static_cast<int>(dst.size()));		//Resize the attribute buffer
+
+			auto * buffer = static_cast<TType *>(elements.GetDirectArray().GetLocked(FbxLayerElementArray::ELockMode::eReadLock));
+
+			for (int index = 0; index < dst.size(); ++index){
+
+				*buffer = dst[index];
+
+				++buffer;
+
+			}
+
+			// Done!
+
+			return true;
+			
+		}
+
+		case FbxLayerElement::EMappingMode::eNone:
+
+			return true;	//The attribute does not exist.
+			
+		default:
+
+			return false;
+
+		}
+				
+	}
+
+	// Processors
+	void RollAttributes(FbxMesh & mesh){
+
+		for (int layer_index = 0; layer_index < mesh.GetLayerCount(); ++layer_index){
+
+			auto & layer = *mesh.GetLayer(layer_index);
+
+			cout << "Layer " << layer_index << std::endl;
+
+			cout << "Processing normals..." << (Roll(mesh, layer.GetNormals(), DotEquals<FbxVector4>) ? "done" : "fail") << std::endl;
+			cout << "Processing binormals..." << (Roll(mesh, layer.GetBinormals(), DotEquals<FbxVector4>) ? "done" : "fail") << std::endl;
+			cout << "Processing tangents..." << (Roll(mesh, layer.GetTangents(), DotEquals<FbxVector4>) ? "done" : "fail") << std::endl;
+			cout << "Processing uvs..." << (Roll(mesh, layer.GetUVs(), Equals<FbxVector2>) ? "done" : "fail") << std::endl;
+			
+			cout << std::endl;
+
+		}
+
+	}
+
+	// Filters
+
+	template <typename TProcessor>
+	class MeshFilter{
+
+	public:
+
+		MeshFilter(TProcessor processor) :
+			processor_(move(processor)){}
+
+		void operator()(FbxNodeAttribute & attribute){
+
+			if (attribute.GetAttributeType() == FbxNodeAttribute::EType::eMesh){
+
+				processor_(static_cast<FbxMesh&>(attribute));
+
+			}
+
+		}
+
+	private:
+
+		TProcessor processor_;
+
+	};
+
+	template <typename TProcessor>
+	MeshFilter<TProcessor> filter_by_mesh(TProcessor&& arg){
+
+		return MeshFilter<TProcessor>(forward<TProcessor>(arg));
+
+	}
+
+	// Walkers
+
+	template <typename TProcessor>
+	void ProcessAttributes(FbxNode & fbx_node, TProcessor processor){
+
+		cout << "Processing " << fbx_node.GetName() << std::endl;
+
+		// Attributes
+		for (int attribute_index = 0; attribute_index < fbx_node.GetNodeAttributeCount(); ++attribute_index){
+
+			cout << "Attribute " << attribute_index << std::endl;
+
+			processor(*(fbx_node.GetNodeAttributeByIndex(attribute_index)));
+			
+			cout << std::endl;
+
+		}
+
+		cout << std::endl;
+
+		// Recursion - Depth-first
+
+		for (int child_index = 0; child_index < fbx_node.GetChildCount(); ++child_index){
+
+			// The instantiated scene node becomes the root of the next level.
+			ProcessAttributes(*fbx_node.GetChild(child_index), processor);
+
+		}
+
+	}
+	
+}
 
 FBX::FBX(){
 
@@ -97,17 +339,15 @@ void FBX::Triangulate(FbxScene & scene){
 
 }
 
-void FBX::Remap(FbxScene & scene, FbxLayerElement::EMappingMode mapping_mode){
+void FBX::RollAttributes(FbxScene & scene){
 
-
+	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::RollAttributes));
 
 }
 
-void FBX::Export(FbxScene & scene, const string & path, bool binary){
+void FBX::Export(FbxScene & scene, const string & path, bool){
 
 	auto fbx_exporter = FbxExporter::Create(manager_, "");
-
-	auto settings = manager_->GetIOSettings();
 
 	if (!fbx_exporter->Initialize(path.c_str(), -1, manager_->GetIOSettings())){
 
