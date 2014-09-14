@@ -144,6 +144,8 @@ namespace{
 				direct_array.ReadUnlock();
 				index_array.ReadUnlock();
 
+				break;
+
 			}
 
 			case FbxLayerElement::EReferenceMode::eDirect:
@@ -161,6 +163,8 @@ namespace{
 
 				direct_array.ReadUnlock();
 				
+				break;
+
 			}
 
 		}
