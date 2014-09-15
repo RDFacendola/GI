@@ -22,6 +22,15 @@ namespace{
 	const double epsilon = 2.0 / 128.0;
 	const double theta_epsilon = 3.141592653 / 6;
 
+	struct LayerElements{
+
+		vector<FbxVector4> normals;
+		vector<FbxVector4> binormals;
+		vector<FbxVector4> tangents;
+		vector<FbxVector2> uvs;
+
+	};
+
 	template <typename T>
 	bool Equals(const T & left, const T & right);
 
@@ -41,297 +50,375 @@ namespace{
 
 	}
 
-	template <typename T>
-	bool DotEquals(const T & left, const T & right);
-
-	template <> bool DotEquals<FbxVector4>(const FbxVector4 & left, const FbxVector4 & right){
-
-		auto left_len = sqrt(left[0] * left[0] + left[1] * left[1] + left[2] * left[2] + left[3] * left[3]);
-		auto right_len = sqrt(right[0] * right[0] + right[1] * right[1] + right[2] * right[2] + right[3] * right[3]);
-
-		auto dot = (left[0] * right[0] + left[1] * right[1] + left[2] * right[2] + left[3] * right[3]);
-		auto len = left_len * right_len;
-
-		auto norm_dot = dot / len;
-		auto cos_theta = cos(theta_epsilon);
-
-		return norm_dot > cos_theta;
-
-	}
-
 	/// \brief Get an element from a FbxLayerElementTemplate by index.
 	template <typename TType>
-	TType GetFbxArrayElement(const FbxLayerElementTemplate<TType> & elements, int index){
+	TType Get(const FbxLayerElementTemplate<TType> & element, int index){
 
-		auto & direct = elements.GetDirectArray();
+		auto & direct = element.GetDirectArray();
 
-		if (elements.GetReferenceMode() == FbxLayerElement::EReferenceMode::eDirect){
+		auto ref = element.GetReferenceMode();
+
+		switch(ref){
+
+		case FbxLayerElement::EReferenceMode::eDirect:
 
 			return direct[index];
 
+		case FbxLayerElement::EReferenceMode::eIndex:
+		case FbxLayerElement::EReferenceMode::eIndexToDirect:
+
+			return direct[element.GetIndexArray()[index]];
+
+		default:
+
+			// Should never happen though
+			throw exception("Unexpected reference mode (supported modes: eDirect, eIndex or eIndexToDirect)");
+
 		}
-		else{
 
-			auto & indices = elements.GetIndexArray();
-
-			return direct[indices[index]];
-
-		}
-		
 	}
 
-	/// \brief Rolls a layer element and change the mapping mode to "byControlPoint".
+	/// \brief Unroll a layer element to a plain vector.
+	template <typename TType>
+	void UnrollElement(const FbxMesh & mesh, FbxLayerElementTemplate<TType> * element_ptr, vector<TType> & destination){
 
-	/// If the conversion fails nothing is changed.
-	/// \return Returns true if the roll succeeded, false otherwise.
-	template <class TType, typename TComparer>
-	bool Roll(FbxMesh & mesh, FbxLayerElementTemplate<TType> * elements_ptr, TComparer compare){
+		if (element_ptr == nullptr){
 
-		if (elements_ptr == nullptr){
-
-			return true;	//The element does not exist.
+			return;		//Nothing to do here
 
 		}
 
-		auto & elements = *elements_ptr;
+		FbxLayerElementTemplate<TType> & element = *element_ptr;
 
-		vector<TType> dst(mesh.GetControlPointsCount());
+		destination.resize(mesh.GetPolygonVertexCount());
 
-		vector<bool> flag(mesh.GetControlPointsCount());
+		switch (element.GetMappingMode()){
 
-		std::fill(flag.begin(), flag.end(), false);
+		case FbxLayerElement::EMappingMode::eByControlPoint:{
 
-		switch (elements.GetMappingMode()){
+			// Unroll the array inside the destination
+			auto polygon_vertices = mesh.GetPolygonVertices();
 
-		case FbxLayerElement::EMappingMode::eByControlPoint:
+			for (int index = 0; index < destination.size(); ++index){
 
-			return true;
+				destination[index] = Get(element, polygon_vertices[index]);
+
+			}
+
+			break;
+
+		}
 
 		case FbxLayerElement::EMappingMode::eByPolygonVertex:{
 
-			auto count = mesh.GetPolygonVertexCount();
+			// Copy the array
+			
+			for (int index = 0; index < destination.size(); ++index){
 
-			int * index_buffer = mesh.GetPolygonVertices();
+				destination[index] = Get(element, index);
 
-			int vertex_index;
+			}
+		
+			break;
 
-			// One element for each index
-			for (int index = 0; index < count; index++){
+		}
 
-				vertex_index = index_buffer[index];
+		default:
 
-				if (!flag[vertex_index]){
+			throw exception("Unexpected mapping mode (supported modes: eByControlPoint, eByPolygonVertex");
 
-					dst[vertex_index] = GetFbxArrayElement(elements, index);
-					flag[vertex_index] = true;	//Written
+		}
+
+	}
+
+	/// \brief Attempts to roll a layer element to a plain vector.
+	template <typename TType>
+	bool RollElement(const FbxMesh & mesh, FbxLayerElementTemplate<TType> * element_ptr, vector<TType> & destination){
+
+		if (element_ptr == nullptr){
+
+			destination.resize(0);
+			return true;
+
+		}
+
+		FbxLayerElementTemplate<TType> & element = *element_ptr;
+
+		destination.resize(mesh.GetControlPointsCount());
+
+		switch (element.GetMappingMode()){
+
+		case FbxLayerElement::EMappingMode::eByControlPoint:{
+
+			// Copy the array
+			for (int i = 0; i < destination.size(); ++i){
+
+				destination[i] = Get(element, i);
+
+			}
+
+			break;
+
+		}
+
+		case FbxLayerElement::EMappingMode::eByPolygonVertex:{
+
+			// See whether the attributes are duplicated according to the index buffer
+
+			auto polygon_vertices = mesh.GetPolygonVertices();
+
+			vector<bool> set(destination.size());
+
+			std::fill(set.begin(), set.end(), false);
+
+			for (int i = 0; i < mesh.GetPolygonVertexCount(); ++i){
+
+				auto vertex_index = polygon_vertices[i];
+
+				if (!set[vertex_index]){
+
+					destination[vertex_index] = Get(element, i);
+					set[vertex_index] = true;
 
 				}
-				else if (!compare(GetFbxArrayElement(elements, index), dst[vertex_index])){
+				else if (!Equals(destination[vertex_index], Get(element, i))){
 
-					return false;	// The same vertex is associated to different attribute's value.
+					// The same control point has different values for the same attribute. Rollback!
+					return false;
 
 				}
 
 			}
 
-			// rolled contains the rolled informations. Resize and remap the elements array.
+			break;
 
-			elements.SetMappingMode(FbxLayerElement::EMappingMode::eByControlPoint);
-			elements.SetReferenceMode(FbxLayerElement::EReferenceMode::eDirect);
-
-			elements.GetIndexArray().Clear();									//Not needed anymore.
-
-			elements.GetDirectArray().Resize(static_cast<int>(dst.size()));		//Resize the attribute buffer
-
-			auto * buffer = static_cast<TType *>(elements.GetDirectArray().GetLocked(FbxLayerElementArray::ELockMode::eReadLock));
-
-			std::copy(dst.begin(),
-				dst.end(),
-				&buffer[0]);
-
-			elements.GetDirectArray().ReadUnlock();
-
-			// Done!
-
-			return true;
-			
 		}
 
-		case FbxLayerElement::EMappingMode::eNone:
-
-			return true;	//The attribute does not exist.
-			
 		default:
 
-			return false;
+			throw exception("Unexpected mapping mode (supported modes: eByControlPoint, eByPolygonVertex");
+
+		}
+
+		return true;
+
+	}
+
+	size_t GetIndex(vector<FbxVector4> vertices, vector<LayerElements> layers, vector<FbxVector4> & indexed_vertices, vector<LayerElements> & indexed_layers, int index){
+
+		// Check against every other indexed vertex
+		for (int i = 0; i < indexed_vertices.size(); ++i){
+				
+			if (!Equals(vertices[index], indexed_vertices[i])){
+
+				continue;
+
+			}
+
+			bool found = true;
+
+			for (int l = 0; l < layers.size(); ++l){
+
+				auto & layer = layers[l];
+				auto & indexed_layer = indexed_layers[l];
+
+				if (layer.normals.size() > 0	&& !Equals(layer.normals[index], indexed_layer.normals[i]) ||
+					layer.binormals.size() > 0	&& !Equals(layer.binormals[index], indexed_layer.binormals[i]) ||
+					layer.tangents.size() > 0	&& !Equals(layer.tangents[index], indexed_layer.tangents[i]) ||
+					layer.uvs.size() > 0		&& !Equals(layer.uvs[index], indexed_layer.uvs[i])){
+
+					found = false;
+					break;
+
+				}
+
+
+			}
+
+			if (found){
+
+				// Return the found index;
+				return i;
+
+			}
+
+		}
+
+		//Not found, add a new vertex
+
+		size_t new_index = indexed_vertices.size();
+
+		indexed_vertices.push_back(vertices[index]);
+
+		for (int l = 0; l < layers.size(); ++l){
+
+			auto & layer = layers[l];
+			auto & indexed_layer = indexed_layers[l];
+
+			if (layer.normals.size() > 0)	indexed_layer.normals.push_back(layer.normals[new_index]);
+			if (layer.binormals.size() > 0)	indexed_layer.binormals.push_back(layer.binormals[new_index]);
+			if (layer.tangents.size() > 0)	indexed_layer.tangents.push_back(layer.tangents[new_index]);
+			if (layer.uvs.size() > 0)		indexed_layer.uvs.push_back(layer.uvs[new_index]);
+
+		}
+
+		// Return the new index.
+		return new_index;
+
+	}
+
+	template <typename TType>
+	void CommitLayerElementRemap(vector<TType> source, FbxLayerElementTemplate<TType> * destination_ptr){
+
+		if (destination_ptr == nullptr){
+
+			return;	//Nothing to do here...
+
+		}
+
+		FbxLayerElementTemplate<TType> & destination = *destination_ptr;
+
+		destination.Clear();
+
+		destination.SetMappingMode(FbxLayerElement::EMappingMode::eByControlPoint);
+		destination.SetReferenceMode(FbxLayerElement::EReferenceMode::eDirect);			//Doesn't really matter...
+
+		// Write the source data inside the direct array.
+
+		auto & destination_array = destination.GetDirectArray();
+
+		destination_array.Resize(source.size());
+
+		for (int i = 0; i < source.size(); ++i){
+
+			destination_array.SetAt(i, source[i]);
 
 		}
 				
 	}
 
-	template <class TType>
-	bool Unroll(FbxMesh & mesh, FbxLayerElementTemplate<TType> * elements_ptr){
+	void CommitRemap(FbxMesh & mesh, vector<FbxVector4> * vertices_ptr, vector<unsigned int> * indices_ptr, vector<LayerElements> & layers){
 
-		if (elements_ptr == nullptr){
+		// Copy the vertices
+		if (vertices_ptr){
 
-			return true;	//The element does not exist.
+			auto & vertices = *vertices_ptr;
+
+			mesh.InitControlPoints(static_cast<int>(vertices.size()));
+
+			auto control_points = mesh.GetControlPoints();
+
+			std::copy(vertices.begin(),
+				vertices.end(),
+				&control_points[0]);
 
 		}
 
-		auto & elements = *elements_ptr;
+		// Copy the indices
+		if (indices_ptr){
 
-		vector<TType> dst(mesh.GetPolygonVertexCount());
+			auto & indices = *indices_ptr;
 
-		switch (elements.GetMappingMode()){
+			// The polygon vertex count never change during remapping
 
-		case FbxLayerElement::EMappingMode::eByControlPoint:
-		{
+			auto polygon_vertices = mesh.GetPolygonVertices();
 
-			//Unroll the attribute
+			std::copy(indices.begin(),
+				indices.end(),
+				&polygon_vertices[0]);
 
-			auto count = mesh.GetPolygonVertexCount();
+		}
 
-			int * index_buffer = mesh.GetPolygonVertices();
+		// Copy the layer elements
+		for (int l = 0; l < layers.size(); ++l){
 
-			int vertex_index;
+			auto & src_layer = layers[l];
 
-			for (int index = 0; index < count; index++){
+			auto & dst_layer = *mesh.GetLayer(l);
 
-				vertex_index = index_buffer[index];
+			CommitLayerElementRemap(src_layer.normals, dst_layer.GetNormals());
+			CommitLayerElementRemap(src_layer.binormals, dst_layer.GetBinormals());
+			CommitLayerElementRemap(src_layer.tangents, dst_layer.GetTangents());
+			CommitLayerElementRemap(src_layer.uvs, dst_layer.GetUVs());
 
-				dst[index] = GetFbxArrayElement(elements, vertex_index);
+		}
 
+	}
+
+	/// \brief Remap the mesh attributes
+	void RemapAttributes(FbxMesh & mesh){
+		
+		vector<LayerElements> layers(mesh.GetLayerCount());
+
+		// Attempts layer elements roll. Vertex buffer is left untouched.
+		cout << "Re-indexing...";
+
+		bool roll = true;
+
+		for (int l = 0; l < layers.size(); ++l){
+
+			auto & layer = *mesh.GetLayer(l);
+
+			if (!RollElement(mesh, layer.GetNormals(), layers[l].normals) ||
+				!RollElement(mesh, layer.GetBinormals(), layers[l].binormals) ||
+				!RollElement(mesh, layer.GetTangents(), layers[l].tangents) ||
+				!RollElement(mesh, layer.GetUVs(), layers[l].uvs)){
+
+				roll = false;
+				break;
+				
 			}
 
-			// Resize and remap the elements array.
-
-			elements.SetReferenceMode(FbxLayerElement::EReferenceMode::eDirect);
-
-			elements.GetIndexArray().Clear();									//Not needed anymore.
-
-			elements.GetDirectArray().Resize(static_cast<int>(dst.size()));		//Resize the attribute buffer
-
-			auto * buffer = static_cast<TType *>(elements.GetDirectArray().GetLocked(FbxLayerElementArray::ELockMode::eReadLock));
-
-			std::copy(dst.begin(),
-				dst.end(),
-				buffer);
-
-			elements.GetDirectArray().ReadUnlock();
-
-			// Done!
-
-			return true;
-
-		}
-		case FbxLayerElement::EMappingMode::eByPolygonVertex:{
-
-			//Change the mapping mode only
-
-			elements.SetMappingMode(FbxLayerElement::EMappingMode::eByControlPoint);
-
-			return true;
-
 		}
 
-		case FbxLayerElement::EMappingMode::eNone:
+		if (roll){
 
-			return true;	//The attribute does not exist.
+			// Neither the vertex buffer, nor the index buffer change.
 
-		default:
+			CommitRemap(mesh, nullptr, nullptr, layers);
 
-			return false;
-
-		}
-
-	}
-
-	void UnrollVertices(FbxMesh & mesh){
-
-		vector<FbxVector4> vertices(mesh.GetPolygonVertexCount());
-
-		auto control_points = mesh.GetControlPoints();
-		auto polygon_vertices = mesh.GetPolygonVertices();
-
-		// Unroll the vertex buffer
-
-		for (int i = 0; i < mesh.GetPolygonVertexCount(); i++){
-
-			vertices[i] = control_points[polygon_vertices[i]];
-
-		}
-
-		// Replace the old vertex buffer
-
-		mesh.InitControlPoints(static_cast<int>(vertices.size()));
-
-		control_points = mesh.GetControlPoints();
-
-		std::copy(vertices.begin(),
-			vertices.end(),
-			control_points);
-
-		// Delete the index buffer
-		
-		// Ok let's just put as 1-2-3-blah
-		for (int i = 0; i < mesh.GetPolygonVertexCount(); i++){
-
-			polygon_vertices[i] = i;
-
-		}
-
-	}
-
-	// Processors
-	void RollAttributes(FbxMesh & mesh){
-
-		for (int layer_index = 0; layer_index < mesh.GetLayerCount(); ++layer_index){
-
-			auto & layer = *mesh.GetLayer(layer_index);
-
-			cout << "Layer " << layer_index << std::endl;
-
-			cout << "Processing normals..." << (Roll(mesh, layer.GetNormals(), DotEquals<FbxVector4>) ? "done" : "fail") << std::endl;
-			cout << "Processing binormals..." << (Roll(mesh, layer.GetBinormals(), DotEquals<FbxVector4>) ? "done" : "fail") << std::endl;
-			cout << "Processing tangents..." << (Roll(mesh, layer.GetTangents(), DotEquals<FbxVector4>) ? "done" : "fail") << std::endl;
-			cout << "Processing uvs..." << (Roll(mesh, layer.GetUVs(), Equals<FbxVector2>) ? "done" : "fail") << std::endl;
-			
-			cout << std::endl;
-
-		}
-
-	}
-
-	void UnrollAttributes(FbxMesh & mesh){
-
-		if (mesh.GetPolygonVertices() == nullptr){
-
-			cout << "The mesh is already non-indexed" << std::endl;
+			cout << "success!" << std::endl;
 
 			return;
 
 		}
 
-		for (int layer_index = 0; layer_index < mesh.GetLayerCount(); ++layer_index){
+		cout << "\rUn-indexing...";
 
-			auto & layer = *mesh.GetLayer(layer_index);
+		vector<FbxVector4> vertices;
+		vector<unsigned int> indices(mesh.GetPolygonVertexCount());
+		auto polygon_vertices = mesh.GetPolygonVertices();
 
-			cout << "Layer " << layer_index << std::endl;
+		// Vertex unroll
+		auto control_points = mesh.GetControlPoints();
 
-			cout << "Processing normals..." << (Unroll(mesh, layer.GetNormals()) ? "done" : "fail") << std::endl;
-			cout << "Processing binormals..." << (Unroll(mesh, layer.GetBinormals()) ? "done" : "fail") << std::endl;
-			cout << "Processing tangents..." << (Unroll(mesh, layer.GetTangents()) ? "done" : "fail") << std::endl;
-			cout << "Processing uvs..." << (Unroll(mesh, layer.GetUVs()) ? "done" : "fail") << std::endl;
+		vertices.resize(mesh.GetPolygonVertexCount());
 
-			cout << std::endl;
+		for (int vertex_index = 0; vertex_index < vertices.size(); ++vertex_index){
+
+			vertices[vertex_index] = control_points[polygon_vertices[vertex_index]];
+
+			indices[vertex_index] = vertex_index;	//The index buffer is the trivial one (0,1,2,3,...)
 
 		}
 
-		//Discards the index buffer and unrolls the vertices.
-		cout << "Unrolling vertices..." << std::endl;
-
-		UnrollVertices(mesh);
+		// Layer elements unroll
 		
+		for (int l = 0; l < layers.size(); ++l){
+
+			auto & layer = *mesh.GetLayer(l);
+
+			UnrollElement(mesh, layer.GetNormals(), layers[l].normals);
+			UnrollElement(mesh, layer.GetBinormals(), layers[l].binormals);
+			UnrollElement(mesh, layer.GetTangents(), layers[l].tangents);
+			UnrollElement(mesh, layer.GetUVs(), layers[l].uvs);
+
+		}
+		
+		CommitRemap(mesh, &vertices, &indices, layers);
+					
+		cout << "success!" << std::endl;
+
 	}
 
 	// Filters
@@ -372,21 +459,15 @@ namespace{
 	template <typename TProcessor>
 	void ProcessAttributes(FbxNode & fbx_node, TProcessor processor){
 
-		cout << "Processing " << fbx_node.GetName() << std::endl;
-
 		// Attributes
 		for (int attribute_index = 0; attribute_index < fbx_node.GetNodeAttributeCount(); ++attribute_index){
 
-			cout << "Attribute " << attribute_index << std::endl;
+			cout << "#" << attribute_index << ": " << fbx_node.GetName() << std::endl;
 
 			processor(*(fbx_node.GetNodeAttributeByIndex(attribute_index)));
-			
-			cout << std::endl;
 
 		}
-
-		cout << std::endl;
-
+		
 		// Recursion - Depth-first
 
 		for (int child_index = 0; child_index < fbx_node.GetChildCount(); ++child_index){
@@ -482,18 +563,11 @@ void FBX::Triangulate(FbxScene & scene){
 
 }
 
-void FBX::RollAttributes(FbxScene & scene){
+void FBX::RemapAttributes(FbxScene & scene){
 
-	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::RollAttributes));
-
-}
-
-void FBX::UnrollAttributes(FbxScene & scene){
-
-	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::UnrollAttributes));
+	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::RemapAttributes));
 
 }
-
 
 void FBX::Export(FbxScene & scene, const string & path, bool){
 

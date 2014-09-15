@@ -187,7 +187,7 @@ namespace{
 		WriteAttribute(&mesh.GetControlPoints()[0], vertices, [](VertexFormatNormalTextured & vertex, const FbxVector4 position){ vertex.position = FbxVector4ToEigenVector3f(position); });
 		WriteAttribute(*mesh.GetLayer(0)->GetNormals(), vertices, [](VertexFormatNormalTextured & vertex, const FbxVector4 normal){ vertex.normal = FbxVector4ToEigenVector3f(normal); });
 		WriteAttribute(*mesh.GetLayer(0)->GetUVs(), vertices, [](VertexFormatNormalTextured & vertex, const FbxVector2 tex_coord){ vertex.tex_coord = FbxVector2ToEigenVector2f(tex_coord); });
-
+			
 		return vertices;
 
 	}
@@ -199,6 +199,30 @@ namespace{
 
 		// Resize the vertex buffer
 		vector<unsigned int> indices;
+
+		// Check whether the index buffer is trivial (ie the i-th position contains i as value, typical of unindexed mesh)
+
+		bool trivial = true;
+
+		for (int i = 0; i < mesh.GetPolygonVertexCount(); ++i){
+
+			if (index_buffer[i] != i){
+
+				trivial = false;		//The index buffer is not "trivial"
+
+				break;
+				
+			}
+
+		}
+
+		if (trivial){
+
+			return indices;
+
+		}
+
+		// Copy the index buffer elsewhere
 
 		indices.resize(mesh.GetPolygonVertexCount());
 

@@ -20,8 +20,8 @@ const char kCommandToken = '-';
 const string kGlobalCommand = "$Global";				// Commandless arguments
 const string kHelpCommand = "-?";						// Halp!
 const string kTriangulateCommand = "-triangulate";		// Triangulate
-const string kRollAttributes = "-roll";					// Rolls the attributes
-const string kUnrollAttributes = "-unroll";				// Unrolls the attribtes
+const string kRemap = "-remap";							// Remap the mesh
+const string kDds = "-dds";								// Converts all the texture in dds format
 const string kOutputCommand = "-o";						// Mandatory
 const string kInputCommand = "-i";						// Mandatory
 
@@ -137,9 +137,9 @@ void ShowHelp(){
 	// Commands
 	cout << std::endl;
 
-	cout << kTriangulateCommand << ": Triangulate the mesh." << std::endl;
-	cout << kRollAttributes << ": Rolls the attributes (byPolygonVertex attributes are re-mapped to byControlPoints, eIndex is remapped to eDirect)." << std::endl;
-	cout << kUnrollAttributes << ": Unrolls the attributes (byPolygonVertex attributes are re-mapped to byControlPoints, index buffer is discarded, eIndex is remapped to eDirect)." << std::endl;
+	//cout << kTriangulateCommand << ": Triangulate the mesh." << std::endl;
+	cout << kRemap << ": Performs a per-vertex remapping of mesh attributes. " << std::endl;
+	cout << kDds << ": Convert each texture addressed by the mesh in dds format. (Note \"texconv\" must be recognized as command)" << std::endl;
 
 }
 
@@ -172,27 +172,27 @@ void Run(CommandMap & commands){
 
 		//EXECUTION
 
-		if (commands.find(kTriangulateCommand) != commands.end()){
+		//if (commands.find(kTriangulateCommand) != commands.end()){
 
 			cout << "Triangulating (this could take a couple of minutes)..." << std::endl;
 
 			fbx.Triangulate(*scene);
 
+		//}
+
+		if (commands.find(kRemap) != commands.end()){
+
+			cout << "Re-mapping mesh attributes..." << std::endl;
+
+			fbx.RemapAttributes(*scene);
+
 		}
+		
+		if (commands.find(kDds) != commands.end()){
 
-		if (commands.find(kRollAttributes) != commands.end()){
+			cout << "Converting textures..." << std::endl;
 
-			cout << "Rolling attributes..." << std::endl;
 
-			fbx.RollAttributes(*scene);
-
-		}
-
-		if (commands.find(kUnrollAttributes) != commands.end()){
-
-			cout << "Unrolling attributes..." << std::endl;
-
-			fbx.UnrollAttributes(*scene);
 
 		}
 
