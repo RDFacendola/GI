@@ -6,13 +6,21 @@
 
 #endif
 
+#ifdef _WIN32
+
+#include <Windows.h>
+
+#endif
+
 #include <exception>
 #include <string>
 #include <sstream>
 #include <utility>
 #include <iostream>
+#include <process.h>
 
 #include "..\include\fbx.h"
+#include "..\include\shell_utils.h"
 
 using namespace ::gi_lib;
 using namespace ::std;
@@ -287,7 +295,7 @@ namespace{
 
 		auto & destination_array = destination.GetDirectArray();
 
-		destination_array.Resize(source.size());
+		destination_array.Resize(static_cast<int>(source.size()));
 
 		for (int i = 0; i < source.size(); ++i){
 
@@ -308,10 +316,12 @@ namespace{
 
 			auto control_points = mesh.GetControlPoints();
 
-			std::copy(vertices.begin(),
-				vertices.end(),
-				&control_points[0]);
+			for (int i = 0; i < vertices.size(); ++i){
 
+				control_points[i] = vertices[i];
+
+			}
+			
 		}
 
 		// Copy the indices
@@ -323,9 +333,11 @@ namespace{
 
 			auto polygon_vertices = mesh.GetPolygonVertices();
 
-			std::copy(indices.begin(),
-				indices.end(),
-				&polygon_vertices[0]);
+			for (int i = 0; i < indices.size(); ++i){
+
+				polygon_vertices[i] = indices[i];
+
+			}
 
 		}
 
@@ -421,9 +433,64 @@ namespace{
 
 	}
 
+	void StripPropertyExtension(FbxProperty property){
+
+		int count = property.GetSrcObjectCount<FbxFileTexture>();
+
+		for (int t = 0; t < count; ++t){
+
+			auto & texture = *property.GetSrcObject<FbxFileTexture>(t);
+			
+			string texture_name = texture.GetFileName();
+
+			cout << "Stripping from " << texture_name << std::endl;
+
+#ifdef _WIN32
+
+			char extension[_MAX_EXT];
+
+			_splitpath_s(texture_name.c_str(), nullptr,0, nullptr, 0, nullptr, 0, extension, _MAX_EXT);
+
+			texture_name.erase(texture_name.end() - strnlen_s(extension, _MAX_EXT), texture_name.end());
+			
+#else
+
+			static_assert(false, "Not supported yet!");
+
+#endif
+			
+			texture.SetFileName(texture_name.c_str());
+								
+		}
+
+	}
+
+	/// \brief Strips textures' extensions.
+	void StripExtension(FbxMesh & mesh){
+		
+		auto & parent = *mesh.GetNode();
+		
+		for (int m = 0; m < parent.GetSrcObjectCount<FbxSurfaceMaterial>(); ++m){
+
+			auto &material = *parent.GetSrcObject<FbxSurfaceMaterial>(m);			
+
+			// Standard maps only...
+			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sEmissive));
+			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sAmbient));
+			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sDiffuse));
+			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sSpecular));
+			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sShininess));
+			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sBump));
+			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sNormalMap));
+			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sReflection));
+
+		}
+
+	}
+
 	// Filters
 
-	template <typename TProcessor>
+	template <typename TProcessor, typename... TExtras >
 	class MeshFilter{
 
 	public:
@@ -431,11 +498,11 @@ namespace{
 		MeshFilter(TProcessor processor) :
 			processor_(move(processor)){}
 
-		void operator()(FbxNodeAttribute & attribute){
+		void operator()(FbxNodeAttribute & attribute, TExtras&&... extras){
 
 			if (attribute.GetAttributeType() == FbxNodeAttribute::EType::eMesh){
 
-				processor_(static_cast<FbxMesh&>(attribute));
+				processor_(static_cast<FbxMesh&>(attribute), forward<TExtras>(extras)...);
 
 			}
 
@@ -447,24 +514,23 @@ namespace{
 
 	};
 
-	template <typename TProcessor>
-	MeshFilter<TProcessor> filter_by_mesh(TProcessor&& arg){
+	template <typename TProcessor, typename... TExtras>
+	MeshFilter<TProcessor, TExtras...> filter_by_mesh(TProcessor&& arg, TExtras&&...){
 
-		return MeshFilter<TProcessor>(forward<TProcessor>(arg));
-
+		return MeshFilter<TProcessor, TExtras...>(forward<TProcessor>(arg));
 	}
 
 	// Walkers
 
-	template <typename TProcessor>
-	void ProcessAttributes(FbxNode & fbx_node, TProcessor processor){
+	template <typename TProcessor, typename... TExtras>
+	void ProcessAttributes(FbxNode & fbx_node, TProcessor processor, TExtras&&... extras){
 
 		// Attributes
 		for (int attribute_index = 0; attribute_index < fbx_node.GetNodeAttributeCount(); ++attribute_index){
 
 			cout << "#" << attribute_index << ": " << fbx_node.GetName() << std::endl;
 
-			processor(*(fbx_node.GetNodeAttributeByIndex(attribute_index)));
+			processor(*(fbx_node.GetNodeAttributeByIndex(attribute_index)), forward<TExtras>(extras)...);
 
 		}
 		
@@ -473,7 +539,7 @@ namespace{
 		for (int child_index = 0; child_index < fbx_node.GetChildCount(); ++child_index){
 
 			// The instantiated scene node becomes the root of the next level.
-			ProcessAttributes(*fbx_node.GetChild(child_index), processor);
+			ProcessAttributes(*fbx_node.GetChild(child_index), processor, forward<TExtras>(extras)...);
 
 		}
 
@@ -566,6 +632,12 @@ void FBX::Triangulate(FbxScene & scene){
 void FBX::RemapAttributes(FbxScene & scene){
 
 	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::RemapAttributes));
+
+}
+
+void FBX::StripExtension(FbxScene & scene){
+	
+	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::StripExtension));
 
 }
 

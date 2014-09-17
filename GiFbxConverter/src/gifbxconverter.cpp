@@ -21,7 +21,7 @@ const string kGlobalCommand = "$Global";				// Commandless arguments
 const string kHelpCommand = "-?";						// Halp!
 const string kTriangulateCommand = "-triangulate";		// Triangulate
 const string kRemap = "-remap";							// Remap the mesh
-const string kDds = "-dds";								// Converts all the texture in dds format
+const string kStrip = "-strip";							// Strips the extension of every addressed texture.
 const string kOutputCommand = "-o";						// Mandatory
 const string kInputCommand = "-i";						// Mandatory
 
@@ -139,7 +139,7 @@ void ShowHelp(){
 
 	//cout << kTriangulateCommand << ": Triangulate the mesh." << std::endl;
 	cout << kRemap << ": Performs a per-vertex remapping of mesh attributes. " << std::endl;
-	cout << kDds << ": Convert each texture addressed by the mesh in dds format. (Note \"texconv\" must be recognized as command)" << std::endl;
+	cout << kStrip << ": Strips the extension from every addressed texture" << std::endl;
 
 }
 
@@ -188,11 +188,11 @@ void Run(CommandMap & commands){
 
 		}
 		
-		if (commands.find(kDds) != commands.end()){
+		if (commands.find(kStrip) != commands.end()){
 
-			cout << "Converting textures..." << std::endl;
+			cout << "Stripping extensions..." << std::endl;
 
-
+			fbx.StripExtension(*scene);
 
 		}
 

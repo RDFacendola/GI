@@ -40,6 +40,9 @@ namespace gi_lib{
 		/// \param scene The scene to remap the attributes of.
 		void RemapAttributes(FbxScene & scene);
 
+		/// \brief Strips the extension of every addressed texture.
+		void StripExtension(FbxScene & scene);
+
 		/// \brief Export a fbx scene into a file.
 		/// \param scene The scene to export.
 		/// \param path The output path.

@@ -160,9 +160,11 @@
   <ItemGroup>
     <ClCompile Include="src\fbx.cpp" />
     <ClCompile Include="src\gifbxconverter.cpp" />
+    <ClCompile Include="src\shell_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\fbx.h" />
+    <ClInclude Include="include\shell_utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

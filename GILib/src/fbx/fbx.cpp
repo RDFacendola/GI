@@ -105,7 +105,7 @@ namespace{
 
 			writer(vertex, *attributes);
 
-			attributes++;
+			++attributes;
 
 		}
 
@@ -137,7 +137,7 @@ namespace{
 
 					writer(vertex, direct_buffer[*index_buffer]);
 
-					index_buffer++;
+					++index_buffer;
 
 				}
 
@@ -157,7 +157,7 @@ namespace{
 
 					writer(vertex, *direct_buffer);
 
-					direct_buffer++;
+					++direct_buffer;
 
 				}
 

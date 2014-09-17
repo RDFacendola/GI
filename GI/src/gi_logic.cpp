@@ -25,7 +25,7 @@ scene_(make_unique<Scene>())
 
 	auto & node = scene_->CreateNode();
 
-	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\crysponza-roll.fbx", node, graphics_.GetManager());
+	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", node, graphics_.GetManager());
 
 	/////////////////////////////////////
 
