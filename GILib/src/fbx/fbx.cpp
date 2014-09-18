@@ -251,14 +251,25 @@ namespace{
 
 	}
 
+	/// \brief Build material method template. Used to dispatch different build methods.
+	template<typename TVertexFormat>
+	void BuildMaterial(const FbxMesh & mesh, SceneNode & node, Manager & resources);
+
+	/// \brief Builds a material with proper shader and textures.
+	template<> void BuildMaterial<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, Manager & resources){
+
+		
+
+	}
+	
 	/// \brief Attempts to load a mesh inside a scene.
 
 	/// The methods load the mesh from fbx and loads it inside the scene. If the original mesh is not supported this method does nothing.
-	void BuildMesh(const FbxMesh & mesh, SceneNode & scene_root, Manager & resources){
+	void BuildObject(const FbxMesh & mesh, SceneNode & node, Manager & resources){
 
 		if (!mesh.IsTriangleMesh()){
 
-			//throw RuntimeException(L"Polygons other than triangles are not supported!");
+			// No triangle mesh, no party!
 			return;
 
 		}
@@ -268,8 +279,9 @@ namespace{
 		if (HasTextureCoordinates(mesh)  &&
 			HasNormals(mesh)){
 
-			BuildMesh<VertexFormatNormalTextured>(mesh, scene_root, resources);
-
+			BuildMesh<VertexFormatNormalTextured>(mesh, node, resources);
+			BuildMaterial<VertexFormatNormalTextured>(mesh, node, resources);
+			
 		}
 				
 	}
@@ -298,8 +310,8 @@ namespace{
 
 			if (attribute->GetAttributeType() == FbxNodeAttribute::EType::eMesh){
 
-				//Builds the mesh found
-				BuildMesh(*static_cast<FbxMesh*>(attribute), scene_node, resources);
+				// Model object
+				BuildObject(*static_cast<FbxMesh*>(attribute), scene_node, resources);
 				
 			}
 				

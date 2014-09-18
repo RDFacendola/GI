@@ -6,6 +6,7 @@
 #pragma once
 
 #include <d3d11.h>
+#include <d3dx11effect.h>
 #include <string>
 #include <memory>
 
@@ -103,7 +104,31 @@ namespace gi_lib{
 			size_t polygon_count_;
 
 			size_t LOD_count_;
+
+			size_t size_;
 			
+		};
+
+		class DX11Shader : public Shader{
+
+		public:
+
+			DX11Shader(ID3D11Device & device, const LoadSettings<Shader, Shader::LoadMode::kCompileFromFile> & settings);
+
+			virtual size_t GetSize() const override;
+
+			virtual ResourcePriority GetPriority() const override;
+
+			virtual void SetPriority(ResourcePriority priority) override;
+
+		private:
+
+			unique_ptr<ID3DX11Effect, COMDeleter> effect_;
+
+			ResourcePriority priority_;
+
+			size_t size_;
+
 		};
 
 		/// \brief DirectX11 resource mapping template.
@@ -122,6 +147,14 @@ namespace gi_lib{
 
 			/// \brief Concrete type associated to a Mesh.
 			using TMapped = DX11Mesh;
+
+		};
+
+		/// \brief Shader mapping.
+		template<> struct ResourceMapping < Shader > {
+
+			/// \brief Concrete type associated to a Shader.
+			using TMapped = DX11Shader;
 
 		};
 
@@ -188,6 +221,31 @@ namespace gi_lib{
 
 		}
 
+		inline size_t DX11Mesh::GetSize() const{
+
+			return size_;
+
+		}
+
+		//
+
+		inline size_t DX11Shader::GetSize() const{
+
+			return size_;
+
+		}
+
+		inline ResourcePriority DX11Shader::GetPriority() const{
+
+			return priority_;
+
+		}
+
+		inline void DX11Shader::SetPriority(ResourcePriority priority){
+
+			priority_ = priority;
+
+		}
 
 	}
 

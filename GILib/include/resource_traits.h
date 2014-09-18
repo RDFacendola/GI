@@ -20,7 +20,19 @@ namespace gi_lib{
 	/// \brief Settings used to load a Texture2D from a DDS file.
 	template <> struct LoadSettings < Texture2D, Texture2D::LoadMode::kFromDDS > {
 
-		wchar_t * file_name;		///< \brief Name of the file to load relative to the resource folder.
+		/// \brief Name of the file to load relative to the resource folder.
+		wchar_t * file_name;		
+
+	};
+
+	/// \brief Settings used to load a Shader from a text file.
+	template <> struct LoadSettings < Shader, Shader::LoadMode::kCompileFromFile > {
+
+		/// \brief Name of the file to load relative to the resource folder.
+		wchar_t * file_name;						
+
+		/// \brief Include directory to use while compiling.
+		vector<wchar_t *> include_directories;		
 
 	};
 

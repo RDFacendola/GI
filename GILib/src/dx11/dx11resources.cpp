@@ -1,11 +1,14 @@
 #pragma comment(lib,"DirectXTK")
 #pragma comment(lib,"DirectXTex")
+#pragma comment(lib,"Effects11")
 
 #include "dx11resources.h"
 
 #include <DDSTextureLoader.h>
 #include <DirectXTex.h>
 #include <DirectXMath.h>
+#include <d3dxGlobal.h>
+#include <d3dcompiler.h>
 #include <Eigen/Core>
 
 #include <math.h>
@@ -18,6 +21,20 @@ using namespace std;
 using namespace gi_lib;
 using namespace gi_lib::dx11;
 using namespace DirectX;
+
+/// Throws if the compilation miserably failed...
+#define THROW_ON_COMPILE_FAIL(expr, blob) do{ \
+								HRESULT hr = expr; \
+								if(FAILED(hr)) { \
+									std::wstringstream stream; \
+									stream << L"\"" << #expr << "\" failed with 0x" << std::hex << hr << std::dec << std::endl \
+										   << __FILE__ << std::endl \
+										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
+									std::wstring error_string(blob != nullptr ? static_cast<wchar_t *>(blob->GetBufferPointer()) : L""); \
+									if(blob != nullptr) blob->Release(); \
+									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(hr)}, {L"compiler error", error_string}}); \
+								} \
+							}WHILE0
 
 namespace{
 
@@ -80,7 +97,7 @@ namespace{
 
 	/// \brief Create an index buffer
 	template <typename TVertexFormat>
-	ID3D11Buffer * MakeVertexBuffer(ID3D11Device & device, const vector<TVertexFormat> & vertices){
+	ID3D11Buffer * MakeVertexBuffer(ID3D11Device & device, const vector<TVertexFormat> & vertices, size_t & size){
 
 		ID3D11Buffer * vertex_buffer = nullptr;
 
@@ -102,12 +119,14 @@ namespace{
 
 		THROW_ON_FAIL(device.CreateBuffer(&buffer_desc, &init_data, &vertex_buffer));
 
+		size = buffer_desc.ByteWidth;
+
 		return vertex_buffer;
 
 	}
 
 	/// \brief Create an index buffer
-	ID3D11Buffer * MakeIndexBuffer(ID3D11Device & device, const vector<unsigned int> & indices){
+	ID3D11Buffer * MakeIndexBuffer(ID3D11Device & device, const vector<unsigned int> & indices, size_t & size){
 
 		ID3D11Buffer * index_buffer = nullptr;
 
@@ -129,6 +148,8 @@ namespace{
 		// Create the buffer with the device.
 		THROW_ON_FAIL(device.CreateBuffer(&buffer_desc, &init_data, &index_buffer));
 
+		size = buffer_desc.ByteWidth;
+
 		return index_buffer;
 
 	}
@@ -143,12 +164,12 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D
 	ID3D11Resource * resource;
 	ID3D11ShaderResourceView * shader_view;
 
-	wstringstream path;
+	wstringstream file_name;
 
-	path << Application::GetInstance().GetDirectory() << settings.file_name;
+	file_name << Application::GetInstance().GetDirectory() << settings.file_name;
 
 	THROW_ON_FAIL( CreateDDSTextureFromFileEx(&device, 
-											  path.str().c_str(), 
+											  file_name.str().c_str(), 
 											  0,									// Load everything.
 											  D3D11_USAGE_IMMUTABLE, 
 											  D3D11_BIND_SHADER_RESOURCE, 
@@ -202,11 +223,14 @@ DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildM
 
 	// Normal, textured mesh.
 
-	vertex_buffer_.reset(MakeVertexBuffer(device, settings.vertices));
+	size_t vb_size = 0;
+	size_t ib_size = 0;
+
+	vertex_buffer_.reset(MakeVertexBuffer(device, settings.vertices, vb_size));
 
 	if (settings.indices.size() > 0){
 
-		index_buffer_.reset(MakeIndexBuffer(device, settings.indices));
+		index_buffer_.reset(MakeIndexBuffer(device, settings.indices, ib_size));
 	
 		polygon_count_ = settings.indices.size();
 
@@ -219,22 +243,67 @@ DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildM
 
 	vertex_count_ = settings.vertices.size();
 	LOD_count_ = 1;
-
-}
-
-size_t DX11Mesh::GetSize() const{
-
-	return 0;
+	size_ = vb_size + ib_size;
 
 }
 
 ResourcePriority DX11Mesh::GetPriority() const{
 
-	return ResourcePriority::NORMAL;
+	return EvictionPriorityToResourcePriority(vertex_buffer_->GetEvictionPriority());
 
 }
 
-void DX11Mesh::SetPriority(ResourcePriority){
+void DX11Mesh::SetPriority(ResourcePriority priority){
 
+	vertex_buffer_->SetEvictionPriority(ResourcePriorityToEvictionPriority(priority));
+
+	if (index_buffer_){
+
+		index_buffer_->SetEvictionPriority(ResourcePriorityToEvictionPriority(priority));
+
+	}
+
+}
+
+///////////////////////////// SHADER ///////////////////////////////////////////////
+
+DX11Shader::DX11Shader(ID3D11Device & device, const LoadSettings<Shader, Shader::LoadMode::kCompileFromFile> & settings){
+
+	ID3DX11Effect * effect;
+	ID3DBlob * errors = nullptr;
+
+	wstringstream file_name;
+
+	file_name << Application::GetInstance().GetDirectory() << settings.file_name;
+
+#ifdef _DEBUG
+
+	THROW_ON_COMPILE_FAIL(D3DX11CompileEffectFromFile(file_name.str().c_str(),
+		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		D3DCOMPILE_DEBUG | D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_SKIP_VALIDATION,
+		0,
+		&device,
+		&effect,
+		&errors),
+		errors);
+
+#else
+
+	THROW_ON_COMPILE_FAIL(D3DX11CompileEffectFromFile(file_name.str().c_str(),
+		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_OPTIMIZATION_LEVEL3,
+		0,
+		&device,
+		&effect,
+		&errors),
+		errors);
+
+#endif
+
+	effect_.reset(effect);
+
+	priority_ = ResourcePriority::NORMAL;
 
 }

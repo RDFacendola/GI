@@ -141,4 +141,26 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Base interface for shaders.
+	/// \author Raffaele D. Facendola.
+	class Shader : public Resource{
+
+	public:
+
+		/// \brief Enumeration of all possible load modes.
+		enum class LoadMode{
+
+			kCompileFromFile = 0,		///< Load the shader from a source file before compiling it.
+
+		};
+
+		/// \brief Enumeration of all possible build modes.
+		enum class BuildMode{
+
+		};
+
+		virtual ~Shader(){}
+
+	};
+
 }
