@@ -6,11 +6,13 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <memory>
 
 #include "resources.h"
 
-using Eigen::Vector3f;
-using Eigen::Vector2f;
+using ::Eigen::Vector3f;
+using ::Eigen::Vector2f;
+using ::std::shared_ptr;
 
 namespace gi_lib{
 
@@ -30,10 +32,7 @@ namespace gi_lib{
 
 		/// \brief Name of the file to load relative to the resource folder.
 		wchar_t * file_name;						
-
-		/// \brief Include directory to use while compiling.
-		vector<wchar_t *> include_directories;		
-
+		
 	};
 
 	/// \brief Resources' build setting's template.
@@ -50,4 +49,11 @@ namespace gi_lib{
 
 	};
 	
+	template <> struct BuildSettings < Material, Material::BuildMode::kFromShader > {
+
+		/// \brief The material's shader.
+		shared_ptr<Shader> shader;
+
+	};
+
 }

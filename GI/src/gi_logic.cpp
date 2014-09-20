@@ -25,7 +25,7 @@ scene_(make_unique<Scene>())
 
 	auto & node = scene_->CreateNode();
 
-	graphics_.GetManager().Load<Shader, Shader::LoadMode::kCompileFromFile>({ L"phong.fx", {} });
+	graphics_.GetManager().Load<Shader, Shader::LoadMode::kCompileFromFile>({ L"phong.fx", });
 
 	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", node, graphics_.GetManager());
 

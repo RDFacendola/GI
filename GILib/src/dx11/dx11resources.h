@@ -115,6 +115,33 @@ namespace gi_lib{
 
 			DX11Shader(ID3D11Device & device, const LoadSettings<Shader, Shader::LoadMode::kCompileFromFile> & settings);
 
+			/// \brief No copy constructor.
+			DX11Shader(DX11Shader &) = delete;
+
+			virtual size_t GetSize() const override;
+
+			virtual ResourcePriority GetPriority() const override;
+
+			virtual void SetPriority(ResourcePriority priority) override;
+
+			ID3DX11Effect & GetEffect();
+
+		private:
+
+			unique_ptr<ID3DX11Effect, COMDeleter> effect_;
+
+			ResourcePriority priority_;
+
+			size_t size_;
+
+		};
+
+		class DX11Material : public Material{
+
+		public:
+
+			DX11Material(ID3D11Device & device, const BuildSettings<Material, Material::BuildMode::kFromShader> & settings);
+
 			virtual size_t GetSize() const override;
 
 			virtual ResourcePriority GetPriority() const override;
@@ -158,14 +185,33 @@ namespace gi_lib{
 
 		};
 
+		/// \brief Material mapping.
+		template<> struct ResourceMapping < Material > {
+
+			/// \brief Concrete type associated to a Material.
+			using TMapped = DX11Material;
+
+		};
+
 		/// \brief Performs a resource cast from an abstract type to a concrete type.
 		/// \tparam TResource Type of the resource to cast.
 		/// \param resource The shared pointer to the resource to cast.
 		/// \return Returns a shared pointer to the casted resource.
-		template <typename TResource, typename std::enable_if<std::is_base_of<Resource, TResource>::value>::type*>
-		typename shared_ptr<typename ResourceMapping<TResource>::TMapped> resource_cast(shared_ptr<TResource> & resource){
+		template <typename TResource>
+		typename ResourceMapping<TResource>::TMapped & resource_cast(shared_ptr<TResource> & resource){
 
-			return static_pointer_cast<typename ResourceMapping<TResource>::TMapped> (resource.operator->());
+			return *static_cast<typename ResourceMapping<TResource>::TMapped *>(resource.get());
+
+		}
+
+		/// \brief Performs a resource cast from an abstract type to a concrete type.
+		/// \tparam TResource Type of the resource to cast.
+		/// \param resource The shared pointer to the resource to cast.
+		/// \return Returns a shared pointer to the casted resource.
+		template <typename TResource>
+		const typename ResourceMapping<TResource>::TMapped & resource_cast(const shared_ptr<TResource> & resource){
+
+			return *static_cast<typename ResourceMapping<TResource>::TMapped *>(resource.get());
 
 		}
 
@@ -246,6 +292,33 @@ namespace gi_lib{
 			priority_ = priority;
 
 		}
+
+		inline ID3DX11Effect & DX11Shader::GetEffect(){
+
+			return *effect_.get();
+
+		}
+
+		//
+
+		inline size_t DX11Material::GetSize() const{
+
+			return size_;
+
+		}
+
+		inline ResourcePriority DX11Material::GetPriority() const{
+
+			return priority_;
+
+		}
+
+		inline void DX11Material::SetPriority(ResourcePriority priority){
+
+			priority_ = priority;
+
+		}
+
 
 	}
 

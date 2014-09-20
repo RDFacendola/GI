@@ -7,7 +7,6 @@
 #include <DDSTextureLoader.h>
 #include <DirectXTex.h>
 #include <DirectXMath.h>
-#include <d3dxGlobal.h>
 #include <d3dcompiler.h>
 #include <Eigen/Core>
 
@@ -303,7 +302,18 @@ DX11Shader::DX11Shader(ID3D11Device & device, const LoadSettings<Shader, Shader:
 #endif
 
 	effect_.reset(effect);
-
+	
 	priority_ = ResourcePriority::NORMAL;
+
+}
+
+////////////////////////////// MATERIAL //////////////////////////////////////////////
+
+DX11Material::DX11Material(ID3D11Device & device, const BuildSettings<Material, Material::BuildMode::kFromShader> & settings){
+
+	// Clone the effect of the shader
+	auto & shader = resource_cast(settings.shader);
+
+
 
 }

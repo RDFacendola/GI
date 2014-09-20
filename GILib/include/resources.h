@@ -163,4 +163,28 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Base interface for materials.
+
+	/// A material is a shader whose parameters are already set.
+	/// \author Raffaele D. Facendola
+	class Material : public Resource{
+
+	public:
+
+		/// \brief Enumeration of all possible load modes.
+		enum class LoadMode{
+
+		};
+
+		/// \brief Enumeration of all possible build modes.
+		enum class BuildMode{
+
+			kFromShader = 0,			///< The material is created starting from a shader.
+
+		};
+
+		virtual ~Material(){}
+
+	};
+
 }
