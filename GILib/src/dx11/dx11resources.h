@@ -109,6 +109,8 @@ namespace gi_lib{
 			
 		};
 
+		/// \brief DirectX11 shader.
+		/// \author Raffaele D. Facendola.
 		class DX11Shader : public Shader{
 
 		public:
@@ -124,7 +126,16 @@ namespace gi_lib{
 
 			virtual void SetPriority(ResourcePriority priority) override;
 
+			/// \brief Get the shader effect.
+			/// \return Returns a reference to the shader effect.
 			ID3DX11Effect & GetEffect();
+
+			/// \brief Get the shader effect.
+			/// \return Returns a reference to the shader effect.
+			const ID3DX11Effect & GetEffect() const;
+
+			/// \brief Clone the effect inside another effect.
+			void CloneEffect(ID3DX11Effect ** effect) const;
 
 		private:
 
@@ -136,6 +147,8 @@ namespace gi_lib{
 
 		};
 
+		/// \brief DirectX11 material.
+		/// \author Raffaele D. Facendola
 		class DX11Material : public Material{
 
 		public:
@@ -147,6 +160,10 @@ namespace gi_lib{
 			virtual ResourcePriority GetPriority() const override;
 
 			virtual void SetPriority(ResourcePriority priority) override;
+
+			virtual Maybe<MaterialParameter&> GetParameterByName(const string & name);
+
+			virtual Maybe<MaterialParameter&> GetParameterBySemantic(const string & semantic);
 
 		private:
 
@@ -294,6 +311,12 @@ namespace gi_lib{
 		}
 
 		inline ID3DX11Effect & DX11Shader::GetEffect(){
+
+			return *effect_.get();
+
+		}
+
+		inline const ID3DX11Effect & DX11Shader::GetEffect() const{
 
 			return *effect_.get();
 

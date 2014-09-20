@@ -307,6 +307,12 @@ DX11Shader::DX11Shader(ID3D11Device & device, const LoadSettings<Shader, Shader:
 
 }
 
+void DX11Shader::CloneEffect(ID3DX11Effect ** effect) const{
+
+	THROW_ON_FAIL(effect_->CloneEffect(D3DX11_EFFECT_CLONE_FORCE_NONSINGLE, effect));
+
+}
+
 ////////////////////////////// MATERIAL //////////////////////////////////////////////
 
 DX11Material::DX11Material(ID3D11Device & device, const BuildSettings<Material, Material::BuildMode::kFromShader> & settings){
@@ -314,6 +320,19 @@ DX11Material::DX11Material(ID3D11Device & device, const BuildSettings<Material, 
 	// Clone the effect of the shader
 	auto & shader = resource_cast(settings.shader);
 
+	ID3DX11Effect * effect;
 
+	shader.CloneEffect(&effect);
+
+	effect_.reset(effect);
+
+
+}
+
+Maybe<MaterialParameter&> DX11Material::GetParameterByName(const string & name){
+
+}
+
+Maybe<MaterialParameter&> DX11Material::GetParameterBySemantic(const string & semantic){
 
 }

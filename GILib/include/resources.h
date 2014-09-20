@@ -6,15 +6,33 @@
 #pragma once
 
 #include <vector>
+#include <memory>
+#include <string>
 
 #include "gimath.h"
+#include "maybe.h"
 
 using ::std::vector;
+using ::std::shared_ptr;
+using ::std::string;
 using ::Eigen::Vector2f;
 using ::Eigen::Vector3f;
+using ::Eigen::Affine3f;
+using ::Eigen::Projective3f;
+using ::Eigen::Matrix;
 
 namespace gi_lib{
-	
+
+	class MaterialParameter;
+	class Resource;
+	class Texture2D;
+	class Mesh;
+	class Shader;
+	class Material;
+	class MaterialParameter;
+
+	using Vector4f = Matrix < float, 4, 1, 0, 4, 1 > ;
+
 	/// \brief Describe the priority of the resources.
 	enum class ResourcePriority{
 
@@ -184,6 +202,127 @@ namespace gi_lib{
 		};
 
 		virtual ~Material(){}
+
+		/// \brief Get a material parameter by name.
+		/// \param name The name of the parameter to get.
+		/// \return Returns the material parameter whose name is the specified one or null if no parameter could be found.
+		virtual Maybe<MaterialParameter&> GetParameterByName(const string & name) = 0;
+
+		/// \brief Get a material parameter by semantic.
+		/// \param semantic The semantic of the parameter to get.
+		/// \return Returns the material parameter whose semantic is the specified one or null if no parameter could be found.
+		virtual Maybe<MaterialParameter&> GetParameterBySemantic(const string & semantic) = 0; 
+
+	};
+
+	/// \brief Base interface for material parameters.
+
+	/// \author Raffaele D. Facendola
+	class MaterialParameter{
+
+	public:
+
+		virtual ~MaterialParameter(){}
+
+		/// \brief Attempts to read the parameter as boolean variable.
+		/// \param out Destination of the result if the method succeeds.
+		/// \return Return true if the variable was a boolean, false otherwise.
+		virtual bool Read(bool & out) = 0;
+
+		/// \brief Attempts to read the parameter as float variable.
+		/// \param out Destination of the result if the method succeeds.
+		/// \return Return true if the variable was a float, false otherwise.
+		virtual bool Read(float & out) = 0;
+
+		/// \brief Attempts to read the parameter as integer variable.
+		/// \param out Destination of the result if the method succeeds.
+		/// \return Return true if the variable was an integer, false otherwise.
+		virtual bool Read(int & out) = 0;
+
+		/// \brief Attempts to read the parameter as 2-dimensional float vector variable.
+		/// \param out Destination of the result if the method succeeds.
+		/// \return Return true if the variable was a 2-dimensional float vector, false otherwise.
+		virtual bool Read(Vector2f & out) = 0;
+
+		/// \brief Attempts to read the parameter as 3-dimensional float vector variable.
+		/// \param out Destination of the result if the method succeeds.
+		/// \return Return true if the variable was a 3-dimensional float vector, false otherwise.
+		virtual bool Read(Vector3f & out) = 0;
+
+		/// \brief Attempts to read the parameter as 4-dimensional float vector variable.
+		/// \param out Destination of the result if the method succeeds.
+		/// \return Return true if the variable was a 4-dimensional float vector, false otherwise.
+		virtual bool Read(Vector4f & out) = 0;
+
+		/// \brief Attempts to read the parameter as 4x4 affine matrix variable.
+		/// \param out Destination of the result if the method succeeds.
+		/// \return Return true if the variable was a 4x4 affine matrix, false otherwise.
+		virtual bool Read(Affine3f & out) = 0;
+
+		/// \brief Attempts to read the parameter as 4x4 projective matrix variable.
+		/// \param out Destination of the result if the method succeeds.
+		/// \return Return true if the variable was a 4x4 projective matrix, false otherwise.
+		virtual bool Read(Projective3f & out) = 0;
+
+		/// \brief Attempts to read the parameter as 2D texture variable.
+		/// \param out Destination of the result if the method succeeds.
+		/// \return Return true if the variable was a 2D texture, false otherwise.
+		virtual bool Read(shared_ptr<Texture2D> & out) = 0;
+
+		/// \brief Attempts to read the parameter as a structure.
+		/// \param out Destination of the resource if the method succeeds.
+		/// \return Return true if the variable was a structure, false otherwise.
+		virtual bool Read(void ** out) = 0;
+
+		/// \brief Attempts to write the parameter as boolean variable.
+		/// \param in Value to copy.
+		/// \return Return true if the variable was a boolean, false otherwise.
+		virtual bool Write(const bool & in) = 0;
+
+		/// \brief Attempts to write the parameter as float variable.
+		/// \param in Value to copy.
+		/// \return Return true if the variable was a float, false otherwise.
+		virtual bool Write(const float & in) = 0;
+
+		/// \brief Attempts to write the parameter as integer variable.
+		/// \param in Value to copy.
+		/// \return Return true if the variable was an integer, false otherwise.
+		virtual bool Write(const int & in) = 0;
+
+		/// \brief Attempts to write the parameter as 2-dimensional float vector variable.
+		/// \param in Value to copy.
+		/// \return Return true if the variable was a 2-dimensional float vector, false otherwise.
+		virtual bool Write(const Vector2f & in) = 0;
+
+		/// \brief Attempts to write the parameter as 3-dimensional float vector variable.
+		/// \param in Value to copy.
+		/// \return Return true if the variable was a 3-dimensional float vector, false otherwise.
+		virtual bool Write(const Vector3f & in) = 0;
+
+		/// \brief Attempts to write the parameter as 4-dimensional float vector variable.
+		/// \param in Value to copy.
+		/// \return Return true if the variable was a 4-dimensional float vector, false otherwise.
+		virtual bool Write(const Vector4f & in) = 0;
+
+		/// \brief Attempts to write the parameter as 4x4 affine matrix variable.
+		/// \param in Value to copy.
+		/// \return Return true if the variable was a 4x4 affine matrix, false otherwise.
+		virtual bool Write(const Affine3f & in) = 0;
+
+		/// \brief Attempts to write the parameter as 4x4 projective matrix variable.
+		/// \param in Value to copy.
+		/// \return Return true if the variable was a 4x4 projective matrix, false otherwise.
+		virtual bool Write(const Projective3f & in) = 0;
+
+		/// \brief Attempts to write the parameter as 2D texture variable.
+		/// \param in Value to copy.
+		/// \return Return true if the variable was a 2D texture, false otherwise.
+		virtual bool Write(const shared_ptr<Texture2D> in) = 0;
+
+		/// \brief Attempts to write the parameter as a structure.
+		/// \param in Value to copy.
+		/// \return Return true if the variable was a structure, false otherwise.
+		virtual bool Write(void ** in) = 0;
 
 	};
 
