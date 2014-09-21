@@ -161,9 +161,9 @@ namespace gi_lib{
 
 			virtual void SetPriority(ResourcePriority priority) override;
 
-			virtual Maybe<MaterialParameter&> GetParameterByName(const string & name);
+			virtual shared_ptr<MaterialParameter> GetParameterByName(const string & name);
 
-			virtual Maybe<MaterialParameter&> GetParameterBySemantic(const string & semantic);
+			virtual shared_ptr<MaterialParameter> GetParameterBySemantic(const string & semantic);
 
 		private:
 
@@ -172,6 +172,65 @@ namespace gi_lib{
 			ResourcePriority priority_;
 
 			size_t size_;
+
+		};
+
+		/// \brief Base interface for material parameters.
+
+		/// \author Raffaele D. Facendola
+		class DX11MaterialParameter: public MaterialParameter{
+
+		public:
+
+			/// \brief Create a new material parameter.
+			/// \param variable The variable accessed by this parameter
+			DX11MaterialParameter(shared_ptr<ID3DX11EffectVariable> variable);
+
+			virtual ~DX11MaterialParameter();
+
+			virtual bool Read(bool & out);
+
+			virtual bool Read(float & out);
+
+			virtual bool Read(int & out);
+
+			virtual bool Read(Vector2f & out);
+
+			virtual bool Read(Vector3f & out);
+
+			virtual bool Read(Vector4f & out);
+
+			virtual bool Read(Affine3f & out);
+
+			virtual bool Read(Projective3f & out);
+
+			virtual bool Read(shared_ptr<Texture2D> & out);
+
+			virtual bool Read(void ** out);
+
+			virtual bool Write(const bool & in);
+
+			virtual bool Write(const float & in);
+
+			virtual bool Write(const int & in);
+
+			virtual bool Write(const Vector2f & in);
+
+			virtual bool Write(const Vector3f & in);
+
+			virtual bool Write(const Vector4f & in);
+
+			virtual bool Write(const Affine3f & in);
+
+			virtual bool Write(const Projective3f & in);
+
+			virtual bool Write(const shared_ptr<Texture2D> in);
+
+			virtual bool Write(void ** in);
+
+		private:
+
+			shared_ptr<ID3DX11EffectVariable> variable_;
 
 		};
 

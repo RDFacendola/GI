@@ -10,7 +10,6 @@
 #include <string>
 
 #include "gimath.h"
-#include "maybe.h"
 
 using ::std::vector;
 using ::std::shared_ptr;
@@ -206,12 +205,12 @@ namespace gi_lib{
 		/// \brief Get a material parameter by name.
 		/// \param name The name of the parameter to get.
 		/// \return Returns the material parameter whose name is the specified one or null if no parameter could be found.
-		virtual Maybe<MaterialParameter&> GetParameterByName(const string & name) = 0;
+		virtual shared_ptr<MaterialParameter> GetParameterByName(const string & name) = 0;
 
 		/// \brief Get a material parameter by semantic.
 		/// \param semantic The semantic of the parameter to get.
 		/// \return Returns the material parameter whose semantic is the specified one or null if no parameter could be found.
-		virtual Maybe<MaterialParameter&> GetParameterBySemantic(const string & semantic) = 0; 
+		virtual shared_ptr<MaterialParameter> GetParameterBySemantic(const string & semantic) = 0;
 
 	};
 

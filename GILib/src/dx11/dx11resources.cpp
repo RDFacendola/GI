@@ -315,7 +315,7 @@ void DX11Shader::CloneEffect(ID3DX11Effect ** effect) const{
 
 ////////////////////////////// MATERIAL //////////////////////////////////////////////
 
-DX11Material::DX11Material(ID3D11Device & device, const BuildSettings<Material, Material::BuildMode::kFromShader> & settings){
+DX11Material::DX11Material(ID3D11Device &, const BuildSettings<Material, Material::BuildMode::kFromShader> & settings){
 
 	// Clone the effect of the shader
 	auto & shader = resource_cast(settings.shader);
@@ -326,13 +326,330 @@ DX11Material::DX11Material(ID3D11Device & device, const BuildSettings<Material, 
 
 	effect_.reset(effect);
 
+}
+
+shared_ptr<MaterialParameter> DX11Material::GetParameterByName(const string & name){
+
+	auto variable = shared_ptr<ID3DX11EffectVariable>(effect_->GetVariableByName(name.c_str()), COMDeleter{});
+
+	if (variable->IsValid()){
+
+		return static_pointer_cast<MaterialParameter>(make_shared<DX11MaterialParameter>(variable));
+
+	}
+	else{
+
+		return nullptr;
+
+	}
 
 }
 
-Maybe<MaterialParameter&> DX11Material::GetParameterByName(const string & name){
+shared_ptr<MaterialParameter> DX11Material::GetParameterBySemantic(const string & semantic){
+
+	auto variable = shared_ptr<ID3DX11EffectVariable>(effect_->GetVariableBySemantic(semantic.c_str()), COMDeleter{});
+
+	if (variable->IsValid()){
+
+		return static_pointer_cast<MaterialParameter>(make_shared<DX11MaterialParameter>(variable));
+
+	}
+	else{
+
+		return nullptr;
+
+	}
 
 }
 
-Maybe<MaterialParameter&> DX11Material::GetParameterBySemantic(const string & semantic){
+//////////////////////////// MATERIAL PARAMETER /////////////////////////////////////////
+
+/// \brief Create a new material parameter.
+/// \param variable The variable accessed by this parameter
+DX11MaterialParameter::DX11MaterialParameter(shared_ptr<ID3DX11EffectVariable> variable) :
+	variable_(variable){
+
+}
+
+DX11MaterialParameter::~DX11MaterialParameter(){}
+
+bool DX11MaterialParameter::Read(bool & out){
+
+	auto scalar = variable_->AsScalar();
+
+	if (scalar->IsValid() &&
+		!FAILED(scalar->GetBool(&out))){
+	
+		scalar->Release();
+		
+		return true;
+		
+	}
+	else{
+
+		scalar->Release();
+
+		return false;
+
+	}
+
+}
+
+bool DX11MaterialParameter::Read(float & out){
+
+	auto scalar = variable_->AsScalar();
+
+	if (scalar->IsValid() &&
+		!FAILED(scalar->GetFloat(&out))){
+
+		scalar->Release();
+
+		return true;
+
+	}
+	else{
+
+		scalar->Release();
+
+		return false;
+
+	}
+
+}
+
+bool DX11MaterialParameter::Read(int & out){
+
+	auto scalar = variable_->AsScalar();
+
+	if (scalar->IsValid() &&
+		!FAILED(scalar->GetInt(&out))){
+
+		scalar->Release();
+
+		return true;
+
+	}
+	else{
+
+		scalar->Release();
+
+		return false;
+
+	}
+
+}
+
+bool DX11MaterialParameter::Read(Vector2f & out){
+
+	static const size_t size = sizeof(float) * 2;
+
+	auto vector = variable_->AsVector();
+
+	float * data;
+
+	if (vector->IsValid() &&
+		!FAILED(vector->GetFloatVector(data))){
+
+		memcpy_s(out.data(), size, data, size);
+
+		vector->Release();
+
+		return true;
+
+	}
+	else{
+
+		vector->Release();
+
+		return false;
+
+	}
+
+}
+
+bool DX11MaterialParameter::Read(Vector3f & out){
+
+	static const size_t size = sizeof(float) * 3;
+
+	auto vector = variable_->AsVector();
+
+	float * data;
+
+	if (vector->IsValid() &&
+		!FAILED(vector->GetFloatVector(data))){
+
+		memcpy_s(out.data(), size, data, size);
+
+		vector->Release();
+
+		return true;
+
+	}
+	else{
+
+		vector->Release();
+
+		return false;
+
+	}
+
+}
+
+bool DX11MaterialParameter::Read(Vector4f & out){
+
+	static const size_t size = sizeof(float) * 4;
+
+	auto vector = variable_->AsVector();
+
+	float * data;
+
+	if (vector->IsValid() &&
+		!FAILED(vector->GetFloatVector(data))){
+
+		memcpy_s(out.data(), size, data, size);
+
+		vector->Release();
+
+		return true;
+
+	}
+	else{
+
+		vector->Release();
+
+		return false;
+
+	}
+
+}
+
+bool DX11MaterialParameter::Read(Affine3f & out){
+
+	static const size_t size = sizeof(float) * 12;	//Last column is [0 0 0 1]. Eigen stores in column major by default, so the last 4 values are not needed.
+
+	auto matrix = variable_->AsMatrix();
+
+	float * data;
+
+	if (matrix->IsValid() &&
+		!FAILED(matrix->GetMatrix(data))){
+
+		memcpy_s(out.data(), size, data, size);
+
+		matrix->Release();
+
+		return true;
+
+	}
+	else{
+
+		matrix->Release();
+
+		return false;
+
+	}
+
+}
+
+bool DX11MaterialParameter::Read(Projective3f & out){
+
+	static const size_t size = sizeof(float) * 16;
+
+	auto matrix = variable_->AsMatrix();
+
+	float * data;
+
+	if (matrix->IsValid() &&
+		!FAILED(matrix->GetMatrix(data))){
+
+		memcpy_s(out.data(), size, data, size);
+
+		matrix->Release();
+
+		return true;
+
+	}
+	else{
+
+		matrix->Release();
+
+		return false;
+
+	}
+	
+}
+
+bool DX11MaterialParameter::Read(shared_ptr<Texture2D> & out){
+
+
+
+}
+
+bool DX11MaterialParameter::Read(void ** out){
+
+	static const size_t size = sizeof(float) * 16;
+
+	auto constant_buffer = variable_->AsConstantBuffer();
+
+	ID3D11Buffer * buffer;
+
+	if (constant_buffer->IsValid() &&
+		!FAILED(constant_buffer->GetConstantBuffer(&buffer))){
+
+		//Map the constant buffer
+
+
+		constant_buffer->Release();
+
+		return true;
+
+	}
+	else{
+
+		constant_buffer->Release();
+
+		return false;
+
+	}
+
+}
+
+bool DX11MaterialParameter::Write(const bool & in){
+
+}
+
+bool DX11MaterialParameter::Write(const float & in){
+
+}
+
+bool DX11MaterialParameter::Write(const int & in){
+
+}
+
+bool DX11MaterialParameter::Write(const Vector2f & in){
+
+}
+
+bool DX11MaterialParameter::Write(const Vector3f & in){
+
+}
+
+bool DX11MaterialParameter::Write(const Vector4f & in){
+
+}
+
+bool DX11MaterialParameter::Write(const Affine3f & in){
+
+}
+
+bool DX11MaterialParameter::Write(const Projective3f & in){
+
+}
+
+bool DX11MaterialParameter::Write(const shared_ptr<Texture2D> in){
+
+}
+
+bool DX11MaterialParameter::Write(void ** in){
 
 }
