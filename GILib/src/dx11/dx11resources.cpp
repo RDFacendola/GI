@@ -581,32 +581,31 @@ bool DX11MaterialParameter::Read(Projective3f & out){
 
 bool DX11MaterialParameter::Read(shared_ptr<Texture2D> & out){
 
-
+	throw RuntimeException(L"Not implemented!");
 
 }
 
 bool DX11MaterialParameter::Read(void ** out){
 
-	static const size_t size = sizeof(float) * 16;
+	throw RuntimeException(L"Not implemented!");
 
-	auto constant_buffer = variable_->AsConstantBuffer();
+}
 
-	ID3D11Buffer * buffer;
+bool DX11MaterialParameter::Write(const bool & in){
 
-	if (constant_buffer->IsValid() &&
-		!FAILED(constant_buffer->GetConstantBuffer(&buffer))){
+	auto scalar = variable_->AsScalar();
 
-		//Map the constant buffer
+	if (scalar->IsValid() &&
+		!FAILED(scalar->SetBool(in))){
 
-
-		constant_buffer->Release();
+		scalar->Release();
 
 		return true;
 
 	}
 	else{
 
-		constant_buffer->Release();
+		scalar->Release();
 
 		return false;
 
@@ -614,42 +613,192 @@ bool DX11MaterialParameter::Read(void ** out){
 
 }
 
-bool DX11MaterialParameter::Write(const bool & in){
-
-}
-
 bool DX11MaterialParameter::Write(const float & in){
+
+	auto scalar = variable_->AsScalar();
+
+	if (scalar->IsValid() &&
+		!FAILED(scalar->SetFloat(in))){
+
+		scalar->Release();
+
+		return true;
+
+	}
+	else{
+
+		scalar->Release();
+
+		return false;
+
+	}
 
 }
 
 bool DX11MaterialParameter::Write(const int & in){
 
+	auto scalar = variable_->AsScalar();
+
+	if (scalar->IsValid() &&
+		!FAILED(scalar->SetInt(in))){
+
+		scalar->Release();
+
+		return true;
+
+	}
+	else{
+
+		scalar->Release();
+
+		return false;
+
+	}
+
 }
 
 bool DX11MaterialParameter::Write(const Vector2f & in){
+
+	auto vector = variable_->AsVector();
+
+	float data[4];
+
+	data[2] = 0.0f;
+	data[3] = 0.0f;
+		
+	memcpy_s(data, sizeof(data), in.data(), in.size() * sizeof(float));
+
+	if (vector->IsValid() &&
+		!FAILED(vector->SetFloatVector(data))){
+
+		vector->Release();
+
+		return true;
+
+	}
+	else{
+
+		vector->Release();
+
+		return false;
+
+	}
 
 }
 
 bool DX11MaterialParameter::Write(const Vector3f & in){
 
+	auto vector = variable_->AsVector();
+
+	float data[4];
+
+	data[3] = 0.0f;
+
+	memcpy_s(data, sizeof(data), in.data(), in.size() * sizeof(float));
+
+	if (vector->IsValid() &&
+		!FAILED(vector->SetFloatVector(data))){
+
+		vector->Release();
+
+		return true;
+
+	}
+	else{
+
+		vector->Release();
+
+		return false;
+
+	}
+
 }
 
 bool DX11MaterialParameter::Write(const Vector4f & in){
+
+	auto vector = variable_->AsVector();
+
+	if (vector->IsValid() &&
+		!FAILED(vector->SetFloatVector(in.data()))){
+
+		vector->Release();
+
+		return true;
+
+	}
+	else{
+
+		vector->Release();
+
+		return false;
+
+	}
 
 }
 
 bool DX11MaterialParameter::Write(const Affine3f & in){
 
+	static const size_t size = sizeof(float) * 12;	//Last column is [0 0 0 1]. Eigen stores in column major by default, so the last 4 values are not needed.
+
+	auto matrix = variable_->AsMatrix();
+
+	float data[16];
+
+	data[12] = 0.0f;
+	data[13] = 0.0f;
+	data[14] = 0.0f;
+	data[15] = 1.0f;
+
+	memcpy_s(data, sizeof(data), in.data(), size);
+
+	if (matrix->IsValid() &&
+		!FAILED(matrix->SetMatrix(data))){
+
+		matrix->Release();
+
+		return true;
+
+	}
+	else{
+
+		matrix->Release();
+
+		return false;
+
+	}
+
 }
 
 bool DX11MaterialParameter::Write(const Projective3f & in){
+
+	auto matrix = variable_->AsMatrix();
+
+	if (matrix->IsValid() &&
+		!FAILED(matrix->SetMatrix(in.data()))){
+
+		matrix->Release();
+
+		return true;
+
+	}
+	else{
+
+		matrix->Release();
+
+		return false;
+
+	}
 
 }
 
 bool DX11MaterialParameter::Write(const shared_ptr<Texture2D> in){
 
+	throw RuntimeException(L"Not implemented!");
+
 }
 
 bool DX11MaterialParameter::Write(void ** in){
+
+	throw RuntimeException(L"Not implemented!");
 
 }
