@@ -27,12 +27,19 @@ scene_(make_unique<Scene>())
 
 	auto & manager = graphics_.GetManager();
 
-	auto shader = manager.Load<Shader, Shader::LoadMode::kCompileFromFile>({ L"phong.fx" });
+	auto shader = manager.Load<Shader, Shader::LoadMode::kCompileFromFile>({ L"Data\\test.fx" });
 
 	auto material = manager.Build<Material, Material::BuildMode::kFromShader>({ shader });
 
-	auto param = material->GetParameterByName("Diffuse");
+	auto param = material->GetParameterByName("gWorldViewProj");
 
+	Projective3f mat;
+
+	param->Read(mat);
+
+	param->Read(mat);
+
+	param->Write(mat);
 
 
 	//FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", node, graphics_.GetManager());

@@ -29,9 +29,10 @@ using namespace DirectX;
 									stream << L"\"" << #expr << "\" failed with 0x" << std::hex << hr << std::dec << std::endl \
 										   << __FILE__ << std::endl \
 										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
-									std::wstring error_string(blob != nullptr ? static_cast<wchar_t *>(blob->GetBufferPointer()) : L""); \
+									std::string error_string(errors != nullptr ? static_cast<char *>(errors->GetBufferPointer()) : ""); \
+									std::wstring werror_string(error_string.begin(), error_string.end()); \
 									if(blob != nullptr) blob->Release(); \
-									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(hr)}, {L"compiler error", error_string}}); \
+									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(hr)}, {L"compiler error", werror_string}}); \
 								} \
 							}WHILE0
 
@@ -286,7 +287,7 @@ DX11Shader::DX11Shader(ID3D11Device & device, const LoadSettings<Shader, Shader:
 		&effect,
 		&errors),
 		errors);
-
+	
 #else
 
 	THROW_ON_COMPILE_FAIL(D3DX11CompileEffectFromFile(file_name.str().c_str(),
@@ -441,16 +442,14 @@ bool DX11MaterialParameter::Read(int & out){
 
 bool DX11MaterialParameter::Read(Vector2f & out){
 
-	static const size_t size = sizeof(float) * 2;
-
 	auto vector = variable_->AsVector();
 
-	float * data;
+	float data[2];
 
 	if (vector->IsValid() &&
 		!FAILED(vector->GetFloatVector(data))){
 
-		memcpy_s(out.data(), size, data, size);
+		memcpy_s(out.data(), out.size() * sizeof(float), data, sizeof(data));
 
 		vector->Release();
 
@@ -469,16 +468,14 @@ bool DX11MaterialParameter::Read(Vector2f & out){
 
 bool DX11MaterialParameter::Read(Vector3f & out){
 
-	static const size_t size = sizeof(float) * 3;
-
 	auto vector = variable_->AsVector();
 
-	float * data;
+	float data[3];
 
 	if (vector->IsValid() &&
 		!FAILED(vector->GetFloatVector(data))){
 
-		memcpy_s(out.data(), size, data, size);
+		memcpy_s(out.data(), out.size() * sizeof(float), data, sizeof(data));
 
 		vector->Release();
 
@@ -497,16 +494,14 @@ bool DX11MaterialParameter::Read(Vector3f & out){
 
 bool DX11MaterialParameter::Read(Vector4f & out){
 
-	static const size_t size = sizeof(float) * 4;
-
 	auto vector = variable_->AsVector();
 
-	float * data;
+	float data[4];
 
 	if (vector->IsValid() &&
 		!FAILED(vector->GetFloatVector(data))){
 
-		memcpy_s(out.data(), size, data, size);
+		memcpy_s(out.data(), out.size() * sizeof(float), data, sizeof(data));
 
 		vector->Release();
 
@@ -525,16 +520,15 @@ bool DX11MaterialParameter::Read(Vector4f & out){
 
 bool DX11MaterialParameter::Read(Affine3f & out){
 
-	static const size_t size = sizeof(float) * 12;	//Last column is [0 0 0 1]. Eigen stores in column major by default, so the last 4 values are not needed.
-
 	auto matrix = variable_->AsMatrix();
 
-	float * data;
+	float data[16];
 
 	if (matrix->IsValid() &&
 		!FAILED(matrix->GetMatrix(data))){
 
-		memcpy_s(out.data(), size, data, size);
+		//The affine matrix assumes that the last column is [0 0 0 1], so last 4 elements are ignored.
+		memcpy_s(out.data(), 12 * sizeof(float), data, 12 * sizeof(float));	
 
 		matrix->Release();
 
@@ -553,16 +547,14 @@ bool DX11MaterialParameter::Read(Affine3f & out){
 
 bool DX11MaterialParameter::Read(Projective3f & out){
 
-	static const size_t size = sizeof(float) * 16;
-
 	auto matrix = variable_->AsMatrix();
 
-	float * data;
+	float data[16];
 
 	if (matrix->IsValid() &&
 		!FAILED(matrix->GetMatrix(data))){
 
-		memcpy_s(out.data(), size, data, size);
+		memcpy_s(out.data(), sizeof(data), data, sizeof(data));
 
 		matrix->Release();
 
