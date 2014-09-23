@@ -11,6 +11,7 @@
 #include <fbxsdk.h>
 
 #include "..\..\include\fbx\fbx.h"
+#include "..\..\include\core.h"
 #include "..\..\include\gimath.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\graphics.h"
@@ -234,6 +235,33 @@ namespace{
 
 	}
 
+	/// \brief Loads the first texture found inside a fbx property
+	/// \param property The fbx property to read.
+	/// \param base_path The path of the fbx file.
+	/// \param resource Manager used to load the resources.
+	shared_ptr<Texture2D> LoadTexture(FbxProperty property, const wstring & base_path, Manager & resources){
+
+		int count = property.GetSrcObjectCount<FbxFileTexture>();
+
+		if (count > 0){
+
+			auto & texture = *property.GetSrcObject<FbxFileTexture>(0);
+
+			string file_name = texture.GetFileName();
+
+			wstring w_file_name(file_name.begin(), file_name.end());
+
+			return resources.Load<Texture2D, Texture2D::LoadMode::kFromDDS>({ base_path + w_file_name });
+
+		}
+		else{
+
+			return nullptr;
+
+		}
+
+	}
+
 	/// \brief Build mesh method template. Used to dispatch different build methods. 
 	template<typename TVertexFormat>
 	void BuildMesh(const FbxMesh & mesh, SceneNode & node, Manager & resources);
@@ -253,10 +281,10 @@ namespace{
 
 	/// \brief Build material method template. Used to dispatch different build methods.
 	template<typename TVertexFormat>
-	void BuildMaterial(const FbxMesh & mesh, SceneNode & node, Manager & resources);
+	void BuildMaterial(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Manager & resources);
 
 	/// \brief Builds a material with proper shader and textures.
-	template<> void BuildMaterial<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, Manager & resources){
+	template<> void BuildMaterial<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Manager & resources){
 
 		// Phong shader
 		auto shader = resources.Load<Shader, Shader::LoadMode::kCompileFromFile>({ Manager::kPhongShaderFile });
@@ -267,18 +295,29 @@ namespace{
 
 		}
 
-		// Material
-		auto material = resources.Build<Material, Material::BuildMode::kFromShader>({ shader });
+		// Materials
 
-		// Load diffuse, specular and bumpmap
-		
+		auto & parent = *mesh.GetNode();
+
+		for (int m = 0; m < parent.GetSrcObjectCount<FbxSurfaceMaterial>(); ++m){
+
+			auto material = resources.Build<Material, Material::BuildMode::kFromShader>({ shader });
+
+			auto &surface = *parent.GetSrcObject<FbxSurfaceMaterial>(m);
+
+			// Load diffuse, specular and bumpmap
+			auto diffuse = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sDiffuse), base_path, resources);
+			auto specular = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sSpecular), base_path, resources);
+			auto bumpmap = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sBump), base_path, resources);
+
+		}
 
 	}
 	
 	/// \brief Attempts to load a mesh inside a scene.
 
 	/// The methods load the mesh from fbx and loads it inside the scene. If the original mesh is not supported this method does nothing.
-	void BuildObject(const FbxMesh & mesh, SceneNode & node, Manager & resources){
+	void BuildObject(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Manager & resources){
 
 		if (!mesh.IsTriangleMesh()){
 
@@ -293,7 +332,7 @@ namespace{
 			HasNormals(mesh)){
 
 			BuildMesh<VertexFormatNormalTextured>(mesh, node, resources);
-			BuildMaterial<VertexFormatNormalTextured>(mesh, node, resources);
+			BuildMaterial<VertexFormatNormalTextured>(mesh, node, base_path, resources);
 			
 		}
 				
@@ -302,8 +341,9 @@ namespace{
 	/// \brief Walk the fbx scene and imports the nodes to a scene.
 	/// \param fbx_node Current fbx scene node.
 	/// \param scene_root Scene root where to import the nodes to.
+	/// \param base_path The path of the fbx file.
 	/// \param resources Manager used to load various resources.
-	void WalkFbxScene(FbxNode * fbx_node, SceneNode & scene_root, Manager & resources){
+	void WalkFbxScene(FbxNode * fbx_node, SceneNode & scene_root, const wstring & base_path, Manager & resources){
 
 		// Node data
 		string name = fbx_node->GetName();
@@ -324,7 +364,7 @@ namespace{
 			if (attribute->GetAttributeType() == FbxNodeAttribute::EType::eMesh){
 
 				// Model object
-				BuildObject(*static_cast<FbxMesh*>(attribute), scene_node, resources);
+				BuildObject(*static_cast<FbxMesh*>(attribute), scene_node, base_path, resources);
 				
 			}
 				
@@ -335,7 +375,7 @@ namespace{
 		for (int child_index = 0; child_index < fbx_node->GetChildCount(); ++child_index){
 
 			// The instantiated scene node becomes the root of the next level.
-			WalkFbxScene(fbx_node->GetChild(child_index), scene_node, resources);
+			WalkFbxScene(fbx_node->GetChild(child_index), scene_node, base_path, resources);
 
 		}
 
@@ -430,6 +470,11 @@ void FBXImporter::ImportScene(const wstring & file_name, SceneNode & scene_root,
 
 	}
 
+	auto app_directory = Application::GetDirectory();
+
+	auto base_directory = Application::GetBaseDirectory(file_name.substr(app_directory.length(),
+		file_name.length() - app_directory.length()));
+
 	// Walk the hierarchy
 	auto root_node = fbx_scene->GetRootNode();
 
@@ -437,7 +482,7 @@ void FBXImporter::ImportScene(const wstring & file_name, SceneNode & scene_root,
 
 		for (int child_index = 0; child_index < root_node->GetChildCount(); ++child_index){
 
-			WalkFbxScene(root_node->GetChild(child_index), scene_root, resources);
+			WalkFbxScene(root_node->GetChild(child_index), scene_root, base_directory, resources);
 
 		}
 

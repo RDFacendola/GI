@@ -6,6 +6,14 @@
 using namespace gi_lib;
 using namespace std;
 
+#ifdef _WIN32
+
+#include <PathCch.h>
+
+#pragma comment(lib, "Pathcch")
+
+#endif
+
 /////////////////////////////////// GLOBALS /////////////////////////////////////////
 
 #ifdef _WIN32
@@ -177,7 +185,9 @@ Application & Application::GetInstance(){
 
 }
 
-wstring Application::GetDirectory() const{
+wstring Application::GetDirectory(){
+
+#ifdef _WIN32
 
 	auto path = GetPath();
 
@@ -185,9 +195,46 @@ wstring Application::GetDirectory() const{
 
 	return path.substr(0, path_index + 1);
 
+#else
+
+#error "Unsupported platform"
+
+#endif
+
 }
 
-wstring Application::GetPath() const{
+wstring Application::GetBaseDirectory(const wstring & file_name){
+
+#ifdef _WIN32
+
+	wstring temp(file_name);
+
+	// This doesn't work, only God knows why
+	//auto hr = PathCchRemoveExtension(&temp[0], temp.size());
+
+	// This is done only if an extension was found
+	if (PathCchRemoveFileSpec(&temp[0], temp.size()) == S_OK){
+
+		temp.resize(temp.find(L'\0'));
+		
+		return temp + kPathSeparator;
+
+	}
+	else{
+
+		return wstring();
+
+	}
+	
+#else
+
+#error "Not supported");
+
+#endif
+
+}
+
+wstring Application::GetPath(){
 
 #ifdef _WIN32
 
@@ -214,7 +261,7 @@ wstring Application::GetPath() const{
 
 }
 
-wstring Application::GetName(bool extension) const{
+wstring Application::GetName(bool extension){
 
 	auto path = GetPath();
 

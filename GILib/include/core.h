@@ -154,16 +154,24 @@ namespace gi_lib{
 
 		/// \brief Get the application directory.
 		/// \return Returns the application directory.
-		wstring GetDirectory() const;
+		static wstring GetDirectory();
+
+		/// \brief Get the base directory starting from the file name.
+
+		/// The functions returns the base directory of the specified file, trailing separator included.
+		/// If the provided parameter is not a full qualified name the behaviour of the function is undefined.
+		/// \param file_name Full file name.
+		/// \return Returns the file name parameter stripped of the file name and file extension.
+		static wstring GetBaseDirectory(const wstring & file_name);
 
 		/// \brief Get the full application path.
 		/// \return Returns the full application path.
-		wstring GetPath() const;
+		static wstring GetPath();
 
 		/// \brief Get the application name.
 		/// \param extension Set whether the extension should be returned or not.
 		/// \return Returns the application name including its extension eventually.
-		wstring GetName(bool extension = true) const;
+		static wstring GetName(bool extension = true);
 
 		/// \brief Create and add new window.
 
