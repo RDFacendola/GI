@@ -18,7 +18,7 @@ GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11)),
 scene_(make_unique<Scene>())
 {
-	
+
 	/////////////////////////////////////
 
 	auto & r = graphics_.GetManager();
@@ -27,20 +27,9 @@ scene_(make_unique<Scene>())
 
 	auto & manager = graphics_.GetManager();
 
-	auto shader = manager.Load<Shader, Shader::LoadMode::kCompileFromFile>({ L"Data\\test.fx" });
+	auto t = manager.Load<Texture2D, Texture2D::LoadMode::kFromDDS>({ L"Data\\textures\\background.dds" });
 
-	auto material = manager.Build<Material, Material::BuildMode::kFromShader>({ shader });
-
-	auto param = material->GetParameterByName("gWorldViewProj");
-
-	Projective3f mat;
-
-	param->Read(mat);
-
-	param->Read(mat);
-
-	param->Write(mat);
-
+	auto t2 = manager.Load<Texture2D, Texture2D::LoadMode::kFromDDS>({ L"Data\\textures\\background.dds" });
 
 	//FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", node, graphics_.GetManager());
 

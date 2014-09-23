@@ -71,6 +71,7 @@
       <Filter>FBX</Filter>
     </ClInclude>
     <ClInclude Include="include\functional.h" />
+    <ClInclude Include="external\fnv1.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -97,5 +98,6 @@
     <ClCompile Include="src\fbx\fbx.cpp">
       <Filter>FBX</Filter>
     </ClCompile>
+    <ClCompile Include="src\resource_traits.cpp" />
   </ItemGroup>
 </Project>

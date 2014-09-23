@@ -258,6 +258,18 @@ namespace{
 	/// \brief Builds a material with proper shader and textures.
 	template<> void BuildMaterial<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, Manager & resources){
 
+		// Phong shader
+		auto shader = resources.Load<Shader, Shader::LoadMode::kCompileFromFile>({ Manager::kPhongShaderFile });
+
+		if (!shader){
+
+			throw RuntimeException(L"Could not find built-in Phong shader");
+
+		}
+
+		// Material
+		auto material = resources.Build<Material, Material::BuildMode::kFromShader>({ shader });
+
 		
 
 	}

@@ -7,12 +7,14 @@
 
 #include <Eigen/Core>
 #include <memory>
+#include <string>
 
 #include "resources.h"
 
 using ::Eigen::Vector3f;
 using ::Eigen::Vector2f;
 using ::std::shared_ptr;
+using ::std::wstring;
 
 namespace gi_lib{
 
@@ -23,7 +25,10 @@ namespace gi_lib{
 	template <> struct LoadSettings < Texture2D, Texture2D::LoadMode::kFromDDS > {
 
 		/// \brief Name of the file to load relative to the resource folder.
-		wchar_t * file_name;		
+		wstring file_name;	
+
+		/// \brief Fills the buffer with the setting's tag
+		void FillTag(void * buffer, size_t size) const;
 
 	};
 
@@ -31,8 +36,11 @@ namespace gi_lib{
 	template <> struct LoadSettings < Shader, Shader::LoadMode::kCompileFromFile > {
 
 		/// \brief Name of the file to load relative to the resource folder.
-		wchar_t * file_name;						
+		wstring file_name;
 		
+		/// \brief Fills the buffer with the setting's tag
+		void FillTag(void * buffer, size_t size) const;
+
 	};
 
 	/// \brief Resources' build setting's template.

@@ -13,6 +13,12 @@ using namespace gi_lib;
 
 //////////////////////// MANAGER //////////////////////////////
 
+#ifdef _WIN32
+
+wchar_t * Manager::kPhongShaderFile = L"\\built-in\\phong.fx";
+
+#endif
+
 Manager::Manager(){}
 
 size_t Manager::GetSize(){
@@ -24,7 +30,7 @@ size_t Manager::GetSize(){
 		static_cast<size_t>(0),
 		[](size_t accumulator, const ResourceMap::value_type & it){
 
-			if (auto resource = std::get<1>(it.second).lock()){
+			if (auto resource = it.second.lock()){
 
 				accumulator += resource->GetSize();
 
@@ -33,6 +39,27 @@ size_t Manager::GetSize(){
 			return accumulator;
 
 		});
+
+}
+
+//////////////// MANAGER::LOADKEY ////////////////////////////////
+
+Manager::LoadKey::LoadKey() :
+key(std::type_index(typeid(void)))
+{
+
+	// Clear the tag in case the load settings don't need to fill it entirely
+	memset(tag, 0, sizeof(tag));
+
+}
+
+bool Manager::LoadKey::operator<(const LoadKey & other) const{
+
+	//Strict order by key first and by tag after.
+
+	return key < other.key ||
+		key == other.key &&
+		memcmp(tag, other.tag, sizeof(tag)) < 0;
 
 }
 

@@ -21,8 +21,7 @@ using ::std::shared_ptr;
 using ::std::unique_ptr;
 using ::std::weak_ptr;
 using ::std::type_index;
-using ::std::multimap;
-using ::std::tuple;
+using ::std::map;
 
 namespace gi_lib{
 
@@ -122,6 +121,9 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Filename of the built-in phong shader.
+		static wchar_t * kPhongShaderFile;
+
 		/// \brief Default constructor.
 		Manager();
 
@@ -139,22 +141,38 @@ namespace gi_lib{
 		/// \tparam TResource Type of the resource to load.
 		/// \param settings The creation settings.
 		/// \return Returns a pointer to the new resource.
-		template <typename TResource, typename TResource::BuildMode kLoadMode>
-		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Build(const typename BuildSettings<TResource, kLoadMode> & settings);
+		template <typename TResource, typename TResource::BuildMode kBuildMode>
+		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Build(const typename BuildSettings<TResource, kBuildMode> & settings);
 
 		/// \brief Get the amount of memory used by the resources loaded.
 		size_t GetSize();
 
 	protected:
 
-		/// \brief Type of resource map keys.
-		using ResourceMapKey = long;
+		/// \brief Used as key to address the resource map flyweight.
+		struct LoadKey{
+
+			/// \brief Type index of the load mode.
+
+			/// Type_index is guaranteed to be unique among different resources and load modes.
+			type_index key;
+
+			/// \brief Unique tag associated to a particular tag configuration.
+			char tag[16];
+
+			/// \brief Default constructor.
+			LoadKey();
+
+			/// \brief Lesser comparison operator.
+			bool operator<(const LoadKey & other) const;
+			
+		};
 
 		/// \brief Type of resource map values.
-		using ResourceMapValue =  tuple<type_index, weak_ptr < Resource > >;
+		using LoadValue =  weak_ptr < Resource >;
 
 		/// \brief Type of resource map. 
-		using ResourceMap = multimap < ResourceMapKey, ResourceMapValue >;
+		using ResourceMap = map < LoadKey, LoadValue >;
 
 		/// \brief Load a resource.
 		/// \param resource_type Resource's type index.
@@ -212,9 +230,12 @@ namespace gi_lib{
 	template <typename TResource, typename TResource::LoadMode kLoadMode>
 	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Manager::Load(const typename LoadSettings<TResource, kLoadMode> & settings){
 
-		/*
-		//Check if the resource exists inside the map
-		auto key = make_pair(std::type_index(typeid(TResource)), base_path_ + path);
+		//Fill the key object with the type index and the tag
+		LoadKey key;
+
+		key.key = std::type_index(typeid(settings));
+
+		settings.FillTag(key.tag, sizeof(key.tag));
 
 		auto it = resources_.find(key);
 
@@ -229,26 +250,26 @@ namespace gi_lib{
 			//Resource was expired...
 
 		}
-		*/
+		
 
 		// Load the actual resource
 		auto resource = shared_ptr<Resource>(std::move(LoadResource(type_index(typeid(TResource)),
 																	static_cast<int>(kLoadMode), 
 																	&settings)));
 
-		//resources_[key] = resource;														// To weak ptr
+
+		resources_[key] = std::weak_ptr<Resource>(resource);	// To weak ptr
 
 		//  This cast should be safe...
 		return static_pointer_cast<TResource>(resource);
 		
 	}
 
-	template <typename TResource, typename TResource::BuildMode kLoadMode>
-	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Manager::Build(const typename BuildSettings<TResource, kLoadMode> & settings){
+	template <typename TResource, typename TResource::BuildMode kBuildMode>
+	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Manager::Build(const typename BuildSettings<TResource, kBuildMode> & settings){
 		
-		// Load the actual resource
 		auto resource = shared_ptr<Resource>(std::move(BuildResource(type_index(typeid(TResource)),
-													   static_cast<int>(kLoadMode),
+													   static_cast<int>(kBuildMode),
 													   &settings)));
 
 		//  This cast should be safe...
