@@ -212,6 +212,14 @@ namespace gi_lib{
 		/// \return Returns the material parameter whose semantic is the specified one or null if no parameter could be found.
 		virtual shared_ptr<MaterialParameter> GetParameterBySemantic(const string & semantic) = 0;
 
+		/// \brief Get the shader associated to this material.
+		/// return Returns a reference to the shader associated to this material.
+		virtual Shader & GetShader() = 0;
+
+		/// \brief Get the shader associated to this material.
+		/// return Returns a reference to the shader associated to this material.
+		virtual const Shader & GetShader() const = 0;
+
 	};
 
 	/// \brief Base interface for material parameters.

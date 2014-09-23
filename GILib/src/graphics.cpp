@@ -15,7 +15,7 @@ using namespace gi_lib;
 
 #ifdef _WIN32
 
-wchar_t * Manager::kPhongShaderFile = L"\\built-in\\phong.fx";
+wchar_t * Manager::kPhongShaderFile = L"Data\\built-in\\phong.fx";
 
 #endif
 

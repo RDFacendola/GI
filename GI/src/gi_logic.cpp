@@ -27,11 +27,7 @@ scene_(make_unique<Scene>())
 
 	auto & manager = graphics_.GetManager();
 
-	auto t = manager.Load<Texture2D, Texture2D::LoadMode::kFromDDS>({ L"Data\\textures\\background.dds" });
-
-	auto t2 = manager.Load<Texture2D, Texture2D::LoadMode::kFromDDS>({ L"Data\\textures\\background.dds" });
-
-	//FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", node, graphics_.GetManager());
+	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", node, graphics_.GetManager());
 
 	/////////////////////////////////////
 

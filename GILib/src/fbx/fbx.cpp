@@ -270,6 +270,7 @@ namespace{
 		// Material
 		auto material = resources.Build<Material, Material::BuildMode::kFromShader>({ shader });
 
+		// Load diffuse, specular and bumpmap
 		
 
 	}

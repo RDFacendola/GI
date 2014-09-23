@@ -161,11 +161,17 @@ namespace gi_lib{
 
 			virtual void SetPriority(ResourcePriority priority) override;
 
-			virtual shared_ptr<MaterialParameter> GetParameterByName(const string & name);
+			virtual shared_ptr<MaterialParameter> GetParameterByName(const string & name) override;
 
-			virtual shared_ptr<MaterialParameter> GetParameterBySemantic(const string & semantic);
+			virtual shared_ptr<MaterialParameter> GetParameterBySemantic(const string & semantic) override;
+
+			virtual Shader & GetShader() override;
+
+			virtual const Shader & GetShader() const override;
 
 		private:
+
+			shared_ptr<Shader> shader_;
 
 			unique_ptr<ID3DX11Effect, COMDeleter> effect_;
 
@@ -401,6 +407,17 @@ namespace gi_lib{
 
 		}
 
+		inline Shader & DX11Material::GetShader() {
+
+			return *shader_;
+
+		}
+
+		inline const Shader & DX11Material::GetShader() const {
+
+			return *shader_;
+
+		}
 
 	}
 
