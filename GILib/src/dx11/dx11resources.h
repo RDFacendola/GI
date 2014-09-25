@@ -8,6 +8,7 @@
 #include <d3d11.h>
 #include <d3dx11effect.h>
 #include <string>
+#include <map>
 #include <memory>
 
 #include "..\..\include\resources.h"
@@ -17,6 +18,7 @@
 using ::std::wstring;
 using ::std::unique_ptr;
 using ::std::shared_ptr;
+using ::std::map;
 
 namespace gi_lib{
 
@@ -51,6 +53,14 @@ namespace gi_lib{
 			virtual WrapMode GetWrapMode() const override;
 
 			virtual void SetWrapMode(WrapMode wrap_mode) override;
+
+			/// \brief Get the view used to bind this texture to a shader.
+			/// \return Returns a reference to the shader resource view.
+			ID3D11ShaderResourceView & GetShaderResourceView();
+
+			/// \brief Get the view used to bind this texture to a shader.
+			/// \return Returns a reference to the shader resource view.
+			const ID3D11ShaderResourceView & GetShaderResourceView() const;
 
 		private:
 
@@ -151,6 +161,8 @@ namespace gi_lib{
 		/// \author Raffaele D. Facendola
 		class DX11Material : public Material{
 
+			friend class DX11MaterialParameter;
+
 		public:
 
 			DX11Material(ID3D11Device & device, const BuildSettings<Material, Material::BuildMode::kFromShader> & settings);
@@ -175,6 +187,8 @@ namespace gi_lib{
 
 			unique_ptr<ID3DX11Effect, COMDeleter> effect_;
 
+			map<string, shared_ptr<Resource>> resources_;		///< \brief Map of inner resources. This is used to prevent destruction while a shader is still using a particular resource.
+
 			ResourcePriority priority_;
 
 			size_t size_;
@@ -189,8 +203,12 @@ namespace gi_lib{
 		public:
 
 			/// \brief Create a new material parameter.
-			/// \param variable The variable accessed by this parameter
-			DX11MaterialParameter(shared_ptr<ID3DX11EffectVariable> variable);
+			/// \param variable The variable accessed by this parameter.
+			/// \param material The material this parameter refers to.
+			DX11MaterialParameter(shared_ptr<ID3DX11EffectVariable> variable, DX11Material & material);
+
+			/// \brief No assignment operator.
+			DX11MaterialParameter & operator=(const DX11MaterialParameter &) = delete;
 
 			virtual ~DX11MaterialParameter();
 
@@ -237,6 +255,10 @@ namespace gi_lib{
 		private:
 
 			shared_ptr<ID3DX11EffectVariable> variable_;
+
+			D3DX11_EFFECT_VARIABLE_DESC metadata_;
+			
+			DX11Material & material_;
 
 		};
 
@@ -291,7 +313,7 @@ namespace gi_lib{
 		/// \param resource The shared pointer to the resource to cast.
 		/// \return Returns a shared pointer to the casted resource.
 		template <typename TResource>
-		const typename ResourceMapping<TResource>::TMapped & resource_cast(const shared_ptr<TResource> & resource){
+		typename ResourceMapping<TResource>::TMapped & resource_cast(const shared_ptr<TResource> & resource){
 
 			return *static_cast<typename ResourceMapping<TResource>::TMapped *>(resource.get());
 
@@ -326,6 +348,17 @@ namespace gi_lib{
 		inline void DX11Texture2D::SetWrapMode(WrapMode wrap_mode){
 
 			wrap_mode_ = wrap_mode;
+
+		}
+
+		inline ID3D11ShaderResourceView & DX11Texture2D::GetShaderResourceView(){
+
+			return *shader_view_;
+		}
+
+		inline const ID3D11ShaderResourceView & DX11Texture2D::GetShaderResourceView() const{
+
+			return *shader_view_;
 
 		}
 

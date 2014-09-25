@@ -335,7 +335,7 @@ shared_ptr<MaterialParameter> DX11Material::GetParameterByName(const string & na
 
 	if (variable->IsValid()){
 
-		return static_pointer_cast<MaterialParameter>(make_shared<DX11MaterialParameter>(variable));
+		return static_pointer_cast<MaterialParameter>(make_shared<DX11MaterialParameter>(variable, *this));
 
 	}
 	else{
@@ -352,7 +352,7 @@ shared_ptr<MaterialParameter> DX11Material::GetParameterBySemantic(const string 
 
 	if (variable->IsValid()){
 
-		return static_pointer_cast<MaterialParameter>(make_shared<DX11MaterialParameter>(variable));
+		return static_pointer_cast<MaterialParameter>(make_shared<DX11MaterialParameter>(variable, *this));
 
 	}
 	else{
@@ -367,8 +367,11 @@ shared_ptr<MaterialParameter> DX11Material::GetParameterBySemantic(const string 
 
 /// \brief Create a new material parameter.
 /// \param variable The variable accessed by this parameter
-DX11MaterialParameter::DX11MaterialParameter(shared_ptr<ID3DX11EffectVariable> variable) :
-	variable_(variable){
+DX11MaterialParameter::DX11MaterialParameter(shared_ptr<ID3DX11EffectVariable> variable, DX11Material & material) :
+	variable_(variable),
+	material_(material){
+
+	variable_->GetDesc(&metadata_);
 
 }
 
@@ -573,11 +576,42 @@ bool DX11MaterialParameter::Read(Projective3f & out){
 
 bool DX11MaterialParameter::Read(shared_ptr<Texture2D> & out){
 
-	throw RuntimeException(L"Not implemented!");
+	auto texture = variable_->AsShaderResource();
+
+	if (texture->IsValid()){
+
+		auto & resources = material_.resources_;
+
+		auto it = resources.find(metadata_.Name);
+				
+		if (it != resources.end()){
+
+			// If the texture was set before then we just find the previous entry
+			out.reset(static_cast<Texture2D*>(it->second.get()));
+
+
+		}
+		else{
+
+			// Resource was not set, so it is null.
+			out.reset();
+
+		}
+
+		texture->Release();
+		return true;
+
+	}
+	else{
+
+		texture->Release();
+		return false;
+
+	}
 
 }
 
-bool DX11MaterialParameter::Read(void ** out){
+bool DX11MaterialParameter::Read(void **){
 
 	throw RuntimeException(L"Not implemented!");
 
@@ -785,11 +819,31 @@ bool DX11MaterialParameter::Write(const Projective3f & in){
 
 bool DX11MaterialParameter::Write(const shared_ptr<Texture2D> in){
 
-	throw RuntimeException(L"Not implemented!");
+	auto texture = variable_->AsShaderResource();
+
+	auto srv = &(resource_cast(in).GetShaderResourceView());
+
+	if (texture->IsValid() &&
+		!FAILED(texture->SetResource(srv))){
+
+		texture->Release();
+
+		material_.resources_[metadata_.Name] = in;
+
+		return true;
+
+	}
+	else{
+
+		texture->Release();
+
+		return false;
+
+	}
 
 }
 
-bool DX11MaterialParameter::Write(void ** in){
+bool DX11MaterialParameter::Write(void **){
 
 	throw RuntimeException(L"Not implemented!");
 

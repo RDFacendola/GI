@@ -29,6 +29,8 @@ scene_(make_unique<Scene>())
 
 	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", node, graphics_.GetManager());
 
+	auto s = manager.GetSize();
+
 	/////////////////////////////////////
 
 	SetTitle(kWindowTitle);

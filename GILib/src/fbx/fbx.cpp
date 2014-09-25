@@ -254,11 +254,6 @@ namespace{
 			return resources.Load<Texture2D, Texture2D::LoadMode::kFromDDS>({ base_path + w_file_name });
 
 		}
-		else{
-
-			return nullptr;
-
-		}
 
 	}
 
@@ -299,6 +294,8 @@ namespace{
 
 		auto & parent = *mesh.GetNode();
 
+		vector<shared_ptr<Material>> materials;
+
 		for (int m = 0; m < parent.GetSrcObjectCount<FbxSurfaceMaterial>(); ++m){
 
 			auto material = resources.Build<Material, Material::BuildMode::kFromShader>({ shader });
@@ -306,11 +303,16 @@ namespace{
 			auto &surface = *parent.GetSrcObject<FbxSurfaceMaterial>(m);
 
 			// Load diffuse, specular and bumpmap
-			auto diffuse = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sDiffuse), base_path, resources);
-			auto specular = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sSpecular), base_path, resources);
-			auto bumpmap = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sBump), base_path, resources);
+
+			material->GetParameterByName("diffuse_map")->Write(LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sDiffuse), base_path, resources));
+			material->GetParameterByName("specular_map")->Write(LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sSpecular), base_path, resources));
+			material->GetParameterByName("bump_map")->Write(LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sBump), base_path, resources));
+
+			materials.push_back(material);
 
 		}
+
+		// Add the rendering component
 
 	}
 	
