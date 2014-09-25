@@ -433,7 +433,7 @@ namespace{
 
 	}
 
-	void StripPropertyExtension(FbxProperty property){
+	void ReplacePropertyExtension(FbxProperty property, const string & extension){
 
 		int count = property.GetSrcObjectCount<FbxFileTexture>();
 
@@ -443,16 +443,18 @@ namespace{
 			
 			string texture_name = texture.GetFileName();
 
-			cout << "Stripping from " << texture_name << std::endl;
+			cout << "Replacing " << texture_name << "'s extension" << std::endl;
 
 #ifdef _WIN32
 
-			char extension[_MAX_EXT];
+			char ext[_MAX_EXT];
 
-			_splitpath_s(texture_name.c_str(), nullptr,0, nullptr, 0, nullptr, 0, extension, _MAX_EXT);
+			_splitpath_s(texture_name.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
 
-			texture_name.erase(texture_name.end() - strnlen_s(extension, _MAX_EXT), texture_name.end());
+			texture_name.erase(texture_name.end() - strnlen_s(ext, _MAX_EXT), texture_name.end());
 			
+			texture_name.append(extension);
+
 #else
 
 			static_assert(false, "Not supported yet!");
@@ -465,28 +467,38 @@ namespace{
 
 	}
 
-	/// \brief Strips textures' extensions.
-	void StripExtension(FbxMesh & mesh){
-		
-		auto & parent = *mesh.GetNode();
-		
-		for (int m = 0; m < parent.GetSrcObjectCount<FbxSurfaceMaterial>(); ++m){
+	/// \brief Extension replacing functor.
+	struct ReplaceExtension{
 
-			auto &material = *parent.GetSrcObject<FbxSurfaceMaterial>(m);			
+		string extension_;
 
-			// Standard maps only...
-			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sEmissive));
-			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sAmbient));
-			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sDiffuse));
-			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sSpecular));
-			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sShininess));
-			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sBump));
-			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sNormalMap));
-			StripPropertyExtension(material.FindProperty(FbxSurfaceMaterial::sReflection));
+		ReplaceExtension(string extension) :
+			extension_(std::move(extension)){}
+		
+		/// \brief Replace textures' extensions.
+		void operator()(FbxMesh & mesh){
+
+			auto & parent = *mesh.GetNode();
+
+			for (int m = 0; m < parent.GetSrcObjectCount<FbxSurfaceMaterial>(); ++m){
+
+				auto &material = *parent.GetSrcObject<FbxSurfaceMaterial>(m);
+
+				// Standard maps only...
+				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sEmissive), extension_);
+				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sAmbient), extension_);
+				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sDiffuse), extension_);
+				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sSpecular), extension_);
+				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sShininess), extension_);
+				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sBump), extension_);
+				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sNormalMap), extension_);
+				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sReflection), extension_);
+
+			}
 
 		}
 
-	}
+	};
 
 	// Filters
 
@@ -635,9 +647,9 @@ void FBX::RemapAttributes(FbxScene & scene){
 
 }
 
-void FBX::StripExtension(FbxScene & scene){
+void FBX::StripExtension(FbxScene & scene, const string & extension){
 	
-	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::StripExtension));
+	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::ReplaceExtension{ extension }));
 
 }
 

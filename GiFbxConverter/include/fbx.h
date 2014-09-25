@@ -41,7 +41,9 @@ namespace gi_lib{
 		void RemapAttributes(FbxScene & scene);
 
 		/// \brief Strips the extension of every addressed texture.
-		void StripExtension(FbxScene & scene);
+		/// \param scene The scene to process.
+		/// \param extension The extension taht will replace the old one.
+		void StripExtension(FbxScene & scene, const string & extension);
 
 		/// \brief Export a fbx scene into a file.
 		/// \param scene The scene to export.

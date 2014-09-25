@@ -21,7 +21,7 @@ const string kGlobalCommand = "$Global";				// Commandless arguments
 const string kHelpCommand = "-?";						// Halp!
 const string kTriangulateCommand = "-triangulate";		// Triangulate
 const string kRemap = "-remap";							// Remap the mesh
-const string kStrip = "-strip";							// Strips the extension of every addressed texture.
+const string kExtension = "-ext";						// Replace the extension of every texture.
 const string kOutputCommand = "-o";						// Mandatory
 const string kInputCommand = "-i";						// Mandatory
 
@@ -139,7 +139,7 @@ void ShowHelp(){
 
 	//cout << kTriangulateCommand << ": Triangulate the mesh." << std::endl;
 	cout << kRemap << ": Performs a per-vertex remapping of mesh attributes. " << std::endl;
-	cout << kStrip << ": Strips the extension from every addressed texture" << std::endl;
+	cout << kExtension << " <extension> : Replace the extension from every texture with <extension>" << std::endl;
 
 }
 
@@ -174,12 +174,14 @@ void Run(CommandMap & commands){
 
 		//if (commands.find(kTriangulateCommand) != commands.end()){
 
-			cout << "Triangulating (this could take a couple of minutes)..." << std::endl;
+		cout << "Triangulating (this could take a couple of minutes)..." << std::endl;
 
-			fbx.Triangulate(*scene);
+		fbx.Triangulate(*scene);
 
 		//}
 
+		CommandMap::iterator cmd;
+	
 		if (commands.find(kRemap) != commands.end()){
 
 			cout << "Re-mapping mesh attributes..." << std::endl;
@@ -188,11 +190,11 @@ void Run(CommandMap & commands){
 
 		}
 		
-		if (commands.find(kStrip) != commands.end()){
+		if ((cmd = commands.find(kExtension)) != commands.end()){
 
 			cout << "Stripping extensions..." << std::endl;
 
-			fbx.StripExtension(*scene);
+			fbx.StripExtension(*scene, cmd->second.size() <= 0 ? "" : cmd->second.front());
 
 		}
 
