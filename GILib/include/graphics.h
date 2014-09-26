@@ -69,6 +69,30 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Viewport bounds
+	struct Viewport{
+
+		Vector2f position;									///< \brief Position of the top-left corner in screen units. Valid range between 0 (top/left) and 1 (bottom/right)).
+		Vector2f extents;									///< \brief Extents of the viewport in screen units. Valid range between 0 and 1 (full size).
+		
+	};
+
+	/// \brief A color.
+	union Color{
+
+		float argb[4];										///< \brief Array of components.
+
+		struct{
+
+			float alpha;									///< \brief Alpha component.
+			float red;										///< \brief Red component.
+			float green;									///< \brief Green component.
+			float blue;										///< \brief Blue component.
+
+		} color;											///< \brief Color.
+
+	};
+
 	/// \brief Interface used to display an image to an output.
 	/// \author Raffaele D. Facendola
 	class Output{

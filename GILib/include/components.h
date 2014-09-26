@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 
+#include "graphics.h"
 #include "resources.h"
 #include "gimath.h"
 #include "timer.h"
@@ -205,6 +206,158 @@ namespace gi_lib{
 
 		shared_ptr<Mesh> mesh_;
 		
+	};
+
+	/// \brief Component used to display objects on screen.
+	class Renderer : public NodeComponent{
+
+	};
+
+	/// \brief Component used to display the scene.
+	
+	/// The position of the camera is given by the transform component of the node this camera is attached to.
+	class Camera : public NodeComponent{
+
+	public:
+
+		/// \brief Projection mode.
+		enum class ProjectionMode{
+
+			kPerspective,						///< \brief Perspective projection.
+			kOrthographic,						///< \brief Orthographic projection.
+
+		};
+
+		/// \brief Clear settings.
+		enum class ClearMode{
+
+			kNone,								///< \brief Do no clear.
+			kDepthOnly,							///< \brief Clear the depth buffer only.
+			kColor,								///< \brief Clear the depth buffer and the color buffer.
+
+		};
+
+		/// \brief Get the projection mode.
+		/// \return Returns the projection mode.
+		ProjectionMode GetProjectionMode() const;
+
+		/// \brief Set the projection mode.
+		/// \param projection_mode The new projection mode.
+		void SetProjectionMode(ProjectionMode projection_mode);
+
+		/// \brief Get the render target.
+		/// \return Returns the render target.
+		shared_ptr<RenderTarget> GetRenderTarget();
+
+		/// \brief Get the render target.
+		/// \return Returns the render target.
+		shared_ptr<const RenderTarget> GetRenderTarget() const;
+
+		/// \brief Set the render target.
+		/// \param render_target The new render target.
+		void SetRenderTarget(shared_ptr<RenderTarget> render_target);
+
+		/// \brief Get the camera viewport.
+		/// \return Returns the camera viewport.
+		Viewport GetViewport() const;
+
+		/// \brief Set the camera viewport.
+		/// \param viewport The new viewport value.
+		void SetViewport(const Viewport & viewport);
+
+		/// \brief Get the camera aspect ratio.
+
+		/// The aspect ratio is Width/Height
+		/// \return Returns the camera aspect ratio.
+		float GetRatio() const;
+
+		/// \brief Set the camera aspect ratio.
+
+		/// The aspect ratio is Width/Height.
+		/// \param ratio The new aspect ratio.
+		void SetRatio(float ratio);
+
+		/// \brief Get the near plane distance.
+		/// \return Returns the near plane distance.
+		float GetNearPlane() const;
+
+		/// \brief Set the near plane distance.
+		/// \param near_plane The new near plane distance.
+		void SetNearPlane(float near_plane);
+
+		/// \brief Get the far plane distance.
+		/// \return Returns the far plane distance.
+		float GetFarPlane() const;
+
+		/// \brief Set the far plane distance.
+		/// \param far_plane The new far plane distance.
+		void SetFarPlane(float far_plane);
+
+		/// \brief Get the color used to clear the target.
+
+		/// This property is used only when the clear mode is "Color".
+		/// \return Returns the color used to clear the target.
+		Color GetClearColor() const;
+
+		/// \brief Set the color used to clear the target.
+
+		/// This property is used only when the clear mode is "Color".
+		/// \param color Set the new clear color.
+		void SetClearColor(Color color);
+
+		/// \brief Get the field of view in radians.
+
+		/// This property is only used when the projection mode is "Perspective".
+		/// \return Return the field of view in radians.
+		float GetFieldOfView() const;
+
+		/// \brief Set the field of view in randians.
+
+		/// This property is used only when the projection mode is "Perspective".
+		/// \param field_of_view The new field of view in radians.
+		void SetFieldOfView(float field_of_view);
+
+		/// \brief Get the height of the viewing volume.
+
+		/// This property is used only when the projection mode is "Orthographic".
+		/// \return Return the height of the viewing volume.
+		float GetOrthoSize();
+
+		/// \brief Set the height of the viewing volume.
+
+		/// This property is used only when the projection mode is "Orthographic".
+		/// \param ortho_size The new orthographic size.
+		void SetOrthoSize(float ortho_size);
+
+	private:
+
+		ProjectionMode projection_mode_;		///< \brief Projection mode of this camera.
+
+		shared_ptr<RenderTarget> target_;		///< \brief Surface(s) the scene will be displayed onto.
+
+		Viewport viewport_;						///< \brief Region of the target the camera will display the image to.
+
+		float ratio_;							///< \brief Width to height ratio of the surface the camera will render to.
+
+		float near_plane_;						///< \brief Near clipping plane's distance.
+
+		float far_plane_;						///< \brief Far clipping plane's distance.
+
+		// Clear mode-specific parameters
+		union{
+
+			Color clear_color_;					///< \brief Color that will be used to clear the target. Valid when clear mode is "Color".
+
+		};
+
+		// Projection-specific parameters
+		union{
+				
+			float field_of_view_;				///< \brief Vertical FoV in radians. Valid when projection mode is "Perspective".
+			float ortho_size_;					///< \brief Units of the scene the camera can display vertically. Valid when projection mode is "Orthographic".
+
+		};
+
 	};
 
 	//

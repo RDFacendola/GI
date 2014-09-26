@@ -48,7 +48,7 @@ namespace gi_lib{
 
 			virtual size_t GetHeight() const override;
 
-			virtual size_t GetMipMapCount() const override;
+			virtual unsigned int GetMipMapCount() const override;
 
 			virtual WrapMode GetWrapMode() const override;
 
@@ -77,7 +77,7 @@ namespace gi_lib{
 
 			size_t bits_per_pixel_;
 
-			size_t mip_levels_;
+			unsigned int mip_levels_;
 			
 			WrapMode wrap_mode_;
 
@@ -333,7 +333,7 @@ namespace gi_lib{
 
 		}
 
-		inline size_t DX11Texture2D::GetMipMapCount() const{
+		inline unsigned int DX11Texture2D::GetMipMapCount() const{
 
 			return mip_levels_;
 

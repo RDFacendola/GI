@@ -108,7 +108,7 @@ namespace gi_lib{
 
 		/// \brief Get the mip map level count.
 		/// \return Returns the mip map level count.
-		virtual size_t GetMipMapCount() const = 0;
+		virtual unsigned int GetMipMapCount() const = 0;
 
 		/// \brief Get the wrap mode.
 
@@ -119,6 +119,22 @@ namespace gi_lib{
 		/// \brief Set the wrap mode.
 		/// \param wrap_mode Wrap mode to use.
 		virtual void SetWrapMode(WrapMode wrap_mode) = 0;
+
+	};
+
+	/// \brief Base interface for render targets.
+	
+	/// A render target is a texture that can be used to draw an image onto.
+	/// It may also have its how depth and stencil buffer.
+	/// This class handles Multi Render Targets (MRT) as well.
+	/// \author Raffaele D. Facendola.
+	class RenderTarget : public Texture2D{
+
+	public:
+
+		/// \brief Get the number of surfaces in this render target.
+		/// \return Returns the number of surfaces in this render target.
+		virtual unsigned int GetCount() const = 0;
 
 	};
 
