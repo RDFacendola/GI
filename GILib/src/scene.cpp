@@ -71,6 +71,40 @@ SceneNode::SceneNode(SceneNode && other) :
 
 }
 
+bool SceneNode::HasTags(std::initializer_list<wstring> tags){
+
+	bool result = true;
+
+	for (auto & tag : tags){
+
+		result &= HasTag(tag);
+
+	}
+
+	return result;
+
+}
+
+std::vector<reference_wrapper<SceneNode>> SceneNode::FindNodeByName(const wstring & name){
+
+	vector<reference_wrapper<SceneNode>> result;
+
+	FindNodeByName(result, name);
+
+	return result;
+
+}
+
+std::vector<reference_wrapper<SceneNode>> SceneNode::FindNodeByTag(std::initializer_list<wstring> tags){
+	
+	vector<reference_wrapper<SceneNode>> result;
+
+	FindNodeByTag(result, tags);
+
+	return result;
+
+}
+
 void SceneNode::Update(const Time & time){
 
 	// Update the components
@@ -99,4 +133,43 @@ void SceneNode::UpdateHierarchy(const Time & time){
 
 	}
 
+}
+
+void SceneNode::FindNodeByName(std::vector<reference_wrapper<SceneNode>> & nodes, const wstring & name){
+
+	// Check this node
+	if (this->name_ == name){
+
+		nodes.push_back(*this);
+
+	}
+
+	// Depth-first (keeps stack size limited)
+	for (int child_index = 0; child_index < transform_.GetChildCount(); ++child_index){
+
+		transform_.GetChildAt(child_index)
+				  .GetOwner()
+				  .FindNodeByName(nodes, name);
+
+	}
+
+}
+
+void SceneNode::FindNodeByTag(std::vector<reference_wrapper<SceneNode>> & nodes, std::initializer_list<wstring> tags){
+
+	// Check this node
+	if (HasTags(tags)){
+
+		nodes.push_back(*this);
+
+	}
+
+	// Depth-first (keeps stack size limited)
+	for (int child_index = 0; child_index < transform_.GetChildCount(); ++child_index){
+
+		transform_.GetChildAt(child_index)
+			.GetOwner()
+			.FindNodeByTag(nodes, tags);
+
+	}
 }

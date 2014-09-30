@@ -105,7 +105,8 @@ void Transform::Update(const Time &){
 	if (parent_ != nullptr)
 	{
 
-		world_transform_ = local_transform_ * parent_->GetWorldTransform();
+		// Local transform first, then world transform
+		world_transform_ = parent_->GetWorldTransform() * local_transform_;
 
 	}
 	else
@@ -138,4 +139,7 @@ void Transform::RemoveChild(Transform & child){
 
 }
 
+/////////////////////// RENDERER ///////////////////////////////////////
+
+/////////////////////// CAMERA /////////////////////////////////////////
 

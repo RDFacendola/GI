@@ -21,6 +21,15 @@ scene_(make_unique<Scene>())
 
 	/////////////////////////////////////
 
+	Affine3f T(Translation3f(10, 20, 30));
+	Affine3f S(AngleAxisf(3.1459f, Vector3f::UnitX()));
+
+	auto TS = T*S;
+	auto ST = S*T;
+
+	auto r0 = TS * Vector3f::Zero();
+	auto r1 = ST * Vector3f::Zero();
+
 	auto & r = graphics_.GetManager();
 
 	auto & node = scene_->CreateNode();

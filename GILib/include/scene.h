@@ -13,6 +13,7 @@
 #include <memory>
 #include <set>
 #include <initializer_list>
+#include <functional>
 
 #include "components.h"
 #include "timer.h"
@@ -25,6 +26,7 @@ using std::map;
 using std::unique_ptr;
 using std::set;
 using std::initializer_list;
+using std::reference_wrapper;
 
 namespace gi_lib{
 	
@@ -113,6 +115,16 @@ namespace gi_lib{
 		/// \brief No assignment operator.
 		SceneNode & operator=(const SceneNode & other) = delete;
 		
+		/// \brief Find all the nodes matching the specified name.
+		/// \param name The name to find.
+		/// \return Return a list containing all the scene nodes which are children of this node and whose name matches the specified one.
+		std::vector<reference_wrapper<SceneNode>> FindNodeByName(const wstring & name);
+
+		/// \brief Find all the nodes matching all the specified tags.
+		/// \param tag Tags to find.
+		/// \return Return a list containing all the scene nodes which are children of this node whose tags matches all the specified ones.
+		std::vector<reference_wrapper<SceneNode>> FindNodeByTag(std::initializer_list<wstring> tags);
+
 		/// \brief Add a new component to the instance.
 
 		/// If a component of the same type exists, it is overwritten and the previous one is destroyed.
@@ -152,6 +164,11 @@ namespace gi_lib{
 		/// \param tag The tag to match.
 		/// \return Returns true if the tag is found, false otherwise.
 		bool HasTag(const wstring & tag);
+
+		/// \brief Check whether the object has all the specified tags.
+		/// \param tags The tags to match.
+		/// \return Returns true if all the tags are found, false otherwise.
+		bool HasTags(std::initializer_list<wstring> tags);
 
 		/// \brief Get the scene object's name.
 
@@ -193,8 +210,6 @@ namespace gi_lib{
 
 	private:
 
-
-
 		/// \brief Type of the component map.
 		using ComponentMap = map<std::type_index, std::unique_ptr<NodeComponent>>;
 
@@ -203,6 +218,10 @@ namespace gi_lib{
 
 		/// \brief Updates the hierarchy of scene nodes.
 		void UpdateHierarchy(const Time & time);
+
+		void FindNodeByName(std::vector<reference_wrapper<SceneNode>> & nodes, const wstring & name);
+
+		void FindNodeByTag(std::vector<reference_wrapper<SceneNode>> & nodes, std::initializer_list<wstring> tags);
 
 		ComponentMap components_;
 
