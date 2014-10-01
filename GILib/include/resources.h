@@ -100,11 +100,11 @@ namespace gi_lib{
 
 		/// \brief Get the width of the texture.
 		/// \return Returns the width of the texture, in pixel.
-		virtual size_t GetWidth() const = 0;
+		virtual unsigned int GetWidth() const = 0;
 
 		/// \brief Get the height of the texture.
 		/// \return Returns the height of the texture, in pixel.
-		virtual size_t GetHeight() const = 0;
+		virtual unsigned int GetHeight() const = 0;
 
 		/// \brief Get the mip map level count.
 		/// \return Returns the mip map level count.
@@ -128,14 +128,32 @@ namespace gi_lib{
 	/// It may also have its how depth and stencil buffer.
 	/// This class handles Multi Render Targets (MRT) as well.
 	/// \author Raffaele D. Facendola.
-	class RenderTarget : public Texture2D{
+	class RenderTarget : public Resource{
 
 	public:
+
+		virtual ~RenderTarget(){};
 
 		/// \brief Get the number of surfaces in this render target.
 		/// \return Returns the number of surfaces in this render target.
 		virtual unsigned int GetCount() const = 0;
 
+		/// \brief Get the texture associated to this render target.
+		/// \param index The index of the render target texture.
+		/// \return Returns the texture associated to the index-th render target.
+		virtual shared_ptr<Texture2D> GetTexture(int index) = 0;
+
+		/// \brief Get the texture associated to this render target.
+		/// \param index The index of the render target texture.
+		/// \return Returns the texture associated to the index-th render target.
+		virtual shared_ptr<const Texture2D> GetTexture(int index) const = 0;
+
+		/// \brief Get the aspect ratio of the render target.
+
+		/// The aspect ratio is Width/Height.
+		/// \return Returns the aspect ratio of the render target.
+		virtual float GetAspectRatio() const = 0;
+		
 	};
 
 	/// \brief Base interface for static meshes.

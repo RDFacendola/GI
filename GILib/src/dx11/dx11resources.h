@@ -10,6 +10,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <numeric>
 
 #include "..\..\include\resources.h"
 #include "..\..\include\resource_traits.h"
@@ -38,15 +39,20 @@ namespace gi_lib{
 			/// \param settings The load settings
 			DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D, Texture2D::LoadMode::kFromDDS> & settings);
 
+			/// \broef Create a mew texture from an existing DirectX11 texture.
+			/// \param device The device used to create the shader view.
+			/// \param texture The DirectX11 texture.
+			DX11Texture2D(ID3D11Device & device, ID3D11Texture2D & texture);
+
 			virtual size_t GetSize() const override;
 
 			virtual ResourcePriority GetPriority() const override;
 
 			virtual void SetPriority(ResourcePriority priority) override;
 
-			virtual size_t GetWidth() const override;
+			virtual unsigned int GetWidth() const override;
 
-			virtual size_t GetHeight() const override;
+			virtual unsigned int GetHeight() const override;
 
 			virtual unsigned int GetMipMapCount() const override;
 
@@ -64,22 +70,55 @@ namespace gi_lib{
 
 		private:
 
+			void UpdateDescription();
+
 			unique_ptr<ID3D11Texture2D, COMDeleter> texture_;
 
 			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;
 
-			// This texture has an alpha channel.
-			bool alpha_;
+			unsigned int width_;
 
-			size_t width_;
+			unsigned int height_;
 
-			size_t height_;
-
-			size_t bits_per_pixel_;
+			unsigned int bits_per_pixel_;
 
 			unsigned int mip_levels_;
 			
 			WrapMode wrap_mode_;
+
+		};
+
+		/// \brief DirectX11 render target.
+		/// \author Raffaele D. Facendola
+		class DX11RenderTarget : public RenderTarget{
+
+		public:
+
+			/// \brief Create a new render target from an existing back buffer.
+
+			/// \param device The device used to create the render target.
+			/// \param back_buffer Backbuffer reference.
+			DX11RenderTarget(ID3D11Device & device, ID3D11Texture2D & back_buffer);
+
+			virtual size_t GetSize() const override;
+
+			virtual ResourcePriority GetPriority() const override;
+
+			virtual void SetPriority(ResourcePriority priority) override;
+
+			virtual unsigned int GetCount() const override;
+
+			virtual shared_ptr<Texture2D> GetTexture(int index) override;
+
+			virtual shared_ptr<const Texture2D> GetTexture(int index) const override;
+
+			virtual float GetAspectRatio() const override;
+
+		private:
+			
+			vector<unique_ptr<ID3D11RenderTargetView, COMDeleter>> target_views_;
+
+			vector<shared_ptr<DX11Texture2D>> textures_;
 
 		};
 
@@ -297,6 +336,14 @@ namespace gi_lib{
 
 		};
 
+		/// \brief Render target mapping.
+		template<> struct ResourceMapping < RenderTarget > {
+
+			/// \brief Concrete type associated to a Render Target
+			using TMapped = DX11RenderTarget;
+
+		};
+
 		/// \brief Performs a resource cast from an abstract type to a concrete type.
 		/// \tparam TResource Type of the resource to cast.
 		/// \param resource The shared pointer to the resource to cast.
@@ -321,13 +368,13 @@ namespace gi_lib{
 
 		//
 
-		inline size_t DX11Texture2D::GetWidth() const{
+		inline unsigned int DX11Texture2D::GetWidth() const{
 
 			return width_;
 
 		}
 
-		inline size_t DX11Texture2D::GetHeight()const {
+		inline unsigned int DX11Texture2D::GetHeight()const {
 
 			return height_;
 
@@ -359,6 +406,63 @@ namespace gi_lib{
 		inline const ID3D11ShaderResourceView & DX11Texture2D::GetShaderResourceView() const{
 
 			return *shader_view_;
+
+		}
+
+		// DX11RenderTarget
+
+		inline size_t DX11RenderTarget::GetSize() const{
+
+			return std::accumulate(textures_.begin(), 
+								   textures_.end(), 
+								   static_cast<size_t>(0), 
+								   [](size_t size, const shared_ptr<DX11Texture2D> texture){ 
+				
+										return size + texture->GetSize(); 
+			
+								   });
+			
+		}
+
+		inline ResourcePriority DX11RenderTarget::GetPriority() const{
+
+			return textures_[0]->GetPriority();
+
+		}
+
+		inline void DX11RenderTarget::SetPriority(ResourcePriority priority){
+
+			for (auto & texture : textures_){
+
+				texture->SetPriority(priority);
+
+			}
+
+		}
+
+		inline float DX11RenderTarget::GetAspectRatio() const{
+
+			// The aspect ratio is guaranteed to be the same for all the targets.
+			return static_cast<float>(textures_[0]->GetWidth()) /
+				static_cast<float>(textures_[0]->GetHeight());
+
+		}
+
+		inline unsigned int DX11RenderTarget::GetCount() const{
+
+			return static_cast<unsigned int>(textures_.size());
+
+		}
+
+		inline shared_ptr<Texture2D> DX11RenderTarget::GetTexture(int index){
+
+			return std::static_pointer_cast<Texture2D>(textures_[index]);
+
+		}
+
+		inline shared_ptr<const Texture2D> DX11RenderTarget::GetTexture(int index) const{
+
+			return std::static_pointer_cast<const Texture2D>(textures_[index]);
 
 		}
 

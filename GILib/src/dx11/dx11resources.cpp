@@ -183,15 +183,22 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D
 	texture_.reset(static_cast<ID3D11Texture2D*>(resource));	
 	shader_view_.reset(shader_view);
 
-	D3D11_TEXTURE2D_DESC description;
+	UpdateDescription();
+	
+}
 
-	texture_->GetDesc(&description);
+DX11Texture2D::DX11Texture2D(ID3D11Device & device, ID3D11Texture2D & texture){
 
-	width_ = description.Width;
-	height_ = description.Height;
-	mip_levels_ = description.MipLevels;
-	bits_per_pixel_ = BitsPerPixel(description.Format);
-	alpha_ = alpha_mode != DDS_ALPHA_MODE_OPAQUE;									//If it is not opaque, it should have an alpha channel
+	ID3D11ShaderResourceView * shader_view;
+
+	THROW_ON_FAIL(device.CreateShaderResourceView(reinterpret_cast<ID3D11Resource *>(&texture),
+		nullptr,
+		&shader_view));
+
+	texture_.reset(&texture);
+	shader_view_.reset(shader_view);
+
+	UpdateDescription();
 
 }
 
@@ -214,6 +221,35 @@ ResourcePriority DX11Texture2D::GetPriority() const{
 void DX11Texture2D::SetPriority(ResourcePriority priority){
 
 	texture_->SetEvictionPriority(ResourcePriorityToEvictionPriority(priority));
+
+}
+
+void DX11Texture2D::UpdateDescription(){
+	
+	D3D11_TEXTURE2D_DESC description;
+
+	texture_->GetDesc(&description);
+
+	width_ = description.Width;
+	height_ = description.Height;
+	mip_levels_ = description.MipLevels;
+	bits_per_pixel_ = static_cast<unsigned int>(BitsPerPixel(description.Format));
+
+}
+
+///////////////////////////// RENDER TARGET ///////////////////////////////////////
+
+DX11RenderTarget::DX11RenderTarget(ID3D11Device & device, ID3D11Texture2D & back_buffer){
+
+	textures_.push_back(make_shared<DX11Texture2D>(device, back_buffer));
+
+	ID3D11RenderTargetView * render_target_view;
+
+	THROW_ON_FAIL(device.CreateRenderTargetView(reinterpret_cast<ID3D11Resource *>(&back_buffer),
+		nullptr,
+		&render_target_view));
+
+	target_views_.push_back(std::move(unique_ptr<ID3D11RenderTargetView, COMDeleter>(render_target_view, COMDeleter{})));
 
 }
 
