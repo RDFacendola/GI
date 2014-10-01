@@ -237,6 +237,12 @@ namespace gi_lib{
 
 		};
 
+		/// \brief Default constructor.
+
+		/// The default camera is perspective
+		/// \param target The render target of the camera.
+		Camera(shared_ptr<RenderTarget> target);
+
 		/// \brief Get the projection mode.
 		/// \return Returns the projection mode.
 		ProjectionMode GetProjectionMode() const;
@@ -245,6 +251,14 @@ namespace gi_lib{
 		/// \param projection_mode The new projection mode.
 		void SetProjectionMode(ProjectionMode projection_mode);
 
+		/// \brief Get the clear mode.
+		/// \return Returns the clear mode.
+		ClearMode GetClearMode() const;
+
+		/// \brief Set the clear mode.
+		/// \param clear_mode The new clear mode.
+		void SetClearMode(ClearMode clear_mode);
+
 		/// \brief Get the render target.
 		/// \return Returns the render target.
 		shared_ptr<RenderTarget> GetRenderTarget();
@@ -252,10 +266,6 @@ namespace gi_lib{
 		/// \brief Get the render target.
 		/// \return Returns the render target.
 		shared_ptr<const RenderTarget> GetRenderTarget() const;
-
-		/// \brief Set the render target.
-		/// \param render_target The new render target.
-		void SetRenderTarget(shared_ptr<RenderTarget> render_target);
 
 		/// \brief Get the camera viewport.
 		/// \return Returns the camera viewport.
@@ -269,13 +279,7 @@ namespace gi_lib{
 
 		/// The aspect ratio is Width/Height
 		/// \return Returns the camera aspect ratio.
-		float GetRatio() const;
-
-		/// \brief Set the camera aspect ratio.
-
-		/// The aspect ratio is Width/Height.
-		/// \param ratio The new aspect ratio.
-		void SetRatio(float ratio);
+		float GetAspectRatio() const;
 
 		/// \brief Get the near plane distance.
 		/// \return Returns the near plane distance.
@@ -328,16 +332,33 @@ namespace gi_lib{
 		/// This property is used only when the projection mode is "Orthographic".
 		/// \param ortho_size The new orthographic size.
 		void SetOrthoSize(float ortho_size);
+			
+		/// \brief Get the current view matrix.
+		/// \return Return the view matrix.
+		Affine3f GetViewMatrix();
+
+		/// \brief Get the current projection matrix.
+		/// \return Return the projection matrix.
+		Projective3f GetProjectionMatrix();
+
+	protected:
+
+		/// \brief Update the component.
+
+		/// \param time The current application time.
+		virtual void Update(const Time & time);
 
 	private:
 
 		ProjectionMode projection_mode_;		///< \brief Projection mode of this camera.
 
+		ClearMode clear_mode_;					/// < \brief The clear mode of this camera.
+
 		shared_ptr<RenderTarget> target_;		///< \brief Surface(s) the scene will be displayed onto.
 
 		Viewport viewport_;						///< \brief Region of the target the camera will display the image to.
 
-		float ratio_;							///< \brief Width to height ratio of the surface the camera will render to.
+		float aspect_ratio_;					///< \brief Width to height ratio of the surface the camera will render to.
 
 		float near_plane_;						///< \brief Near clipping plane's distance.
 
@@ -358,9 +379,21 @@ namespace gi_lib{
 
 		};
 
+		bool projection_dirty_ = true;							///< \brief Is the projection matrix dirty?
+
+		bool view_dirty_ = true;								///< \brief Is the view matrix dirty?
+
+		Affine3f view_matrix_;									///< \brief The camera matrix.
+
+		Projective3f proj_matrix_;								///< \brief The projection matrix.
+
+		void UpdateProjectionMatrix(bool force = false);		///< \brief Update the projection matrix.
+
+		void UpdateViewMatrix(bool force = false);				///< \brief Update the view matrix.
+
 	};
 
-	//
+	// Node component
 
 	inline SceneNode & NodeComponent::GetOwner(){
 
@@ -386,7 +419,7 @@ namespace gi_lib{
 
 	}
 
-	//
+	// Transform
 
 	inline Affine3f & Transform::GetLocalTransform(){
 
@@ -461,5 +494,133 @@ namespace gi_lib{
 	}
 
 	inline void StaticGeometry::Update(const Time &){}
+
+	// Renderer
+
+	// Camera
+
+	inline Camera::ProjectionMode Camera::GetProjectionMode() const{
+
+		return projection_mode_;
+
+	}
+
+	inline void Camera::SetProjectionMode(ProjectionMode projection_mode){
+
+		projection_mode_ = projection_mode;
+
+		projection_dirty_ = true;
+
+	}
+
+	inline Camera::ClearMode Camera::GetClearMode() const{
+
+		return clear_mode_;
+
+	}
+
+	inline void Camera::SetClearMode(ClearMode clear_mode){
+
+		clear_mode_ = clear_mode;
+
+	}
+
+	inline shared_ptr<RenderTarget> Camera::GetRenderTarget(){
+
+		return target_;
+
+	}
+
+	inline shared_ptr<const RenderTarget> Camera::GetRenderTarget() const{
+
+		return target_;
+
+	}
+
+	inline Viewport Camera::GetViewport() const{
+		
+		return viewport_;
+
+	}
+
+	inline void Camera::SetViewport(const Viewport & viewport){
+
+		viewport_ = viewport;
+
+	}
+
+	inline float Camera::GetAspectRatio() const{
+
+		return aspect_ratio_;
+
+	}
+
+	inline float Camera::GetNearPlane() const{
+
+		return near_plane_;
+
+	}
+
+	inline void Camera::SetNearPlane(float near_plane){
+
+		near_plane_ = near_plane;
+
+		projection_dirty_ = true;
+
+	}
+
+	inline float Camera::GetFarPlane() const{
+
+		return far_plane_;
+
+	}
+
+	inline void Camera::SetFarPlane(float far_plane){
+
+		far_plane_ = far_plane;
+
+		projection_dirty_ = true;
+
+	}
+
+	inline Color Camera::GetClearColor() const{
+
+		return clear_color_;
+
+	}
+
+	inline void Camera::SetClearColor(Color color){
+
+		clear_color_ = color;
+
+	}
+	
+	inline float Camera::GetFieldOfView() const{
+
+		return field_of_view_;
+
+	}
+	
+	inline void Camera::SetFieldOfView(float field_of_view){
+
+		field_of_view_ = field_of_view;
+
+		projection_dirty_ = true;
+
+	}
+
+	inline float Camera::GetOrthoSize(){
+
+		return ortho_size_;
+
+	}
+
+	inline void Camera::SetOrthoSize(float ortho_size){
+
+		ortho_size_ = ortho_size;
+
+		projection_dirty_ = true;
+
+	}
 	
 }

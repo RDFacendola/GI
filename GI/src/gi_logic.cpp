@@ -21,27 +21,6 @@ scene_(make_unique<Scene>())
 
 	/////////////////////////////////////
 
-	Affine3f T(Translation3f(10, 20, 30));
-	Affine3f S(AngleAxisf(3.1459f, Vector3f::UnitX()));
-
-	auto TS = T*S;
-	auto ST = S*T;
-
-	auto r0 = TS * Vector3f::Zero();
-	auto r1 = ST * Vector3f::Zero();
-
-	auto & r = graphics_.GetManager();
-
-	auto & node = scene_->CreateNode();
-
-	auto & manager = graphics_.GetManager();
-
-	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", node, graphics_.GetManager());
-
-	auto s = manager.GetSize();
-
-	/////////////////////////////////////
-
 	SetTitle(kWindowTitle);
 
 	Show();
@@ -49,6 +28,20 @@ scene_(make_unique<Scene>())
 	auto p = graphics_.GetAdapterProfile();
 
 	output_ = graphics_.CreateOutput(*this, p.video_modes[0]);
+
+	/////////////////////////////////////
+
+	auto & camera = scene_->CreateNode(L"MainCamera", Affine3f::Identity(), std::initializer_list<wstring>{ L"Camera" });
+
+	camera.Add<Camera>(output_->GetRenderTarget());
+
+	auto & node = scene_->CreateNode();
+
+	auto & manager = graphics_.GetManager();
+
+	//FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", node, graphics_.GetManager());
+
+	auto s = manager.GetSize();
 
 }
 

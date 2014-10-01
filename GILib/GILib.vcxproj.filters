@@ -99,5 +99,6 @@
       <Filter>FBX</Filter>
     </ClCompile>
     <ClCompile Include="src\resource_traits.cpp" />
+    <ClCompile Include="src\gimath.cpp" />
   </ItemGroup>
 </Project>
