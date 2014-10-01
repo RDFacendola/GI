@@ -13,6 +13,7 @@
 #include <map>
 #include <tuple>
 
+#include "resources.h"
 #include "resource_traits.h"
 
 using ::std::wstring;
@@ -80,8 +81,6 @@ namespace gi_lib{
 	/// \brief A color.
 	union Color{
 
-		float argb[4];										///< \brief Array of components.
-
 		struct{
 
 			float alpha;									///< \brief Alpha component.
@@ -90,6 +89,8 @@ namespace gi_lib{
 			float blue;										///< \brief Blue component.
 
 		} color;											///< \brief Color.
+
+		float argb[4];										///< \brief Array of components.
 
 	};
 
@@ -136,6 +137,10 @@ namespace gi_lib{
 
 		/// \brief Finalize the current frame and deliver it on the output.
 		virtual void Commit() = 0;
+
+		/// \brief Get the render target associated to this output.
+		/// \return Returns the render target associated to this output.
+		virtual shared_ptr<RenderTarget> GetRenderTarget() = 0;
 
 	};
 

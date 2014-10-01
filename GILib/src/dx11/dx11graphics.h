@@ -49,27 +49,31 @@ namespace gi_lib{
 			/// \brief Default destructor.
 			~DX11Output();
 
-			virtual void SetVideoMode(const VideoMode & video_mode);
+			virtual void SetVideoMode(const VideoMode & video_mode) override;
 
-			virtual const VideoMode & GetVideoMode() const;
+			virtual const VideoMode & GetVideoMode() const override;
 
-			virtual void SetAntialisingMode(const AntialiasingMode & antialiasing_mode);
+			virtual void SetAntialisingMode(const AntialiasingMode & antialiasing_mode) override;
 
-			virtual const AntialiasingMode & GetAntialisingMode() const;
+			virtual const AntialiasingMode & GetAntialisingMode() const override;
 
-			virtual void SetFullscreen(bool fullscreen);
+			virtual void SetFullscreen(bool fullscreen) override;
 
-			virtual bool IsFullscreen() const;
+			virtual bool IsFullscreen() const override;
 
-			virtual void SetVSync(bool vsync);
+			virtual void SetVSync(bool vsync) override;
 
-			virtual bool IsVSync() const;
+			virtual bool IsVSync() const override;
 
-			virtual void Commit();
+			virtual void Commit() override;
+
+			virtual shared_ptr<RenderTarget> GetRenderTarget() override;
 
 		private:
 
 			void UpdateSwapChain();
+
+			void UpdateViews();
 
 			VideoMode video_mode_;
 
@@ -92,6 +96,8 @@ namespace gi_lib{
 			IDXGIFactory & factory_;
 
 			unique_ptr<IDXGISwapChain, COMDeleter> swap_chain_;
+
+			shared_ptr<RenderTarget> render_target_;
 
 		};
 
@@ -152,7 +158,7 @@ namespace gi_lib{
 
 		};
 
-		//
+		// Output
 
 		inline const VideoMode & DX11Output::GetVideoMode() const{
 
@@ -181,6 +187,12 @@ namespace gi_lib{
 		inline bool DX11Output::IsVSync() const{
 
 			return vsync_;
+
+		}
+
+		inline shared_ptr<RenderTarget> DX11Output::GetRenderTarget(){
+
+			return render_target_;
 
 		}
 

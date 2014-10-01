@@ -493,11 +493,12 @@ DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & fa
 
 																	video_mode_ = DXGIModeToVideoMode(desc.BufferDesc);
 
+																	UpdateViews();
+
 																 });
 
 }
 
-///Destroy the graphic object
 DX11Output::~DX11Output(){
 
 	//Return to windowed mode (otherwise the screen will hang)
@@ -546,7 +547,7 @@ void DX11Output::UpdateSwapChain(){
 	dxgi_desc.OutputWindow = window_.GetHandle();
 	dxgi_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	dxgi_desc.Windowed = true;
-	dxgi_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	dxgi_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
 
 	dxgi_desc.BufferDesc = VideoModeToDXGIMode(video_mode_);
 	dxgi_desc.SampleDesc = AntialiasingModeToSampleDesc(antialiasing_mode_);
@@ -561,8 +562,8 @@ void DX11Output::UpdateSwapChain(){
 
 	swap_chain_.reset(swap_chain);
 
-	//TODO: Get the references to the backbuffer
-
+	UpdateViews();
+	
 	// Restore the fullscreen state
 	SetFullscreen(fullscreen_);
 
@@ -573,6 +574,21 @@ void DX11Output::Commit(){
 
 	swap_chain_->Present(IsVSync() ? 1 : 0,
 						 0);
+
+}
+
+void DX11Output::UpdateViews(){
+
+	ID3D11Texture2D * back_buffer;
+
+	swap_chain_->GetBuffer(0,
+		__uuidof(back_buffer),
+		reinterpret_cast<void**>(&back_buffer));
+
+	// Destory the old render target and assign the new one (the shared ptr will take care about it)
+	render_target_ = std::make_shared<DX11RenderTarget>(device_, *back_buffer);
+	
+	//render_target_texture->Release();		//The render target will take care of its releasing...
 
 }
 
