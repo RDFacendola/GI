@@ -270,7 +270,7 @@ namespace{
 
 		settings.vertices = ReadVertices<VertexFormatNormalTextured>(mesh);
 		
-		node.Add<StaticGeometry>(resources.Build<Mesh, Mesh::BuildMode::kNormalTextured>(settings));
+		node.AddComponent<StaticGeometry>(resources.Build<Mesh, Mesh::BuildMode::kNormalTextured>(settings));
 
 	}
 
@@ -352,7 +352,7 @@ namespace{
 		wstring wname = wstring(name.begin(), name.end());
 
 		//Create a new node and attack it to the scene
-		auto & scene_node = scene_root.GetScene().CreateNode(wname, FbxMatrixToEigenAffine3f(fbx_node->EvaluateLocalTransform()));
+		auto & scene_node = scene_root.GetScene().CreateNode(/*wname, FbxMatrixToEigenAffine3f(fbx_node->EvaluateLocalTransform())*/);
 
 		scene_node.SetParent(scene_root);
 

@@ -31,77 +31,21 @@ void Scene::Update(const Time & time){
 
 }
 
-void Scene::SetRoot(SceneNode & node){
-
-	node.SetParent(*root_);
-
-}
-
 /////////////////////////// SCENE NODE //////////////////////////////////////
 
-SceneNode::SceneNode(Scene & scene) : SceneNode(scene, L"", Affine3f::Identity(), {}){}
+SceneNode::SceneNode(Scene & scene) : SceneNode(scene, scene.GetRoot(), L"", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()), {}){}
 
-SceneNode::SceneNode(Scene & scene, const wstring & name, const Affine3f & local_transform, initializer_list<wstring> tags):
-	scene_(scene),
-	name_(name),
-	tags_(tags.begin(), tags.end()),
-	transform_(*Add<Transform>(local_transform)),
-	unique_(Unique<SceneNode>::MakeUnique()){
-
-}
-
-SceneNode::SceneNode(SceneNode && other) :
-	scene_(other.scene_),
-	name_(std::move(other.name_)),
-	tags_(std::move(other.tags_)),
-	components_(std::move(other.components_)),
-	transform_(*Get<Transform>()),
-	unique_(other.unique_){
-	
-	other.unique_ = Unique<SceneNode>::kNull;
-
-	// Change components' ownership
-	for (auto & pair : components_){
-
-		pair.second->owner_ = this;
-
-	}
-
-	scene_.SetRoot(*this);
-
-}
-
-bool SceneNode::HasTags(std::initializer_list<wstring> tags){
-
-	bool result = true;
-
-	for (auto & tag : tags){
-
-		result &= HasTag(tag);
-
-	}
-
-	return result;
-
-}
-
-std::vector<reference_wrapper<SceneNode>> SceneNode::FindNodeByName(const wstring & name){
-
-	vector<reference_wrapper<SceneNode>> result;
-
-	FindNodeByName(result, name);
-
-	return result;
-
-}
-
-std::vector<reference_wrapper<SceneNode>> SceneNode::FindNodeByTag(std::initializer_list<wstring> tags){
-	
-	vector<reference_wrapper<SceneNode>> result;
-
-	FindNodeByTag(result, tags);
-
-	return result;
+SceneNode::SceneNode(Scene & scene, SceneNode & parent, const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags) :
+scene_(scene),
+name_(name),
+tags_(tags),
+unique_(Unique<SceneNode>::MakeUnique()),
+parent_(&parent),
+position_(position),
+rotation_(rotation),
+scale_(scaling),
+local_dirty_(true),
+world_dirty_(true){
 
 }
 
@@ -110,26 +54,101 @@ void SceneNode::Update(const Time & time){
 	// Update the components
 	for (auto & it : components_){
 
-		if (it.second->IsEnabled()){
+		if (it.IsEnabled()){
 
-			it.second->Update(time);
+			it.Update(time);
 
 		}
 
 	}
 
 	// Update the hierarchy
-	UpdateHierarchy(time);
+	for (auto & child : children_){
+
+		child.get().Update(time);
+
+	}
 
 }
 
-void SceneNode::UpdateHierarchy(const Time & time){
+// Transformation & Hierarchy
 
-	// Access child scene nodes by transform components.
+void SceneNode::SetParent(SceneNode & parent){
 
-	for (auto child_index = 0; child_index < transform_.GetChildCount(); ++child_index){
+	auto & parent_children = parent_->children_;
 
-		transform_.GetChildAt(child_index).UpdateOwner(time);
+	// Erase this node from the current parent
+	parent_children.erase(std::remove_if(parent_children.begin(),
+		parent_children.end(),
+		[this](const std::reference_wrapper<SceneNode> & reference){ return reference.get() == *this; }),
+		parent_children.end());
+
+	// Add it to the new one
+	parent.children_.push_back(*this);
+
+	parent_ = &parent;
+
+	// The world matrix changed...
+	SetDirty(true);
+
+
+}
+
+SceneNode::ChildrenList SceneNode::FindNodeByName(const wstring & name){
+
+	SceneNode::ChildrenList result;
+
+	FindNodeByName(result, name);
+
+	return result;
+
+}
+
+SceneNode::ChildrenList SceneNode::FindNodeByTag(std::initializer_list<wstring> tags){
+
+	SceneNode::ChildrenList result;
+
+	FindNodeByTag(result, tags);
+
+	return result;
+
+}
+
+void SceneNode::SetDirty(bool world_only){
+
+	local_dirty_ = !world_only;
+	world_dirty_ = true;
+
+	// Dirtens every world matrix on the children
+
+	for (auto & child : children_){
+
+		child.get().SetDirty(true);
+
+	}
+
+}
+
+void SceneNode::UpdateLocalTransform(){
+
+	if (local_dirty_){
+
+		local_transform_ = position_ * (rotation_ * scale_);
+
+		local_dirty_ = false;
+
+	}
+
+}
+
+void SceneNode::UpdateWorldTransform(){
+
+	if (world_dirty_){
+
+		// Local transform first, world transform then
+		world_transform_ = parent_->GetWorldTransform() * local_transform_;
+
+		world_dirty_ = false;
 
 	}
 
@@ -145,11 +164,9 @@ void SceneNode::FindNodeByName(std::vector<reference_wrapper<SceneNode>> & nodes
 	}
 
 	// Depth-first (keeps stack size limited)
-	for (int child_index = 0; child_index < transform_.GetChildCount(); ++child_index){
+	for (auto & child : children_){
 
-		transform_.GetChildAt(child_index)
-				  .GetOwner()
-				  .FindNodeByName(nodes, name);
+		child.get().FindNodeByName(nodes, name);
 
 	}
 
@@ -165,11 +182,10 @@ void SceneNode::FindNodeByTag(std::vector<reference_wrapper<SceneNode>> & nodes,
 	}
 
 	// Depth-first (keeps stack size limited)
-	for (int child_index = 0; child_index < transform_.GetChildCount(); ++child_index){
+	for (auto & child : children_){
 
-		transform_.GetChildAt(child_index)
-			.GetOwner()
-			.FindNodeByTag(nodes, tags);
+		child.get().FindNodeByTag(nodes, tags);
 
 	}
+
 }

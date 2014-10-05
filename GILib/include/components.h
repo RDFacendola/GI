@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <memory>
+#include <functional>
 
 #include "graphics.h"
 #include "resources.h"
@@ -15,8 +16,12 @@
 #include "maybe.h"
 
 using ::Eigen::Affine3f;
+using ::Eigen::Translation3f;
+using ::Eigen::AlignedScaling3f;
+using ::Eigen::Quaternionf;
 using ::std::vector;
 using ::std::shared_ptr;
+using ::std::reference_wrapper;
 
 namespace gi_lib{
 
@@ -28,8 +33,9 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Default constructor.
-		NodeComponent();
+		/// \brief Create a new node component.
+		/// \param node The node this component belongs to.
+		NodeComponent(SceneNode & node);
 
 		/// \brief No copy constructor.
 		NodeComponent(const NodeComponent & other) = delete;
@@ -39,15 +45,15 @@ namespace gi_lib{
 
 		virtual ~NodeComponent();
 
-		/// \brief Get the component's owner.
+		/// \brief Get the node this component belongs to.
 
 		/// \return Returns the component's owner reference.
-		SceneNode & GetOwner();
+		SceneNode & GetNode();
 
-		/// \brief Get the component's owner.
+		/// \brief Get the node this component belongs to.
 
-		/// \return Returns the component's owner constant reference.
-		const SceneNode & GetOwner() const;
+		/// \return Returns the component's owner reference.
+		const SceneNode & GetNode() const;
 
 		/// \brief Check wheter this component is enabled.
 		/// \return Returns true if the component is enabled, false otherwise.
@@ -68,109 +74,7 @@ namespace gi_lib{
 
 		bool enabled_;
 
-		SceneNode * owner_;
-
-	};
-
-	//
-
-	/// \brief Represents a 3D transformation.
-	class Transform: public NodeComponent{
-
-		friend class SceneNode;
-
-	public:
-
-		/// \brief Initialize the transform component with a transformation matrix.
-		/// \param local_transform Transformation in local space.
-		Transform(const Affine3f & local_transform);
-
-		/// \brief No copy constructor.
-		/// A node may have one parent at maximum, copying would require for them to have more than one.
-		Transform(const Transform & other) = delete;
-
-		/// \brief No assignment operator.
-		/// A node may have one parent at maximum, assignment would require for them to have more than one.
-		Transform & operator=(const Transform & other) = delete;
-
-		/// \brief Move-constructor.
-
-		/// The constructor moves the matrix value and the relationship with other transforms.
-		Transform(Transform && other);
-
-		/// \brief Destroy the transfom.
-
-		/// \brief Child transforms become roots.
-		~Transform();
-
-		/// \brief Get the local transfom.
-		/// \return Returns the local transform matrix.
-		Affine3f & GetLocalTransform();
-		
-		/// \brief Get the local transfom.
-		/// \return Returns the local transform matrix.
-		const Affine3f & GetLocalTransform() const;
-
-		/// \brief Get the global transfom.
-		/// \return Returns the global transform matrix.
-		Affine3f & GetWorldTransform();
-		
-		/// \brief Get the global transfom.
-		/// \return Returns the global transform matrix.
-		const Affine3f & GetWorldTransform() const;
-
-		/// \brief Assign this transform to a new parent.
-
-		/// The transform is detached first and its previous parent is updated accordingly.
-		void SetParent(Transform & parent);
-
-		/// \brief Get the parent transform.
-
-		/// \return Returns the transform's parent.
-		Transform & GetParent();
-
-		/// \brief Get the parent transform.
-
-		/// \return Returns the transform's parent if present. Returns nullptr if this component has no parent transform.
-		const Transform & GetParent() const;
-
-		/// \brief Check whether this node is a root.
-		/// \return Returns true if the node is a root, false otherwise.
-		bool IsRoot() const;
-
-		/// \brief Get a child transform by index.
-		/// \param index Index of the child.
-		/// \return Returns a reference to the child transform.
-		Transform & GetChildAt(unsigned int index);
-
-		/// \brief Get a child transform by index.
-		/// \param index Index of the child.
-		/// \return Returns a const reference to the child transform.
-		const Transform & GetChildAt(unsigned int index) const;
-
-		/// \brief Get the current number of child transforms attached to this component.
-		/// \return Returns the number of the child transforms attached to this component.
-		size_t GetChildCount() const;
-
-	protected:
-
-		virtual void Update(const Time & time) override;
-
-	private:
-		
-		void UpdateOwner(const Time & time);
-
-		void RemoveChild(Transform & child);
-
-		void AddChild(Transform & child);
-
-		Transform * parent_;			//Parent of the transformation.
-
-		vector<Transform *> children_;	//Children of the transformation.
-
-		Affine3f local_transform_;
-
-		Affine3f world_transform_;		//Compount transformation.
+		SceneNode & node_;
 
 	};
 
@@ -180,8 +84,9 @@ namespace gi_lib{
 	public:
 
 		/// \brief Create a new geometry component.
+		/// \param node The node this component belongs to.
 		/// \param mesh Pointer to the mesh bound to this component.
-		StaticGeometry(const shared_ptr<Mesh> & mesh);
+		StaticGeometry(SceneNode & node, const shared_ptr<Mesh> & mesh);
 
 		/// \brief Set a new mesh.
 		/// \param mesh Pointer to the mesh to set.
@@ -210,6 +115,10 @@ namespace gi_lib{
 
 	/// \brief Component used to display objects on screen.
 	class Renderer : public NodeComponent{
+
+	public:
+
+		Renderer(SceneNode & node);
 
 	};
 
@@ -240,8 +149,9 @@ namespace gi_lib{
 		/// \brief Default constructor.
 
 		/// The default camera is perspective
+		/// \param node The node this component belongs to.
 		/// \param target The render target of the camera.
-		Camera(shared_ptr<RenderTarget> target);
+		Camera(SceneNode & node, shared_ptr<RenderTarget> target);
 
 		/// \brief Get the projection mode.
 		/// \return Returns the projection mode.
@@ -395,15 +305,15 @@ namespace gi_lib{
 
 	// Node component
 
-	inline SceneNode & NodeComponent::GetOwner(){
+	inline SceneNode & NodeComponent::GetNode(){
 
-		return *owner_;
+		return node_;
 
 	}
 
-	inline const SceneNode & NodeComponent::GetOwner() const{
+	inline const SceneNode & NodeComponent::GetNode() const{
 
-		return *owner_;
+		return node_;
 
 	}
 
@@ -419,61 +329,11 @@ namespace gi_lib{
 
 	}
 
-	// Transform
+	// Static geometry
 
-	inline Affine3f & Transform::GetLocalTransform(){
-
-		return local_transform_;
-
-	}
-
-	inline const Affine3f & Transform::GetLocalTransform() const{
-
-		return local_transform_;
-
-	}
-	
-	inline Affine3f & Transform::GetWorldTransform(){
-
-		return world_transform_;
-
-	}
-
-	inline const Affine3f & Transform::GetWorldTransform() const{
-
-		return world_transform_;
-
-	}
-
-	inline bool Transform::IsRoot() const{
-
-		return parent_ == nullptr;
-
-	}
-	
-	inline Transform & Transform::GetChildAt(unsigned int index){
-
-		return *children_[index];
-
-	}
-
-	inline const Transform & Transform::GetChildAt(unsigned int index) const{
-
-		return *children_[index];
-
-	}
-
-	inline size_t Transform::GetChildCount() const{
-
-		return children_.size();
-
-	}
-	
-	//
-
-	inline StaticGeometry::StaticGeometry(const shared_ptr<Mesh> & mesh):
+	inline StaticGeometry::StaticGeometry(SceneNode & node, const shared_ptr<Mesh> & mesh) :
+		NodeComponent(node), 
 		mesh_(mesh){}
-
 
 	inline void StaticGeometry::SetMesh(const shared_ptr<Mesh> & mesh){
 
