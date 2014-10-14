@@ -8,7 +8,7 @@ using namespace ::std;
 /////////////////////////// SCENE ///////////////////////////////////////////
 
 Scene::Scene():
-	root_( std::make_unique<SceneNode>(*this) ){}
+	root_( *this ){}
 
 Scene::~Scene(){
 
@@ -27,16 +27,16 @@ void Scene::DestroyNode(SceneNode & node){
 void Scene::Update(const Time & time){
 
 	//Update traverse the node hierarchy Transform-wise starting from the root.
-	root_->Update(time);
+	root_.Update(time);
 
 }
 
 /////////////////////////// SCENE NODE //////////////////////////////////////
 
-SceneNode::SceneNode(Scene & scene) : SceneNode(scene, scene.GetRoot(), L"", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()), {}){}
+SceneNode::SceneNode(Scene & scene) : SceneNode(scene.GetRoot(), L"", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()), {}){}
 
-SceneNode::SceneNode(Scene & scene, SceneNode & parent, const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags) :
-scene_(scene),
+SceneNode::SceneNode(SceneNode & parent, const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags) :
+scene_(parent.GetScene()),
 name_(name),
 tags_(tags),
 unique_(Unique<SceneNode>::MakeUnique()),
@@ -54,9 +54,9 @@ void SceneNode::Update(const Time & time){
 	// Update the components
 	for (auto & it : components_){
 
-		if (it.IsEnabled()){
+		if (it->IsEnabled()){
 
-			it.Update(time);
+			it->Update(time);
 
 		}
 

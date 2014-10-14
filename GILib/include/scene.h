@@ -33,55 +33,7 @@ using std::iterator;
 
 namespace gi_lib{
 	
-	class SceneNode;
-
-	/// \brief Represents an entire scene.
-	class Scene{
-
-	public:
-
-		/// \brief Create a new scene.
-		Scene();
-
-		/// Destroy all the nodes.
-		~Scene();
-
-		/// \brief No assignment operator.
-		Scene & operator=(const Scene &) = delete;
-
-		/// \brief Create a new scene node.
-
-		/// The scene node is attached to the root by default.
-		/// \param name The name of the node
-		/// \param local_transform The transform of the node in local space.
-		/// \param tags Tags associated to the node.
-		/// \return Returns a reference to the new node.
-		template <typename... TArgs>
-		SceneNode & CreateNode(TArgs&&... args);
-
-		/// \brief Destroy an existing node.
-
-		/// \param node The node to destroy. <b>Do not attempt to use the node afterwards!.</b>
-		void DestroyNode(SceneNode & node);
-
-		/// \brief Update the entire scene.
-		/// \param time The current application time.
-		void Update(const Time & time);
-
-		/// \brief Get the scene root.
-		/// \return Return a reference to the scene root.
-		SceneNode & GetRoot();
-
-	private:
-
-		/// \brief Type of the node map.
-		using NodeMap = map<Unique<SceneNode>, unique_ptr<SceneNode>>;
-
-		unique_ptr<SceneNode> root_;	// Root of the scene
-
-		NodeMap nodes_;					// Nodes inside the scene
-
-	};
+	class Scene;
 
 	/// \brief Represents a scene node.
 
@@ -95,7 +47,7 @@ namespace gi_lib{
 	public:
 		
 		/// \brief Type of the component list.
-		using ComponentList = vector < NodeComponent >;
+		using ComponentList = vector < shared_ptr<NodeComponent> >;
 
 		/// \brief Type of the children list.
 		using ChildrenList = vector < reference_wrapper<SceneNode> > ;
@@ -107,12 +59,11 @@ namespace gi_lib{
 		SceneNode(Scene & scene);
 
 		/// \brief Create a scene node.
-		/// \param scene The scene who owns this node.
 		/// \param parent The node's parent.
 		/// \param name Name of the scene node. It may not be unique.
 		/// \param local_transform Affine transformation in local space.
 		/// \param tags List of tags associated to the scene node.
-		SceneNode(Scene & scene, SceneNode & parent, const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags = {});
+		SceneNode(SceneNode & parent, const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags = {});
 
 		/// \brief No copy constructor.
 		SceneNode(const SceneNode & other) = delete;
@@ -120,32 +71,46 @@ namespace gi_lib{
 		/// \brief No assignment operator.
 		SceneNode & operator=(const SceneNode & other) = delete;
 		
-		/// \brief Add a new component to the instance.
-
-		/// If a component of the same type exists, it is overwritten and the previous one is destroyed.
+		/// \brief Add a new component.
 		/// \tparam TNodeComponent Type of the component to add. It must derive from NodeComponent.
-		/// \tparam TArgs Type of the arguments that will be passed to the component during its creation.
-		/// \param args Arguments that will be passed to the component during its creation.
-		/// \return Returns a reference to the added component.
+		/// \param args Arguments to pass to the component's constructor.
 		template<typename TNodeComponent, typename... TArgs>
-		std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, TNodeComponent&> AddComponent(TArgs&&... args);
+		std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, shared_ptr<TNodeComponent>> AddComponent(TArgs&&... args);
 
-		/// \brief Remove a component by type.
-		/// \tparam TNodeComponent Type of the component to remove. It must derive from NodeComponent.
+		/// \brief Remove all the component whose dynamic type matches the specified one.
+
+		/// \tparam Dynamic type of the components to remove. It must derive from NodeComponent.
 		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
 		void RemoveComponents();
 
-		/// \brief Get the component whose type is equal to TNodeComponent.
-		/// \tparam TNodeComponent Type of the component to get. It must derive from NodeComponent.
-		/// \return Returns a reference to the found object, if any. Returns an empty reference otherwise.
+		/// \brief Remove the specified component.
+		/// \tparam TNodeComponent Type of the component to remove. It must derive from NodeComponent.
 		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
-		Maybe<TNodeComponent &> GetComponent();
+		void RemoveComponent(typename shared_ptr<TNodeComponent> component);
 
-		/// \brief Get the component whose type is equal to TNodeComponent.
-		/// \tparam TNodeComponent Type of the component to get. It must derive from NodeComponent.
-		/// \return Returns a reference to the found object, if any. Returns an empty reference otherwise.
+		/// \brief Get the first component whose dynamic type matched the specified one.
+		/// \tparam TNodeComponent Dynamic type of the component to get. It must derive from NodeComponent.
+		/// \return Returns a pointer to the first component matching the specified type. Returns null if no component could be found.
 		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
-		Maybe<const TNodeComponent &> GetComponent() const;
+		typename shared_ptr<TNodeComponent> GetComponent();
+
+		/// \brief Get the first component whose dynamic type matched the specified one.
+		/// \tparam TNodeComponent Dynamic type of the component to get. It must derive from NodeComponent.
+		/// \return Returns a pointer to the first component matching the specified type. Returns null if no component could be found.
+		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
+		typename shared_ptr<const TNodeComponent> GetComponent() const;
+
+		/// \brief Get the list of all components whose dynamic type match the specified one.
+		/// \tparam TNodeComponent Dynamic type of the components to get. It must derive from NodeComponent.
+		/// \return Returns the list of all components matching the specified type.
+		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
+		typename vector < shared_ptr<TNodeComponent> > GetComponents();
+
+		/// \brief Get the list of all components whose dynamic type match the specified one.
+		/// \tparam TNodeComponent Dynamic type of the components to get. It must derive from NodeComponent.
+		/// \return Returns the list of all components matching the specified type.
+		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
+		typename vector < shared_ptr<const TNodeComponent> > GetComponents() const;
 
 		/// \brief Updates the enabled components.
 
@@ -335,73 +300,161 @@ namespace gi_lib{
 
 	};
 
-	//
+	/// \brief Represents an entire scene.
+	class Scene{
 
-	template <typename... TArgs>
-	SceneNode & Scene::CreateNode(TArgs&&... args){
+	public:
 
-		auto node = std::make_unique<SceneNode>(*this, std::forward<TArgs>(args)...);
+		/// \brief Create a new scene.
+		Scene();
 
-		auto key = node->GetUniqueID();
+		/// Destroy all the nodes.
+		~Scene();
 
-		auto & ret = (nodes_[key] = std::move(node));
+		/// \brief No assignment operator.
+		Scene & operator=(const Scene &) = delete;
 
-		return *ret;
+		/// \brief Create a new scene node.
 
-	}
+		/// The scene node is attached to the root by default.
+		/// \param name The name of the node
+		/// \param local_transform The transform of the node in local space.
+		/// \param tags Tags associated to the node.
+		/// \return Returns a reference to the new node.
+		template <typename... TArgs>
+		SceneNode & CreateNode(TArgs&&... args);
 
-	//
+		/// \brief Destroy an existing node.
+
+		/// \param node The node to destroy. <b>Do not attempt to use the node afterwards!.</b>
+		void DestroyNode(SceneNode & node);
+
+		/// \brief Update the entire scene.
+		/// \param time The current application time.
+		void Update(const Time & time);
+
+		/// \brief Get the scene root.
+		/// \return Return a reference to the scene root.
+		SceneNode & GetRoot();
+
+	private:
+
+		/// \brief Type of the node map.
+		using NodeMap = map<Unique<SceneNode>, unique_ptr<SceneNode>>;
+
+		SceneNode root_;				// Root of the scene
+
+		NodeMap nodes_;					// Nodes inside the scene
+
+	};
+
+	// SceneNode - Components
 
 	template<typename TNodeComponent, typename... TArgs>
-	inline std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, TNodeComponent&> SceneNode::AddComponent(TArgs&&... args){
+	std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, shared_ptr<TNodeComponent>> SceneNode::AddComponent(TArgs&&... args){
 
-		components_.push_back(TNodeComponent(*this, std::forward<TArgs>(args)...));
+		auto component = std::make_shared<TNodeComponent>(*this, std::forward<TArgs>(args)...);
 
-		auto last_it = components_.end() - 1;
+		components_.push_back(static_pointer_cast<NodeComponent>(component));
 
-		return static_cast<TNodeComponent &>(*last_it);
-		
+		return component;
+
 	}
 
 	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
 	void SceneNode::RemoveComponents(){
 
-		// O(n)
 		components_.erase(std::remove_if(components_.begin(),
 			components_.end(),
-			[](const NodeComponent & component){ return dynamic_cast<TNodeComponent*>(&component) != nullptr; }),
+			[](const shared_ptr<NodeComponent> & component){ return dynamic_pointer_cast<TNodeComponent>(component) != nullptr; }),
 			components_.end());
+
+	}
+
+	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
+	void SceneNode::RemoveComponent(typename shared_ptr<TNodeComponent> component){
+
+		auto node_component = static_pointer_cast<NodeComponent>(component);
+
+		components_.erase(std::remove(components_.begin(),
+			components_.end(),
+			component),
+			components_.end());
+
+	}
+
+	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
+	typename shared_ptr<TNodeComponent> SceneNode::GetComponent(){
+
+		auto it = std::find_if(components_.begin(),
+			components_.end(),
+			[](const shared_ptr<NodeComponent> & component){ return dynamic_pointer_cast<TNodeComponent>(component) != nullptr; });
+
+		return it != components_.end() ?
+			static_pointer_cast<TNodeComponent>(*it),
+			nullptr;
+
+	}
+
+	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
+	typename shared_ptr<const TNodeComponent> SceneNode::GetComponent() const{
 		
-	}
-
-	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
-	inline Maybe<TNodeComponent &> SceneNode::GetComponent(){
-
-		// O(n)
 		auto it = std::find_if(components_.begin(),
 			components_.end(),
-			[](const NodeComponent & component){ return dynamic_cast<TNodeComponent*>(&component) != nullptr; });
+			[](const shared_ptr<NodeComponent> & component){ return dynamic_pointer_cast<TNodeComponent>(component) != nullptr; });
 
 		return it != components_.end() ?
-			Maybe<TNodeComponent&>(static_cast<TNodeComponent &>(*it)) :
-			Maybe<TNodeComponent&>();
+			static_pointer_cast<const TNodeComponent>(*it),
+			nullptr;
 
 	}
 
 	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
-	inline Maybe<const TNodeComponent &> SceneNode::GetComponent() const{
+	typename vector < shared_ptr<TNodeComponent> > SceneNode::GetComponents(){
 
-		// O(n)
-		auto it = std::find_if(components_.begin(),
-			components_.end(),
-			[](const NodeComponent & component){ return dynamic_cast<TNodeComponent*>(&component) != nullptr; });
+		vector<shared_ptr<TNodeComponent>> components;
 
-		return it != components_.end() ?
-			Maybe<const TNodeComponent&>(static_cast<TNodeComponent &>(*it)) :
-			Maybe<const TNodeComponent&>();
+		shared_ptr<TNodeComponent> component;
+
+		for (auto it : components_){
+
+			component = dynamic_pointer_cast<TNodeComponent>(it);
+
+			if (component != nullptr){
+
+				components.push_back(component);
+
+			}
+
+		}
+
+		return components;
 
 	}
 
+	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
+	typename vector < shared_ptr<const TNodeComponent> > SceneNode::GetComponents() const{
+
+		vector<shared_ptr<const TNodeComponent>> components;
+
+		shared_ptr<const TNodeComponent> component;
+
+		for (auto it : components_){
+
+			component = dynamic_pointer_cast<const TNodeComponent>(it);
+
+			if (component != nullptr){
+
+				components.push_back(component);
+
+			}
+
+		}
+
+		return components;
+
+	}
+	
 	// SceneNode - Transform & Hierarchy
 
 	inline const Translation3f & SceneNode::GetPosition() const{
@@ -505,7 +558,7 @@ namespace gi_lib{
 
 	}
 
-	unsigned int SceneNode::GetChildrenCount() const{
+	inline unsigned int SceneNode::GetChildrenCount() const{
 
 		return static_cast<unsigned int>(children_.size());
 
@@ -577,6 +630,27 @@ namespace gi_lib{
 	inline const Unique<SceneNode> & SceneNode::GetUniqueID() const{
 
 		return unique_;
+
+	}
+
+	// Scene
+
+	template <typename... TArgs>
+	SceneNode & Scene::CreateNode(TArgs&&... args){
+
+		auto node = std::make_unique<SceneNode>(*this, std::forward<TArgs>(args)...);
+
+		auto key = node->GetUniqueID();
+
+		auto & ret = (nodes_[key] = std::move(node));
+
+		return *ret;
+
+	}
+
+	inline SceneNode & Scene::GetRoot(){
+
+		return root_;
 
 	}
 
