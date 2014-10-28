@@ -40,9 +40,10 @@ namespace gi_lib{
 			DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D, Texture2D::LoadMode::kFromDDS> & settings);
 
 			/// \broef Create a mew texture from an existing DirectX11 texture.
-			/// \param device The device used to create the shader view.
 			/// \param texture The DirectX11 texture.
-			DX11Texture2D(ID3D11Device & device, ID3D11Texture2D & texture);
+			DX11Texture2D(ID3D11Texture2D & texture);
+
+			virtual ~DX11Texture2D(){}
 
 			virtual size_t GetSize() const override;
 
@@ -94,11 +95,12 @@ namespace gi_lib{
 
 		public:
 
-			/// \brief Create a new render target from an existing back buffer.
+			/// \brief Create a new render target from an existing buffer.
 
-			/// \param device The device used to create the render target.
-			/// \param back_buffer Backbuffer reference.
-			DX11RenderTarget(ID3D11Device & device, ID3D11Texture2D & back_buffer);
+			/// \param buffer Buffer reference.
+			DX11RenderTarget(ID3D11Texture2D & buffer);
+
+			virtual ~DX11RenderTarget(){}
 
 			virtual size_t GetSize() const override;
 
@@ -113,6 +115,14 @@ namespace gi_lib{
 			virtual shared_ptr<const Texture2D> GetTexture(int index) const override;
 
 			virtual float GetAspectRatio() const override;
+
+			/// \brief Set new buffers for the render target.
+
+			/// \param buffers The list of buffers to bound
+			void SetBuffers(std::initializer_list<ID3D11Texture2D*> buffers);
+
+			/// \brief Releases al the buffers referenced by the render target.
+			void ResetBuffers();
 
 		private:
 			

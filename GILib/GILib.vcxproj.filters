@@ -72,6 +72,7 @@
     </ClInclude>
     <ClInclude Include="include\functional.h" />
     <ClInclude Include="external\fnv1.h" />
+    <ClInclude Include="include\scope_guard.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">

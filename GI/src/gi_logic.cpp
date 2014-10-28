@@ -45,14 +45,9 @@ scene_(make_unique<Scene>())
 
 	/// TESTING STUFFS
 
-	auto & h = scene_->CreateNode();
+	auto asd = Translation3f::Identity();
 
-	h.AddComponent<Foo>();
-	h.AddComponent<Bar>();
 
-	auto foos = h.GetComponents<Foo>().size();
-	auto bars = h.GetComponents<Bar>().size();
-	
 	/////////////////////////////////////
 
 	SetTitle(kWindowTitle);
@@ -64,19 +59,19 @@ scene_(make_unique<Scene>())
 	output_ = graphics_.CreateOutput(*this, p.video_modes[0]);
 
 	/////////////////////////////////////
+	
+	SceneNodeBuilder camera_builder(scene_->GetRoot());
 
-	auto & camera = scene_->CreateNode();
-
+	auto & camera = camera_builder.Build();
+		
 	camera.AddComponent<Camera>(output_->GetRenderTarget());
-
-	auto & node = scene_->CreateNode();
-
+	
 	auto & manager = graphics_.GetManager();
 
 	//FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", node, graphics_.GetManager());
 
 	auto s = manager.GetSize();
-
+	
 }
 
 GILogic::~GILogic(){

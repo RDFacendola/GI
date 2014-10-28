@@ -34,6 +34,60 @@ using std::iterator;
 namespace gi_lib{
 	
 	class Scene;
+	class SceneNode;
+	
+	/// \brief Used to build a scene node
+	class SceneNodeBuilder{
+
+	public:
+
+		/// \brief Create a new scene node builder.
+		/// \param parent The node's parent
+		SceneNodeBuilder(SceneNode & parent);
+
+		/// \brief Set the node's parent.
+		/// \param parent The node's parent.
+		void SetParent(SceneNode & parent);
+
+		/// \brief Set the node's name.
+		/// \param name The node's name.
+		void SetName(const wstring & name);
+
+		/// \brief Set the node's position.
+		/// \param position The node's position.
+		void SetPosition(const Translation3f & position);
+
+		/// \brief Set the node's rotation.
+		/// \param rotation The node's rotation.
+		void SetRotation(const Quaternionf & rotation);
+
+		/// \brief Set the node's scaling.
+		/// \param scaling The node's scaling.
+		void SetScaling(const AlignedScaling3f & scaling);
+
+		/// \brief Set the node's tags.
+		/// \param tags The node's tags.
+		void SetTags(initializer_list<wstring> tags);
+
+		/// \brief Build a new scene node.
+		/// \return Returns a new scene node built according to the previous parameters set.
+		SceneNode & Build() const;
+
+	private:
+
+		SceneNode * parent_;
+
+		wstring name_ = L"";
+
+		Translation3f position_ = Translation3f(Vector3f::Zero());
+
+		Quaternionf rotation_ = Quaternionf::Identity();
+
+		AlignedScaling3f scaling_ = AlignedScaling3f(Vector3f::Ones());
+
+		initializer_list<wstring> tags_;
+
+	};
 
 	/// \brief Represents a scene node.
 
@@ -50,20 +104,21 @@ namespace gi_lib{
 		using ComponentList = vector < shared_ptr<NodeComponent> >;
 
 		/// \brief Type of the children list.
-		using ChildrenList = vector < reference_wrapper<SceneNode> > ;
+		using ChildrenList = vector < SceneNode* > ;
 
-		/// \brief Create a default scene node.
-
-		/// The node won't have any name or tags and its local transformation matrix will be the identity matrix.
-		/// \param scene The scene who owns this node.
-		SceneNode(Scene & scene);
+		/// \brief Create a root node.
+		SceneNode();
 
 		/// \brief Create a scene node.
-		/// \param parent The node's parent.
 		/// \param name Name of the scene node. It may not be unique.
-		/// \param local_transform Affine transformation in local space.
+		/// \param position Position of the node in local space.
+		/// \param rotation Rotation of the node in local space.
+		/// \param scaling Scaling of the node in local space.
 		/// \param tags List of tags associated to the scene node.
-		SceneNode(SceneNode & parent, const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags = {});
+		SceneNode(const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags);
+
+		/// \brief Destroy the current scene node and all the children.
+		~SceneNode();
 
 		/// \brief No copy constructor.
 		SceneNode(const SceneNode & other) = delete;
@@ -163,11 +218,14 @@ namespace gi_lib{
 
 		/// \brief Set this node's parent.
 
-		/// The new parent must belong to the same scene.
+		/// The specified parent will take node's ownership and will destroy this node upon its own destruction.
 		/// You may not change a scene root`s parent or create a new root (by setting the parent parameter to *this, for example)
 		/// You amy not create cycles inside the scene graph!
 		/// \param parent The new parent.
 		void SetParent(SceneNode & parent);
+
+		/// \brief Remove this node from the parent's children.
+		void ResetParent();
 
 		/// \brief Check whether this node is a root.
 		/// \return Returns true if the node is a root, false otherwise.
@@ -196,12 +254,12 @@ namespace gi_lib{
 		/// \brief Find all the nodes matching the specified name.
 		/// \param name The name to find.
 		/// \return Return a list containing all the scene nodes which are children of this node and whose name matches the specified one.
-		ChildrenList FindNodeByName(const wstring & name);
+		vector<reference_wrapper<SceneNode>> FindNodeByName(const wstring & name);
 
 		/// \brief Find all the nodes matching all the specified tags.
 		/// \param tag Tags to find.
 		/// \return Return a list containing all the scene nodes which are children of this node whose tags matches all the specified ones.
-		ChildrenList FindNodeByTag(std::initializer_list<wstring> tags);
+		vector<reference_wrapper<SceneNode>> FindNodeByTag(std::initializer_list<wstring> tags);
 
 		// Identity
 
@@ -237,12 +295,12 @@ namespace gi_lib{
 		/// \brief Check whether the object has a particular tag.
 		/// \param tag The tag to match.
 		/// \return Returns true if the tag is found, false otherwise.
-		bool HasTag(const wstring & tag);
+		bool HasTag(const wstring & tag) const;
 
 		/// \brief Check whether the object has all the specified tags.
 		/// \param tags The tags to match.
 		/// \return Returns true if all the tags are found, false otherwise.
-		bool HasTags(std::initializer_list<wstring> tags);
+		bool HasTags(std::initializer_list<wstring> tags) const;
 
 		/// \brief Get the unique ID identifying this scene node.
 		/// \return Returns an object which is guaranteed to be unique among other scene nodes.
@@ -261,9 +319,9 @@ namespace gi_lib{
 
 		void UpdateWorldTransform();
 
-		void FindNodeByName(std::vector<reference_wrapper<SceneNode>> & nodes, const wstring & name);
+		void FindNodeByName(vector<reference_wrapper<SceneNode>> & nodes, const wstring & name);
 
-		void FindNodeByTag(std::vector<reference_wrapper<SceneNode>> & nodes, std::initializer_list<wstring> tags);
+		void FindNodeByTag(vector<reference_wrapper<SceneNode>> & nodes, std::initializer_list<wstring> tags);
 
 		// Components
 
@@ -271,7 +329,7 @@ namespace gi_lib{
 
 		// Transformation and hierarchy
 
-		SceneNode * parent_;
+		SceneNode* parent_;
 
 		ChildrenList children_;
 
@@ -290,7 +348,7 @@ namespace gi_lib{
 		bool world_dirty_;									
 		
 		// Identity
-		Scene & scene_;
+		//Scene & scene_;
 
 		wstring name_;
 
@@ -308,26 +366,8 @@ namespace gi_lib{
 		/// \brief Create a new scene.
 		Scene();
 
-		/// Destroy all the nodes.
-		~Scene();
-
 		/// \brief No assignment operator.
 		Scene & operator=(const Scene &) = delete;
-
-		/// \brief Create a new scene node.
-
-		/// The scene node is attached to the root by default.
-		/// \param name The name of the node
-		/// \param local_transform The transform of the node in local space.
-		/// \param tags Tags associated to the node.
-		/// \return Returns a reference to the new node.
-		template <typename... TArgs>
-		SceneNode & CreateNode(TArgs&&... args);
-
-		/// \brief Destroy an existing node.
-
-		/// \param node The node to destroy. <b>Do not attempt to use the node afterwards!.</b>
-		void DestroyNode(SceneNode & node);
 
 		/// \brief Update the entire scene.
 		/// \param time The current application time.
@@ -339,14 +379,62 @@ namespace gi_lib{
 
 	private:
 
-		/// \brief Type of the node map.
-		using NodeMap = map<Unique<SceneNode>, unique_ptr<SceneNode>>;
-
 		SceneNode root_;				// Root of the scene
 
-		NodeMap nodes_;					// Nodes inside the scene
-
 	};
+
+	// SceneNodeBuilder
+
+	inline SceneNodeBuilder::SceneNodeBuilder(SceneNode & parent):
+		parent_(&parent){}
+
+	inline void SceneNodeBuilder::SetParent(SceneNode & parent){
+
+		parent_ = &parent;
+
+	}
+
+	inline void SceneNodeBuilder::SetName(const wstring & name){
+
+		name_ = name;
+
+	}
+
+	inline void SceneNodeBuilder::SetPosition(const Translation3f & position){
+
+		position_ = position;
+
+	}
+
+	inline void SceneNodeBuilder::SetRotation(const Quaternionf & rotation){
+
+		rotation_ = rotation;
+
+	}
+
+	inline void SceneNodeBuilder::SetScaling(const AlignedScaling3f & scaling){
+
+		scaling_ = scaling;
+
+	}
+
+	inline void SceneNodeBuilder::SetTags(initializer_list<wstring> tags){
+
+		tags_ = tags;
+
+	}
+
+	inline SceneNode & SceneNodeBuilder::Build() const{
+
+		// TODO: add a memory pool for placement new to speed up the creation of the nodes.
+
+		auto & node = *new SceneNode(name_, position_, rotation_, scaling_, tags_);
+
+		node.SetParent(*parent_);
+		
+		return node;
+
+	}
 
 	// SceneNode - Components
 
@@ -479,7 +567,7 @@ namespace gi_lib{
 
 	inline void SceneNode::SetRotation(const Quaternionf & rotation){
 
-		rotation_ = rotation;
+		rotation_ = rotation.normalized();
 
 		SetDirty();
 
@@ -499,7 +587,6 @@ namespace gi_lib{
 
 	}
 
-
 	inline const Affine3f & SceneNode::GetLocalTransform(){
 
 		UpdateLocalTransform();	//Update by need
@@ -518,19 +605,37 @@ namespace gi_lib{
 
 	inline SceneNode & SceneNode::GetParent(){
 
-		return *parent_;
+		if (!IsRoot()){
 
+			return *parent_;
+
+		}
+		else{
+
+			return *this;
+
+		}
+		
 	}
 
 	inline const SceneNode & SceneNode::GetParent() const {
 
-		return *parent_;
+		if (!IsRoot()){
+
+			return *parent_;
+
+		}
+		else{
+
+			return *this;
+
+		}
 
 	}
 	
 	inline bool SceneNode::IsRoot() const{
 
-		return this == parent_;
+		return parent_ == nullptr;
 
 	}
 
@@ -578,18 +683,6 @@ namespace gi_lib{
 
 	}
 
-	inline Scene & SceneNode::GetScene(){
-
-		return scene_;
-
-	}
-
-	inline const Scene & SceneNode::GetScene() const{
-
-		return scene_;
-
-	}
-
 	inline const wstring & SceneNode::GetName() const{
 
 		return name_;
@@ -608,13 +701,13 @@ namespace gi_lib{
 
 	}
 
-	inline bool SceneNode::HasTag(const wstring & tag){
+	inline bool SceneNode::HasTag(const wstring & tag) const{
 
 		return tags_.find(tag) != tags_.end();
 
 	}
 
-	inline bool SceneNode::HasTags(std::initializer_list<wstring> tags){
+	inline bool SceneNode::HasTags(std::initializer_list<wstring> tags) const{
 
 		return std::accumulate(tags.begin(), 
 							   tags.end(), 
@@ -634,19 +727,6 @@ namespace gi_lib{
 	}
 
 	// Scene
-
-	template <typename... TArgs>
-	SceneNode & Scene::CreateNode(TArgs&&... args){
-
-		auto node = std::make_unique<SceneNode>(*this, std::forward<TArgs>(args)...);
-
-		auto key = node->GetUniqueID();
-
-		auto & ret = (nodes_[key] = std::move(node));
-
-		return *ret;
-
-	}
 
 	inline SceneNode & Scene::GetRoot(){
 

@@ -12,6 +12,7 @@
 
 #include "..\..\include\observable.h"
 #include "..\..\include\graphics.h"
+#include "dx11resources.h"
 #include "dx11shared.h"
 
 using ::std::unique_ptr;
@@ -97,7 +98,7 @@ namespace gi_lib{
 
 			unique_ptr<IDXGISwapChain, COMDeleter> swap_chain_;
 
-			shared_ptr<RenderTarget> render_target_;
+			shared_ptr<DX11RenderTarget> render_target_;
 
 		};
 
@@ -192,7 +193,7 @@ namespace gi_lib{
 
 		inline shared_ptr<RenderTarget> DX11Output::GetRenderTarget(){
 
-			return render_target_;
+			return std::static_pointer_cast<RenderTarget>(render_target_);
 
 		}
 

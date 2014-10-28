@@ -480,6 +480,9 @@ DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & fa
 	//Listeners
 	on_window_resized_listener_ = window_.OnResized().AddListener([this](Window &, unsigned int, unsigned int){
 
+																	// Release the old back buffer
+																	render_target_->ResetBuffers();
+
 																	//Resize the swapchain buffer
 																	swap_chain_->ResizeBuffers(kBuffersCount,
 																							   0,	//Will fit the client width
@@ -490,7 +493,7 @@ DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & fa
 																	DXGI_SWAP_CHAIN_DESC desc;
 
 																	swap_chain_->GetDesc(&desc);
-
+																	
 																	video_mode_ = DXGIModeToVideoMode(desc.BufferDesc);
 
 																	UpdateViews();
@@ -585,11 +588,17 @@ void DX11Output::UpdateViews(){
 		__uuidof(back_buffer),
 		reinterpret_cast<void**>(&back_buffer));
 
-	// Destory the old render target and assign the new one (the shared ptr will take care about it)
-	render_target_ = std::make_shared<DX11RenderTarget>(device_, *back_buffer);
-	
-	//render_target_texture->Release();		//The render target will take care of its releasing...
+	if (!render_target_){
 
+		render_target_ = std::make_shared<DX11RenderTarget>(*back_buffer);
+
+	}
+	else{
+
+		render_target_->SetBuffers({ back_buffer });
+
+	}
+	
 }
 
 /////////////////////////////////// MANAGER ///////////////////////////////////////////

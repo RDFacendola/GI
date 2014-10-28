@@ -15,6 +15,7 @@
 #include "..\..\include\core.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\functional.h"
+#include "..\..\include\scope_guard.h"
 
 using namespace std;
 using namespace gi_lib;
@@ -187,11 +188,17 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D
 	
 }
 
-DX11Texture2D::DX11Texture2D(ID3D11Device & device, ID3D11Texture2D & texture){
+DX11Texture2D::DX11Texture2D(ID3D11Texture2D & texture){
+
+	ID3D11Device * device;
+
+	texture.GetDevice(&device);
+
+	unique_ptr<ID3D11Device, COMDeleter> guard(device, COMDeleter{});	// Will release the device
 
 	ID3D11ShaderResourceView * shader_view;
 
-	THROW_ON_FAIL(device.CreateShaderResourceView(reinterpret_cast<ID3D11Resource *>(&texture),
+	THROW_ON_FAIL(device->CreateShaderResourceView(reinterpret_cast<ID3D11Resource *>(&texture),
 		nullptr,
 		&shader_view));
 
@@ -239,17 +246,53 @@ void DX11Texture2D::UpdateDescription(){
 
 ///////////////////////////// RENDER TARGET ///////////////////////////////////////
 
-DX11RenderTarget::DX11RenderTarget(ID3D11Device & device, ID3D11Texture2D & back_buffer){
+DX11RenderTarget::DX11RenderTarget(ID3D11Texture2D & buffer){
 
-	textures_.push_back(make_shared<DX11Texture2D>(device, back_buffer));
+	SetBuffers({ &buffer });
 
+}
+
+void DX11RenderTarget::SetBuffers(initializer_list<ID3D11Texture2D*> buffers){
+
+	ResetBuffers();
+
+	ID3D11Device * device;
 	ID3D11RenderTargetView * render_target_view;
 
-	THROW_ON_FAIL(device.CreateRenderTargetView(reinterpret_cast<ID3D11Resource *>(&back_buffer),
-		nullptr,
-		&render_target_view));
+	// Rollback guard ensures that the state of the render target is cleared upon error
+	// (ie: if one buffer causes an exception, the entire operation is rollback'd)
 
-	target_views_.push_back(std::move(unique_ptr<ID3D11RenderTargetView, COMDeleter>(render_target_view, COMDeleter{})));
+	auto rollback = make_scope_guard([this](){
+	
+		textures_.clear();
+		target_views_.clear();
+	
+	});
+
+	for (auto buffer : buffers){
+
+		buffer->GetDevice(&device);
+
+		unique_ptr<ID3D11Device, COMDeleter> guard(device, COMDeleter{});	// Will release the device
+
+		THROW_ON_FAIL(device->CreateRenderTargetView(reinterpret_cast<ID3D11Resource *>(buffer),
+			nullptr,
+			&render_target_view));
+
+		textures_.push_back(make_shared<DX11Texture2D>(*buffer));
+		target_views_.push_back(std::move(unique_ptr<ID3D11RenderTargetView, COMDeleter>(render_target_view, COMDeleter{})));
+
+	}
+
+	// Everything went as it should have...
+	rollback.Dismiss();
+
+}
+
+void DX11RenderTarget::ResetBuffers(){
+
+	textures_.clear();
+	target_views_.clear();
 
 }
 

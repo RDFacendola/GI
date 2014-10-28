@@ -24,6 +24,7 @@
     <ClInclude Include="include\functional.h" />
     <ClInclude Include="include\gimath.h" />
     <ClInclude Include="include\resource_traits.h" />
+    <ClInclude Include="include\scope_guard.h" />
     <ClInclude Include="src\dx11\dx11shared.h" />
     <ClInclude Include="include\core.h" />
     <ClInclude Include="src\dx11\dx11graphics.h" />

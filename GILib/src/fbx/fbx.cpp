@@ -70,6 +70,15 @@ namespace{
 
 	}
 
+	inline Quaternionf FbxQuaternionToEigenQuaternionf(const FbxQuaternion & quaternion){
+
+		return Quaternionf(static_cast<float>(quaternion.mData[0]),
+			static_cast<float>(quaternion.mData[1]),
+			static_cast<float>(quaternion.mData[2]),
+			static_cast<float>(quaternion.mData[3]));
+
+	}
+
 	/// \brief Check whether the mesh defines UV coordinates.
 	bool HasTextureCoordinates(const FbxMesh & mesh){
 
@@ -279,7 +288,7 @@ namespace{
 	void BuildMaterial(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Manager & resources);
 
 	/// \brief Builds a material with proper shader and textures.
-	template<> void BuildMaterial<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Manager & resources){
+	template<> void BuildMaterial<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & /*node*/, const wstring & base_path, Manager & resources){
 
 		// Phong shader
 		auto shader = resources.Load<Shader, Shader::LoadMode::kCompileFromFile>({ Manager::kPhongShaderFile });
@@ -312,8 +321,8 @@ namespace{
 
 		}
 
-		// Add the rendering component
-
+		// TODO: Add the rendering component
+		
 	}
 	
 	/// \brief Attempts to load a mesh inside a scene.
@@ -349,10 +358,21 @@ namespace{
 
 		// Node data
 		string name = fbx_node->GetName();
-		wstring wname = wstring(name.begin(), name.end());
+		
+		//Create a new node and attach it to the scene
+		auto node_name = wstring(name.begin(), name.end());
+		auto node_transform = fbx_node->EvaluateLocalTransform();
 
-		//Create a new node and attack it to the scene
-		auto & scene_node = scene_root.GetScene().CreateNode(/*wname, FbxMatrixToEigenAffine3f(fbx_node->EvaluateLocalTransform())*/);
+		// Position, rotation and scaling of the object
+		Translation3f position = Translation3f(FbxVector4ToEigenVector3f(node_transform.GetT()));
+		Quaternionf rotation = Quaternionf(FbxQuaternionToEigenQuaternionf(node_transform.GetQ())).normalized();
+		AlignedScaling3f scaling = AlignedScaling3f(FbxVector4ToEigenVector3f(node_transform.GetS()));
+				
+		auto & scene_node = *new SceneNode(node_name,
+			position,
+			rotation,
+			scaling,
+			{});
 
 		scene_node.SetParent(scene_root);
 
