@@ -120,6 +120,8 @@ namespace gi_lib{
 
 		Renderer(SceneNode & node);
 
+		~Renderer();
+
 	};
 
 	/// \brief Component used to display the scene.

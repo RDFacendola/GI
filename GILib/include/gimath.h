@@ -22,6 +22,8 @@
 
 #include <math.h>
 
+using ::Eigen::Vector3f;
+
 namespace gi_lib{
 
 	/// \brief Wraps common math functions.
@@ -53,6 +55,17 @@ namespace gi_lib{
 		/// \param epsilon The maximum error percentage. Defines the error range around the smallest number between a and b.
 		/// \return Returns true if the bigger number falls within the error range of the smallest one. Returns false otherwise.
 		static bool Equal(float a, float b, float epsilon);
+
+	};
+
+	/// \brief Represents the bound of a geometry
+	struct Bounds{
+
+		/// \brief Center of the bounds.
+		Vector3f center;
+
+		/// \brief Extents of the bounds (ie: Width x Height x Depth)
+		Vector3f extents;
 
 	};
 

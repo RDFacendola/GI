@@ -155,6 +155,47 @@ namespace{
 
 	}
 	
+	template <typename TVertexFormat>
+	Bounds VerticesToBounds(const std::vector<TVertexFormat> & vertices){
+
+		if (vertices.size() == 0){
+
+			return Bounds{ Vector3f::Zero(), Vector3f::Zero() };
+
+		}
+
+		Vector3f min_corner;
+		Vector3f max_corner;
+
+		min_corner = vertices[0].position;
+		max_corner = vertices[0].position;
+
+		for (auto & vertex : vertices){
+
+			// Find maximum and minimum coordinates for each axis independently
+
+			for (int coordinate = 0; coordinate < 3; ++coordinate){
+
+				if (min_corner(coordinate) > vertex.position(coordinate)){
+
+					min_corner(coordinate) = vertex.position(coordinate);
+
+				}
+				else if (max_corner(coordinate) < vertex.position(coordinate)){
+
+					max_corner(coordinate) = vertex.position(coordinate);
+
+				}
+
+			}
+
+		}
+
+		return Bounds{ 0.5f * (max_corner + min_corner),
+			max_corner - min_corner };
+					  
+	}
+
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
@@ -304,7 +345,7 @@ DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildM
 
 	size_t vb_size = 0;
 	size_t ib_size = 0;
-
+	
 	vertex_buffer_.reset(MakeVertexBuffer(device, settings.vertices, vb_size));
 
 	if (settings.indices.size() > 0){
@@ -323,6 +364,8 @@ DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildM
 	vertex_count_ = settings.vertices.size();
 	LOD_count_ = 1;
 	size_ = vb_size + ib_size;
+
+	bounds_ = VerticesToBounds(settings.vertices);
 
 }
 

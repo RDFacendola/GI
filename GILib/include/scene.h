@@ -231,6 +231,10 @@ namespace gi_lib{
 		/// \return Returns true if the node is a root, false otherwise.
 		bool IsRoot() const;
 
+		/// \brief Get the builder used to build child nodes.
+		/// \return Return a builder whose parent is the current instance.
+		SceneNodeBuilder GetBuilder();
+
 		/// \brief Get the first child.
 		/// \return Returns an iterator to the first child
 		ChildrenList::iterator ChildrenBegin();
@@ -666,6 +670,12 @@ namespace gi_lib{
 	inline unsigned int SceneNode::GetChildrenCount() const{
 
 		return static_cast<unsigned int>(children_.size());
+
+	}
+
+	inline SceneNodeBuilder SceneNode::GetBuilder(){
+
+		return SceneNodeBuilder(*this);
 
 	}
 

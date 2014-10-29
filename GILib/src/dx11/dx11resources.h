@@ -152,6 +152,8 @@ namespace gi_lib{
 
 			virtual size_t GetLODCount() const override;
 
+			virtual Bounds GetBounds() const override;
+
 		private:
 
 			unique_ptr<ID3D11Buffer, COMDeleter> vertex_buffer_;
@@ -165,6 +167,8 @@ namespace gi_lib{
 			size_t LOD_count_;
 
 			size_t size_;
+
+			Bounds bounds_;
 			
 		};
 
@@ -476,7 +480,7 @@ namespace gi_lib{
 
 		}
 
-		//
+		// DX11Mesh
 
 		inline size_t DX11Mesh::GetVertexCount() const{
 
@@ -499,6 +503,12 @@ namespace gi_lib{
 		inline size_t DX11Mesh::GetSize() const{
 
 			return size_;
+
+		}
+
+		inline Bounds DX11Mesh::GetBounds() const{
+
+			return bounds_;
 
 		}
 

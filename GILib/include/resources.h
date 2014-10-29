@@ -190,6 +190,10 @@ namespace gi_lib{
 		/// \return Returns the level of detail count.
 		virtual size_t GetLODCount() const = 0;
 
+		/// \brief Get the bounds of the mesh.
+		/// \return Returns the bounds of the mesh in object space.
+		virtual Bounds GetBounds() const = 0;
+
 	};
 
 	/// \brief Base interface for shaders.

@@ -60,7 +60,7 @@ scene_(make_unique<Scene>())
 
 	/////////////////////////////////////
 	
-	SceneNodeBuilder camera_builder(scene_->GetRoot());
+	SceneNodeBuilder camera_builder = scene_->GetRoot().GetBuilder();
 
 	auto & camera = camera_builder.Build();
 		
@@ -68,7 +68,7 @@ scene_(make_unique<Scene>())
 	
 	auto & manager = graphics_.GetManager();
 
-	//FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", node, graphics_.GetManager());
+	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", scene_->GetRoot(), graphics_.GetManager());
 
 	auto s = manager.GetSize();
 	

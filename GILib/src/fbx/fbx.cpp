@@ -263,6 +263,11 @@ namespace{
 			return resources.Load<Texture2D, Texture2D::LoadMode::kFromDDS>({ base_path + w_file_name });
 
 		}
+		else{
+
+			return nullptr;
+
+		}
 
 	}
 
