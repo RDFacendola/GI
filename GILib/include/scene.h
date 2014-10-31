@@ -169,8 +169,13 @@ namespace gi_lib{
 
 		/// \brief Updates the enabled components.
 
-		/// \param time The application time
+		/// \param time The application time.
 		void Update(const Time & time);
+
+		/// \brief Post updats the node.
+
+		/// \param time The application time.
+		void PostUpdate(const Time & time);
 
 		// Transformation and hierarchy
 		
@@ -483,7 +488,7 @@ namespace gi_lib{
 			[](const shared_ptr<NodeComponent> & component){ return dynamic_pointer_cast<TNodeComponent>(component) != nullptr; });
 
 		return it != components_.end() ?
-			static_pointer_cast<TNodeComponent>(*it),
+			static_pointer_cast<TNodeComponent>(*it) :
 			nullptr;
 
 	}
@@ -496,7 +501,7 @@ namespace gi_lib{
 			[](const shared_ptr<NodeComponent> & component){ return dynamic_pointer_cast<TNodeComponent>(component) != nullptr; });
 
 		return it != components_.end() ?
-			static_pointer_cast<const TNodeComponent>(*it),
+			static_pointer_cast<const TNodeComponent>(*it) :
 			nullptr;
 
 	}

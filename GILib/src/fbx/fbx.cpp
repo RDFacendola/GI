@@ -34,7 +34,7 @@ namespace{
 		return Vector3f(static_cast<float>(src.mData[0]),
 			static_cast<float>(src.mData[1]),
 			static_cast<float>(src.mData[2]));
-
+		
 	}
 
 	/// \brief Map a 2-element fbx vector to a 2-element Eigen one.
@@ -293,7 +293,7 @@ namespace{
 	void BuildMaterial(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Manager & resources);
 
 	/// \brief Builds a material with proper shader and textures.
-	template<> void BuildMaterial<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & /*node*/, const wstring & base_path, Manager & resources){
+	template<> void BuildMaterial<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Manager & resources){
 
 		// Phong shader
 		auto shader = resources.Load<Shader, Shader::LoadMode::kCompileFromFile>({ Manager::kPhongShaderFile });
@@ -316,17 +316,41 @@ namespace{
 
 			auto &surface = *parent.GetSrcObject<FbxSurfaceMaterial>(m);
 
-			// Load diffuse, specular and bumpmap
+			// Load diffuse 
 
-			material->GetParameterByName("diffuse_map")->Write(LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sDiffuse), base_path, resources));
-			material->GetParameterByName("specular_map")->Write(LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sSpecular), base_path, resources));
-			material->GetParameterByName("bump_map")->Write(LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sBump), base_path, resources));
+			auto diffuse = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sDiffuse), base_path, resources);
+			
+			if (diffuse){
 
+				material->GetParameterByName("diffuse_map")->Write(diffuse);
+
+			}
+			else{
+
+				continue;
+
+			}
+			
+
+			/*
+
+			(specular and bumpmap are not bound to crysponza mesh for some reason...)
+
+			auto specular = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sSpecular), base_path, resources);
+			auto bump = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sBump), base_path, resources);
+
+			material->GetParameterByName("specular_map")->Write(specular);
+			material->GetParameterByName("bump_map")->Write(bump);
+			*/
 			materials.push_back(material);
 
 		}
 
-		// TODO: Add the rendering component
+		// Add the rendering component
+		
+		auto renderer = node.AddComponent<Renderer>();
+
+		renderer->SetMaterials(materials);
 		
 	}
 	

@@ -36,8 +36,6 @@ public:
 
 };
 
-
-
 GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11)),
 scene_(make_unique<Scene>())
@@ -46,8 +44,7 @@ scene_(make_unique<Scene>())
 	/// TESTING STUFFS
 
 	auto asd = Translation3f::Identity();
-
-
+	
 	/////////////////////////////////////
 
 	SetTitle(kWindowTitle);

@@ -16,6 +16,31 @@ NodeComponent::~NodeComponent(){}
 
 /////////////////////// RENDERER ///////////////////////////////////////
 
+Renderer::Renderer(SceneNode & node) :
+NodeComponent(node){
+
+	
+
+}
+
+Renderer::~Renderer(){
+
+}
+
+void Renderer::PostUpdate(const Time & time){
+
+	// Update the bounds of the geometry
+	
+	auto & parent = GetNode();
+
+	auto geometry = parent.GetComponent<StaticGeometry>();
+
+	bounds_ = geometry->GetMesh()->GetBounds();
+
+	bounds_.center = parent.GetWorldTransform() * bounds_.center;
+	
+}
+
 /////////////////////// CAMERA /////////////////////////////////////////
 
 Camera::Camera(SceneNode & node, shared_ptr<RenderTarget> target) :

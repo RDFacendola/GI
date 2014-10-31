@@ -67,6 +67,28 @@ void SceneNode::Update(const Time & time){
 
 }
 
+void SceneNode::PostUpdate(const Time & time){
+
+	// Post-update the components
+	for (auto & it : components_){
+
+		if (it->IsEnabled()){
+
+			it->PostUpdate(time);
+
+		}
+
+	}
+
+	// Post-Update the hierarchy
+	for (auto & child : children_){
+
+		child->PostUpdate(time);
+
+	}
+
+}
+
 // Transformation & Hierarchy
 
 void SceneNode::SetParent(SceneNode & parent){
@@ -215,7 +237,10 @@ root_(){}
 
 void Scene::Update(const Time & time){
 
-	//Update the hierarchy starting from the root.
+	// Update the hierarchy starting from the root.
 	root_.Update(time);
+
+	// Post update.
+	root_.PostUpdate(time);
 
 }

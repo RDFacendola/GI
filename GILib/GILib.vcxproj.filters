@@ -99,7 +99,9 @@
     <ClCompile Include="src\fbx\fbx.cpp">
       <Filter>FBX</Filter>
     </ClCompile>
-    <ClCompile Include="src\resource_traits.cpp" />
     <ClCompile Include="src\gimath.cpp" />
+    <ClCompile Include="src\resource_traits.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

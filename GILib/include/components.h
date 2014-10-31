@@ -70,6 +70,11 @@ namespace gi_lib{
 		/// \param time The current application time.
 		virtual void Update(const Time & time) = 0;
 
+		/// \brief Method called after all Update methods have been called.
+		
+		/// \param time The current time application time.
+		virtual void PostUpdate(const Time & time);
+
 	private:
 
 		bool enabled_;
@@ -102,9 +107,6 @@ namespace gi_lib{
 
 	protected:
 
-		/// \brief Update the component.
-
-		/// \param time The current application time.
 		virtual void Update(const Time & time);
 
 	private:
@@ -114,6 +116,7 @@ namespace gi_lib{
 	};
 
 	/// \brief Component used to display objects on screen.
+	/// This componenent requires any geometry component to be attached to the node!
 	class Renderer : public NodeComponent{
 
 	public:
@@ -121,6 +124,36 @@ namespace gi_lib{
 		Renderer(SceneNode & node);
 
 		~Renderer();
+
+		/// \brief Get the bounds of the mesh in world space.
+		/// \return Returns the bounds of the mesh in world space.
+		Bounds GetBounds() const;
+
+		/// \brief Get the materials' vector.
+		/// \return Returns the materials' vector.
+		vector<shared_ptr<Material>> & GetMaterials();
+
+		/// \brief Set the materials' vector.
+		/// \param materials The new materials' vector.
+		void SetMaterials(const vector<shared_ptr<Material>> & materials);
+
+		/// \brief Get the materials' vector.
+		/// \return Returns the materials' vector.
+		const vector<shared_ptr<Material>> & GetMaterials() const;
+
+	protected:
+
+		virtual void Update(const Time & time) override;
+
+		virtual void PostUpdate(const Time & time) override;
+
+	private:
+
+		vector<shared_ptr<Material>> materials_;
+
+		Bounds bounds_;									///< \brief Current bounds in world space.
+
+		shared_ptr<StaticGeometry> geometry_;			///< \brief Geometry component.
 
 	};
 
@@ -331,6 +364,8 @@ namespace gi_lib{
 
 	}
 
+	inline void NodeComponent::PostUpdate(const Time &){}
+
 	// Static geometry
 
 	inline StaticGeometry::StaticGeometry(SceneNode & node, const shared_ptr<Mesh> & mesh) :
@@ -358,6 +393,26 @@ namespace gi_lib{
 	inline void StaticGeometry::Update(const Time &){}
 
 	// Renderer
+
+	inline vector<shared_ptr<Material>> & Renderer::GetMaterials(){
+
+		return materials_;
+
+	}
+
+	inline const vector<shared_ptr<Material>> & Renderer::GetMaterials() const{
+
+		return materials_;
+
+	}
+
+	inline void Renderer::SetMaterials(const vector<shared_ptr<Material>> & materials){
+
+		materials_ = materials;
+
+	}
+
+	inline void Renderer::Update(const Time &){}
 
 	// Camera
 
