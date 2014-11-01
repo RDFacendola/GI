@@ -145,7 +145,7 @@ vector<reference_wrapper<SceneNode>> SceneNode::FindNodeByTag(std::initializer_l
 
 void SceneNode::SetDirty(bool world_only){
 
-	local_dirty_ = !world_only;
+	local_dirty_ |= !world_only;
 	world_dirty_ = true;
 
 	// Dirtens every world matrix on the children
@@ -162,15 +162,20 @@ void SceneNode::UpdateLocalTransform(){
 
 	if (local_dirty_){
 
-		local_transform_ = position_ * (rotation_ * scale_);
+		local_transform_ = scale_ * rotation_ * position_;
 
 		local_dirty_ = false;
+		
+		// this node and its children have their world transform dirty...
+		SetDirty(true);
 
 	}
 
 }
 
 void SceneNode::UpdateWorldTransform(){
+
+	UpdateLocalTransform();
 
 	if (world_dirty_){
 

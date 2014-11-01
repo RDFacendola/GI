@@ -21,8 +21,10 @@
 #endif
 
 #include <math.h>
+#include <algorithm>
 
 using ::Eigen::Vector3f;
+using ::Eigen::Affine3f;
 
 namespace gi_lib{
 
@@ -56,6 +58,16 @@ namespace gi_lib{
 		/// \return Returns true if the bigger number falls within the error range of the smallest one. Returns false otherwise.
 		static bool Equal(float a, float b, float epsilon);
 
+		/// \brief Finds the component-wise minimum of two 3-dimensional vectors.
+		/// \param left First operand.
+		/// \param right Second operand.
+		static Vector3f Min(const Vector3f & left, const Vector3f & right);
+
+		/// \brief Finds the component-wise maximum of two 3-dimensional vectors.
+		/// \param left First operand.
+		/// \param right Second operand.
+		static Vector3f Max(const Vector3f & left, const Vector3f & right);
+
 	};
 
 	/// \brief Represents the bound of a geometry
@@ -66,6 +78,11 @@ namespace gi_lib{
 
 		/// \brief Extents of the bounds (ie: Width x Height x Depth)
 		Vector3f extents;
+
+		/// \brief Transform the bounding box using an affine transformation matrix.
+		/// \param transform Matrix used to transform the bounding box.
+		/// \return Returns a new bounding box which is the transformed version of this instance.
+		Bounds Transformed(const Affine3f & transform);
 
 	};
 
@@ -88,6 +105,24 @@ namespace gi_lib{
 		
 		/// From "The art of computer programming by Knuth"
 		return fabs(a - b) <= ((fabs(a) > fabs(b) ? fabs(b) : fabs(a)) * epsilon);
+
+	}
+
+
+	inline Vector3f Math::Min(const Vector3f & left, const Vector3f & right){
+
+		return Vector3f(std::min<float>(left(0), right(0)),
+			std::min<float>(left(1), right(1)),
+			std::min<float>(left(2), right(2)));
+
+	}
+
+	inline Vector3f Math::Max(const Vector3f & left, const Vector3f & right){
+		
+		return Vector3f(std::max<float>(left(0), right(0)),
+			std::max<float>(left(1), right(1)),
+			std::max<float>(left(2), right(2)));
+
 
 	}
 	

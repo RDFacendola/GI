@@ -30,14 +30,13 @@ Renderer::~Renderer(){
 void Renderer::PostUpdate(const Time & time){
 
 	// Update the bounds of the geometry
+	auto & node = GetNode();
+
+	auto geometry = node.GetComponent<StaticGeometry>();
 	
-	auto & parent = GetNode();
-
-	auto geometry = parent.GetComponent<StaticGeometry>();
-
-	bounds_ = geometry->GetMesh()->GetBounds();
-
-	bounds_.center = parent.GetWorldTransform() * bounds_.center;
+	bounds_ = geometry->GetMesh()
+					  ->GetBounds()
+					   .Transformed(node.GetWorldTransform());
 	
 }
 
@@ -115,7 +114,7 @@ void Camera::UpdateProjectionMatrix(bool force){
 
 	}
 
-	//
+	// TODO: Update the projection matrix
 
 	projection_dirty_ = false;
 
@@ -130,7 +129,7 @@ void Camera::UpdateViewMatrix(bool force){
 
 	}
 
-	//
+	// TODO: Update the view matrix
 
 	view_dirty_ = false;
 
