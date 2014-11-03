@@ -15,7 +15,8 @@ position_(Translation3f(Vector3f::Identity())),
 rotation_(Quaternionf::Identity()),
 scale_(AlignedScaling3f(Vector3f::Ones())),
 local_dirty_(true),
-world_dirty_(true)
+world_dirty_(true),
+world_changed_ (true)
 {
 
 }
@@ -29,7 +30,8 @@ position_(position),
 rotation_(rotation),
 scale_(scaling),
 local_dirty_(true),
-world_dirty_(true){
+world_dirty_(true),
+world_changed_(true){
 
 }
 
@@ -40,6 +42,19 @@ SceneNode::~SceneNode(){
 	while (children_.size() > 0){
 
 		delete children_.back();
+
+	}
+
+}
+
+void SceneNode::PreUpdate(const Time & time){
+
+	world_changed_ = false;
+	
+	// Update the node hierarchy
+	for (auto & child : children_){
+
+		child->PreUpdate(time);
 
 	}
 
@@ -148,6 +163,8 @@ void SceneNode::SetDirty(bool world_only){
 	local_dirty_ |= !world_only;
 	world_dirty_ = true;
 
+	world_changed_ = true;
+
 	// Dirtens every world matrix on the children
 
 	for (auto child : children_){
@@ -192,7 +209,6 @@ void SceneNode::UpdateWorldTransform(){
 
 		}
 		
-
 		world_dirty_ = false;
 
 	}
@@ -241,6 +257,9 @@ Scene::Scene() :
 root_(){}
 
 void Scene::Update(const Time & time){
+
+	// Pre update
+	root_.PreUpdate(time);
 
 	// Update the hierarchy starting from the root.
 	root_.Update(time);

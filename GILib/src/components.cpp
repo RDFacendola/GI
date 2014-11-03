@@ -14,6 +14,27 @@ NodeComponent::NodeComponent(SceneNode & node) :
 
 NodeComponent::~NodeComponent(){}
 
+/////////////////////// GEOMETRY ///////////////////////////////////////
+
+void Geometry::PostUpdate(const Time & time){
+
+	// Update the bounds of the geometry 
+
+	auto & node = GetNode();
+
+	if (node.IsWorldTransformChanged() ||
+		dirty_){
+
+		bounds_ = mesh_->GetBounds()
+			.Transformed(node.GetWorldTransform());
+
+		dirty_ = false;
+
+	}
+	
+
+}
+
 /////////////////////// RENDERER ///////////////////////////////////////
 
 Renderer::Renderer(SceneNode & node) :
@@ -25,19 +46,6 @@ NodeComponent(node){
 
 Renderer::~Renderer(){
 
-}
-
-void Renderer::PostUpdate(const Time & time){
-
-	// Update the bounds of the geometry
-	auto & node = GetNode();
-
-	auto geometry = node.GetComponent<StaticGeometry>();
-	
-	bounds_ = geometry->GetMesh()
-					  ->GetBounds()
-					   .Transformed(node.GetWorldTransform());
-	
 }
 
 /////////////////////// CAMERA /////////////////////////////////////////

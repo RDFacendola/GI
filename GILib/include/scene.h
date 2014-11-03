@@ -167,6 +167,12 @@ namespace gi_lib{
 		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
 		typename vector < shared_ptr<const TNodeComponent> > GetComponents() const;
 
+		/// \brief Prepare the node for the update.
+
+		/// This method is used to update nodes before their components.
+		/// \param time The application time.
+		void PreUpdate(const Time & time);
+
 		/// \brief Updates the enabled components.
 
 		/// \param time The application time.
@@ -174,6 +180,8 @@ namespace gi_lib{
 
 		/// \brief Post updats the node.
 
+		/// The method is intended to update the internal state of the components based on the state of others.
+		/// Avoid cross-component update here!
 		/// \param time The application time.
 		void PostUpdate(const Time & time);
 
@@ -212,6 +220,10 @@ namespace gi_lib{
 		/// \brief Get the global transfom.
 		/// \return Returns the global transform matrix.
 		const Affine3f & GetWorldTransform();
+
+		/// \brief Check whether the world transform changed since the last update.
+		/// \return Returns true if the world transform changed since the last update, false otherwise.
+		bool IsWorldTransformChanged();
 
 		/// \brief Get this node's parent.
 		/// \return Returns a reference to the node's parent. If the node is actually the root of the scene, it returns a reference to this object.
@@ -352,6 +364,8 @@ namespace gi_lib{
 
 		Affine3f world_transform_;							
 
+		bool world_changed_;
+
 		bool local_dirty_;									
 
 		bool world_dirty_;									
@@ -412,7 +426,7 @@ namespace gi_lib{
 	inline void SceneNodeBuilder::SetPosition(const Translation3f & position){
 
 		position_ = position;
-
+		
 	}
 
 	inline void SceneNodeBuilder::SetRotation(const Quaternionf & rotation){
@@ -609,6 +623,12 @@ namespace gi_lib{
 		UpdateWorldTransform(); //Update by need
 
 		return world_transform_;
+
+	}
+
+	inline bool SceneNode::IsWorldTransformChanged(){
+
+		return world_changed_;
 
 	}
 

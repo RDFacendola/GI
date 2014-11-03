@@ -284,7 +284,7 @@ namespace{
 
 		settings.vertices = ReadVertices<VertexFormatNormalTextured>(mesh);
 		
-		node.AddComponent<StaticGeometry>(resources.Build<Mesh, Mesh::BuildMode::kNormalTextured>(settings));
+		node.AddComponent<Geometry>(resources.Build<Mesh, Mesh::BuildMode::kNormalTextured>(settings));
 
 	}
 

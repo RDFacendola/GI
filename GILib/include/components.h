@@ -72,6 +72,8 @@ namespace gi_lib{
 
 		/// \brief Method called after all Update methods have been called.
 		
+		/// The method is intended to update the internal state of the component based on the state of others.
+		/// Avoid cross-component update here!
 		/// \param time The current time application time.
 		virtual void PostUpdate(const Time & time);
 
@@ -83,15 +85,15 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Contains informations about static geometry.
-	class StaticGeometry : public NodeComponent{
+	/// \brief Contains informations about a geometry.
+	class Geometry : public NodeComponent{
 
 	public:
 
 		/// \brief Create a new geometry component.
 		/// \param node The node this component belongs to.
 		/// \param mesh Pointer to the mesh bound to this component.
-		StaticGeometry(SceneNode & node, const shared_ptr<Mesh> & mesh);
+		Geometry(SceneNode & node, const shared_ptr<Mesh> & mesh);
 
 		/// \brief Set a new mesh.
 		/// \param mesh Pointer to the mesh to set.
@@ -109,9 +111,15 @@ namespace gi_lib{
 
 		virtual void Update(const Time & time);
 
+		virtual void PostUpdate(const Time & time) override;
+
 	private:
 
 		shared_ptr<Mesh> mesh_;
+
+		Bounds bounds_;									///< \brief Current bounds in world space.
+
+		bool dirty_;									///< \brief Flag used to determine whether the mesh changed.
 		
 	};
 
@@ -145,15 +153,9 @@ namespace gi_lib{
 
 		virtual void Update(const Time & time) override;
 
-		virtual void PostUpdate(const Time & time) override;
-
 	private:
 
 		vector<shared_ptr<Material>> materials_;
-
-		Bounds bounds_;									///< \brief Current bounds in world space.
-
-		shared_ptr<StaticGeometry> geometry_;			///< \brief Geometry component.
 
 	};
 
@@ -368,29 +370,32 @@ namespace gi_lib{
 
 	// Static geometry
 
-	inline StaticGeometry::StaticGeometry(SceneNode & node, const shared_ptr<Mesh> & mesh) :
+	inline Geometry::Geometry(SceneNode & node, const shared_ptr<Mesh> & mesh) :
 		NodeComponent(node), 
-		mesh_(mesh){}
+		mesh_(mesh),
+		dirty_(true),
+		bounds_(mesh->GetBounds()){}
 
-	inline void StaticGeometry::SetMesh(const shared_ptr<Mesh> & mesh){
+	inline void Geometry::SetMesh(const shared_ptr<Mesh> & mesh){
 
 		mesh_ = mesh;
+		dirty_ = true;
 
 	} 
 
-	inline shared_ptr<Mesh> StaticGeometry::GetMesh(){
+	inline shared_ptr<Mesh> Geometry::GetMesh(){
 
 		return mesh_;
 
 	}
 		
-	inline shared_ptr<const Mesh> StaticGeometry::GetMesh() const{
+	inline shared_ptr<const Mesh> Geometry::GetMesh() const{
 
 		return std::static_pointer_cast<const Mesh>(mesh_);
 
 	}
 
-	inline void StaticGeometry::Update(const Time &){}
+	inline void Geometry::Update(const Time &){}
 
 	// Renderer
 

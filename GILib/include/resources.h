@@ -156,7 +156,7 @@ namespace gi_lib{
 		
 	};
 
-	/// \brief Base interface for static meshes.
+	/// \brief Base interface for meshes.
 	/// \author Raffaele D. Facendola.
 	class Mesh : public Resource{
 
