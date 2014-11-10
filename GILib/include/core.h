@@ -238,11 +238,11 @@ namespace gi_lib{
 
 		/// \brief Event fired when the window has been closed.
 		/// \return Returns an observable event which notifies when the window is closed.
-		inline Observable<Window&> & OnClosed();
+		Observable<Window&> & OnClosed();
 
 		/// \brief Event fired when the window has been resized.
 		/// \return Returns an observable event which notifies when the window is resized.
-		inline Observable<Window&, unsigned int, unsigned int> & OnResized();
+		Observable<Window&, unsigned int, unsigned int> & OnResized();
 
 	protected:
 

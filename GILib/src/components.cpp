@@ -16,12 +16,27 @@ NodeComponent::~NodeComponent(){}
 
 /////////////////////// BOUNDABLE ///////////////////////////////////////
 
-Boundable::Boundable(SceneNode & node) :
-NodeComponent(node){}
+Boundable::Boundable(SceneNode & node, const Bounds & bounds) :
+NodeComponent(node),
+bounds_(bounds){}
 
 Boundable::~Boundable(){}
 
+void Boundable::SetBounds(const Bounds & bounds){
+
+	bounds_ = bounds;
+
+	// Notify the event to the observers.
+	on_bounds_changed_.Notify(*this);
+
+}
+
 /////////////////////// GEOMETRY ///////////////////////////////////////
+
+Geometry::Geometry(SceneNode & node, const shared_ptr<Mesh> & mesh) :
+	Boundable(node, mesh_->GetBounds()),
+	mesh_(mesh),
+	dirty_(true){}
 
 void Geometry::PostUpdate(const Time & time){
 
@@ -32,8 +47,7 @@ void Geometry::PostUpdate(const Time & time){
 	if (node.IsWorldTransformChanged() ||
 		dirty_){
 
-		bounds_ = mesh_->GetBounds()
-			.Transformed(node.GetWorldTransform());
+		SetBounds( mesh_->GetBounds().Transformed(node.GetWorldTransform()) );
 
 		dirty_ = false;
 

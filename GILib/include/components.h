@@ -92,17 +92,31 @@ namespace gi_lib{
 	public:
 
 		/// \brief Create a new boundable component.
-		Boundable(SceneNode & node);
+		Boundable(SceneNode & node, const Bounds & bounds);
 
 		virtual ~Boundable();
 
 		/// \brief Get the updated mesh bounds.
 		/// \return Returns the updated bounds of the mesh.
-		virtual Bounds GetBounds() const = 0;
+		Bounds GetBounds() const ;
 
+		/// \brief Event raised whenever the bounds associated to this component change.
+		/// \return Returns a reference to the observable event raised after the bounds have changed.
+		Observable<Boundable&> & OnBoundsChanged();
+		
 	protected:
 		
 		virtual void Update(const Time & time) = 0;
+
+		/// \brief Set the bounds for this component.
+		/// \param bounds The new bounds.
+		void SetBounds(const Bounds & bounds);
+
+	private:
+
+		Bounds bounds_;
+
+		Event<Boundable &> on_bounds_changed_;
 
 	};
 
@@ -127,9 +141,7 @@ namespace gi_lib{
 		/// \brief Get a pointer to this component's mesh.
 		/// \return Returns a pointer to this component's mesh.
 		shared_ptr<const Mesh> GetMesh() const;
-
-		virtual Bounds GetBounds() const override;
-
+		
 	protected:
 
 		virtual void Update(const Time & time);
@@ -139,8 +151,6 @@ namespace gi_lib{
 	private:
 
 		shared_ptr<Mesh> mesh_;
-
-		Bounds bounds_;									///< \brief Current bounds in world space.
 
 		bool dirty_;									///< \brief Flag used to determine whether the mesh changed.
 		
@@ -391,13 +401,21 @@ namespace gi_lib{
 
 	inline void NodeComponent::PostUpdate(const Time &){}
 
-	// Static geometry
+	// Boundable
 
-	inline Geometry::Geometry(SceneNode & node, const shared_ptr<Mesh> & mesh) :
-		Boundable(node), 
-		mesh_(mesh),
-		dirty_(true),
-		bounds_(mesh->GetBounds()){}
+	inline Bounds Boundable::GetBounds() const{
+
+		return bounds_;
+
+	}
+
+	inline Observable<Boundable&> & Boundable::OnBoundsChanged(){
+
+		return on_bounds_changed_;
+
+	}
+
+	// Geometry
 
 	inline void Geometry::SetMesh(const shared_ptr<Mesh> & mesh){
 
@@ -419,12 +437,6 @@ namespace gi_lib{
 	}
 
 	inline void Geometry::Update(const Time &){}
-
-	inline Bounds Geometry::GetBounds() const{
-
-		return bounds_;
-
-	}
 
 	// Renderer
 
