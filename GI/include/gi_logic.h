@@ -28,6 +28,6 @@ private:
 
 	unique_ptr<Output> output_;
 
-	unique_ptr<Scene> scene_;
+	Scene & scene_;
 
 };

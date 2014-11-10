@@ -253,6 +253,14 @@ void SceneNode::FindNodeByTag(vector<reference_wrapper<SceneNode>> & nodes, std:
 
 /////////////////////////// SCENE ///////////////////////////////////////////
 
+Scene & Scene::GetInstance(){
+
+	static Scene instance;
+
+	return instance;
+
+}
+
 Scene::Scene() :
 root_(){}
 

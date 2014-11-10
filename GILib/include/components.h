@@ -14,6 +14,7 @@
 #include "gimath.h"
 #include "timer.h"
 #include "maybe.h"
+#include "observable.h"
 
 using ::Eigen::Affine3f;
 using ::Eigen::Translation3f;
@@ -85,8 +86,28 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Contains informations about an axis-aligned bounding box surrounding the node.
+	class Boundable : public NodeComponent{
+
+	public:
+
+		/// \brief Create a new boundable component.
+		Boundable(SceneNode & node);
+
+		virtual ~Boundable();
+
+		/// \brief Get the updated mesh bounds.
+		/// \return Returns the updated bounds of the mesh.
+		virtual Bounds GetBounds() const = 0;
+
+	protected:
+		
+		virtual void Update(const Time & time) = 0;
+
+	};
+
 	/// \brief Contains informations about a geometry.
-	class Geometry : public NodeComponent{
+	class Geometry : public Boundable{
 
 	public:
 
@@ -104,8 +125,10 @@ namespace gi_lib{
 		shared_ptr<Mesh> GetMesh();
 
 		/// \brief Get a pointer to this component's mesh.
-		/// \return Return a pointer to this component's mesh.
+		/// \return Returns a pointer to this component's mesh.
 		shared_ptr<const Mesh> GetMesh() const;
+
+		virtual Bounds GetBounds() const override;
 
 	protected:
 
@@ -371,7 +394,7 @@ namespace gi_lib{
 	// Static geometry
 
 	inline Geometry::Geometry(SceneNode & node, const shared_ptr<Mesh> & mesh) :
-		NodeComponent(node), 
+		Boundable(node), 
 		mesh_(mesh),
 		dirty_(true),
 		bounds_(mesh->GetBounds()){}
@@ -396,6 +419,12 @@ namespace gi_lib{
 	}
 
 	inline void Geometry::Update(const Time &){}
+
+	inline Bounds Geometry::GetBounds() const{
+
+		return bounds_;
+
+	}
 
 	// Renderer
 

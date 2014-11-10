@@ -14,6 +14,13 @@ NodeComponent::NodeComponent(SceneNode & node) :
 
 NodeComponent::~NodeComponent(){}
 
+/////////////////////// BOUNDABLE ///////////////////////////////////////
+
+Boundable::Boundable(SceneNode & node) :
+NodeComponent(node){}
+
+Boundable::~Boundable(){}
+
 /////////////////////// GEOMETRY ///////////////////////////////////////
 
 void Geometry::PostUpdate(const Time & time){

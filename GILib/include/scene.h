@@ -386,8 +386,9 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Create a new scene.
-		Scene();
+		/// \brief Get the singleton instance.
+		/// \return Returns the singleton instance.
+		static Scene & GetInstance();
 
 		/// \brief No assignment operator.
 		Scene & operator=(const Scene &) = delete;
@@ -401,6 +402,9 @@ namespace gi_lib{
 		SceneNode & GetRoot();
 
 	private:
+
+		/// \brief Create a new scene.
+		Scene();
 
 		SceneNode root_;				// Root of the scene
 

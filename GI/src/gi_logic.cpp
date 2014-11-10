@@ -38,9 +38,9 @@ public:
 
 GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11)),
-scene_(make_unique<Scene>())
+scene_(Scene::GetInstance())
 {
-
+	
 	/// TESTING STUFFS
 
 	auto asd = Translation3f::Identity();
@@ -57,7 +57,7 @@ scene_(make_unique<Scene>())
 
 	/////////////////////////////////////
 	
-	SceneNodeBuilder camera_builder = scene_->GetRoot().GetBuilder();
+	SceneNodeBuilder camera_builder = scene_.GetRoot().GetBuilder();
 
 	auto & camera = camera_builder.Build();
 		
@@ -65,7 +65,7 @@ scene_(make_unique<Scene>())
 	
 	auto & manager = graphics_.GetManager();
 
-	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", scene_->GetRoot(), graphics_.GetManager());
+	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", scene_.GetRoot(), graphics_.GetManager());
 
 	auto s = manager.GetSize();
 	
@@ -77,7 +77,7 @@ GILogic::~GILogic(){
 
 void GILogic::Update(const Time & time){
 	
-	scene_->Update(time);
+	scene_.Update(time);
 
 	output_->Commit();
 	
