@@ -18,9 +18,18 @@ NodeComponent::~NodeComponent(){}
 
 Boundable::Boundable(SceneNode & node, const Bounds & bounds) :
 NodeComponent(node),
-bounds_(bounds){}
+bounds_(bounds){
 
-Boundable::~Boundable(){}
+	// Add the volume to the BVH
+	Scene::GetInstance().GetBVH().AddVolume(*this);
+
+}
+
+Boundable::~Boundable(){
+
+	Scene::GetInstance().GetBVH().RemoveVolume(*this);
+
+}
 
 void Boundable::SetBounds(const Bounds & bounds){
 
@@ -33,8 +42,8 @@ void Boundable::SetBounds(const Bounds & bounds){
 
 /////////////////////// GEOMETRY ///////////////////////////////////////
 
-Geometry::Geometry(SceneNode & node, const shared_ptr<Mesh> & mesh) :
-	Boundable(node, mesh_->GetBounds()),
+Geometry::Geometry(SceneNode & node, shared_ptr<Mesh> mesh) :
+	Boundable(node, mesh->GetBounds()),
 	mesh_(mesh),
 	dirty_(true){}
 

@@ -100,6 +100,9 @@ namespace gi_lib{
 		/// \return Returns the updated bounds of the mesh.
 		Bounds GetBounds() const ;
 
+		/// \brief Convert the boundable component to actual bounds.
+		operator const Bounds &() const;
+
 		/// \brief Event raised whenever the bounds associated to this component change.
 		/// \return Returns a reference to the observable event raised after the bounds have changed.
 		Observable<Boundable&> & OnBoundsChanged();
@@ -128,7 +131,7 @@ namespace gi_lib{
 		/// \brief Create a new geometry component.
 		/// \param node The node this component belongs to.
 		/// \param mesh Pointer to the mesh bound to this component.
-		Geometry(SceneNode & node, const shared_ptr<Mesh> & mesh);
+		Geometry(SceneNode & node, shared_ptr<Mesh> mesh);
 
 		/// \brief Set a new mesh.
 		/// \param mesh Pointer to the mesh to set.
@@ -412,6 +415,12 @@ namespace gi_lib{
 	inline Observable<Boundable&> & Boundable::OnBoundsChanged(){
 
 		return on_bounds_changed_;
+
+	}
+
+	inline Boundable::operator const Bounds &() const{
+
+		return bounds_;
 
 	}
 

@@ -84,6 +84,11 @@ namespace gi_lib{
 		/// \return Returns a new bounding box which is the transformed version of this instance.
 		Bounds Transformed(const Affine3f & transform);
 
+		/// \brief Check whether this bounds are strictly inside the specified ones.
+		/// \param other The bounds to check inclusion against.
+		/// \return Returns true if the bounds are strictly contained inside 'other', false otherwise.
+		bool Inside(const Bounds & other);
+
 	};
 
 	// math

@@ -18,6 +18,7 @@
 #include <numeric>
 
 #include "components.h"
+#include "bvh.h"
 #include "timer.h"
 #include "maybe.h"
 #include "exceptions.h"
@@ -398,8 +399,12 @@ namespace gi_lib{
 		void Update(const Time & time);
 
 		/// \brief Get the scene root.
-		/// \return Return a reference to the scene root.
+		/// \return Returns a reference to the scene root.
 		SceneNode & GetRoot();
+
+		/// \brief Get the scene's bounding volume hierarchy.
+		/// \return Returns a reference to the scene's bounding volume hierarchy.
+		BVH & GetBVH();
 
 	private:
 
@@ -407,6 +412,8 @@ namespace gi_lib{
 		Scene();
 
 		SceneNode root_;				// Root of the scene
+
+		unique_ptr<BVH> bvh_;			// Bounding volume hierarchy
 
 	};
 
@@ -770,6 +777,12 @@ namespace gi_lib{
 	inline SceneNode & Scene::GetRoot(){
 
 		return root_;
+
+	}
+
+	inline BVH & Scene::GetBVH(){
+
+		return *bvh_;
 
 	}
 

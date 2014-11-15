@@ -73,6 +73,7 @@
     <ClInclude Include="include\functional.h" />
     <ClInclude Include="external\fnv1.h" />
     <ClInclude Include="include\scope_guard.h" />
+    <ClInclude Include="include\bvh.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -103,5 +104,6 @@
     <ClCompile Include="src\resource_traits.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\bvh.cpp" />
   </ItemGroup>
 </Project>

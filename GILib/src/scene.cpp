@@ -262,7 +262,8 @@ Scene & Scene::GetInstance(){
 }
 
 Scene::Scene() :
-root_(){}
+root_(),
+bvh_(make_unique<Octree>()){}
 
 void Scene::Update(const Time & time){
 

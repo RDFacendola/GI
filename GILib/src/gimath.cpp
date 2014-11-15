@@ -53,3 +53,11 @@ Bounds Bounds::Transformed(const Affine3f & transform){
 		max_transformed - min_transformed };
 		
 }
+
+bool Bounds::Inside(const Bounds & other){
+
+	return 2.0f * std::abs(other.center(0) - center(0)) < other.extents(0) - extents(0) &&
+		2.0f * std::abs(other.center(1) - center(1)) < other.extents(1) - extents(1) &&
+		2.0f * std::abs(other.center(2) - center(2)) < other.extents(2) - extents(2);
+
+}

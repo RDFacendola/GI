@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\fnv1.h" />
+    <ClInclude Include="include\bvh.h" />
     <ClInclude Include="include\components.h" />
     <ClInclude Include="include\functional.h" />
     <ClInclude Include="include\gimath.h" />
@@ -48,6 +49,7 @@
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
+    <ClCompile Include="src\bvh.cpp" />
     <ClCompile Include="src\resource_traits.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\timer.cpp" />

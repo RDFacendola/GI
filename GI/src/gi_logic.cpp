@@ -43,8 +43,6 @@ scene_(Scene::GetInstance())
 	
 	/// TESTING STUFFS
 
-	auto asd = Translation3f::Identity();
-	
 	/////////////////////////////////////
 
 	SetTitle(kWindowTitle);
@@ -68,6 +66,10 @@ scene_(Scene::GetInstance())
 	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", scene_.GetRoot(), graphics_.GetManager());
 
 	auto s = manager.GetSize();
+
+	////////////////////////////////////
+
+	scene_.GetBVH().Rebuild();
 	
 }
 
