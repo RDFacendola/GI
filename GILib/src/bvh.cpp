@@ -13,7 +13,7 @@ using namespace Eigen;
 
 Octree::Octree():
 parent_(nullptr),
-bounds_{ Vector3f::Zero(), Vector3f::Zero() }{
+bounds_({ Vector3f::Zero(), Vector3f::Zero() }){
 
 }
 
@@ -39,6 +39,32 @@ void Octree::Rebuild(){
 	Vector3f min_extents;
 	unsigned int max_objects;
 
+	// Searching inside an octree will
+	// - check against every object inside every node considered. If the objects are spread uniformly across the space and we ignore object overlapping two or more nodes
+	//   we can safely assume that all the objects are stored inside the 8^depth leaves. This means that the average number of objects per leaf is objects / 8 ^ depth.
+	// - check against the bounds of all 8 children of every node found during tree traversal. Each traversal from root to leaf cost "depth", thus the total cost is 8 times that amount.
+	// - the cost of a single traversal must be payed for each node overlapping the camera.
+	// Cost function = overlaps * ( avg_objects_per_node + traversal_cost )
+	//				 = overlaps * ( objects_count / 8 ^ depth + 8 depth )
+	// Minimize the above to find the following approximation:
+	
+	const float kOverlap = 8;	// 8 is just a guess here...
+
+	if (objects_.size() > 0){
+
+		auto depth = std::lround(0.4809f * std::log(0.25993f * kOverlap * objects_.size()));
+
+		max_objects = static_cast<unsigned int>(std::lround(objects_.size() / std::pow(8, depth)));
+		min_extents = bounds_.extents * (1.0f / std::powf(2.0f, depth));
+
+	}
+	else{
+
+		max_objects = 1;
+		min_extents = bounds_.extents;
+
+	}
+	
 	// 3. ???????????
 	// 4. Profit!
 
@@ -54,7 +80,10 @@ bounds_(bounds){
 	// Take all those objects whose bounds fall exactly within this node's bounds.
 	vector<Boundable *> parent_objects;
 
-	std::partition_copy(parent->objects_.begin(),
+	parent_objects.resize(parent->objects_.size());
+	objects_.resize(parent->objects_.size());
+
+	auto new_ends = std::partition_copy(parent->objects_.begin(),
 		parent->objects_.end(),
 		objects_.begin(),
 		parent_objects.begin(),
@@ -63,6 +92,12 @@ bounds_(bounds){
 		return object->GetBounds().Inside(bounds);
 
 	});
+
+	parent_objects.erase(new_ends.second,
+		parent_objects.end());
+
+	objects_.erase(new_ends.first,
+		objects_.end());
 
 	parent->objects_ = std::move(parent_objects);
 	
