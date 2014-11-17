@@ -21,8 +21,9 @@ using namespace std;
 using namespace gi_lib;
 using namespace gi_lib::dx11;
 using namespace DirectX;
+using namespace Eigen;
 
-/// Throws if the compilation miserably failed...
+/// Throws if the compilation miserably fails...
 #define THROW_ON_COMPILE_FAIL(expr, blob) do{ \
 								HRESULT hr = expr; \
 								if(FAILED(hr)) { \

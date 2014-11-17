@@ -24,6 +24,7 @@
 #include <algorithm>
 
 using ::Eigen::Vector3f;
+using ::Eigen::Vector4f;
 using ::Eigen::Affine3f;
 
 namespace gi_lib{
@@ -76,18 +77,32 @@ namespace gi_lib{
 		/// \brief Center of the bounds.
 		Vector3f center;
 
-		/// \brief Extents of the bounds (ie: Width x Height x Depth)
-		Vector3f extents;
+		/// \brief Half-extents of the bounds (ie: Width x Height x Depth)
+		Vector3f half_extents;
 
 		/// \brief Transform the bounding box using an affine transformation matrix.
 		/// \param transform Matrix used to transform the bounding box.
 		/// \return Returns a new bounding box which is the transformed version of this instance.
-		Bounds Transformed(const Affine3f & transform);
+		Bounds Transformed(const Affine3f & transform) const;
 
 		/// \brief Check whether this bounds are strictly inside the specified ones.
 		/// \param other The bounds to check inclusion against.
 		/// \return Returns true if the bounds are strictly contained inside 'other', false otherwise.
-		bool Inside(const Bounds & other);
+		bool Inside(const Bounds & other) const;
+
+	};
+
+	/// \brief Frustum represented by 6 planes
+	struct Frustum{
+
+		/// \brief Planes composing the frustum.
+
+		/// The order of the planes is not defined.
+		Vector4f planes[6];
+
+		/// \brief Check whether the frustum contains or intersect a given aabb.
+		/// \param bounds The bounds to test against.
+		bool Intersect(const Bounds & bounds) const;
 
 	};
 
@@ -130,5 +145,5 @@ namespace gi_lib{
 
 
 	}
-	
+		
 }

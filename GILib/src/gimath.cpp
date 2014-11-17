@@ -21,16 +21,14 @@ namespace {
 
 }
 
-Bounds Bounds::Transformed(const Affine3f & transform){
+Bounds Bounds::Transformed(const Affine3f & transform) const{
 
 	/// Theory on: http://dev.theomader.com/transform-bounding-boxes/
 
 	Matrix4f matrix = transform.matrix();
 
-	Vector3f half = extents * 0.5f;
-
-	Vector3f min = center - half;
-	Vector3f max = center + half;
+	Vector3f min = center - half_extents;
+	Vector3f max = center + half_extents;
 
 	Vector3f min_transformed = ToVector3f(matrix.col(3));
 	Vector3f max_transformed = ToVector3f(matrix.col(3));
@@ -50,14 +48,44 @@ Bounds Bounds::Transformed(const Affine3f & transform){
 	}
 
 	return Bounds{ 0.5f * (max_transformed + min_transformed),
-		max_transformed - min_transformed };
+		0.5f * (max_transformed - min_transformed) };
 		
 }
 
-bool Bounds::Inside(const Bounds & other){
+bool Bounds::Inside(const Bounds & other) const{
 
-	return 2.0f * std::abs(other.center(0) - center(0)) < other.extents(0) - extents(0) &&
-		2.0f * std::abs(other.center(1) - center(1)) < other.extents(1) - extents(1) &&
-		2.0f * std::abs(other.center(2) - center(2)) < other.extents(2) - extents(2);
+	return std::abs(other.center(0) - center(0)) < other.half_extents(0) - half_extents(0) &&
+		std::abs(other.center(1) - center(1)) < other.half_extents(1) - half_extents(1) &&
+		std::abs(other.center(2) - center(2)) < other.half_extents(2) - half_extents(2);
+
+}
+
+//////////////////////////// FRUSTUM /////////////////////////////////////
+
+bool Frustum::Intersect(const Bounds & bounds) const{
+
+	/// Theory on: http://www.gamedev.net/page/resources/_/technical/general-programming/useless-snippet-2-aabbfrustum-test-r3342
+
+	bool inside = true;
+
+	// Test against every plane in the frustum
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+
+		const Vector3f & plane = ToVector3f(planes[i]); //The 4th component (ie. the distance) is not needed for the distance and the radius.
+
+		float distance = bounds.center.dot(plane);
+						 
+		float radius = bounds.half_extents.dot(plane.cwiseAbs());
+
+		if (distance + radius < -planes[i](3)){
+
+			return false;
+
+		}
+
+	}
+
+	return true;
 
 }

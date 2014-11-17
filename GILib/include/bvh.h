@@ -3,6 +3,8 @@
 ///
 /// \author Raffaele D. Facendola
 
+#pragma once
+
 #include <vector>
 
 #include "gimath.h"
@@ -12,6 +14,7 @@ using std::vector;
 namespace gi_lib{
 
 	class Boundable;
+	class SceneNode;
 
 	/// \brief Interface for every bounding volume hierarchy
 	/// \author Raffaele D. Facendola
@@ -29,6 +32,11 @@ namespace gi_lib{
 		/// \brief Remove an existing volume from the hierarchy.
 		/// \param volume The volume to remove from the hierarchy.
 		virtual void RemoveVolume(Boundable & volume) = 0;
+
+		/// \brief Get the set of nodes which overlaps or are contained inside the specified frustum.
+		/// \param camera The frustum used to test against.
+		/// \return Returns the set of the nodes whose bounding boxes are contained or overlap the specified frustum.
+		virtual vector<SceneNode *> GetIntersections(const Frustum & frustum) = 0;
 
 	};
 
@@ -50,6 +58,8 @@ namespace gi_lib{
 
 		virtual void RemoveVolume(Boundable & volume) override;
 
+		virtual vector<SceneNode *> GetIntersections(const Frustum & frustum) override;
+
 	private:
 
 		Octree(Octree * parent, const Bounds & bounds);
@@ -59,6 +69,8 @@ namespace gi_lib{
 		void Split(const Vector3f & min_extents, unsigned int max_objects);
 
 		void RecomputeBounds();
+
+		void GetIntersections(const Frustum & frustum, vector<Boundable *> & objects);
 
 		Octree * parent_;
 

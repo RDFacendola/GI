@@ -47,7 +47,7 @@ Geometry::Geometry(SceneNode & node, shared_ptr<Mesh> mesh) :
 	mesh_(mesh),
 	dirty_(true){}
 
-void Geometry::PostUpdate(const Time & time){
+void Geometry::PostUpdate(const Time &){
 
 	// Update the bounds of the geometry 
 

@@ -30,8 +30,6 @@ namespace gi_lib{
 	class Material;
 	class MaterialParameter;
 
-	using Vector4f = Matrix < float, 4, 1, 0, 4, 1 > ;
-
 	/// \brief Describe the priority of the resources.
 	enum class ResourcePriority{
 

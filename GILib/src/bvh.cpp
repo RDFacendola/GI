@@ -5,6 +5,7 @@
 #include <Eigen\Core>
 
 #include "..\include\components.h"
+#include "..\include\scene.h"
 
 using namespace gi_lib;
 using namespace Eigen;
@@ -55,13 +56,13 @@ void Octree::Rebuild(){
 		auto depth = std::lround(0.4809f * std::log(0.25993f * kOverlap * objects_.size()));
 
 		max_objects = static_cast<unsigned int>(std::lround(objects_.size() / std::pow(8, depth)));
-		min_extents = bounds_.extents * (1.0f / std::powf(2.0f, depth));
+		min_extents = bounds_.half_extents * (1.0f / std::powf(2.0f, static_cast<float>(depth)));
 
 	}
 	else{
 
 		max_objects = 1;
-		min_extents = bounds_.extents;
+		min_extents = bounds_.half_extents;
 
 	}
 	
@@ -132,12 +133,11 @@ void Octree::Split(const Vector3f & min_extents, unsigned int max_objects){
 	// The node must be equal or greater than twice the minimum extents (so halving the node won't produce nodes that are smaller than the allowed minimum)
 
 	if (objects_.size() > max_objects &&
-		bounds_.extents(0) >= min_extents(0) * 2.0f &&
-		bounds_.extents(1) >= min_extents(1) * 2.0f &&
-		bounds_.extents(2) >= min_extents(2) * 2.0f ){
+		bounds_.half_extents(0) >= min_extents(0) * 2.0f &&
+		bounds_.half_extents(1) >= min_extents(1) * 2.0f &&
+		bounds_.half_extents(2) >= min_extents(2) * 2.0f){
 		
-		Vector3f half = bounds_.extents * 0.5f;		// Extents of each children.
-		Vector3f quarter = half * 0.5f;				// Offset of each children from the center of the parent.
+		Vector3f quarter = bounds_.half_extents * 0.5f;				// Offset of each children from the center of the parent.
 
 		// Unitary offsets of each children from the center of the parent (this)
 		static vector<Vector3f> offsets = { Vector3f(1.0f, 1.0f, 1.0f),
@@ -153,7 +153,7 @@ void Octree::Split(const Vector3f & min_extents, unsigned int max_objects){
 
 			children_.push_back(new Octree(this,
 				Bounds{ bounds_.center + offset.cwiseProduct(quarter),
-				half }));
+				quarter }));
 
 			// Split recursively
 			children_.back()->Split(min_extents, max_objects);
@@ -167,26 +167,26 @@ void Octree::Split(const Vector3f & min_extents, unsigned int max_objects){
 void Octree::RecomputeBounds(){
 
 	bounds_.center = Vector3f::Zero();
-	bounds_.extents = Vector3f::Zero();
+	bounds_.half_extents = Vector3f::Zero();
 
 	if (objects_.size() > 0){
 
 		bounds_ = *(objects_.back());
 
-		Vector3f min = bounds_.center - bounds_.extents * 0.5f;
-		Vector3f max = min + bounds_.extents;
+		Vector3f min = bounds_.center - bounds_.half_extents;
+		Vector3f max = bounds_.center + bounds_.half_extents;
 
 		for (auto object : objects_){
 
 			bounds_ = *object;
 
-			min = Math::Min(min, bounds_.center + bounds_.extents * 0.5f);
-			max = Math::Max(max, bounds_.center - bounds_.extents * 0.5f);
+			min = Math::Min(min, bounds_.center + bounds_.half_extents);
+			max = Math::Max(max, bounds_.center - bounds_.half_extents);
 
 		}
 
-		bounds_.center = (min + max) * 0.5f;
-		bounds_.extents = max - min;
+		bounds_.center = (max + min) * 0.5f;
+		bounds_.half_extents = (max - min) * 0.5f;
 
 	}
 
@@ -202,38 +202,55 @@ void Octree::AddVolume(Boundable & volume){
 
 void Octree::RemoveVolume(Boundable & volume){
 
+	// TODO Remove the actual volume
+
 }
 
-/*
-Octree::Octree(const Bounds & bounds, int split){
+vector<SceneNode *> Octree::GetIntersections(const Frustum & frustum){
 
-	bounds_ = bounds;
+	vector<Boundable *> objects;
 
-	if (split > 0){
+	// Internal recursive method.
 
+	GetIntersections(frustum, objects);
 
-		
+	vector<SceneNode *> nodes;
+
+	nodes.resize(objects.size());
+
+	// Returns the node list from the boundable list.
+
+	std::transform(objects.begin(), objects.end(), nodes.begin(), [](Boundable * boundable){
+
+		return &(boundable->GetNode());
+
+	});
+
+	return nodes;
+
+}
+
+void Octree::GetIntersections(const Frustum & frustum, vector<Boundable *> & objects){
+
+	if (!frustum.Intersect(bounds_)){
+
+		// The rest of the hierarchy won't intersect the frustum either...
+
+		return;
+
+	}
+	else{
+
+		objects.insert(objects.end(), objects_.begin(), objects_.end());
+
+		for (auto child : children_){
+
+			// Recursion...
+
+			child->GetIntersections(frustum, objects);
+
+		}
+
 	}
 
 }
-
-Octree::Octree(Octree & parent, const Bounds & bounds, int split) :
-Octree(bounds, split){
-
-	parent_ = &parent;
-
-}
-
-Octree::~Octree(){
-
-	for (auto child : children_){
-
-		delete child;
-
-	}
-
-	parent_ = nullptr;
-
-}
-
-*/
