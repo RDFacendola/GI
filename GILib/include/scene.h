@@ -390,6 +390,9 @@ namespace gi_lib{
 		/// \brief Get the singleton instance.
 		/// \return Returns the singleton instance.
 		static Scene & GetInstance();
+		
+		/// \brief Destroy the scene instance.
+		~Scene();
 
 		/// \brief No assignment operator.
 		Scene & operator=(const Scene &) = delete;
@@ -411,7 +414,7 @@ namespace gi_lib{
 		/// \brief Create a new scene.
 		Scene();
 
-		SceneNode root_;				// Root of the scene
+		unique_ptr<SceneNode> root_;	// Root of the scene
 
 		unique_ptr<BVH> bvh_;			// Bounding volume hierarchy
 
@@ -776,7 +779,7 @@ namespace gi_lib{
 
 	inline SceneNode & Scene::GetRoot(){
 
-		return root_;
+		return *root_;
 
 	}
 

@@ -27,7 +27,10 @@ bounds_(bounds){
 
 Boundable::~Boundable(){
 
-	Scene::GetInstance().GetBVH().RemoveVolume(*this);
+	// Remove the volume from the BVH
+	Scene::GetInstance()
+		  .GetBVH()
+		  .RemoveVolume(*this);
 
 }
 

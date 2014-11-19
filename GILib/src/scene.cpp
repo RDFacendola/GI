@@ -262,18 +262,29 @@ Scene & Scene::GetInstance(){
 }
 
 Scene::Scene() :
-root_(),
+root_(make_unique<SceneNode>()),
 bvh_(make_unique<Octree>()){}
+
+Scene::~Scene(){
+
+	// Nodes must be deleted before everything else.
+	root_ = nullptr;
+
+	//
+
+	bvh_ = nullptr;
+
+}
 
 void Scene::Update(const Time & time){
 
 	// Pre update
-	root_.PreUpdate(time);
+	root_->PreUpdate(time);
 
 	// Update the hierarchy starting from the root.
-	root_.Update(time);
+	root_->Update(time);
 
 	// Post update.
-	root_.PostUpdate(time);
+	root_->PostUpdate(time);
 
 }

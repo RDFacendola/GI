@@ -22,6 +22,9 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Virtual destructor.
+		virtual ~BVH(){}
+
 		/// \brief Rebuild the bounding volume hierarchy.
 		virtual void Rebuild() = 0;
 
@@ -30,6 +33,8 @@ namespace gi_lib{
 		virtual void AddVolume(Boundable & volume) = 0;
 
 		/// \brief Remove an existing volume from the hierarchy.
+
+		/// If the specified volume couldn't be found the method does nothing.
 		/// \param volume The volume to remove from the hierarchy.
 		virtual void RemoveVolume(Boundable & volume) = 0;
 

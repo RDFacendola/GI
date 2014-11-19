@@ -20,6 +20,14 @@ bounds_({ Vector3f::Zero(), Vector3f::Zero() }){
 
 Octree::~Octree(){
 
+	objects_.clear();
+
+	for (auto child : children_){
+
+		delete child;
+
+	}
+
 }
 
 void Octree::Rebuild(){
