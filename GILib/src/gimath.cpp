@@ -66,8 +66,6 @@ bool Frustum::Intersect(const Bounds & bounds) const{
 
 	/// Theory on: http://www.gamedev.net/page/resources/_/technical/general-programming/useless-snippet-2-aabbfrustum-test-r3342
 
-	bool inside = true;
-
 	// Test against every plane in the frustum
 	for (unsigned int i = 0; i < 6; ++i)
 	{

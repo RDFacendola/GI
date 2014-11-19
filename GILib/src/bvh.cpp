@@ -249,11 +249,25 @@ void Octree::GetIntersections(const Frustum & frustum, vector<Boundable *> & obj
 	}
 	else{
 
-		objects.insert(objects.end(), objects_.begin(), objects_.end());
+		// Reserve the entire capacity
+
+		objects.resize(objects.size() + objects_.size());
+
+		auto end_it = std::copy_if(objects_.begin(), 
+								   objects_.end(), 
+								   objects.end(), 
+								   [&frustum](Boundable * b){ 
+			
+									return frustum.Intersect(*b); 
+		
+								    });
+
+		// Shrink it down
+		objects_.erase(end_it, objects_.end());
+
+		// Recursion...
 
 		for (auto child : children_){
-
-			// Recursion...
 
 			child->GetIntersections(frustum, objects);
 

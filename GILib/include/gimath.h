@@ -104,6 +104,8 @@ namespace gi_lib{
 		/// \param bounds The bounds to test against.
 		bool Intersect(const Bounds & bounds) const;
 
+
+
 	};
 
 	// math
