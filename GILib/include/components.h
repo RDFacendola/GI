@@ -318,11 +318,15 @@ namespace gi_lib{
 			
 		/// \brief Get the current view matrix.
 		/// \return Return the view matrix.
-		Affine3f GetViewMatrix();
+		Affine3f GetViewMatrix() const;
 
 		/// \brief Get the current projection matrix.
 		/// \return Return the projection matrix.
-		Projective3f GetProjectionMatrix();
+		Projective3f GetProjectionMatrix() const;
+
+		/// \brief Get the current view frustum.
+		/// \return Return the current view frustum.
+		Frustum GetViewFrustum() const;
 
 	protected:
 
@@ -362,17 +366,13 @@ namespace gi_lib{
 
 		};
 
-		bool projection_dirty_ = true;							///< \brief Is the projection matrix dirty?
-
-		bool view_dirty_ = true;								///< \brief Is the view matrix dirty?
-
 		Affine3f view_matrix_;									///< \brief The camera matrix.
 
 		Projective3f proj_matrix_;								///< \brief The projection matrix.
 
-		void UpdateProjectionMatrix(bool force = false);		///< \brief Update the projection matrix.
+		void UpdateProjectionMatrix();
 
-		void UpdateViewMatrix(bool force = false);				///< \brief Update the view matrix.
+		void UpdateViewMatrix();
 
 	};
 
@@ -481,7 +481,7 @@ namespace gi_lib{
 
 		projection_mode_ = projection_mode;
 
-		projection_dirty_ = true;
+		UpdateProjectionMatrix();
 
 	}
 
@@ -537,7 +537,7 @@ namespace gi_lib{
 
 		near_plane_ = near_plane;
 
-		projection_dirty_ = true;
+		UpdateProjectionMatrix();
 
 	}
 
@@ -551,7 +551,7 @@ namespace gi_lib{
 
 		far_plane_ = far_plane;
 
-		projection_dirty_ = true;
+		UpdateProjectionMatrix();
 
 	}
 
@@ -577,7 +577,7 @@ namespace gi_lib{
 
 		field_of_view_ = field_of_view;
 
-		projection_dirty_ = true;
+		UpdateProjectionMatrix();
 
 	}
 
@@ -591,7 +591,19 @@ namespace gi_lib{
 
 		ortho_size_ = ortho_size;
 
-		projection_dirty_ = true;
+		UpdateProjectionMatrix();
+
+	}
+
+	inline Affine3f Camera::GetViewMatrix() const{
+
+		return view_matrix_;
+
+	}
+
+	inline Projective3f Camera::GetProjectionMatrix() const{
+
+		return proj_matrix_;
 
 	}
 	

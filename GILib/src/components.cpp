@@ -114,7 +114,7 @@ target_(target){
 void Camera::Update(const Time &){
 
 	// The camera is likely to move every frame, so the view matrix must be always recomputed.
-	UpdateViewMatrix(true);
+	UpdateViewMatrix();
 
 	// The only external factor is the aspect ratio: if it changes the projection matrix must be recomputed.
 
@@ -124,54 +124,31 @@ void Camera::Update(const Time &){
 
 		aspect_ratio_ = aspect_ratio;
 
-		UpdateProjectionMatrix(true);
+		UpdateProjectionMatrix();
 
 	}
 
 }
 
-Affine3f Camera::GetViewMatrix(){
+Frustum Camera::GetViewFrustum() const{
 
-	UpdateViewMatrix();
+	auto projection_matrix = GetProjectionMatrix();
 
-	return view_matrix_;
+	Frustum frustum;
 
-}
-
-Projective3f Camera::GetProjectionMatrix(){
-
-	UpdateProjectionMatrix();
-
-	return proj_matrix_;
+	return frustum;
 
 }
 
-void Camera::UpdateProjectionMatrix(bool force){
-
-	if (!projection_dirty_ && 
-		!force){
-		
-		return;
-
-	}
+void Camera::UpdateProjectionMatrix(){
 
 	// TODO: Update the projection matrix
 
-	projection_dirty_ = false;
 
 }
 
-void Camera::UpdateViewMatrix(bool force){
-
-	if (!view_dirty_ &&
-		!force){
-
-		return;
-
-	}
+void Camera::UpdateViewMatrix(){
 
 	// TODO: Update the view matrix
-
-	view_dirty_ = false;
 
 }

@@ -216,15 +216,15 @@ namespace gi_lib{
 
 		/// The local transformation matrix applies the scaling first, the rotation second and the translation last.
 		/// \return Returns the local transform matrix.
-		const Affine3f & GetLocalTransform();
+		const Affine3f & GetLocalTransform() const;
 
 		/// \brief Get the global transfom.
 		/// \return Returns the global transform matrix.
-		const Affine3f & GetWorldTransform();
+		const Affine3f & GetWorldTransform() const;
 
 		/// \brief Check whether the world transform changed since the last update.
 		/// \return Returns true if the world transform changed since the last update, false otherwise.
-		bool IsWorldTransformChanged();
+		bool IsWorldTransformChanged() const;
 
 		/// \brief Get this node's parent.
 		/// \return Returns a reference to the node's parent. If the node is actually the root of the scene, it returns a reference to this object.
@@ -335,11 +335,11 @@ namespace gi_lib{
 
 		// Transformation and hierarchy
 
-		void SetDirty(bool world_only = false);
+		void SetDirty(bool world_only = false) const;
 
-		void UpdateLocalTransform();
+		void UpdateLocalTransform() const;
 
-		void UpdateWorldTransform();
+		void UpdateWorldTransform() const;
 
 		void FindNodeByName(vector<reference_wrapper<SceneNode>> & nodes, const wstring & name);
 
@@ -361,15 +361,15 @@ namespace gi_lib{
 
 		AlignedScaling3f scale_;							
 
-		Affine3f local_transform_;							
+		mutable Affine3f local_transform_;							
 
-		Affine3f world_transform_;							
+		mutable Affine3f world_transform_;							
 
-		bool world_changed_;
+		mutable bool world_changed_;
 
-		bool local_dirty_;									
+		mutable bool local_dirty_;									
 
-		bool world_dirty_;									
+		mutable bool world_dirty_;									
 		
 		// Identity
 		//Scene & scene_;
@@ -624,7 +624,7 @@ namespace gi_lib{
 
 	}
 
-	inline const Affine3f & SceneNode::GetLocalTransform(){
+	inline const Affine3f & SceneNode::GetLocalTransform() const{
 
 		UpdateLocalTransform();	//Update by need
 
@@ -632,7 +632,7 @@ namespace gi_lib{
 
 	}
 
-	inline const Affine3f & SceneNode::GetWorldTransform(){
+	inline const Affine3f & SceneNode::GetWorldTransform() const{
 
 		UpdateWorldTransform(); //Update by need
 
@@ -640,7 +640,7 @@ namespace gi_lib{
 
 	}
 
-	inline bool SceneNode::IsWorldTransformChanged(){
+	inline bool SceneNode::IsWorldTransformChanged() const{
 
 		return world_changed_;
 

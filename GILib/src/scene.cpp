@@ -158,7 +158,7 @@ vector<reference_wrapper<SceneNode>> SceneNode::FindNodeByTag(std::initializer_l
 
 }
 
-void SceneNode::SetDirty(bool world_only){
+void SceneNode::SetDirty(bool world_only) const{
 
 	local_dirty_ |= !world_only;
 	world_dirty_ = true;
@@ -175,7 +175,7 @@ void SceneNode::SetDirty(bool world_only){
 
 }
 
-void SceneNode::UpdateLocalTransform(){
+void SceneNode::UpdateLocalTransform() const{
 
 	if (local_dirty_){
 
@@ -190,7 +190,7 @@ void SceneNode::UpdateLocalTransform(){
 
 }
 
-void SceneNode::UpdateWorldTransform(){
+void SceneNode::UpdateWorldTransform() const{
 
 	UpdateLocalTransform();
 

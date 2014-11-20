@@ -70,7 +70,7 @@ scene_(Scene::GetInstance())
 	////////////////////////////////////
 
 	scene_.GetBVH().Rebuild();
-	
+		
 }
 
 GILogic::~GILogic(){
