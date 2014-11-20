@@ -132,9 +132,11 @@ void Camera::Update(const Time &){
 
 Frustum Camera::GetViewFrustum() const{
 
-	auto projection_matrix = GetProjectionMatrix();
+	auto & projection_matrix = GetProjectionMatrix();
 
 	Frustum frustum;
+
+	// TODO: compute the actual frustum
 
 	return frustum;
 
@@ -142,13 +144,38 @@ Frustum Camera::GetViewFrustum() const{
 
 void Camera::UpdateProjectionMatrix(){
 
-	// TODO: Update the projection matrix
+	if (projection_mode_ == ProjectionMode::kPerspective){
 
+		// The matrix here is transposed: http://msdn.microsoft.com/en-us/library/bb205352(v=vs.85).aspx
+
+		proj_matrix_ = Projective3f::Identity();
+
+		auto tan_half_fov = std::tanf(field_of_view_ * 0.5f);
+
+		proj_matrix_(0, 0) = 1.0f / (aspect_ratio_ * tan_half_fov);
+
+		proj_matrix_(1, 1) = 1.0f / tan_half_fov;
+
+		proj_matrix_(2, 2) = (far_plane_ + near_plane_) / (near_plane_ - far_plane_);
+
+		proj_matrix_(2, 3) = (/* 2.0f * */ far_plane_ * near_plane_) / (near_plane_ - far_plane_);	// IMPORTANT: Under OpenGL, Multiply this by 2 (OpenGL has depth values ranging from -w to w. Direct3D uses [0;w] instead).
+
+		proj_matrix_(3, 2) = /* -*/ 1;																// IMPORTANT: Left handed coordinate system. For right handed use -1 instead.
+
+		proj_matrix_(3, 3) = 0.0f;
+		
+	}
+
+	// Add code for the ortographic projection, eventually.
 
 }
 
 void Camera::UpdateViewMatrix(){
 
-	// TODO: Update the view matrix
+	// Naive approach: inverse of the world transformation applied to the camera.
+
+	// ps: don't play with parent's scaling, otherwise the scene will look "squeezed" :D
+
+	view_matrix_ = GetNode().GetWorldTransform().inverse();
 
 }

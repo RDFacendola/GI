@@ -206,7 +206,7 @@ namespace gi_lib{
 		enum class ProjectionMode{
 
 			kPerspective,						///< \brief Perspective projection.
-			kOrthographic,						///< \brief Orthographic projection.
+			//kOrthographic,						///< \brief Orthographic projection.
 
 		};
 
@@ -318,11 +318,11 @@ namespace gi_lib{
 			
 		/// \brief Get the current view matrix.
 		/// \return Return the view matrix.
-		Affine3f GetViewMatrix() const;
+		const Affine3f & GetViewMatrix() const;
 
 		/// \brief Get the current projection matrix.
 		/// \return Return the projection matrix.
-		Projective3f GetProjectionMatrix() const;
+		const Projective3f &  GetProjectionMatrix() const;
 
 		/// \brief Get the current view frustum.
 		/// \return Return the current view frustum.
@@ -595,13 +595,13 @@ namespace gi_lib{
 
 	}
 
-	inline Affine3f Camera::GetViewMatrix() const{
+	inline const Affine3f & Camera::GetViewMatrix() const{
 
 		return view_matrix_;
 
 	}
 
-	inline Projective3f Camera::GetProjectionMatrix() const{
+	inline const Projective3f & Camera::GetProjectionMatrix() const{
 
 		return proj_matrix_;
 
