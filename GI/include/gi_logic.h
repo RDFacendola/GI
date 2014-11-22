@@ -30,4 +30,6 @@ private:
 
 	Scene & scene_;
 
+	shared_ptr<Camera> camera_;
+
 };

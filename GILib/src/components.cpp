@@ -113,9 +113,6 @@ target_(target){
 
 void Camera::Update(const Time &){
 
-	// The camera is likely to move every frame, so the view matrix must be always recomputed.
-	UpdateViewMatrix();
-
 	// The only external factor is the aspect ratio: if it changes the projection matrix must be recomputed.
 
 	auto aspect_ratio = target_->GetAspectRatio();
@@ -124,58 +121,58 @@ void Camera::Update(const Time &){
 
 		aspect_ratio_ = aspect_ratio;
 
-		UpdateProjectionMatrix();
-
 	}
 
 }
 
 Frustum Camera::GetViewFrustum() const{
+	
+	auto view_matrix = GetNode().GetWorldTransform().inverse();	//View matrix
 
-	auto & projection_matrix = GetProjectionMatrix();
+	// Projection matrix (Using D3D left-handed notation, should not change the final result though)
 
-	Frustum frustum;
-
-	// TODO: compute the actual frustum
-
-	return frustum;
-
-}
-
-void Camera::UpdateProjectionMatrix(){
+	auto proj_matrix = Projective3f::Identity();
 
 	if (projection_mode_ == ProjectionMode::kPerspective){
 
-		// The matrix here is transposed: http://msdn.microsoft.com/en-us/library/bb205352(v=vs.85).aspx
+		auto cot_half_FoV = 1.0f / std::tanf(field_of_view_ * 0.5f);
 
-		proj_matrix_ = Projective3f::Identity();
+		proj_matrix(0, 0) = cot_half_FoV / aspect_ratio_;
 
-		auto tan_half_fov = std::tanf(field_of_view_ * 0.5f);
+		proj_matrix(1, 1) = cot_half_FoV;
 
-		proj_matrix_(0, 0) = 1.0f / (aspect_ratio_ * tan_half_fov);
+		proj_matrix(2, 2) = far_plane_ / (far_plane_ - near_plane_);
 
-		proj_matrix_(1, 1) = 1.0f / tan_half_fov;
+		proj_matrix(2, 3) = -(far_plane_ * near_plane_) / (far_plane_ - near_plane_);
 
-		proj_matrix_(2, 2) = (far_plane_ + near_plane_) / (near_plane_ - far_plane_);
+		proj_matrix(3, 2) = 1.0f;
 
-		proj_matrix_(2, 3) = (/* 2.0f * */ far_plane_ * near_plane_) / (near_plane_ - far_plane_);	// IMPORTANT: Under OpenGL, Multiply this by 2 (OpenGL has depth values ranging from -w to w. Direct3D uses [0;w] instead).
+		proj_matrix(3, 3) = 0.0f;
 
-		proj_matrix_(3, 2) = /* -*/ 1;																// IMPORTANT: Left handed coordinate system. For right handed use -1 instead.
-
-		proj_matrix_(3, 3) = 0.0f;
-		
 	}
+	else{
 
-	// Add code for the ortographic projection, eventually.
+		// Add the orthographic projection matrix here
+		throw RuntimeException(L"Not yet implemented, duh!");
 
-}
+	}
+	
+	// Compute the frustum from view * proj matrix
 
-void Camera::UpdateViewMatrix(){
+	// Fancy details here: http://www.chadvernon.com/blog/resources/directx9/frustum-culling/
+	// more: http://fgiesen.wordpress.com/2012/08/31/frustum-planes-from-the-projection-matrix/
 
-	// Naive approach: inverse of the world transformation applied to the camera.
+	auto view_proj_matrix = (view_matrix * proj_matrix).matrix();
 
-	// ps: don't play with parent's scaling, otherwise the scene will look "squeezed" :D
+	Frustum frustum;
 
-	view_matrix_ = GetNode().GetWorldTransform().inverse();
+	frustum.planes[0] = view_proj_matrix.row(3) + view_proj_matrix.row(0);		// Left
+	frustum.planes[1] = view_proj_matrix.row(3) - view_proj_matrix.row(0);		// Right
+	frustum.planes[2] = view_proj_matrix.row(3) + view_proj_matrix.row(1);		// Bottom
+	frustum.planes[3] = view_proj_matrix.row(3) - view_proj_matrix.row(1);		// Top
+	frustum.planes[4] = view_proj_matrix.row(2);								// Near
+	frustum.planes[5] = view_proj_matrix.row(3) - view_proj_matrix.row(2);		// Far
+
+	return frustum;
 
 }

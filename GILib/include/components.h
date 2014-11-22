@@ -316,14 +316,6 @@ namespace gi_lib{
 		/// \param ortho_size The new orthographic size.
 		void SetOrthoSize(float ortho_size);
 			
-		/// \brief Get the current view matrix.
-		/// \return Return the view matrix.
-		const Affine3f & GetViewMatrix() const;
-
-		/// \brief Get the current projection matrix.
-		/// \return Return the projection matrix.
-		const Projective3f &  GetProjectionMatrix() const;
-
 		/// \brief Get the current view frustum.
 		/// \return Return the current view frustum.
 		Frustum GetViewFrustum() const;
@@ -365,14 +357,6 @@ namespace gi_lib{
 			float ortho_size_;					///< \brief Units of the scene the camera can display vertically. Valid when projection mode is "Orthographic".
 
 		};
-
-		Affine3f view_matrix_;									///< \brief The camera matrix.
-
-		Projective3f proj_matrix_;								///< \brief The projection matrix.
-
-		void UpdateProjectionMatrix();
-
-		void UpdateViewMatrix();
 
 	};
 
@@ -481,8 +465,6 @@ namespace gi_lib{
 
 		projection_mode_ = projection_mode;
 
-		UpdateProjectionMatrix();
-
 	}
 
 	inline Camera::ClearMode Camera::GetClearMode() const{
@@ -537,8 +519,6 @@ namespace gi_lib{
 
 		near_plane_ = near_plane;
 
-		UpdateProjectionMatrix();
-
 	}
 
 	inline float Camera::GetFarPlane() const{
@@ -550,8 +530,6 @@ namespace gi_lib{
 	inline void Camera::SetFarPlane(float far_plane){
 
 		far_plane_ = far_plane;
-
-		UpdateProjectionMatrix();
 
 	}
 
@@ -577,8 +555,6 @@ namespace gi_lib{
 
 		field_of_view_ = field_of_view;
 
-		UpdateProjectionMatrix();
-
 	}
 
 	inline float Camera::GetOrthoSize(){
@@ -590,20 +566,6 @@ namespace gi_lib{
 	inline void Camera::SetOrthoSize(float ortho_size){
 
 		ortho_size_ = ortho_size;
-
-		UpdateProjectionMatrix();
-
-	}
-
-	inline const Affine3f & Camera::GetViewMatrix() const{
-
-		return view_matrix_;
-
-	}
-
-	inline const Projective3f & Camera::GetProjectionMatrix() const{
-
-		return proj_matrix_;
 
 	}
 	

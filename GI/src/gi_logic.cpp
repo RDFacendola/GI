@@ -57,13 +57,18 @@ scene_(Scene::GetInstance())
 	
 	SceneNodeBuilder camera_builder = scene_.GetRoot().GetBuilder();
 
-	auto & camera = camera_builder.Build();
+	auto & camera_node = camera_builder.Build();
 		
-	camera.AddComponent<Camera>(output_->GetRenderTarget());
+	camera_ = camera_node.AddComponent<Camera>(output_->GetRenderTarget());
 	
+	camera_->SetFarPlane(1000);
+	camera_->SetNearPlane(1);
+	camera_->SetFieldOfView(Math::kPi * 0.5f);
+	camera_->SetProjectionMode(Camera::ProjectionMode::kPerspective);
+
 	auto & manager = graphics_.GetManager();
 
-	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", scene_.GetRoot(), graphics_.GetManager());
+	//FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", scene_.GetRoot(), graphics_.GetManager());
 
 	auto s = manager.GetSize();
 
@@ -80,6 +85,8 @@ GILogic::~GILogic(){
 void GILogic::Update(const Time & time){
 	
 	scene_.Update(time);
+
+	auto f = camera_->GetViewFrustum();
 
 	output_->Commit();
 	

@@ -11,7 +11,7 @@ SceneNode::SceneNode():
 name_(L""),
 unique_(Unique<SceneNode>::MakeUnique()),
 parent_(nullptr),
-position_(Translation3f(Vector3f::Identity())),
+position_(Translation3f(Vector3f::Zero())),
 rotation_(Quaternionf::Identity()),
 scale_(AlignedScaling3f(Vector3f::Ones())),
 local_dirty_(true),
