@@ -113,15 +113,9 @@ target_(target){
 
 void Camera::Update(const Time &){
 
-	// The only external factor is the aspect ratio: if it changes the projection matrix must be recomputed.
+	// Update the aspect ratio
 
-	auto aspect_ratio = target_->GetAspectRatio();
-
-	if (!Math::Equal(aspect_ratio, aspect_ratio_, 0.01f)){
-
-		aspect_ratio_ = aspect_ratio;
-
-	}
+	aspect_ratio_ = target_->GetAspectRatio();
 
 }
 
@@ -162,7 +156,7 @@ Frustum Camera::GetViewFrustum() const{
 	// Fancy details here: http://www.chadvernon.com/blog/resources/directx9/frustum-culling/
 	// more: http://fgiesen.wordpress.com/2012/08/31/frustum-planes-from-the-projection-matrix/
 
-	auto view_proj_matrix = (view_matrix * proj_matrix).matrix();
+	auto view_proj_matrix = (proj_matrix * view_matrix).matrix();
 
 	Frustum frustum;
 

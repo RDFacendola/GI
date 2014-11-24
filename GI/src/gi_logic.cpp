@@ -66,6 +66,9 @@ scene_(Scene::GetInstance())
 	camera_->SetFieldOfView(Math::kPi * 0.5f);
 	camera_->SetProjectionMode(Camera::ProjectionMode::kPerspective);
 
+	//camera_node.SetRotation(Quaternionf(AngleAxisf(Math::kPi * 0.5f, Vector3f::Identity())));
+	//camera_node.SetPosition(Translation3f(Vector3f(0.0f, 0.0f, 1000.0f)));
+
 	auto & manager = graphics_.GetManager();
 
 	//FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", scene_.GetRoot(), graphics_.GetManager());
