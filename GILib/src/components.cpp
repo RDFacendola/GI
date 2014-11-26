@@ -68,18 +68,12 @@ void Geometry::PostUpdate(const Time &){
 
 }
 
-/////////////////////// RENDERER ///////////////////////////////////////
+/////////////////////// ASPECT ///////////////////////////////////////
 
-Renderer::Renderer(SceneNode & node) :
-NodeComponent(node){
+Aspect::Aspect(SceneNode & node) :
+NodeComponent(node){}
 
-	
-
-}
-
-Renderer::~Renderer(){
-
-}
+Aspect::~Aspect(){}
 
 /////////////////////// CAMERA /////////////////////////////////////////
 
@@ -96,7 +90,8 @@ target_(target){
 	projection_mode_ = ProjectionMode::kPerspective;
 	clear_mode_ = ClearMode::kColor;
 
-	viewport_.position = Vector2f::Zero();
+	// The entire render surface.
+	viewport_.position = Vector2f::Zero();		
 	viewport_.extents = Vector2f::Ones();
 
 	aspect_ratio_ = target_->GetAspectRatio();
@@ -104,10 +99,13 @@ target_(target){
 	near_plane_ = 1.0f;
 	far_plane_ = 1000.0f;
 
+	// Solid black
 	clear_color_ = Color{ { 1.0f, 0.0f, 0.0f, 0.0f } };
 
 	field_of_view_ = Math::DegToRad(60.0f);
 	ortho_size_ = 1.0f;
+
+	priority_ = 0;
 
 }
 

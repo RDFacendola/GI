@@ -1,4 +1,4 @@
-/// \file guard.h
+/// \file scope_guard.h
 /// \brief Defines guards that wraps various RAII functionalities
 ///
 /// \author Raffaele D. Facendola

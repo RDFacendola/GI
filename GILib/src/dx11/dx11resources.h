@@ -39,7 +39,7 @@ namespace gi_lib{
 			/// \param settings The load settings
 			DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D, Texture2D::LoadMode::kFromDDS> & settings);
 
-			/// \broef Create a mew texture from an existing DirectX11 texture.
+			/// \brief Create a mew texture from an existing DirectX11 texture.
 			/// \param texture The DirectX11 texture.
 			DX11Texture2D(ID3D11Texture2D & texture);
 
@@ -138,6 +138,9 @@ namespace gi_lib{
 
 		public:
 
+			/// \brief Create a new DirectX11 mesh.
+			/// \param device The device used to load the graphical resources.
+			/// \param settings Settings used to build the mesh.
 			DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kNormalTextured> & settings);
 
 			virtual size_t GetSize() const override;
@@ -178,6 +181,9 @@ namespace gi_lib{
 
 		public:
 
+			/// \brief Create a new DirectX11 shader.
+			/// \param device The device used to load the graphical resources.
+			/// \param settings The settings used to build the shader.
 			DX11Shader(ID3D11Device & device, const LoadSettings<Shader, Shader::LoadMode::kCompileFromFile> & settings);
 
 			/// \brief No copy constructor.
@@ -218,6 +224,9 @@ namespace gi_lib{
 
 		public:
 
+			/// \brief Create a new DirectX11 material instance.
+			/// \param device The device used to load the graphical resources.
+			/// \param settings The settings used to build the material.
 			DX11Material(ID3D11Device & device, const BuildSettings<Material, Material::BuildMode::kFromShader> & settings);
 
 			virtual size_t GetSize() const override;

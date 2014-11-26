@@ -14,7 +14,6 @@
 
 #include "..\..\include\core.h"
 #include "..\..\include\exceptions.h"
-#include "..\..\include\functional.h"
 #include "..\..\include\scope_guard.h"
 
 using namespace std;

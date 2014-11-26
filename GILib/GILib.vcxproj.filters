@@ -70,7 +70,6 @@
     <ClInclude Include="include\fbx\fbx.h">
       <Filter>FBX</Filter>
     </ClInclude>
-    <ClInclude Include="include\functional.h" />
     <ClInclude Include="external\fnv1.h" />
     <ClInclude Include="include\scope_guard.h" />
     <ClInclude Include="include\bvh.h" />

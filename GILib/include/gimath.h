@@ -35,10 +35,13 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Factor used to convert a radian to a degree.
 		static float kRadToDeg;
 
+		/// \brief Factor used to convert a degree to a radian.
 		static float kDegToRad;
 			
+		/// \brief Pi.
 		static float kPi;
 
 		/// \brief Convert radians to degrees.

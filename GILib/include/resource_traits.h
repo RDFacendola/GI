@@ -57,6 +57,7 @@ namespace gi_lib{
 
 	};
 	
+	// \brief Build settings for a material bound to a shader.
 	template <> struct BuildSettings < Material, Material::BuildMode::kFromShader > {
 
 		/// \brief The material's shader.

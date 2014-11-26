@@ -279,7 +279,7 @@ namespace gi_lib{
 		vector<reference_wrapper<SceneNode>> FindNodeByName(const wstring & name);
 
 		/// \brief Find all the nodes matching all the specified tags.
-		/// \param tag Tags to find.
+		/// \param tags Tags to find.
 		/// \return Return a list containing all the scene nodes which are children of this node whose tags matches all the specified ones.
 		vector<reference_wrapper<SceneNode>> FindNodeByTag(std::initializer_list<wstring> tags);
 

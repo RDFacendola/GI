@@ -334,7 +334,7 @@ namespace{
 
 			/*
 
-			(specular and bumpmap are not bound to crysponza mesh for some reason...)
+			(specular and bumpmap are not bound to sponza mesh for some reason...)
 
 			auto specular = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sSpecular), base_path, resources);
 			auto bump = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sBump), base_path, resources);
@@ -348,9 +348,9 @@ namespace{
 
 		// Add the rendering component
 		
-		auto renderer = node.AddComponent<Renderer>();
+		auto aspect = node.AddComponent<Aspect>();
 
-		renderer->SetMaterials(materials);
+		aspect->SetMaterials(materials);
 		
 	}
 	
@@ -440,10 +440,13 @@ namespace{
 
 struct FBXImporter::FbxSDK{
 
+	/// \brief Manager of the Fbx SDK.
 	FbxManager * manager;
 
+	/// \brief Settings used during the import or export.
 	FbxIOSettings * settings;
 
+	/// \brief Used to convert the imported geometry.
 	FbxGeometryConverter * converter;
 
 	~FbxSDK(){

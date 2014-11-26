@@ -39,7 +39,7 @@ namespace gi_lib{
 		virtual void RemoveVolume(Boundable & volume) = 0;
 
 		/// \brief Get the set of nodes which overlaps or are contained inside the specified frustum.
-		/// \param camera The frustum used to test against.
+		/// \param frustum The frustum used to test the volumes against.
 		/// \return Returns the set of the nodes whose bounding boxes are contained or overlap the specified frustum.
 		virtual vector<SceneNode *> GetIntersections(const Frustum & frustum) = 0;
 

@@ -159,31 +159,28 @@ namespace gi_lib{
 		
 	};
 
-	/// \brief Component used to display objects on screen.
-	/// This componenent requires any geometry component to be attached to the node!
-	class Renderer : public NodeComponent{
+	/// \brief Component used to describe the aspect of the objects on screen.
+	class Aspect : public NodeComponent{
 
 	public:
 
-		Renderer(SceneNode & node);
+		/// \brief Create an empty aspect component.
+		Aspect(SceneNode & node);
 
-		~Renderer();
-
-		/// \brief Get the bounds of the mesh in world space.
-		/// \return Returns the bounds of the mesh in world space.
-		Bounds GetBounds() const;
+		/// \brief Destroy the component instance.
+		virtual ~Aspect();
 
 		/// \brief Get the materials' vector.
 		/// \return Returns the materials' vector.
 		vector<shared_ptr<Material>> & GetMaterials();
+		
+		/// \brief Get the materials' vector.
+		/// \return Returns the materials' vector.
+		const vector<shared_ptr<Material>> & GetMaterials() const;
 
 		/// \brief Set the materials' vector.
 		/// \param materials The new materials' vector.
 		void SetMaterials(const vector<shared_ptr<Material>> & materials);
-
-		/// \brief Get the materials' vector.
-		/// \return Returns the materials' vector.
-		const vector<shared_ptr<Material>> & GetMaterials() const;
 
 	protected:
 
@@ -225,6 +222,18 @@ namespace gi_lib{
 		/// \param node The node this component belongs to.
 		/// \param target The render target of the camera.
 		Camera(SceneNode & node, shared_ptr<RenderTarget> target);
+
+		/// \brief Get the camera render priority.
+
+		/// Cameras with high priority will draw their scene first.
+		/// \return Returns the render priority of this instance.
+		int GetPriority() const;
+
+		/// \brief Set the camera render priority.
+
+		/// Cameras with high priority will draw their scene first.
+		/// \param priority The new render priority of the camera.
+		void SetPriority(int priority);
 
 		/// \brief Get the projection mode.
 		/// \return Returns the projection mode.
@@ -329,6 +338,8 @@ namespace gi_lib{
 
 	private:
 
+		int priority_;							///< \brief Camera priority.
+
 		ProjectionMode projection_mode_;		///< \brief Projection mode of this camera.
 
 		ClearMode clear_mode_;					/// < \brief The clear mode of this camera.
@@ -431,29 +442,41 @@ namespace gi_lib{
 
 	inline void Geometry::Update(const Time &){}
 
-	// Renderer
+	// Aspect
 
-	inline vector<shared_ptr<Material>> & Renderer::GetMaterials(){
-
-		return materials_;
-
-	}
-
-	inline const vector<shared_ptr<Material>> & Renderer::GetMaterials() const{
+	inline vector<shared_ptr<Material>> & Aspect::GetMaterials(){
 
 		return materials_;
 
 	}
 
-	inline void Renderer::SetMaterials(const vector<shared_ptr<Material>> & materials){
+	inline const vector<shared_ptr<Material>> & Aspect::GetMaterials() const{
+
+		return materials_;
+
+	}
+
+	inline void Aspect::SetMaterials(const vector<shared_ptr<Material>> & materials){
 
 		materials_ = materials;
 
 	}
 
-	inline void Renderer::Update(const Time &){}
+	inline void Aspect::Update(const Time &){}
 
 	// Camera
+
+	inline int Camera::GetPriority() const{
+
+		return priority_;
+
+	}
+
+	inline void Camera::SetPriority(int priority){
+
+		priority_ = priority;
+
+	}
 
 	inline Camera::ProjectionMode Camera::GetProjectionMode() const{
 

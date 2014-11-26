@@ -41,9 +41,7 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11)),
 scene_(Scene::GetInstance())
 {
 	
-	/// TESTING STUFFS
-
-	/////////////////////////////////////
+	// Graphics setup
 
 	SetTitle(kWindowTitle);
 
@@ -53,32 +51,27 @@ scene_(Scene::GetInstance())
 
 	output_ = graphics_.CreateOutput(*this, p.video_modes[0]);
 
-	/////////////////////////////////////
-	
+	// Camera setup
+
 	SceneNodeBuilder camera_builder = scene_.GetRoot().GetBuilder();
 
 	auto & camera_node = camera_builder.Build();
 		
-	camera_ = camera_node.AddComponent<Camera>(output_->GetRenderTarget());
+	camera_ = camera_node.AddComponent<Camera>(output_->GetRenderTarget());	// The camera will render directly on the backbuffer
 	
 	camera_->SetFarPlane(1000);
 	camera_->SetNearPlane(1);
 	camera_->SetFieldOfView(Math::kPi * 0.5f);
 	camera_->SetProjectionMode(Camera::ProjectionMode::kPerspective);
+	
+	//Scene import
 
-	//camera_node.SetRotation(Quaternionf(AngleAxisf(Math::kPi * 0.5f, Vector3f::Identity())));
-	//camera_node.SetPosition(Translation3f(Vector3f(0.0f, 0.0f, 1000.0f)));
+	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", scene_.GetRoot(), graphics_.GetManager());
 
-	auto & manager = graphics_.GetManager();
-
-	//FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", scene_.GetRoot(), graphics_.GetManager());
-
-	auto s = manager.GetSize();
-
-	////////////////////////////////////
-
+	// Bounding volume hierarchy rebuild
+	
 	scene_.GetBVH().Rebuild();
-		
+
 }
 
 GILogic::~GILogic(){
