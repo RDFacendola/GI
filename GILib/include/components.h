@@ -223,6 +223,8 @@ namespace gi_lib{
 		/// \param target The render target of the camera.
 		Camera(SceneNode & node, shared_ptr<RenderTarget> target);
 
+		~Camera();
+
 		/// \brief Get the camera render priority.
 
 		/// Cameras with high priority will draw their scene first.
@@ -329,6 +331,10 @@ namespace gi_lib{
 		/// \return Return the current view frustum.
 		Frustum GetViewFrustum() const;
 
+		/// \brief Get the list of all the cameras instantiated.
+		/// \return Returns a vector containing all the camera components that have been instantiated.
+		static const vector<Camera *> GetCameras();
+
 	protected:
 
 		/// \brief Update the component.
@@ -337,6 +343,8 @@ namespace gi_lib{
 		virtual void Update(const Time & time);
 
 	private:
+
+		static vector<Camera*> cameras_;		///< List of all cameras, sorted by priority (ascending)
 
 		int priority_;							///< \brief Camera priority.
 
@@ -368,6 +376,8 @@ namespace gi_lib{
 			float ortho_size_;					///< \brief Units of the scene the camera can display vertically. Valid when projection mode is "Orthographic".
 
 		};
+
+		static void SortCamerasByPriority();
 
 	};
 
@@ -475,6 +485,8 @@ namespace gi_lib{
 	inline void Camera::SetPriority(int priority){
 
 		priority_ = priority;
+
+		SortCamerasByPriority();
 
 	}
 
@@ -592,4 +604,10 @@ namespace gi_lib{
 
 	}
 	
+	inline const vector<Camera *> Camera::GetCameras(){
+
+		return cameras_;
+		
+	}
+
 }

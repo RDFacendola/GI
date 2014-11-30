@@ -66,7 +66,7 @@ scene_(Scene::GetInstance())
 	
 	//Scene import
 
-	FBXImporter::GetInstance().ImportScene(Application::GetInstance().GetDirectory() + L"Data\\gisponza.fbx", scene_.GetRoot(), graphics_.GetManager());
+	FBXImporter::GetInstance().ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", scene_.GetRoot(), graphics_.GetManager());
 
 	// Bounding volume hierarchy rebuild
 	
@@ -83,6 +83,8 @@ void GILogic::Update(const Time & time){
 	scene_.Update(time);
 
 	auto f = camera_->GetViewFrustum();
+
+	auto & c = Camera::GetCameras();
 
 	output_->Commit();
 	

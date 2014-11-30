@@ -77,6 +77,8 @@ Aspect::~Aspect(){}
 
 /////////////////////// CAMERA /////////////////////////////////////////
 
+vector<Camera *> Camera::cameras_;
+
 Camera::Camera(SceneNode & node, shared_ptr<RenderTarget> target) :
 NodeComponent(node),
 target_(target){
@@ -106,6 +108,24 @@ target_(target){
 	ortho_size_ = 1.0f;
 
 	priority_ = 0;
+
+	//Add the camera to the sorted list
+
+	cameras_.push_back(this);
+
+	SortCamerasByPriority();
+	
+}
+
+Camera::~Camera(){
+
+	// Remove this camera from the camera list
+	cameras_.erase(std::remove(cameras_.begin(),
+		cameras_.end(),
+		this),
+		cameras_.end());
+
+	SortCamerasByPriority();
 
 }
 
@@ -149,7 +169,7 @@ Frustum Camera::GetViewFrustum() const{
 
 	}
 	
-	// Compute the frustum from view * proj matrix
+	// Compute the frustum from view-proj matrix
 
 	// Fancy details here: http://www.chadvernon.com/blog/resources/directx9/frustum-culling/
 	// more: http://fgiesen.wordpress.com/2012/08/31/frustum-planes-from-the-projection-matrix/
@@ -166,5 +186,17 @@ Frustum Camera::GetViewFrustum() const{
 	frustum.planes[5] = view_proj_matrix.row(3) - view_proj_matrix.row(2);		// Far
 
 	return frustum;
+
+}
+
+void Camera::SortCamerasByPriority(){
+
+	std::sort(cameras_.begin(),
+		cameras_.end(),
+		[](const Camera * first, const Camera * second){
+
+		return first->GetPriority() < second->GetPriority();
+
+	});
 
 }
