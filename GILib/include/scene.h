@@ -37,59 +37,6 @@ namespace gi_lib{
 	class Scene;
 	class SceneNode;
 	
-	/// \brief Used to build a scene node
-	class SceneNodeBuilder{
-
-	public:
-
-		/// \brief Create a new scene node builder.
-		/// \param parent The node's parent
-		SceneNodeBuilder(SceneNode & parent);
-
-		/// \brief Set the node's parent.
-		/// \param parent The node's parent.
-		void SetParent(SceneNode & parent);
-
-		/// \brief Set the node's name.
-		/// \param name The node's name.
-		void SetName(const wstring & name);
-
-		/// \brief Set the node's position.
-		/// \param position The node's position.
-		void SetPosition(const Translation3f & position);
-
-		/// \brief Set the node's rotation.
-		/// \param rotation The node's rotation.
-		void SetRotation(const Quaternionf & rotation);
-
-		/// \brief Set the node's scaling.
-		/// \param scaling The node's scaling.
-		void SetScaling(const AlignedScaling3f & scaling);
-
-		/// \brief Set the node's tags.
-		/// \param tags The node's tags.
-		void SetTags(initializer_list<wstring> tags);
-
-		/// \brief Build a new scene node.
-		/// \return Returns a new scene node built according to the previous parameters set.
-		SceneNode & Build() const;
-
-	private:
-
-		SceneNode * parent_;
-
-		wstring name_ = L"";
-
-		Translation3f position_ = Translation3f(Vector3f::Zero());
-
-		Quaternionf rotation_ = Quaternionf::Identity();
-
-		AlignedScaling3f scaling_ = AlignedScaling3f(Vector3f::Ones());
-
-		initializer_list<wstring> tags_;
-
-	};
-
 	/// \brief Represents a scene node.
 
 	/// A node may represents a camera, a light, a model and so on.
@@ -102,36 +49,34 @@ namespace gi_lib{
 	public:
 		
 		/// \brief Type of the component list.
-		using ComponentList = vector < shared_ptr<NodeComponent> >;
+		using ComponentList = vector < unique_ptr<NodeComponent> >;
 
 		/// \brief Type of the children list.
-		using ChildrenList = vector < SceneNode* > ;
-
-		/// \brief Create a root node.
-		SceneNode();
+		using ChildrenList = vector < unique_ptr<SceneNode> > ;
 
 		/// \brief Create a scene node.
+		/// \param scene The scene this node belongs to.
 		/// \param name Name of the scene node. It may not be unique.
 		/// \param position Position of the node in local space.
 		/// \param rotation Rotation of the node in local space.
 		/// \param scaling Scaling of the node in local space.
 		/// \param tags List of tags associated to the scene node.
-		SceneNode(const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags);
+		SceneNode(Scene & scene, const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags);
 
 		/// \brief Destroy the current scene node and all the children.
-		~SceneNode();
-
+		virtual ~SceneNode();
+		
 		/// \brief No copy constructor.
-		SceneNode(const SceneNode & other) = delete;
+		SceneNode(const SceneNode &) = delete;
 
 		/// \brief No assignment operator.
-		SceneNode & operator=(const SceneNode & other) = delete;
+		SceneNode & operator=(const SceneNode &) = delete;
 		
 		/// \brief Add a new component.
 		/// \tparam TNodeComponent Type of the component to add. It must derive from NodeComponent.
 		/// \param args Arguments to pass to the component's constructor.
 		template<typename TNodeComponent, typename... TArgs>
-		std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, shared_ptr<TNodeComponent>> AddComponent(TArgs&&... args);
+		std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, TNodeComponent*> AddComponent(TArgs&&... args);
 
 		/// \brief Remove all the component whose dynamic type matches the specified one.
 
@@ -142,31 +87,31 @@ namespace gi_lib{
 		/// \brief Remove the specified component.
 		/// \tparam TNodeComponent Type of the component to remove. It must derive from NodeComponent.
 		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
-		void RemoveComponent(typename shared_ptr<TNodeComponent> component);
+		void RemoveComponent(TNodeComponent * component);
 
 		/// \brief Get the first component whose dynamic type matched the specified one.
 		/// \tparam TNodeComponent Dynamic type of the component to get. It must derive from NodeComponent.
 		/// \return Returns a pointer to the first component matching the specified type. Returns null if no component could be found.
 		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
-		typename shared_ptr<TNodeComponent> GetComponent();
+		typename TNodeComponent * GetComponent();
 
 		/// \brief Get the first component whose dynamic type matched the specified one.
 		/// \tparam TNodeComponent Dynamic type of the component to get. It must derive from NodeComponent.
 		/// \return Returns a pointer to the first component matching the specified type. Returns null if no component could be found.
 		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
-		typename shared_ptr<const TNodeComponent> GetComponent() const;
+		typename const TNodeComponent * GetComponent() const;
 
 		/// \brief Get the list of all components whose dynamic type match the specified one.
 		/// \tparam TNodeComponent Dynamic type of the components to get. It must derive from NodeComponent.
 		/// \return Returns the list of all components matching the specified type.
 		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
-		typename vector < shared_ptr<TNodeComponent> > GetComponents();
+		typename vector < TNodeComponent * > GetComponents();
 
 		/// \brief Get the list of all components whose dynamic type match the specified one.
 		/// \tparam TNodeComponent Dynamic type of the components to get. It must derive from NodeComponent.
 		/// \return Returns the list of all components matching the specified type.
 		template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type* = nullptr>
-		typename vector < shared_ptr<const TNodeComponent> > GetComponents() const;
+		typename vector < const TNodeComponent * > GetComponents() const;
 
 		/// \brief Prepare the node for the update.
 
@@ -227,61 +172,34 @@ namespace gi_lib{
 		bool IsWorldTransformChanged() const;
 
 		/// \brief Get this node's parent.
-		/// \return Returns a reference to the node's parent. If the node is actually the root of the scene, it returns a reference to this object.
-		SceneNode & GetParent();
+		/// \return Returns a pointer to the parent node if any. Returns nullptr otherwise.
+		SceneNode * GetParent();
 		
 		/// \brief Get this node's parent.
-		/// \return Returns a reference to the node's parent. If the node is actually the root of the scene, it returns a reference to this object.
-		const SceneNode & GetParent() const;
+		/// \return Returns a pointer to the parent node if any. Returns nullptr otherwise.
+		const SceneNode * GetParent() const;
 
 		/// \brief Set this node's parent.
 
 		/// The specified parent will take node's ownership and will destroy this node upon its own destruction.
-		/// You may not change a scene root`s parent or create a new root (by setting the parent parameter to *this, for example)
-		/// You amy not create cycles inside the scene graph!
 		/// \param parent The new parent.
 		void SetParent(SceneNode & parent);
 
-		/// \brief Remove this node from the parent's children.
-		void ResetParent();
-
-		/// \brief Check whether this node is a root.
-		/// \return Returns true if the node is a root, false otherwise.
-		bool IsRoot() const;
-
-		/// \brief Get the builder used to build child nodes.
-		/// \return Return a builder whose parent is the current instance.
-		SceneNodeBuilder GetBuilder();
-
-		/// \brief Get the first child.
-		/// \return Returns an iterator to the first child
-		ChildrenList::iterator ChildrenBegin();
-
-		/// \brief Get one element past the last child.
-		/// \return Returns an iterator to the first child past the last one. Do not dereference this iterator!
-		ChildrenList::iterator ChildrenEnd();
-
-		/// \brief Get the first child.
-		/// \return Returns an iterator to the first child
-		ChildrenList::const_iterator ChildrenBegin() const;
-
-		/// \brief Get one element past the last child.
-		/// \return Returns an iterator to the first child past the last one. Do not dereference this iterator!
-		ChildrenList::const_iterator ChildrenEnd() const;
-
 		/// \brief Get the children count.
-		/// \return Returns the children count
+		/// \return Returns the children count.
 		unsigned int GetChildrenCount() const;
 
-		/// \brief Find all the nodes matching the specified name.
-		/// \param name The name to find.
-		/// \return Return a list containing all the scene nodes which are children of this node and whose name matches the specified one.
-		vector<reference_wrapper<SceneNode>> FindNodeByName(const wstring & name);
+		/// \brief Get a children knowing its index.
 
-		/// \brief Find all the nodes matching all the specified tags.
-		/// \param tags Tags to find.
-		/// \return Return a list containing all the scene nodes which are children of this node whose tags matches all the specified ones.
-		vector<reference_wrapper<SceneNode>> FindNodeByTag(std::initializer_list<wstring> tags);
+		/// The method throws if the index exceeds the number of the actual children.
+		/// \return Return the child whose index is the specified one.
+		SceneNode & GetChildAt(unsigned int index);
+
+		/// \brief Get a children knowing its index.
+
+		/// The method throws if the index exceeds the number of the actual children.
+		/// \return Return the child whose index is the specified one.
+		const SceneNode & GetChildAt(unsigned int index) const;
 
 		// Identity
 
@@ -341,10 +259,18 @@ namespace gi_lib{
 
 		void UpdateWorldTransform() const;
 
-		void FindNodeByName(vector<reference_wrapper<SceneNode>> & nodes, const wstring & name);
+		SceneNode & AddNode(unique_ptr<SceneNode> && node);
 
-		void FindNodeByTag(vector<reference_wrapper<SceneNode>> & nodes, std::initializer_list<wstring> tags);
+		unique_ptr<SceneNode> MoveNode(SceneNode & node);
 
+		void DestroyNode(SceneNode & node);
+		
+		// Identity
+
+		void FindNodeByName(const wstring & name, vector<SceneNode *> & nodes);
+
+		void FindNodeByTag(std::initializer_list<wstring> & tags, vector<SceneNode *> nodes);
+		
 		// Components
 
 		ComponentList components_;
@@ -372,7 +298,7 @@ namespace gi_lib{
 		mutable bool world_dirty_;									
 		
 		// Identity
-		//Scene & scene_;
+		Scene & scene_;
 
 		wstring name_;
 
@@ -387,23 +313,50 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Get the singleton instance.
-		/// \return Returns the singleton instance.
-		static Scene & GetInstance();
-		
+		/// \brief Create a new scene.
+		Scene();
+				
 		/// \brief Destroy the scene instance.
 		~Scene();
+
+		/// \brief No copy ctor
+		Scene(const Scene &) = delete;
 
 		/// \brief No assignment operator.
 		Scene & operator=(const Scene &) = delete;
 
+		/// \brief Create a new node.
+		/// \param name The name of the node to add.
+		/// \param position The position of the node with respect to the world's origin.
+		/// \param rotation The rotation of the node.
+		/// \param scaling The scaling of the node.
+		/// \param tags The tags associated to the node to add.
+		/// \return Returns the created node.
+		SceneNode & CreateNode(const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags);
+
+		/// \brief Create a new node.
+		/// \return Returns the created node.
+		SceneNode & CreateNode();
+
+		/// \brief Destroy an existing node.
+		void DestroyNode(SceneNode & node);
+
+		/// \brief Get the scene root.
+		SceneNode & GetRoot();
+
+		/// \brief Find all the nodes matching the specified name.
+		/// \param name The name to find.
+		/// \return Return a list containing all the nodes whose name matches the specified one.
+		vector<SceneNode *> FindNodeByName(const wstring & name);
+
+		/// \brief Find all the nodes matching all the specified tags.
+		/// \param tags Tags to find.
+		/// \return Return a list containing all the nodes whose tags match all the specified ones.
+		vector<SceneNode *> FindNodeByTag(std::initializer_list<wstring> tags);
+
 		/// \brief Update the entire scene.
 		/// \param time The current application time.
 		void Update(const Time & time);
-
-		/// \brief Get the scene root.
-		/// \return Returns a reference to the scene root.
-		SceneNode & GetRoot();
 
 		/// \brief Get the scene's bounding volume hierarchy.
 		/// \return Returns a reference to the scene's bounding volume hierarchy.
@@ -411,78 +364,20 @@ namespace gi_lib{
 
 	private:
 
-		/// \brief Create a new scene.
-		Scene();
-
-		unique_ptr<SceneNode> root_;	// Root of the scene
+		unique_ptr<SceneNode> root_;
 
 		unique_ptr<BVH> bvh_;			// Bounding volume hierarchy
 
 	};
 
-	// SceneNodeBuilder
-
-	inline SceneNodeBuilder::SceneNodeBuilder(SceneNode & parent):
-		parent_(&parent){}
-
-	inline void SceneNodeBuilder::SetParent(SceneNode & parent){
-
-		parent_ = &parent;
-
-	}
-
-	inline void SceneNodeBuilder::SetName(const wstring & name){
-
-		name_ = name;
-
-	}
-
-	inline void SceneNodeBuilder::SetPosition(const Translation3f & position){
-
-		position_ = position;
-		
-	}
-
-	inline void SceneNodeBuilder::SetRotation(const Quaternionf & rotation){
-
-		rotation_ = rotation;
-
-	}
-
-	inline void SceneNodeBuilder::SetScaling(const AlignedScaling3f & scaling){
-
-		scaling_ = scaling;
-
-	}
-
-	inline void SceneNodeBuilder::SetTags(initializer_list<wstring> tags){
-
-		tags_ = tags;
-
-	}
-
-	inline SceneNode & SceneNodeBuilder::Build() const{
-
-		// TODO: add a memory pool for placement new to speed up the creation of the nodes.
-
-		auto & node = *new SceneNode(name_, position_, rotation_, scaling_, tags_);
-
-		node.SetParent(*parent_);
-		
-		return node;
-
-	}
-
 	// SceneNode - Components
 
 	template<typename TNodeComponent, typename... TArgs>
-	std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, shared_ptr<TNodeComponent>> SceneNode::AddComponent(TArgs&&... args){
+	std::enable_if_t<std::is_base_of<NodeComponent, TNodeComponent>::value, TNodeComponent*> SceneNode::AddComponent(TArgs&&... args){
 
-		auto component = std::make_shared<TNodeComponent>(*this, std::forward<TArgs>(args)...);
+		components_.push_back(make_unique<TNodeComponent>(*this, std::forward<TArgs>(args)...));
 
-		components_.push_back(static_pointer_cast<NodeComponent>(component));
-
-		return component;
+		return static_cast<TNodeComponent*>(components_.back().get());
 
 	}
 
@@ -491,59 +386,57 @@ namespace gi_lib{
 
 		components_.erase(std::remove_if(components_.begin(),
 			components_.end(),
-			[](const shared_ptr<NodeComponent> & component){ return dynamic_pointer_cast<TNodeComponent>(component) != nullptr; }),
+			[](const unique_ptr<NodeComponent> & component){ return dynamic_cast<TNodeComponent *>(component.get()) != nullptr; }),
 			components_.end());
 
 	}
 
 	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
-	void SceneNode::RemoveComponent(typename shared_ptr<TNodeComponent> component){
+	void SceneNode::RemoveComponent(typename TNodeComponent * component){
 
-		auto node_component = static_pointer_cast<NodeComponent>(component);
-
-		components_.erase(std::remove(components_.begin(),
+		components_.erase(std::remove_if(components_.begin(),
 			components_.end(),
-			component),
+			[](const unique_ptr<NodeComponent> & component){ return component.get() == static_cast<NodeComponent *>(component); }),
 			components_.end());
 
 	}
 
 	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
-	typename shared_ptr<TNodeComponent> SceneNode::GetComponent(){
+	typename TNodeComponent * SceneNode::GetComponent(){
 
 		auto it = std::find_if(components_.begin(),
 			components_.end(),
-			[](const shared_ptr<NodeComponent> & component){ return dynamic_pointer_cast<TNodeComponent>(component) != nullptr; });
+			[](const unique_ptr<NodeComponent> & component){ return dynamic_cast<TNodeComponent *>(component.get()) != nullptr; });
 
 		return it != components_.end() ?
-			static_pointer_cast<TNodeComponent>(*it) :
+			static_cast<TNodeComponent *>(it->get()) :
 			nullptr;
 
 	}
 
 	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
-	typename shared_ptr<const TNodeComponent> SceneNode::GetComponent() const{
+	typename const TNodeComponent *SceneNode::GetComponent() const{
 		
 		auto it = std::find_if(components_.begin(),
 			components_.end(),
-			[](const shared_ptr<NodeComponent> & component){ return dynamic_pointer_cast<TNodeComponent>(component) != nullptr; });
+			[](const unique_ptr<NodeComponent> & component){ return dynamic_cast<TNodeComponent *>(component.get()) != nullptr; });
 
 		return it != components_.end() ?
-			static_pointer_cast<const TNodeComponent>(*it) :
+			static_cast<const TNodeComponent *>(it->get()) :
 			nullptr;
 
 	}
 
 	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
-	typename vector < shared_ptr<TNodeComponent> > SceneNode::GetComponents(){
+	typename vector < TNodeComponent * > SceneNode::GetComponents(){
 
-		vector<shared_ptr<TNodeComponent>> components;
+		vector< TNodeComponent *> components;
 
-		shared_ptr<TNodeComponent> component;
+		TNodeComponent * component;
 
-		for (auto it : components_){
+		for (auto & it : components_){
 
-			component = dynamic_pointer_cast<TNodeComponent>(it);
+			component = dynamic_cast<TNodeComponent * >(it.get());
 
 			if (component != nullptr){
 
@@ -558,15 +451,15 @@ namespace gi_lib{
 	}
 
 	template<typename TNodeComponent, typename std::enable_if<std::is_base_of<NodeComponent, TNodeComponent>::value>::type*>
-	typename vector < shared_ptr<const TNodeComponent> > SceneNode::GetComponents() const{
+	typename vector < const TNodeComponent * > SceneNode::GetComponents() const{
 
-		vector<shared_ptr<const TNodeComponent>> components;
+		vector< const TNodeComponent *> components;
 
-		shared_ptr<const TNodeComponent> component;
+		const TNodeComponent * component;
 
-		for (auto it : components_){
+		for (auto & it : components_){
 
-			component = dynamic_pointer_cast<const TNodeComponent>(it);
+			component = dynamic_cast<const TNodeComponent * >(it.get());
 
 			if (component != nullptr){
 
@@ -646,75 +539,33 @@ namespace gi_lib{
 
 	}
 
-	inline SceneNode & SceneNode::GetParent(){
+	inline SceneNode * SceneNode::GetParent(){
 
-		if (!IsRoot()){
-
-			return *parent_;
-
-		}
-		else{
-
-			return *this;
-
-		}
+		return parent_;
 		
 	}
 
-	inline const SceneNode & SceneNode::GetParent() const {
-
-		if (!IsRoot()){
-
-			return *parent_;
-
-		}
-		else{
-
-			return *this;
-
-		}
+	inline const SceneNode * SceneNode::GetParent() const {
+		
+		return parent_;
 
 	}
 	
-	inline bool SceneNode::IsRoot() const{
-
-		return parent_ == nullptr;
-
-	}
-
-	inline SceneNode::ChildrenList::iterator SceneNode::ChildrenBegin(){
-
-		return children_.begin();
-
-	}
-
-	inline SceneNode::ChildrenList::iterator SceneNode::ChildrenEnd(){
-
-		return children_.end();
-
-	}
-
-	inline SceneNode::ChildrenList::const_iterator SceneNode::ChildrenBegin() const{
-
-		return children_.cbegin();
-
-	}
-
-	inline SceneNode::ChildrenList::const_iterator SceneNode::ChildrenEnd() const{
-
-		return children_.cend();
-
-	}
-
 	inline unsigned int SceneNode::GetChildrenCount() const{
 
 		return static_cast<unsigned int>(children_.size());
 
 	}
 
-	inline SceneNodeBuilder SceneNode::GetBuilder(){
+	inline SceneNode & SceneNode::GetChildAt(unsigned int index){
 
-		return SceneNodeBuilder(*this);
+		return *children_[index];
+
+	}
+
+	inline const SceneNode & SceneNode::GetChildAt(unsigned int index) const{
+
+		return *children_[index];
 
 	}
 
@@ -729,6 +580,18 @@ namespace gi_lib{
 	inline bool SceneNode::operator!=(const SceneNode & other) const{
 
 		return unique_ != other.unique_;
+
+	}
+
+	inline Scene & SceneNode::GetScene(){
+
+		return scene_;
+
+	}
+
+	inline const Scene & SceneNode::GetScene() const{
+
+		return scene_;
 
 	}
 

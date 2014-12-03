@@ -37,8 +37,7 @@ public:
 };
 
 GILogic::GILogic() :
-graphics_(Graphics::GetAPI(API::DIRECTX_11)),
-scene_(Scene::GetInstance())
+graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {
 	
 	// Graphics setup
@@ -53,10 +52,8 @@ scene_(Scene::GetInstance())
 
 	// Camera setup
 
-	SceneNodeBuilder camera_builder = scene_.GetRoot().GetBuilder();
+	auto & camera_node = scene_.CreateNode();
 
-	auto & camera_node = camera_builder.Build();
-		
 	camera_ = camera_node.AddComponent<Camera>(output_->GetRenderTarget());	// The camera will render directly on the backbuffer
 	
 	camera_->SetFarPlane(1000);
@@ -66,7 +63,7 @@ scene_(Scene::GetInstance())
 	
 	//Scene import
 
-	FBXImporter::GetInstance().ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", scene_.GetRoot(), graphics_.GetManager());
+	FBXImporter::GetInstance().ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", scene_.CreateNode(), graphics_.GetManager());
 
 	// Bounding volume hierarchy rebuild
 	

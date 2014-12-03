@@ -396,13 +396,11 @@ namespace{
 		Translation3f position = Translation3f(FbxVector4ToEigenVector3f(node_transform.GetT()));
 		Quaternionf rotation = Quaternionf(FbxQuaternionToEigenQuaternionf(node_transform.GetQ())).normalized();
 		AlignedScaling3f scaling = AlignedScaling3f(FbxVector4ToEigenVector3f(node_transform.GetS()));
-				
-		auto & scene_node = *new SceneNode(node_name,
-			position,
-			rotation,
-			scaling,
-			{});
+			
+		Scene & scene = scene_root.GetScene();
 
+		auto & scene_node = scene.CreateNode(node_name, position, rotation, scaling, {});
+		
 		scene_node.SetParent(scene_root);
 
 		FbxNodeAttribute * attribute;

@@ -30,13 +30,13 @@ namespace gi_lib{
 
 		/// \brief Add a new volume to the hierarchy.
 		/// \param volume The volume to add to the hierarchy.
-		virtual void AddVolume(Boundable & volume) = 0;
+		virtual void AddBoundable(Boundable & volume) = 0;
 
 		/// \brief Remove an existing volume from the hierarchy.
 
 		/// If the specified volume couldn't be found the method does nothing.
 		/// \param volume The volume to remove from the hierarchy.
-		virtual void RemoveVolume(Boundable & volume) = 0;
+		virtual void RemoveBoundable(Boundable & volume) = 0;
 
 		/// \brief Get the set of nodes which overlaps or are contained inside the specified frustum.
 		/// \param frustum The frustum used to test the volumes against.
@@ -59,9 +59,9 @@ namespace gi_lib{
 
 		virtual void Rebuild() override;
 
-		virtual void AddVolume(Boundable & volume) override;
+		virtual void AddBoundable(Boundable & volume) override;
 
-		virtual void RemoveVolume(Boundable & volume) override;
+		virtual void RemoveBoundable(Boundable & volume) override;
 
 		virtual vector<SceneNode *> GetIntersections(const Frustum & frustum) override;
 

@@ -200,7 +200,7 @@ void Octree::RecomputeBounds(){
 
 }
 
-void Octree::AddVolume(Boundable & volume){
+void Octree::AddBoundable(Boundable & volume){
 
 	objects_.push_back(&volume);
 
@@ -208,7 +208,7 @@ void Octree::AddVolume(Boundable & volume){
 
 }
 
-void Octree::RemoveVolume(Boundable & volume){
+void Octree::RemoveBoundable(Boundable & volume){
 
 	// TODO Remove the actual volume
 

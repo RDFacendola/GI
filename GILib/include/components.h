@@ -39,10 +39,10 @@ namespace gi_lib{
 		NodeComponent(SceneNode & node);
 
 		/// \brief No copy constructor.
-		NodeComponent(const NodeComponent & other) = delete;
+		NodeComponent(const NodeComponent &) = delete;
 
 		/// \brief No assignment operator.
-		NodeComponent & operator=(const NodeComponent & other) = delete;
+		NodeComponent & operator=(const NodeComponent &) = delete;
 
 		virtual ~NodeComponent();
 

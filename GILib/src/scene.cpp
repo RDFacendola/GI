@@ -1,27 +1,15 @@
 #include "..\include\scene.h"
 
 #include <algorithm>
+#include <assert.h>
 
 using namespace ::gi_lib;
 using namespace ::std;
 
 /////////////////////////// SCENE NODE //////////////////////////////////////
 
-SceneNode::SceneNode():
-name_(L""),
-unique_(Unique<SceneNode>::MakeUnique()),
-parent_(nullptr),
-position_(Translation3f(Vector3f::Zero())),
-rotation_(Quaternionf::Identity()),
-scale_(AlignedScaling3f(Vector3f::Ones())),
-local_dirty_(true),
-world_dirty_(true),
-world_changed_ (true)
-{
-
-}
-
-SceneNode::SceneNode(const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags) :
+SceneNode::SceneNode(Scene & scene, const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags) :
+scene_(scene),
 name_(name),
 tags_(tags),
 unique_(Unique<SceneNode>::MakeUnique()),
@@ -37,13 +25,7 @@ world_changed_(true){
 
 SceneNode::~SceneNode(){
 
-	ResetParent();
-
-	while (children_.size() > 0){
-
-		delete children_.back();
-
-	}
+	// Will destroy the children recursively...
 
 }
 
@@ -107,54 +89,72 @@ void SceneNode::PostUpdate(const Time & time){
 // Transformation & Hierarchy
 
 void SceneNode::SetParent(SceneNode & parent){
+	
+	// Prevents the root from changing parent...
+	assert(parent_ != nullptr);
 
-	ResetParent();
+	//Move from the old parent to the new one
 
-	// Add it to the new one
-	parent.children_.push_back(this);
+	parent.AddNode(parent_->MoveNode(*this));
 
-	parent_ = &parent;
+	parent_ = addressof(parent);
 
 	// The world matrix changed...
 	SetDirty(true);
 	
 }
 
-void SceneNode::ResetParent(){
+SceneNode & SceneNode::AddNode(unique_ptr<SceneNode> && node){
+	
+	auto & node_ref = *node;
 
-	if (!IsRoot()){
+	children_.push_back(std::move(node));
 
-		auto & parent_children = parent_->children_;
+	node_ref.parent_ = this;
 
-		// Erase this node from the current parent
-		parent_children.erase(std::remove(parent_children.begin(),
-			parent_children.end(),
-			this),
-			parent_children.end());
+	return node_ref;
+	
+}
 
-		parent_ = nullptr;
+unique_ptr<SceneNode> SceneNode::MoveNode(SceneNode & node){
+	
+	auto it = std::find_if(children_.begin(),
+		children_.end(),
+		[&node](unique_ptr<SceneNode> & node_ptr){
+
+		return node_ptr.get() == addressof(node);
+
+	});
+
+	if (it != children_.end()){
+
+		// Move the found node outside the children array and erase the old position.
+
+		auto node_ptr = std::move(*it);
+
+		children_.erase(it);
+
+		return node_ptr;
+
+	}
+	else{
+
+		return nullptr;	//Should never happen, though.
 
 	}
 	
 }
 
-vector<reference_wrapper<SceneNode>> SceneNode::FindNodeByName(const wstring & name){
+void SceneNode::DestroyNode(SceneNode & node){
 
-	vector<reference_wrapper<SceneNode>> result;
+	children_.erase(std::remove_if(children_.begin(),
+		children_.end(),
+		[&node](const unique_ptr<SceneNode> & node_ptr){
 
-	FindNodeByName(result, name);
+			return node_ptr.get() == addressof(node);
 
-	return result;
-
-}
-
-vector<reference_wrapper<SceneNode>> SceneNode::FindNodeByTag(std::initializer_list<wstring> tags){
-
-	vector<reference_wrapper<SceneNode>> result;
-
-	FindNodeByTag(result, tags);
-
-	return result;
+		}),
+		children_.end());
 
 }
 
@@ -167,7 +167,7 @@ void SceneNode::SetDirty(bool world_only) const{
 
 	// Dirtens every world matrix on the children
 
-	for (auto child : children_){
+	for (auto & child : children_){
 
 		child->SetDirty(true);
 
@@ -196,7 +196,7 @@ void SceneNode::UpdateWorldTransform() const{
 
 	if (world_dirty_){
 
-		if (!IsRoot()){
+		if (GetParent()){
 
 			// Local transform first, world transform then
 			world_transform_ = parent_->GetWorldTransform() * local_transform_;
@@ -215,37 +215,33 @@ void SceneNode::UpdateWorldTransform() const{
 
 }
 
-void SceneNode::FindNodeByName(vector<reference_wrapper<SceneNode>> & nodes, const wstring & name){
+void SceneNode::FindNodeByName(const wstring & name, vector<SceneNode *> & nodes){
 
-	// Check this node
-	if (this->name_ == name){
+	if (name_ == name){
 
-		nodes.push_back(*this);
+		nodes.push_back(this);
 
 	}
 
-	// Depth-first (keeps stack size limited)
 	for (auto & child : children_){
 
-		child->FindNodeByName(nodes, name);
+		child->FindNodeByName(name, nodes);
 
 	}
 
 }
 
-void SceneNode::FindNodeByTag(vector<reference_wrapper<SceneNode>> & nodes, std::initializer_list<wstring> tags){
+void SceneNode::FindNodeByTag(std::initializer_list<wstring> & tags, vector<SceneNode *> nodes){
 
-	// Check this node
 	if (HasTags(tags)){
 
-		nodes.push_back(*this);
+		nodes.push_back(this);
 
 	}
 
-	// Depth-first (keeps stack size limited)
 	for (auto & child : children_){
 
-		child->FindNodeByTag(nodes, tags);
+		child->FindNodeByTag(tags, nodes);
 
 	}
 
@@ -253,38 +249,74 @@ void SceneNode::FindNodeByTag(vector<reference_wrapper<SceneNode>> & nodes, std:
 
 /////////////////////////// SCENE ///////////////////////////////////////////
 
-Scene & Scene::GetInstance(){
+Scene::Scene(){
 
-	static Scene instance;
-
-	return instance;
+	root_ = make_unique<SceneNode>(*this, L"", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()), initializer_list < wstring > {});
+	bvh_ = make_unique<Octree>();
 
 }
 
-Scene::Scene() :
-root_(make_unique<SceneNode>()),
-bvh_(make_unique<Octree>()){}
-
 Scene::~Scene(){
 
-	// Nodes must be deleted before everything else.
 	root_ = nullptr;
-
-	//
-
 	bvh_ = nullptr;
+
+}
+
+SceneNode & Scene::CreateNode(const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags){
+
+	return root_->AddNode(make_unique<SceneNode>(*this, name, position, rotation, scaling, tags));
+
+}
+
+SceneNode & Scene::CreateNode(){
+
+	return CreateNode(L"", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()), {});
+
+}
+
+void Scene::DestroyNode(SceneNode & node){
+	
+	auto parent = node.GetParent();
+
+	if (parent){
+
+		parent->DestroyNode(node);
+
+	}
+	else{
+
+		// We are deleting the root and replacing it with a new one!
+		root_ = make_unique<SceneNode>(*this, L"", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()), initializer_list < wstring > {});
+
+	}
+
+}
+
+vector<SceneNode *> Scene::FindNodeByName(const wstring & name){
+
+	vector<SceneNode *> nodes;
+
+	root_->FindNodeByName(name, nodes);
+
+	return nodes;
+
+}
+
+vector<SceneNode *> Scene::FindNodeByTag(std::initializer_list<wstring> tags){
+
+	vector<SceneNode *> nodes;
+
+	root_->FindNodeByTag(tags, nodes);
+
+	return nodes;
 
 }
 
 void Scene::Update(const Time & time){
 
-	// Pre update
 	root_->PreUpdate(time);
-
-	// Update the hierarchy starting from the root.
 	root_->Update(time);
-
-	// Post update.
 	root_->PostUpdate(time);
 
 }

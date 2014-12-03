@@ -21,16 +21,14 @@ NodeComponent(node),
 bounds_(bounds){
 
 	// Add the volume to the BVH
-	Scene::GetInstance().GetBVH().AddVolume(*this);
+	GetNode().GetScene().GetBVH().AddBoundable(*this);
 
 }
 
 Boundable::~Boundable(){
 
 	// Remove the volume from the BVH
-	Scene::GetInstance()
-		  .GetBVH()
-		  .RemoveVolume(*this);
+	GetNode().GetScene().GetBVH().RemoveBoundable(*this);
 
 }
 

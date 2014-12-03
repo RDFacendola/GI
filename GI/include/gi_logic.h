@@ -28,8 +28,8 @@ private:
 
 	unique_ptr<Output> output_;
 
-	Scene & scene_;
+	Scene scene_;
 
-	shared_ptr<Camera> camera_;
+	Camera * camera_;
 
 };
