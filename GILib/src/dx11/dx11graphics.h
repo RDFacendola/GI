@@ -25,6 +25,8 @@ struct IDXGISwapChain;
 namespace gi_lib{
 
 	class Window;
+	class Camera;
+	class SceneNode;
 
 	namespace dx11{
 
@@ -66,7 +68,7 @@ namespace gi_lib{
 
 			virtual bool IsVSync() const override;
 
-			virtual void Commit() override;
+			virtual void Draw(Scene & scene) override;
 
 			virtual shared_ptr<RenderTarget> GetRenderTarget() override;
 
@@ -75,6 +77,8 @@ namespace gi_lib{
 			void UpdateSwapChain();
 
 			void UpdateViews();
+
+			void Draw(Camera & camera, const vector<SceneNode *> & nodes);
 
 			VideoMode video_mode_;
 
@@ -93,6 +97,8 @@ namespace gi_lib{
 			Window & window_;
 
 			ID3D11Device & device_;
+
+			unique_ptr<ID3D11DeviceContext, COMDeleter> immediate_context_;
 
 			IDXGIFactory & factory_;
 

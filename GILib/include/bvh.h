@@ -41,7 +41,7 @@ namespace gi_lib{
 		/// \brief Get the set of nodes which overlaps or are contained inside the specified frustum.
 		/// \param frustum The frustum used to test the volumes against.
 		/// \return Returns the set of the nodes whose bounding boxes are contained or overlap the specified frustum.
-		virtual vector<SceneNode *> GetIntersections(const Frustum & frustum) = 0;
+		virtual vector<SceneNode *> GetIntersections(const Frustum & frustum) const = 0;
 
 	};
 
@@ -63,7 +63,7 @@ namespace gi_lib{
 
 		virtual void RemoveBoundable(Boundable & volume) override;
 
-		virtual vector<SceneNode *> GetIntersections(const Frustum & frustum) override;
+		virtual vector<SceneNode *> GetIntersections(const Frustum & frustum) const override;
 
 	private:
 
@@ -75,7 +75,7 @@ namespace gi_lib{
 
 		void RecomputeBounds();
 
-		void GetIntersections(const Frustum & frustum, vector<Boundable *> & objects);
+		void GetIntersections(const Frustum & frustum, vector<Boundable *> & objects) const;
 
 		Octree * parent_;
 

@@ -28,6 +28,7 @@ namespace gi_lib{
 
 	class Window;
 	class Resource;
+	class Scene;
 
 	/// \brief Enumeration of all supported graphical API.
 	enum class API{
@@ -135,8 +136,8 @@ namespace gi_lib{
 		/// \return Returns true if VSync is enabled, false otherwise.
 		virtual bool IsVSync() const = 0;
 
-		/// \brief Finalize the current frame and deliver it on the output.
-		virtual void Commit() = 0;
+		/// \brief Draw the specified scene and commit.
+		virtual void Draw(Scene & scene) = 0;
 
 		/// \brief Get the render target associated to this output.
 		/// \return Returns the render target associated to this output.

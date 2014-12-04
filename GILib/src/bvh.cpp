@@ -214,7 +214,7 @@ void Octree::RemoveBoundable(Boundable & volume){
 
 }
 
-vector<SceneNode *> Octree::GetIntersections(const Frustum & frustum){
+vector<SceneNode *> Octree::GetIntersections(const Frustum & frustum) const{
 
 	vector<Boundable *> objects;
 
@@ -230,7 +230,7 @@ vector<SceneNode *> Octree::GetIntersections(const Frustum & frustum){
 
 	std::transform(objects.begin(), objects.end(), nodes.begin(), [](Boundable * boundable){
 
-		return &(boundable->GetNode());
+		return std::addressof(boundable->GetNode());
 
 	});
 
@@ -238,7 +238,7 @@ vector<SceneNode *> Octree::GetIntersections(const Frustum & frustum){
 
 }
 
-void Octree::GetIntersections(const Frustum & frustum, vector<Boundable *> & objects){
+void Octree::GetIntersections(const Frustum & frustum, vector<Boundable *> & objects) const{
 
 	if (!frustum.Intersect(bounds_)){
 
@@ -251,19 +251,21 @@ void Octree::GetIntersections(const Frustum & frustum, vector<Boundable *> & obj
 
 		// Reserve the entire capacity
 
-		objects.resize(objects.size() + objects_.size());
+		auto size = objects.size();
+
+		objects.resize(size + objects_.size());
 
 		auto end_it = std::copy_if(objects_.begin(), 
 								   objects_.end(), 
-								   objects.end(), 
-								   [&frustum](Boundable * b){ 
-			
-									return frustum.Intersect(*b); 
-		
-								    });
+								   objects.begin() + size,
+								   [&frustum](Boundable * b){
+
+									   return frustum.Intersect(*b);
+
+								   });
 
 		// Shrink it down
-		objects_.erase(end_it, objects_.end());
+		objects.resize(std::distance(objects.begin(), end_it));
 
 		// Recursion...
 

@@ -80,9 +80,7 @@ void GILogic::Update(const Time & time){
 	scene_.Update(time);
 
 	auto f = camera_->GetViewFrustum();
-
-	auto & c = Camera::GetCameras();
-
-	output_->Commit();
+	
+	output_->Draw(scene_);
 	
 }

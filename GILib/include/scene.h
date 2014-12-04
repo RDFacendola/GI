@@ -364,6 +364,10 @@ namespace gi_lib{
 		/// \return Returns a reference to the scene's bounding volume hierarchy.
 		BVH & GetBVH();
 
+		/// \brief Get the scene's bounding volume hierarchy.
+		/// \return Returns a reference to the scene's bounding volume hierarchy.
+		const BVH & GetBVH() const;
+
 		/// \brief Get the scene's cameras.
 		/// \return Returns a vector containing all the cameras inside the scene.
 		vector<Camera *> GetCameras();
@@ -665,6 +669,12 @@ namespace gi_lib{
 	}
 
 	inline BVH & Scene::GetBVH(){
+
+		return *bvh_;
+
+	}
+
+	inline const BVH & Scene::GetBVH() const{
 
 		return *bvh_;
 

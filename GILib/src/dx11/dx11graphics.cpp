@@ -6,12 +6,14 @@
 #include <dxgi.h>
 
 #include "..\..\include\core.h"
+#include "..\..\include\scene.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\resources.h"
 #include "..\..\include\resource_traits.h"
 
 #include "dx11resources.h"
 #include "dx11shared.h"
+
 
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d11.lib")
@@ -383,6 +385,24 @@ namespace{
 	const Builder::BuilderMap Builder::builder_map_{ Builder::Register<Mesh, Mesh::BuildMode::kNormalTextured>(),
 													 Builder::Register<Material, Material::BuildMode::kFromShader>() };
 	
+	/// \brief Utility class for rendering stuffs.
+	class RenderHelper{
+
+	public:
+
+		static void SetupRenderTarget(Camera & camera, ID3D11DeviceContext & context){
+
+			auto & target = resource_cast(*camera.GetRenderTarget());
+
+			target.Bind(context);
+
+
+
+
+		}
+
+	};
+
 }
 
 //////////////////////////////////// GRAPHICS ////////////////////////////////////
@@ -500,6 +520,14 @@ DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & fa
 
 																 });
 
+	// Get the immediate context
+
+	ID3D11DeviceContext * context;
+
+	device_.GetImmediateContext(&context);
+
+	immediate_context_.reset(context);
+
 }
 
 DX11Output::~DX11Output(){
@@ -572,11 +600,27 @@ void DX11Output::UpdateSwapChain(){
 
 }
 
-///Show the current frame and prepare the next one
-void DX11Output::Commit(){
+// Draw the specified scene
+void DX11Output::Draw(Scene & scene){
+
+	// Draw the scene from every camera
+	for (auto camera : scene.GetCameras()){
+
+		// Objects seen from the camera
+		auto nodes = scene.GetBVH().GetIntersections(camera->GetViewFrustum());
+
+		Draw(*camera, nodes);
+
+	}
 
 	swap_chain_->Present(IsVSync() ? 1 : 0,
 						 0);
+
+}
+
+void DX11Output::Draw(Camera & camera, const vector<SceneNode *> & nodes){
+
+	RenderHelper::SetupRenderTarget(camera, *immediate_context_);
 
 }
 

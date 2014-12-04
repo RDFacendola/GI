@@ -124,8 +124,14 @@ namespace gi_lib{
 			/// \brief Releases al the buffers referenced by the render target.
 			void ResetBuffers();
 
+			/// \brief Bind the render target to the specified context.
+			/// \param context The context to bound the render target to.
+			void Bind(ID3D11DeviceContext & context);
+
 		private:
 			
+			unique_ptr < ID3D11DepthStencilView, COMDeleter > depth_stencil_view_;
+
 			vector<unique_ptr<ID3D11RenderTargetView, COMDeleter>> target_views_;
 
 			vector<shared_ptr<DX11Texture2D>> textures_;
@@ -372,9 +378,9 @@ namespace gi_lib{
 		/// \param resource The shared pointer to the resource to cast.
 		/// \return Returns a shared pointer to the casted resource.
 		template <typename TResource>
-		typename ResourceMapping<TResource>::TMapped & resource_cast(shared_ptr<TResource> & resource){
+		typename ResourceMapping<TResource>::TMapped & resource_cast(TResource & resource){
 
-			return *static_cast<typename ResourceMapping<TResource>::TMapped *>(resource.get());
+			return static_cast<typename ResourceMapping<TResource>::TMapped&>(resource);
 
 		}
 
@@ -383,11 +389,12 @@ namespace gi_lib{
 		/// \param resource The shared pointer to the resource to cast.
 		/// \return Returns a shared pointer to the casted resource.
 		template <typename TResource>
-		typename ResourceMapping<TResource>::TMapped & resource_cast(const shared_ptr<TResource> & resource){
+		typename const ResourceMapping<TResource>::TMapped & resource_cast(const TResource & resource){
 
-			return *static_cast<typename ResourceMapping<TResource>::TMapped *>(resource.get());
+			return static_cast<const typename ResourceMapping<TResource>::TMapped&>(resource);
 
 		}
+
 
 		//
 

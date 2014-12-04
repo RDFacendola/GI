@@ -325,6 +325,9 @@ void DX11RenderTarget::SetBuffers(initializer_list<ID3D11Texture2D*> buffers){
 
 	}
 
+	// TODO: Create the depth stencil view
+
+
 	// Everything went as it should have...
 	rollback.Dismiss();
 
@@ -334,6 +337,32 @@ void DX11RenderTarget::ResetBuffers(){
 
 	textures_.clear();
 	target_views_.clear();
+
+}
+
+void DX11RenderTarget::Bind(ID3D11DeviceContext & context){
+
+	// Actual array of render target views.
+
+	vector<ID3D11RenderTargetView *> target_view_array(target_views_.size());
+
+	std::transform(target_views_.begin(),
+		target_views_.end(),
+		target_view_array.begin(),
+		[](unique_ptr<ID3D11RenderTargetView, COMDeleter> & target_view){
+
+			return target_view.get();
+
+		});
+
+	context.OMSetRenderTargets(static_cast<unsigned int>(target_view_array.size()),
+		&target_view_array[0],
+		depth_stencil_view_.get());
+
+	// TODO: Remove this stuff here!
+	float color[] = { 1.0f, 1.0f, 0.0f, 0.0f };
+
+	context.ClearRenderTargetView(target_view_array[0], color);
 
 }
 
@@ -441,7 +470,7 @@ void DX11Shader::CloneEffect(ID3DX11Effect ** effect) const{
 DX11Material::DX11Material(ID3D11Device &, const BuildSettings<Material, Material::BuildMode::kFromShader> & settings){
 
 	// Clone the effect of the shader
-	auto & shader = resource_cast(settings.shader);
+	auto & shader = resource_cast(*settings.shader);
 
 	ID3DX11Effect * effect;
 
@@ -943,7 +972,7 @@ bool DX11MaterialParameter::Write(const shared_ptr<Texture2D> in){
 
 	auto texture = variable_->AsShaderResource();
 
-	auto srv = &(resource_cast(in).GetShaderResourceView());
+	auto srv = &(resource_cast(*in).GetShaderResourceView());
 
 	if (texture->IsValid() &&
 		!FAILED(texture->SetResource(srv))){
