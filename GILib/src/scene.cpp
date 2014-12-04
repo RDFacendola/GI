@@ -320,3 +320,34 @@ void Scene::Update(const Time & time){
 	root_->PostUpdate(time);
 
 }
+
+void Scene::AddCamera(Camera & camera){
+
+	cameras_.push_back(std::addressof(camera));
+
+	SortCamerasByPriority();
+	
+}
+
+void Scene::RemoveCamera(Camera & camera){
+
+	cameras_.erase(std::remove(cameras_.begin(),
+		cameras_.end(),
+		std::addressof(camera)),
+		cameras_.end());
+
+	SortCamerasByPriority();
+
+}
+
+void Scene::SortCamerasByPriority(){
+
+	std::sort(cameras_.begin(),
+		cameras_.end(),
+		[](const Camera * first, const Camera * second){
+
+		return first->GetPriority() < second->GetPriority();
+
+	});
+
+}

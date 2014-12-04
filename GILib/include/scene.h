@@ -311,6 +311,8 @@ namespace gi_lib{
 	/// \brief Represents an entire scene.
 	class Scene{
 
+		friend class Camera;
+
 	public:
 
 		/// \brief Create a new scene.
@@ -362,11 +364,27 @@ namespace gi_lib{
 		/// \return Returns a reference to the scene's bounding volume hierarchy.
 		BVH & GetBVH();
 
+		/// \brief Get the scene's cameras.
+		/// \return Returns a vector containing all the cameras inside the scene.
+		vector<Camera *> GetCameras();
+
+		/// \brief Get the scene's cameras.
+		/// \return Returns a vector containing all the cameras inside the scene.
+		const vector<Camera *> & GetCameras() const;
+
 	private:
 
+		void AddCamera(Camera & camera);
+
+		void RemoveCamera(Camera & camera);
+
+		void SortCamerasByPriority();
+		
 		unique_ptr<SceneNode> root_;
 
 		unique_ptr<BVH> bvh_;			// Bounding volume hierarchy
+
+		vector<Camera *> cameras_;
 
 	};
 
@@ -649,6 +667,18 @@ namespace gi_lib{
 	inline BVH & Scene::GetBVH(){
 
 		return *bvh_;
+
+	}
+
+	inline vector<Camera *> Scene::GetCameras(){
+
+		return cameras_;
+
+	}
+
+	inline const vector<Camera *> & Scene::GetCameras() const{
+
+		return cameras_;
 
 	}
 
