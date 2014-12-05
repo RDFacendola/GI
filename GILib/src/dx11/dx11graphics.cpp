@@ -603,8 +603,6 @@ void DX11Output::SetFullscreen(bool fullscreen){
 ///Create a new swapchain given its description
 void DX11Output::UpdateSwapChain(){
 
-	//TODO: Release the outstanding references to the backbuffer in the context
-
 	// Description from video mode and antialiasing mode
 	DXGI_SWAP_CHAIN_DESC dxgi_desc;
 
@@ -658,7 +656,10 @@ void DX11Output::Draw(Scene & scene){
 
 void DX11Output::Draw(Camera & camera, const vector<SceneNode *> & nodes){
 
+	// Will bind and clear the camera's target correctly
 	RenderHelper::SetupRenderTarget(camera, *immediate_context_);
+
+
 
 }
 
@@ -669,7 +670,7 @@ void DX11Output::UpdateViews(){
 	swap_chain_->GetBuffer(0,
 		__uuidof(back_buffer),
 		reinterpret_cast<void**>(&back_buffer));
-
+	
 	if (!render_target_){
 
 		render_target_ = std::make_shared<DX11RenderTarget>(*back_buffer);

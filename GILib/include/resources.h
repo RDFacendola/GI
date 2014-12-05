@@ -146,6 +146,18 @@ namespace gi_lib{
 		/// \return Returns the texture associated to the index-th render target.
 		virtual shared_ptr<const Texture2D> GetTexture(int index) const = 0;
 
+		/// \brief Get the texture associated to the depth stencil buffer.
+		
+		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.
+		/// \return Returns the texture associated to the depth stencil buffer used by this render target.
+		virtual shared_ptr<Texture2D> GetZStencil() = 0;
+
+		/// \brief Get the texture associated to the depth stencil buffer.
+
+		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.
+		/// \return Returns the texture associated to the depth stencil buffer used by this render target.
+		virtual shared_ptr<const Texture2D> GetZStencil() const = 0;
+
 		/// \brief Get the aspect ratio of the render target.
 
 		/// The aspect ratio is Width/Height.

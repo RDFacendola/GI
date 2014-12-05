@@ -42,7 +42,8 @@ namespace gi_lib{
 
 			/// \brief Create a mew texture from an existing DirectX11 texture.
 			/// \param texture The DirectX11 texture.
-			DX11Texture2D(ID3D11Texture2D & texture);
+			/// \param format The format used when sampling from the texture.
+			DX11Texture2D(ID3D11Texture2D & texture, DXGI_FORMAT format);
 
 			virtual ~DX11Texture2D(){}
 
@@ -99,7 +100,8 @@ namespace gi_lib{
 			/// \brief Create a new render target from an existing buffer.
 
 			/// \param buffer Buffer reference.
-			DX11RenderTarget(ID3D11Texture2D & buffer);
+			/// \param device Device used to create the additional internal resources.
+			DX11RenderTarget(ID3D11Texture2D & target);
 
 			virtual ~DX11RenderTarget(){}
 
@@ -115,12 +117,16 @@ namespace gi_lib{
 
 			virtual shared_ptr<const Texture2D> GetTexture(int index) const override;
 
+			virtual shared_ptr<Texture2D> GetZStencil() override;
+
+			virtual shared_ptr<const Texture2D> GetZStencil() const override;
+
 			virtual float GetAspectRatio() const override;
 
 			/// \brief Set new buffers for the render target.
 
 			/// \param buffers The list of buffers to bound
-			void SetBuffers(std::initializer_list<ID3D11Texture2D*> buffers);
+			void SetBuffers(std::initializer_list<ID3D11Texture2D*> targets);
 
 			/// \brief Releases al the buffers referenced by the render target.
 			void ResetBuffers();
@@ -143,11 +149,13 @@ namespace gi_lib{
 
 		private:
 			
-			unique_ptr < ID3D11DepthStencilView, COMDeleter > depth_stencil_view_;
-
 			vector<unique_ptr<ID3D11RenderTargetView, COMDeleter>> target_views_;
 
+			unique_ptr < ID3D11DepthStencilView, COMDeleter > zstencil_view_;
+
 			vector<shared_ptr<DX11Texture2D>> textures_;
+
+			shared_ptr<DX11Texture2D> zstencil_;
 
 		};
 
@@ -506,6 +514,18 @@ namespace gi_lib{
 		inline shared_ptr<const Texture2D> DX11RenderTarget::GetTexture(int index) const{
 
 			return std::static_pointer_cast<const Texture2D>(textures_[index]);
+
+		}
+
+		inline shared_ptr<Texture2D> DX11RenderTarget::GetZStencil(){
+
+			return std::static_pointer_cast<Texture2D>(zstencil_);
+
+		}
+
+		inline shared_ptr<const Texture2D> DX11RenderTarget::GetZStencil() const{
+
+			return std::static_pointer_cast<const Texture2D>(zstencil_);
 
 		}
 

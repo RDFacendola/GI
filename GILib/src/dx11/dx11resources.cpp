@@ -79,7 +79,7 @@ namespace{
 
 	}
 	
-	/// \brief Convert an Eigen Vector3f to an XMFLOAT3
+	/// \brief Convert an Eigen Vector3f to an XMFLOAT3.
 	XMFLOAT3 EigenVector3fToXMFLOAT3(const Eigen::Vector3f & vector){
 
 		return XMFLOAT3(vector.x(), 
@@ -88,11 +88,45 @@ namespace{
 
 	}
 
-	/// \brief Convert an Eigen Vector2f to an XMFLOAT2
+	/// \brief Convert an Eigen Vector2f to an XMFLOAT2.
 	XMFLOAT2 EigenVector2fToXMFLOAT2(const Eigen::Vector2f & vector){
 
 		return XMFLOAT2(vector.x(),
 						vector.y());
+
+	}
+
+	/// \brief Create a depth stencil suitable for the provided target.
+
+	/// The resource must be manually released!
+	ID3D11Texture2D * MakeDepthStencil(ID3D11Device & device, ID3D11Texture2D & target){
+
+		ID3D11Texture2D * depth_stencil;
+
+		// Create the depth buffer for use with the depth/stencil view.
+		D3D11_TEXTURE2D_DESC desc;
+
+		target.GetDesc(&desc);
+
+		auto width = desc.Width;
+		auto height = desc.Height;
+
+		ZeroMemory(&desc, sizeof(D3D11_TEXTURE2D_DESC));
+
+		desc.ArraySize = 1;
+		desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+		desc.CPUAccessFlags = 0;
+		desc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+		desc.Width = width;
+		desc.Height = height;
+		desc.MipLevels = 1;
+		desc.SampleDesc.Count = 1;
+		desc.SampleDesc.Quality = 0;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+
+		THROW_ON_FAIL(device.CreateTexture2D(&desc, nullptr, &depth_stencil));
+
+		return depth_stencil;
 
 	}
 
@@ -196,6 +230,8 @@ namespace{
 					  
 	}
 
+
+
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
@@ -229,7 +265,7 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D
 	
 }
 
-DX11Texture2D::DX11Texture2D(ID3D11Texture2D & texture){
+DX11Texture2D::DX11Texture2D(ID3D11Texture2D & texture, DXGI_FORMAT format){
 
 	ID3D11Device * device;
 
@@ -239,8 +275,19 @@ DX11Texture2D::DX11Texture2D(ID3D11Texture2D & texture){
 
 	ID3D11ShaderResourceView * shader_view;
 
+	D3D11_TEXTURE2D_DESC texture_desc;
+
+	texture.GetDesc(&texture_desc);
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC view_desc;
+
+	view_desc.Format = format == DXGI_FORMAT_UNKNOWN ? texture_desc.Format : format;
+	view_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	view_desc.Texture2D.MostDetailedMip = 0;
+	view_desc.Texture2D.MipLevels = texture_desc.MipLevels;
+
 	THROW_ON_FAIL(device->CreateShaderResourceView(reinterpret_cast<ID3D11Resource *>(&texture),
-		nullptr,
+		&view_desc,
 		&shader_view));
 
 	texture_.reset(&texture);
@@ -287,18 +334,25 @@ void DX11Texture2D::UpdateDescription(){
 
 ///////////////////////////// RENDER TARGET ///////////////////////////////////////
 
-DX11RenderTarget::DX11RenderTarget(ID3D11Texture2D & buffer){
+DX11RenderTarget::DX11RenderTarget(ID3D11Texture2D & target){
 
-	SetBuffers({ &buffer });
+	SetBuffers({ &target });
 
 }
 
-void DX11RenderTarget::SetBuffers(initializer_list<ID3D11Texture2D*> buffers){
+void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> targets){
 
+	/// The render target view format and the shader resource view format for the render targets are the same of the textures they are generated from (DXGI_FORMAT_UNKNOWN).
+	/// The depth stencil texture is created with a 24bit channel for the depth and a 8bit channel for the stencil, both without a type (DXGI_FORMAT_R24G8_TYPELESS).
+	/// The depth stencil view format of the depth stencil texture is 24bit uniform for the depth and 8bit unsigned int for the stencil (DXGI_FORMAT_D24_UNORM_S8_UINT).
+	/// The shader resource view of the depth stencil texture is 24bit uniform for the depth. The stencil cannot be sampled inside the shader (DXGI_FORMAT_R24_UNORM_X8_TYPELESS).
+	
 	ResetBuffers();
 
 	ID3D11Device * device;
+	ID3D11Texture2D * zstencil;
 	ID3D11RenderTargetView * render_target_view;
+	ID3D11DepthStencilView * zstencil_view;
 
 	// Rollback guard ensures that the state of the render target is cleared upon error
 	// (ie: if one buffer causes an exception, the entire operation is rollback'd)
@@ -307,26 +361,44 @@ void DX11RenderTarget::SetBuffers(initializer_list<ID3D11Texture2D*> buffers){
 	
 		textures_.clear();
 		target_views_.clear();
+
+		zstencil_ = nullptr;
+		zstencil_view_ = nullptr;
 	
 	});
 
-	for (auto buffer : buffers){
+	(*targets.begin())->GetDevice(&device);
 
-		buffer->GetDevice(&device);
+	unique_ptr<ID3D11Device, COMDeleter> guard(device, COMDeleter{});	// Will release the device
 
-		unique_ptr<ID3D11Device, COMDeleter> guard(device, COMDeleter{});	// Will release the device
-
-		THROW_ON_FAIL(device->CreateRenderTargetView(reinterpret_cast<ID3D11Resource *>(buffer),
+	for (auto target : targets){
+		
+		THROW_ON_FAIL(device->CreateRenderTargetView(reinterpret_cast<ID3D11Resource *>(target),
 			nullptr,
 			&render_target_view));
 
-		textures_.push_back(make_shared<DX11Texture2D>(*buffer));
+		textures_.push_back(make_shared<DX11Texture2D>(*target, DXGI_FORMAT_UNKNOWN));
 		target_views_.push_back(std::move(unique_ptr<ID3D11RenderTargetView, COMDeleter>(render_target_view, COMDeleter{})));
 
 	}
 
-	// TODO: Create the depth stencil view
+	// Create the z-stencil and the z-stencil view
 
+	zstencil = MakeDepthStencil(*device, **targets.begin());
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC view_desc;
+
+	ZeroMemory(&view_desc, sizeof(view_desc));
+
+	view_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	
+	THROW_ON_FAIL(device->CreateDepthStencilView(reinterpret_cast<ID3D11Resource *>(zstencil),
+		&view_desc,
+		&zstencil_view));
+
+	zstencil_ = make_shared<DX11Texture2D>(*zstencil, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);				// This is the only format compatible with R24G8_TYPELESS used to create the depth buffer resource
+	zstencil_view_ = unique_ptr<ID3D11DepthStencilView, COMDeleter>(zstencil_view, COMDeleter{});
 
 	// Everything went as it should have...
 	rollback.Dismiss();
@@ -337,6 +409,8 @@ void DX11RenderTarget::ResetBuffers(){
 
 	textures_.clear();
 	target_views_.clear();
+	zstencil_ = nullptr;
+	zstencil_view_ = nullptr;
 
 }
 
@@ -357,13 +431,13 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext & context){
 
 	context.OMSetRenderTargets(static_cast<unsigned int>(target_view_array.size()),
 		&target_view_array[0],
-		depth_stencil_view_.get());
+		zstencil_view_.get());
 
 }
 
 void DX11RenderTarget::ClearDepthStencil(ID3D11DeviceContext & context, unsigned int clear_flags, float depth, unsigned char stencil){
 
-	context.ClearDepthStencilView(depth_stencil_view_.get(), clear_flags, depth, stencil);
+	context.ClearDepthStencilView(zstencil_view_.get(), clear_flags, depth, stencil);
 	
 }
 
