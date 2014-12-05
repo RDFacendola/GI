@@ -12,6 +12,7 @@
 #include <memory>
 #include <numeric>
 
+#include "..\..\include\graphics.h"
 #include "..\..\include\resources.h"
 #include "..\..\include\resource_traits.h"
 #include "dx11shared.h"
@@ -127,6 +128,18 @@ namespace gi_lib{
 			/// \brief Bind the render target to the specified context.
 			/// \param context The context to bound the render target to.
 			void Bind(ID3D11DeviceContext & context);
+
+			/// \brief Clear the depth stencil view.
+			/// \param context The context used to clear the view.
+			/// \param clear_flags Determines whether to clear the depth and\or the stencil buffer. (see: D3D11_CLEAR_FLAGS)
+			/// \param depth Depth value to store inside the depth buffer.
+			/// \param stencil Stencil valuet o store inside the stencil buffer.
+			void ClearDepthStencil(ID3D11DeviceContext & context, unsigned int clear_flags, float depth, unsigned char stencil);
+
+			/// \brief Clear every target view.
+			/// \param context The context used to clear the view.
+			/// \param color The color used to clear the targets.
+			void ClearTargets(ID3D11DeviceContext & context, Color color);
 
 		private:
 			

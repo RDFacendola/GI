@@ -98,7 +98,7 @@ target_(target){
 	far_plane_ = 1000.0f;
 
 	// Solid black
-	clear_color_ = Color{ { 1.0f, 0.0f, 0.0f, 0.0f } };
+	clear_color_ = Color{ { 0.0f, 0.0f, 0.0f, 0.0f } };
 
 	field_of_view_ = Math::DegToRad(60.0f);
 	ortho_size_ = 1.0f;

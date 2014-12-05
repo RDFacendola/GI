@@ -396,8 +396,44 @@ namespace{
 
 			target.Bind(context);
 
+			ClearRenderTarget(camera, context);
+			
+		}
 
+	private:
 
+		static void ClearRenderTarget(Camera & camera, ID3D11DeviceContext & context){
+
+			// TODO: This will clear the entire render target, regardless of the camera viewport.
+			// This usually won't be a problem, however if there are more than one camera drawing to a single render target,
+			// the additional cameras will overwrite everything unless their clear mode is set to "none".
+			// Also depth stencil "tricks" are not supported yet.
+
+			auto & target = resource_cast(*camera.GetRenderTarget());
+
+			switch (camera.GetClearMode()){
+
+			case Camera::ClearMode::kColor:
+
+				// Color and depth-stencil
+				target.ClearTargets(context, camera.GetClearColor());
+				target.ClearDepthStencil(context, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+				break;
+
+			case Camera::ClearMode::kDepthOnly:
+
+				// Depth stencil only
+				target.ClearDepthStencil(context, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+				break;
+
+			default:
+
+				// Do nothing
+				break;
+
+			}
 
 		}
 
@@ -603,7 +639,7 @@ void DX11Output::UpdateSwapChain(){
 // Draw the specified scene
 void DX11Output::Draw(Scene & scene){
 
-	// Draw the scene from every camera
+	// Draw the scene from every camera (High priority cameras are rendered first)
 	for (auto camera : scene.GetCameras()){
 
 		// Objects seen from the camera
@@ -615,6 +651,8 @@ void DX11Output::Draw(Scene & scene){
 
 	swap_chain_->Present(IsVSync() ? 1 : 0,
 						 0);
+
+	immediate_context_->ClearState();
 
 }
 

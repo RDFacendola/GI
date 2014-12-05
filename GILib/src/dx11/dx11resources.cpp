@@ -359,10 +359,30 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext & context){
 		&target_view_array[0],
 		depth_stencil_view_.get());
 
-	// TODO: Remove this stuff here!
-	float color[] = { 1.0f, 1.0f, 0.0f, 0.0f };
+}
 
-	context.ClearRenderTargetView(target_view_array[0], color);
+void DX11RenderTarget::ClearDepthStencil(ID3D11DeviceContext & context, unsigned int clear_flags, float depth, unsigned char stencil){
+
+	context.ClearDepthStencilView(depth_stencil_view_.get(), clear_flags, depth, stencil);
+	
+}
+
+void DX11RenderTarget::ClearTargets(ID3D11DeviceContext & context, Color color){
+
+	// The color is ARGB, however the method ClearRenderTargetView needs an RGBA.
+
+	float rgba_color[4];
+
+	rgba_color[0] = color.color.red;
+	rgba_color[1] = color.color.green;
+	rgba_color[2] = color.color.blue;
+	rgba_color[3] = color.color.alpha;
+
+	for (auto & rt_view : target_views_){
+
+		context.ClearRenderTargetView(rt_view.get(), rgba_color);
+
+	}
 
 }
 
