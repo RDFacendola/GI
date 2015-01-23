@@ -84,13 +84,6 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Enumeration of all possible load modes.
-		enum class LoadMode{
-
-			kFromDDS = 0,				///< The resource is loaded from a DDS file.
-
-		};
-
 		/// \brief Interface destructor.
 		virtual ~Texture2D(){}
 
@@ -170,13 +163,6 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Enumeration of all possible load modes.
-		enum class LoadMode{
-
-			kNormalTextured = 0,	///< The mesh declares vertex coordinates, texture coordinates and vertex normal.
-
-		};
-
 		virtual ~Mesh(){}
 
 		/// \brief Get the vertices count.
@@ -199,23 +185,41 @@ namespace gi_lib{
 
 	};
 
+
 	/// \brief Base interface for materials.
 
-	/// A material is a shader whose parameters are already set.
 	/// \author Raffaele D. Facendola
 	class Material : public Resource{
 
 	public:
 
-		/// \brief Enumeration of all possible load modes.
-		enum class LoadMode{
-
-			kFromShader = 0,			///< The material is loaded from a shader code.
-			kInstantiate = 1,			///< The material is an instance of another base material.
-
-		};
-
 		virtual ~Material(){}
+
+		/// \brief Get the index of a parameter knowing its name.
+
+		/// The parameter name is case-sensitive.
+		/// \param name The name of the parameter.
+		/// \return Returns the index of the parameter whose name matches the specified one.
+		virtual unsigned int GetParameterIndex(const wstring& name) const = 0;
+
+		/// \brief Get the index of a texture knowing its name.
+
+		/// The texture name is case-sensitive.
+		/// \param name The name of the texture.
+		/// \return Returns the index of the texture whose name matches the specified one.
+		virtual unsigned int GetTextureIndex(const wstring& name) const = 0;
+
+	};
+
+	/// \brief A material instance.
+
+	/// A material instance is a material whose parameter have already been set.
+	/// \author Raffaele D. Facendola
+	class MaterialInstance : public Resource{
+
+	public:
+
+		virtual ~MaterialInstance(){}
 
 		/// \brief Get the index of a parameter knowing its name.
 
@@ -288,14 +292,14 @@ namespace gi_lib{
 	// Material
 
 	template <typename TType>
-	inline bool Material::SetParameter(const wstring & name, const TType& value){
+	inline bool MaterialInstance::SetParameter(const wstring & name, const TType& value){
 
 		return SetParameter(name, &value, sizeof(TType));
 
 	}
 
 	template <typename TType>
-	inline bool Material::SetParameter(unsigned int index, const TType& value){
+	inline bool MaterialInstance::SetParameter(unsigned int index, const TType& value){
 
 		return SetParameter(index, &value, sizeof(TType));
 

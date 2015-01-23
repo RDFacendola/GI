@@ -161,10 +161,10 @@ namespace gi_lib{
 		~Resources(){};
 
 
-		template <typename TResource, typename TBundle, typename TBundle::cached* = nullptr>
+		template <typename TResource, typename TBundle, typename use_cache<TBundle>::type* = nullptr>
 		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Load(const typename TBundle& bundle);
 
-		template <typename TResource, typename TBundle>
+		template <typename TResource, typename TBundle, typename no_cache<TBundle>::type* = nullptr>
 		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Load(const typename TBundle& bundle);
 
 		/// \brief Get the amount of memory used by the resources loaded.
@@ -244,7 +244,7 @@ namespace gi_lib{
 
 	//
 
-	template <typename TResource, typename TBundle, typename TBundle::cached*>
+	template <typename TResource, typename TBundle, typename use_cache<TBundle>::type*>
 	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Resources::Load(const typename TBundle & bundle){
 
 		// Cached version
@@ -254,7 +254,7 @@ namespace gi_lib{
 		key.resource_type_id = std::type_index(typeid(TResource));
 		key.bundle_type_id = std::type_index(typeid(TBundle));
 
-		key.cache_key= settings.GetCacheKey();
+		key.cache_key = bundle.GetCacheKey();
 
 		auto it = resources_.find(key);
 
@@ -274,7 +274,7 @@ namespace gi_lib{
 		// Load the actual resource
 		auto resource = shared_ptr<Resource>(std::move(Load(type_index(typeid(TResource)),
 															std::type_index(typeid(TBundle)), 
-															&settings)));
+															&bundle)));
 
 		resources_[key] = std::weak_ptr<Resource>(resource);	// Stores a weak reference for caching reasons.
 
@@ -283,7 +283,7 @@ namespace gi_lib{
 		
 	}
 
-	template <typename TResource, typename TBundle>
+	template <typename TResource, typename TBundle, typename no_cache<TBundle>::type*>
 	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Resources::Load(const typename TBundle & bundle){
 
 		// Uncached version
@@ -291,7 +291,7 @@ namespace gi_lib{
 		// Load the actual resource
 		auto resource = shared_ptr<Resource>(std::move(Load(type_index(typeid(TResource)),
 															std::type_index(typeid(TBundle)), 
-															&settings)));
+															&bundle)));
 
 		//  This cast is safe as long as the virtual LoadResource is implemented properly!
 		return static_pointer_cast<TResource>(resource);

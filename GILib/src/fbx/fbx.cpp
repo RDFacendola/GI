@@ -16,7 +16,7 @@
 #include "..\..\include\exceptions.h"
 #include "..\..\include\graphics.h"
 #include "..\..\include\resources.h"
-#include "..\..\include\resource_traits.h"
+#include "..\..\include\bundles.h"
 #include "..\..\include\scene.h"
 #include "..\..\include\components.h"
 
@@ -248,7 +248,7 @@ namespace{
 	/// \param property The fbx property to read.
 	/// \param base_path The path of the fbx file.
 	/// \param resource Manager used to load the resources.
-	shared_ptr<Texture2D> LoadTexture(FbxProperty property, const wstring & base_path, Manager & resources){
+	shared_ptr<Texture2D> LoadTexture(FbxProperty property, const wstring & base_path, Resources & resources){
 
 		int count = property.GetSrcObjectCount<FbxFileTexture>();
 
@@ -260,7 +260,7 @@ namespace{
 
 			wstring w_file_name(file_name.begin(), file_name.end());
 
-			return resources.Load<Texture2D, Texture2D::LoadMode::kFromDDS>({ base_path + w_file_name });
+			return resources.Load<Texture2D, LoadFromFile>({ base_path + w_file_name });
 
 		}
 		else{
@@ -273,46 +273,42 @@ namespace{
 
 	/// \brief Build mesh method template. Used to dispatch different build methods. 
 	template<typename TVertexFormat>
-	void BuildMesh(const FbxMesh & mesh, SceneNode & node, Manager & resources);
+	void BuildMesh(const FbxMesh & mesh, SceneNode & node, Resources & resources);
 
 	/// \brief Builds an indexed mesh with texture coordinates.
-	template<> void BuildMesh<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, Manager & resources){
+	template<> void BuildMesh<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, Resources & resources){
 		
-		BuildSettings<Mesh, Mesh::BuildMode::kNormalTextured> settings;
+		BuildIndexedNormalTextured bundle;
 
-		settings.indices = ReadIndices(mesh);
+		bundle.indices = ReadIndices(mesh);
 
-		settings.vertices = ReadVertices<VertexFormatNormalTextured>(mesh);
+		bundle.vertices = ReadVertices<VertexFormatNormalTextured>(mesh);
 		
-		node.AddComponent<Geometry>(resources.Build<Mesh, Mesh::BuildMode::kNormalTextured>(settings));
+		node.AddComponent<Geometry>(resources.Load<Mesh, BuildIndexedNormalTextured>(bundle));
 
 	}
 
 	/// \brief Build material method template. Used to dispatch different build methods.
 	template<typename TVertexFormat>
-	void BuildMaterial(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Manager & resources);
+	void BuildMaterial(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Resources & resources);
 
 	/// \brief Builds a material with proper shader and textures.
-	template<> void BuildMaterial<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Manager & resources){
+	template<> void BuildMaterial<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Resources & resources){
 
 		// Phong shader
-		auto shader = resources.Load<Shader, Shader::LoadMode::kCompileFromFile>({ Manager::kPhongShaderFile });
+		auto base_material = resources.Load<Material, LoadFromFile>({ Resources::kPhongShaderFile });
 
-		if (!shader){
-
-			throw RuntimeException(L"Could not find built-in Phong shader");
-
-		}
+		auto diffuse_map_index = base_material->GetTextureIndex(L"diffuse_map");
 
 		// Materials
 
 		auto & parent = *mesh.GetNode();
 
-		vector<shared_ptr<Material>> materials;
+		vector<shared_ptr<MaterialInstance>> materials;
 
 		for (int m = 0; m < parent.GetSrcObjectCount<FbxSurfaceMaterial>(); ++m){
 
-			auto material = resources.Build<Material, Material::BuildMode::kFromShader>({ shader });
+			auto material_instance = resources.Load<MaterialInstance, InstantiateFromMaterial>({ base_material });
 
 			auto &surface = *parent.GetSrcObject<FbxSurfaceMaterial>(m);
 
@@ -322,7 +318,7 @@ namespace{
 			
 			if (diffuse){
 
-				material->GetParameterByName("diffuse_map")->Write(diffuse);
+				material_instance->SetTexture(diffuse_map_index, diffuse);
 
 			}
 			else{
@@ -342,7 +338,7 @@ namespace{
 			material->GetParameterByName("specular_map")->Write(specular);
 			material->GetParameterByName("bump_map")->Write(bump);
 			*/
-			materials.push_back(material);
+			materials.push_back(material_instance);
 
 		}
 
@@ -357,7 +353,7 @@ namespace{
 	/// \brief Attempts to load a mesh inside a scene.
 
 	/// The methods load the mesh from fbx and loads it inside the scene. If the original mesh is not supported this method does nothing.
-	void BuildObject(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Manager & resources){
+	void BuildObject(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Resources & resources){
 
 		if (!mesh.IsTriangleMesh()){
 
@@ -383,7 +379,7 @@ namespace{
 	/// \param scene_root Scene root where to import the nodes to.
 	/// \param base_path The path of the fbx file.
 	/// \param resources Manager used to load various resources.
-	void WalkFbxScene(FbxNode * fbx_node, SceneNode & scene_root, const wstring & base_path, Manager & resources){
+	void WalkFbxScene(FbxNode * fbx_node, SceneNode & scene_root, const wstring & base_path, Resources & resources){
 
 		// Node data
 		string name = fbx_node->GetName();
@@ -491,7 +487,7 @@ FBXImporter::~FBXImporter(){
 
 }
 
-void FBXImporter::ImportScene(const wstring & file_name, SceneNode & scene_root, Manager & resources){
+void FBXImporter::ImportScene(const wstring & file_name, SceneNode & scene_root, Resources & resources){
 
 	// Create the importer
 	string fbx_path = string(file_name.begin(), file_name.end());

@@ -14,28 +14,6 @@ using namespace ::Eigen;
 
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
-class Foo : public NodeComponent{
-
-public:
-
-	Foo(SceneNode & node) :
-		NodeComponent(node){}
-
-protected:
-
-	virtual void Update(const Time & time) override {};
-	
-};
-
-class Bar : public Foo{
-
-public:
-
-	Bar(SceneNode & node) :
-		Foo(node){}
-
-};
-
 GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {
@@ -79,8 +57,6 @@ void GILogic::Update(const Time & time){
 	
 	scene_.Update(time);
 
-	auto f = camera_->GetViewFrustum();
-	
 	output_->Draw(scene_);
 	
 }

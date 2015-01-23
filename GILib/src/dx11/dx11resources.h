@@ -206,11 +206,9 @@ namespace gi_lib{
 		/// \author Raffaele D. Facendola
 		class DX11Material : public Material{
 
-			friend class DX11MaterialParameter;
-
 		public:
 
-			/// \brief Create a new DirectX11 material instance.
+			/// \brief Create a new DirectX11 material.
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to load the material.
 			DX11Material(ID3D11Device & device, const LoadFromFile& bundle);
@@ -225,6 +223,42 @@ namespace gi_lib{
 
 			virtual unsigned int GetTextureIndex(const wstring& name) const override;
 
+		private:
+			
+			ResourcePriority priority_;
+
+			size_t size_;
+
+		};
+
+		/// \brief DirectX11 material instance.
+		/// \author Raffaele D. Facendola
+		class DX11MaterialInstance : public MaterialInstance{
+
+
+		public:
+
+			/// \brief Create a new DirectX11 material instance.
+			/// \param device The device used to load the graphical resources.
+			/// \param bundle Bundle used to load the material instance.
+			DX11MaterialInstance(ID3D11Device& device, const InstantiateFromMaterial& bundle);
+
+			virtual size_t GetSize() const override;
+
+			virtual ResourcePriority GetPriority() const override;
+
+			virtual void SetPriority(ResourcePriority priority) override;
+
+			virtual unsigned int GetParameterIndex(const wstring& name) const override;
+
+			template <typename TType>
+			bool SetParameter(const wstring& name, const TType& value);
+
+			template <typename TType>
+			bool SetParameter(unsigned int index, const TType& value);
+
+			virtual unsigned int GetTextureIndex(const wstring& name) const override;
+
 			virtual bool SetTexture(const wstring &name, shared_ptr<Texture2D> texture) override;
 
 			virtual bool SetTexture(unsigned int index, shared_ptr<Texture2D> texture) override;
@@ -236,7 +270,7 @@ namespace gi_lib{
 			virtual bool SetParameter(unsigned int index, const void* buffer, size_t size) override;
 
 		private:
-			
+
 			ResourcePriority priority_;
 
 			size_t size_;
@@ -251,6 +285,14 @@ namespace gi_lib{
 
 			/// \brief Concrete type associated to a Texture2D.
 			using TMapped = DX11Texture2D;
+
+		};
+
+		/// \brief Render target mapping.
+		template<> struct ResourceMapping < RenderTarget > {
+
+			/// \brief Concrete type associated to a Render Target
+			using TMapped = DX11RenderTarget;
 
 		};
 
@@ -270,11 +312,11 @@ namespace gi_lib{
 
 		};
 
-		/// \brief Render target mapping.
-		template<> struct ResourceMapping < RenderTarget > {
+		/// \brief Material instance mapping.
+		template<> struct ResourceMapping < MaterialInstance > {
 
-			/// \brief Concrete type associated to a Render Target
-			using TMapped = DX11RenderTarget;
+			/// \brief Concrete type associated to a MaterialInstance.
+			using TMapped = DX11MaterialInstance;
 
 		};
 

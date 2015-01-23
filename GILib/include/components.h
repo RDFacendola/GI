@@ -172,15 +172,15 @@ namespace gi_lib{
 
 		/// \brief Get the materials' vector.
 		/// \return Returns the materials' vector.
-		vector<shared_ptr<Material>> & GetMaterials();
+		vector<shared_ptr<MaterialInstance>> & GetMaterials();
 		
 		/// \brief Get the materials' vector.
 		/// \return Returns the materials' vector.
-		const vector<shared_ptr<Material>> & GetMaterials() const;
+		const vector<shared_ptr<MaterialInstance>> & GetMaterials() const;
 
 		/// \brief Set the materials' vector.
 		/// \param materials The new materials' vector.
-		void SetMaterials(const vector<shared_ptr<Material>> & materials);
+		void SetMaterials(const vector<shared_ptr<MaterialInstance>> & materials);
 
 	protected:
 
@@ -188,7 +188,7 @@ namespace gi_lib{
 
 	private:
 
-		vector<shared_ptr<Material>> materials_;
+		vector<shared_ptr<MaterialInstance>> materials_;
 
 	};
 
@@ -446,19 +446,19 @@ namespace gi_lib{
 
 	// Aspect
 
-	inline vector<shared_ptr<Material>> & Aspect::GetMaterials(){
+	inline vector<shared_ptr<MaterialInstance>> & Aspect::GetMaterials(){
 
 		return materials_;
 
 	}
 
-	inline const vector<shared_ptr<Material>> & Aspect::GetMaterials() const{
+	inline const vector<shared_ptr<MaterialInstance>> & Aspect::GetMaterials() const{
 
 		return materials_;
 
 	}
 
-	inline void Aspect::SetMaterials(const vector<shared_ptr<Material>> & materials){
+	inline void Aspect::SetMaterials(const vector<shared_ptr<MaterialInstance>> & materials){
 
 		materials_ = materials;
 

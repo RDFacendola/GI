@@ -14,7 +14,7 @@ using ::std::unique_ptr;
 namespace gi_lib{
 
 	class SceneNode;
-	class Manager;
+	class Resources;
 
 	/// \brief FBX file importer
 	/// \author Raffaele D. Facendola
@@ -36,7 +36,7 @@ namespace gi_lib{
 		/// \param file_name Name of the FBX file to import.
 		/// \param scene_root The node where all the imported scene will be attached.
 		/// \param resources Used to load resources during the import process.
-		void ImportScene(const wstring & file_name, SceneNode & scene_root, Manager & resources);
+		void ImportScene(const wstring & file_name, SceneNode & scene_root, Resources & resources);
 
 	private:
 

@@ -326,8 +326,9 @@ namespace{
 	// Add support for new resources HERE!
 
 	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, LoadFromFile>(),
-												 Loader::Register<Material, LoadFromFile>(),
-												 Loader::Register<Mesh, BuildIndexedNormalTextured>()};
+												 Loader::Register<Mesh, BuildIndexedNormalTextured>(),
+												 Loader::Register<Material, LoadFromFile>(), 
+												 Loader::Register<MaterialInstance, InstantiateFromMaterial>() };
 
 	/// \brief Utility class for rendering stuffs.
 	class RenderHelper{
@@ -618,7 +619,7 @@ void DX11Output::Draw(Camera & camera, const vector<SceneNode *> & nodes){
 
 	Aspect * aspect;
 
-	DX11Material * dx11_material;
+	DX11MaterialInstance * dx11_material;
 
 	for (auto node : nodes){
 

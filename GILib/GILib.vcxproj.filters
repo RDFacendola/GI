@@ -60,9 +60,6 @@
     <ClInclude Include="include\components.h">
       <Filter>scene</Filter>
     </ClInclude>
-    <ClInclude Include="include\resource_traits.h">
-      <Filter>graphics</Filter>
-    </ClInclude>
     <ClInclude Include="include\graphics.h">
       <Filter>graphics</Filter>
     </ClInclude>
@@ -73,6 +70,9 @@
     <ClInclude Include="external\fnv1.h" />
     <ClInclude Include="include\scope_guard.h" />
     <ClInclude Include="include\bvh.h" />
+    <ClInclude Include="include\bundles.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -100,9 +100,12 @@
       <Filter>FBX</Filter>
     </ClCompile>
     <ClCompile Include="src\gimath.cpp" />
-    <ClCompile Include="src\resource_traits.cpp">
+    <ClCompile Include="src\bvh.cpp" />
+    <ClCompile Include="src\bundles.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\bvh.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>
