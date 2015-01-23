@@ -236,7 +236,7 @@ namespace{
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
 
-DX11Texture2D::DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D, Texture2D::LoadMode::kFromDDS> & settings){
+DX11Texture2D::DX11Texture2D(ID3D11Device & device, const LoadFromFile& bundle){
 	
 	DDS_ALPHA_MODE alpha_mode;
 	ID3D11Resource * resource;
@@ -244,7 +244,7 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D
 
 	wstringstream file_name;
 
-	file_name << Application::GetInstance().GetDirectory() << settings.file_name;
+	file_name << Application::GetInstance().GetDirectory() << bundle.file_name;
 
 	THROW_ON_FAIL( CreateDDSTextureFromFileEx(&device, 
 											  file_name.str().c_str(), 
@@ -462,33 +462,33 @@ void DX11RenderTarget::ClearTargets(ID3D11DeviceContext & context, Color color){
 
 ///////////////////////////// MESH ////////////////////////////////////////////////
 
-DX11Mesh::DX11Mesh(ID3D11Device & device, const LoadSettings<Mesh, Mesh::LoadMode::kNormalTextured> & settings){
+DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildIndexedNormalTextured& bundle){
 
 	// Normal, textured mesh.
 
 	size_t vb_size = 0;
 	size_t ib_size = 0;
 	
-	vertex_buffer_.reset(MakeVertexBuffer(device, settings.vertices, vb_size));
+	vertex_buffer_.reset(MakeVertexBuffer(device, bundle.vertices, vb_size));
 
-	if (settings.indices.size() > 0){
+	if (bundle.indices.size() > 0){
 
-		index_buffer_.reset(MakeIndexBuffer(device, settings.indices, ib_size));
+		index_buffer_.reset(MakeIndexBuffer(device, bundle.indices, ib_size));
 	
-		polygon_count_ = settings.indices.size();
+		polygon_count_ = bundle.indices.size();
 
 	}
 	else{
 
-		polygon_count_ = settings.vertices.size() / 3;
+		polygon_count_ = bundle.vertices.size() / 3;
 
 	}
 
-	vertex_count_ = settings.vertices.size();
+	vertex_count_ = bundle.vertices.size();
 	LOD_count_ = 1;
 	size_ = vb_size + ib_size;
 
-	bounds_ = VerticesToBounds(settings.vertices);
+	bounds_ = VerticesToBounds(bundle.vertices);
 
 }
 
@@ -512,7 +512,7 @@ void DX11Mesh::SetPriority(ResourcePriority priority){
 
 ////////////////////////////// MATERIAL //////////////////////////////////////////////
 
-DX11Material::DX11Material(ID3D11Device &, const LoadSettings<Material, Material::LoadMode::kFromShader> & settings){
+DX11Material::DX11Material(ID3D11Device &, const LoadFromFile& bundle){
 
 	// TODO: Load the shader, perform reflection and stuffs
 	

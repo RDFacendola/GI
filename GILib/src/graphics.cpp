@@ -45,16 +45,13 @@ size_t Resources::GetSize(){
 //////////////// MANAGER::LOADKEY ////////////////////////////////
 
 Resources::ResourceMapKey::ResourceMapKey() :
-id(std::type_index(typeid(void)))
+resource_type_id(std::type_index(typeid(void))),
+bundle_type_id(resource_type_id)
 {}
 
 bool Resources::ResourceMapKey::operator<(const ResourceMapKey & other) const{
 
-	//Strict order by type_id first and settings_id after.
-
-	return id < other.id ||
-		id == other.id &&
-		cache_key < other.cache_key;
+	return memcmp(this, &other, sizeof(ResourceMapKey)) < 0;
 
 }
 

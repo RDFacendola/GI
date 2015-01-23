@@ -127,7 +127,7 @@ namespace gi_lib{
 
 		protected:
 
-			virtual unique_ptr<Resource> Load(const type_index & resource_type, int load_mode, const void * settings) override;
+			virtual unique_ptr<Resource> Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle) override;
 
 		private:
 

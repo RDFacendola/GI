@@ -14,7 +14,7 @@
 
 #include "..\..\include\graphics.h"
 #include "..\..\include\resources.h"
-#include "..\..\include\resource_traits.h"
+#include "..\..\include\bundles.h"
 #include "dx11shared.h"
 
 using ::std::wstring;
@@ -37,8 +37,8 @@ namespace gi_lib{
 			
 			/// \brief Create a new texture from DDS file.
 			/// \param device The device used to create the texture.
-			/// \param settings The load settings
-			DX11Texture2D(ID3D11Device & device, const LoadSettings<Texture2D, Texture2D::LoadMode::kFromDDS> & settings);
+			/// \param bundle The bundle used to load the texture.
+			DX11Texture2D(ID3D11Device & device, const LoadFromFile& bundle);
 
 			/// \brief Create a mew texture from an existing DirectX11 texture.
 			/// \param texture The DirectX11 texture.
@@ -167,8 +167,8 @@ namespace gi_lib{
 
 			/// \brief Create a new DirectX11 mesh.
 			/// \param device The device used to load the graphical resources.
-			/// \param settings Settings used to build the mesh.
-			DX11Mesh(ID3D11Device & device, const LoadSettings<Mesh, Mesh::LoadMode::kNormalTextured> & settings);
+			/// \param bundle Bundle used to create the mesh.
+			DX11Mesh(ID3D11Device & device, const BuildIndexedNormalTextured& bundle);
 
 			virtual size_t GetSize() const override;
 
@@ -212,8 +212,8 @@ namespace gi_lib{
 
 			/// \brief Create a new DirectX11 material instance.
 			/// \param device The device used to load the graphical resources.
-			/// \param settings The settings used to build the material.
-			DX11Material(ID3D11Device & device, const LoadSettings<Material, Material::LoadMode::kFromShader> & settings);
+			/// \param bundle Bundle used to load the material.
+			DX11Material(ID3D11Device & device, const LoadFromFile& bundle);
 
 			virtual size_t GetSize() const override;
 

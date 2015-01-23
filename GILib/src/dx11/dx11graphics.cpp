@@ -9,7 +9,7 @@
 #include "..\..\include\scene.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\resources.h"
-#include "..\..\include\resource_traits.h"
+#include "..\..\include\bundles.h"
 
 #include "dx11resources.h"
 #include "dx11shared.h"
@@ -273,7 +273,7 @@ namespace{
 	class Loader{
 
 		using LoaderFunction = unique_ptr<Resource>(*)(ID3D11Device &, const void *);
-		using LoaderKey = pair < std::type_index, int > ;
+		using LoaderKey = pair < std::type_index, std::type_index >;
 		using LoaderMap = map < LoaderKey, LoaderFunction >;
 
 	public:
@@ -284,36 +284,36 @@ namespace{
 		/// \param device Device used to create the resource.
 		/// \param settings Settings used to load the resource.
 		/// \return Returns a shared pointer to the loaded resource.
-		static unique_ptr<Resource> Load(const std::type_index & resource_type, int load_mode, ID3D11Device & device, const void * settings){
+		static unique_ptr<Resource> Load(const std::type_index & resource_type, const std::type_index & bundle_type, ID3D11Device & device, const void * bundle){
 
-			auto key = make_pair(resource_type, load_mode);
+			auto key = make_pair(resource_type, bundle_type);
 
 			auto it = loader_map_.find(key);
 
 			return it == loader_map_.end() ?
 				unique_ptr<Resource>() :			// Not supported
-				it->second(device, settings);
+				it->second(device, bundle);
 			
 		}
 
 	private:
 
 		/// \brief Load routine dispatcher.
-		template <typename TResource, typename TResource::LoadMode kLoadMode>
+		template <typename TResource, typename TBundle>
 		static unique_ptr<Resource> LoadResource(ID3D11Device & device, const void * settings){
 
 			// The resource created is the mapped type of TResource (eg: Texture2D => DX11Texture2D)
 			return make_unique<typename ResourceMapping<TResource>::TMapped>(device,
-				*static_cast<const LoadSettings<TResource, kLoadMode>*>(settings));
+																			 *static_cast<const TBundle*>(settings));
 
 		}
 
 		/// \brief Register the support for a resource type.
-		template <typename TResource, typename TResource::LoadMode kLoadMode>
+		template <typename TResource, typename TBundle>
 		static LoaderMap::value_type Register(){
 
-			auto key = make_pair(std::type_index(typeid(TResource)), static_cast<int>(kLoadMode));
-			auto value = LoadResource < TResource, kLoadMode > ;
+			auto key = make_pair(std::type_index(typeid(TResource)), std::type_index(typeid(TBundle)));
+			auto value = LoadResource < TResource, TBundle >;
 
 			return LoaderMap::value_type(key, value);
 
@@ -325,9 +325,9 @@ namespace{
 
 	// Add support for new resources HERE!
 
-	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, Texture2D::LoadMode::kFromDDS>(),
-												 Loader::Register<Material, Material::LoadMode::kFromShader>(),
-												 Loader::Register<Mesh, Mesh::LoadMode::kNormalTextured>()};
+	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, LoadFromFile>(),
+												 Loader::Register<Material, LoadFromFile>(),
+												 Loader::Register<Mesh, BuildIndexedNormalTextured>()};
 
 	/// \brief Utility class for rendering stuffs.
 	class RenderHelper{
@@ -664,8 +664,8 @@ void DX11Output::UpdateViews(){
 
 /////////////////////////////////// RESOURCES ///////////////////////////////////////////
 
-unique_ptr<Resource> DX11Resources::Load(const type_index & resource_type, int load_mode, const void * settings){
+unique_ptr<Resource> DX11Resources::Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle){
 
-	return Loader::Load(resource_type, load_mode, device_, settings);
+	return Loader::Load(resource_type, bundle_type, device_, bundle);
 
 }

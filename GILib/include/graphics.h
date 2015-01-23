@@ -14,7 +14,7 @@
 #include <tuple>
 
 #include "resources.h"
-#include "resource_traits.h"
+#include "bundles.h"
 
 using ::std::wstring;
 using ::std::vector;
@@ -160,23 +160,12 @@ namespace gi_lib{
 		/// \brief Default destructor;
 		~Resources(){};
 
-		/// \brief Load a resource.
 
-		/// This methods will use any cached resource if the load mode allows it.
-		/// \tparam Type of resource to load.
-		/// \param settings In depth load settings.
-		/// \return Return an handle to the specified resource. Throws if no resource is found.
-		template <typename TResource, typename TResource::LoadMode kLoadMode, typename LoadSettings<TResource, kLoadMode>::cached * = nullptr>
-		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Load(const typename LoadSettings<TResource, kLoadMode> & settings);
+		template <typename TResource, typename TBundle, typename TBundle::cached* = nullptr>
+		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Load(const typename TBundle& bundle);
 
-		/// \brief Load a resource.
-
-		/// This methods will load a resource when the caching is not supported by the load mode.
-		/// \tparam Type of resource to load.
-		/// \param settings In depth load settings.
-		/// \return Return an handle to the specified resource. Throws if no resource is found.
-		template <typename TResource, typename TResource::LoadMode kLoadMode>
-		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Load(const typename LoadSettings<TResource, kLoadMode> & settings);
+		template <typename TResource, typename TBundle>
+		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Load(const typename TBundle& bundle);
 
 		/// \brief Get the amount of memory used by the resources loaded.
 		size_t GetSize();
@@ -186,12 +175,13 @@ namespace gi_lib{
 		/// \brief Used as key to address the resource map flyweight.
 		struct ResourceMapKey{
 
-			/// \brief Unique id associated to the load mode.
-			type_index id;
+			/// \brief Type index associated to the type of the resource to load.
+			type_index resource_type_id;
 
-			/// \brief Unique cache key associated to the settings used to load the resource.
+			/// \brief Type index associated to the bundle type used to load the resource.
+			type_index bundle_type_id;
 
-			/// The cache key must be unique within the same type_id. Load modes with different type_id may have the same cache key and still refer to two different resources.
+			/// \brief Unique cache key associated to the bundle used to load the resource.
 			size_t cache_key;
 			
 			/// \brief Default constructor.
@@ -210,10 +200,10 @@ namespace gi_lib{
 
 		/// \brief Load a resource.
 		/// \param resource_type Resource's type index.
-		/// \param load_mode Load mode index.
-		/// \param settings Raw pointer to the load settings.
+		/// \param bundle_type Bundle's type index.
+		/// \param bundle Pointer to the bundle to be used to load the resource.
 		/// \return Returns a pointer to the loaded resource
-		virtual unique_ptr<Resource> Load(const type_index & resource_type, int load_mode, const void * settings) = 0;
+		virtual unique_ptr<Resource> Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle) = 0;
 
 	private:
 
@@ -254,14 +244,16 @@ namespace gi_lib{
 
 	//
 
-	template <typename TResource, typename TResource::LoadMode kLoadMode, typename LoadSettings<TResource, kLoadMode>::cached *>
-	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Resources::Load(const typename LoadSettings<TResource, kLoadMode> & settings){
+	template <typename TResource, typename TBundle, typename TBundle::cached*>
+	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Resources::Load(const typename TBundle & bundle){
 
 		// Cached version
 
 		ResourceMapKey key;
 
-		key.id = std::type_index(typeid(settings));
+		key.resource_type_id = std::type_index(typeid(TResource));
+		key.bundle_type_id = std::type_index(typeid(TBundle));
+
 		key.cache_key= settings.GetCacheKey();
 
 		auto it = resources_.find(key);
@@ -281,7 +273,7 @@ namespace gi_lib{
 
 		// Load the actual resource
 		auto resource = shared_ptr<Resource>(std::move(Load(type_index(typeid(TResource)),
-															static_cast<int>(kLoadMode), 
+															std::type_index(typeid(TBundle)), 
 															&settings)));
 
 		resources_[key] = std::weak_ptr<Resource>(resource);	// Stores a weak reference for caching reasons.
@@ -291,14 +283,14 @@ namespace gi_lib{
 		
 	}
 
-	template <typename TResource, typename TResource::LoadMode kLoadMode>
-	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Resources::Load(const typename LoadSettings<TResource, kLoadMode> & settings){
+	template <typename TResource, typename TBundle>
+	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Resources::Load(const typename TBundle & bundle){
 
 		// Uncached version
 
 		// Load the actual resource
 		auto resource = shared_ptr<Resource>(std::move(Load(type_index(typeid(TResource)),
-															static_cast<int>(kLoadMode),
+															std::type_index(typeid(TBundle)), 
 															&settings)));
 
 		//  This cast is safe as long as the virtual LoadResource is implemented properly!
