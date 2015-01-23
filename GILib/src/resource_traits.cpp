@@ -5,26 +5,22 @@
 using namespace gi_lib;
 using namespace std;
 
-void LoadSettings< Texture2D, Texture2D::LoadMode::kFromDDS >::FillTag(void * buffer, size_t size) const{
+size_t LoadSettings< Texture2D, Texture2D::LoadMode::kFromDDS >::GetCacheKey() const{
 
 	// The tag of this load setting is just the hash of the texture's path
 
 	std::string wfile(file_name.begin(), file_name.end());
 
-	size_t hash = ::hash::fnv_1{}(wfile);
-
-	memcpy_s(buffer, size, &hash, sizeof(hash));
+	return ::hash::fnv_1{}(wfile);
 
 }
 
-void LoadSettings< Shader, Shader::LoadMode::kCompileFromFile >::FillTag(void * buffer, size_t size) const{
+size_t LoadSettings< Material, Material::LoadMode::kFromShader >::GetCacheKey() const{
 
-	// The tag of this load setting is just the hash of the shader's path
+	// The tag of this load setting is just the hash of the texture's path
 
 	std::string wfile(file_name.begin(), file_name.end());
 
-	size_t hash = ::hash::fnv_1{}(wfile);
-
-	memcpy_s(buffer, size, &hash, sizeof(hash));
+	return ::hash::fnv_1{}(wfile);
 
 }

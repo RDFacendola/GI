@@ -323,68 +323,12 @@ namespace{
 
 	};
 
-	/// \brief Builder class. Maps every resource with their respective builder.
-	class Builder{
-
-		using BuilderFunction = unique_ptr<Resource>(*)(ID3D11Device &, const void *);
-		using BuilderKey = pair < std::type_index, int >;
-		using BuilderMap = map < BuilderKey, BuilderFunction >;
-
-	public:
-
-		/// \brief Build a resource.
-		/// \param type_index Type of the resource to load.
-		/// \param build_mode Index of the build mode.
-		/// \param device Device used to create the resource.
-		/// \param settings Settings used to build the resource.
-		/// \return Returns a shared pointer to the built resource.
-		static unique_ptr<Resource> Build(const std::type_index & resource_type, int build_mode, ID3D11Device & device, const void * settings){
-
-			auto key = make_pair(resource_type, build_mode);
-
-			auto it = builder_map_.find(key);
-
-			return it == builder_map_.end() ?
-				unique_ptr<Resource>() :			// Not supported
-				it->second(device, settings);
-
-		}
-
-	private:
-
-		/// \brief Build routine dispatcher.
-		template <typename TResource, typename TResource::BuildMode kBuildMode>
-		static unique_ptr<Resource> BuildResource(ID3D11Device & device, const void * settings){
-
-			// The resource created is the mapped type of TResource (eg: Texture2D => DX11Texture2D)
-			return make_unique<typename ResourceMapping<TResource>::TMapped>(device, 
-				*static_cast<const BuildSettings<TResource, kBuildMode>*>(settings));
-
-		}
-
-		/// \brief Register the support for a resource type.
-		template <typename TResource, typename TResource::BuildMode kBuildMode>
-		static BuilderMap::value_type Register(){
-
-			auto key = make_pair(std::type_index(typeid(TResource)), static_cast<int>(kBuildMode));
-			auto value = BuildResource < TResource, kBuildMode >;
-
-			return BuilderMap::value_type(key, value);
-
-		}
-
-		static const BuilderMap builder_map_;
-
-	};
-
 	// Add support for new resources HERE!
 
 	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, Texture2D::LoadMode::kFromDDS>(),
-												 Loader::Register<Shader, Shader::LoadMode::kCompileFromFile>() };
+												 Loader::Register<Material, Material::LoadMode::kFromShader>(),
+												 Loader::Register<Mesh, Mesh::LoadMode::kNormalTextured>()};
 
-	const Builder::BuilderMap Builder::builder_map_{ Builder::Register<Mesh, Mesh::BuildMode::kNormalTextured>(),
-													 Builder::Register<Material, Material::BuildMode::kFromShader>() };
-	
 	/// \brief Utility class for rendering stuffs.
 	class RenderHelper{
 
@@ -511,9 +455,9 @@ unique_ptr<Output> DX11Graphics::CreateOutput(Window & window, const VideoMode &
 
 }
 
-DX11Manager & DX11Graphics::GetManager(){
+DX11Resources & DX11Graphics::GetResources(){
 
-	static DX11Manager resources(*device_);
+	static DX11Resources resources(*device_);
 
 	return resources;
 
@@ -656,10 +600,44 @@ void DX11Output::Draw(Scene & scene){
 
 void DX11Output::Draw(Camera & camera, const vector<SceneNode *> & nodes){
 
+	// vvvvvv changes for every type of renderer, different paths ecc vvvvvvvvvvv
+
+	// Setup the renderer
+
+	// For each node n
+	//    For each material m of n
+	//       Setup m
+	//       Draw n
+
+	// Finalize
+
 	// Will bind and clear the camera's target correctly
 	RenderHelper::SetupRenderTarget(camera, *immediate_context_);
 
+	// Draw every node using the given technique (!?)
 
+	Aspect * aspect;
+
+	DX11Material * dx11_material;
+
+	for (auto node : nodes){
+
+		aspect = node->GetComponent<Aspect>();
+				
+		if (aspect != nullptr){
+
+			for (auto material : aspect->GetMaterials()){
+
+				dx11_material = & resource_cast(*material);
+
+				// Set the shader status
+				// Draw!
+
+			}
+
+		}
+		
+	}
 
 }
 
@@ -684,16 +662,10 @@ void DX11Output::UpdateViews(){
 	
 }
 
-/////////////////////////////////// MANAGER ///////////////////////////////////////////
+/////////////////////////////////// RESOURCES ///////////////////////////////////////////
 
-unique_ptr<Resource> DX11Manager::LoadResource(const type_index & resource_type, int load_mode, const void * settings){
+unique_ptr<Resource> DX11Resources::Load(const type_index & resource_type, int load_mode, const void * settings){
 
 	return Loader::Load(resource_type, load_mode, device_, settings);
-
-}
-
-unique_ptr<Resource> DX11Manager::BuildResource(const type_index & resource_type, int build_mode, const void * settings){
-
-	return Builder::Build(resource_type, build_mode, device_, settings);
 
 }

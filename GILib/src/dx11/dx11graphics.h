@@ -110,26 +110,24 @@ namespace gi_lib{
 
 		/// \brief Resource manager interface for DirectX11.
 		/// \author Raffaele D. Facendola.
-		class DX11Manager : public Manager{
+		class DX11Resources : public Resources{
 
 		public:
 
 			/// \brief No copy constructor.
-			DX11Manager(const DX11Manager &) = delete;
+			DX11Resources(const DX11Resources &) = delete;
 
 			/// \brief No assignment operator.
-			DX11Manager & operator=(const DX11Manager &) = delete;
+			DX11Resources & operator=(const DX11Resources &) = delete;
 
 			/// \brief Create a new instance of DirectX11 resource manager.
 			/// \param device The device used to create the actual resources.
-			DX11Manager(ID3D11Device & device) :
+			DX11Resources(ID3D11Device & device) :
 				device_(device){}
 
 		protected:
 
-			virtual unique_ptr<Resource> LoadResource(const type_index & resource_type, int load_mode, const void * settings);
-
-			virtual unique_ptr<Resource> BuildResource(const type_index & resource_type, int build_mode, const void * settings);
+			virtual unique_ptr<Resource> Load(const type_index & resource_type, int load_mode, const void * settings) override;
 
 		private:
 
@@ -147,11 +145,11 @@ namespace gi_lib{
 			/// \return Returns a reference to the DirectX11 factory singleton.
 			static DX11Graphics & GetInstance();
 
-			virtual AdapterProfile GetAdapterProfile() const;
+			virtual AdapterProfile GetAdapterProfile() const override ;
 
-			virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode);
+			virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode) override;
 
-			virtual DX11Manager & GetManager();
+			virtual DX11Resources & GetResources() override;
 
 		private:
 

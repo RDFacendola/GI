@@ -168,7 +168,7 @@ namespace gi_lib{
 			/// \brief Create a new DirectX11 mesh.
 			/// \param device The device used to load the graphical resources.
 			/// \param settings Settings used to build the mesh.
-			DX11Mesh(ID3D11Device & device, const BuildSettings<Mesh, Mesh::BuildMode::kNormalTextured> & settings);
+			DX11Mesh(ID3D11Device & device, const LoadSettings<Mesh, Mesh::LoadMode::kNormalTextured> & settings);
 
 			virtual size_t GetSize() const override;
 
@@ -202,47 +202,6 @@ namespace gi_lib{
 			
 		};
 
-		/// \brief DirectX11 shader.
-		/// \author Raffaele D. Facendola.
-		class DX11Shader : public Shader{
-
-		public:
-
-			/// \brief Create a new DirectX11 shader.
-			/// \param device The device used to load the graphical resources.
-			/// \param settings The settings used to build the shader.
-			DX11Shader(ID3D11Device & device, const LoadSettings<Shader, Shader::LoadMode::kCompileFromFile> & settings);
-
-			/// \brief No copy constructor.
-			DX11Shader(DX11Shader &) = delete;
-
-			virtual size_t GetSize() const override;
-
-			virtual ResourcePriority GetPriority() const override;
-
-			virtual void SetPriority(ResourcePriority priority) override;
-
-			/// \brief Get the shader effect.
-			/// \return Returns a reference to the shader effect.
-			ID3DX11Effect & GetEffect();
-
-			/// \brief Get the shader effect.
-			/// \return Returns a reference to the shader effect.
-			const ID3DX11Effect & GetEffect() const;
-
-			/// \brief Clone the effect inside another effect.
-			void CloneEffect(ID3DX11Effect ** effect) const;
-
-		private:
-
-			unique_ptr<ID3DX11Effect, COMDeleter> effect_;
-
-			ResourcePriority priority_;
-
-			size_t size_;
-
-		};
-
 		/// \brief DirectX11 material.
 		/// \author Raffaele D. Facendola
 		class DX11Material : public Material{
@@ -254,100 +213,33 @@ namespace gi_lib{
 			/// \brief Create a new DirectX11 material instance.
 			/// \param device The device used to load the graphical resources.
 			/// \param settings The settings used to build the material.
-			DX11Material(ID3D11Device & device, const BuildSettings<Material, Material::BuildMode::kFromShader> & settings);
+			DX11Material(ID3D11Device & device, const LoadSettings<Material, Material::LoadMode::kFromShader> & settings);
 
 			virtual size_t GetSize() const override;
 
 			virtual ResourcePriority GetPriority() const override;
 
 			virtual void SetPriority(ResourcePriority priority) override;
+		
+			virtual unsigned int GetParameterIndex(const wstring& name) const override;
 
-			virtual shared_ptr<MaterialParameter> GetParameterByName(const string & name) override;
+			virtual unsigned int GetTextureIndex(const wstring& name) const override;
 
-			virtual shared_ptr<MaterialParameter> GetParameterBySemantic(const string & semantic) override;
+			virtual bool SetTexture(const wstring &name, shared_ptr<Texture2D> texture) override;
 
-			virtual Shader & GetShader() override;
+			virtual bool SetTexture(unsigned int index, shared_ptr<Texture2D> texture) override;
 
-			virtual const Shader & GetShader() const override;
+		protected:
+
+			virtual bool SetParameter(const wstring & name, const void* buffer, size_t size) override;
+
+			virtual bool SetParameter(unsigned int index, const void* buffer, size_t size) override;
 
 		private:
-
-			shared_ptr<Shader> shader_;
-
-			unique_ptr<ID3DX11Effect, COMDeleter> effect_;
-
-			map<string, shared_ptr<Resource>> resources_;		///< \brief Map of inner resources. This is used to prevent destruction while a shader is still using a particular resource.
-
+			
 			ResourcePriority priority_;
 
 			size_t size_;
-
-		};
-
-		/// \brief Base interface for material parameters.
-
-		/// \author Raffaele D. Facendola
-		class DX11MaterialParameter: public MaterialParameter{
-
-		public:
-
-			/// \brief Create a new material parameter.
-			/// \param variable The variable accessed by this parameter.
-			/// \param material The material this parameter refers to.
-			DX11MaterialParameter(shared_ptr<ID3DX11EffectVariable> variable, DX11Material & material);
-
-			/// \brief No assignment operator.
-			DX11MaterialParameter & operator=(const DX11MaterialParameter &) = delete;
-
-			virtual ~DX11MaterialParameter();
-
-			virtual bool Read(bool & out);
-
-			virtual bool Read(float & out);
-
-			virtual bool Read(int & out);
-
-			virtual bool Read(Vector2f & out);
-
-			virtual bool Read(Vector3f & out);
-
-			virtual bool Read(Vector4f & out);
-
-			virtual bool Read(Affine3f & out);
-
-			virtual bool Read(Projective3f & out);
-
-			virtual bool Read(shared_ptr<Texture2D> & out);
-
-			virtual bool Read(void ** out);
-
-			virtual bool Write(const bool & in);
-
-			virtual bool Write(const float & in);
-
-			virtual bool Write(const int & in);
-
-			virtual bool Write(const Vector2f & in);
-
-			virtual bool Write(const Vector3f & in);
-
-			virtual bool Write(const Vector4f & in);
-
-			virtual bool Write(const Affine3f & in);
-
-			virtual bool Write(const Projective3f & in);
-
-			virtual bool Write(const shared_ptr<Texture2D> in);
-
-			virtual bool Write(void ** in);
-
-		private:
-
-			shared_ptr<ID3DX11EffectVariable> variable_;
-
-			D3DX11_EFFECT_VARIABLE_DESC metadata_;
-			
-			DX11Material & material_;
 
 		};
 
@@ -367,14 +259,6 @@ namespace gi_lib{
 
 			/// \brief Concrete type associated to a Mesh.
 			using TMapped = DX11Mesh;
-
-		};
-
-		/// \brief Shader mapping.
-		template<> struct ResourceMapping < Shader > {
-
-			/// \brief Concrete type associated to a Shader.
-			using TMapped = DX11Shader;
 
 		};
 
@@ -563,38 +447,6 @@ namespace gi_lib{
 
 		//
 
-		inline size_t DX11Shader::GetSize() const{
-
-			return size_;
-
-		}
-
-		inline ResourcePriority DX11Shader::GetPriority() const{
-
-			return priority_;
-
-		}
-
-		inline void DX11Shader::SetPriority(ResourcePriority priority){
-
-			priority_ = priority;
-
-		}
-
-		inline ID3DX11Effect & DX11Shader::GetEffect(){
-
-			return *effect_.get();
-
-		}
-
-		inline const ID3DX11Effect & DX11Shader::GetEffect() const{
-
-			return *effect_.get();
-
-		}
-
-		//
-
 		inline size_t DX11Material::GetSize() const{
 
 			return size_;
@@ -610,18 +462,6 @@ namespace gi_lib{
 		inline void DX11Material::SetPriority(ResourcePriority priority){
 
 			priority_ = priority;
-
-		}
-
-		inline Shader & DX11Material::GetShader() {
-
-			return *shader_;
-
-		}
-
-		inline const Shader & DX11Material::GetShader() const {
-
-			return *shader_;
 
 		}
 

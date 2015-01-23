@@ -147,7 +147,7 @@ namespace gi_lib{
 
 	/// \brief Resource manager interface.
 	/// \author Raffaele D. Facendola.
-	class Manager{
+	class Resources{
 
 	public:
 
@@ -155,24 +155,28 @@ namespace gi_lib{
 		static wchar_t * kPhongShaderFile;
 
 		/// \brief Default constructor.
-		Manager();
+		Resources();
 
 		/// \brief Default destructor;
-		~Manager(){};
+		~Resources(){};
 
 		/// \brief Load a resource.
+
+		/// This methods will use any cached resource if the load mode allows it.
+		/// \tparam Type of resource to load.
+		/// \param settings In depth load settings.
+		/// \return Return an handle to the specified resource. Throws if no resource is found.
+		template <typename TResource, typename TResource::LoadMode kLoadMode, typename LoadSettings<TResource, kLoadMode>::cached * = nullptr>
+		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Load(const typename LoadSettings<TResource, kLoadMode> & settings);
+
+		/// \brief Load a resource.
+
+		/// This methods will load a resource when the caching is not supported by the load mode.
 		/// \tparam Type of resource to load.
 		/// \param settings In depth load settings.
 		/// \return Return an handle to the specified resource. Throws if no resource is found.
 		template <typename TResource, typename TResource::LoadMode kLoadMode>
 		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Load(const typename LoadSettings<TResource, kLoadMode> & settings);
-
-		/// \brief Create a resource.
-		/// \tparam TResource Type of the resource to load.
-		/// \param settings The creation settings.
-		/// \return Returns a pointer to the new resource.
-		template <typename TResource, typename TResource::BuildMode kBuildMode>
-		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Build(const typename BuildSettings<TResource, kBuildMode> & settings);
 
 		/// \brief Get the amount of memory used by the resources loaded.
 		size_t GetSize();
@@ -180,43 +184,36 @@ namespace gi_lib{
 	protected:
 
 		/// \brief Used as key to address the resource map flyweight.
-		struct LoadKey{
+		struct ResourceMapKey{
 
-			/// \brief Type index of the load mode.
+			/// \brief Unique id associated to the load mode.
+			type_index id;
 
-			/// Type_index is guaranteed to be unique among different resources and load modes.
-			type_index key;
+			/// \brief Unique cache key associated to the settings used to load the resource.
 
-			/// \brief Unique tag associated to a particular tag configuration.
-			char tag[16];
-
+			/// The cache key must be unique within the same type_id. Load modes with different type_id may have the same cache key and still refer to two different resources.
+			size_t cache_key;
+			
 			/// \brief Default constructor.
-			LoadKey();
+			ResourceMapKey();
 
 			/// \brief Lesser comparison operator.
-			bool operator<(const LoadKey & other) const;
+			bool operator<(const ResourceMapKey & other) const;
 			
 		};
 
 		/// \brief Type of resource map values.
-		using LoadValue =  weak_ptr < Resource >;
+		using ResourceMapValue =  weak_ptr < Resource >;
 
 		/// \brief Type of resource map. 
-		using ResourceMap = map < LoadKey, LoadValue >;
+		using ResourceMap = map < ResourceMapKey, ResourceMapValue >;
 
 		/// \brief Load a resource.
 		/// \param resource_type Resource's type index.
 		/// \param load_mode Load mode index.
 		/// \param settings Raw pointer to the load settings.
 		/// \return Returns a pointer to the loaded resource
-		virtual unique_ptr<Resource> LoadResource(const type_index & resource_type, int load_mode, const void * settings) = 0;
-
-		/// \brief Build a resource.
-		/// \param resource_type Resource's type index.
-		/// \param build_mode Build mode index.
-		/// \param settings Raw pointer to the build settings.
-		/// \return Returns a pointer to the built resource
-		virtual unique_ptr<Resource> BuildResource(const type_index & resource_type, int build_mode, const void * settings) = 0;
+		virtual unique_ptr<Resource> Load(const type_index & resource_type, int load_mode, const void * settings) = 0;
 
 	private:
 
@@ -251,21 +248,21 @@ namespace gi_lib{
 
 		/// \brief Get the resource manager.
 		/// \return Returns the resource manager.
-		virtual Manager & GetManager() = 0;
+		virtual Resources & GetResources() = 0;
 
 	};
 
 	//
 
-	template <typename TResource, typename TResource::LoadMode kLoadMode>
-	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Manager::Load(const typename LoadSettings<TResource, kLoadMode> & settings){
+	template <typename TResource, typename TResource::LoadMode kLoadMode, typename LoadSettings<TResource, kLoadMode>::cached *>
+	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Resources::Load(const typename LoadSettings<TResource, kLoadMode> & settings){
 
-		//Fill the key object with the type index and the tag
-		LoadKey key;
+		// Cached version
 
-		key.key = std::type_index(typeid(settings));
+		ResourceMapKey key;
 
-		settings.FillTag(key.tag, sizeof(key.tag));
+		key.id = std::type_index(typeid(settings));
+		key.cache_key= settings.GetCacheKey();
 
 		auto it = resources_.find(key);
 
@@ -273,6 +270,7 @@ namespace gi_lib{
 
 			if (auto resource = it->second.lock()){
 
+				// The same resource already exists and is still valid.
 				return static_pointer_cast<TResource>(resource);
 
 			}
@@ -280,30 +278,32 @@ namespace gi_lib{
 			//Resource was expired...
 
 		}
-		
 
 		// Load the actual resource
-		auto resource = shared_ptr<Resource>(std::move(LoadResource(type_index(typeid(TResource)),
-																	static_cast<int>(kLoadMode), 
-																	&settings)));
+		auto resource = shared_ptr<Resource>(std::move(Load(type_index(typeid(TResource)),
+															static_cast<int>(kLoadMode), 
+															&settings)));
 
+		resources_[key] = std::weak_ptr<Resource>(resource);	// Stores a weak reference for caching reasons.
 
-		resources_[key] = std::weak_ptr<Resource>(resource);	// To weak ptr
-
-		//  This cast should be safe...
+		//  This cast is safe as long as the virtual LoadResource is implemented properly!
 		return static_pointer_cast<TResource>(resource);
 		
 	}
 
-	template <typename TResource, typename TResource::BuildMode kBuildMode>
-	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Manager::Build(const typename BuildSettings<TResource, kBuildMode> & settings){
-		
-		auto resource = shared_ptr<Resource>(std::move(BuildResource(type_index(typeid(TResource)),
-													   static_cast<int>(kBuildMode),
-													   &settings)));
+	template <typename TResource, typename TResource::LoadMode kLoadMode>
+	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Resources::Load(const typename LoadSettings<TResource, kLoadMode> & settings){
 
-		//  This cast should be safe...
+		// Uncached version
+
+		// Load the actual resource
+		auto resource = shared_ptr<Resource>(std::move(Load(type_index(typeid(TResource)),
+															static_cast<int>(kLoadMode),
+															&settings)));
+
+		//  This cast is safe as long as the virtual LoadResource is implemented properly!
 		return static_pointer_cast<TResource>(resource);
+
 	}
 
 }

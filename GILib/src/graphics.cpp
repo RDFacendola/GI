@@ -11,17 +11,17 @@
 using namespace std;
 using namespace gi_lib;
 
-//////////////////////// MANAGER //////////////////////////////
+//////////////////////// RESOURCES //////////////////////////////
 
 #ifdef _WIN32
 
-wchar_t * Manager::kPhongShaderFile = L"Data\\built-in\\phong.fx";
+wchar_t * Resources::kPhongShaderFile = L"Data\\built-in\\phong.fx";
 
 #endif
 
-Manager::Manager(){}
+Resources::Resources(){}
 
-size_t Manager::GetSize(){
+size_t Resources::GetSize(){
 
 	// Runs trough every resource and sum its memory footprint.
 
@@ -44,22 +44,17 @@ size_t Manager::GetSize(){
 
 //////////////// MANAGER::LOADKEY ////////////////////////////////
 
-Manager::LoadKey::LoadKey() :
-key(std::type_index(typeid(void)))
-{
+Resources::ResourceMapKey::ResourceMapKey() :
+id(std::type_index(typeid(void)))
+{}
 
-	// Clear the tag in case the load settings don't need to fill it entirely
-	memset(tag, 0, sizeof(tag));
+bool Resources::ResourceMapKey::operator<(const ResourceMapKey & other) const{
 
-}
+	//Strict order by type_id first and settings_id after.
 
-bool Manager::LoadKey::operator<(const LoadKey & other) const{
-
-	//Strict order by key first and by tag after.
-
-	return key < other.key ||
-		key == other.key &&
-		memcmp(tag, other.tag, sizeof(tag)) < 0;
+	return id < other.id ||
+		id == other.id &&
+		cache_key < other.cache_key;
 
 }
 

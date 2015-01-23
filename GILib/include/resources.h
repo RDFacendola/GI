@@ -13,7 +13,7 @@
 
 using ::std::vector;
 using ::std::shared_ptr;
-using ::std::string;
+using ::std::wstring;
 using ::Eigen::Vector2f;
 using ::Eigen::Vector3f;
 using ::Eigen::Affine3f;
@@ -22,13 +22,11 @@ using ::Eigen::Matrix;
 
 namespace gi_lib{
 
-	class MaterialParameter;
+	
 	class Resource;
 	class Texture2D;
 	class Mesh;
-	class Shader;
 	class Material;
-	class MaterialParameter;
 
 	/// \brief Describe the priority of the resources.
 	enum class ResourcePriority{
@@ -174,11 +172,6 @@ namespace gi_lib{
 
 		/// \brief Enumeration of all possible load modes.
 		enum class LoadMode{
-		
-		};
-
-		/// \brief Enumeration of all possible build modes.
-		enum class BuildMode{
 
 			kNormalTextured = 0,	///< The mesh declares vertex coordinates, texture coordinates and vertex normal.
 
@@ -206,28 +199,6 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Base interface for shaders.
-	/// \author Raffaele D. Facendola.
-	class Shader : public Resource{
-
-	public:
-
-		/// \brief Enumeration of all possible load modes.
-		enum class LoadMode{
-
-			kCompileFromFile = 0,		///< Load the shader from a source file before compiling it.
-
-		};
-
-		/// \brief Enumeration of all possible build modes.
-		enum class BuildMode{
-
-		};
-
-		virtual ~Shader(){}
-
-	};
-
 	/// \brief Base interface for materials.
 
 	/// A material is a shader whose parameters are already set.
@@ -239,146 +210,95 @@ namespace gi_lib{
 		/// \brief Enumeration of all possible load modes.
 		enum class LoadMode{
 
-		};
-
-		/// \brief Enumeration of all possible build modes.
-		enum class BuildMode{
-
-			kFromShader = 0,			///< The material is created starting from a shader.
+			kFromShader = 0,			///< The material is loaded from a shader code.
+			kInstantiate = 1,			///< The material is an instance of another base material.
 
 		};
 
 		virtual ~Material(){}
 
-		/// \brief Get a material parameter by name.
-		/// \param name The name of the parameter to get.
-		/// \return Returns the material parameter whose name is the specified one or null if no parameter could be found.
-		virtual shared_ptr<MaterialParameter> GetParameterByName(const string & name) = 0;
+		/// \brief Get the index of a parameter knowing its name.
 
-		/// \brief Get a material parameter by semantic.
-		/// \param semantic The semantic of the parameter to get.
-		/// \return Returns the material parameter whose semantic is the specified one or null if no parameter could be found.
-		virtual shared_ptr<MaterialParameter> GetParameterBySemantic(const string & semantic) = 0;
+		/// The parameter name is case-sensitive.
+		/// \param name The name of the parameter.
+		/// \return Returns the index of the parameter whose name matches the specified one.
+		virtual unsigned int GetParameterIndex(const wstring& name) const  = 0;
 
-		/// \brief Get the shader associated to this material.
-		/// return Returns a reference to the shader associated to this material.
-		virtual Shader & GetShader() = 0;
+		/// \brief Set a new value for a parameter.
 
-		/// \brief Get the shader associated to this material.
-		/// return Returns a reference to the shader associated to this material.
-		virtual const Shader & GetShader() const = 0;
+		/// \tparam TType type of the parameter to set.
+		/// \param name The name of the parameter to set.
+		/// \param value The value the parameter must be set to.
+		/// \return Returns true if the method succeeds, returns false otherwise.
+		/// \remarks The method fails if the specified name could not be found or the type specified for the parameter is not compatible with the expected type.
+		template <typename TType>
+		bool SetParameter(const wstring& name, const TType& value);
 
-	};
+		/// \brief Set a new value for a parameter.
 
-	/// \brief Base interface for material parameters.
+		/// \tparam TType type of the parameter to set.
+		/// \param index The index of the parameter to set.
+		/// \param value The value the parameter must be set to.
+		/// \return Returns true if the method succeeds, returns false otherwise.
+		/// \remarks The method fails if the index is not valid or the type specified for the parameter is not compatible with the expected type.
+		template <typename TType>
+		bool SetParameter(unsigned int index, const TType& value);
 
-	/// \author Raffaele D. Facendola
-	class MaterialParameter{
+		/// \brief Get the index of a texture knowing its name.
 
-	public:
+		/// The texture name is case-sensitive.
+		/// \param name The name of the texture.
+		/// \return Returns the index of the texture whose name matches the specified one.
+		virtual unsigned int GetTextureIndex(const wstring& name) const  = 0;
 
-		virtual ~MaterialParameter(){}
+		/// \brief Set a new value for a texture.
+		/// \param name The name of the texture to set.
+		/// \param texture Reference to the texture to set.
+		/// \return Returns true if the method succeeds, returns false otherwise.
+		/// \remarks The method fails if the specified name could not be found or the texture type is not compatible with the expected type.
+		virtual bool SetTexture(const wstring &name, shared_ptr<Texture2D> texture) = 0;
 
-		/// \brief Attempts to read the parameter as boolean variable.
-		/// \param out Destination of the result if the method succeeds.
-		/// \return Return true if the variable was a boolean, false otherwise.
-		virtual bool Read(bool & out) = 0;
+		/// \brief Set a new value for a texture.
+		/// \param name The name of the texture to set.
+		/// \param index The index of the texture to set.
+		/// \return Returns true if the method succeeds, returns false otherwise.
+		/// \remarks The method fails if the specified name could not be found or the texture type is not compatible with the expected type.
+		virtual bool SetTexture(unsigned int index, shared_ptr<Texture2D> texture) = 0;
+						
+	protected:
 
-		/// \brief Attempts to read the parameter as float variable.
-		/// \param out Destination of the result if the method succeeds.
-		/// \return Return true if the variable was a float, false otherwise.
-		virtual bool Read(float & out) = 0;
+		/// \brief Set a parameter value from a raw buffer.
+		/// \param name The name of the parameter to set.
+		/// \param buffer Pointer to the buffer containing the data.
+		/// \param size Size of the buffer.
+		/// \return Returns true if the method succeeds, returns false otherwise.
+		/// \remarks The method fails if the parameter name could not be found or the type specified for the parameter is not compatible with the expected type.
+		virtual bool SetParameter(const wstring & name, const void* buffer, size_t size) = 0;
 
-		/// \brief Attempts to read the parameter as integer variable.
-		/// \param out Destination of the result if the method succeeds.
-		/// \return Return true if the variable was an integer, false otherwise.
-		virtual bool Read(int & out) = 0;
-
-		/// \brief Attempts to read the parameter as 2-dimensional float vector variable.
-		/// \param out Destination of the result if the method succeeds.
-		/// \return Return true if the variable was a 2-dimensional float vector, false otherwise.
-		virtual bool Read(Vector2f & out) = 0;
-
-		/// \brief Attempts to read the parameter as 3-dimensional float vector variable.
-		/// \param out Destination of the result if the method succeeds.
-		/// \return Return true if the variable was a 3-dimensional float vector, false otherwise.
-		virtual bool Read(Vector3f & out) = 0;
-
-		/// \brief Attempts to read the parameter as 4-dimensional float vector variable.
-		/// \param out Destination of the result if the method succeeds.
-		/// \return Return true if the variable was a 4-dimensional float vector, false otherwise.
-		virtual bool Read(Vector4f & out) = 0;
-
-		/// \brief Attempts to read the parameter as 4x4 affine matrix variable.
-		/// \param out Destination of the result if the method succeeds.
-		/// \return Return true if the variable was a 4x4 affine matrix, false otherwise.
-		virtual bool Read(Affine3f & out) = 0;
-
-		/// \brief Attempts to read the parameter as 4x4 projective matrix variable.
-		/// \param out Destination of the result if the method succeeds.
-		/// \return Return true if the variable was a 4x4 projective matrix, false otherwise.
-		virtual bool Read(Projective3f & out) = 0;
-
-		/// \brief Attempts to read the parameter as 2D texture variable.
-		/// \param out Destination of the result if the method succeeds.
-		/// \return Return true if the variable was a 2D texture, false otherwise.
-		virtual bool Read(shared_ptr<Texture2D> & out) = 0;
-
-		/// \brief Attempts to read the parameter as a structure.
-		/// \param out Destination of the resource if the method succeeds.
-		/// \return Return true if the variable was a structure, false otherwise.
-		virtual bool Read(void ** out) = 0;
-
-		/// \brief Attempts to write the parameter as boolean variable.
-		/// \param in Value to copy.
-		/// \return Return true if the variable was a boolean, false otherwise.
-		virtual bool Write(const bool & in) = 0;
-
-		/// \brief Attempts to write the parameter as float variable.
-		/// \param in Value to copy.
-		/// \return Return true if the variable was a float, false otherwise.
-		virtual bool Write(const float & in) = 0;
-
-		/// \brief Attempts to write the parameter as integer variable.
-		/// \param in Value to copy.
-		/// \return Return true if the variable was an integer, false otherwise.
-		virtual bool Write(const int & in) = 0;
-
-		/// \brief Attempts to write the parameter as 2-dimensional float vector variable.
-		/// \param in Value to copy.
-		/// \return Return true if the variable was a 2-dimensional float vector, false otherwise.
-		virtual bool Write(const Vector2f & in) = 0;
-
-		/// \brief Attempts to write the parameter as 3-dimensional float vector variable.
-		/// \param in Value to copy.
-		/// \return Return true if the variable was a 3-dimensional float vector, false otherwise.
-		virtual bool Write(const Vector3f & in) = 0;
-
-		/// \brief Attempts to write the parameter as 4-dimensional float vector variable.
-		/// \param in Value to copy.
-		/// \return Return true if the variable was a 4-dimensional float vector, false otherwise.
-		virtual bool Write(const Vector4f & in) = 0;
-
-		/// \brief Attempts to write the parameter as 4x4 affine matrix variable.
-		/// \param in Value to copy.
-		/// \return Return true if the variable was a 4x4 affine matrix, false otherwise.
-		virtual bool Write(const Affine3f & in) = 0;
-
-		/// \brief Attempts to write the parameter as 4x4 projective matrix variable.
-		/// \param in Value to copy.
-		/// \return Return true if the variable was a 4x4 projective matrix, false otherwise.
-		virtual bool Write(const Projective3f & in) = 0;
-
-		/// \brief Attempts to write the parameter as 2D texture variable.
-		/// \param in Value to copy.
-		/// \return Return true if the variable was a 2D texture, false otherwise.
-		virtual bool Write(const shared_ptr<Texture2D> in) = 0;
-
-		/// \brief Attempts to write the parameter as a structure.
-		/// \param in Value to copy.
-		/// \return Return true if the variable was a structure, false otherwise.
-		virtual bool Write(void ** in) = 0;
+		/// \brief Set a parameter value from a raw buffer.
+		/// \param index The index of the parameter to set.
+		/// \param buffer Pointer to the buffer containing the data.
+		/// \param size Size of the buffer.
+		/// \return Returns true if the method succeeds, returns false otherwise.
+		/// \remarks The method fails if the parameter name could not be found or the type specified for the parameter is not compatible with the expected type.
+		virtual bool SetParameter(unsigned int index, const void* buffer, size_t size) = 0;
 
 	};
+
+	// Material
+
+	template <typename TType>
+	inline bool Material::SetParameter(const wstring & name, const TType& value){
+
+		return SetParameter(name, &value, sizeof(TType));
+
+	}
+
+	template <typename TType>
+	inline bool Material::SetParameter(unsigned int index, const TType& value){
+
+		return SetParameter(index, &value, sizeof(TType));
+
+	}
 
 }

@@ -22,32 +22,20 @@ namespace gi_lib{
 	template <typename TResource, typename TResource::LoadMode kLoadMode> struct LoadSettings;
 
 	/// \brief Settings used to load a Texture2D from a DDS file.
-	template <> struct LoadSettings < Texture2D, Texture2D::LoadMode::kFromDDS > {
+
+	/// The load setting allows caching.
+	template <> struct LoadSettings < Texture2D, Texture2D::LoadMode::kFromDDS> {
 
 		/// \brief Name of the file to load relative to the resource folder.
 		wstring file_name;	
 
-		/// \brief Fills the buffer with the setting's tag
-		void FillTag(void * buffer, size_t size) const;
+		/// \brief Get the cache key associated to the load settings.
+		size_t GetCacheKey() const;
 
 	};
-
-	/// \brief Settings used to load a Shader from a text file.
-	template <> struct LoadSettings < Shader, Shader::LoadMode::kCompileFromFile > {
-
-		/// \brief Name of the file to load relative to the resource folder.
-		wstring file_name;
-		
-		/// \brief Fills the buffer with the setting's tag
-		void FillTag(void * buffer, size_t size) const;
-
-	};
-
-	/// \brief Resources' build setting's template.
-	template <typename TResource, typename TResource::BuildMode kBuildMode> struct BuildSettings;
-
-	/// \brief Build settings for normal textured meshes..
-	template <> struct BuildSettings<Mesh, Mesh::BuildMode::kNormalTextured>{
+	
+	/// \brief Build settings for normal textured meshes.
+	template <> struct LoadSettings<Mesh, Mesh::LoadMode::kNormalTextured>{
 
 		/// \brief Indices' data.
 		vector<unsigned int> indices;
@@ -56,13 +44,19 @@ namespace gi_lib{
 		vector<VertexFormatNormalTextured> vertices;
 
 	};
-	
-	// \brief Build settings for a material bound to a shader.
-	template <> struct BuildSettings < Material, Material::BuildMode::kFromShader > {
 
-		/// \brief The material's shader.
-		shared_ptr<Shader> shader;
+	/// \brief Settings used to load a Material from a shader file.
+	template <> struct LoadSettings < Material, Material::LoadMode::kFromShader> {
+
+		/// \brief Name of the file to load relative to the resource folder.
+		wstring file_name;
+
+		/// \brief Get the cache key associated to the load settings.
+		size_t GetCacheKey() const;
 
 	};
+
+
+
 
 }
