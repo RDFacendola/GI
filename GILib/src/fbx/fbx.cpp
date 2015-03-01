@@ -304,11 +304,11 @@ namespace{
 
 		auto & parent = *mesh.GetNode();
 
-		vector<shared_ptr<MaterialInstance>> materials;
+		vector<shared_ptr<Material>> materials;
 
 		for (int m = 0; m < parent.GetSrcObjectCount<FbxSurfaceMaterial>(); ++m){
 
-			auto material_instance = resources.Load<MaterialInstance, InstantiateFromMaterial>({ base_material });
+			auto material_instance = resources.Load<Material, InstantiateFromMaterial>({ base_material });
 
 			auto &surface = *parent.GetSrcObject<FbxSurfaceMaterial>(m);
 

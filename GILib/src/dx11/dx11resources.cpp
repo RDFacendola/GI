@@ -305,18 +305,6 @@ size_t DX11Texture2D::GetSize() const{
 
 }
 
-ResourcePriority DX11Texture2D::GetPriority() const{
-
-	return EvictionPriorityToResourcePriority(texture_->GetEvictionPriority());
-
-}
-
-void DX11Texture2D::SetPriority(ResourcePriority priority){
-
-	texture_->SetEvictionPriority(ResourcePriorityToEvictionPriority(priority));
-
-}
-
 void DX11Texture2D::UpdateDescription(){
 	
 	D3D11_TEXTURE2D_DESC description;
@@ -487,24 +475,6 @@ DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildIndexedNormalTextured& bund
 	size_ = vb_size + ib_size;
 
 	bounds_ = VerticesToBounds(bundle.vertices);
-
-}
-
-ResourcePriority DX11Mesh::GetPriority() const{
-
-	return EvictionPriorityToResourcePriority(vertex_buffer_->GetEvictionPriority());
-
-}
-
-void DX11Mesh::SetPriority(ResourcePriority priority){
-
-	vertex_buffer_->SetEvictionPriority(ResourcePriorityToEvictionPriority(priority));
-
-	if (index_buffer_){
-
-		index_buffer_->SetEvictionPriority(ResourcePriorityToEvictionPriority(priority));
-
-	}
 
 }
 

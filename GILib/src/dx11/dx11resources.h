@@ -49,10 +49,6 @@ namespace gi_lib{
 
 			virtual size_t GetSize() const override;
 
-			virtual ResourcePriority GetPriority() const override;
-
-			virtual void SetPriority(ResourcePriority priority) override;
-
 			virtual unsigned int GetWidth() const override;
 
 			virtual unsigned int GetHeight() const override;
@@ -106,10 +102,6 @@ namespace gi_lib{
 			virtual ~DX11RenderTarget(){}
 
 			virtual size_t GetSize() const override;
-
-			virtual ResourcePriority GetPriority() const override;
-
-			virtual void SetPriority(ResourcePriority priority) override;
 
 			virtual unsigned int GetCount() const override;
 
@@ -172,10 +164,6 @@ namespace gi_lib{
 
 			virtual size_t GetSize() const override;
 
-			virtual ResourcePriority GetPriority() const override;
-
-			virtual void SetPriority(ResourcePriority priority) override;
-
 			virtual size_t GetVertexCount() const override;
 
 			virtual size_t GetPolygonCount() const override;
@@ -213,42 +201,13 @@ namespace gi_lib{
 			/// \param bundle Bundle used to load the material.
 			DX11Material(ID3D11Device & device, const LoadFromFile& bundle);
 
-			virtual size_t GetSize() const override;
-
-			virtual ResourcePriority GetPriority() const override;
-
-			virtual void SetPriority(ResourcePriority priority) override;
-		
-			virtual unsigned int GetParameterIndex(const wstring& name) const override;
-
-			virtual unsigned int GetTextureIndex(const wstring& name) const override;
-
-		private:
-			
-			ResourcePriority priority_;
-
-			size_t size_;
-
-		};
-
-		/// \brief DirectX11 material instance.
-		/// \author Raffaele D. Facendola
-		class DX11MaterialInstance : public MaterialInstance{
-
-
-		public:
-
-			/// \brief Create a new DirectX11 material instance.
+			/// \brief Instantiate a DirectX11 material from another one.
 			/// \param device The device used to load the graphical resources.
-			/// \param bundle Bundle used to load the material instance.
-			DX11MaterialInstance(ID3D11Device& device, const InstantiateFromMaterial& bundle);
+			/// \param bundle Bundle used to instantiate the material.
+			DX11Material(ID3D11Device & device, const InstantiateFromMaterial& bundle);
 
 			virtual size_t GetSize() const override;
-
-			virtual ResourcePriority GetPriority() const override;
-
-			virtual void SetPriority(ResourcePriority priority) override;
-
+		
 			virtual unsigned int GetParameterIndex(const wstring& name) const override;
 
 			virtual unsigned int GetTextureIndex(const wstring& name) const override;
@@ -256,7 +215,7 @@ namespace gi_lib{
 			virtual bool SetTexture(const wstring &name, shared_ptr<Texture2D> texture) override;
 
 			virtual bool SetTexture(unsigned int index, shared_ptr<Texture2D> texture) override;
-
+		
 		protected:
 
 			virtual bool SetParameter(const wstring & name, const void* buffer, size_t size) override;
@@ -265,10 +224,16 @@ namespace gi_lib{
 
 		private:
 
-			ResourcePriority priority_;
-
 			size_t size_;
 
+			unique_ptr<ID3D11VertexShader, COMDeleter> vertex_shader_;
+
+			unique_ptr<ID3D11GeometryShader, COMDeleter> geometry_shader_;
+
+			unique_ptr<ID3D11PixelShader, COMDeleter> pixel_shader_;
+
+
+			
 		};
 
 		/// \brief DirectX11 resource mapping template.
@@ -303,14 +268,6 @@ namespace gi_lib{
 
 			/// \brief Concrete type associated to a Material.
 			using TMapped = DX11Material;
-
-		};
-
-		/// \brief Material instance mapping.
-		template<> struct ResourceMapping < MaterialInstance > {
-
-			/// \brief Concrete type associated to a MaterialInstance.
-			using TMapped = DX11MaterialInstance;
 
 		};
 
@@ -395,22 +352,6 @@ namespace gi_lib{
 			
 		}
 
-		inline ResourcePriority DX11RenderTarget::GetPriority() const{
-
-			return textures_[0]->GetPriority();
-
-		}
-
-		inline void DX11RenderTarget::SetPriority(ResourcePriority priority){
-
-			for (auto & texture : textures_){
-
-				texture->SetPriority(priority);
-
-			}
-
-		}
-
 		inline float DX11RenderTarget::GetAspectRatio() const{
 
 			// The aspect ratio is guaranteed to be the same for all the targets.
@@ -481,23 +422,11 @@ namespace gi_lib{
 
 		}
 
-		//
+		// DX11Material
 
 		inline size_t DX11Material::GetSize() const{
 
 			return size_;
-
-		}
-
-		inline ResourcePriority DX11Material::GetPriority() const{
-
-			return priority_;
-
-		}
-
-		inline void DX11Material::SetPriority(ResourcePriority priority){
-
-			priority_ = priority;
 
 		}
 

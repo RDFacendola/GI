@@ -70,12 +70,12 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Bundle used to instantiate an material from a base.
+	/// \brief Bundle used to instantiate an material from another one.
 	struct InstantiateFromMaterial{
 
 		NO_CACHE
 
-		shared_ptr<Material> material_base;
+		shared_ptr<Material> base;
 
 	};
 

@@ -328,7 +328,7 @@ namespace{
 	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, LoadFromFile>(),
 												 Loader::Register<Mesh, BuildIndexedNormalTextured>(),
 												 Loader::Register<Material, LoadFromFile>(), 
-												 Loader::Register<MaterialInstance, InstantiateFromMaterial>() };
+												 Loader::Register<Material, InstantiateFromMaterial>() };
 
 	/// \brief Utility class for rendering stuffs.
 	class RenderHelper{

@@ -68,14 +68,6 @@ namespace gi_lib{
 		/// \return Returns the size of the resource, in bytes.
 		virtual size_t GetSize() const = 0;
 
-		/// \brief Get the priority of the resource.
-		/// \return Returns the resource priority.
-		virtual ResourcePriority GetPriority() const = 0;
-
-		/// \brief Set the priority of the resource.
-		/// \param priority The new priority.
-		virtual void SetPriority(ResourcePriority priority) = 0;
-
 	};
 
 	/// \brief Base interface for plain textures.
@@ -185,7 +177,6 @@ namespace gi_lib{
 
 	};
 
-
 	/// \brief Base interface for materials.
 
 	/// \author Raffaele D. Facendola
@@ -201,32 +192,6 @@ namespace gi_lib{
 		/// \param name The name of the parameter.
 		/// \return Returns the index of the parameter whose name matches the specified one.
 		virtual unsigned int GetParameterIndex(const wstring& name) const = 0;
-
-		/// \brief Get the index of a texture knowing its name.
-
-		/// The texture name is case-sensitive.
-		/// \param name The name of the texture.
-		/// \return Returns the index of the texture whose name matches the specified one.
-		virtual unsigned int GetTextureIndex(const wstring& name) const = 0;
-
-	};
-
-	/// \brief A material instance.
-
-	/// A material instance is a material whose parameters have already been set.
-	/// \author Raffaele D. Facendola
-	class MaterialInstance : public Resource{
-
-	public:
-
-		virtual ~MaterialInstance(){}
-
-		/// \brief Get the index of a parameter knowing its name.
-
-		/// The parameter name is case-sensitive.
-		/// \param name The name of the parameter.
-		/// \return Returns the index of the parameter whose name matches the specified one.
-		virtual unsigned int GetParameterIndex(const wstring& name) const  = 0;
 
 		/// \brief Set a new value for a parameter.
 
@@ -253,7 +218,7 @@ namespace gi_lib{
 		/// The texture name is case-sensitive.
 		/// \param name The name of the texture.
 		/// \return Returns the index of the texture whose name matches the specified one.
-		virtual unsigned int GetTextureIndex(const wstring& name) const  = 0;
+		virtual unsigned int GetTextureIndex(const wstring& name) const = 0;
 
 		/// \brief Set a new value for a texture.
 		/// \param name The name of the texture to set.
@@ -268,7 +233,7 @@ namespace gi_lib{
 		/// \return Returns true if the method succeeds, returns false otherwise.
 		/// \remarks The method fails if the specified name could not be found or the texture type is not compatible with the expected type.
 		virtual bool SetTexture(unsigned int index, shared_ptr<Texture2D> texture) = 0;
-						
+
 	protected:
 
 		/// \brief Set a parameter value from a raw buffer.
@@ -292,14 +257,14 @@ namespace gi_lib{
 	// Material
 
 	template <typename TType>
-	inline bool MaterialInstance::SetParameter(const wstring & name, const TType& value){
+	inline bool Material::SetParameter(const wstring & name, const TType& value){
 
 		return SetParameter(name, &value, sizeof(TType));
 
 	}
 
 	template <typename TType>
-	inline bool MaterialInstance::SetParameter(unsigned int index, const TType& value){
+	inline bool Material::SetParameter(unsigned int index, const TType& value){
 
 		return SetParameter(index, &value, sizeof(TType));
 
