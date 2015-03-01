@@ -41,7 +41,7 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	
 	//Scene import
 
-	FBXImporter::GetInstance().ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", scene_.CreateNode(), graphics_.GetManager());
+	FBXImporter::GetInstance().ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", scene_.CreateNode(), graphics_.GetResources());
 
 	// Bounding volume hierarchy rebuild
 	

@@ -159,8 +159,7 @@ namespace gi_lib{
 
 		/// \brief Default destructor;
 		~Resources(){};
-
-
+		
 		template <typename TResource, typename TBundle, typename use_cache<TBundle>::type* = nullptr>
 		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Load(const typename TBundle& bundle);
 

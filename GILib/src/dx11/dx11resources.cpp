@@ -130,7 +130,7 @@ namespace{
 
 	}
 
-	/// \brief Create an index buffer
+	/// \brief Create a vertex buffer
 	template <typename TVertexFormat>
 	ID3D11Buffer * MakeVertexBuffer(ID3D11Device & device, const vector<TVertexFormat> & vertices, size_t & size){
 
@@ -229,8 +229,6 @@ namespace{
 			max_corner - min_corner };
 					  
 	}
-
-
 
 }
 

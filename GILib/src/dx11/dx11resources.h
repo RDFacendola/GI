@@ -251,12 +251,6 @@ namespace gi_lib{
 
 			virtual unsigned int GetParameterIndex(const wstring& name) const override;
 
-			template <typename TType>
-			bool SetParameter(const wstring& name, const TType& value);
-
-			template <typename TType>
-			bool SetParameter(unsigned int index, const TType& value);
-
 			virtual unsigned int GetTextureIndex(const wstring& name) const override;
 
 			virtual bool SetTexture(const wstring &name, shared_ptr<Texture2D> texture) override;

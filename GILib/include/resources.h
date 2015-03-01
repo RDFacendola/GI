@@ -213,7 +213,7 @@ namespace gi_lib{
 
 	/// \brief A material instance.
 
-	/// A material instance is a material whose parameter have already been set.
+	/// A material instance is a material whose parameters have already been set.
 	/// \author Raffaele D. Facendola
 	class MaterialInstance : public Resource{
 

@@ -612,6 +612,7 @@ void DX11Output::Draw(Camera & camera, const vector<SceneNode *> & nodes){
 
 	// Finalize
 
+	/*
 	// Will bind and clear the camera's target correctly
 	RenderHelper::SetupRenderTarget(camera, *immediate_context_);
 
@@ -639,6 +640,7 @@ void DX11Output::Draw(Camera & camera, const vector<SceneNode *> & nodes){
 		}
 		
 	}
+	*/
 
 }
 

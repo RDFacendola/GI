@@ -70,6 +70,7 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Bundle used to instantiate an material from a base.
 	struct InstantiateFromMaterial{
 
 		NO_CACHE
