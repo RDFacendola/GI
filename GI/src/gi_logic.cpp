@@ -18,6 +18,10 @@ GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {
 	
+	auto b = DEBUG_BOILERPLATEW;
+
+	auto material = graphics_.GetResources().Load<Material, CompileFromFile>({ Application::GetDirectory() + L"Data\\phong.fx", false });
+
 	// Graphics setup
 
 	SetTitle(kWindowTitle);
@@ -41,7 +45,7 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	
 	//Scene import
 
-	FBXImporter::GetInstance().ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", scene_.CreateNode(), graphics_.GetResources());
+	//FBXImporter::GetInstance().ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", scene_.CreateNode(), graphics_.GetResources());
 
 	// Bounding volume hierarchy rebuild
 	

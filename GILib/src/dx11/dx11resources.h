@@ -15,12 +15,15 @@
 #include "..\..\include\graphics.h"
 #include "..\..\include\resources.h"
 #include "..\..\include\bundles.h"
-#include "dx11shared.h"
+#include "..\..\include\windows\os_windows.h"
 
+using ::std::string;
 using ::std::wstring;
 using ::std::unique_ptr;
 using ::std::shared_ptr;
 using ::std::map;
+
+using ::gi_lib::windows::COMDeleter;
 
 namespace gi_lib{
 
@@ -38,7 +41,7 @@ namespace gi_lib{
 			/// \brief Create a new texture from DDS file.
 			/// \param device The device used to create the texture.
 			/// \param bundle The bundle used to load the texture.
-			DX11Texture2D(ID3D11Device & device, const LoadFromFile& bundle);
+			DX11Texture2D(ID3D11Device& device, const LoadFromFile& bundle);
 
 			/// \brief Create a mew texture from an existing DirectX11 texture.
 			/// \param texture The DirectX11 texture.
@@ -196,43 +199,80 @@ namespace gi_lib{
 
 		public:
 
-			/// \brief Create a new DirectX11 material.
+			/// \brief Create a new DirectX11 material from shader code.
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to load the material.
-			DX11Material(ID3D11Device & device, const LoadFromFile& bundle);
+			DX11Material(ID3D11Device& device, const CompileFromFile& bundle);
 
 			/// \brief Instantiate a DirectX11 material from another one.
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to instantiate the material.
-			DX11Material(ID3D11Device & device, const InstantiateFromMaterial& bundle);
-
+			DX11Material(ID3D11Device& device, const InstantiateFromMaterial& bundle);
+			
 			virtual size_t GetSize() const override;
 		
-			virtual unsigned int GetParameterIndex(const wstring& name) const override;
+			virtual unsigned int GetParameterIndex(const string& name) const override;
 
-			virtual unsigned int GetTextureIndex(const wstring& name) const override;
-
-			virtual bool SetTexture(const wstring &name, shared_ptr<Texture2D> texture) override;
+			virtual unsigned int GetTextureIndex(const string& name) const override;
 
 			virtual bool SetTexture(unsigned int index, shared_ptr<Texture2D> texture) override;
 		
 		protected:
 
-			virtual bool SetParameter(const wstring & name, const void* buffer, size_t size) override;
-
 			virtual bool SetParameter(unsigned int index, const void* buffer, size_t size) override;
 
 		private:
 
+			// \brief Info about shader's parameters.
+			struct ParameterInfo{
+
+				// \brief Name of the parameter.
+				string name;
+
+				// \brief Index of the constant buffer this parameter belongs to.
+				unsigned int buffer_index;
+
+				// \brief Size of the parameter in bytes.
+				size_t size;
+
+				// \brief Offset from the beginning of the constant buffer.
+				size_t offset;
+
+			};
+
+			// \brief Info about shader's constant buffers.
+			struct CBufferInfo{
+
+				// \brief Constant buffer used by DirectX11.
+				ID3D11Buffer * constant_buffer;
+
+				// \brief Unstructured buffer used to hold data in the system memory.
+				void * raw_buffer;
+
+				// \brief Total size of the constant buffer.
+				size_t size;
+
+				// \brief Whether the constant buffer should be updated with the latest data contained inside the raw buffer.
+				bool dirty;
+
+				~CBufferInfo();
+
+			};
+
 			size_t size_;
 
-			unique_ptr<ID3D11VertexShader, COMDeleter> vertex_shader_;
+			shared_ptr<ID3D11VertexShader> vertex_shader_;
 
-			unique_ptr<ID3D11GeometryShader, COMDeleter> geometry_shader_;
+			shared_ptr<ID3D11GeometryShader> geometry_shader_;
 
-			unique_ptr<ID3D11PixelShader, COMDeleter> pixel_shader_;
+			shared_ptr<ID3D11PixelShader> pixel_shader_;
 
+			// \brief Parameters info.
+			// The info are shared among material instances.
+			shared_ptr<vector<ParameterInfo>> parameters_;
 
+			// \brief Buffer status.
+			vector<CBufferInfo> buffers_;
 			
 		};
 
@@ -427,6 +467,16 @@ namespace gi_lib{
 		inline size_t DX11Material::GetSize() const{
 
 			return size_;
+
+		}
+
+		// DX11Material::CBufferInfo
+
+		inline DX11Material::CBufferInfo::~CBufferInfo(){
+
+			delete[] raw_buffer;
+
+			constant_buffer->Release();
 
 		}
 

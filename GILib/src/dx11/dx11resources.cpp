@@ -16,24 +16,27 @@
 #include "..\..\include\exceptions.h"
 #include "..\..\include\scope_guard.h"
 
+#include "..\..\include\windows\os_windows.h"
+
 using namespace std;
 using namespace gi_lib;
 using namespace gi_lib::dx11;
+using namespace gi_lib::windows;
+
 using namespace DirectX;
 using namespace Eigen;
 
 /// Throws if the compilation miserably fails...
 #define THROW_ON_COMPILE_FAIL(expr, blob) do{ \
-								HRESULT hr = expr; \
-								if(FAILED(hr)) { \
+								HRESULT __hr = expr; \
+								if(FAILED(__hr)) { \
 									std::wstringstream stream; \
-									stream << L"\"" << #expr << "\" failed with 0x" << std::hex << hr << std::dec << std::endl \
+									stream << L"\"" << #expr << "\" failed with 0x" << std::hex << __hr << std::dec << std::endl \
 										   << __FILE__ << std::endl \
 										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
-									std::string error_string(errors != nullptr ? static_cast<char *>(errors->GetBufferPointer()) : ""); \
+									std::string error_string(blob != nullptr ? static_cast<char *>(blob->GetBufferPointer()) : ""); \
 									std::wstring werror_string(error_string.begin(), error_string.end()); \
-									if(blob != nullptr) blob->Release(); \
-									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(hr)}, {L"compiler error", werror_string}}); \
+									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(__hr)}, {L"compiler error", werror_string}}); \
 								} \
 							}WHILE0
 
@@ -230,6 +233,110 @@ namespace{
 					  
 	}
 
+	// \brief Perform a shader reflection.
+	bool Reflect(void * bytecode, size_t size, map<string, unsigned int>& cbuffer_index){
+
+
+		// 3. Reflection and shit
+
+		ID3D11ShaderReflection * reflection = nullptr;
+
+		unique_ptr<ID3D11ShaderReflection, COMDeleter> reflection_guard(reflection, COMDeleter{});
+
+		THROW_ON_FAIL(D3DReflect(bytecode,
+			size,
+			IID_ID3D11ShaderReflection,
+			(void**)&reflection));
+
+		D3D11_SHADER_DESC shader_desc;
+		D3D11_SHADER_BUFFER_DESC buffer_desc;
+		D3D11_SHADER_VARIABLE_DESC variable_desc;
+
+		reflection->GetDesc(&shader_desc);
+
+		int buffers_count = shader_desc.ConstantBuffers;
+
+		for (int i = 0; i < buffers_count; ++i){
+
+			auto buffer = reflection->GetConstantBufferByIndex(i);
+
+			buffer->GetDesc(&buffer_desc);
+
+			auto variables_count = buffer_desc.Variables;
+
+			for (int j = 0; j < variables_count; ++j){
+
+				auto variable = buffer->GetVariableByIndex(j);
+
+				variable->GetDesc(&variable_desc);
+
+
+
+				// Blahblahblah
+
+			}
+
+		}
+
+	}
+
+	// \brief Compile a shader code and reflects it.
+	// \param compulsory If set to true the method will throw if the entry point couldn't be found, otherwise the method will simply return false upon errors.
+	bool CompileAndReflect(const string& source_file, const string& code, const string& entry_point, const string& shader_profile, bool optimize, map<string, unsigned int>& cbuffer_index, bool compulsory){
+
+		ID3DBlob * bytecode = nullptr;
+		ID3DBlob * errors = nullptr;
+
+		HRESULT hr = D3DCompile(&code[0],
+								code.size(),
+								source_file.c_str(),
+								nullptr,
+								D3D_COMPILE_STANDARD_FILE_INCLUDE,
+								entry_point.c_str(),
+								shader_profile.c_str(),
+								D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | (optimize ? D3DCOMPILE_OPTIMIZATION_LEVEL3 : D3DCOMPILE_SKIP_OPTIMIZATION),
+								0,
+								&bytecode,
+								&errors);
+
+		COM_GUARD(bytecode);
+		COM_GUARD(errors);
+
+		if (compulsory){
+
+			THROW_ON_COMPILE_FAIL(hr, errors);
+
+		}
+		else if(FAILED(hr)){
+
+			return false;
+
+		}
+		
+		return Reflect(bytecode->GetBufferPointer(),
+					   bytecode->GetBufferSize(),
+					   cbuffer_index);
+
+	}
+	
+	bool VSCompileAndReflect(const string& source_file, const string& code, map<string, unsigned int>& cbuffer_index, bool optimize){
+
+		return CompileAndReflect(source_file, code, "VSMain", "vs_5_0", optimize, cbuffer_index, true);
+
+	}
+
+	bool GSCompileAndReflect(const string& source_file, const string& code, map<string, unsigned int>& cbuffer_index, bool optimize){
+						
+		return CompileAndReflect(source_file, code, "GSMain", "gs_5_0", optimize, cbuffer_index, false);
+				
+	}
+
+	bool PSCompileAndReflect(const string& source_file, const string& code, map<string, unsigned int>& cbuffer_index, bool optimize){
+
+		return CompileAndReflect(source_file, code, "PSMain", "ps_5_0", optimize, cbuffer_index, true);
+
+	}
+
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
@@ -340,7 +447,7 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 	ID3D11RenderTargetView * render_target_view;
 	ID3D11DepthStencilView * zstencil_view;
 
-	// Rollback guard ensures that the state of the render target is cleared upon error
+	// Rollback guard ensures that the state of the render target is cleared on error
 	// (ie: if one buffer causes an exception, the entire operation is rollback'd)
 
 	auto rollback = make_scope_guard([this](){
@@ -480,9 +587,48 @@ DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildIndexedNormalTextured& bund
 
 ////////////////////////////// MATERIAL //////////////////////////////////////////////
 
-DX11Material::DX11Material(ID3D11Device &, const LoadFromFile& bundle){
+DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 
 	// TODO: Load the shader, perform reflection and stuffs
-	
+
+	string code = IO::ReadFile(bundle.file_name);
+
+	string file_name = string(bundle.file_name.begin(), bundle.file_name.end());
+
+	map<string, unsigned int> cbuffer_index;
+
+	VSCompileAndReflect(file_name, code, cbuffer_index, true);
+	GSCompileAndReflect(file_name, code, cbuffer_index, true);
+	PSCompileAndReflect(file_name, code, cbuffer_index, false);
+
+}
+
+DX11Material::DX11Material(ID3D11Device& device, const InstantiateFromMaterial& bundle){
+
+	// TODO: Instantiate etc.
+
+}
+
+unsigned int DX11Material::GetParameterIndex(const string& name) const{
+
+	THROW(L"Invalid shader parameter name.");
+
+}
+
+unsigned int DX11Material::GetTextureIndex(const string& name) const{
+
+	return -1;
+
+}
+
+bool DX11Material::SetTexture(unsigned int index, shared_ptr<Texture2D> texture){
+
+	return false;
+
+}
+
+bool DX11Material::SetParameter(unsigned int index, const void* buffer, size_t size){
+
+	return false;
 
 }

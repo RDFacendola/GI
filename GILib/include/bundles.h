@@ -47,7 +47,7 @@ namespace gi_lib{
 
 		USE_CACHE
 
-		/// \brief Name of the file to load relative to the resource folder.
+		/// \brief Name of the file to load relative to the bundle.
 		wstring file_name;
 
 		/// \brief Get the cache key associated to the load settings.
@@ -76,6 +76,23 @@ namespace gi_lib{
 		NO_CACHE
 
 		shared_ptr<Material> base;
+
+	};
+
+	/// \brief Create a material compiling the code from a file.
+	struct CompileFromFile{
+
+		USE_CACHE
+
+		// \brief Name of the file to read the shader code from.
+		wstring file_name;
+
+		// \brief Whether the code should be optimized or not.
+		// Enabling this parameter might affect compilation time severely.
+		bool optimize;
+
+		/// \brief Get the cache key associated to the load settings. 
+		size_t GetCacheKey() const;
 
 	};
 

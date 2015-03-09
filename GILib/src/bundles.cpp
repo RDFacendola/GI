@@ -12,3 +12,11 @@ size_t LoadFromFile::GetCacheKey() const{
 	return ::hash::fnv_1{}(wfile);
 
 }
+
+size_t CompileFromFile::GetCacheKey() const{
+
+	std::string wfile(file_name.begin(), file_name.end());
+
+	return ::hash::fnv_1{}(wfile);
+
+}

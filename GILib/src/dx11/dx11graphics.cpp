@@ -12,8 +12,6 @@
 #include "..\..\include\bundles.h"
 
 #include "dx11resources.h"
-#include "dx11shared.h"
-
 
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d11.lib")
@@ -21,6 +19,7 @@
 using namespace std;
 using namespace gi_lib;
 using namespace gi_lib::dx11;
+using namespace gi_lib::windows;
 
 //////////////////////////////////// ANONYMOUS ///////////////////////////////////
 
@@ -327,7 +326,7 @@ namespace{
 
 	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, LoadFromFile>(),
 												 Loader::Register<Mesh, BuildIndexedNormalTextured>(),
-												 Loader::Register<Material, LoadFromFile>(), 
+												 Loader::Register<Material, CompileFromFile>(), 
 												 Loader::Register<Material, InstantiateFromMaterial>() };
 
 	/// \brief Utility class for rendering stuffs.

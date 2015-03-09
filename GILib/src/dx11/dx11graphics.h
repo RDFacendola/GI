@@ -13,9 +13,10 @@
 #include "..\..\include\observable.h"
 #include "..\..\include\graphics.h"
 #include "dx11resources.h"
-#include "dx11shared.h"
 
 using ::std::unique_ptr;
+
+using ::gi_lib::windows::COMDeleter;
 
 struct ID3D11Device;
 struct IDXGIFactory;

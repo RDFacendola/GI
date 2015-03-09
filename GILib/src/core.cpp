@@ -1,7 +1,13 @@
 #include "..\include\core.h"
 
+#include <streambuf>
+#include <fstream>
+
 #include "..\include\exceptions.h"
 #include "..\include\timer.h"
+
+// TODO: Remove this!
+#include "..\include\windows\os_windows.h"
 
 using namespace gi_lib;
 using namespace std;
@@ -147,8 +153,7 @@ StorageProfile System::GetStorageProfile(){
 DesktopProfile System::GetDesktopProfile(){
 
 #ifdef _WIN32
-
-	
+		
 	DEVMODE devmode;
 
 	devmode.dmSize = sizeof(DEVMODE);
@@ -168,6 +173,25 @@ DesktopProfile System::GetDesktopProfile(){
 #error "Unsupported platform"
 
 #endif
+
+}
+
+////////////////////// IO ////////////////////////////////////////
+
+string IO::ReadFile(const wstring& file_name){
+
+	std::ifstream file_stream(file_name);
+	std::string content;
+
+	// Size of the file
+	file_stream.seekg(0, std::ios::end);
+	content.reserve(file_stream.tellg());
+	file_stream.seekg(0, std::ios::beg);
+
+	content.assign((std::istreambuf_iterator<char>(file_stream)),
+				    std::istreambuf_iterator<char>());
+
+	return content;
 
 }
 

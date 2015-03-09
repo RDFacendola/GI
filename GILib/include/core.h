@@ -20,6 +20,7 @@
 
 using ::std::shared_ptr;
 using ::std::map;
+using ::std::string;
 using ::std::wstring;
 using ::std::vector;
 
@@ -136,6 +137,21 @@ namespace gi_lib{
 
 		/// \return Returns informations about user's desktop.
 		static DesktopProfile GetDesktopProfile();
+
+	};
+
+	// \brief Exposes Input\Output methods.
+	// \author Raffaele D. Facendola
+	class IO{
+
+	public:
+
+		IO() = delete;
+
+		// \brief Read an entire file.
+		
+		// \return Returns a string filled with the file content.
+		static string ReadFile(const wstring& file_name);
 
 	};
 

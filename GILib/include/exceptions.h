@@ -27,53 +27,6 @@ using ::std::wstring;
 using ::std::stringstream;
 using ::std::map;
 
-#ifdef _WIN32
-
-/// If expr fails, throws a runtime exception with detailed informations. "expr" must be of type "HRESULT"; the error code is defined by the value of the expression itself.
-#define THROW_ON_FAIL(expr) do{ \
-								HRESULT hr = expr; \
-								if(FAILED(hr)) { \
-									std::wstringstream stream; \
-									stream << L"\"" << #expr << "\" failed with 0x" << std::hex << hr << std::dec << std::endl \
-										   << __FILE__ << std::endl \
-										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
-									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(hr)}}); \
-								} \
-							}WHILE0
-
-/// If expr is 0, throws a runtime exception. "expr" must be of type "bool".
-#define THROW_ON_ZERO(expr) do{ \
-								auto b = expr; \
-								if( b == 0) { \
-									std::wstringstream stream; \
-									stream << L"\"" << #expr << "\" failed" << std::endl \
-										   << __FILE__ << std::endl \
-										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
-									throw RuntimeException(stream.str()); \
-																} \
-						   }WHILE0
-
-/// If "expr" raises an error, throws a runtime exception with detailed informations. "expr" must support the unary operator "!"; the error code must be returned by GetLastError().
-#define THROW_ON_ERROR(expr) do { \
-								auto hr = expr; \
-								if(!hr){ \
-									std::wstringstream stream; \
-									stream << L"\"" << #expr << "\" failed with 0x" << std::hex << GetLastError() << std::dec << std::endl \
-										   << __FILE__ << std::endl \
-										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
-									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(GetLastError())}}); } \
-							 }WHILE0
-
-/// If expr fails returns from the routine with the fail code
-#define RETURN_ON_FAIL(expr) do{ \
-								HRESULT hr = expr; \
-								if (FAILED(hr)){ \
-									return hr; \
-								} \
-							 }WHILE0
-
-#endif
-
 namespace gi_lib{
 
 	/// \brief Manages the stack trace.

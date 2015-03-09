@@ -14,6 +14,7 @@
 using ::std::vector;
 using ::std::shared_ptr;
 using ::std::wstring;
+using ::std::string;
 using ::Eigen::Vector2f;
 using ::Eigen::Vector3f;
 using ::Eigen::Affine3f;
@@ -191,7 +192,7 @@ namespace gi_lib{
 		/// The parameter name is case-sensitive.
 		/// \param name The name of the parameter.
 		/// \return Returns the index of the parameter whose name matches the specified one.
-		virtual unsigned int GetParameterIndex(const wstring& name) const = 0;
+		virtual unsigned int GetParameterIndex(const string& name) const = 0;
 
 		/// \brief Set a new value for a parameter.
 
@@ -201,7 +202,7 @@ namespace gi_lib{
 		/// \return Returns true if the method succeeds, returns false otherwise.
 		/// \remarks The method fails if the specified name could not be found or the type specified for the parameter is not compatible with the expected type.
 		template <typename TType>
-		bool SetParameter(const wstring& name, const TType& value);
+		bool SetParameter(const string& name, const TType& value);
 
 		/// \brief Set a new value for a parameter.
 
@@ -218,14 +219,14 @@ namespace gi_lib{
 		/// The texture name is case-sensitive.
 		/// \param name The name of the texture.
 		/// \return Returns the index of the texture whose name matches the specified one.
-		virtual unsigned int GetTextureIndex(const wstring& name) const = 0;
+		virtual unsigned int GetTextureIndex(const string& name) const = 0;
 
 		/// \brief Set a new value for a texture.
 		/// \param name The name of the texture to set.
 		/// \param texture Reference to the texture to set.
 		/// \return Returns true if the method succeeds, returns false otherwise.
 		/// \remarks The method fails if the specified name could not be found or the texture type is not compatible with the expected type.
-		virtual bool SetTexture(const wstring &name, shared_ptr<Texture2D> texture) = 0;
+		virtual bool SetTexture(const string &name, shared_ptr<Texture2D> texture);
 
 		/// \brief Set a new value for a texture.
 		/// \param name The name of the texture to set.
@@ -242,7 +243,7 @@ namespace gi_lib{
 		/// \param size Size of the buffer.
 		/// \return Returns true if the method succeeds, returns false otherwise.
 		/// \remarks The method fails if the parameter name could not be found or the type specified for the parameter is not compatible with the expected type.
-		virtual bool SetParameter(const wstring & name, const void* buffer, size_t size) = 0;
+		virtual bool SetParameter(const string & name, const void* buffer, size_t size);
 
 		/// \brief Set a parameter value from a raw buffer.
 		/// \param index The index of the parameter to set.
@@ -257,7 +258,7 @@ namespace gi_lib{
 	// Material
 
 	template <typename TType>
-	inline bool Material::SetParameter(const wstring & name, const TType& value){
+	inline bool Material::SetParameter(const string & name, const TType& value){
 
 		return SetParameter(name, &value, sizeof(TType));
 
@@ -267,6 +268,18 @@ namespace gi_lib{
 	inline bool Material::SetParameter(unsigned int index, const TType& value){
 
 		return SetParameter(index, &value, sizeof(TType));
+
+	}
+
+	inline bool Material::SetTexture(const string &name, shared_ptr<Texture2D> texture){
+
+		return SetTexture(GetTextureIndex(name), texture);
+
+	}
+
+	inline bool Material::SetParameter(const string & name, const void* buffer, size_t size){
+
+		return SetParameter(GetParameterIndex(name), buffer, size);
 
 	}
 

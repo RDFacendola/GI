@@ -25,7 +25,7 @@
     <ClInclude Include="include\gimath.h" />
     <ClInclude Include="include\bundles.h" />
     <ClInclude Include="include\scope_guard.h" />
-    <ClInclude Include="src\dx11\dx11shared.h" />
+    <ClInclude Include="include\windows\os_windows.h" />
     <ClInclude Include="include\core.h" />
     <ClInclude Include="src\dx11\dx11graphics.h" />
     <ClInclude Include="src\dx11\dx11resources.h" />
@@ -52,9 +52,6 @@
     <ClCompile Include="src\bundles.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\timer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{21C15D82-5532-4597-B69C-EA2ECFA64DF4}</ProjectGuid>

@@ -10,14 +10,14 @@
     <Filter Include="graphics">
       <UniqueIdentifier>{9b367e73-ee71-4afa-bd92-b013a0aa5432}</UniqueIdentifier>
     </Filter>
-    <Filter Include="graphics\dx11">
-      <UniqueIdentifier>{7f63097a-8a40-48d6-9d15-deb875f0b168}</UniqueIdentifier>
-    </Filter>
     <Filter Include="core">
       <UniqueIdentifier>{8d6e244c-ba3e-4532-939b-79349da04ec3}</UniqueIdentifier>
     </Filter>
     <Filter Include="FBX">
       <UniqueIdentifier>{7dc001f6-c62b-471a-a501-1aa07ce6de85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="graphics\directx XI">
+      <UniqueIdentifier>{7f63097a-8a40-48d6-9d15-deb875f0b168}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -46,13 +46,10 @@
       <Filter>graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\dx11\dx11graphics.h">
-      <Filter>graphics\dx11</Filter>
+      <Filter>graphics\directx XI</Filter>
     </ClInclude>
     <ClInclude Include="src\dx11\dx11resources.h">
-      <Filter>graphics\dx11</Filter>
-    </ClInclude>
-    <ClInclude Include="src\dx11\dx11shared.h">
-      <Filter>graphics\dx11</Filter>
+      <Filter>graphics\directx XI</Filter>
     </ClInclude>
     <ClInclude Include="include\scene.h">
       <Filter>scene</Filter>
@@ -63,23 +60,28 @@
     <ClInclude Include="include\graphics.h">
       <Filter>graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\gimath.h" />
     <ClInclude Include="include\fbx\fbx.h">
       <Filter>FBX</Filter>
     </ClInclude>
     <ClInclude Include="external\fnv1.h" />
-    <ClInclude Include="include\scope_guard.h" />
     <ClInclude Include="include\bvh.h" />
     <ClInclude Include="include\bundles.h">
       <Filter>graphics</Filter>
     </ClInclude>
+    <ClInclude Include="include\gimath.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\scope_guard.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\windows\os_windows.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\dx11graphics.cpp">
-      <Filter>graphics\dx11</Filter>
+      <Filter>graphics\directx XI</Filter>
     </ClCompile>
     <ClCompile Include="src\core.cpp">
       <Filter>core</Filter>
@@ -88,7 +90,7 @@
       <Filter>graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\dx11resources.cpp">
-      <Filter>graphics\dx11</Filter>
+      <Filter>graphics\directx XI</Filter>
     </ClCompile>
     <ClCompile Include="src\components.cpp">
       <Filter>scene</Filter>
@@ -99,13 +101,12 @@
     <ClCompile Include="src\fbx\fbx.cpp">
       <Filter>FBX</Filter>
     </ClCompile>
-    <ClCompile Include="src\gimath.cpp" />
     <ClCompile Include="src\bvh.cpp" />
     <ClCompile Include="src\bundles.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ClassDiagram.cd" />
+    <ClCompile Include="src\gimath.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
