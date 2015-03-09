@@ -352,7 +352,7 @@ void Application::Join(){
 		//Shared time to enforce coherence (windows may use their own timer to have the actual time).
 		for (auto & window : windows_){
 
-(window.second)->Update(timer.GetTime());
+			(window.second)->Update(timer.GetTime());
 
 		}
 

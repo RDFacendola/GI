@@ -219,78 +219,77 @@ namespace{
 					  
 	}
 
-	// \brief Perform a shader reflection.
-	bool Reflect(void * bytecode, size_t size, map<string, unsigned int>& cbuffer_index){
+	/// \brief Info about shader types.
+	template <typename TShaderType>
+	struct ShaderTypeInfo;
 
+	/// \brief Info about vertex shader.
+	template <> struct ShaderTypeInfo < ID3D11VertexShader > {
 
-		// 3. Reflection and shit
+		static const char * kEntryPoint;		///< Entry point for the vertex shader.
 
-		ID3D11ShaderReflection * reflection = nullptr;
+		static const char * kShaderProfile;		///< Shader profile.
 
-		unique_ptr<ID3D11ShaderReflection, COMDeleter> reflection_guard(reflection, COMDeleter{});
+		static const bool kCompulsory;			///< Whether the presence of a vertex shader is compulsory or not.
 
-		THROW_ON_FAIL(D3DReflect(bytecode,
-			size,
-			IID_ID3D11ShaderReflection,
-			(void**)&reflection));
+	};
 
-		D3D11_SHADER_DESC shader_desc;
-		D3D11_SHADER_BUFFER_DESC buffer_desc;
-		D3D11_SHADER_VARIABLE_DESC variable_desc;
+	/// \brief Info about geometry shader.
+	template <> struct ShaderTypeInfo < ID3D11GeometryShader > {
 
-		reflection->GetDesc(&shader_desc);
+		static const char * kEntryPoint;		///< Entry point for the geometry shader.
 
-		int buffers_count = shader_desc.ConstantBuffers;
+		static const char * kShaderProfile;		///< Shader profile.
 
-		for (int i = 0; i < buffers_count; ++i){
+		static const bool kCompulsory;			///< Whether the presence of a geometry shader is compulsory or not.
 
-			auto buffer = reflection->GetConstantBufferByIndex(i);
+	};
+	
+	/// \brief Info about pixel shader.
+	template <> struct ShaderTypeInfo < ID3D11PixelShader > {
 
-			buffer->GetDesc(&buffer_desc);
+		static const char * kEntryPoint;		///< Entry point for the pixel shader.
 
-			auto variables_count = buffer_desc.Variables;
+		static const char * kShaderProfile;		///< Shader profile.
 
-			for (int j = 0; j < variables_count; ++j){
+		static const bool kCompulsory;			///< Whether the presence of a pixel shader is compulsory or not.
 
-				auto variable = buffer->GetVariableByIndex(j);
-
-				variable->GetDesc(&variable_desc);
-
-
-
-				// Blahblahblah
-
-			}
-
-		}
-
-	}
-
-	// \brief Compile a shader code and reflects it.
-	// \param compulsory If set to true the method will throw if the entry point couldn't be found, otherwise the method will simply return false upon errors.
-	bool CompileAndReflect(const string& source_file, const string& code, const string& entry_point, const string& shader_profile, bool optimize, map<string, unsigned int>& cbuffer_index, bool compulsory){
+	};
+	
+	// \brief Compile a shader to bytecode.
+	template <typename TShaderType>
+	unique_ptr<ID3DBlob, COMDeleter> Compile(const string& source_file, const string& code){
 
 		ID3DBlob * bytecode = nullptr;
 		ID3DBlob * errors = nullptr;
+
+		#ifdef _DEBUG
+
+		UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_SKIP_OPTIMIZATION;
+
+		#else
+
+		UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_OPTIMIZATION_LEVEL3;
+
+		#endif
 
 		HRESULT hr = D3DCompile(&code[0],
 								code.size(),
 								source_file.c_str(),
 								nullptr,
 								D3D_COMPILE_STANDARD_FILE_INCLUDE,
-								entry_point.c_str(),
-								shader_profile.c_str(),
-								D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | (optimize ? D3DCOMPILE_OPTIMIZATION_LEVEL3 : D3DCOMPILE_SKIP_OPTIMIZATION),
+								ShaderTypeInfo<TShaderType>::kEntryPoint,
+								ShaderTypeInfo<TShaderType>::kShaderProfile,
+								compilation_flags,
 								0,
 								&bytecode,
 								&errors);
 
-		COM_GUARD(bytecode);
 		COM_GUARD(errors);
 
 		if (FAILED(hr)){
 
-			if (compulsory){
+			if (ShaderTypeInfo<TShaderType>::kCompulsory){
 
 				wstringstream stream;
 
@@ -301,35 +300,93 @@ namespace{
 			}
 			else{
 
-				return false;
+				return nullptr;
 
 			}
 
 		}
 		
-		return Reflect(bytecode->GetBufferPointer(),
-					   bytecode->GetBufferSize(),
-					   cbuffer_index);
+		return unique_ptr<ID3DBlob, COMDeleter>(bytecode, COMDeleter{});
 
 	}
 	
-	bool VSCompileAndReflect(const string& source_file, const string& code, map<string, unsigned int>& cbuffer_index, bool optimize){
+	/// \brief Get the slot index of a constant buffer by name. If the name couldn't be found, the buffer is added at the end.
+	/// \return Returns the slot index associated to the specified constant buffer.
+	unsigned int CBufferSlot(const string& cbuffer_name, map<const string, unsigned int>& cbuffer_map){
 
-		return CompileAndReflect(source_file, code, "VSMain", "vs_5_0", optimize, cbuffer_index, true);
+		auto it = cbuffer_map.find(cbuffer_name);
+
+		if (it != cbuffer_map.cend()){
+
+			return it->second;
+
+		}
+
+		cbuffer_map[cbuffer_name] = cbuffer_map.size();
+
+		return cbuffer_map.size() - 1;
 
 	}
 
-	bool GSCompileAndReflect(const string& source_file, const string& code, map<string, unsigned int>& cbuffer_index, bool optimize){
-						
-		return CompileAndReflect(source_file, code, "GSMain", "gs_5_0", optimize, cbuffer_index, false);
-				
+	// \brief Perform a shader reflection.
+	void Reflect(ID3DBlob * bytecode, map<const string, unsigned int>& cbuffer_map){
+		
+		if (bytecode == nullptr){
+
+			return;
+
+		}
+
+		ID3D11ShaderReflection * reflector = nullptr;
+
+		THROW_ON_FAIL(D3DReflect(bytecode->GetBufferPointer(),
+								 bytecode->GetBufferSize(),
+								 IID_ID3D11ShaderReflection,
+								 (void**)&reflector));
+
+		COM_GUARD(reflector)
+
+		D3D11_SHADER_DESC shader_desc;
+		D3D11_SHADER_BUFFER_DESC buffer_desc;
+		D3D11_SHADER_VARIABLE_DESC variable_desc;
+
+		reflector->GetDesc(&shader_desc);
+
+		for (int cbuffer_index = 0; cbuffer_index < shader_desc.ConstantBuffers; ++cbuffer_index){
+
+			auto buffer = reflector->GetConstantBufferByIndex(cbuffer_index);
+
+			buffer->GetDesc(&buffer_desc);
+
+			auto cbuffer_slot = CBufferSlot(buffer_desc.Name, cbuffer_map);
+
+			for (int variable_index = 0; variable_index < buffer_desc.Variables; ++variable_index){
+
+				auto variable = buffer->GetVariableByIndex(variable_index);
+
+				variable->GetDesc(&variable_desc);
+
+
+			}
+
+		}
+
 	}
 
-	bool PSCompileAndReflect(const string& source_file, const string& code, map<string, unsigned int>& cbuffer_index, bool optimize){
 
-		return CompileAndReflect(source_file, code, "PSMain", "ps_5_0", optimize, cbuffer_index, true);
+	//
 
-	}
+	const char * ShaderTypeInfo<ID3D11VertexShader>::kEntryPoint = "VSMain";
+	const char * ShaderTypeInfo<ID3D11VertexShader>::kShaderProfile = "vs_5_0";
+	const bool   ShaderTypeInfo<ID3D11VertexShader>::kCompulsory = true;
+
+	const char * ShaderTypeInfo<ID3D11GeometryShader>::kEntryPoint = "GSMain";
+	const char * ShaderTypeInfo<ID3D11GeometryShader>::kShaderProfile = "gs_5_0";
+	const bool   ShaderTypeInfo<ID3D11GeometryShader>::kCompulsory = false;
+
+	const char * ShaderTypeInfo<ID3D11PixelShader>::kEntryPoint = "PSMain";
+	const char * ShaderTypeInfo<ID3D11PixelShader>::kShaderProfile = "ps_5_0";
+	const bool   ShaderTypeInfo<ID3D11PixelShader>::kCompulsory = true;
 
 }
 
@@ -589,11 +646,21 @@ DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 
 	string file_name = string(bundle.file_name.begin(), bundle.file_name.end());
 
-	map<string, unsigned int> cbuffer_index;
+	map<const string, unsigned int> cbuffer_map;
 
-	VSCompileAndReflect(file_name, code, cbuffer_index, true);
-	GSCompileAndReflect(file_name, code, cbuffer_index, true);
-	PSCompileAndReflect(file_name, code, cbuffer_index, false);
+	auto vs = Compile<ID3D11VertexShader>(file_name, code);
+	auto gs = Compile<ID3D11GeometryShader>(file_name, code);
+	auto ps = Compile<ID3D11PixelShader>(file_name, code);
+
+	shared_ptr<vector<ParameterInfo>> parameters_;
+
+	// \brief Buffer status.
+	vector<CBufferInfo> buffers_;
+
+
+	Reflect(vs.get(), cbuffer_map);
+	Reflect(gs.get(), cbuffer_map);
+	Reflect(ps.get(), cbuffer_map);
 
 }
 

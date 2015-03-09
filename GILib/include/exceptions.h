@@ -99,9 +99,6 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Type of the extra arguments.
-		typedef map<wstring, wstring> TErrorArgs;
-
 		/// \brief Move ctor.
 		/// \param other The r-value reference to the object to move.
 		Exception(Exception && other){
