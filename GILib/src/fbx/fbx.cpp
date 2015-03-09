@@ -500,7 +500,7 @@ void FBXImporter::ImportScene(const wstring & file_name, SceneNode & scene_root,
 
 		wstring werror = wstring(error.begin(), error.end());
 
-		throw RuntimeException(L"FbxImporter::Initialize() failed.\n" + werror);
+		THROW(L"FbxImporter::Initialize() failed.\n" + werror);
 
 	}
 
@@ -514,7 +514,7 @@ void FBXImporter::ImportScene(const wstring & file_name, SceneNode & scene_root,
 	// Triangulate the scene (Better to do this offline, as it is heavily time-consuming)
 	if (!fbx_sdk_->converter->Triangulate(fbx_scene, true)){
 
-		throw RuntimeException(L"FbxGeometryConverter::Triangulate() failed.\n");
+		THROW(L"FbxGeometryConverter::Triangulate() failed.\n");
 
 	}
 

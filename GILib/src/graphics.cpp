@@ -69,7 +69,7 @@ Graphics & Graphics::GetAPI(API api){
 
 		default:
 
-			throw RuntimeException(L"Specified API is not supported.");
+			THROW(L"Specified API is not supported.");
 
 	}
 

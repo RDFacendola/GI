@@ -59,12 +59,12 @@ CpuProfile System::GetCPUProfile(){
 
 	if (!QueryPerformanceFrequency(&frequency)){
 
-		throw RuntimeException(L"Your system does not support high-resolution performance counter");
+THROW(L"Your system does not support high-resolution performance counter");
 
 	}
 
 	GetSystemInfo(&system_info);
-	
+
 	cpu_profile.cores = system_info.dwNumberOfProcessors;
 	cpu_profile.frequency = frequency.QuadPart * 1000;
 
@@ -153,12 +153,16 @@ StorageProfile System::GetStorageProfile(){
 DesktopProfile System::GetDesktopProfile(){
 
 #ifdef _WIN32
-		
+
 	DEVMODE devmode;
 
 	devmode.dmSize = sizeof(DEVMODE);
-	
-	THROW_ON_ZERO(EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devmode));
+
+	if (EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &devmode) == 0){
+
+		THROW(L"Could not get desktop profile.");
+
+	}
 		
 	DesktopProfile desktop_profile;
 
@@ -348,7 +352,7 @@ void Application::Join(){
 		//Shared time to enforce coherence (windows may use their own timer to have the actual time).
 		for (auto & window : windows_){
 
-			(window.second)->Update(timer.GetTime());
+(window.second)->Update(timer.GetTime());
 
 		}
 
@@ -447,7 +451,11 @@ Window::WindowClass::WindowClass(){
 
 	//Attempt to register the class
 
-	THROW_ON_ERROR(RegisterClass(&window_description));
+	if (!RegisterClass(&window_description)){
+
+		THROW(L"Could not register window class.");
+
+	}
 
 }
 
@@ -500,17 +508,17 @@ Window::Window(){
 #ifdef _WIN32
 
 	//Create the window
-	THROW_ON_ERROR(handle_ = CreateWindow(WindowClass::GetInstance().kWindowClassName,
-		L"",
-		WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		NULL,
-		NULL,
-		GetModuleHandle(nullptr),
-		NULL));
+	THROW_ON_FALSE(handle_ = CreateWindow(WindowClass::GetInstance().kWindowClassName,
+										  L"",
+										  WS_OVERLAPPEDWINDOW,
+										  CW_USEDEFAULT,
+										  CW_USEDEFAULT,
+										  CW_USEDEFAULT,
+										  CW_USEDEFAULT,
+										  NULL,
+										  NULL,
+										  GetModuleHandle(nullptr),
+										  NULL));
 
 #else
 

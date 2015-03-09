@@ -81,7 +81,7 @@ target_(target){
 
 	if (!target_){
 
-		throw RuntimeException(L"Render target must not be null!");
+		THROW(L"Render target must not be null!");
 
 	}
 
@@ -161,7 +161,7 @@ Frustum Camera::GetViewFrustum() const{
 	else{
 
 		// Add the orthographic projection matrix here
-		throw RuntimeException(L"Not yet implemented, duh!");
+		THROW(L"Not yet implemented, duh!");
 
 	}
 	

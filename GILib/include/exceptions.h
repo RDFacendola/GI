@@ -7,12 +7,6 @@
 
 #pragma comment(lib, "StackWalker")
 
-#ifdef _WIN32
-
-#include <Windows.h>
-
-#endif
-
 #include <string>
 #include <iomanip>
 #include <string>
@@ -26,6 +20,17 @@
 using ::std::wstring;
 using ::std::stringstream;
 using ::std::map;
+
+/// \brief Debug boilerplate used to localize exceptions.
+/// The format is "<File>:<Line> (<Function>)"
+#define EXCEPTION_LOCATION __FILE__ ":" TO_STRING(__LINE__) " (" __FUNCTION__ ")"
+
+/// \brief Debug boilerplate used to localize exceptions.
+/// The format is "<File>:<Line> (<Function>)"
+#define EXCEPTION_LOCATION_W CONCATENATE(L, __FILE__) L":" TO_WSTRING(__LINE__) L" (" CONCATENATE(L, __FUNCTION__) L")"
+
+/// \brief Throws an exception.
+#define THROW(message) throw Exception(message, EXCEPTION_LOCATION_W)
 
 namespace gi_lib{
 
@@ -90,7 +95,7 @@ namespace gi_lib{
 	/// throw RuntimeException("message", {{L"arg0", L"value0"}, {L"arg1", L"value1"}})
 	/// \endcode
 	/// \author Raffaele D. Facendola
-	class RuntimeException{
+	class Exception{
 
 	public:
 
@@ -99,42 +104,29 @@ namespace gi_lib{
 
 		/// \brief Move ctor.
 		/// \param other The r-value reference to the object to move.
-		RuntimeException(RuntimeException && other){
+		Exception(Exception && other){
 
-			error_message_ = std::move(other.error_message_);
+			where_ = std::move(other.where_);
+			what_ = other.what_;
 			stack_trace_ = std::move(other.stack_trace_);
-			extras_ = std::move(other.extras_);
-
-		}
-
-		/// \brief Creates a new exception.
-		/// \param error_message The error message associated to the exception
-		RuntimeException(const wstring & error_message){
-
-			StackTrace e;
-
-			stack_trace_ = e.GetStackTrace();
-			error_message_ = error_message;
-
-		}
-
-		/// \brief Creates a new exception.
-		/// \param error_message The error message associated to the exception
-		/// \param extras Extra arguments to store within the exception
-		RuntimeException(const wstring & error_message, TErrorArgs && extras){
-
-			StackTrace e;
-
-			stack_trace_ = e.GetStackTrace();
-			error_message_ = error_message;
 			
-			extras_ = std::move(extras);
+		}
+
+		/// \brief Creates a new exception.
+		/// \param error_message The error message associated to the exception
+		Exception(const wstring & what, const wstring & location){
+
+			StackTrace e;
+
+			where_ = location;
+			what_ = what;
+			stack_trace_ = e.GetStackTrace();
 
 		}
 
 		/// \brief Unified assigment operator.
 		/// \param other The value to assign to this object.
-		inline RuntimeException & operator=(RuntimeException other){
+		inline Exception & operator=(Exception other){
 
 			other.Swap(*this);
 
@@ -142,11 +134,19 @@ namespace gi_lib{
 
 		}
 
-		/// \brief Get the error message.
-		/// \return Returns the error message.
-		const wstring & GetErrorMessage() const{
+		/// \brief What happened.
+		/// \return Returns a string with the exception cause.
+		const wstring & GetWhat() const{
 
-			return error_message_;
+			return what_;
+
+		}
+
+		/// \brief Where the exception was thrown.
+		/// \return Returns a string containing the location where the exception was thrown from.
+		const wstring & GetWhere() const{
+
+			return where_;
 
 		}
 
@@ -158,44 +158,25 @@ namespace gi_lib{
 
 		}
 
-		/// \brief Get an extra value by key.
-		/// \param key Key of the extra to retrieve.
-		/// \return Returns a value corresponding to the extra whose key is the specified one. If no extra is found, an empty string is returned instead.
-		inline const wstring & GetExtra(wstring key) const{
-
-			auto it = extras_.find(key);
-
-			if (it != extras_.end()){
-
-				return it->second;
-
-			}else{
-
-				return kEmptyExtra;
-
-			}
-
-		}
-	
 	private:
 
-		/// \brief Swap routine
-		inline void Swap(RuntimeException & other){
+		/// \brief Swap.
+		inline void Swap(Exception & other){
 
-			std::swap(error_message_, other.error_message_);
+			std::swap(where_, other.where_);
+			std::swap(what_, other.what_);
 			std::swap(stack_trace_, other.stack_trace_);
-			std::swap(extras_, other.extras_);
 
 		}
 
-		const wstring kEmptyExtra = L"";
+		/// \brief Location of the exception.
+		wstring where_;
 
-		wstring error_message_;
+		/// \brief What happened.
+		wstring what_;
 
 		wstring stack_trace_;
-
-		TErrorArgs extras_;
-
+		
 	};
 
 }

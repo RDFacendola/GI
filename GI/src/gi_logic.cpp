@@ -18,9 +18,7 @@ GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {
 	
-	auto b = DEBUG_BOILERPLATEW;
-
-	auto material = graphics_.GetResources().Load<Material, CompileFromFile>({ Application::GetDirectory() + L"Data\\phong.fx", false });
+	//auto material = graphics_.GetResources().Load<Material, CompileFromFile>({ Application::GetDirectory() + L"Data\\phong.fx", false });
 
 	// Graphics setup
 

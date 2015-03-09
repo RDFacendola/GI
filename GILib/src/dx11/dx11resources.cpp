@@ -26,20 +26,6 @@ using namespace gi_lib::windows;
 using namespace DirectX;
 using namespace Eigen;
 
-/// Throws if the compilation miserably fails...
-#define THROW_ON_COMPILE_FAIL(expr, blob) do{ \
-								HRESULT __hr = expr; \
-								if(FAILED(__hr)) { \
-									std::wstringstream stream; \
-									stream << L"\"" << #expr << "\" failed with 0x" << std::hex << __hr << std::dec << std::endl \
-										   << __FILE__ << std::endl \
-										   << __FUNCTION__ << L" @ " << __LINE__ << std::endl; \
-									std::string error_string(blob != nullptr ? static_cast<char *>(blob->GetBufferPointer()) : ""); \
-									std::wstring werror_string(error_string.begin(), error_string.end()); \
-									throw RuntimeException(stream.str(), {{L"error_code", std::to_wstring(__hr)}, {L"compiler error", werror_string}}); \
-								} \
-							}WHILE0
-
 namespace{
 
 	/// \brief Ratio between a Bit and a Byte size.
@@ -61,7 +47,7 @@ namespace{
 
 		}
 
-		throw RuntimeException(L"Unrecognized priority level.");
+		THROW(L"Unrecognized priority level.");
 
 	}
 
@@ -78,7 +64,7 @@ namespace{
 
 		}
 
-		throw RuntimeException(L"Unrecognized priority level.");
+		THROW(L"Unrecognized priority level.");
 
 	}
 	
@@ -302,14 +288,22 @@ namespace{
 		COM_GUARD(bytecode);
 		COM_GUARD(errors);
 
-		if (compulsory){
+		if (FAILED(hr)){
 
-			THROW_ON_COMPILE_FAIL(hr, errors);
+			if (compulsory){
 
-		}
-		else if(FAILED(hr)){
+				wstringstream stream;
 
-			return false;
+				stream << std::to_wstring(hr) << L" - " << errors->GetBufferPointer();
+
+				THROW(stream.str());
+
+			}
+			else{
+
+				return false;
+
+			}
 
 		}
 		

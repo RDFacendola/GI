@@ -12,7 +12,7 @@ using ::std::wstring;
 using ::std::wstringstream;
 
 using ::gi_lib::Application;
-using ::gi_lib::RuntimeException;
+using ::gi_lib::Exception;
 
 void CopyToClipboard(const wstring &);
 
@@ -26,13 +26,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		app.Join();
 
-	}catch (const RuntimeException & e){
+	}catch (const Exception & e){
 
 		//Unhandled exception!
 		wstringstream stream;
 		
-		stream << e.GetErrorMessage()
+		stream << e.GetWhat()
 			   << std::endl
+			   << e.GetWhere()
 			   << std::endl
 			   << e.GetStackTrace()
 			   << std::endl

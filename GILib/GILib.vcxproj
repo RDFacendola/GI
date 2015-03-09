@@ -52,6 +52,7 @@
     <ClCompile Include="src\bundles.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\timer.cpp" />
+    <ClCompile Include="src\windows\os_windows.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{21C15D82-5532-4597-B69C-EA2ECFA64DF4}</ProjectGuid>

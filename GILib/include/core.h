@@ -295,7 +295,7 @@ namespace gi_lib{
 
 	template<typename TWindow, typename... TArgs>
 	typename std::enable_if_t< std::is_base_of<Window, TWindow>::value, weak_ptr<TWindow>> 
-		Application::AddWindow(TArgs&&... arguments){
+	Application::AddWindow(TArgs&&... arguments){
 
 		auto window = std::make_shared<TWindow>(std::forward<TArgs>(arguments)...);
 
