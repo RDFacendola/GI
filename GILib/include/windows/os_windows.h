@@ -36,7 +36,7 @@ using std::unique_ptr;
 							 }WHILE0
 
 /// \brief Defines a raii guard for COM interfaces.
-#define COM_GUARD(com) unique_ptr<IUnknown, COMDeleter> ANONYMOUS(com, COMDeleter{});
+#define COM_GUARD(com) unique_ptr<IUnknown, COMDeleter> ANONYMOUS(com, COMDeleter{})
 
 namespace gi_lib{
 

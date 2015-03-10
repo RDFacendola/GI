@@ -209,6 +209,9 @@ namespace gi_lib{
 			/// \param bundle Bundle used to instantiate the material.
 			DX11Material(ID3D11Device& device, const InstantiateFromMaterial& bundle);
 			
+			/// \brief Default destructor.
+			~DX11Material();
+
 			virtual size_t GetSize() const override;
 		
 			virtual unsigned int GetParameterIndex(const string& name) const override;
@@ -254,12 +257,21 @@ namespace gi_lib{
 
 				// \brief Whether the constant buffer should be updated with the latest data contained inside the raw buffer.
 				bool dirty;
-
-				~CBufferInfo();
-
+				
 			};
+			
+			/// \brief Add a new constant buffer.
+			/// \param device The device used to create the hardware buffer.
+			/// \param size Size of the buffer.
+			/// \return Returns the index of the constant buffer.
+			unsigned int AddCBuffer(ID3D11Device& device, size_t size);
 
-			size_t size_;
+			/// \brief Add a new shader parameter.
+			/// \param name Name of the parameter.
+			/// \param buffer_index Index of the buffer containing the variable.
+			/// \param size Size of the variable.
+			/// \param offset Offset of the variable.
+			unsigned int AddParameter(const string & name, unsigned int buffer_index, size_t size, size_t offset);
 
 			shared_ptr<ID3D11VertexShader> vertex_shader_;
 
@@ -273,7 +285,13 @@ namespace gi_lib{
 
 			// \brief Buffer status.
 			vector<CBufferInfo> buffers_;
+
+			vector<ID3D11Buffer *> vs_buffers_;		///< \brief Order of the constant buffers for the vertex shader.
+
+			vector<ID3D11Buffer *> gs_buffers_;		///< \brief Order of the constant buffers for the geometry shader.
 			
+			vector<ID3D11Buffer *> ps_buffers_;		///< \brief Order of the constant buffers for the pixel shader.
+
 		};
 
 		/// \brief DirectX11 resource mapping template.
@@ -332,8 +350,7 @@ namespace gi_lib{
 			return static_cast<const typename ResourceMapping<TResource>::TMapped&>(resource);
 
 		}
-
-
+		
 		//
 
 		inline unsigned int DX11Texture2D::GetWidth() const{
@@ -459,24 +476,6 @@ namespace gi_lib{
 		inline Bounds DX11Mesh::GetBounds() const{
 
 			return bounds_;
-
-		}
-
-		// DX11Material
-
-		inline size_t DX11Material::GetSize() const{
-
-			return size_;
-
-		}
-
-		// DX11Material::CBufferInfo
-
-		inline DX11Material::CBufferInfo::~CBufferInfo(){
-
-			delete[] raw_buffer;
-
-			constant_buffer->Release();
 
 		}
 
