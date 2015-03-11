@@ -1,24 +1,21 @@
 #pragma comment(lib,"DirectXTK")
 #pragma comment(lib,"DirectXTex")
-#pragma comment(lib,"Effects11")
 
 #include "dx11resources.h"
 
 #include <set>
+#include <math.h>
 
 #include <DDSTextureLoader.h>
 #include <DirectXTex.h>
 #include <DirectXMath.h>
-#include <d3dcompiler.h>
 #include <Eigen/Core>
-
-#include <math.h>
 
 #include "..\..\include\core.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\scope_guard.h"
 
-#include "..\..\include\windows\os_windows.h"
+#include "dx11shader.h"
 
 using namespace std;
 using namespace gi_lib;
@@ -35,95 +32,7 @@ namespace{
 
 	/// \brief Size ration between two consecutive MIP levels of a texture 2D.
 	const float kMIPRatio2D = 1.0f / 4.0f;
-	
-	/// \brief Info about shader types.
-	template <typename TShaderType>
-	struct ShaderTypeInfo;
-
-	/// \brief Info about vertex shader.
-	template <> struct ShaderTypeInfo < ID3D11VertexShader > {
-
-		static const char * kEntryPoint;		///< Entry point for the vertex shader.
-
-		static const char * kShaderProfile;		///< Shader profile.
-
-		static const bool kCompulsory;			///< Whether the presence of a vertex shader is compulsory or not.
-
-	};
-
-	/// \brief Info about geometry shader.
-	template <> struct ShaderTypeInfo < ID3D11GeometryShader > {
-
-		static const char * kEntryPoint;		///< Entry point for the geometry shader.
-
-		static const char * kShaderProfile;		///< Shader profile.
-
-		static const bool kCompulsory;			///< Whether the presence of a geometry shader is compulsory or not.
-
-	};
-
-	/// \brief Info about pixel shader.
-	template <> struct ShaderTypeInfo < ID3D11PixelShader > {
-
-		static const char * kEntryPoint;		///< Entry point for the pixel shader.
-
-		static const char * kShaderProfile;		///< Shader profile.
-
-		static const bool kCompulsory;			///< Whether the presence of a pixel shader is compulsory or not.
-
-	};
-	
-	/// \brief Info about shader variables.
-	struct ShaderVariableInfo{
-
-		string variable_name;		///< \brief Variable name.
-
-		string cbuffer_name;		///< \brief Constant buffer name.
-
-		size_t size;				///< \brief Size of the variable.
-
-		size_t offset;				///< \brief Offset of the variable.
-
-	};
-
-	/// \brief Info about constant buffers.
-	struct ConstantBufferInfo{
-
-		string buffer_name;			///< \brief Constant buffer name.
-
-		size_t size;				///< \brief Constant buffer total size.
-
-	};
-	
-	template <typename TType>
-	struct LessThan;
-	
-	/// \brief Less comparator for shader variable info.
-	/// Variable name must not be duplicated.
-	template <> 
-	struct LessThan<ShaderVariableInfo>{
-
-		bool operator() (const ShaderVariableInfo& left, const ShaderVariableInfo& right) const{
-
-			return left.variable_name < right.variable_name;
-
-		}
-
-	};
-	
-	/// \brief Less comparator for constant buffer info.
-	/// Constant buffer name must not be duplicated.
-	template <>
-	struct LessThan<ConstantBufferInfo>{
-
-		bool operator() (const ConstantBufferInfo& left, const ConstantBufferInfo& right) const{
-
-			return left.buffer_name < right.buffer_name;
-
-		}
-
-	};
-
+		
 	/// \brief Convert a resource priority to an eviction priority
 	unsigned int ResourcePriorityToEvictionPriority(ResourcePriority priority){
 
@@ -308,181 +217,6 @@ namespace{
 			max_corner - min_corner };
 					  
 	}
-
-	using ShaderVariableSet = std::set < ShaderVariableInfo, LessThan<ShaderVariableInfo> >;
-
-	using CBufferSet = std::set < ConstantBufferInfo, LessThan<ConstantBufferInfo> >;
-
-	/// \brief Compile a shader to bytecode.
-	template <typename TShaderType>
-	unique_ptr<ID3DBlob, COMDeleter> Compile(const string& source_file, const string& code){
-
-		ID3DBlob * bytecode = nullptr;
-		ID3DBlob * errors = nullptr;
-
-		#ifdef _DEBUG
-
-		UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_SKIP_OPTIMIZATION;
-
-		#else
-
-		UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_OPTIMIZATION_LEVEL3;
-
-		#endif
-
-		HRESULT hr = D3DCompile(&code[0],
-								code.size(),
-								source_file.c_str(),
-								nullptr,
-								D3D_COMPILE_STANDARD_FILE_INCLUDE,
-								ShaderTypeInfo<TShaderType>::kEntryPoint,
-								ShaderTypeInfo<TShaderType>::kShaderProfile,
-								compilation_flags,
-								0,
-								&bytecode,
-								&errors);
-
-		COM_GUARD(errors);
-
-		if (FAILED(hr)){
-
-			if (ShaderTypeInfo<TShaderType>::kCompulsory){
-
-				wstringstream stream;
-
-				string error_string = static_cast<char *>(errors->GetBufferPointer());
-
-				stream << std::to_wstring(hr) << L" - " << wstring(error_string.begin(), error_string.end());
-
-				THROW(stream.str());
-
-			}
-			else{
-
-				return nullptr;
-
-			}
-
-		}
-		
-		return unique_ptr<ID3DBlob, COMDeleter>(bytecode, COMDeleter{});
-
-	}
-	
-	/// \brief Perform a shader reflection.
-	/// \return Returns a vector containing the ordered sequence of constant buffers.
-	vector<string> Reflect(ID3DBlob * bytecode, CBufferSet& cbuffers, ShaderVariableSet& variables){
-
-		vector<string> buffer_sequence;
-
-		if (bytecode == nullptr){
-
-			return buffer_sequence;
-
-		}
-
-		ID3D11ShaderReflection * reflector = nullptr;
-
-		THROW_ON_FAIL(D3DReflect(bytecode->GetBufferPointer(),
-								 bytecode->GetBufferSize(),
-								 IID_ID3D11ShaderReflection,
-								 (void**)&reflector));
-
-		COM_GUARD(reflector);
-
-		D3D11_SHADER_DESC shader_desc;
-		D3D11_SHADER_BUFFER_DESC buffer_desc;
-		D3D11_SHADER_VARIABLE_DESC variable_desc;
-
-		reflector->GetDesc(&shader_desc);
-
-		// Constant buffers and variables
-
-		for (int cbuffer_index = 0; cbuffer_index < shader_desc.ConstantBuffers; ++cbuffer_index){
-
-			// Adds a new constant buffer
-
-			auto buffer = reflector->GetConstantBufferByIndex(cbuffer_index);
-
-			buffer->GetDesc(&buffer_desc);
-
-			cbuffers.insert(ConstantBufferInfo{ buffer_desc.Name, 
-												buffer_desc.Size });
-
-			buffer_sequence.push_back(buffer_desc.Name);
-
-			for (int variable_index = 0; variable_index < buffer_desc.Variables; ++variable_index){
-
-				// Adds a new variable
-
-				auto variable = buffer->GetVariableByIndex(variable_index);
-
-				variable->GetDesc(&variable_desc);
-
-				
-				variables.insert(ShaderVariableInfo{ variable_desc.Name, 
-													 buffer_desc.Name, 
-													 variable_desc.Size, 
-													 variable_desc.StartOffset });
-
-			}
-
-		}
-
-		// Texture, samplers
-
-		D3D11_SHADER_INPUT_BIND_DESC resource_desc;
-
-		for (int resource_index = 0; resource_index < shader_desc.BoundResources; ++resource_index){
-
-			reflector->GetResourceBindingDesc(resource_index, &resource_desc);
-
-			
-
-		}
-
-		
-		return buffer_sequence;
-
-	}
-	
-	/// \brief Create a constant buffer.
-	ID3D11Buffer * MakeConstantBuffer(ID3D11Device & device, size_t size){
-
-		ID3D11Buffer* cbuffer = nullptr;
-
-		// Fill in a buffer description.
-		D3D11_BUFFER_DESC buffer_desc;
-
-		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;					
-		buffer_desc.ByteWidth = static_cast<unsigned int>(size);	
-		buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;			
-		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;		
-		buffer_desc.MiscFlags = 0;
-		buffer_desc.StructureByteStride = 0;
-
-		// Create the buffer with the device.
-		THROW_ON_FAIL(device.CreateBuffer(&buffer_desc, 
-										  nullptr, 
-										  &cbuffer));
-		
-		return cbuffer;
-
-	}
-
-	//
-
-	const char * ShaderTypeInfo<ID3D11VertexShader>::kEntryPoint = "VSMain";
-	const char * ShaderTypeInfo<ID3D11VertexShader>::kShaderProfile = "vs_5_0";
-	const bool   ShaderTypeInfo<ID3D11VertexShader>::kCompulsory = true;
-
-	const char * ShaderTypeInfo<ID3D11GeometryShader>::kEntryPoint = "GSMain";
-	const char * ShaderTypeInfo<ID3D11GeometryShader>::kShaderProfile = "gs_5_0";
-	const bool   ShaderTypeInfo<ID3D11GeometryShader>::kCompulsory = false;
-
-	const char * ShaderTypeInfo<ID3D11PixelShader>::kEntryPoint = "PSMain";
-	const char * ShaderTypeInfo<ID3D11PixelShader>::kShaderProfile = "ps_5_0";
-	const bool   ShaderTypeInfo<ID3D11PixelShader>::kCompulsory = true;
 
 }
 
@@ -741,24 +475,29 @@ DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 	string file_name = string(bundle.file_name.begin(), bundle.file_name.end());
 
 	// Compile
-
-	auto vs = Compile<ID3D11VertexShader>(file_name, code);
-	auto gs = Compile<ID3D11GeometryShader>(file_name, code);
-	auto ps = Compile<ID3D11PixelShader>(file_name, code);
+	auto vs = ShaderHelper::CompileOrDie<ID3D11VertexShader>(code, file_name);
+	auto gs = ShaderHelper::Compile<ID3D11GeometryShader>(code, file_name);
+	auto ps = ShaderHelper::Compile<ID3D11PixelShader>(code, file_name);
 
 	// Reflection
+	ShaderReflection reflection;
 
-	CBufferSet cbuffers;
-	ShaderVariableSet variables;
+	ShaderHelper::ReflectMoreOrDie(*vs, reflection);
 
-	auto vs_order = Reflect(vs.get(), cbuffers, variables);
-	auto gs_order = Reflect(gs.get(), cbuffers, variables);
-	auto ps_order = Reflect(ps.get(), cbuffers, variables);
+	if (gs){
+
+		ShaderHelper::ReflectMoreOrDie(*gs, reflection);
+
+	}
+	
+	ShaderHelper::ReflectMoreOrDie(*vs, reflection);
+
+	static const bool lookup[] = { true, false };
 
 	// Construction
 	
 	// This is O(cbuffers * variable) but not worthy of optimization.
-
+	/*
 	for (auto & cbuffer : cbuffers){
 
 		auto cbuffer_index = AddCBuffer(device, cbuffer.size);
@@ -774,7 +513,7 @@ DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 		}
 
 	}
-
+	*/
 }
 
 DX11Material::DX11Material(ID3D11Device& device, const InstantiateFromMaterial& bundle){
@@ -798,14 +537,14 @@ unsigned int DX11Material::AddCBuffer(ID3D11Device& device, size_t size){
 
 	CBufferInfo buffer_info;
 
-	buffer_info.constant_buffer = MakeConstantBuffer(device, size);
+	buffer_info.constant_buffer = ShaderHelper::MakeConstantBufferOrDie(device, size);
 	buffer_info.raw_buffer = new char[size];
 	buffer_info.size = size;
 	buffer_info.dirty = false;
 	
 	buffers_.push_back(buffer_info);
 
-	return buffers_.size() - 1;
+	return static_cast<unsigned int>(buffers_.size()) - 1;
 
 }
 
@@ -827,31 +566,31 @@ unsigned int DX11Material::AddParameter(const string & name, unsigned int buffer
 	
 	parameters_->push_back(parameter_info);
 
-	return parameters_->size() - 1;
+	return static_cast<unsigned int>(parameters_->size()) - 1;
 
 }
 
-unsigned int DX11Material::GetParameterIndex(const string& name) const{
+Material::VariableHandle DX11Material::GetVariableHandle(const string& name) const{
 
-	THROW(L"Invalid shader parameter name.");
-
-}
-
-unsigned int DX11Material::GetTextureIndex(const string& name) const{
-
-	return -1;
+	return 0;
 
 }
 
-bool DX11Material::SetTexture(unsigned int index, shared_ptr<Texture2D> texture){
+Material::ResourceHandle DX11Material::GetResourceHandle(const string& name) const{
 
-	return false;
+	return 0;
 
 }
 
-bool DX11Material::SetParameter(unsigned int index, const void* buffer, size_t size){
+void DX11Material::SetResource(const ResourceHandle& handle, shared_ptr<ShaderResource> resource){
 
-	return false;
+	// Not yet implemented
+
+}
+
+void DX11Material::SetVariable(const VariableHandle& handle, const void* buffer, size_t size){
+
+	// Not yet implemented
 
 }
 

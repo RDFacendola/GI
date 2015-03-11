@@ -39,10 +39,12 @@
     <ClInclude Include="include\unique.h" />
     <ClInclude Include="include\resources.h" />
     <ClInclude Include="include\macros.h" />
+    <ClInclude Include="src\dx11\dx11shader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\components.cpp" />
     <ClCompile Include="src\dx11\dx11resources.cpp" />
+    <ClCompile Include="src\dx11\dx11shader.cpp" />
     <ClCompile Include="src\fbx\fbx.cpp" />
     <ClCompile Include="src\gimath.cpp" />
     <ClCompile Include="src\graphics.cpp" />

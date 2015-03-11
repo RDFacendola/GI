@@ -75,6 +75,7 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="include\windows\os_windows.h" />
+    <ClInclude Include="src\dx11\dx11shader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -109,5 +110,6 @@
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="src\windows\os_windows.cpp" />
+    <ClCompile Include="src\dx11\dx11shader.cpp" />
   </ItemGroup>
 </Project>

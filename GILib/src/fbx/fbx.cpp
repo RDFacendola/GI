@@ -298,7 +298,7 @@ namespace{
 		// Phong shader
 		auto base_material = resources.Load<Material, LoadFromFile>({ Resources::kPhongShaderFile });
 
-		auto diffuse_map_index = base_material->GetTextureIndex("diffuse_map");
+		auto diffuse_map_index = base_material->GetResourceHandle("diffuse_map");
 
 		// Materials
 
@@ -318,7 +318,7 @@ namespace{
 			
 			if (diffuse){
 
-				material_instance->SetTexture(diffuse_map_index, diffuse);
+				//material_instance->SetTexture(diffuse_map_index, diffuse);
 
 			}
 			else{

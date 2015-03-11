@@ -6,7 +6,6 @@
 #pragma once
 
 #include <d3d11.h>
-#include <d3dx11effect.h>
 #include <string>
 #include <map>
 #include <memory>
@@ -32,9 +31,33 @@ namespace gi_lib{
 		class DX11Texture2D;
 		class DX11Mesh;
 
+		template <typename TShader>
+		struct ShaderSetup;
+
+		/// \brief Base interface for DirectX11 resources that can be bound as shader resources.
+		class DX11ShaderResource{
+
+		public:
+
+			/// \brief Get the number of shader resource views associated to this resource.
+			/// \return Returns the number of shader resource views associated to this resource.
+			virtual unsigned int GetShaderViewCount() const = 0;
+
+			/// \brief Get the shader resource view associated to this shader resource.
+			/// \param index Index of the shader view to get.
+			/// \return Returns the shader resource view associated to this shader resource.
+			virtual const ID3D11ShaderResourceView& GetShaderView(unsigned int index) const = 0;
+
+			/// \brief Get the shader resource view associated to this shader resource.
+			/// \param index Index of the shader view to get.
+			/// \return Returns the shader resource view associated to this shader resource.
+			virtual ID3D11ShaderResourceView& GetShaderView(unsigned int index) = 0;
+
+		};
+
 		/// \brief DirectX11 plain texture.
 		/// \author Raffaele D. Facendola.
-		class DX11Texture2D : public Texture2D{
+		class DX11Texture2D : public Texture2D, public DX11ShaderResource{
 
 		public:
 			
@@ -62,13 +85,11 @@ namespace gi_lib{
 
 			virtual void SetWrapMode(WrapMode wrap_mode) override;
 
-			/// \brief Get the view used to bind this texture to a shader.
-			/// \return Returns a reference to the shader resource view.
-			ID3D11ShaderResourceView & GetShaderResourceView();
+			virtual unsigned int GetShaderViewCount() const override;
 
-			/// \brief Get the view used to bind this texture to a shader.
-			/// \return Returns a reference to the shader resource view.
-			const ID3D11ShaderResourceView & GetShaderResourceView() const;
+			virtual const ID3D11ShaderResourceView& GetShaderView(unsigned int index) const override;
+
+			virtual ID3D11ShaderResourceView& GetShaderView(unsigned int index) override;
 
 		private:
 
@@ -76,7 +97,7 @@ namespace gi_lib{
 
 			unique_ptr<ID3D11Texture2D, COMDeleter> texture_;
 
-			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;
+			shared_ptr<ID3D11ShaderResourceView> shader_view_;
 
 			unsigned int width_;
 
@@ -193,6 +214,21 @@ namespace gi_lib{
 			
 		};
 
+		/// \brief Shader setup.
+		/// \tparam TShader Type of the shader this structure refers to.
+		template <typename TShader>
+		struct ShaderSetup{
+
+			shared_ptr<TShader> shader;							///< \brief Pointer to the shader.
+
+			vector<ID3D11Buffer *> buffers;						///< \brief Buffers to bind to the pipeline.
+
+			vector<ID3D11SamplerState *> samplers;				///< \brief Samplers to bind to the pipeline.
+
+			vector<ID3D11ShaderResourceView *> resources;		///< \brief Resources to bind to the pipeline (such as textures, structured buffers, ...)
+
+		};
+
 		/// \brief DirectX11 material.
 		/// \author Raffaele D. Facendola
 		class DX11Material : public Material{
@@ -214,15 +250,15 @@ namespace gi_lib{
 
 			virtual size_t GetSize() const override;
 		
-			virtual unsigned int GetParameterIndex(const string& name) const override;
+			virtual VariableHandle GetVariableHandle(const string& name) const override;
 
-			virtual unsigned int GetTextureIndex(const string& name) const override;
+			virtual ResourceHandle GetResourceHandle(const string& name) const override;
 
-			virtual bool SetTexture(unsigned int index, shared_ptr<Texture2D> texture) override;
+			virtual void SetResource(const ResourceHandle& handle, shared_ptr<ShaderResource> resource) override;
 		
 		protected:
 
-			virtual bool SetParameter(unsigned int index, const void* buffer, size_t size) override;
+			virtual void SetVariable(const VariableHandle& handle, const void* buffer, size_t size) override;
 
 		private:
 
@@ -273,11 +309,15 @@ namespace gi_lib{
 			/// \param offset Offset of the variable.
 			unsigned int AddParameter(const string & name, unsigned int buffer_index, size_t size, size_t offset);
 
-			shared_ptr<ID3D11VertexShader> vertex_shader_;
+			ShaderSetup<ID3D11VertexShader> vertex_shader_;
 
-			shared_ptr<ID3D11GeometryShader> geometry_shader_;
+			ShaderSetup<ID3D11HullShader> hull_shader_;
 
-			shared_ptr<ID3D11PixelShader> pixel_shader_;
+			ShaderSetup<ID3D11DomainShader> domain_shader_;
+
+			ShaderSetup<ID3D11GeometryShader> geometry_shader_;
+
+			ShaderSetup<ID3D11PixelShader> pixel_shader_;
 
 			// \brief Parameters info.
 			// The info are shared among material instances.
@@ -286,11 +326,6 @@ namespace gi_lib{
 			// \brief Buffer status.
 			vector<CBufferInfo> buffers_;
 
-			vector<ID3D11Buffer *> vs_buffers_;		///< \brief Order of the constant buffers for the vertex shader.
-
-			vector<ID3D11Buffer *> gs_buffers_;		///< \brief Order of the constant buffers for the geometry shader.
-			
-			vector<ID3D11Buffer *> ps_buffers_;		///< \brief Order of the constant buffers for the pixel shader.
 
 		};
 
@@ -383,12 +418,18 @@ namespace gi_lib{
 
 		}
 
-		inline ID3D11ShaderResourceView & DX11Texture2D::GetShaderResourceView(){
+		inline unsigned int DX11Texture2D::GetShaderViewCount() const{
+
+			return 1;
+			
+		}
+
+		inline ID3D11ShaderResourceView & DX11Texture2D::GetShaderView(unsigned int){
 
 			return *shader_view_;
 		}
 
-		inline const ID3D11ShaderResourceView & DX11Texture2D::GetShaderResourceView() const{
+		inline const ID3D11ShaderResourceView & DX11Texture2D::GetShaderView(unsigned int) const{
 
 			return *shader_view_;
 

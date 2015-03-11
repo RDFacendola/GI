@@ -71,9 +71,16 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Base interface for graphical resources that can also be bound to the pipeline as shader resources.
+	class ShaderResource : public Resource{
+
+	public:
+
+	};
+
 	/// \brief Base interface for plain textures.
 	/// \author Raffaele D. Facendola.
-	class Texture2D : public Resource{
+	class Texture2D : public ShaderResource{
 
 	public:
 
@@ -185,101 +192,60 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Type of the variables handle.
+		using VariableHandle = unsigned int;
+		
+		/// \brief Type of the resources handle.
+		using ResourceHandle = unsigned int;
+
+		/// \brief Default destructor.
 		virtual ~Material(){}
 
-		/// \brief Get the index of a parameter knowing its name.
+		/// \brief Get the handle of a variable by name.
 
-		/// The parameter name is case-sensitive.
-		/// \param name The name of the parameter.
-		/// \return Returns the index of the parameter whose name matches the specified one.
-		virtual unsigned int GetParameterIndex(const string& name) const = 0;
+		/// The variable name is case-sensitive.
+		/// \param name The name of the variable.
+		/// \return Returns the handle of the variable.
+		virtual VariableHandle GetVariableHandle(const string& name) const = 0;
 
-		/// \brief Set a new value for a parameter.
+		/// \brief Set a new value for a variable.
 
-		/// \tparam TType type of the parameter to set.
-		/// \param name The name of the parameter to set.
-		/// \param value The value the parameter must be set to.
-		/// \return Returns true if the method succeeds, returns false otherwise.
-		/// \remarks The method fails if the specified name could not be found or the type specified for the parameter is not compatible with the expected type.
+		/// \tparam TType type of the variable to set.
+		/// \param handle Handle of the variable to set.
+		/// \param value The new value for the variable.
 		template <typename TType>
-		bool SetParameter(const string& name, const TType& value);
+		void SetVariable(const VariableHandle& handle, const TType& value);
 
-		/// \brief Set a new value for a parameter.
+		/// \brief Get the handle of a resource by name.
 
-		/// \tparam TType type of the parameter to set.
-		/// \param index The index of the parameter to set.
-		/// \param value The value the parameter must be set to.
-		/// \return Returns true if the method succeeds, returns false otherwise.
-		/// \remarks The method fails if the index is not valid or the type specified for the parameter is not compatible with the expected type.
-		template <typename TType>
-		bool SetParameter(unsigned int index, const TType& value);
+		/// The resource name is case-sensitive.
+		/// \param name The name of the resource.
+		/// \return Returns the handle of the resource.
+		virtual ResourceHandle GetResourceHandle(const string& name) const = 0;
 
-		/// \brief Get the index of a texture knowing its name.
-
-		/// The texture name is case-sensitive.
-		/// \param name The name of the texture.
-		/// \return Returns the index of the texture whose name matches the specified one.
-		virtual unsigned int GetTextureIndex(const string& name) const = 0;
-
-		/// \brief Set a new value for a texture.
-		/// \param name The name of the texture to set.
-		/// \param texture Reference to the texture to set.
-		/// \return Returns true if the method succeeds, returns false otherwise.
-		/// \remarks The method fails if the specified name could not be found or the texture type is not compatible with the expected type.
-		virtual bool SetTexture(const string &name, shared_ptr<Texture2D> texture);
-
-		/// \brief Set a new value for a texture.
-		/// \param name The name of the texture to set.
-		/// \param index The index of the texture to set.
-		/// \return Returns true if the method succeeds, returns false otherwise.
-		/// \remarks The method fails if the specified name could not be found or the texture type is not compatible with the expected type.
-		virtual bool SetTexture(unsigned int index, shared_ptr<Texture2D> texture) = 0;
+		/// \brief Set a new value for a resource.
+		/// \param handle Handle of the resource to set.
+		/// \param resource New resource to set.
+		virtual void SetResource(const ResourceHandle& handle, shared_ptr<ShaderResource> resource) = 0;
 
 	protected:
 
-		/// \brief Set a parameter value from a raw buffer.
-		/// \param name The name of the parameter to set.
-		/// \param buffer Pointer to the buffer containing the data.
-		/// \param size Size of the buffer.
-		/// \return Returns true if the method succeeds, returns false otherwise.
-		/// \remarks The method fails if the parameter name could not be found or the type specified for the parameter is not compatible with the expected type.
-		virtual bool SetParameter(const string & name, const void* buffer, size_t size);
+		/// \brief Set a new value for a variable.
 
-		/// \brief Set a parameter value from a raw buffer.
-		/// \param index The index of the parameter to set.
-		/// \param buffer Pointer to the buffer containing the data.
+		/// \tparam TType type of the variable to set.
+		/// \param handle Handle of the variable to set.
+		/// \param buffer Buffer containing the variable data.
 		/// \param size Size of the buffer.
-		/// \return Returns true if the method succeeds, returns false otherwise.
-		/// \remarks The method fails if the parameter name could not be found or the type specified for the parameter is not compatible with the expected type.
-		virtual bool SetParameter(unsigned int index, const void* buffer, size_t size) = 0;
+		virtual void SetVariable(const VariableHandle& handle, const void* buffer, size_t size) = 0;
 
 	};
 
 	// Material
 
 	template <typename TType>
-	inline bool Material::SetParameter(const string & name, const TType& value){
+	inline void Material::SetVariable(const VariableHandle& handle, const TType& value){
 
-		return SetParameter(name, &value, sizeof(TType));
-
-	}
-
-	template <typename TType>
-	inline bool Material::SetParameter(unsigned int index, const TType& value){
-
-		return SetParameter(index, &value, sizeof(TType));
-
-	}
-
-	inline bool Material::SetTexture(const string &name, shared_ptr<Texture2D> texture){
-
-		return SetTexture(GetTextureIndex(name), texture);
-
-	}
-
-	inline bool Material::SetParameter(const string & name, const void* buffer, size_t size){
-
-		return SetParameter(GetParameterIndex(name), buffer, size);
+		return SetVariable(handle, &value, sizeof(TType));
 
 	}
 
