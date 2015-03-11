@@ -350,7 +350,9 @@ namespace{
 
 				wstringstream stream;
 
-				stream << std::to_wstring(hr) << L" - " << errors->GetBufferPointer();
+				string error_string = static_cast<char *>(errors->GetBufferPointer());
+
+				stream << std::to_wstring(hr) << L" - " << wstring(error_string.begin(), error_string.end());
 
 				THROW(stream.str());
 
@@ -394,6 +396,8 @@ namespace{
 
 		reflector->GetDesc(&shader_desc);
 
+		// Constant buffers and variables
+
 		for (int cbuffer_index = 0; cbuffer_index < shader_desc.ConstantBuffers; ++cbuffer_index){
 
 			// Adds a new constant buffer
@@ -425,6 +429,19 @@ namespace{
 
 		}
 
+		// Texture, samplers
+
+		D3D11_SHADER_INPUT_BIND_DESC resource_desc;
+
+		for (int resource_index = 0; resource_index < shader_desc.BoundResources; ++resource_index){
+
+			reflector->GetResourceBindingDesc(resource_index, &resource_desc);
+
+			
+
+		}
+
+		
 		return buffer_sequence;
 
 	}
