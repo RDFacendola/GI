@@ -16,6 +16,65 @@ using namespace gi_lib::windows;
 
 namespace{
 
+	/// \brief Shader type traits.
+	template <typename TShader> 
+	struct ShaderTraits;
+
+	/// \brief Vertex shader type traits.
+	template<> struct ShaderTraits < ID3D11VertexShader > {
+
+		static const char * entry_point;	///< \brief Entry point.
+		static const char * profile;		///< \brief Shader profile.
+
+	};
+
+	/// \brief hull shader type traits.
+	template<> struct ShaderTraits < ID3D11HullShader > {
+
+		static const char * entry_point;	///< \brief Entry point.
+		static const char * profile;		///< \brief Shader profile.
+
+	};
+
+	/// \brief domain shader type traits.
+	template<> struct ShaderTraits < ID3D11DomainShader > {
+
+		static const char * entry_point;	///< \brief Entry point.
+		static const char * profile;		///< \brief Shader profile.
+
+	};
+
+	/// \brief geomtry shader type traits.
+	template<> struct ShaderTraits < ID3D11GeometryShader > {
+
+		static const char * entry_point;	///< \brief Entry point.
+		static const char * profile;		///< \brief Shader profile. 
+
+	};
+
+	/// \brief pixel shader type traits.
+	template<> struct ShaderTraits < ID3D11PixelShader > {
+
+		static const char * entry_point;	///< \brief Entry point.
+		static const char * profile;		///< \brief Shader profile.
+
+	};
+
+	const char * ShaderTraits < ID3D11VertexShader >::entry_point = "VSMain";
+	const char * ShaderTraits < ID3D11VertexShader >::profile = "vs_5_0";
+
+	const char * ShaderTraits < ID3D11HullShader >::entry_point = "HSMain";
+	const char * ShaderTraits < ID3D11HullShader >::profile = "hs_5_0";
+
+	const char * ShaderTraits < ID3D11DomainShader >::entry_point = "DSMain";
+	const char * ShaderTraits < ID3D11DomainShader >::profile = "ds_5_0";
+	
+	const char * ShaderTraits < ID3D11GeometryShader >::entry_point = "GSMain";
+	const char * ShaderTraits < ID3D11GeometryShader >::profile = "gs_5_0";
+
+	const char * ShaderTraits < ID3D11PixelShader >::entry_point = "PSMain";
+	const char * ShaderTraits < ID3D11PixelShader >::profile = "ps_5_0";
+
 #ifdef _DEBUG
 		
 	/// \brief Shader macros used during compilation.
@@ -28,57 +87,56 @@ namespace{
 
 #endif
 
-	/// \brief Reflect more shader buffers.
-	void ReflectMoreBuffers(ID3D11ShaderReflection& reflector, vector<BufferReflection>& reflection){
+	void ReflectBuffers(ID3D11ShaderReflection& reflector, ShaderReflection& reflection){
 
-		D3D11_SHADER_DESC shader_desc;
-		D3D11_SHADER_BUFFER_DESC buffer_desc;
-		D3D11_SHADER_VARIABLE_DESC variable_desc;
+		D3D11_SHADER_DESC dx_shader_desc;
+		D3D11_SHADER_BUFFER_DESC dx_buffer_desc;
+		D3D11_SHADER_VARIABLE_DESC dx_variable_desc;
 
-		reflector.GetDesc(&shader_desc);
+		auto& buffers = reflection.buffers;
+
+		reflector.GetDesc(&dx_shader_desc);
 
 		// Constant buffers and variables
 
-		for (unsigned int cbuffer_index = 0; cbuffer_index < shader_desc.ConstantBuffers; ++cbuffer_index){
+		for (unsigned int cbuffer_index = 0; cbuffer_index < dx_shader_desc.ConstantBuffers; ++cbuffer_index){
 
 			auto buffer = reflector.GetConstantBufferByIndex(cbuffer_index);
 
-			buffer->GetDesc(&buffer_desc);
+			buffer->GetDesc(&dx_buffer_desc);
 
-			string cbuffer_name = buffer_desc.Name;
+			auto it = std::find_if(buffers.begin(),
+								   buffers.end(),
+								   [&dx_buffer_desc](const ShaderBufferDesc& desc){
 
-			auto it = std::find_if(reflection.begin(),
-								   reflection.end(),
-								   [&cbuffer_name](const BufferReflection& reflection){
-
-										return reflection.buffer_name == cbuffer_name;
+										return desc.name == dx_buffer_desc.Name;
 
 								   });
 
-			if (it == reflection.end()){
+			if (it == buffers.end()){
 
 				// Add a new constant buffer
 
-				BufferReflection buffer_reflection;
+				ShaderBufferDesc buffer_desc;
 
-				buffer_reflection.buffer_name = std::move(cbuffer_name);
-				buffer_reflection.size = buffer_desc.Size;
-				
-				for (unsigned int variable_index = 0; variable_index < buffer_desc.Variables; ++variable_index){
+				buffer_desc.name = dx_buffer_desc.Name;
+				buffer_desc.size = dx_buffer_desc.Size;
+
+				for (unsigned int variable_index = 0; variable_index < dx_buffer_desc.Variables; ++variable_index){
 
 					// Add a new variable
 
 					auto variable = buffer->GetVariableByIndex(variable_index);
 
-					variable->GetDesc(&variable_desc);
+					variable->GetDesc(&dx_variable_desc);
 
-					buffer_reflection.variables.push_back({ variable_desc.Name,
-															variable_desc.Size,
-															variable_desc.StartOffset });
+					buffer_desc.variables.push_back({ dx_variable_desc.Name,
+													  dx_variable_desc.Size,
+													  dx_variable_desc.StartOffset });
 
 				}
 
-				reflection.push_back(std::move(buffer_reflection));
+				buffers.push_back(std::move(buffer_desc));
 
 			}
 
@@ -86,64 +144,99 @@ namespace{
 
 	}
 
-	void ReflectResources(ID3D11ShaderReflection& reflector, vector<string>& buffer_sequence){
+	void Reflect(ShaderBinding& binding, ShaderReflection& reflection){
 
-		D3D11_SHADER_DESC shader_desc;
+		ID3D11ShaderReflection * reflector = nullptr;
 
-		D3D11_SHADER_INPUT_BIND_DESC resource_desc;
+		THROW_ON_FAIL(D3DReflect(binding.bytecode->GetBufferPointer(),
+								 binding.bytecode->GetBufferSize(),
+								 IID_ID3D11ShaderReflection,
+								 (void**)&reflector));
 
-		reflector.GetDesc(&shader_desc);
+		ReflectBuffers(*reflector, reflection);
 
-		buffer_sequence.resize(shader_desc.ConstantBuffers);
+	}
 
-		for (unsigned int resource_index = 0; resource_index < shader_desc.BoundResources; ++resource_index){
+	template <typename TShader>
+	ID3DBlob * Compile(const char* code, size_t size, const char* source_file, bool compulsory){
 
-			reflector.GetResourceBindingDesc(resource_index, &resource_desc);
+		ID3DBlob * bytecode = nullptr;
+		ID3DBlob * errors = nullptr;
 
-			switch (resource_desc.Type){
+	#ifdef _DEBUG
 
-			case D3D_SIT_CBUFFER:
-			case D3D_SIT_TBUFFER:
+		UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_SKIP_OPTIMIZATION;
 
-				// Constant or Texture buffer (they are basically the same thing, however tbuffers are optimized for random access, such as lookup tables)
+	#else
 
-				buffer_sequence[resource_desc.BindPoint] = resource_desc.Name;
-				break;
+		UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_OPTIMIZATION_LEVEL3;
 
-			case D3D_SIT_TEXTURE:
+	#endif
 
-				break;
+		HRESULT hr = D3DCompile(code,
+								size,
+								source_file,
+								shader_macros,
+								D3D_COMPILE_STANDARD_FILE_INCLUDE,
+								ShaderTraits<TShader>::entry_point,
+								ShaderTraits<TShader>::profile,
+								compilation_flags,
+								0,
+								&bytecode,
+								&errors);
 
-			case D3D10_SIT_SAMPLER:
+		COM_GUARD(errors);
 
-				break;
+		if (FAILED(hr)){
+
+			if (compulsory){
+
+				wstringstream stream;
+
+				string error_string = static_cast<char *>(errors->GetBufferPointer());
+
+				stream << L"0x" << std::hex << std::to_wstring(hr) << std::dec << L" - " << wstring(error_string.begin(), error_string.end());
+
+				THROW(stream.str());
+
+			}
+			else{
+
+				return nullptr;
 
 			}
 
 		}
+		else{
+
+			return bytecode;
+
+		}
 
 	}
-	
+
+	template <typename TShader>
+	void CompileShader(const char* code, size_t size, const char* source_file, bool compulsory, ShaderBinding& binding, ShaderReflection& reflection){
+
+		
+		binding.bytecode = shared_ptr<ID3DBlob>( Compile<TShader>(code,
+																  size, 
+																  source_file, 
+																  compulsory),
+												 COMDeleter{});
+
+		if (binding.bytecode){
+
+			Reflect(binding,
+					reflection);
+
+		}
+		
+	}
+
 }
 
-// ShaderTypeInfo constants
-
-const char * ShaderTypeInfo<ID3D11VertexShader>::kEntryPoint = "VSMain";
-const char * ShaderTypeInfo<ID3D11VertexShader>::kShaderProfile = "vs_5_0";
-
-const char * ShaderTypeInfo<ID3D11HullShader>::kEntryPoint = "HSMain";
-const char * ShaderTypeInfo<ID3D11HullShader>::kShaderProfile = "hs_5_0";
-
-const char * ShaderTypeInfo<ID3D11DomainShader>::kEntryPoint = "DSMain";
-const char * ShaderTypeInfo<ID3D11DomainShader>::kShaderProfile = "ds_5_0";
-
-const char * ShaderTypeInfo<ID3D11GeometryShader>::kEntryPoint = "GSMain";
-const char * ShaderTypeInfo<ID3D11GeometryShader>::kShaderProfile = "gs_5_0";
-
-const char * ShaderTypeInfo<ID3D11PixelShader>::kEntryPoint = "PSMain";
-const char * ShaderTypeInfo<ID3D11PixelShader>::kShaderProfile = "ps_5_0";
-
-// ShaderHelper
+//////////////////// ShaderHelper //////////////////////////
 
 ID3D11Buffer * ShaderHelper::MakeConstantBufferOrDie(ID3D11Device & device, size_t size){
 
@@ -167,69 +260,66 @@ ID3D11Buffer * ShaderHelper::MakeConstantBufferOrDie(ID3D11Device & device, size
 
 }
 
-unique_ptr<ID3DBlob, COMDeleter> ShaderHelper::Compile(const string& code, const string& source_file, const char * entry_point, const char * shader_profile, bool compulsory){
+ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, const char* source_file, unsigned int shaders, unsigned int compulsory_shaders){
 
-	ID3DBlob * bytecode = nullptr;
-	ID3DBlob * errors = nullptr;
+	ShaderCombo shader_combo;
+	
+	if ((shaders & kVertexShader) > 0){
 
-#ifdef _DEBUG
-
-	UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_SKIP_OPTIMIZATION;
-
-#else
-
-	UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_OPTIMIZATION_LEVEL3;
-
-#endif
-
-	HRESULT hr = D3DCompile(&code[0],
-							code.size(),
-							source_file.c_str(),
-							shader_macros,
-							D3D_COMPILE_STANDARD_FILE_INCLUDE,
-							entry_point,
-							shader_profile,
-							compilation_flags,
-							0,
-							&bytecode,
-							&errors);
-
-	COM_GUARD(errors);
-
-	if (FAILED(hr)){
-
-		if (compulsory){
-
-			wstringstream stream;
-
-			string error_string = static_cast<char *>(errors->GetBufferPointer());
-
-			stream << std::to_wstring(hr) << L" - " << wstring(error_string.begin(), error_string.end());
-
-			THROW(stream.str());
-
-		}
-		else{
-
-			return nullptr;
-
-		}
+		CompileShader<ID3D11VertexShader>(code,
+										  size,
+										  source_file,
+										  (compulsory_shaders & kVertexShader) > 0,
+										  shader_combo.vertex_shader,
+										  shader_combo.reflection);
 
 	}
 
-	return unique_ptr<ID3DBlob, COMDeleter>(bytecode, COMDeleter{});
+	if ((shaders & kHullShader) > 0){
+
+		CompileShader<ID3D11HullShader>(code,
+										size,
+										source_file,
+										(compulsory_shaders & kHullShader) > 0,
+										shader_combo.hull_shader,
+										shader_combo.reflection);
+
+	}
+
+	if ((shaders & kDomainShader) > 0){
+
+		CompileShader<ID3D11DomainShader>(code,
+										  size,
+										  source_file,
+										  (compulsory_shaders & kDomainShader) > 0,
+										  shader_combo.domain_shader,
+										  shader_combo.reflection);
+
+	}
+
+	if ((shaders & kGeometryShader) > 0){
+
+		CompileShader<ID3D11GeometryShader>(code,
+											size,
+											source_file,
+											(compulsory_shaders & kGeometryShader) > 0,
+											shader_combo.geometry_shader,
+											shader_combo.reflection);
+
+	}
+
+	if ((shaders & kPixelShader) > 0){
+
+		CompileShader<ID3D11PixelShader>(code,
+										 size,
+										 source_file,
+										 (compulsory_shaders & kPixelShader) > 0,
+										 shader_combo.pixel_shader,
+										 shader_combo.reflection);
+
+	}
+
+	return shader_combo;
 
 }
 
-void ShaderHelper::ReflectMoreOrDie(ID3DBlob& bytecode, ShaderReflection& reflection){
-
-	ID3D11ShaderReflection * reflector = nullptr;
-
-	THROW_ON_FAIL(D3DReflect(bytecode.GetBufferPointer(),
-							 bytecode.GetBufferSize(),
-							 IID_ID3D11ShaderReflection,
-							 (void**)&reflector));
-		
-	ReflectMoreBuffers(*reflector, reflection.buffers);
-
-}

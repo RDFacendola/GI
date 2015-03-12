@@ -76,6 +76,9 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Needed for virtual classes.
+		virtual ~ShaderResource(){}
+
 	};
 
 	/// \brief Base interface for plain textures.

@@ -18,7 +18,7 @@ GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {
 	
-	auto material = graphics_.GetResources().Load<Material, CompileFromFile>({ Application::GetDirectory() + L"Data\\phong.fx", false });
+	auto ah = graphics_.GetResources().Load<Material, CompileFromFile>({ Application::GetDirectory() + L"Data\\phong.fx", false });
 
 	// Graphics setup
 
@@ -31,7 +31,7 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	output_ = graphics_.CreateOutput(*this, p.video_modes[0]);
 
 	// Camera setup
-
+	
 	auto & camera_node = scene_.CreateNode();
 
 	camera_ = camera_node.AddComponent<Camera>(output_->GetRenderTarget());	// The camera will render directly on the backbuffer
@@ -53,11 +53,13 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 
 GILogic::~GILogic(){
 
+	output_ = nullptr;
+
 }
 
 void GILogic::Update(const Time & time){
 	
-	scene_.Update(time);
+	//scene_.Update(time);
 
 	output_->Draw(scene_);
 	

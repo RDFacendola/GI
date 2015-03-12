@@ -16,88 +16,99 @@
 
 using std::string;
 using std::vector;
-using std::unique_ptr;
+using std::shared_ptr;
 using gi_lib::windows::COMDeleter;
 
 namespace gi_lib{
 
 	namespace dx11{
 
-		/// \brief Info about shader types.
-		template <typename TShaderType>
-		struct ShaderTypeInfo;
+		/// \brief Type of a shader resource.
+		enum class ShaderResourceType{
 
-		/// \brief Info about vertex shader.
-		template <> struct ShaderTypeInfo < ID3D11VertexShader > {
-
-			static const char * kEntryPoint;		///< Entry point for the vertex shader.
-
-			static const char * kShaderProfile;		///< Shader profile.
+			TEXTURE_2D,		///< \brief 2D texture.
+			TEXTURE_3D		///< \brief 3D texture.
 
 		};
 
-		/// \brief Info about hull shader.
-		template <> struct ShaderTypeInfo < ID3D11HullShader > {
+		/// \brief Description of a shader and the binding order of the resources.
+		struct ShaderBinding{
 
-			static const char * kEntryPoint;		///< Entry point for the hull shader.
+			shared_ptr<ID3DBlob> bytecode;				///< \brief Compiled shader code.
 
-			static const char * kShaderProfile;		///< Shader profile.
+			vector<unsigned int> buffer_order;			///< \brief Binding order of the buffers, relative to the buffers declared in the reflection.
 
-		};
+			vector<unsigned int> resources_order;		///< \brief Binding order of the resources, relative to the resources declared in the reflection.
 
-		/// \brief Info about domain shader.
-		template <> struct ShaderTypeInfo < ID3D11DomainShader > {
-
-			static const char * kEntryPoint;		///< Entry point for the domain shader.
-
-			static const char * kShaderProfile;		///< Shader profile.
+			vector<unsigned int> samplers_order;		///< \brief Binding order of the samplers, relative to the samplers declared in the reflection.
 
 		};
 
-		/// \brief Info about geometry shader.
-		template <> struct ShaderTypeInfo < ID3D11GeometryShader > {
+		/// \brief Description of a shader variable.
+		struct ShaderVariableDesc{
 
-			static const char * kEntryPoint;		///< Entry point for the geometry shader.
+			string name;								///< \brief Name of the variable.
 
-			static const char * kShaderProfile;		///< Shader profile.
+			size_t size;								///< \brief Size of the variable.
 
-		};
-
-		/// \brief Info about pixel shader.
-		template <> struct ShaderTypeInfo < ID3D11PixelShader > {
-
-			static const char * kEntryPoint;		///< Entry point for the pixel shader.
-
-			static const char * kShaderProfile;		///< Shader profile.
+			size_t offset;								///< \brief Offset of the variable.
 
 		};
 
-		/// \brief Shader variable reflection.
-		struct ShaderVariableReflection{
+		/// \brief Description of a shader buffer (tbuffer or cbuffer).
+		struct ShaderBufferDesc{
 
-			string variable_name;		///< \brief Variable name.
+			string name;								///< \brief Name of the buffer.
 
-			size_t size;				///< \brief Size of the variable.
+			size_t size;								///< \brief Size of the buffer.
 
-			size_t offset;				///< \brief Offset of the variable.
-
-		};
-
-		/// \brief Shader buffer reflection.
-		struct BufferReflection{
-
-			string buffer_name;								///< \brief Constant buffer name.
-
-			size_t size;									///< \brief Constant buffer total size.
-
-			vector<ShaderVariableReflection> variables;		///< \brief Variable reflections.
+			vector<ShaderVariableDesc> variables;		///< \brief Variables inside the buffer.
 
 		};
 
-		/// \brief Shader reflection.
+		/// \brief Description of a shader resource (textures, structured buffers, uavs, ...).
+		struct ShaderResourceDesc{
+
+			string name;								///< \brief Name of the resource.
+
+			ShaderResourceType type;					///< \brief Type of the resource.
+
+			unsigned int elements;						///< \brief Elements in case of a resource array.
+
+		};
+
+		/// \brief Description of a shader sampler.
+		struct ShaderSamplerDesc{
+
+			string name;								///< \brief Name of the sampler.
+
+		};
+
+		/// \brief Description of a shader.
 		struct ShaderReflection{
 
-			vector<BufferReflection> buffers;				///< \brief Buffer reflections.
+			vector<ShaderBufferDesc> buffers;			///< \brief Buffers.
+
+			vector<ShaderResourceDesc> resources;		///< \brief Resources.
+
+			vector<ShaderSamplerDesc> samplers;			///< \brief Samplers.
+
+		};
+
+		/// \brief Combination of shaders and their reflection.
+		struct ShaderCombo{
+
+			ShaderBinding vertex_shader;				///< \brief Vertex shader.
+
+			ShaderBinding hull_shader;					///< \brief Hull shader.
+
+			ShaderBinding domain_shader;				///< \brief Domain shader.
+
+			ShaderBinding geometry_shader;				///< \brief Geometry shader.
+
+			ShaderBinding pixel_shader;					///< \brief Pixel shader.
+
+			ShaderReflection reflection;				///< \brief Combined reflection of the shaders.
 
 		};
 
@@ -106,69 +117,34 @@ namespace gi_lib{
 
 		public:
 
+
+			static const unsigned int kVertexShader = 1;		///< \brief Vertex shader.
+			static const unsigned int kHullShader = 2;			///< \brief Hull shader.
+			static const unsigned int kDomainShader = 4;		///< \brief Domain shader.
+			static const unsigned int kGeometryShader = 8;		///< \brief Geometry shader.
+			static const unsigned int kPixelShader = 16;		///< \brief Pixel shader.
+			
+			/// \brief All shaders.
+			static const unsigned int kAllShaders = kVertexShader | kHullShader | kDomainShader | kGeometryShader | kPixelShader;	
+
 			/// \brief Create a constant buffer.
-			/// \param device Device used to create the constant buffer
-			/// \param
+			/// \param device Device used to create the constant buffer.
+			/// \param size Size of the buffer.
 			static ID3D11Buffer * MakeConstantBufferOrDie(ID3D11Device & device, size_t size);
 
-			/// \brief Compile the specified shader code.
-			/// \param code HLSL code to compile.
-			/// \param source_file Name of the file the code was read from. This parameter is used to resolve #include directives.
-			/// \return Returns a pointer to the compiled code if the compilation was successful, returns null otherwise.
-			template <typename TShaderType>
-			static unique_ptr<ID3DBlob, COMDeleter> Compile(const string& code, const string& source_file);
-
-			/// \brief Compile the specified shader code.
-			/// \param code HLSL code to compile.
-			/// \param source_file Name of the file the code was read from. This parameter is used to resolve #include directives.
-			/// \return Returns a pointer to the compiled code if the compilation was successful, throws an error otherwise.
-			template <typename TShaderType>
-			static unique_ptr<ID3DBlob, COMDeleter> CompileOrDie(const string& code, const string& source_file);
-			
-			/// \brief Reflect a shader from its bytecode.
-			/// Reflection info are ignored if already present in the specified reflection object.
-			/// \param bytecode Compiled shader code.
-			/// \param reflection Output of the reflection.
-			/// \return Returns a vector containing the indices of the constant buffers ordered according to the bytecode.
-			static void ReflectMoreOrDie(ID3DBlob& bytecode, ShaderReflection& reflection);
+			/// \brief Compile a shader.
+			/// \param code Pointer to a buffer containing the HLSL code.
+			/// \param size Size of the code buffer in bytes.
+			/// \param source_file Name of the source file. Used to resolve the #include directives inside the HLSL code.
+			/// \param shaders Shaders to compile (for example: kVertexShader | kPixelShader).
+			/// \param compulsory_shaders Shaders that are required. If at least one shader is missing the method throws.
+			/// \return Returns a shader combo
+			static ShaderCombo CompileShadersOrDie(const char* code, size_t size, const char* source_file, unsigned int shaders, unsigned int compulsory_shaders);
 
 		private:
 
-			/// \brief Compile the specified shader code.
-			/// \param code HLSL code to compile.
-			/// \param source_file Name of the file the code was read from. This parameter is used to resolve #include directives.
-			/// \param entry_point Name of the entry point of the shader.
-			/// \param shader_profile Shader profile.
-			/// \param compulsory Whether is not acceptable a compilation failure or not.
-			/// \return Returns a pointer to the compiled code if the compilation was successful, otherwise, depending on "compulsory" the method will throw an exception (true) or return null (false).
-			static unique_ptr<ID3DBlob, COMDeleter> Compile(const string& code, const string& source_file, const char * entry_point, const char * shader_profile, bool compulsory);
 
 		};
-
-
-		// ShaderHelper
-
-		template <typename TShaderType>
-		unique_ptr<ID3DBlob, COMDeleter> ShaderHelper::Compile(const string& code, const string& source_file){
-
-			return Compile(code,
-						   source_file,
-						   ShaderTypeInfo<TShaderType>::kEntryPoint,
-						   ShaderTypeInfo<TShaderType>::kShaderProfile,
-						   false);
-			
-		}
-
-		template <typename TShaderType>
-		unique_ptr<ID3DBlob, COMDeleter> ShaderHelper::CompileOrDie(const string& code, const string& source_file){
-			
-			return Compile(code,
-						   source_file,
-						   ShaderTypeInfo<TShaderType>::kEntryPoint,
-						   ShaderTypeInfo<TShaderType>::kShaderProfile,
-						   true);
-			
-		}
 
 	}
 

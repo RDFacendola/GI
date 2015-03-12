@@ -39,6 +39,8 @@ namespace gi_lib{
 
 		public:
 
+			virtual ~DX11ShaderResource(){}
+
 			/// \brief Get the number of shader resource views associated to this resource.
 			/// \return Returns the number of shader resource views associated to this resource.
 			virtual unsigned int GetShaderViewCount() const = 0;
@@ -261,54 +263,7 @@ namespace gi_lib{
 			virtual void SetVariable(const VariableHandle& handle, const void* buffer, size_t size) override;
 
 		private:
-
-			// \brief Info about shader's parameters.
-			struct ParameterInfo{
-
-				// \brief Name of the parameter.
-				string name;
-
-				// \brief Index of the constant buffer this parameter belongs to.
-				unsigned int buffer_index;
-
-				// \brief Size of the parameter in bytes.
-				size_t size;
-
-				// \brief Offset from the beginning of the constant buffer.
-				size_t offset;
-
-			};
-
-			// \brief Info about shader's constant buffers.
-			struct CBufferInfo{
-
-				// \brief Constant buffer used by DirectX11.
-				ID3D11Buffer * constant_buffer;
-
-				// \brief Unstructured buffer used to hold data in the system memory.
-				void * raw_buffer;
-
-				// \brief Total size of the constant buffer.
-				size_t size;
-
-				// \brief Whether the constant buffer should be updated with the latest data contained inside the raw buffer.
-				bool dirty;
-				
-			};
 			
-			/// \brief Add a new constant buffer.
-			/// \param device The device used to create the hardware buffer.
-			/// \param size Size of the buffer.
-			/// \return Returns the index of the constant buffer.
-			unsigned int AddCBuffer(ID3D11Device& device, size_t size);
-
-			/// \brief Add a new shader parameter.
-			/// \param name Name of the parameter.
-			/// \param buffer_index Index of the buffer containing the variable.
-			/// \param size Size of the variable.
-			/// \param offset Offset of the variable.
-			unsigned int AddParameter(const string & name, unsigned int buffer_index, size_t size, size_t offset);
-
 			ShaderSetup<ID3D11VertexShader> vertex_shader_;
 
 			ShaderSetup<ID3D11HullShader> hull_shader_;
@@ -318,14 +273,6 @@ namespace gi_lib{
 			ShaderSetup<ID3D11GeometryShader> geometry_shader_;
 
 			ShaderSetup<ID3D11PixelShader> pixel_shader_;
-
-			// \brief Parameters info.
-			// The info are shared among material instances.
-			shared_ptr<vector<ParameterInfo>> parameters_;
-
-			// \brief Buffer status.
-			vector<CBufferInfo> buffers_;
-
 
 		};
 

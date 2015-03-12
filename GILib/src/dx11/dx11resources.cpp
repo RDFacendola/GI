@@ -245,7 +245,7 @@ DX11Texture2D::DX11Texture2D(ID3D11Device & device, const LoadFromFile& bundle){
 											  &alpha_mode) );						//Alpha informations
 
 	texture_.reset(static_cast<ID3D11Texture2D*>(resource));	
-	shader_view_.reset(shader_view);
+	shader_view_.reset(shader_view, COMDeleter{});
 
 	UpdateDescription();
 	
@@ -257,7 +257,7 @@ DX11Texture2D::DX11Texture2D(ID3D11Texture2D & texture, DXGI_FORMAT format){
 
 	texture.GetDevice(&device);
 
-	unique_ptr<ID3D11Device, COMDeleter> guard(device, COMDeleter{});	// Will release the device
+	COM_GUARD(device);
 
 	ID3D11ShaderResourceView * shader_view;
 
@@ -273,11 +273,11 @@ DX11Texture2D::DX11Texture2D(ID3D11Texture2D & texture, DXGI_FORMAT format){
 	view_desc.Texture2D.MipLevels = texture_desc.MipLevels;
 
 	THROW_ON_FAIL(device->CreateShaderResourceView(reinterpret_cast<ID3D11Resource *>(&texture),
-		&view_desc,
-		&shader_view));
+												   &view_desc,
+												   &shader_view));
 
 	texture_.reset(&texture);
-	shader_view_.reset(shader_view);
+	shader_view_.reset(shader_view, COMDeleter{});
 
 	UpdateDescription();
 
@@ -473,26 +473,13 @@ DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 	string code = IO::ReadFile(bundle.file_name);
 
 	string file_name = string(bundle.file_name.begin(), bundle.file_name.end());
-
-	// Compile
-	auto vs = ShaderHelper::CompileOrDie<ID3D11VertexShader>(code, file_name);
-	auto gs = ShaderHelper::Compile<ID3D11GeometryShader>(code, file_name);
-	auto ps = ShaderHelper::Compile<ID3D11PixelShader>(code, file_name);
-
-	// Reflection
-	ShaderReflection reflection;
-
-	ShaderHelper::ReflectMoreOrDie(*vs, reflection);
-
-	if (gs){
-
-		ShaderHelper::ReflectMoreOrDie(*gs, reflection);
-
-	}
 	
-	ShaderHelper::ReflectMoreOrDie(*vs, reflection);
-
-	static const bool lookup[] = { true, false };
+	auto combo = ShaderHelper::CompileShadersOrDie(code.c_str(), 
+												   code.size(), 
+												   file_name.c_str(), 
+												   ShaderHelper::kAllShaders, 
+												   ShaderHelper::kVertexShader | ShaderHelper::kPixelShader);
+	
 
 	// Construction
 	
@@ -524,49 +511,6 @@ DX11Material::DX11Material(ID3D11Device& device, const InstantiateFromMaterial& 
 
 DX11Material::~DX11Material(){
 
-	for (auto & buffer : buffers_){
-
-		buffer.constant_buffer->Release();
-		delete[] buffer.raw_buffer;
-
-	}
-
-}
-
-unsigned int DX11Material::AddCBuffer(ID3D11Device& device, size_t size){
-
-	CBufferInfo buffer_info;
-
-	buffer_info.constant_buffer = ShaderHelper::MakeConstantBufferOrDie(device, size);
-	buffer_info.raw_buffer = new char[size];
-	buffer_info.size = size;
-	buffer_info.dirty = false;
-	
-	buffers_.push_back(buffer_info);
-
-	return static_cast<unsigned int>(buffers_.size()) - 1;
-
-}
-
-
-unsigned int DX11Material::AddParameter(const string & name, unsigned int buffer_index, size_t size, size_t offset){
-
-	if (!parameters_){
-
-		parameters_ = make_shared<vector<ParameterInfo>>();
-
-	}
-
-	ParameterInfo parameter_info;
-
-	parameter_info.name = name;
-	parameter_info.buffer_index = buffer_index;
-	parameter_info.size = size;
-	parameter_info.offset = offset;
-	
-	parameters_->push_back(parameter_info);
-
-	return static_cast<unsigned int>(parameters_->size()) - 1;
 
 }
 
@@ -596,13 +540,6 @@ void DX11Material::SetVariable(const VariableHandle& handle, const void* buffer,
 
 size_t DX11Material::GetSize() const{
 
-	return accumulate(buffers_.begin(),
-					  buffers_.end(),
-					  static_cast<size_t>(0),
-					  [](size_t accumulator, const CBufferInfo & it){
-
-						  return accumulator + it.size;
-
-					  });
+	return 0;
 
 }

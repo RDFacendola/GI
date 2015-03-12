@@ -56,7 +56,7 @@ namespace gi_lib{
 		inline void COMDeleter::operator()(IUnknown * com){
 
 			com->Release();
-			
+	
 		}
 
 	}
