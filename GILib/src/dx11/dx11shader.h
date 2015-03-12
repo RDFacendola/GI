@@ -42,6 +42,21 @@ namespace gi_lib{
 
 			vector<unsigned int> samplers_order;		///< \brief Binding order of the samplers, relative to the samplers declared in the reflection.
 
+			/// \brief Default constructor.
+			ShaderBinding();
+
+			/// \brief Copy constructor.
+			ShaderBinding(const ShaderBinding& other);
+
+			/// \brief Move constructor.
+			ShaderBinding(ShaderBinding&& other);
+
+			/// \brief Unified assignment operator.
+			ShaderBinding& operator=(ShaderBinding other);
+
+			/// \brief Swaps this instance with the provided one.
+			void Swap(ShaderBinding& other);
+
 		};
 
 		/// \brief Description of a shader variable.
@@ -109,8 +124,37 @@ namespace gi_lib{
 			ShaderBinding pixel_shader;					///< \brief Pixel shader.
 
 			ShaderReflection reflection;				///< \brief Combined reflection of the shaders.
+			
+			/// \brief Default constructor.
+			ShaderCombo();
 
+			/// \brief Copy constructor.
+			ShaderCombo(const ShaderCombo& other);
+
+			/// \brief Move constructor.
+			ShaderCombo(ShaderCombo&& other);
+
+			/// \brief Unified assignment operator.
+			ShaderCombo& operator=(ShaderCombo other);
+
+			/// \brief Swaps this instance with the provided one.
+			void Swap(ShaderCombo& other);
+			
 		};
+
+		/// \brief Swaps two shader bindings.
+		inline void swap(ShaderBinding& left, ShaderBinding& right){
+
+			left.Swap(right);
+
+		}
+
+		/// \brief Swaps two shader combos.
+		inline void swap(ShaderCombo& left, ShaderCombo& right){
+
+			left.Swap(right);
+
+		}
 
 		/// \brief Helper class for shader management.
 		class ShaderHelper{

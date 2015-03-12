@@ -144,6 +144,45 @@ namespace{
 
 	}
 
+	void ReflectResources(ID3D11ShaderReflection& reflector){
+
+		D3D11_SHADER_DESC shader_desc;
+
+		D3D11_SHADER_INPUT_BIND_DESC resource_desc;
+
+		reflector.GetDesc(&shader_desc);
+
+		//buffer_sequence.resize(shader_desc.ConstantBuffers);
+
+		for (unsigned int resource_index = 0; resource_index < shader_desc.BoundResources; ++resource_index){
+
+			reflector.GetResourceBindingDesc(resource_index, &resource_desc);
+
+			switch (resource_desc.Type){
+
+			case D3D_SIT_CBUFFER:
+			case D3D_SIT_TBUFFER:
+
+				// Constant or Texture buffer (they are basically the same thing, however tbuffers are optimized for random access, such as lookup tables)
+
+				//buffer_sequence[resource_desc.BindPoint] = resource_desc.Name;
+				break;
+
+			case D3D_SIT_TEXTURE:
+
+				break;
+
+			case D3D10_SIT_SAMPLER:
+
+				break;
+
+			}
+
+		}
+
+	}
+
+
 	void Reflect(ShaderBinding& binding, ShaderReflection& reflection){
 
 		ID3D11ShaderReflection * reflector = nullptr;
@@ -233,6 +272,95 @@ namespace{
 		}
 		
 	}
+
+}
+
+//////////////////// ShaderBinding /////////////////////////
+
+ShaderBinding::ShaderBinding():
+bytecode(nullptr){
+
+}
+
+ShaderBinding::ShaderBinding(const ShaderBinding& other){
+
+	bytecode = other.bytecode;
+	buffer_order = other.buffer_order;
+	resources_order = other.resources_order;
+	samplers_order = other.samplers_order;
+
+}
+
+ShaderBinding::ShaderBinding(ShaderBinding&& other){
+
+	bytecode = std::move(other.bytecode);
+	buffer_order = std::move(other.buffer_order);
+	resources_order = std::move(other.resources_order);
+	samplers_order = std::move(other.samplers_order);
+
+}
+
+ShaderBinding& ShaderBinding::operator=(ShaderBinding other){
+
+	other.Swap(*this);
+
+	return *this;
+
+}
+
+void ShaderBinding::Swap(ShaderBinding& other){
+
+	std::swap(bytecode, other.bytecode);
+	std::swap(buffer_order, other.buffer_order);
+	std::swap(resources_order, other.resources_order);
+	std::swap(samplers_order, other.samplers_order);
+
+}
+
+//////////////////// ShaderCombo ///////////////////////////
+
+ShaderCombo::ShaderCombo(){
+
+}
+
+ShaderCombo::ShaderCombo(const ShaderCombo& other){
+
+	vertex_shader = other.vertex_shader;
+	hull_shader = other.hull_shader;
+	domain_shader = other.domain_shader;
+	geometry_shader = other.geometry_shader;
+	pixel_shader = other.pixel_shader;
+	reflection = other.reflection;
+
+}
+
+ShaderCombo::ShaderCombo(ShaderCombo&& other){
+
+	vertex_shader = std::move(other.vertex_shader);
+	hull_shader = std::move(other.hull_shader);
+	domain_shader = std::move(other.domain_shader);
+	geometry_shader = std::move(other.geometry_shader);
+	pixel_shader = std::move(other.pixel_shader);
+	reflection = other.reflection;
+
+}
+
+ShaderCombo& ShaderCombo::operator=(ShaderCombo other){
+
+	other.Swap(*this);
+
+	return *this;
+
+}
+
+void ShaderCombo::Swap(ShaderCombo& other){
+
+	std::swap(vertex_shader, other.vertex_shader);
+	std::swap(hull_shader, other.hull_shader);
+	std::swap(domain_shader, other.domain_shader);
+	std::swap(geometry_shader, other.geometry_shader);
+	std::swap(pixel_shader, other.pixel_shader);
+	std::swap(reflection, other.reflection);
 
 }
 
