@@ -23,14 +23,17 @@ namespace{
 	/// \brief Vertex shader type traits.
 	template<> struct ShaderTraits < ID3D11VertexShader > {
 
+		static const unsigned int flag;		///< \brief Flag used to identify the shader type.
 		static const char * entry_point;	///< \brief Entry point.
 		static const char * profile;		///< \brief Shader profile.
+		
 
 	};
 
 	/// \brief hull shader type traits.
 	template<> struct ShaderTraits < ID3D11HullShader > {
 
+		static const unsigned int flag;		///< \brief Flag used to identify the shader type.
 		static const char * entry_point;	///< \brief Entry point.
 		static const char * profile;		///< \brief Shader profile.
 
@@ -39,6 +42,7 @@ namespace{
 	/// \brief domain shader type traits.
 	template<> struct ShaderTraits < ID3D11DomainShader > {
 
+		static const unsigned int flag;		///< \brief Flag used to identify the shader type.
 		static const char * entry_point;	///< \brief Entry point.
 		static const char * profile;		///< \brief Shader profile.
 
@@ -47,6 +51,7 @@ namespace{
 	/// \brief geomtry shader type traits.
 	template<> struct ShaderTraits < ID3D11GeometryShader > {
 
+		static const unsigned int flag;		///< \brief Flag used to identify the shader type.
 		static const char * entry_point;	///< \brief Entry point.
 		static const char * profile;		///< \brief Shader profile. 
 
@@ -55,23 +60,29 @@ namespace{
 	/// \brief pixel shader type traits.
 	template<> struct ShaderTraits < ID3D11PixelShader > {
 
+		static const unsigned int flag;		///< \brief Flag used to identify the shader type.
 		static const char * entry_point;	///< \brief Entry point.
 		static const char * profile;		///< \brief Shader profile.
 
 	};
 
+	const unsigned int ShaderTraits < ID3D11VertexShader >::flag = ShaderHelper::kVertexShader;
 	const char * ShaderTraits < ID3D11VertexShader >::entry_point = "VSMain";
 	const char * ShaderTraits < ID3D11VertexShader >::profile = "vs_5_0";
 
+	const unsigned int ShaderTraits < ID3D11HullShader >::flag = ShaderHelper::kHullShader;
 	const char * ShaderTraits < ID3D11HullShader >::entry_point = "HSMain";
 	const char * ShaderTraits < ID3D11HullShader >::profile = "hs_5_0";
 
+	const unsigned int ShaderTraits < ID3D11DomainShader >::flag = ShaderHelper::kDomainShader;
 	const char * ShaderTraits < ID3D11DomainShader >::entry_point = "DSMain";
 	const char * ShaderTraits < ID3D11DomainShader >::profile = "ds_5_0";
 	
+	const unsigned int ShaderTraits < ID3D11GeometryShader >::flag = ShaderHelper::kGeometryShader;
 	const char * ShaderTraits < ID3D11GeometryShader >::entry_point = "GSMain";
 	const char * ShaderTraits < ID3D11GeometryShader >::profile = "gs_5_0";
 
+	const unsigned int ShaderTraits < ID3D11PixelShader >::flag = ShaderHelper::kPixelShader;
 	const char * ShaderTraits < ID3D11PixelShader >::entry_point = "PSMain";
 	const char * ShaderTraits < ID3D11PixelShader >::profile = "ps_5_0";
 
@@ -88,70 +99,153 @@ namespace{
 
 #endif
 
-	void ReflectBuffers(ID3D11ShaderReflection& reflector, ShaderReflection& reflection){
+	/// \brief Convert a shader resource view dimension into a shader resource type.
+	/// \param dimension Shader resource view dimension.
+	/// \return Returns the converted shader resource view dimension.
+	ShaderResourceType SRVDimensionToShaderResourceType(D3D_SRV_DIMENSION dimension){
 
-		D3D11_SHADER_DESC dx_shader_desc;
-		D3D11_SHADER_BUFFER_DESC dx_buffer_desc;
-		D3D11_SHADER_VARIABLE_DESC dx_variable_desc;
+		switch (dimension){
 
-		auto& buffers = reflection.buffers;
+			case D3D_SRV_DIMENSION_TEXTURE1D:
+			case D3D_SRV_DIMENSION_TEXTURE1DARRAY:
 
-		reflector.GetDesc(&dx_shader_desc);
+				return ShaderResourceType::TEXTURE_1D;
 
-		// Constant buffers and variables - O(#buffers ^ 2)
+			case D3D_SRV_DIMENSION_TEXTURE2D:
+			case D3D_SRV_DIMENSION_TEXTURE2DARRAY:
+			case D3D_SRV_DIMENSION_TEXTURE2DMS:
+			case D3D_SRV_DIMENSION_TEXTURE2DMSARRAY:
 
-		for (unsigned int cbuffer_index = 0; cbuffer_index < dx_shader_desc.ConstantBuffers; ++cbuffer_index){
+				return ShaderResourceType::TEXTURE_2D;
 
-			auto buffer = reflector.GetConstantBufferByIndex(cbuffer_index);
+			case D3D_SRV_DIMENSION_TEXTURE3D:
 
-			buffer->GetDesc(&dx_buffer_desc);
+				return ShaderResourceType::TEXTURE_3D;
 
-			auto it = std::find_if(buffers.begin(),
-								   buffers.end(),
-								   [&dx_buffer_desc](const ShaderBufferDesc& desc){
+			case D3D_SRV_DIMENSION_TEXTURECUBE:
+			case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:
+			
+				return ShaderResourceType::TEXTURE_CUBE;
+		
+			default:
 
-										return desc.name == dx_buffer_desc.Name;
-
-								   });
-
-			if (it == buffers.end()){
-
-				// Add a new constant buffer
-
-				ShaderBufferDesc buffer_desc;
-
-				buffer_desc.name = dx_buffer_desc.Name;
-				buffer_desc.size = dx_buffer_desc.Size;
-
-				for (unsigned int variable_index = 0; variable_index < dx_buffer_desc.Variables; ++variable_index){
-
-					// Add a new variable
-
-					auto variable = buffer->GetVariableByIndex(variable_index);
-
-					variable->GetDesc(&dx_variable_desc);
-
-					buffer_desc.variables.push_back({ dx_variable_desc.Name,
-													  dx_variable_desc.Size,
-													  dx_variable_desc.StartOffset });
-
-				}
-
-				buffers.push_back(std::move(buffer_desc));
-
-			}
+				return ShaderResourceType::UNKNOWN;
 
 		}
 
 	}
 
-	void ReflectResources(ID3D11ShaderReflection& reflector, ShaderBinding& binding, ShaderReflection& reflection){
+	/// \brief Reflect a shader input inside the specified vector.
+
+	/// The method won't reflect resources already inside the resource vector.
+	/// \tparam TType Type of the reflected structure. The type must me expose a field "name" used to uniquely identify the reflected resource.
+	/// \tparam TReflector Type of the reflector used to build the reflected data.
+	/// \param reflector Used to reflect the shader.
+	/// \param input_desc Decription of the shader input.
+	/// \param ResourceReflector Functor used to build the reflected data.
+	/// \param resource Vector that will contain the reflected data.
+	/// \param order Vector containing the binding order.
+	template <typename TType, typename TReflector>
+	void Reflect(ID3D11ShaderReflection& reflector, const D3D11_SHADER_INPUT_BIND_DESC& input_desc, TReflector ResourceReflector, vector<TType>& resources, vector<unsigned int>& order){
+
+		auto it = std::find_if(resources.begin(),
+							   resources.end(),
+							   [&input_desc](const TType& desc){
+
+									return desc.name == input_desc.Name;
+
+							   });
+
+		if (it == resources.end()){
+
+			resources.push_back(ResourceReflector(reflector, input_desc));
+
+			order[input_desc.BindPoint] = static_cast<unsigned int>(resources.size() - 1);
+
+		}
+		else{
+
+			order[input_desc.BindPoint] = static_cast<unsigned int>(std::distance(resources.begin(), it));
+
+		}
+			
+	}
+
+	/// \brief Reflect a constant buffer.
+	/// \param reflector Reflector used to perform the reflection.
+	/// \param input_desc Description of the shader input.
+	/// \return Return the description of the reflected constant buffer.
+	ShaderBufferDesc ReflectCBuffer(ID3D11ShaderReflection& reflector, const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
+
+		D3D11_SHADER_BUFFER_DESC dx_buffer_desc;
+		D3D11_SHADER_VARIABLE_DESC dx_variable_desc;
+
+		auto buffer = reflector.GetConstantBufferByName(input_desc.Name);
+		
+		buffer->GetDesc(&dx_buffer_desc);
+
+		ShaderBufferDesc buffer_desc;
+
+		buffer_desc.name = dx_buffer_desc.Name;
+		buffer_desc.size = dx_buffer_desc.Size;
+
+		for (unsigned int i = 0; i < dx_buffer_desc.Variables; ++i){
+
+			// Variables
+
+			auto variable = buffer->GetVariableByIndex(i);
+
+			variable->GetDesc(&dx_variable_desc);
+
+			buffer_desc.variables.push_back({ dx_variable_desc.Name,
+											  dx_variable_desc.Size,
+											  dx_variable_desc.StartOffset });
+
+		}
+			
+		return buffer_desc;
+
+	}
+
+	/// \brief Reflect a texture.
+	/// \param reflector Reflector used to perform the reflection.
+	/// \param input_desc Description of the shader input.
+	/// \return Return the description of the reflected texture.
+	ShaderResourceDesc ReflectTexture(ID3D11ShaderReflection&, const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
+
+		return ShaderResourceDesc{ input_desc.Name,
+								   SRVDimensionToShaderResourceType(input_desc.Dimension),
+								   input_desc.BindCount };
+
+	}
+
+	/// \brief Reflect a sampler.
+	/// \param reflector Reflector used to perform the reflection.
+	/// \param input_desc Description of the shader input.
+	/// \return Return the description of the reflected sampler.
+	ShaderSamplerDesc ReflectSampler(ID3D11ShaderReflection&, const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
+
+		return ShaderSamplerDesc{ input_desc.Name };
+
+	}
+
+	/// \brief Reflect a shader from bytecode.
+	/// \param binding Holds information about the shader and the binding order of the resources.
+	/// \param reflection Holds shared information about various shaders as well as detailed information about resources.
+	void Reflect(ShaderBinding& binding, ShaderReflection& reflection){
+
+		ID3D11ShaderReflection * reflector = nullptr;
+
+		THROW_ON_FAIL(D3DReflect(binding.bytecode->GetBufferPointer(),
+								 binding.bytecode->GetBufferSize(),
+								 IID_ID3D11ShaderReflection,
+								 (void**)&reflector));
 
 		D3D11_SHADER_DESC shader_desc;
 
 		D3D11_SHADER_INPUT_BIND_DESC resource_desc;
 
-		reflector.GetDesc(&shader_desc);
+		reflector->GetDesc(&shader_desc);
 
 		// Resize the arrays
 		binding.buffer_order.resize(shader_desc.ConstantBuffers);									// The size is known.
@@ -163,7 +257,7 @@ namespace{
 
 		for (unsigned int resource_index = 0; resource_index < shader_desc.BoundResources; ++resource_index){
 
-			reflector.GetResourceBindingDesc(resource_index, &resource_desc);
+			reflector->GetResourceBindingDesc(resource_index, &resource_desc);
 
 			switch (resource_desc.Type){
 
@@ -173,78 +267,27 @@ namespace{
 
 					// Constant or Texture buffer
 
-					auto it = std::find_if(reflection.buffers.begin(),
-										   reflection.buffers.end(),
-										   [&resource_desc](const ShaderBufferDesc& desc){
-
-												return desc.name == resource_desc.Name;
-
-											});
-
-					binding.buffer_order[resource_desc.BindPoint] = static_cast<unsigned int>(std::distance(reflection.buffers.begin(), it)); // Set the binding point
+					Reflect(*reflector,
+							resource_desc,
+							ReflectCBuffer,
+							reflection.buffers,
+							binding.buffer_order);
 
 					break;
-				
+
 				}
 				case D3D_SIT_TEXTURE:
 				{
-				
+
 					// Textures 
 
 					max_resource_index = (std::max)(max_resource_index, static_cast<int>(resource_desc.BindPoint));
 
-					ShaderResourceType resource_type;
-
-					switch (resource_desc.Dimension){
-
-						case D3D_SRV_DIMENSION_TEXTURE1D:
-						case D3D_SRV_DIMENSION_TEXTURE1DARRAY:
-
-							resource_type = ShaderResourceType::TEXTURE_1D;
-							break;
-
-						case D3D_SRV_DIMENSION_TEXTURE2D:
-						case D3D_SRV_DIMENSION_TEXTURE2DARRAY:
-						case D3D_SRV_DIMENSION_TEXTURE2DMS:
-						case D3D_SRV_DIMENSION_TEXTURE2DMSARRAY:
-
-							resource_type = ShaderResourceType::TEXTURE_2D;
-							break;
-
-						case D3D_SRV_DIMENSION_TEXTURE3D:
-
-							resource_type = ShaderResourceType::TEXTURE_3D;
-							break;
-
-						//case D3D_SRV_DIMENSION_TEXTURECUBE:
-						//case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:
-						default:
-
-							resource_type = ShaderResourceType::TEXTURE_CUBE;
-							break;
-
-					}
-
-					auto it = std::find_if(reflection.resources.begin(),
-										   reflection.resources.end(),
-										   [&resource_desc](const ShaderResourceDesc& desc){
-
-												return desc.name == resource_desc.Name;
-
-										   });
-
-					if (it == reflection.resources.end()){
-					
-						reflection.resources.push_back({ resource_desc.Name, resource_type, resource_desc.BindCount });
-
-						binding.resources_order[resource_desc.BindPoint] = static_cast<unsigned int>(reflection.resources.size() - 1);
-
-					}
-					else{
-
-						binding.resources_order[resource_desc.BindPoint] = static_cast<unsigned int>(std::distance(reflection.resources.begin(), it));
-					
-					}
+					Reflect(*reflector,
+							resource_desc,
+							ReflectTexture,
+							reflection.resources,
+							binding.resources_order);
 
 					break;
 
@@ -252,31 +295,15 @@ namespace{
 				case D3D_SIT_SAMPLER:
 				{
 
-
 					// Samplers
 
 					max_sampler_index = (std::max)(max_sampler_index, static_cast<int>(resource_desc.BindPoint));
-								
-					auto it = std::find_if(reflection.samplers.begin(),
-										   reflection.samplers.end(),
-										   [&resource_desc](const ShaderSamplerDesc& desc){
 
-												return desc.name == resource_desc.Name;
-
-										   });
-
-					if (it == reflection.samplers.end()){
-
-						reflection.samplers.push_back({ resource_desc.Name });
-
-						binding.samplers_order[resource_desc.BindPoint] = static_cast<unsigned int>(reflection.samplers.size() - 1);
-
-					}
-					else{
-
-						binding.samplers_order[resource_desc.BindPoint] = static_cast<unsigned int>(std::distance(reflection.samplers.begin(), it));
-
-					}
+					Reflect(*reflector,
+							resource_desc,
+							ReflectSampler,
+							reflection.samplers,
+							binding.samplers_order);
 
 					break;
 
@@ -292,21 +319,13 @@ namespace{
 
 	}
 
-
-	void Reflect(ShaderBinding& binding, ShaderReflection& reflection){
-
-		ID3D11ShaderReflection * reflector = nullptr;
-
-		THROW_ON_FAIL(D3DReflect(binding.bytecode->GetBufferPointer(),
-								 binding.bytecode->GetBufferSize(),
-								 IID_ID3D11ShaderReflection,
-								 (void**)&reflector));
-
-		ReflectBuffers(*reflector, reflection);
-		ReflectResources(*reflector, binding, reflection);
-
-	}
-
+	/// \brief Compile an HLSL code.
+	/// \tparam TShader Type of the shader to compile.
+	/// \param code Pointer to the HLSL code buffer.
+	/// \param size Size of the code buffer.
+	/// \param source_file Null terminated string representing the source file. Used to resolve #include directives.
+	/// \param compulsory Whether the presence of the given shader is compulsory or not.
+	/// \return Returns a pointer to the compiled shader code if the method succeeds, otherwise the method will throw if the shader presence was compulsory or nullptr otherwise.
 	template <typename TShader>
 	ID3DBlob * Compile(const char* code, size_t size, const char* source_file, bool compulsory){
 
@@ -365,23 +384,35 @@ namespace{
 
 	}
 
+	/// \brief Compile and reflect a shader.
+	/// \tparam TShader Type of the shader to handle.
+	/// \param code Pointer to the HLSL code buffer.
+	/// \param size Size of the code buffer.
+	/// \param source_file Null terminated string representing the source file. Used to resolve #include directives.
+	/// \param shaders Presence flags used to determine whether to compile a given shader or not.
+	/// \param compulsory_shaders Flags used to determine whether the presence of the specified shader is compulsory or not. If a compulsory shader is not found the method will throw.
+	/// \param binding Holds information about the shader and the binding order of the resources.
+	/// \param reflection Holds shared information about various shaders as well as detailed information about resources.
 	template <typename TShader>
-	void CompileShader(const char* code, size_t size, const char* source_file, bool compulsory, ShaderBinding& binding, ShaderReflection& reflection){
+	void CompileShader(const char* code, size_t size, const char* source_file, unsigned int shaders, unsigned int compulsory_shaders, ShaderBinding& binding, ShaderReflection& reflection){
 
-		
-		binding.bytecode = shared_ptr<ID3DBlob>( Compile<TShader>(code,
-																  size, 
-																  source_file, 
-																  compulsory),
-												 COMDeleter{});
+		if ((shaders & ShaderTraits<TShader>::flag) > 0){
 
-		if (binding.bytecode){
+			binding.bytecode = shared_ptr<ID3DBlob>(Compile<TShader>(code,
+													size,
+													source_file,
+													(compulsory_shaders & ShaderTraits<TShader>::flag) > 0),
+													COMDeleter{});
 
-			Reflect(binding,
+			if (binding.bytecode){
+
+				Reflect(binding,
 					reflection);
 
+			}
+
 		}
-		
+				
 	}
 
 }
@@ -499,60 +530,46 @@ ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, con
 
 	ShaderCombo shader_combo;
 	
-	if ((shaders & kVertexShader) > 0){
-
-		CompileShader<ID3D11VertexShader>(code,
-										  size,
-										  source_file,
-										  (compulsory_shaders & kVertexShader) > 0,
-										  shader_combo.vertex_shader,
-										  shader_combo.reflection);
-
-	}
-
-	if ((shaders & kHullShader) > 0){
-
-		CompileShader<ID3D11HullShader>(code,
+	CompileShader<ID3D11VertexShader>(code,
 										size,
 										source_file,
-										(compulsory_shaders & kHullShader) > 0,
-										shader_combo.hull_shader,
+										shaders,
+										compulsory_shaders,
+										shader_combo.vertex_shader,
 										shader_combo.reflection);
 
-	}
+	CompileShader<ID3D11HullShader>(code,
+									size,
+									source_file,
+									shaders,
+									compulsory_shaders,
+									shader_combo.hull_shader,
+									shader_combo.reflection);
 
-	if ((shaders & kDomainShader) > 0){
 
-		CompileShader<ID3D11DomainShader>(code,
-										  size,
-										  source_file,
-										  (compulsory_shaders & kDomainShader) > 0,
-										  shader_combo.domain_shader,
-										  shader_combo.reflection);
+	CompileShader<ID3D11DomainShader>(code,
+									  size,
+									  source_file,
+									  shaders,
+									  compulsory_shaders,
+									  shader_combo.domain_shader,
+									  shader_combo.reflection);
 
-	}
+	CompileShader<ID3D11GeometryShader>(code,
+										size,
+										source_file,
+										shaders,
+										compulsory_shaders,
+										shader_combo.geometry_shader,
+										shader_combo.reflection);
 
-	if ((shaders & kGeometryShader) > 0){
-
-		CompileShader<ID3D11GeometryShader>(code,
-											size,
-											source_file,
-											(compulsory_shaders & kGeometryShader) > 0,
-											shader_combo.geometry_shader,
-											shader_combo.reflection);
-
-	}
-
-	if ((shaders & kPixelShader) > 0){
-
-		CompileShader<ID3D11PixelShader>(code,
-										 size,
-										 source_file,
-										 (compulsory_shaders & kPixelShader) > 0,
-										 shader_combo.pixel_shader,
-										 shader_combo.reflection);
-
-	}
+	CompileShader<ID3D11PixelShader>(code,
+									 size,
+									 source_file,
+									 shaders,
+									 compulsory_shaders,
+									 shader_combo.pixel_shader,
+									 shader_combo.reflection);
 
 	return shader_combo;
 

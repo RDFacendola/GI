@@ -26,6 +26,7 @@ namespace gi_lib{
 		/// \brief Type of a shader resource.
 		enum class ShaderResourceType{
 
+			UNKNOWN,			///< \brief Unknown resource.
 			TEXTURE_1D,			///< \brief 1D texture.
 			TEXTURE_2D,			///< \brief 2D texture.
 			TEXTURE_3D,			///< \brief 3D texture.
@@ -164,11 +165,11 @@ namespace gi_lib{
 		public:
 
 
-			static const unsigned int kVertexShader = 1;		///< \brief Vertex shader.
-			static const unsigned int kHullShader = 2;			///< \brief Hull shader.
-			static const unsigned int kDomainShader = 4;		///< \brief Domain shader.
-			static const unsigned int kGeometryShader = 8;		///< \brief Geometry shader.
-			static const unsigned int kPixelShader = 16;		///< \brief Pixel shader.
+			static const unsigned int kVertexShader = 1;		///< \brief Identifies a vertex shader.
+			static const unsigned int kHullShader = 2;			///< \brief Identifies a hull shader.
+			static const unsigned int kDomainShader = 4;		///< \brief Identifies a domain shader.
+			static const unsigned int kGeometryShader = 8;		///< \brief Identifies a geometry shader.
+			static const unsigned int kPixelShader = 16;		///< \brief Identifies a pixel shader.
 			
 			/// \brief All shaders.
 			static const unsigned int kAllShaders = kVertexShader | kHullShader | kDomainShader | kGeometryShader | kPixelShader;	
