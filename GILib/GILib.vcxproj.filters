@@ -19,6 +19,9 @@
     <Filter Include="graphics\directx XI">
       <UniqueIdentifier>{7f63097a-8a40-48d6-9d15-deb875f0b168}</UniqueIdentifier>
     </Filter>
+    <Filter Include="os">
+      <UniqueIdentifier>{8a322a3c-831f-4abe-93ba-ae8623c09933}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\timer.h">
@@ -64,7 +67,6 @@
       <Filter>FBX</Filter>
     </ClInclude>
     <ClInclude Include="external\fnv1.h" />
-    <ClInclude Include="include\bvh.h" />
     <ClInclude Include="include\bundles.h">
       <Filter>graphics</Filter>
     </ClInclude>
@@ -74,8 +76,15 @@
     <ClInclude Include="include\scope_guard.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\windows\os_windows.h" />
-    <ClInclude Include="src\dx11\dx11shader.h" />
+    <ClInclude Include="src\dx11\dx11shader.h">
+      <Filter>graphics\directx XI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\bvh.h">
+      <Filter>scene</Filter>
+    </ClInclude>
+    <ClInclude Include="include\windows\os_windows.h">
+      <Filter>os</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -102,14 +111,20 @@
     <ClCompile Include="src\fbx\fbx.cpp">
       <Filter>FBX</Filter>
     </ClCompile>
-    <ClCompile Include="src\bvh.cpp" />
     <ClCompile Include="src\bundles.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\gimath.cpp">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\windows\os_windows.cpp" />
-    <ClCompile Include="src\dx11\dx11shader.cpp" />
+    <ClCompile Include="src\dx11\dx11shader.cpp">
+      <Filter>graphics\directx XI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\bvh.cpp">
+      <Filter>scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\os_windows.cpp">
+      <Filter>os</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

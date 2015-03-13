@@ -88,7 +88,7 @@ namespace{
 
 #endif
 
-	void ReflectBuffers(ID3D11ShaderReflection& reflector, ShaderBinding& binding, ShaderReflection& reflection){
+	void ReflectBuffers(ID3D11ShaderReflection& reflector, ShaderReflection& reflection){
 
 		D3D11_SHADER_DESC dx_shader_desc;
 		D3D11_SHADER_BUFFER_DESC dx_buffer_desc;
@@ -99,8 +99,6 @@ namespace{
 		reflector.GetDesc(&dx_shader_desc);
 
 		// Constant buffers and variables - O(#buffers ^ 2)
-
-		binding.buffer_order.resize(dx_shader_desc.ConstantBuffers);
 
 		for (unsigned int cbuffer_index = 0; cbuffer_index < dx_shader_desc.ConstantBuffers; ++cbuffer_index){
 
@@ -155,9 +153,13 @@ namespace{
 
 		reflector.GetDesc(&shader_desc);
 
-		//buffer_sequence.resize(shader_desc.ConstantBuffers);
+		// Resize the arrays
+		binding.buffer_order.resize(shader_desc.ConstantBuffers);									// The size is known.
+		binding.resources_order.resize(shader_desc.BoundResources - shader_desc.ConstantBuffers);	// Worst case scenario, the size is unknown at this stage.
+		binding.samplers_order.resize(shader_desc.BoundResources - shader_desc.ConstantBuffers);	// Worst case scenario, the size is unknown at this stage.
 
-		vector<ShaderBufferDesc>::iterator it;
+		int max_resource_index = -1;
+		int max_sampler_index = -1;
 
 		for (unsigned int resource_index = 0; resource_index < shader_desc.BoundResources; ++resource_index){
 
@@ -165,34 +167,128 @@ namespace{
 
 			switch (resource_desc.Type){
 
-			case D3D_SIT_CBUFFER:
-			case D3D_SIT_TBUFFER:
+				case D3D_SIT_CBUFFER:
+				case D3D_SIT_TBUFFER:
+				{
 
-				// Constant or Texture buffer
+					// Constant or Texture buffer
 
-				it = std::find_if(reflection.buffers.begin(),
-								  reflection.buffers.end(),
-								  [&resource_desc](const ShaderBufferDesc& desc){
+					auto it = std::find_if(reflection.buffers.begin(),
+										   reflection.buffers.end(),
+										   [&resource_desc](const ShaderBufferDesc& desc){
 
-									 return desc.name == resource_desc.Name;
+												return desc.name == resource_desc.Name;
 
-								  });
+											});
 
-				binding.buffer_order[resource_desc.BindPoint] = static_cast<unsigned int>(std::distance(reflection.buffers.begin(), it)); // Set the binding point
+					binding.buffer_order[resource_desc.BindPoint] = static_cast<unsigned int>(std::distance(reflection.buffers.begin(), it)); // Set the binding point
 
-				break;
+					break;
+				
+				}
+				case D3D_SIT_TEXTURE:
+				{
+				
+					// Textures 
 
-			case D3D_SIT_TEXTURE:
+					max_resource_index = (std::max)(max_resource_index, static_cast<int>(resource_desc.BindPoint));
 
-				break;
+					ShaderResourceType resource_type;
 
-			case D3D10_SIT_SAMPLER:
+					switch (resource_desc.Dimension){
 
-				break;
+						case D3D_SRV_DIMENSION_TEXTURE1D:
+						case D3D_SRV_DIMENSION_TEXTURE1DARRAY:
+
+							resource_type = ShaderResourceType::TEXTURE_1D;
+							break;
+
+						case D3D_SRV_DIMENSION_TEXTURE2D:
+						case D3D_SRV_DIMENSION_TEXTURE2DARRAY:
+						case D3D_SRV_DIMENSION_TEXTURE2DMS:
+						case D3D_SRV_DIMENSION_TEXTURE2DMSARRAY:
+
+							resource_type = ShaderResourceType::TEXTURE_2D;
+							break;
+
+						case D3D_SRV_DIMENSION_TEXTURE3D:
+
+							resource_type = ShaderResourceType::TEXTURE_3D;
+							break;
+
+						//case D3D_SRV_DIMENSION_TEXTURECUBE:
+						//case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:
+						default:
+
+							resource_type = ShaderResourceType::TEXTURE_CUBE;
+							break;
+
+					}
+
+					auto it = std::find_if(reflection.resources.begin(),
+										   reflection.resources.end(),
+										   [&resource_desc](const ShaderResourceDesc& desc){
+
+												return desc.name == resource_desc.Name;
+
+										   });
+
+					if (it == reflection.resources.end()){
+					
+						reflection.resources.push_back({ resource_desc.Name, resource_type, resource_desc.BindCount });
+
+						binding.resources_order[resource_desc.BindPoint] = static_cast<unsigned int>(reflection.resources.size() - 1);
+
+					}
+					else{
+
+						binding.resources_order[resource_desc.BindPoint] = static_cast<unsigned int>(std::distance(reflection.resources.begin(), it));
+					
+					}
+
+					break;
+
+				}
+				case D3D_SIT_SAMPLER:
+				{
+
+
+					// Samplers
+
+					max_sampler_index = (std::max)(max_sampler_index, static_cast<int>(resource_desc.BindPoint));
+								
+					auto it = std::find_if(reflection.samplers.begin(),
+										   reflection.samplers.end(),
+										   [&resource_desc](const ShaderSamplerDesc& desc){
+
+												return desc.name == resource_desc.Name;
+
+										   });
+
+					if (it == reflection.samplers.end()){
+
+						reflection.samplers.push_back({ resource_desc.Name });
+
+						binding.samplers_order[resource_desc.BindPoint] = static_cast<unsigned int>(reflection.samplers.size() - 1);
+
+					}
+					else{
+
+						binding.samplers_order[resource_desc.BindPoint] = static_cast<unsigned int>(std::distance(reflection.samplers.begin(), it));
+
+					}
+
+					break;
+
+				}
 
 			}
 
 		}
+
+		// Resize the resource and the sampler vectors to the right size
+		binding.resources_order.resize(max_resource_index + 1);
+		binding.samplers_order.resize(max_sampler_index + 1);
 
 	}
 
@@ -206,7 +302,7 @@ namespace{
 								 IID_ID3D11ShaderReflection,
 								 (void**)&reflector));
 
-		ReflectBuffers(*reflector, binding, reflection);
+		ReflectBuffers(*reflector, reflection);
 		ReflectResources(*reflector, binding, reflection);
 
 	}
