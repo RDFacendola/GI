@@ -78,7 +78,8 @@ namespace{
 #ifdef _DEBUG
 		
 	/// \brief Shader macros used during compilation.
-	D3D_SHADER_MACRO shader_macros[2] = { { "_DEBUG", "" }, { nullptr, nullptr } };
+	D3D_SHADER_MACRO shader_macros[2] = { { "_DEBUG", "" }, 
+										  { nullptr, nullptr } };
 
 #else
 
@@ -87,7 +88,7 @@ namespace{
 
 #endif
 
-	void ReflectBuffers(ID3D11ShaderReflection& reflector, ShaderReflection& reflection){
+	void ReflectBuffers(ID3D11ShaderReflection& reflector, ShaderBinding& binding, ShaderReflection& reflection){
 
 		D3D11_SHADER_DESC dx_shader_desc;
 		D3D11_SHADER_BUFFER_DESC dx_buffer_desc;
@@ -97,7 +98,9 @@ namespace{
 
 		reflector.GetDesc(&dx_shader_desc);
 
-		// Constant buffers and variables
+		// Constant buffers and variables - O(#buffers ^ 2)
+
+		binding.buffer_order.resize(dx_shader_desc.ConstantBuffers);
 
 		for (unsigned int cbuffer_index = 0; cbuffer_index < dx_shader_desc.ConstantBuffers; ++cbuffer_index){
 
@@ -144,7 +147,7 @@ namespace{
 
 	}
 
-	void ReflectResources(ID3D11ShaderReflection& reflector){
+	void ReflectResources(ID3D11ShaderReflection& reflector, ShaderBinding& binding, ShaderReflection& reflection){
 
 		D3D11_SHADER_DESC shader_desc;
 
@@ -153,6 +156,8 @@ namespace{
 		reflector.GetDesc(&shader_desc);
 
 		//buffer_sequence.resize(shader_desc.ConstantBuffers);
+
+		vector<ShaderBufferDesc>::iterator it;
 
 		for (unsigned int resource_index = 0; resource_index < shader_desc.BoundResources; ++resource_index){
 
@@ -163,9 +168,18 @@ namespace{
 			case D3D_SIT_CBUFFER:
 			case D3D_SIT_TBUFFER:
 
-				// Constant or Texture buffer (they are basically the same thing, however tbuffers are optimized for random access, such as lookup tables)
+				// Constant or Texture buffer
 
-				//buffer_sequence[resource_desc.BindPoint] = resource_desc.Name;
+				it = std::find_if(reflection.buffers.begin(),
+								  reflection.buffers.end(),
+								  [&resource_desc](const ShaderBufferDesc& desc){
+
+									 return desc.name == resource_desc.Name;
+
+								  });
+
+				binding.buffer_order[resource_desc.BindPoint] = static_cast<unsigned int>(std::distance(reflection.buffers.begin(), it)); // Set the binding point
+
 				break;
 
 			case D3D_SIT_TEXTURE:
@@ -192,7 +206,8 @@ namespace{
 								 IID_ID3D11ShaderReflection,
 								 (void**)&reflector));
 
-		ReflectBuffers(*reflector, reflection);
+		ReflectBuffers(*reflector, binding, reflection);
+		ReflectResources(*reflector, binding, reflection);
 
 	}
 
@@ -278,9 +293,7 @@ namespace{
 //////////////////// ShaderBinding /////////////////////////
 
 ShaderBinding::ShaderBinding():
-bytecode(nullptr){
-
-}
+bytecode(nullptr){}
 
 ShaderBinding::ShaderBinding(const ShaderBinding& other){
 
@@ -319,9 +332,7 @@ void ShaderBinding::Swap(ShaderBinding& other){
 
 //////////////////// ShaderCombo ///////////////////////////
 
-ShaderCombo::ShaderCombo(){
-
-}
+ShaderCombo::ShaderCombo(){}
 
 ShaderCombo::ShaderCombo(const ShaderCombo& other){
 
