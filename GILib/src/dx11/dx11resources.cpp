@@ -12,6 +12,7 @@
 #include <Eigen/Core>
 
 #include "..\..\include\core.h"
+#include "..\..\include\enums.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\scope_guard.h"
 
@@ -467,6 +468,13 @@ DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildIndexedNormalTextured& bund
 }
 
 ////////////////////////////// MATERIAL //////////////////////////////////////////////
+
+template <typename TEnum>
+TEnum Bhas(TEnum first, TEnum second){
+
+	return static_cast<TEnum>(static_cast<int>(first) | static_cast<int>(second));
+	
+}
 
 DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 

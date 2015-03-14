@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "..\..\include\macros.h"
+#include "..\..\include\enums.h"
 #include "..\..\include\windows\os_windows.h"
 
 using std::string;
@@ -25,15 +26,15 @@ namespace gi_lib{
 	namespace dx11{
 
 		/// \brief Shader type.
-		ENUM_FLAGS(ShaderType){
+		ENUM_FLAGS(ShaderType, unsigned int){
 
-			VERTEX_SHADER = 1,
-			HULL_SHADER = 2,
-			DOMAIN_SHADER = 4,
-			GEOMETRY_SHADER = 8,
-			PIXEL_SHADER = 16,
+			VERTEX_SHADER = 1u,
+			HULL_SHADER = 2u,
+			DOMAIN_SHADER = 4u,
+			GEOMETRY_SHADER = 8u,
+			PIXEL_SHADER = 16u,
 
-			ALL_SHADERS = 31
+			ALL_SHADERS = 31u
 
 		};
 
@@ -174,9 +175,9 @@ namespace gi_lib{
 			/// \param size Size of the code buffer in bytes.
 			/// \param source_file Name of the source file. Used to resolve the #include directives inside the HLSL code.
 			/// \param shaders Shaders to compile (for example: kVertexShader | kPixelShader).
-			/// \param compulsory_shaders Shaders that are required. If at least one shader is missing the method throws.
+			/// \param compulsory Shaders that are required. If at least one shader is missing the method throws.
 			/// \return Returns a shader combo
-			static ShaderCombo CompileShadersOrDie(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory_shaders);
+			static ShaderCombo CompileShadersOrDie(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory);
 
 		private:
 

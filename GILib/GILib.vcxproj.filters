@@ -85,6 +85,7 @@
     <ClInclude Include="include\windows\os_windows.h">
       <Filter>os</Filter>
     </ClInclude>
+    <ClInclude Include="include\enums.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">

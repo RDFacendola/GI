@@ -22,6 +22,7 @@
     <ClInclude Include="external\fnv1.h" />
     <ClInclude Include="include\bvh.h" />
     <ClInclude Include="include\components.h" />
+    <ClInclude Include="include\enums.h" />
     <ClInclude Include="include\gimath.h" />
     <ClInclude Include="include\bundles.h" />
     <ClInclude Include="include\scope_guard.h" />

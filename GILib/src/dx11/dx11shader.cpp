@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "..\..\include\exceptions.h"
+#include "..\..\include\enums.h"
 
 using namespace std;
 using namespace gi_lib;
@@ -394,14 +395,14 @@ namespace{
 	/// \param binding Holds information about the shader and the binding order of the resources.
 	/// \param reflection Holds shared information about various shaders as well as detailed information about resources.
 	template <typename TShader>
-	void CompileShader(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory_shaders, ShaderBinding& binding, ShaderReflection& reflection){
+	void CompileShader(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory, ShaderBinding& binding, ShaderReflection& reflection){
 
-		if ((shaders & ShaderTraits<TShader>::flag) > 0){
+		if (shaders && ShaderTraits<TShader>::flag){
 
 			binding.bytecode = shared_ptr<ID3DBlob>(Compile<TShader>(code,
-													size,
-													source_file,
-													(compulsory_shaders & ShaderTraits<TShader>::flag) > 0),
+																	 size,
+																	 source_file,
+																	 compulsory && ShaderTraits<TShader>::flag),
 													COMDeleter{});
 
 			if (binding.bytecode){
@@ -526,7 +527,7 @@ ID3D11Buffer * ShaderHelper::MakeConstantBufferOrDie(ID3D11Device & device, size
 
 }
 
-ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory_shaders){
+ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory){
 
 	ShaderCombo shader_combo;
 	
@@ -534,7 +535,7 @@ ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, con
 									  size,
 									  source_file,
 									  shaders,
-									  compulsory_shaders,
+									  compulsory,
 									  shader_combo.vertex_shader,
 									  shader_combo.reflection);
 
@@ -542,7 +543,7 @@ ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, con
 									size,
 									source_file,
 									shaders,
-									compulsory_shaders,
+									compulsory,
 									shader_combo.hull_shader,
 									shader_combo.reflection);
 
@@ -551,7 +552,7 @@ ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, con
 									  size,
 									  source_file,
 									  shaders,
-									  compulsory_shaders,
+									  compulsory,
 									  shader_combo.domain_shader,
 									  shader_combo.reflection);
 
@@ -559,7 +560,7 @@ ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, con
 										size,
 										source_file,
 										shaders,
-										compulsory_shaders,
+										compulsory,
 										shader_combo.geometry_shader,
 										shader_combo.reflection);
 
@@ -567,7 +568,7 @@ ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, con
 									 size,
 									 source_file,
 									 shaders,
-									 compulsory_shaders,
+									 compulsory,
 									 shader_combo.pixel_shader,
 									 shader_combo.reflection);
 
