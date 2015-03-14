@@ -35,6 +35,11 @@
 /// \brief Token stringification with argument expansion.
 #define TO_WSTRING(x) CONCATENATE(L, TO_STRING(x))
 
+/// \brief Defines an enumerable that can be composed with a bitwise or operator.
+#define ENUM_FLAGS(__enum_identifier) enum __enum_identifier; \
+									  inline __enum_identifier operator|(__enum_identifier a, __enum_identifier b){ return static_cast<__enum_identifier>(static_cast<int>(a) | static_cast<int>(b)); } \
+									  enum __enum_identifier
+
 #ifdef _MSC_VER
 
 /// \brief Anonymous name generation (unique).

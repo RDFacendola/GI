@@ -23,7 +23,7 @@ namespace{
 	/// \brief Vertex shader type traits.
 	template<> struct ShaderTraits < ID3D11VertexShader > {
 
-		static const unsigned int flag;		///< \brief Flag used to identify the shader type.
+		static const ShaderType flag;		///< \brief Flag used to identify the shader type.
 		static const char * entry_point;	///< \brief Entry point.
 		static const char * profile;		///< \brief Shader profile.
 		
@@ -33,7 +33,7 @@ namespace{
 	/// \brief hull shader type traits.
 	template<> struct ShaderTraits < ID3D11HullShader > {
 
-		static const unsigned int flag;		///< \brief Flag used to identify the shader type.
+		static const ShaderType flag;		///< \brief Flag used to identify the shader type.
 		static const char * entry_point;	///< \brief Entry point.
 		static const char * profile;		///< \brief Shader profile.
 
@@ -42,7 +42,7 @@ namespace{
 	/// \brief domain shader type traits.
 	template<> struct ShaderTraits < ID3D11DomainShader > {
 
-		static const unsigned int flag;		///< \brief Flag used to identify the shader type.
+		static const ShaderType flag;		///< \brief Flag used to identify the shader type.
 		static const char * entry_point;	///< \brief Entry point.
 		static const char * profile;		///< \brief Shader profile.
 
@@ -51,7 +51,7 @@ namespace{
 	/// \brief geomtry shader type traits.
 	template<> struct ShaderTraits < ID3D11GeometryShader > {
 
-		static const unsigned int flag;		///< \brief Flag used to identify the shader type.
+		static const ShaderType flag;		///< \brief Flag used to identify the shader type.
 		static const char * entry_point;	///< \brief Entry point.
 		static const char * profile;		///< \brief Shader profile. 
 
@@ -60,29 +60,29 @@ namespace{
 	/// \brief pixel shader type traits.
 	template<> struct ShaderTraits < ID3D11PixelShader > {
 
-		static const unsigned int flag;		///< \brief Flag used to identify the shader type.
+		static const ShaderType flag;		///< \brief Flag used to identify the shader type.
 		static const char * entry_point;	///< \brief Entry point.
 		static const char * profile;		///< \brief Shader profile.
 
 	};
 
-	const unsigned int ShaderTraits < ID3D11VertexShader >::flag = ShaderHelper::kVertexShader;
+	const ShaderType ShaderTraits < ID3D11VertexShader >::flag = ShaderType::VERTEX_SHADER;
 	const char * ShaderTraits < ID3D11VertexShader >::entry_point = "VSMain";
 	const char * ShaderTraits < ID3D11VertexShader >::profile = "vs_5_0";
 
-	const unsigned int ShaderTraits < ID3D11HullShader >::flag = ShaderHelper::kHullShader;
+	const ShaderType ShaderTraits < ID3D11HullShader >::flag = ShaderType::HULL_SHADER;
 	const char * ShaderTraits < ID3D11HullShader >::entry_point = "HSMain";
 	const char * ShaderTraits < ID3D11HullShader >::profile = "hs_5_0";
 
-	const unsigned int ShaderTraits < ID3D11DomainShader >::flag = ShaderHelper::kDomainShader;
+	const ShaderType ShaderTraits < ID3D11DomainShader >::flag = ShaderType::DOMAIN_SHADER;
 	const char * ShaderTraits < ID3D11DomainShader >::entry_point = "DSMain";
 	const char * ShaderTraits < ID3D11DomainShader >::profile = "ds_5_0";
 	
-	const unsigned int ShaderTraits < ID3D11GeometryShader >::flag = ShaderHelper::kGeometryShader;
+	const ShaderType ShaderTraits < ID3D11GeometryShader >::flag = ShaderType::GEOMETRY_SHADER;
 	const char * ShaderTraits < ID3D11GeometryShader >::entry_point = "GSMain";
 	const char * ShaderTraits < ID3D11GeometryShader >::profile = "gs_5_0";
 
-	const unsigned int ShaderTraits < ID3D11PixelShader >::flag = ShaderHelper::kPixelShader;
+	const ShaderType ShaderTraits < ID3D11PixelShader >::flag = ShaderType::PIXEL_SHADER;
 	const char * ShaderTraits < ID3D11PixelShader >::entry_point = "PSMain";
 	const char * ShaderTraits < ID3D11PixelShader >::profile = "ps_5_0";
 
@@ -394,7 +394,7 @@ namespace{
 	/// \param binding Holds information about the shader and the binding order of the resources.
 	/// \param reflection Holds shared information about various shaders as well as detailed information about resources.
 	template <typename TShader>
-	void CompileShader(const char* code, size_t size, const char* source_file, unsigned int shaders, unsigned int compulsory_shaders, ShaderBinding& binding, ShaderReflection& reflection){
+	void CompileShader(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory_shaders, ShaderBinding& binding, ShaderReflection& reflection){
 
 		if ((shaders & ShaderTraits<TShader>::flag) > 0){
 
@@ -526,17 +526,17 @@ ID3D11Buffer * ShaderHelper::MakeConstantBufferOrDie(ID3D11Device & device, size
 
 }
 
-ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, const char* source_file, unsigned int shaders, unsigned int compulsory_shaders){
+ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory_shaders){
 
 	ShaderCombo shader_combo;
 	
 	CompileShader<ID3D11VertexShader>(code,
-										size,
-										source_file,
-										shaders,
-										compulsory_shaders,
-										shader_combo.vertex_shader,
-										shader_combo.reflection);
+									  size,
+									  source_file,
+									  shaders,
+									  compulsory_shaders,
+									  shader_combo.vertex_shader,
+									  shader_combo.reflection);
 
 	CompileShader<ID3D11HullShader>(code,
 									size,

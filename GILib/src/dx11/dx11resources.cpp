@@ -477,8 +477,8 @@ DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 	auto combo = ShaderHelper::CompileShadersOrDie(code.c_str(), 
 												   code.size(), 
 												   file_name.c_str(), 
-												   ShaderHelper::kAllShaders, 
-												   ShaderHelper::kVertexShader | ShaderHelper::kPixelShader);
+												   ShaderType::ALL_SHADERS, 
+												   ShaderType::VERTEX_SHADER | ShaderType::PIXEL_SHADER);
 	
 
 	// Construction

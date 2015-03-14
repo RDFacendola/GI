@@ -12,6 +12,7 @@
 #include <memory>
 #include <vector>
 
+#include "..\..\include\macros.h"
 #include "..\..\include\windows\os_windows.h"
 
 using std::string;
@@ -22,6 +23,19 @@ using gi_lib::windows::COMDeleter;
 namespace gi_lib{
 
 	namespace dx11{
+
+		/// \brief Shader type.
+		ENUM_FLAGS(ShaderType){
+
+			VERTEX_SHADER = 1,
+			HULL_SHADER = 2,
+			DOMAIN_SHADER = 4,
+			GEOMETRY_SHADER = 8,
+			PIXEL_SHADER = 16,
+
+			ALL_SHADERS = 31
+
+		};
 
 		/// \brief Type of a shader resource.
 		enum class ShaderResourceType{
@@ -145,6 +159,32 @@ namespace gi_lib{
 			
 		};
 
+		/// \brief Helper class for shader management.
+		class ShaderHelper{
+
+		public:
+
+			/// \brief Create a constant buffer.
+			/// \param device Device used to create the constant buffer.
+			/// \param size Size of the buffer.
+			static ID3D11Buffer * MakeConstantBufferOrDie(ID3D11Device & device, size_t size);
+
+			/// \brief Compile a shader.
+			/// \param code Pointer to a buffer containing the HLSL code.
+			/// \param size Size of the code buffer in bytes.
+			/// \param source_file Name of the source file. Used to resolve the #include directives inside the HLSL code.
+			/// \param shaders Shaders to compile (for example: kVertexShader | kPixelShader).
+			/// \param compulsory_shaders Shaders that are required. If at least one shader is missing the method throws.
+			/// \return Returns a shader combo
+			static ShaderCombo CompileShadersOrDie(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory_shaders);
+
+		private:
+
+
+		};
+
+		//
+
 		/// \brief Swaps two shader bindings.
 		inline void swap(ShaderBinding& left, ShaderBinding& right){
 
@@ -159,39 +199,6 @@ namespace gi_lib{
 
 		}
 
-		/// \brief Helper class for shader management.
-		class ShaderHelper{
-
-		public:
-
-
-			static const unsigned int kVertexShader = 1;		///< \brief Identifies a vertex shader.
-			static const unsigned int kHullShader = 2;			///< \brief Identifies a hull shader.
-			static const unsigned int kDomainShader = 4;		///< \brief Identifies a domain shader.
-			static const unsigned int kGeometryShader = 8;		///< \brief Identifies a geometry shader.
-			static const unsigned int kPixelShader = 16;		///< \brief Identifies a pixel shader.
-			
-			/// \brief All shaders.
-			static const unsigned int kAllShaders = kVertexShader | kHullShader | kDomainShader | kGeometryShader | kPixelShader;	
-
-			/// \brief Create a constant buffer.
-			/// \param device Device used to create the constant buffer.
-			/// \param size Size of the buffer.
-			static ID3D11Buffer * MakeConstantBufferOrDie(ID3D11Device & device, size_t size);
-
-			/// \brief Compile a shader.
-			/// \param code Pointer to a buffer containing the HLSL code.
-			/// \param size Size of the code buffer in bytes.
-			/// \param source_file Name of the source file. Used to resolve the #include directives inside the HLSL code.
-			/// \param shaders Shaders to compile (for example: kVertexShader | kPixelShader).
-			/// \param compulsory_shaders Shaders that are required. If at least one shader is missing the method throws.
-			/// \return Returns a shader combo
-			static ShaderCombo CompileShadersOrDie(const char* code, size_t size, const char* source_file, unsigned int shaders, unsigned int compulsory_shaders);
-
-		private:
-
-
-		};
 
 	}
 
