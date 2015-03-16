@@ -450,28 +450,6 @@ void ShaderCombo::Swap(ShaderCombo& other){
 
 //////////////////// ShaderHelper //////////////////////////
 
-ID3D11Buffer * ShaderHelper::MakeConstantBufferOrDie(ID3D11Device & device, size_t size){
-
-	ID3D11Buffer* cbuffer = nullptr;
-
-	D3D11_BUFFER_DESC buffer_desc;
-
-	buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-	buffer_desc.ByteWidth = static_cast<unsigned int>(size);
-	buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	buffer_desc.MiscFlags = 0;
-	buffer_desc.StructureByteStride = 0;
-
-	// Create the buffer with the device.
-	THROW_ON_FAIL(device.CreateBuffer(&buffer_desc,
-									  nullptr,
-									  &cbuffer));
-
-	return cbuffer;
-
-}
-
 ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory){
 
 	ShaderCombo shader_combo;

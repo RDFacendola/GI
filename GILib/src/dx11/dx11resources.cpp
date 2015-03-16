@@ -51,6 +51,68 @@ namespace{
 
 	}
 
+	/// \brief Describes a shader variable.
+	struct ShaderVariableEntry{
+
+		size_t offset;					/// \brief Offset from the beginning of the constant buffer in bytes.
+		
+		size_t size;					/// \brief Size of the variable in bytes.
+
+		unsigned int buffer_index;		/// \brief Index of the constant buffer this variable refers to.
+
+	};
+
+	/// \brief Describes a shader constant buffer.
+	struct ShaderBufferEntry{
+		
+		unique_ptr<ID3D11Buffer, COMDeleter> buffer;		///< \brief Hardware buffer that can be bound to the pipeline.	
+
+		void * raw_buffer;									///< \brief Temporary buffer to hold data before committing the material.
+
+		size_t size;										///< \brief Size of the buffer.
+
+		bool dirty;											///< \brief Dirty buffer will be copied to the hardware buffer during commits.
+
+		/// \brief No copy-constructor.
+		ShaderBufferEntry(const ShaderBufferEntry&) = delete;
+
+		/// \brief Move constructor.
+		ShaderBufferEntry(ShaderBufferEntry&& other);
+		
+		/// \brief Default destructor.
+		~ShaderBufferEntry();
+
+		/// \brief No assignment operator.
+		ShaderBufferEntry& operator=(const ShaderBufferEntry&) = delete;
+
+		/// \brief Swaps this instance with the provided one.
+		void Swap(ShaderBufferEntry& other);
+
+	};
+
+	/// \brief Describes a shader resource.
+	struct ShaderResourceEntry{
+
+		///< \brief Pointer to the shader resource.
+		/// Used to prevent deallocation of resources still bound to the pipeline.
+		shared_ptr<DX11ShaderResource> resource;	
+
+	};
+
+	/// \brief Describes a shader sampler.
+	struct ShaderSamplerEntry{
+
+		
+
+	};
+
+	/// \brief Swaps two shader buffer entry.
+	inline void swap(ShaderBufferEntry& left, ShaderBufferEntry& right){
+
+		left.Swap(right);
+
+	}
+
 	/// \brief Convert a resource priority to an eviction priority (DirectX11)
 	ResourcePriority EvictionPriorityToResourcePriority(unsigned int priority){
 
@@ -85,9 +147,48 @@ namespace{
 
 	}
 
-	/// \brief Create a depth stencil suitable for the provided target.
+	template <typename TVertexFormat>
+	Bounds VerticesToBounds(const std::vector<TVertexFormat> & vertices){
 
-	/// The resource must be manually released!
+		if (vertices.size() == 0){
+
+			return Bounds{ Vector3f::Zero(), Vector3f::Zero() };
+
+		}
+
+		Vector3f min_corner;
+		Vector3f max_corner;
+
+		min_corner = vertices[0].position;
+		max_corner = vertices[0].position;
+
+		for (auto & vertex : vertices){
+
+			// Find maximum and minimum coordinates for each axis independently
+
+			for (int coordinate = 0; coordinate < 3; ++coordinate){
+
+				if (min_corner(coordinate) > vertex.position(coordinate)){
+
+					min_corner(coordinate) = vertex.position(coordinate);
+
+				}
+				else if (max_corner(coordinate) < vertex.position(coordinate)){
+
+					max_corner(coordinate) = vertex.position(coordinate);
+
+				}
+
+			}
+
+		}
+
+		return Bounds{ 0.5f * (max_corner + min_corner),
+			max_corner - min_corner };
+
+	}
+	
+	/// \brief Create a depth stencil suitable for the provided target.
 	ID3D11Texture2D * MakeDepthStencil(ID3D11Device & device, ID3D11Texture2D & target){
 
 		ID3D11Texture2D * depth_stencil;
@@ -178,45 +279,25 @@ namespace{
 
 	}
 	
-	template <typename TVertexFormat>
-	Bounds VerticesToBounds(const std::vector<TVertexFormat> & vertices){
+	/// \brief Create a constant buffer.
+	ID3D11Buffer * MakeConstantBuffer(ID3D11Device & device, size_t size){
 
-		if (vertices.size() == 0){
+		ID3D11Buffer* cbuffer = nullptr;
 
-			return Bounds{ Vector3f::Zero(), Vector3f::Zero() };
+		D3D11_BUFFER_DESC buffer_desc;
 
-		}
+		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+		buffer_desc.ByteWidth = static_cast<unsigned int>(size);
+		buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		buffer_desc.MiscFlags = 0;
+		buffer_desc.StructureByteStride = 0;
 
-		Vector3f min_corner;
-		Vector3f max_corner;
+		// Create the buffer with the device.
+		THROW_ON_FAIL(device.CreateBuffer(&buffer_desc, nullptr, &cbuffer));
 
-		min_corner = vertices[0].position;
-		max_corner = vertices[0].position;
+		return cbuffer;
 
-		for (auto & vertex : vertices){
-
-			// Find maximum and minimum coordinates for each axis independently
-
-			for (int coordinate = 0; coordinate < 3; ++coordinate){
-
-				if (min_corner(coordinate) > vertex.position(coordinate)){
-
-					min_corner(coordinate) = vertex.position(coordinate);
-
-				}
-				else if (max_corner(coordinate) < vertex.position(coordinate)){
-
-					max_corner(coordinate) = vertex.position(coordinate);
-
-				}
-
-			}
-
-		}
-
-		return Bounds{ 0.5f * (max_corner + min_corner),
-			max_corner - min_corner };
-					  
 	}
 
 }
@@ -469,12 +550,21 @@ DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildIndexedNormalTextured& bund
 
 ////////////////////////////// MATERIAL //////////////////////////////////////////////
 
-template <typename TEnum>
-TEnum Bhas(TEnum first, TEnum second){
+// PRIVATE IMPLEMENTATION (INSTANCE)
 
-	return static_cast<TEnum>(static_cast<int>(first) | static_cast<int>(second));
-	
-}
+struct DX11Material::InstanceImpl{
+
+};
+
+// SHARED IMPLEMENTATION (MATERIAL)
+
+struct DX11Material::MaterialImpl{
+
+
+
+};
+
+// MATERIAL
 
 DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 
@@ -488,27 +578,6 @@ DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 												   ShaderType::ALL, 
 												   ShaderType::VERTEX_SHADER | ShaderType::PIXEL_SHADER);
 	
-
-	// Construction
-	
-	// This is O(cbuffers * variable) but not worthy of optimization.
-	/*
-	for (auto & cbuffer : cbuffers){
-
-		auto cbuffer_index = AddCBuffer(device, cbuffer.size);
-
-		for (auto & variable : variables){
-
-			if (variable.cbuffer_name == cbuffer.buffer_name){
-
-				AddParameter(variable.variable_name, cbuffer_index, variable.size, variable.offset);
-
-			}
-
-		}
-
-	}
-	*/
 }
 
 DX11Material::DX11Material(ID3D11Device& device, const InstantiateFromMaterial& bundle){

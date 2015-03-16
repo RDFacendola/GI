@@ -145,11 +145,6 @@ namespace gi_lib{
 
 		public:
 
-			/// \brief Create a constant buffer.
-			/// \param device Device used to create the constant buffer.
-			/// \param size Size of the buffer.
-			static ID3D11Buffer * MakeConstantBufferOrDie(ID3D11Device & device, size_t size);
-
 			/// \brief Compile a shader.
 			/// \param code Pointer to a buffer containing the HLSL code.
 			/// \param size Size of the code buffer in bytes.

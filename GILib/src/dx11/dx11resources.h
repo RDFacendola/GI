@@ -216,21 +216,6 @@ namespace gi_lib{
 			
 		};
 
-		/// \brief Shader setup.
-		/// \tparam TShader Type of the shader this structure refers to.
-		template <typename TShader>
-		struct ShaderSetup{
-
-			shared_ptr<TShader> shader;							///< \brief Pointer to the shader.
-
-			vector<ID3D11Buffer *> buffers;						///< \brief Buffers to bind to the pipeline.
-
-			vector<ID3D11SamplerState *> samplers;				///< \brief Samplers to bind to the pipeline.
-
-			vector<ID3D11ShaderResourceView *> resources;		///< \brief Resources to bind to the pipeline (such as textures, structured buffers, ...)
-
-		};
-
 		/// \brief DirectX11 material.
 		/// \author Raffaele D. Facendola
 		class DX11Material : public Material{
@@ -258,6 +243,13 @@ namespace gi_lib{
 
 		private:
 
+			/// \brief Holds the properties shared among material istances.
+			struct MaterialImpl;
+
+			/// \brief Holds the private properties of this material instance.
+			struct InstanceImpl;
+
+			/// \brief Material variable.
 			class Variable : public Material::Variable{
 
 			protected:
@@ -266,6 +258,7 @@ namespace gi_lib{
 
 			};
 
+			/// \brief Material resource.
 			class Resource : public Material::Resource{
 
 			public:
@@ -274,8 +267,10 @@ namespace gi_lib{
 
 			};
 			
+			shared_ptr<MaterialImpl> shared_impl_;		///< \brief Properties shared among material instances.
 
-
+			unique_ptr<InstanceImpl> private_impl_;		///< \brief Private properties of this material instance.
+			
 		};
 
 		/// \brief DirectX11 resource mapping template.
