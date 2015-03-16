@@ -33,9 +33,6 @@
     <ClInclude Include="include\observable.h">
       <Filter>pattern</Filter>
     </ClInclude>
-    <ClInclude Include="include\unique.h">
-      <Filter>pattern</Filter>
-    </ClInclude>
     <ClInclude Include="include\maybe.h">
       <Filter>pattern</Filter>
     </ClInclude>
@@ -86,6 +83,9 @@
       <Filter>os</Filter>
     </ClInclude>
     <ClInclude Include="include\enums.h" />
+    <ClInclude Include="include\unique.h">
+      <Filter>pattern</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">

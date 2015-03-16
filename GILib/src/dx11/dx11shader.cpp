@@ -146,8 +146,9 @@ namespace{
 	/// \param ResourceReflector Functor used to build the reflected data.
 	/// \param resource Vector that will contain the reflected data.
 	/// \param order Vector containing the binding order.
+	/// \return Returns the a reference to the reflected element
 	template <typename TType, typename TReflector>
-	void Reflect(ID3D11ShaderReflection& reflector, const D3D11_SHADER_INPUT_BIND_DESC& input_desc, TReflector ResourceReflector, vector<TType>& resources, vector<unsigned int>& order){
+	TType& Reflect(const D3D11_SHADER_INPUT_BIND_DESC& input_desc, TReflector ResourceReflector, vector<TType>& resources){
 
 		auto it = std::find_if(resources.begin(),
 							   resources.end(),
@@ -159,14 +160,14 @@ namespace{
 
 		if (it == resources.end()){
 
-			resources.push_back(ResourceReflector(reflector, input_desc));
+			resources.push_back(ResourceReflector(input_desc));
 
-			order[input_desc.BindPoint] = static_cast<unsigned int>(resources.size() - 1);
+			return resources.back();
 
 		}
 		else{
 
-			order[input_desc.BindPoint] = static_cast<unsigned int>(std::distance(resources.begin(), it));
+			return *it;
 
 		}
 			
@@ -189,6 +190,7 @@ namespace{
 
 		buffer_desc.name = dx_buffer_desc.Name;
 		buffer_desc.size = dx_buffer_desc.Size;
+		buffer_desc.shader_usage = ShaderType::NONE;
 
 		for (unsigned int i = 0; i < dx_buffer_desc.Variables; ++i){
 
@@ -212,11 +214,12 @@ namespace{
 	/// \param reflector Reflector used to perform the reflection.
 	/// \param input_desc Description of the shader input.
 	/// \return Return the description of the reflected texture.
-	ShaderResourceDesc ReflectTexture(ID3D11ShaderReflection&, const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
+	ShaderResourceDesc ReflectTexture(const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
 
 		return ShaderResourceDesc{ input_desc.Name,
 								   SRVDimensionToShaderResourceType(input_desc.Dimension),
-								   input_desc.BindCount };
+								   input_desc.BindCount,
+								   ShaderType::NONE };
 
 	}
 
@@ -224,21 +227,22 @@ namespace{
 	/// \param reflector Reflector used to perform the reflection.
 	/// \param input_desc Description of the shader input.
 	/// \return Return the description of the reflected sampler.
-	ShaderSamplerDesc ReflectSampler(ID3D11ShaderReflection&, const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
+	ShaderSamplerDesc ReflectSampler(const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
 
-		return ShaderSamplerDesc{ input_desc.Name };
+		return ShaderSamplerDesc{ input_desc.Name, ShaderType::NONE };
 
 	}
 
 	/// \brief Reflect a shader from bytecode.
-	/// \param binding Holds information about the shader and the binding order of the resources.
+	/// \param bytecode Bytecode used to perform reflection.
 	/// \param reflection Holds shared information about various shaders as well as detailed information about resources.
-	void Reflect(ShaderBinding& binding, ShaderReflection& reflection){
+	template <typename TShader>
+	void Reflect(ID3DBlob& bytecode, ShaderReflection& reflection){
 
 		ID3D11ShaderReflection * reflector = nullptr;
 
-		THROW_ON_FAIL(D3DReflect(binding.bytecode->GetBufferPointer(),
-								 binding.bytecode->GetBufferSize(),
+		THROW_ON_FAIL(D3DReflect(bytecode.GetBufferPointer(),
+								 bytecode.GetBufferSize(),
 								 IID_ID3D11ShaderReflection,
 								 (void**)&reflector));
 
@@ -247,14 +251,6 @@ namespace{
 		D3D11_SHADER_INPUT_BIND_DESC resource_desc;
 
 		reflector->GetDesc(&shader_desc);
-
-		// Resize the arrays
-		binding.buffer_order.resize(shader_desc.ConstantBuffers);									// The size is known.
-		binding.resources_order.resize(shader_desc.BoundResources - shader_desc.ConstantBuffers);	// Worst case scenario, the size is unknown at this stage.
-		binding.samplers_order.resize(shader_desc.BoundResources - shader_desc.ConstantBuffers);	// Worst case scenario, the size is unknown at this stage.
-
-		int max_resource_index = -1;
-		int max_sampler_index = -1;
 
 		for (unsigned int resource_index = 0; resource_index < shader_desc.BoundResources; ++resource_index){
 
@@ -268,11 +264,9 @@ namespace{
 
 					// Constant or Texture buffer
 
-					Reflect(*reflector,
-							resource_desc,
-							ReflectCBuffer,
-							reflection.buffers,
-							binding.buffer_order);
+					Reflect(resource_desc,
+							[reflector](const D3D11_SHADER_INPUT_BIND_DESC& input_desc){ return ReflectCBuffer(*reflector, input_desc); },
+							reflection.buffers).shader_usage |= ShaderTraits<TShader>::flag;
 
 					break;
 
@@ -282,13 +276,9 @@ namespace{
 
 					// Textures 
 
-					max_resource_index = (std::max)(max_resource_index, static_cast<int>(resource_desc.BindPoint));
-
-					Reflect(*reflector,
-							resource_desc,
+					Reflect(resource_desc,
 							ReflectTexture,
-							reflection.resources,
-							binding.resources_order);
+							reflection.resources).shader_usage |= ShaderTraits<TShader>::flag;
 
 					break;
 
@@ -298,13 +288,9 @@ namespace{
 
 					// Samplers
 
-					max_sampler_index = (std::max)(max_sampler_index, static_cast<int>(resource_desc.BindPoint));
-
-					Reflect(*reflector,
-							resource_desc,
+					Reflect(resource_desc,
 							ReflectSampler,
-							reflection.samplers,
-							binding.samplers_order);
+							reflection.samplers).shader_usage |= ShaderTraits<TShader>::flag;
 
 					break;
 
@@ -313,10 +299,6 @@ namespace{
 			}
 
 		}
-
-		// Resize the resource and the sampler vectors to the right size
-		binding.resources_order.resize(max_resource_index + 1);
-		binding.samplers_order.resize(max_sampler_index + 1);
 
 	}
 
@@ -394,67 +376,30 @@ namespace{
 	/// \param compulsory_shaders Flags used to determine whether the presence of the specified shader is compulsory or not. If a compulsory shader is not found the method will throw.
 	/// \param binding Holds information about the shader and the binding order of the resources.
 	/// \param reflection Holds shared information about various shaders as well as detailed information about resources.
+	/// \return Returns the compiled bytecode if the method succeeds, returns nullptr otherwise.
 	template <typename TShader>
-	void CompileShader(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory, ShaderBinding& binding, ShaderReflection& reflection){
+	shared_ptr<ID3DBlob> CompileShader(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory, ShaderReflection& reflection){
 
 		if (shaders && ShaderTraits<TShader>::flag){
 
-			binding.bytecode = shared_ptr<ID3DBlob>(Compile<TShader>(code,
-																	 size,
-																	 source_file,
-																	 compulsory && ShaderTraits<TShader>::flag),
-													COMDeleter{});
+			auto bytecode = Compile<TShader>(code,
+											 size,
+											 source_file,
+											 compulsory && ShaderTraits<TShader>::flag);
 
-			if (binding.bytecode){
+			if (bytecode){
 
-				Reflect(binding,
-					reflection);
+				Reflect<TShader>(*bytecode, reflection);
+
+				return shared_ptr<ID3DBlob>(bytecode, COMDeleter{});
 
 			}
 
 		}
+
+		return nullptr;
 				
 	}
-
-}
-
-//////////////////// ShaderBinding /////////////////////////
-
-ShaderBinding::ShaderBinding():
-bytecode(nullptr){}
-
-ShaderBinding::ShaderBinding(const ShaderBinding& other){
-
-	bytecode = other.bytecode;
-	buffer_order = other.buffer_order;
-	resources_order = other.resources_order;
-	samplers_order = other.samplers_order;
-
-}
-
-ShaderBinding::ShaderBinding(ShaderBinding&& other){
-
-	bytecode = std::move(other.bytecode);
-	buffer_order = std::move(other.buffer_order);
-	resources_order = std::move(other.resources_order);
-	samplers_order = std::move(other.samplers_order);
-
-}
-
-ShaderBinding& ShaderBinding::operator=(ShaderBinding other){
-
-	other.Swap(*this);
-
-	return *this;
-
-}
-
-void ShaderBinding::Swap(ShaderBinding& other){
-
-	std::swap(bytecode, other.bytecode);
-	std::swap(buffer_order, other.buffer_order);
-	std::swap(resources_order, other.resources_order);
-	std::swap(samplers_order, other.samplers_order);
 
 }
 
@@ -464,22 +409,22 @@ ShaderCombo::ShaderCombo(){}
 
 ShaderCombo::ShaderCombo(const ShaderCombo& other){
 
-	vertex_shader = other.vertex_shader;
-	hull_shader = other.hull_shader;
-	domain_shader = other.domain_shader;
-	geometry_shader = other.geometry_shader;
-	pixel_shader = other.pixel_shader;
+	vs_bytecode = other.vs_bytecode;
+	hs_bytecode = other.hs_bytecode;
+	ds_bytecode = other.ds_bytecode;
+	gs_bytecode = other.gs_bytecode;
+	ps_bytecode = other.ps_bytecode;
 	reflection = other.reflection;
 
 }
 
 ShaderCombo::ShaderCombo(ShaderCombo&& other){
 
-	vertex_shader = std::move(other.vertex_shader);
-	hull_shader = std::move(other.hull_shader);
-	domain_shader = std::move(other.domain_shader);
-	geometry_shader = std::move(other.geometry_shader);
-	pixel_shader = std::move(other.pixel_shader);
+	vs_bytecode = std::move(other.vs_bytecode);
+	hs_bytecode = std::move(other.hs_bytecode);
+	ds_bytecode = std::move(other.ds_bytecode);
+	gs_bytecode = std::move(other.gs_bytecode);
+	ps_bytecode = std::move(other.ps_bytecode);
 	reflection = other.reflection;
 
 }
@@ -494,11 +439,11 @@ ShaderCombo& ShaderCombo::operator=(ShaderCombo other){
 
 void ShaderCombo::Swap(ShaderCombo& other){
 
-	std::swap(vertex_shader, other.vertex_shader);
-	std::swap(hull_shader, other.hull_shader);
-	std::swap(domain_shader, other.domain_shader);
-	std::swap(geometry_shader, other.geometry_shader);
-	std::swap(pixel_shader, other.pixel_shader);
+	std::swap(vs_bytecode, other.vs_bytecode);
+	std::swap(hs_bytecode, other.hs_bytecode);
+	std::swap(ds_bytecode, other.ds_bytecode);
+	std::swap(gs_bytecode, other.gs_bytecode);
+	std::swap(ps_bytecode, other.ps_bytecode);
 	std::swap(reflection, other.reflection);
 
 }
@@ -531,46 +476,40 @@ ShaderCombo ShaderHelper::CompileShadersOrDie(const char* code, size_t size, con
 
 	ShaderCombo shader_combo;
 	
-	CompileShader<ID3D11VertexShader>(code,
-									  size,
-									  source_file,
-									  shaders,
-									  compulsory,
-									  shader_combo.vertex_shader,
-									  shader_combo.reflection);
+	shader_combo.vs_bytecode = CompileShader<ID3D11VertexShader>(code,
+																 size,
+																 source_file,
+																 shaders,
+																 compulsory,
+																 shader_combo.reflection);
 
-	CompileShader<ID3D11HullShader>(code,
-									size,
-									source_file,
-									shaders,
-									compulsory,
-									shader_combo.hull_shader,
-									shader_combo.reflection);
+	shader_combo.hs_bytecode = CompileShader<ID3D11HullShader>(code,
+															   size,
+															   source_file,
+															   shaders,
+															   compulsory,
+															   shader_combo.reflection);
 
+	shader_combo.ds_bytecode = CompileShader<ID3D11DomainShader>(code,
+																 size,
+																 source_file,
+																 shaders,
+																 compulsory,
+																 shader_combo.reflection);
 
-	CompileShader<ID3D11DomainShader>(code,
-									  size,
-									  source_file,
-									  shaders,
-									  compulsory,
-									  shader_combo.domain_shader,
-									  shader_combo.reflection);
+	shader_combo.gs_bytecode = CompileShader<ID3D11GeometryShader>(code,
+																   size,
+																   source_file,
+																   shaders,
+																   compulsory,
+																   shader_combo.reflection);
 
-	CompileShader<ID3D11GeometryShader>(code,
-										size,
-										source_file,
-										shaders,
-										compulsory,
-										shader_combo.geometry_shader,
-										shader_combo.reflection);
-
-	CompileShader<ID3D11PixelShader>(code,
-									 size,
-									 source_file,
-									 shaders,
-									 compulsory,
-									 shader_combo.pixel_shader,
-									 shader_combo.reflection);
+	shader_combo.ps_bytecode = CompileShader<ID3D11PixelShader>(code,
+																size,
+																source_file,
+																shaders,
+																compulsory,
+																shader_combo.reflection);
 
 	return shader_combo;
 

@@ -195,61 +195,55 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Type of the variables handle.
-		using VariableHandle = unsigned int;
-		
-		/// \brief Type of the resources handle.
-		using ResourceHandle = unsigned int;
+		/// \brief Interface for material variables.
+		class Variable{
+
+		public:
+
+			/// \brief Default destructor.
+			virtual ~Variable(){}
+
+			/// \brief Set the variable value.
+			/// \param value The value to set.
+			template <typename TValue>
+			void Set(const TValue& value);
+
+		protected:
+
+			/// \brief Set the variable value.
+			/// \param buffer Pointer to the buffer holding the data to write.
+			/// \param size Size of the buffer.
+			virtual void Set(void * buffer, size_t size) = 0;
+
+		};
+
+		/// \brief Interface for material resources.
+		class Resource{
+
+		public:
+
+			/// \brief Default destructor.
+			virtual ~Resource(){}
+
+			/// \brief Set the resource value.
+			/// \param resource The resource to bind to the material.
+			virtual void Set(shared_ptr<ShaderResource> resource) = 0;
+
+		};
 
 		/// \brief Default destructor.
 		virtual ~Material(){}
 
-		/// \brief Get the handle of a variable by name.
-
-		/// The variable name is case-sensitive.
+		/// \brief Get a material variable by name.
 		/// \param name The name of the variable.
-		/// \return Returns the handle of the variable.
-		virtual VariableHandle GetVariableHandle(const string& name) const = 0;
+		/// \return Returns a pointer to the variable matching the specified name.
+		virtual shared_ptr<Variable> GetVariable(const string& name) = 0;
 
-		/// \brief Set a new value for a variable.
-
-		/// \tparam TType type of the variable to set.
-		/// \param handle Handle of the variable to set.
-		/// \param value The new value for the variable.
-		template <typename TType>
-		void SetVariable(const VariableHandle& handle, const TType& value);
-
-		/// \brief Get the handle of a resource by name.
-
-		/// The resource name is case-sensitive.
+		/// \brief Get a material resource by name.
 		/// \param name The name of the resource.
-		/// \return Returns the handle of the resource.
-		virtual ResourceHandle GetResourceHandle(const string& name) const = 0;
-
-		/// \brief Set a new value for a resource.
-		/// \param handle Handle of the resource to set.
-		/// \param resource New resource to set.
-		virtual void SetResource(const ResourceHandle& handle, shared_ptr<ShaderResource> resource) = 0;
-
-	protected:
-
-		/// \brief Set a new value for a variable.
-
-		/// \tparam TType type of the variable to set.
-		/// \param handle Handle of the variable to set.
-		/// \param buffer Buffer containing the variable data.
-		/// \param size Size of the buffer.
-		virtual void SetVariable(const VariableHandle& handle, const void* buffer, size_t size) = 0;
+		/// \return Returns a pointer to the resource matching the specified name.
+		virtual shared_ptr<Resource> GetResource(const string& name) = 0;
 
 	};
-
-	// Material
-
-	template <typename TType>
-	inline void Material::SetVariable(const VariableHandle& handle, const TType& value){
-
-		return SetVariable(handle, &value, sizeof(TType));
-
-	}
-
+	
 }

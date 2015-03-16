@@ -28,52 +28,26 @@ namespace gi_lib{
 		/// \brief Shader type.
 		ENUM_FLAGS(ShaderType, unsigned int){
 
+			NONE = 0u,
+
 			VERTEX_SHADER = 1u,
 			HULL_SHADER = 2u,
 			DOMAIN_SHADER = 4u,
 			GEOMETRY_SHADER = 8u,
 			PIXEL_SHADER = 16u,
 
-			ALL_SHADERS = 31u
+			ALL = 31u
 
 		};
 
 		/// \brief Type of a shader resource.
-		enum class ShaderResourceType{
+		enum class ShaderResourceType: unsigned int{
 
 			UNKNOWN,			///< \brief Unknown resource.
 			TEXTURE_1D,			///< \brief 1D texture.
 			TEXTURE_2D,			///< \brief 2D texture.
 			TEXTURE_3D,			///< \brief 3D texture.
 			TEXTURE_CUBE		///< \brief Cube texture.
-
-		};
-
-		/// \brief Description of a shader and the binding order of the resources.
-		struct ShaderBinding{
-
-			shared_ptr<ID3DBlob> bytecode;				///< \brief Compiled shader code.
-
-			vector<unsigned int> buffer_order;			///< \brief Binding order of the buffers, relative to the buffers declared in the reflection.
-
-			vector<unsigned int> resources_order;		///< \brief Binding order of the resources, relative to the resources declared in the reflection.
-
-			vector<unsigned int> samplers_order;		///< \brief Binding order of the samplers, relative to the samplers declared in the reflection.
-
-			/// \brief Default constructor.
-			ShaderBinding();
-
-			/// \brief Copy constructor.
-			ShaderBinding(const ShaderBinding& other);
-
-			/// \brief Move constructor.
-			ShaderBinding(ShaderBinding&& other);
-
-			/// \brief Unified assignment operator.
-			ShaderBinding& operator=(ShaderBinding other);
-
-			/// \brief Swaps this instance with the provided one.
-			void Swap(ShaderBinding& other);
 
 		};
 
@@ -95,6 +69,8 @@ namespace gi_lib{
 
 			size_t size;								///< \brief Size of the buffer.
 
+			ShaderType shader_usage;					///< \brief Shader using this constant buffer.
+
 			vector<ShaderVariableDesc> variables;		///< \brief Variables inside the buffer.
 
 		};
@@ -108,6 +84,8 @@ namespace gi_lib{
 
 			unsigned int elements;						///< \brief Elements in case of a resource array.
 
+			ShaderType shader_usage;					///< \brief Shader using this resource.
+			
 		};
 
 		/// \brief Description of a shader sampler.
@@ -115,6 +93,8 @@ namespace gi_lib{
 
 			string name;								///< \brief Name of the sampler.
 
+			ShaderType shader_usage;					///< \brief Shader using this sampler.
+			
 		};
 
 		/// \brief Description of a shader.
@@ -131,17 +111,17 @@ namespace gi_lib{
 		/// \brief Combination of shaders and their reflection.
 		struct ShaderCombo{
 
-			ShaderBinding vertex_shader;				///< \brief Vertex shader.
+			shared_ptr<ID3DBlob> vs_bytecode;				///< \brief Vertex shader bytecode.
 
-			ShaderBinding hull_shader;					///< \brief Hull shader.
+			shared_ptr<ID3DBlob> hs_bytecode;				///< \brief Hull shader bytecode.
 
-			ShaderBinding domain_shader;				///< \brief Domain shader.
+			shared_ptr<ID3DBlob> ds_bytecode;				///< \brief Domain shader bytecode.
 
-			ShaderBinding geometry_shader;				///< \brief Geometry shader.
+			shared_ptr<ID3DBlob> gs_bytecode;				///< \brief Geometry shader bytecode.
 
-			ShaderBinding pixel_shader;					///< \brief Pixel shader.
+			shared_ptr<ID3DBlob> ps_bytecode;				///< \brief Pixel shader bytecode.
 
-			ShaderReflection reflection;				///< \brief Combined reflection of the shaders.
+			ShaderReflection reflection;					///< \brief Combined reflection of the shaders.
 			
 			/// \brief Default constructor.
 			ShaderCombo();
@@ -174,7 +154,7 @@ namespace gi_lib{
 			/// \param code Pointer to a buffer containing the HLSL code.
 			/// \param size Size of the code buffer in bytes.
 			/// \param source_file Name of the source file. Used to resolve the #include directives inside the HLSL code.
-			/// \param shaders Shaders to compile (for example: kVertexShader | kPixelShader).
+			/// \param shaders Shaders to compile (for example: ShaderType::VERTEX_SHADER | ShaderType::PIXEL_SHADER).
 			/// \param compulsory Shaders that are required. If at least one shader is missing the method throws.
 			/// \return Returns a shader combo
 			static ShaderCombo CompileShadersOrDie(const char* code, size_t size, const char* source_file, ShaderType shaders, ShaderType compulsory);
@@ -185,13 +165,6 @@ namespace gi_lib{
 		};
 
 		//
-
-		/// \brief Swaps two shader bindings.
-		inline void swap(ShaderBinding& left, ShaderBinding& right){
-
-			left.Swap(right);
-
-		}
 
 		/// \brief Swaps two shader combos.
 		inline void swap(ShaderCombo& left, ShaderCombo& right){

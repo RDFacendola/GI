@@ -298,7 +298,7 @@ namespace{
 		// Phong shader
 		auto base_material = resources.Load<Material, LoadFromFile>({ Resources::kPhongShaderFile });
 
-		auto diffuse_map_index = base_material->GetResourceHandle("diffuse_map");
+		auto diffuse_map_index = base_material->GetResource("diffuse_map");
 
 		// Materials
 
