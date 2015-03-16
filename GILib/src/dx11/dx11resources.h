@@ -251,28 +251,30 @@ namespace gi_lib{
 			~DX11Material();
 
 			virtual size_t GetSize() const override;
-		
-			virtual VariableHandle GetVariableHandle(const string& name) const override;
 
-			virtual ResourceHandle GetResourceHandle(const string& name) const override;
+			virtual shared_ptr<Material::Variable> GetVariable(const string& name) override;
 
-			virtual void SetResource(const ResourceHandle& handle, shared_ptr<ShaderResource> resource) override;
-		
-		protected:
-
-			virtual void SetVariable(const VariableHandle& handle, const void* buffer, size_t size) override;
+			virtual shared_ptr<Material::Resource> GetResource(const string& name) override;
 
 		private:
+
+			class Variable : public Material::Variable{
+
+			protected:
+
+				virtual void Set(void * buffer, size_t size) override;
+
+			};
+
+			class Resource : public Material::Resource{
+
+			public:
+
+				virtual void Set(shared_ptr<ShaderResource> resource) override;
+
+			};
 			
-			ShaderSetup<ID3D11VertexShader> vertex_shader_;
 
-			ShaderSetup<ID3D11HullShader> hull_shader_;
-
-			ShaderSetup<ID3D11DomainShader> domain_shader_;
-
-			ShaderSetup<ID3D11GeometryShader> geometry_shader_;
-
-			ShaderSetup<ID3D11PixelShader> pixel_shader_;
 
 		};
 

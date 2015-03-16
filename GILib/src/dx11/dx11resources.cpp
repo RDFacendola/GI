@@ -485,7 +485,7 @@ DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 	auto combo = ShaderHelper::CompileShadersOrDie(code.c_str(), 
 												   code.size(), 
 												   file_name.c_str(), 
-												   ShaderType::ALL_SHADERS, 
+												   ShaderType::ALL, 
 												   ShaderType::VERTEX_SHADER | ShaderType::PIXEL_SHADER);
 	
 
@@ -522,27 +522,15 @@ DX11Material::~DX11Material(){
 
 }
 
-Material::VariableHandle DX11Material::GetVariableHandle(const string& name) const{
+shared_ptr<Material::Variable> DX11Material::GetVariable(const string& name){
 
-	return 0;
-
-}
-
-Material::ResourceHandle DX11Material::GetResourceHandle(const string& name) const{
-
-	return 0;
+	return nullptr;
 
 }
 
-void DX11Material::SetResource(const ResourceHandle& handle, shared_ptr<ShaderResource> resource){
+shared_ptr<Material::Resource> DX11Material::GetResource(const string& name){
 
-	// Not yet implemented
-
-}
-
-void DX11Material::SetVariable(const VariableHandle& handle, const void* buffer, size_t size){
-
-	// Not yet implemented
+	return nullptr;
 
 }
 
