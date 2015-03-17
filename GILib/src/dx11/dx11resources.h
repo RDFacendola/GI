@@ -30,10 +30,7 @@ namespace gi_lib{
 
 		class DX11Texture2D;
 		class DX11Mesh;
-
-		template <typename TShader>
-		struct ShaderSetup;
-
+		
 		/// \brief Base interface for DirectX11 resources that can be bound as shader resources.
 		class DX11ShaderResource{
 

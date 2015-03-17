@@ -104,7 +104,7 @@ namespace gi_lib{
 		Exception(Exception && other){
 
 			where_ = std::move(other.where_);
-			what_ = other.what_;
+			what_ = std::move(other.what_);
 			stack_trace_ = std::move(other.stack_trace_);
 			
 		}

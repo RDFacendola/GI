@@ -4,6 +4,7 @@
 #include "dx11resources.h"
 
 #include <set>
+#include <unordered_map>
 #include <math.h>
 
 #include <DDSTextureLoader.h>
@@ -16,7 +17,7 @@
 #include "..\..\include\exceptions.h"
 #include "..\..\include\scope_guard.h"
 
-#include "dx11shader.h"
+#include "dx11.h"
 
 using namespace std;
 using namespace gi_lib;
@@ -51,67 +52,74 @@ namespace{
 
 	}
 
-	/// \brief Describes a shader variable.
-	struct ShaderVariableEntry{
+	/// \brief Describes the current status of a buffer.
+	class BufferStatus{
 
-		size_t offset;					/// \brief Offset from the beginning of the constant buffer in bytes.
-		
-		size_t size;					/// \brief Size of the variable in bytes.
+	public:
 
-		unsigned int buffer_index;		/// \brief Index of the constant buffer this variable refers to.
+		/// \brief Create a new buffer status.
+		/// \param size Size of the buffer to create.
+		BufferStatus(size_t size);
 
-	};
-
-	/// \brief Describes a shader constant buffer.
-	struct ShaderBufferEntry{
-		
-		unique_ptr<ID3D11Buffer, COMDeleter> buffer;		///< \brief Hardware buffer that can be bound to the pipeline.	
-
-		void * raw_buffer;									///< \brief Temporary buffer to hold data before committing the material.
-
-		size_t size;										///< \brief Size of the buffer.
-
-		bool dirty;											///< \brief Dirty buffer will be copied to the hardware buffer during commits.
-
-		/// \brief No copy-constructor.
-		ShaderBufferEntry(const ShaderBufferEntry&) = delete;
+		/// \brief No copy constructor.
+		BufferStatus(const BufferStatus&) = delete;
 
 		/// \brief Move constructor.
-		ShaderBufferEntry(ShaderBufferEntry&& other);
-		
-		/// \brief Default destructor.
-		~ShaderBufferEntry();
+		/// \param Instance to move.
+		BufferStatus(BufferStatus&& other);
 
 		/// \brief No assignment operator.
-		ShaderBufferEntry& operator=(const ShaderBufferEntry&) = delete;
+		BufferStatus& operator=(const BufferStatus&) = delete;
 
-		/// \brief Swaps this instance with the provided one.
-		void Swap(ShaderBufferEntry& other);
-
-	};
-
-	/// \brief Describes a shader resource.
-	struct ShaderResourceEntry{
-
-		///< \brief Pointer to the shader resource.
-		/// Used to prevent deallocation of resources still bound to the pipeline.
-		shared_ptr<DX11ShaderResource> resource;	
-
-	};
-
-	/// \brief Describes a shader sampler.
-	struct ShaderSamplerEntry{
-
+		/// \brief Destructor.
+		~BufferStatus();
 		
+	private:
+
+		unique_ptr<ID3D11Buffer, COMDeleter> buffer_;		/// \brief Constant buffer to bound to the graphic pipeline.
+
+		void * data_;										/// \brief Buffer containing the data to send to the constant buffer.
+
+		bool dirty_;										/// \brief Whether the constant buffer should be updated.
+
+		size_t size_;										/// \brief Size of the buffer in bytes.
 
 	};
 
-	/// \brief Swaps two shader buffer entry.
-	inline void swap(ShaderBufferEntry& left, ShaderBufferEntry& right){
+	/// \brief Describes a shader along with the resources bound to it.
+	class ShaderSetup{
 
-		left.Swap(right);
+	public:
 
-	}
+		/// \brief Create a new buffer status.
+		/// \param size Size of the buffer to create.
+		template <typename TShader>
+		ShaderSetup(ID3D11Device& device, ID3DBlob& bytecode);
+
+		/// \brief No copy constructor.
+		ShaderSetup(const ShaderSetup&) = delete;
+
+		/// \brief Move constructor.
+		/// \param Instance to move.
+		ShaderSetup(ShaderSetup&& other);
+
+		/// \brief No assignment operator.
+		ShaderSetup& operator=(const ShaderSetup&) = delete;
+
+		/// \brief Destructor.
+		~ShaderSetup();
+
+	private:
+
+		shared_ptr<ID3D11DeviceChild> shader_;				/// \brief Shader class. Shared.
+
+		shared_ptr<vector<ID3D11SamplerState*>> samplers_;	/// \brief Sampler binding status. Shared.
+
+		vector<ID3D11Buffer*> buffers_;						/// \brief Buffer binding status.
+
+		vector<ID3D11ShaderResourceView*> resources_;		/// \brief Resource binding status.
+
+	};
 
 	/// \brief Convert a resource priority to an eviction priority (DirectX11)
 	ResourcePriority EvictionPriorityToResourcePriority(unsigned int priority){
@@ -187,116 +195,34 @@ namespace{
 			max_corner - min_corner };
 
 	}
-	
-	/// \brief Create a depth stencil suitable for the provided target.
-	ID3D11Texture2D * MakeDepthStencil(ID3D11Device & device, ID3D11Texture2D & target){
+				
 
-		ID3D11Texture2D * depth_stencil;
+	/////////////////////////// BUFFER STATUS ///////////////////////////
 
-		// Create the depth buffer for use with the depth/stencil view.
-		D3D11_TEXTURE2D_DESC desc;
-
-		target.GetDesc(&desc);
-
-		auto width = desc.Width;
-		auto height = desc.Height;
-
-		ZeroMemory(&desc, sizeof(D3D11_TEXTURE2D_DESC));
-
-		desc.ArraySize = 1;
-		desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
-		desc.CPUAccessFlags = 0;
-		desc.Format = DXGI_FORMAT_R24G8_TYPELESS;
-		desc.Width = width;
-		desc.Height = height;
-		desc.MipLevels = 1;
-		desc.SampleDesc.Count = 1;
-		desc.SampleDesc.Quality = 0;
-		desc.Usage = D3D11_USAGE_DEFAULT;
-
-		THROW_ON_FAIL(device.CreateTexture2D(&desc, nullptr, &depth_stencil));
-
-		return depth_stencil;
+	BufferStatus::BufferStatus(size_t size){
 
 	}
 
-	/// \brief Create a vertex buffer.
-	template <typename TVertexFormat>
-	ID3D11Buffer * MakeVertexBuffer(ID3D11Device & device, const vector<TVertexFormat> & vertices, size_t & size){
-
-		ID3D11Buffer * vertex_buffer = nullptr;
-
-		// Fill in a buffer description.
-		D3D11_BUFFER_DESC buffer_desc;
-
-		buffer_desc.Usage = D3D11_USAGE_IMMUTABLE;
-		buffer_desc.ByteWidth = static_cast<UINT>(sizeof(TVertexFormat) * vertices.size());
-		buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		buffer_desc.CPUAccessFlags = 0;
-		buffer_desc.MiscFlags = 0;
-
-		// Fill in the subresource data.
-		D3D11_SUBRESOURCE_DATA init_data;
-
-		init_data.pSysMem = &vertices[0];
-		init_data.SysMemPitch = 0;
-		init_data.SysMemSlicePitch = 0;
-
-		THROW_ON_FAIL(device.CreateBuffer(&buffer_desc, &init_data, &vertex_buffer));
-
-		size = buffer_desc.ByteWidth;
-
-		return vertex_buffer;
+	BufferStatus::BufferStatus(BufferStatus&& other){
 
 	}
 
-	/// \brief Create an index buffer.
-	ID3D11Buffer * MakeIndexBuffer(ID3D11Device & device, const vector<unsigned int> & indices, size_t & size){
-
-		ID3D11Buffer * index_buffer = nullptr;
-
-		// Fill in a buffer description.
-		D3D11_BUFFER_DESC buffer_desc;
-
-		buffer_desc.Usage = D3D11_USAGE_DEFAULT;
-		buffer_desc.ByteWidth = static_cast<UINT>( sizeof(unsigned int) * indices.size() );
-		buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		buffer_desc.CPUAccessFlags = 0;
-		buffer_desc.MiscFlags = 0;
-		
-		// Define the resource data.
-		D3D11_SUBRESOURCE_DATA init_data;
-		init_data.pSysMem = &indices[0];
-		init_data.SysMemPitch = 0;
-		init_data.SysMemSlicePitch = 0;
-
-		// Create the buffer with the device.
-		THROW_ON_FAIL(device.CreateBuffer(&buffer_desc, &init_data, &index_buffer));
-
-		size = buffer_desc.ByteWidth;
-
-		return index_buffer;
+	BufferStatus::~BufferStatus(){
 
 	}
-	
-	/// \brief Create a constant buffer.
-	ID3D11Buffer * MakeConstantBuffer(ID3D11Device & device, size_t size){
 
-		ID3D11Buffer* cbuffer = nullptr;
+	////////////////////////// SHADER SETUP /////////////////////////////
 
-		D3D11_BUFFER_DESC buffer_desc;
+	template <typename TShader>
+	ShaderSetup::ShaderSetup(ID3D11Device& device, ID3DBlob& bytecode){
 
-		buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-		buffer_desc.ByteWidth = static_cast<unsigned int>(size);
-		buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		buffer_desc.MiscFlags = 0;
-		buffer_desc.StructureByteStride = 0;
+	}
 
-		// Create the buffer with the device.
-		THROW_ON_FAIL(device.CreateBuffer(&buffer_desc, nullptr, &cbuffer));
+	ShaderSetup::ShaderSetup(ShaderSetup&& other){
 
-		return cbuffer;
+	}
+
+	ShaderSetup::~ShaderSetup(){
 
 	}
 
@@ -406,9 +332,15 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 	ResetBuffers();
 
 	ID3D11Device * device;
+	
 	ID3D11Texture2D * zstencil;
+	D3D11_TEXTURE2D_DESC desc;
+
 	ID3D11RenderTargetView * render_target_view;
+
 	ID3D11DepthStencilView * zstencil_view;
+
+	auto& target = **targets.begin();
 
 	// Rollback guard ensures that the state of the render target is cleared on error
 	// (ie: if one buffer causes an exception, the entire operation is rollback'd)
@@ -423,15 +355,15 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 	
 	});
 
-	(*targets.begin())->GetDevice(&device);
+	target.GetDevice(&device);
 
-	unique_ptr<ID3D11Device, COMDeleter> guard(device, COMDeleter{});	// Will release the device
+	COM_GUARD(device);
 
 	for (auto target : targets){
 		
 		THROW_ON_FAIL(device->CreateRenderTargetView(reinterpret_cast<ID3D11Resource *>(target),
-			nullptr,
-			&render_target_view));
+													 nullptr,
+													 &render_target_view));
 
 		textures_.push_back(make_shared<DX11Texture2D>(*target, DXGI_FORMAT_UNKNOWN));
 		target_views_.push_back(std::move(unique_ptr<ID3D11RenderTargetView, COMDeleter>(render_target_view, COMDeleter{})));
@@ -439,19 +371,10 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 	}
 
 	// Create the z-stencil and the z-stencil view
+		
+	target.GetDesc(&desc);
 
-	zstencil = MakeDepthStencil(*device, **targets.begin());
-
-	D3D11_DEPTH_STENCIL_VIEW_DESC view_desc;
-
-	ZeroMemory(&view_desc, sizeof(view_desc));
-
-	view_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	
-	THROW_ON_FAIL(device->CreateDepthStencilView(reinterpret_cast<ID3D11Resource *>(zstencil),
-		&view_desc,
-		&zstencil_view));
+	MakeDepthStencil(*device, desc.Width, desc.Height, &zstencil, &zstencil_view);
 
 	zstencil_ = make_shared<DX11Texture2D>(*zstencil, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);				// This is the only format compatible with R24G8_TYPELESS used to create the depth buffer resource
 	zstencil_view_ = unique_ptr<ID3D11DepthStencilView, COMDeleter>(zstencil_view, COMDeleter{});
@@ -518,19 +441,31 @@ void DX11RenderTarget::ClearTargets(ID3D11DeviceContext & context, Color color){
 
 ///////////////////////////// MESH ////////////////////////////////////////////////
 
-DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildIndexedNormalTextured& bundle){
+DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildIndexedNormalTextured& bundle){
 
 	// Normal, textured mesh.
 
-	size_t vb_size = 0;
-	size_t ib_size = 0;
+	size_t vb_size = bundle.vertices.size() * sizeof(VertexFormatNormalTextured);
+	size_t ib_size = bundle.indices.size() * sizeof(unsigned int);
 	
-	vertex_buffer_.reset(MakeVertexBuffer(device, bundle.vertices, vb_size));
+	ID3D11Buffer * buffer;
+	
+	THROW_ON_FAIL(MakeVertexBuffer(device,
+								   &(bundle.vertices[0]),
+								   vb_size,
+								   &buffer));
+
+	vertex_buffer_.reset(buffer);
 
 	if (bundle.indices.size() > 0){
 
-		index_buffer_.reset(MakeIndexBuffer(device, bundle.indices, ib_size));
+		THROW_ON_FAIL(MakeIndexBuffer(device, 
+									  &(bundle.indices[0]), 
+									  ib_size,
+									  &buffer));
 	
+		index_buffer_.reset(buffer);
+
 		polygon_count_ = bundle.indices.size();
 
 	}
@@ -550,17 +485,21 @@ DX11Mesh::DX11Mesh(ID3D11Device & device, const BuildIndexedNormalTextured& bund
 
 ////////////////////////////// MATERIAL //////////////////////////////////////////////
 
-// PRIVATE IMPLEMENTATION (INSTANCE)
-
+/// \brief Private implementation of DX11Material.
 struct DX11Material::InstanceImpl{
+
+	vector<BufferStatus> buffer_status;
+
+	vector<shared_ptr<ShaderResource>> resources_status;
+
+	unordered_map<ShaderType, ShaderSetup> setup;
 
 };
 
-// SHARED IMPLEMENTATION (MATERIAL)
-
+/// \brief Shared implementation of DX11Material.
 struct DX11Material::MaterialImpl{
 
-
+	ShaderReflection reflection;		/// \brief Combined reflection of the shaders.
 
 };
 
@@ -572,17 +511,25 @@ DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 
 	string file_name = string(bundle.file_name.begin(), bundle.file_name.end());
 	
-	auto combo = ShaderHelper::CompileShadersOrDie(code.c_str(), 
-												   code.size(), 
-												   file_name.c_str(), 
-												   ShaderType::ALL, 
-												   ShaderType::VERTEX_SHADER | ShaderType::PIXEL_SHADER);
+	ShaderReflection sr;
+
+	ID3D11VertexShader * vs;
+	ID3D11HullShader * hs;
+	ID3D11PixelShader * ps;
+
+	wstring error;
+
+	MakeShader(device, code, file_name, &vs, &sr, &error);
+	MakeShader(device, code, file_name, &hs, &sr, &error);
+	MakeShader(device, code, file_name, &ps, &sr, &error);
 	
+
 }
 
 DX11Material::DX11Material(ID3D11Device& device, const InstantiateFromMaterial& bundle){
 
 	// TODO: Instantiate etc.
+	
 
 }
 

@@ -17,23 +17,37 @@ using std::unique_ptr;
 
 /// \brief If the provided expression fails the caller returns the expression value, otherwise nothing happens.
 /// The expression fails if FAILED(.) is true.
-#define RETURN_ON_FAIL(expr) do{ \
-								HRESULT __hr = expr; \
-								if (FAILED(__hr)) return __hr; \
-							 }WHILE0
+#define RETURN_ON_FAIL_1(expr) \
+do{ \
+	HRESULT __hr = expr; \
+	if (FAILED(__hr)) return __hr; \
+}WHILE0
+
+/// \brief If the provided expression fails the caller returns the expression value, otherwise nothing happens.
+/// The expression fails if FAILED(.) is true.
+#define RETURN_ON_FAIL_2(expr, retrn) \
+do{ \
+	HRESULT __hr = expr; \
+	if (FAILED(__hr)) return retrn; \
+}WHILE0
+
+/// \brief Macro selector. If the provided expression fails the caller returns either the failure value or a specified value.
+#define RETURN_ON_FAIL(...) EXPAND( SELECT_3RD(__VA_ARGS__ , RETURN_ON_FAIL_2, RETURN_ON_FAIL_1)(__VA_ARGS__ ) )
 
 /// \brief If the provided expression fails the caller throws an exception with the error code, otherwise nothing happens.
 /// The expression fails if FAILED(.) is true.
-#define THROW_ON_FAIL(expr) do{ \
-								HRESULT __hr = expr; \
-								if(FAILED(__hr)) THROW(std::to_wstring(__hr)); \
-							}WHILE0
+#define THROW_ON_FAIL(expr) \
+do{ \
+	HRESULT __hr = expr; \
+	if(FAILED(__hr)) THROW(std::to_wstring(__hr)); \
+}WHILE0
 
 /// \brief If the provided expression if false the caller throws an exception whose error code is equal to GetLastError() current value.
-#define THROW_ON_FALSE(expr) do{ \
-								auto __expr = (expr); \
-								if(!__expr) THROW(std::to_wstring(GetLastError())); \
-							 }WHILE0
+#define THROW_ON_FALSE(expr) \
+do{ \
+	auto __expr = (expr); \
+	if(!__expr) THROW(std::to_wstring(GetLastError())); \
+}WHILE0
 
 /// \brief Defines a raii guard for COM interfaces.
 #define COM_GUARD(com) unique_ptr<IUnknown, COMDeleter> ANONYMOUS(com, COMDeleter{})

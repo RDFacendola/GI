@@ -22,6 +22,18 @@ while(0)
 
 #endif
 
+/// \brief Expand the given token.
+#define EXPAND(x) x
+
+/// \brief Select the 3rd token.
+#define SELECT_3RD(_0, _1, x, ...) x
+
+/// \brief Select the 4th token.
+#define SELECT_4TH(_0, _1, _2, x, ...) x
+
+/// \brief Select the 5th token.
+#define SELECT_5TH(_0, _1, _2, _3, x, ...) x
+
 /// \brief Token concatenation.
 #define CONCATENATE_DETAIL(x, y) \
 x##y

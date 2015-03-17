@@ -73,9 +73,6 @@
     <ClInclude Include="include\scope_guard.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="src\dx11\dx11shader.h">
-      <Filter>graphics\directx XI</Filter>
-    </ClInclude>
     <ClInclude Include="include\bvh.h">
       <Filter>scene</Filter>
     </ClInclude>
@@ -86,6 +83,7 @@
     <ClInclude Include="include\unique.h">
       <Filter>pattern</Filter>
     </ClInclude>
+    <ClInclude Include="src\dx11\dx11.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -118,14 +116,12 @@
     <ClCompile Include="src\gimath.cpp">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11\dx11shader.cpp">
-      <Filter>graphics\directx XI</Filter>
-    </ClCompile>
     <ClCompile Include="src\bvh.cpp">
       <Filter>scene</Filter>
     </ClCompile>
     <ClCompile Include="src\windows\os_windows.cpp">
       <Filter>os</Filter>
     </ClCompile>
+    <ClCompile Include="src\dx11\dx11.cpp" />
   </ItemGroup>
 </Project>
