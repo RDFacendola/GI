@@ -371,11 +371,11 @@ bool ShaderTraits < ID3D11HullShader >::MakeShader(ID3D11Device& device, const s
 	};
 
 	return ::MakeShader<ID3D11HullShader>(HLSL,
-		source_file,
-		make_vertex_shader,
-		shader,
-		reflection,
-		errors);
+										  source_file,
+										  make_vertex_shader,
+										  shader,
+										  reflection,
+										  errors);
 
 }
 
