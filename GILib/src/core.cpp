@@ -508,17 +508,23 @@ Window::Window(){
 #ifdef _WIN32
 
 	//Create the window
-	THROW_ON_FALSE(handle_ = CreateWindow(WindowClass::GetInstance().kWindowClassName,
-										  L"",
-										  WS_OVERLAPPEDWINDOW,
-										  CW_USEDEFAULT,
-										  CW_USEDEFAULT,
-										  CW_USEDEFAULT,
-										  CW_USEDEFAULT,
-										  NULL,
-										  NULL,
-										  GetModuleHandle(nullptr),
-										  NULL));
+	handle_ = CreateWindow(WindowClass::GetInstance().kWindowClassName,
+						   L"",
+						   WS_OVERLAPPEDWINDOW,
+						   CW_USEDEFAULT,
+						   CW_USEDEFAULT,
+						   CW_USEDEFAULT,
+						   CW_USEDEFAULT,
+						   NULL,
+						   NULL,
+						   GetModuleHandle(nullptr),
+						   NULL);
+
+	if(!handle_){
+	
+		THROW(std::to_wstring(GetLastError()));
+
+	}
 
 #else
 

@@ -36,18 +36,22 @@ do{ \
 
 /// \brief If the provided expression fails the caller throws an exception with the error code, otherwise nothing happens.
 /// The expression fails if FAILED(.) is true.
-#define THROW_ON_FAIL(expr) \
+#define THROW_ON_FAIL_1(expr) \
 do{ \
 	HRESULT __hr = expr; \
 	if(FAILED(__hr)) THROW(std::to_wstring(__hr)); \
 }WHILE0
 
-/// \brief If the provided expression if false the caller throws an exception whose error code is equal to GetLastError() current value.
-#define THROW_ON_FALSE(expr) \
+/// \brief If the provided expression fails the caller throws an exception with the error code followed by the specified error message, otherwise nothing happens.
+/// The expression fails if FAILED(.) is true.
+#define THROW_ON_FAIL_2(expr, thrw_mssg) \
 do{ \
-	auto __expr = (expr); \
-	if(!__expr) THROW(std::to_wstring(GetLastError())); \
+	HRESULT __hr = expr; \
+	if(FAILED(__hr)) THROW(std::to_wstring(__hr) + L": " + thrw_mssg); \
 }WHILE0
+
+/// \brief Macro selector. If the provided expression fails the caller returns either the failure value or a specified value.
+#define THROW_ON_FAIL(...) EXPAND( SELECT_3RD(__VA_ARGS__ , THROW_ON_FAIL_2, THROW_ON_FAIL_1)(__VA_ARGS__ ) )
 
 /// \brief Defines a raii guard for COM interfaces.
 #define COM_GUARD(com) unique_ptr<IUnknown, COMDeleter> ANONYMOUS(com, COMDeleter{})

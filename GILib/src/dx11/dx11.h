@@ -122,8 +122,7 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			/// \return Returns true if the method succeeds, returns false otherwise.
-			static bool MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11VertexShader** shader, ShaderReflection* reflection, wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11VertexShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
 
@@ -143,8 +142,7 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			/// \return Returns true if the method succeeds, returns false otherwise.
-			static bool MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11HullShader** shader, ShaderReflection* reflection, wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11HullShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
 
@@ -164,8 +162,7 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			/// \return Returns true if the method succeeds, returns false otherwise.
-			static bool MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11DomainShader** shader, ShaderReflection* reflection, wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11DomainShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
 
@@ -185,8 +182,7 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			/// \return Returns true if the method succeeds, returns false otherwise.
-			static bool MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11GeometryShader** shader, ShaderReflection* reflection, wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11GeometryShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
 
@@ -205,8 +201,7 @@ namespace gi_lib{
 			/// \param source_file Used to resolve #include directives.
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
-			/// \return Returns true if the method succeeds, returns false otherwise.
-			static bool MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11PixelShader** shader, ShaderReflection* reflection, wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11PixelShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
 
@@ -216,8 +211,7 @@ namespace gi_lib{
 		/// \param height The height of the depth stencil texture in pixels.
 		/// \param depth_stencil Pointer to the created depth stencil. Set to nullptr if not needed.
 		/// \param depth_stencil_view Pointer to the depth stencil view. Set to nullptr if not needed.
-		/// \return Returns true if the method succeeds, return false otherwise.
-		bool MakeDepthStencil(ID3D11Device& device, unsigned int width, unsigned int height, ID3D11Texture2D** depth_stencil, ID3D11DepthStencilView** depth_stencil_view);
+		HRESULT MakeDepthStencil(ID3D11Device& device, unsigned int width, unsigned int height, ID3D11Texture2D** depth_stencil, ID3D11DepthStencilView** depth_stencil_view);
 
 		/// \brief Create a vertex buffer.
 		/// \tparam TVertexFormat Format of the vertex.
@@ -225,23 +219,20 @@ namespace gi_lib{
 		/// \param vertices Pointer to the firt vertex.
 		/// \param size Total size of the vertex buffer in bytes.
 		/// \param buffer Pointer to the object that will hold the buffer.
-		/// \return Returns true if the method succeeds, return false otherwise.
-		bool MakeVertexBuffer(ID3D11Device& device, const void* vertices, size_t size, ID3D11Buffer** buffer);
+		HRESULT MakeVertexBuffer(ID3D11Device& device, const void* vertices, size_t size, ID3D11Buffer** buffer);
 
 		/// \brief Create an index buffer.
 		/// \param device Device used to create the index buffer.
 		/// \param indices Pointer to the first index.
 		/// \param size Total size of the index buffer in bytes.
 		/// \param buffer Pointer to the object that will hold the buffer.
-		/// \return Returns true if the method succeeds, return false otherwise.
-		bool MakeIndexBuffer(ID3D11Device& device, const unsigned int* indices, size_t size, ID3D11Buffer** buffer);
+		HRESULT MakeIndexBuffer(ID3D11Device& device, const unsigned int* indices, size_t size, ID3D11Buffer** buffer);
 
 		/// \brief Create a constant buffer.
 		/// \param device Device used to create the constant buffer.
 		/// \param size Size of the constant buffer in bytes.
 		/// \param buffer Pointer to the object that will hold the buffer.
-		/// \return Returns true if the method succeeds, return false otherwise.
-		bool MakeConstantBuffer(ID3D11Device& device, size_t size, ID3D11Buffer** buffer);
+		HRESULT MakeConstantBuffer(ID3D11Device& device, size_t size, ID3D11Buffer** buffer);
 
 		/// \brief Create a shader from HLSL code.
 		/// \param device Device used to create the shader.
@@ -250,9 +241,8 @@ namespace gi_lib{
 		/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 		/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 		/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-		/// \return Returns true if the method succeeds, returns false otherwise.
 		template <typename TShader>
-		bool MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, TShader** shader, ShaderReflection* reflection, wstring* errors);
+		HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, TShader** shader, ShaderReflection* reflection = nullptr, wstring* errors = nullptr);
 
 	}
 
@@ -261,7 +251,7 @@ namespace gi_lib{
 //
 
 template <typename TShader>
-inline bool gi_lib::dx11::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, TShader** shader, ShaderReflection* reflection, wstring* errors){
+inline HRESULT gi_lib::dx11::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, TShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	return ShaderTraits<TShader>::MakeShader(device, HLSL, source_file, shader, reflection, errors);
 

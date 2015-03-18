@@ -35,31 +35,15 @@ namespace{
 	/// \brief Size ration between two consecutive MIP levels of a texture 2D.
 	const float kMIPRatio2D = 1.0f / 4.0f;
 		
-	/// \brief Convert a resource priority to an eviction priority
-	unsigned int ResourcePriorityToEvictionPriority(ResourcePriority priority){
-
-		switch (priority){
-
-		case ResourcePriority::MINIMUM:			return DXGI_RESOURCE_PRIORITY_MINIMUM;
-		case ResourcePriority::LOW:				return DXGI_RESOURCE_PRIORITY_LOW;
-		case ResourcePriority::NORMAL:			return DXGI_RESOURCE_PRIORITY_NORMAL;
-		case ResourcePriority::HIGH:			return DXGI_RESOURCE_PRIORITY_HIGH;
-		case ResourcePriority::CRITICAL:		return DXGI_RESOURCE_PRIORITY_MAXIMUM;
-
-		}
-
-		THROW(L"Unrecognized priority level.");
-
-	}
-
 	/// \brief Describes the current status of a buffer.
 	class BufferStatus{
 
 	public:
 
 		/// \brief Create a new buffer status.
+		/// \param device Device used to create the constant buffer.
 		/// \param size Size of the buffer to create.
-		BufferStatus(size_t size);
+		BufferStatus(ID3D11Device& device, size_t size);
 
 		/// \brief No copy constructor.
 		BufferStatus(const BufferStatus&) = delete;
@@ -74,6 +58,12 @@ namespace{
 		/// \brief Destructor.
 		~BufferStatus();
 		
+		/// \brief Write inside the constant buffer.
+		/// \param source Buffer to read from.
+		/// \param size Size of the buffer to read in bytes.
+		/// \param offset Offset from the beginning of the constant buffer in bytes.
+		void Write(void * source, size_t size, size_t offset);
+
 	private:
 
 		unique_ptr<ID3D11Buffer, COMDeleter> buffer_;		/// \brief Constant buffer to bound to the graphic pipeline.
@@ -86,75 +76,23 @@ namespace{
 
 	};
 
-	/// \brief Describes a shader along with the resources bound to it.
-	class ShaderSetup{
+	/// \brief Describes the current status of a shader.
+	class ShaderStatus{
 
 	public:
 
-		/// \brief Create a new buffer status.
-		/// \param size Size of the buffer to create.
-		template <typename TShader>
-		ShaderSetup(ID3D11Device& device, ID3DBlob& bytecode);
-
-		/// \brief No copy constructor.
-		ShaderSetup(const ShaderSetup&) = delete;
-
-		/// \brief Move constructor.
-		/// \param Instance to move.
-		ShaderSetup(ShaderSetup&& other);
-
-		/// \brief No assignment operator.
-		ShaderSetup& operator=(const ShaderSetup&) = delete;
-
-		/// \brief Destructor.
-		~ShaderSetup();
+		ShaderStatus();
 
 	private:
-
-		shared_ptr<ID3D11DeviceChild> shader_;				/// \brief Shader class. Shared.
-
-		shared_ptr<vector<ID3D11SamplerState*>> samplers_;	/// \brief Sampler binding status. Shared.
 
 		vector<ID3D11Buffer*> buffers_;						/// \brief Buffer binding status.
 
 		vector<ID3D11ShaderResourceView*> resources_;		/// \brief Resource binding status.
+		
+		vector<ID3D11SamplerState*> samplers_;				/// \brief Sampler binding status.
 
 	};
-
-	/// \brief Convert a resource priority to an eviction priority (DirectX11)
-	ResourcePriority EvictionPriorityToResourcePriority(unsigned int priority){
-
-		switch (priority){
-
-		case DXGI_RESOURCE_PRIORITY_MINIMUM:	return ResourcePriority::MINIMUM;
-		case DXGI_RESOURCE_PRIORITY_LOW:		return ResourcePriority::LOW;
-		case DXGI_RESOURCE_PRIORITY_NORMAL:		return ResourcePriority::NORMAL;
-		case DXGI_RESOURCE_PRIORITY_HIGH:		return ResourcePriority::HIGH;
-		case DXGI_RESOURCE_PRIORITY_MAXIMUM:	return ResourcePriority::CRITICAL;
-
-		}
-
-		THROW(L"Unrecognized priority level.");
-
-	}
 	
-	/// \brief Convert an Eigen Vector3f to an XMFLOAT3.
-	XMFLOAT3 EigenVector3fToXMFLOAT3(const Eigen::Vector3f & vector){
-
-		return XMFLOAT3(vector.x(), 
-						vector.y(), 
-						vector.z());
-
-	}
-
-	/// \brief Convert an Eigen Vector2f to an XMFLOAT2.
-	XMFLOAT2 EigenVector2fToXMFLOAT2(const Eigen::Vector2f & vector){
-
-		return XMFLOAT2(vector.x(),
-						vector.y());
-
-	}
-
 	template <typename TVertexFormat>
 	Bounds VerticesToBounds(const std::vector<TVertexFormat> & vertices){
 
@@ -192,39 +130,68 @@ namespace{
 		}
 
 		return Bounds{ 0.5f * (max_corner + min_corner),
-			max_corner - min_corner };
+					   max_corner - min_corner };
 
 	}
-				
 
 	/////////////////////////// BUFFER STATUS ///////////////////////////
 
-	BufferStatus::BufferStatus(size_t size){
+	BufferStatus::BufferStatus(ID3D11Device& device, size_t size){
+
+		ID3D11Buffer * buffer;
+
+		THROW_ON_FAIL(MakeConstantBuffer(device,
+										  size,
+										  &buffer));
+
+		buffer_.reset(buffer);
+
+		data_ = new char[size];
+
+		size_ = size;
+
+		dirty_ = false;
 
 	}
 
 	BufferStatus::BufferStatus(BufferStatus&& other){
 
+		buffer_ = std::move(other.buffer_);
+
+		data_ = other.data_;
+		other.data_ = nullptr;
+
+		size_ = other.size_;
+
+		dirty_ = other.dirty_;
+
 	}
 
 	BufferStatus::~BufferStatus(){
+
+		if (data_){
+
+			delete[] data_;
+
+		}
+
+	}
+
+	void BufferStatus::Write(void * source, size_t size, size_t offset){
+
+		memcpy_s(static_cast<char*>(data_) + offset,
+				 size_ - offset,
+				 source,
+				 size);
+
+		dirty_ = true;
 
 	}
 
 	////////////////////////// SHADER SETUP /////////////////////////////
 
-	template <typename TShader>
-	ShaderSetup::ShaderSetup(ID3D11Device& device, ID3DBlob& bytecode){
 
-	}
 
-	ShaderSetup::ShaderSetup(ShaderSetup&& other){
-
-	}
-
-	ShaderSetup::~ShaderSetup(){
-
-	}
 
 }
 
@@ -488,19 +455,29 @@ DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildIndexedNormalTextured& bundl
 /// \brief Private implementation of DX11Material.
 struct DX11Material::InstanceImpl{
 
+	
+
 	vector<BufferStatus> buffer_status;
 
 	vector<shared_ptr<ShaderResource>> resources_status;
-
-	unordered_map<ShaderType, ShaderSetup> setup;
 
 };
 
 /// \brief Shared implementation of DX11Material.
 struct DX11Material::MaterialImpl{
 
-	ShaderReflection reflection;		/// \brief Combined reflection of the shaders.
+	unique_ptr<ID3D11VertexShader, COMDeleter> vertex_shader;			///< \brief Vertex shader.
 
+	unique_ptr<ID3D11HullShader, COMDeleter> hull_shader;				///< \brief Hull shader.
+
+	unique_ptr<ID3D11DomainShader, COMDeleter> domain_shader;			///< \brief Domain shader.
+
+	unique_ptr<ID3D11GeometryShader, COMDeleter> geometry_shader;		///< \brief Geometry shader.
+
+	unique_ptr<ID3D11PixelShader, COMDeleter> pixel_shader;				///< \brief Pixel shader.
+
+	ShaderReflection reflection;										/// \brief Combined reflection of the shaders.
+	
 };
 
 // MATERIAL
@@ -511,18 +488,35 @@ DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 
 	string file_name = string(bundle.file_name.begin(), bundle.file_name.end());
 	
-	ShaderReflection sr;
+	// Shared implementation
+	shared_impl_ = make_shared<MaterialImpl>();
 
-	ID3D11VertexShader * vs;
-	ID3D11HullShader * hs;
-	ID3D11PixelShader * ps;
+	// Private implementation
+	ID3D11VertexShader * vs = nullptr;
+	ID3D11HullShader * hs = nullptr;
+	ID3D11DomainShader * ds = nullptr;
+	ID3D11GeometryShader * gs = nullptr;
+	ID3D11PixelShader * ps = nullptr;
 
 	wstring error;
 
-	MakeShader(device, code, file_name, &vs, &sr, &error);
-	MakeShader(device, code, file_name, &hs, &sr, &error);
-	MakeShader(device, code, file_name, &ps, &sr, &error);
-	
+	auto rollback = make_scope_guard([&](){
+
+		if (vs) vs->Release();
+		if (hs) hs->Release();
+		if (ds) ds->Release();
+		if (gs) gs->Release();
+		if (ps) ps->Release();
+
+	});
+
+	// Vertex shader and pixel shader are mandatory for materials.
+
+	THROW_ON_FAIL(MakeShader(device, code, file_name, &vs, &(shared_impl_->reflection), &error), error);
+				  MakeShader(device, code, file_name, &hs, &(shared_impl_->reflection));
+				  MakeShader(device, code, file_name, &ds, &(shared_impl_->reflection));
+				  MakeShader(device, code, file_name, &gs, &(shared_impl_->reflection));
+	THROW_ON_FAIL(MakeShader(device, code, file_name, &ps, &(shared_impl_->reflection), &error), error);
 
 }
 

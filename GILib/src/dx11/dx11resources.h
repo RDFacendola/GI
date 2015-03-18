@@ -80,10 +80,6 @@ namespace gi_lib{
 
 			virtual unsigned int GetMipMapCount() const override;
 
-			virtual WrapMode GetWrapMode() const override;
-
-			virtual void SetWrapMode(WrapMode wrap_mode) override;
-
 			virtual unsigned int GetShaderViewCount() const override;
 
 			virtual const ID3D11ShaderResourceView& GetShaderView(unsigned int index) const override;
@@ -105,9 +101,7 @@ namespace gi_lib{
 			unsigned int bits_per_pixel_;
 
 			unsigned int mip_levels_;
-			
-			WrapMode wrap_mode_;
-
+		
 		};
 
 		/// \brief DirectX11 render target.
@@ -344,18 +338,6 @@ namespace gi_lib{
 		inline unsigned int DX11Texture2D::GetMipMapCount() const{
 
 			return mip_levels_;
-
-		}
-
-		inline WrapMode DX11Texture2D::GetWrapMode() const{
-
-			return wrap_mode_;
-
-		}
-
-		inline void DX11Texture2D::SetWrapMode(WrapMode wrap_mode){
-
-			wrap_mode_ = wrap_mode;
 
 		}
 

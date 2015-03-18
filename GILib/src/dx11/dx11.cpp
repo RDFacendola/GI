@@ -152,17 +152,17 @@ namespace{
 	/// \brief Reflect a shader from bytecode.
 	/// \param bytecode Bytecode used to perform reflection.
 	/// \param reflection Holds shared information about various shaders as well as detailed information about resources.
-	/// \return Returns true if the method succeeds, return false otherwise.
 	template <typename TShader>
-	bool Reflect(ID3DBlob& bytecode, ShaderReflection& reflection){
+	HRESULT Reflect(ID3DBlob& bytecode, ShaderReflection& reflection){
 
 		ID3D11ShaderReflection * reflector = nullptr;
 
 		RETURN_ON_FAIL(D3DReflect(bytecode.GetBufferPointer(),
 								  bytecode.GetBufferSize(),
 								  IID_ID3D11ShaderReflection,
-								  (void**)&reflector),
-					   false);
+								  (void**)&reflector));
+
+		COM_GUARD(reflector);
 
 		D3D11_SHADER_DESC shader_desc;
 
@@ -218,7 +218,7 @@ namespace{
 
 		}
 
-		return true;
+		return S_OK;
 
 	}
 
@@ -227,9 +227,8 @@ namespace{
 	/// \brief source_file Used to resolve the #include directives.
 	/// \brief bytecode Pointer to the blob that will hold the compiled code if the method succeeds. Set to nullptr to ignore.
 	/// \brief errors Pointer to the blob that will hold the compilation errors if the method fails. Set to nullptr to ignore.
-	/// \return Returns true if the method succeeds, return false otherwise.
 	template <typename TShader>
-	bool Compile(const string& HLSL, const string& source_file, ID3DBlob** bytecode, ID3DBlob** errors){
+	HRESULT Compile(const string& HLSL, const string& source_file, ID3DBlob** bytecode, wstring* error_string){
 
 #ifdef _DEBUG
 
@@ -245,78 +244,79 @@ namespace{
 
 #endif
 
-		RETURN_ON_FAIL(D3DCompile(HLSL.c_str(),
-								  HLSL.length(),
-								  source_file.c_str(),
-								  shader_macros,
-								  D3D_COMPILE_STANDARD_FILE_INCLUDE,
-								  ShaderTraits<TShader>::entry_point,
-								  ShaderTraits<TShader>::profile,
-								  compilation_flags,
-								  0,
-								  bytecode,
-								  errors),
-				       false);
+		ID3DBlob * errors;
 
-		return true;
+		auto hr = D3DCompile(HLSL.c_str(),
+							 HLSL.length(),
+							 source_file.c_str(),
+							 shader_macros,
+							 D3D_COMPILE_STANDARD_FILE_INCLUDE,
+							 ShaderTraits<TShader>::entry_point,
+							 ShaderTraits<TShader>::profile,
+							 compilation_flags,
+							 0,
+							 bytecode,
+							 &errors);
+				
+		if (FAILED(hr) &&
+			error_string){
+
+			COM_GUARD(errors);
+
+			string err_string = static_cast<char*>(errors->GetBufferPointer());
+
+			*error_string = wstring(err_string.begin(), err_string.end());
+
+		}
+
+		return hr;
 
 	}
 
 	template <typename TShader, typename TCreateShader>
-	bool MakeShader(const string& HLSL, const string& source_file, TCreateShader CreateShader, TShader** shader, ShaderReflection* reflection, wstring* error_string){
+	HRESULT MakeShader(const string& HLSL, const string& source_file, TCreateShader CreateShader, TShader** shader, ShaderReflection* reflection, wstring* error_string){
 
 		ID3DBlob * bytecode = nullptr;
-		ID3DBlob * errors = nullptr;
 
-		if (!::Compile<TShader>(HLSL, source_file, &bytecode, &errors)){
+		RETURN_ON_FAIL(::Compile<TShader>(HLSL, 
+										  source_file, 
+										  &bytecode, 
+										  error_string));
 
-			COM_GUARD(errors);
+		COM_GUARD(bytecode);
 
-			if (error_string){
+		TShader* shader_ptr = nullptr;
 
-				string err_string = static_cast<char*>(errors->GetBufferPointer());
+		auto cleanup = make_scope_guard([&](){
 
-				*error_string = wstring(err_string.begin(), err_string.end());
-				
-			}
-			
-			return false;
+			if (shader_ptr) shader_ptr->Release();
 
-		}
-		else{
+		});
 
-			COM_GUARD(bytecode);
+		if (shader){
 
-			TShader * shader_ptr = nullptr;
-
-			if (shader &&
-				!CreateShader(*bytecode, &shader_ptr)){
-
-				return false;
-
-			}
-
-			COM_GUARD(shader_ptr);
-
-			if (reflection &&
-				!::Reflect<TShader>(*bytecode, *reflection)){
-
-				return false;
-
-			}
-
-			if (shader){
-
-				*shader = shader_ptr;
-
-				shader_ptr->AddRef();	// Needed because of the COM guard above.
-
-			}
+			RETURN_ON_FAIL(CreateShader(*bytecode, 
+										&shader_ptr));
 
 		}
 
-		return true;
+		if (reflection){
 
+			RETURN_ON_FAIL(::Reflect<TShader>(*bytecode, 
+											  *reflection));
+
+		}
+
+		if (shader){
+
+			*shader = shader_ptr;
+
+		}
+
+		cleanup.Dismiss();
+
+		return S_OK;
+		
 	}
 	
 }
@@ -329,15 +329,15 @@ const char * ShaderTraits < ID3D11VertexShader >::entry_point = "VSMain";
 
 const char * ShaderTraits < ID3D11VertexShader >::profile = "vs_5_0";
 
-bool ShaderTraits < ID3D11VertexShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11VertexShader** shader, ShaderReflection* reflection, wstring* errors){
+HRESULT ShaderTraits < ID3D11VertexShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11VertexShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	auto make_vertex_shader = [&device](ID3DBlob& bytecode, ID3D11VertexShader** shader_ptr)
 	{
 		
-		return !FAILED(device.CreateVertexShader(bytecode.GetBufferPointer(),
-												 bytecode.GetBufferSize(), 
-												 nullptr, 
-												 shader_ptr));
+		return device.CreateVertexShader(bytecode.GetBufferPointer(),
+										 bytecode.GetBufferSize(), 
+										 nullptr, 
+										 shader_ptr);
 	
 	};
 
@@ -358,15 +358,15 @@ const char * ShaderTraits < ID3D11HullShader >::entry_point = "HSMain";
 
 const char * ShaderTraits < ID3D11HullShader >::profile = "hs_5_0";
 
-bool ShaderTraits < ID3D11HullShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11HullShader** shader, ShaderReflection* reflection, wstring* errors){
+HRESULT ShaderTraits < ID3D11HullShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11HullShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	auto make_vertex_shader = [&device](ID3DBlob& bytecode, ID3D11HullShader** shader_ptr)
 	{
 
-		return !FAILED(device.CreateHullShader(bytecode.GetBufferPointer(),
-										 	   bytecode.GetBufferSize(),
-										 	   nullptr,
-											   shader_ptr));
+		return device.CreateHullShader(bytecode.GetBufferPointer(),
+									   bytecode.GetBufferSize(),
+									   nullptr,
+									   shader_ptr);
 
 	};
 
@@ -387,15 +387,15 @@ const char * ShaderTraits < ID3D11DomainShader >::entry_point = "DSMain";
 
 const char * ShaderTraits < ID3D11DomainShader >::profile = "ds_5_0";
 
-bool ShaderTraits < ID3D11DomainShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11DomainShader** shader, ShaderReflection* reflection, wstring* errors){
+HRESULT ShaderTraits < ID3D11DomainShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11DomainShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	auto make_vertex_shader = [&device](ID3DBlob& bytecode, ID3D11DomainShader** shader_ptr)
 	{
 
-		return !FAILED(device.CreateDomainShader(bytecode.GetBufferPointer(),
-											     bytecode.GetBufferSize(),
-											     nullptr,
-											     shader_ptr));
+		return device.CreateDomainShader(bytecode.GetBufferPointer(),
+										 bytecode.GetBufferSize(),
+										 nullptr,
+										 shader_ptr);
 
 	};
 
@@ -416,15 +416,15 @@ const char * ShaderTraits < ID3D11GeometryShader >::entry_point = "GSMain";
 
 const char * ShaderTraits < ID3D11GeometryShader >::profile = "gs_5_0";
 
-bool ShaderTraits < ID3D11GeometryShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11GeometryShader** shader, ShaderReflection* reflection, wstring* errors){
+HRESULT ShaderTraits < ID3D11GeometryShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11GeometryShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	auto make_vertex_shader = [&device](ID3DBlob& bytecode, ID3D11GeometryShader** shader_ptr)
 	{
 
-		return !FAILED(device.CreateGeometryShader(bytecode.GetBufferPointer(),
-												   bytecode.GetBufferSize(),
-											       nullptr,
-											       shader_ptr));
+		return device.CreateGeometryShader(bytecode.GetBufferPointer(),
+										   bytecode.GetBufferSize(),
+										   nullptr,
+										   shader_ptr);
 
 	};
 
@@ -445,15 +445,15 @@ const char * ShaderTraits < ID3D11PixelShader >::entry_point = "PSMain";
 
 const char * ShaderTraits < ID3D11PixelShader >::profile = "ps_5_0";
 
-bool ShaderTraits < ID3D11PixelShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11PixelShader** shader, ShaderReflection* reflection, wstring* errors){
+HRESULT ShaderTraits < ID3D11PixelShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11PixelShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	auto make_vertex_shader = [&device](ID3DBlob& bytecode, ID3D11PixelShader** shader_ptr)
 	{
 
-		return !FAILED(device.CreatePixelShader(bytecode.GetBufferPointer(),
-											    bytecode.GetBufferSize(),
-											    nullptr,
-											    shader_ptr));
+		return device.CreatePixelShader(bytecode.GetBufferPointer(),
+									    bytecode.GetBufferSize(),
+										nullptr,
+										shader_ptr);
 
 	};
 
@@ -468,19 +468,15 @@ bool ShaderTraits < ID3D11PixelShader >::MakeShader(ID3D11Device& device, const 
 
 /////////////////// METHODS ///////////////////////////
 
-bool gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width, unsigned int height, ID3D11Texture2D** depth_stencil, ID3D11DepthStencilView** depth_stencil_view){
+HRESULT gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width, unsigned int height, ID3D11Texture2D** depth_stencil, ID3D11DepthStencilView** depth_stencil_view){
 
 	ID3D11Texture2D * texture = nullptr;
 	ID3D11DepthStencilView * view = nullptr;
 
 	auto cleanup = make_scope_guard([&texture](){
 
-		if (texture){
-
-			texture->Release();
-
-		}
-
+		if (texture) texture->Release();
+		
 	});
 
 	D3D11_TEXTURE2D_DESC desc;
@@ -500,8 +496,7 @@ bool gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width, un
 
 	RETURN_ON_FAIL(device.CreateTexture2D(&desc, 
 										  nullptr, 
-										  &texture),
-				   false);
+										  &texture));
 
 	if (depth_stencil_view){
 
@@ -514,8 +509,7 @@ bool gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width, un
 
 		RETURN_ON_FAIL(device.CreateDepthStencilView(reinterpret_cast<ID3D11Resource *>(texture),
 													 &view_desc,
-													 &view),
-					   false);
+													 &view));
 
 		*depth_stencil_view = view;
 
@@ -525,11 +519,11 @@ bool gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width, un
 
 	cleanup.Dismiss();
 
-	return true;
+	return S_OK;
 
 }
 
-bool gi_lib::dx11::MakeVertexBuffer(ID3D11Device& device, const void* vertices, size_t size, ID3D11Buffer** buffer){
+HRESULT gi_lib::dx11::MakeVertexBuffer(ID3D11Device& device, const void* vertices, size_t size, ID3D11Buffer** buffer){
 
 	// Fill in a buffer description.
 	D3D11_BUFFER_DESC buffer_desc;
@@ -547,16 +541,13 @@ bool gi_lib::dx11::MakeVertexBuffer(ID3D11Device& device, const void* vertices, 
 	init_data.SysMemPitch = 0;
 	init_data.SysMemSlicePitch = 0;
 
-	RETURN_ON_FAIL(device.CreateBuffer(&buffer_desc, 
-									   &init_data,
-									   buffer),
-				   false);
-
-	return true;
+	return device.CreateBuffer(&buffer_desc, 
+							   &init_data,
+							   buffer);
 
 }
 
-bool gi_lib::dx11::MakeIndexBuffer(ID3D11Device& device, const unsigned int* indices, size_t size, ID3D11Buffer** buffer){
+HRESULT gi_lib::dx11::MakeIndexBuffer(ID3D11Device& device, const unsigned int* indices, size_t size, ID3D11Buffer** buffer){
 
 	// Fill in a buffer description.
 	D3D11_BUFFER_DESC buffer_desc;
@@ -574,16 +565,13 @@ bool gi_lib::dx11::MakeIndexBuffer(ID3D11Device& device, const unsigned int* ind
 	init_data.SysMemSlicePitch = 0;
 
 	// Create the buffer with the device.
-	RETURN_ON_FAIL(device.CreateBuffer(&buffer_desc, 
-									   &init_data, 
-									   buffer),
-				   false);
-
-	return true;
+	return device.CreateBuffer(&buffer_desc, 
+							   &init_data, 
+							   buffer);
 
 }
 
-bool gi_lib::dx11::MakeConstantBuffer(ID3D11Device& device, size_t size, ID3D11Buffer** buffer){
+HRESULT gi_lib::dx11::MakeConstantBuffer(ID3D11Device& device, size_t size, ID3D11Buffer** buffer){
 
 	D3D11_BUFFER_DESC buffer_desc;
 
@@ -595,11 +583,8 @@ bool gi_lib::dx11::MakeConstantBuffer(ID3D11Device& device, size_t size, ID3D11B
 	buffer_desc.StructureByteStride = 0;
 
 	// Create the buffer with the device.
-	RETURN_ON_FAIL(device.CreateBuffer(&buffer_desc, 
-									   nullptr, 
-									   buffer),
-				   false);
-
-	return true;
+	return device.CreateBuffer(&buffer_desc, 
+							   nullptr, 
+							   buffer);
 
 }
