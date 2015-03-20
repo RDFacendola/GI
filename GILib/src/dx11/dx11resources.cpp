@@ -64,6 +64,12 @@ namespace{
 		/// \param offset Offset from the beginning of the constant buffer in bytes.
 		void Write(void * source, size_t size, size_t offset);
 
+		/// \brief Get the hardware buffer reference.
+		ID3D11Buffer& GetBuffer();
+
+		/// \brief Get the hardware buffer reference.
+		const ID3D11Buffer& GetBuffer() const;
+
 	private:
 
 		unique_ptr<ID3D11Buffer, COMDeleter> buffer_;		/// \brief Constant buffer to bound to the graphic pipeline.
@@ -76,20 +82,20 @@ namespace{
 
 	};
 
-	/// \brief Describes the current status of a shader.
-	class ShaderStatus{
+	/// \brief Bundle of shader resources that will be bound to the pipeline.
+	struct ShaderBundle{
 
-	public:
+		vector<ID3D11Buffer*> buffers;						/// \brief Buffer binding status.
 
-		ShaderStatus();
-
-	private:
-
-		vector<ID3D11Buffer*> buffers_;						/// \brief Buffer binding status.
-
-		vector<ID3D11ShaderResourceView*> resources_;		/// \brief Resource binding status.
+		vector<ID3D11ShaderResourceView*> resources;		/// \brief Resource binding status.
 		
-		vector<ID3D11SamplerState*> samplers_;				/// \brief Sampler binding status.
+		vector<ID3D11SamplerState*> samplers;				/// \brief Sampler binding status.
+
+		/// \brief Default constructor;
+		ShaderBundle();
+
+		/// \brief Move constructor.
+		ShaderBundle(ShaderBundle&& other);
 
 	};
 	
@@ -188,11 +194,30 @@ namespace{
 
 	}
 
-	////////////////////////// SHADER SETUP /////////////////////////////
+	ID3D11Buffer& BufferStatus::GetBuffer(){
 
+		return *buffer_;
 
+	}
 
+	const ID3D11Buffer& BufferStatus::GetBuffer() const{
 
+		return *buffer_;
+
+	}
+
+	////////////////////////// SHADER BUNDLE /////////////////////////////
+
+	ShaderBundle::ShaderBundle(){}
+
+	ShaderBundle::ShaderBundle(ShaderBundle&& other){
+
+		buffers = std::move(other.buffers);
+		resources = std::move(other.resources);
+		samplers = std::move(other.samplers);
+
+	}
+	
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
@@ -242,8 +267,8 @@ DX11Texture2D::DX11Texture2D(ID3D11Texture2D & texture, DXGI_FORMAT format){
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC view_desc;
 
-	view_desc.Format = format == DXGI_FORMAT_UNKNOWN ? texture_desc.Format : format;
-	view_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	view_desc.Format = (format == DXGI_FORMAT_UNKNOWN) ? texture_desc.Format : format;
+	view_desc.ViewDimension = (texture_desc.SampleDesc.Count == 1) ? D3D11_SRV_DIMENSION_TEXTURE2D : D3D11_SRV_DIMENSION_TEXTURE2DMS;
 	view_desc.Texture2D.MostDetailedMip = 0;
 	view_desc.Texture2D.MipLevels = texture_desc.MipLevels;
 
@@ -455,82 +480,155 @@ DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildIndexedNormalTextured& bundl
 /// \brief Private implementation of DX11Material.
 struct DX11Material::InstanceImpl{
 
+	vector<BufferStatus> buffer_status;									///< \brief Status of constant buffers.
+
+	vector<shared_ptr<ShaderResource>> resources_status;				///< \brief Status of bound resources.
+
+	unordered_map<ShaderType, ShaderBundle> bundles;					///< \brief Bundles of resources bound to shaders.
 	
+	InstanceImpl(ID3D11Device& device, const ShaderReflection& reflection);
 
-	vector<BufferStatus> buffer_status;
+private:
 
-	vector<shared_ptr<ShaderResource>> resources_status;
+	void AddBundle(ShaderType shader_type, const ShaderReflection& reflection);
 
 };
 
 /// \brief Shared implementation of DX11Material.
 struct DX11Material::MaterialImpl{
 
-	unique_ptr<ID3D11VertexShader, COMDeleter> vertex_shader;			///< \brief Vertex shader.
+	ShaderReflection reflection;													/// \brief Combined reflection of the shaders.
 
-	unique_ptr<ID3D11HullShader, COMDeleter> hull_shader;				///< \brief Hull shader.
+	unordered_map<ShaderType, unique_ptr<ID3D11DeviceChild, COMDeleter>> shaders;	/// \brief Shader objects.
 
-	unique_ptr<ID3D11DomainShader, COMDeleter> domain_shader;			///< \brief Domain shader.
-
-	unique_ptr<ID3D11GeometryShader, COMDeleter> geometry_shader;		///< \brief Geometry shader.
-
-	unique_ptr<ID3D11PixelShader, COMDeleter> pixel_shader;				///< \brief Pixel shader.
-
-	ShaderReflection reflection;										/// \brief Combined reflection of the shaders.
+	MaterialImpl(ID3D11Device& device, const CompileFromFile& bundle);
 	
 };
 
-// MATERIAL
+//----------------------------  MATERIAL :: INSTANCE IMPL -------------------------------//
 
-DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
+DX11Material::InstanceImpl::InstanceImpl(ID3D11Device& device, const ShaderReflection& reflection){
 
+	// Buffer status
+	for (auto& buffer : reflection.buffers){
+
+		buffer_status.push_back(BufferStatus(device, buffer.size));
+
+	}
+
+	// Resource status (empty)
+	resources_status.resize(reflection.resources.size());
+
+	// Bundles
+	AddBundle(ShaderType::VERTEX_SHADER, reflection);
+	AddBundle(ShaderType::HULL_SHADER, reflection);
+	AddBundle(ShaderType::DOMAIN_SHADER, reflection);
+	AddBundle(ShaderType::GEOMETRY_SHADER, reflection);
+	AddBundle(ShaderType::PIXEL_SHADER, reflection);
+
+}
+
+void DX11Material::InstanceImpl::AddBundle(ShaderType shader_type, const ShaderReflection& reflection){
+
+	ShaderBundle bundle;
+
+	// Buffers, built once, updated automatically.
+	for (int buffer_index = 0; buffer_index < buffer_status.size(); ++buffer_index){
+
+		if (reflection.buffers[buffer_index].shader_usage && shader_type){
+
+			bundle.buffers.push_back(&buffer_status[buffer_index].GetBuffer());
+
+		}
+
+	}
+
+	// Resources, built on demand
+	bundle.resources.resize(std::count_if(reflection.resources.begin(),
+										  reflection.resources.end(),
+										  [shader_type](const ShaderResourceDesc& resource_desc){ 
+		
+											  return resource_desc.shader_usage && shader_type; 
+	
+										  }));
+	
+	// Samplers, built once, updated on demand (happens only when system options are changed)
+	for (auto& sampler : reflection.samplers){
+
+		if (sampler.shader_usage && shader_type){
+
+			bundle.samplers.push_back(nullptr);		// The sampler pointer is a function of the sampler name and the current settings
+
+		}
+
+	}
+
+	bundles[shader_type] = std::move(bundle);
+
+}
+
+//----------------------------  MATERIAL :: MATERIAL IMPL -------------------------------//
+
+DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFromFile& bundle){
+	
 	string code = IO::ReadFile(bundle.file_name);
 
 	string file_name = string(bundle.file_name.begin(), bundle.file_name.end());
-	
-	// Shared implementation
-	shared_impl_ = make_shared<MaterialImpl>();
-
-	// Private implementation
-	ID3D11VertexShader * vs = nullptr;
-	ID3D11HullShader * hs = nullptr;
-	ID3D11DomainShader * ds = nullptr;
-	ID3D11GeometryShader * gs = nullptr;
-	ID3D11PixelShader * ps = nullptr;
 
 	wstring error;
 
+	ID3D11VertexShader* vs = nullptr;
+	ID3D11HullShader* hs = nullptr;
+	ID3D11DomainShader* ds = nullptr;
+	ID3D11GeometryShader* gs = nullptr;
+	ID3D11PixelShader* ps = nullptr;
+
 	auto rollback = make_scope_guard([&](){
 
-		if (vs) vs->Release();
-		if (hs) hs->Release();
-		if (ds) ds->Release();
-		if (gs) gs->Release();
-		if (ps) ps->Release();
+		release_com({ vs, hs, ds, gs, ps });
 
 	});
 
-	// Vertex shader and pixel shader are mandatory for materials.
+	// Create everything
+	THROW_ON_FAIL(MakeShader(device, code, file_name, &vs, &reflection, &error), error);	// The vertex shader is mandatory.
+				  MakeShader(device, code, file_name, &hs, &reflection);
+				  MakeShader(device, code, file_name, &ds, &reflection);
+				  MakeShader(device, code, file_name, &gs, &reflection);
+	THROW_ON_FAIL(MakeShader(device, code, file_name, &ps, &reflection, &error), error);	// The pixel shader is mandatory.
+	
+	// Commit
+	shaders[ShaderType::VERTEX_SHADER] = unique_com(vs);
+	shaders[ShaderType::HULL_SHADER] = unique_com(hs);
+	shaders[ShaderType::DOMAIN_SHADER] = unique_com(ds);
+	shaders[ShaderType::GEOMETRY_SHADER] = unique_com(gs);
+	shaders[ShaderType::PIXEL_SHADER] = unique_com(ps);
 
-	THROW_ON_FAIL(MakeShader(device, code, file_name, &vs, &(shared_impl_->reflection), &error), error);
-				  MakeShader(device, code, file_name, &hs, &(shared_impl_->reflection));
-				  MakeShader(device, code, file_name, &ds, &(shared_impl_->reflection));
-				  MakeShader(device, code, file_name, &gs, &(shared_impl_->reflection));
-	THROW_ON_FAIL(MakeShader(device, code, file_name, &ps, &(shared_impl_->reflection), &error), error);
+	// Dismiss
+	rollback.Dismiss();
+
+}
+
+//----------------------------  MATERIAL -------------------------------//
+
+DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
+
+	shared_impl_ = make_shared<MaterialImpl>(device, bundle);
+
+	private_impl_ = make_unique<InstanceImpl>(device, shared_impl_->reflection);
 
 }
 
 DX11Material::DX11Material(ID3D11Device& device, const InstantiateFromMaterial& bundle){
 
-	// TODO: Instantiate etc.
+	auto& material = resource_cast(*bundle.base);
 	
+	shared_impl_ = material.shared_impl_;
 
+	private_impl_ = make_unique<InstanceImpl>(device, shared_impl_->reflection);	// TODO: copy the current status of the base material
+	
 }
 
-DX11Material::~DX11Material(){
-
-
-}
+DX11Material::~DX11Material(){}
 
 shared_ptr<Material::Variable> DX11Material::GetVariable(const string& name){
 

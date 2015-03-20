@@ -567,8 +567,8 @@ LRESULT Window::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARA
 
 		//The window has been resized
 		on_resized_.Notify(*this,
-			LOWORD(lparameter),
-			HIWORD(lparameter));
+						   LOWORD(lparameter),
+						   HIWORD(lparameter));
 
 		break;
 

@@ -57,10 +57,6 @@ namespace gi_lib{
 
 			virtual const VideoMode & GetVideoMode() const override;
 
-			virtual void SetAntialisingMode(const AntialiasingMode & antialiasing_mode) override;
-
-			virtual const AntialiasingMode & GetAntialisingMode() const override;
-
 			virtual void SetFullscreen(bool fullscreen) override;
 
 			virtual bool IsFullscreen() const override;
@@ -82,9 +78,7 @@ namespace gi_lib{
 			void Draw(Camera & camera, const vector<SceneNode *> & nodes);
 
 			VideoMode video_mode_;
-
-			AntialiasingMode antialiasing_mode_;
-
+			
 			bool fullscreen_;
 
 			bool vsync_;
@@ -92,6 +86,8 @@ namespace gi_lib{
 			// Listeners
 
 			ListenerKey on_window_resized_listener_;
+
+			ListenerKey on_settings_changed_listener_;
 
 			// DirectX stuffs
 
@@ -169,12 +165,6 @@ namespace gi_lib{
 		inline const VideoMode & DX11Output::GetVideoMode() const{
 
 			return video_mode_;
-
-		}
-
-		inline const AntialiasingMode & DX11Output::GetAntialisingMode() const{
-
-			return antialiasing_mode_;
 
 		}
 

@@ -57,7 +57,12 @@ bool Resources::ResourceMapKey::operator<(const ResourceMapKey & other) const{
 
 ////////////////////// GRAPHICS ////////////////////////////////
 
-Graphics & Graphics::GetAPI(API api){
+Graphics::Settings Graphics::settings_ = Graphics::Settings{ 0, AntialiasingMode::NONE };
+
+Event<const Graphics::Settings&, const Graphics::Settings&> Graphics::on_settings_changed_ = Event<const Graphics::Settings&, const Graphics::Settings&>();
+
+
+Graphics& Graphics::GetAPI(API api){
 
 	switch (api){
 
@@ -72,5 +77,27 @@ Graphics & Graphics::GetAPI(API api){
 			THROW(L"Specified API is not supported.");
 
 	}
+
+}
+
+Graphics::Settings Graphics::GetSettings(){
+
+	return settings_;
+
+}
+
+void Graphics::SetSettings(const Settings& settings){
+
+	auto old_settings = settings_;
+
+	settings_ = settings;
+
+	on_settings_changed_.Notify(old_settings, settings_);
+
+}
+
+Observable<const Graphics::Settings&, const Graphics::Settings&>& Graphics::OnSettingsChanged(){
+
+	return on_settings_changed_;
 
 }

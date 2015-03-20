@@ -15,6 +15,7 @@
 
 #include "resources.h"
 #include "bundles.h"
+#include "observable.h"
 
 using ::std::wstring;
 using ::std::vector;
@@ -111,14 +112,6 @@ namespace gi_lib{
 		/// \brief Get the current video mode.
 		/// \return Returns the current video mode.
 		virtual const VideoMode & GetVideoMode() const = 0;
-
-		/// \brief Set the antialiasing mode.
-		/// \param antialiasing_mode The antialiasing technique to activate.
-		virtual void SetAntialisingMode(const AntialiasingMode & antialiasing_mode) = 0;
-
-		/// \brief Get the current antialiasing mode.
-		/// \return Returns the current antialiasing mode.
-		virtual const AntialiasingMode & GetAntialisingMode() const = 0;
 
 		/// \brief Enable or disable fullscreen state.
 		/// \param fullscreen Set to true to enable fullscreen mode, false to disable it.
@@ -220,8 +213,29 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Graphics settings.
+		struct Settings{
+
+			unsigned int anisotropy_level;		///< \brief Global maximum anisotropy level. Values between 0 (no anisotropy) to AdapterProfile::max_anisotropy.
+
+			AntialiasingMode antialiasing;		///< \brief Global antialiasing mode.
+
+		};
+
 		/// \brief Get a reference to a specific graphical subsystem.
-		static Graphics & GetAPI(API api);
+		static Graphics& GetAPI(API api);
+		
+		/// \brief Get the current settings.
+		/// \return Returns the current settings.
+		static Settings GetSettings();
+
+		/// \brief Set the settings.
+		/// \param settings The new settings to apply.
+		static void SetSettings(const Settings& settings);
+
+		/// \brief Event triggered when settings change.
+		/// \return Returns an observable interface that notifies listeners when the settings change.
+		static Observable<const Settings&, const Settings&>& OnSettingsChanged();
 
 		/// \brief Default destructor;
 		virtual ~Graphics(){}
@@ -238,6 +252,12 @@ namespace gi_lib{
 		/// \brief Get the resource manager.
 		/// \return Returns the resource manager.
 		virtual Resources & GetResources() = 0;
+
+	private:
+
+		static Settings settings_;
+
+		static Event<const Settings&, const Settings&> on_settings_changed_;	///< \brief Triggered when settings change. Arguments are the old settings and the new ones.
 
 	};
 

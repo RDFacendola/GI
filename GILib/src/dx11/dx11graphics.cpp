@@ -141,22 +141,21 @@ namespace{
 		unsigned int output_mode_count;
 
 		THROW_ON_FAIL(adapter.EnumOutputs(kPrimaryOutputIndex,
-			&adapter_output));
+										  &adapter_output));
 
-		//Release the output when the function returns or throws
-		auto guard = unique_ptr<IDXGIOutput, COMDeleter>(adapter_output);
+		COM_GUARD(adapter_output);
 
 		THROW_ON_FAIL(adapter_output->GetDisplayModeList(kVideoFormat,
-			0,
-			&output_mode_count,
-			nullptr));
+														 0,
+														 &output_mode_count,
+														 nullptr));
 
 		vector<DXGI_MODE_DESC> dxgi_modes(output_mode_count);
 
 		THROW_ON_FAIL(adapter_output->GetDisplayModeList(kVideoFormat,
-			0,
-			&output_mode_count,
-			&dxgi_modes[0]));
+														 0,
+														 &output_mode_count,
+														 &dxgi_modes[0]));
 
 		return dxgi_modes;
 
@@ -169,50 +168,50 @@ namespace{
 
 		//Remove the modes that do not satisfy the minimum requirements
 		dxgi_modes.erase(std::remove_if(dxgi_modes.begin(),
-			dxgi_modes.end(),
-			[](const DXGI_MODE_DESC & value){
+										dxgi_modes.end(),
+										[](const DXGI_MODE_DESC & value){
 
-			return value.Width * value.Height < kMinimumResolution;
+											return value.Width * value.Height < kMinimumResolution;
 
-		}),
-			dxgi_modes.end());
+										}),
+						 dxgi_modes.end());
 
 		//Sorts the modes by width, height and refresh rate
 		std::sort(dxgi_modes.begin(),
-			dxgi_modes.end(),
-			[](const DXGI_MODE_DESC & first, const DXGI_MODE_DESC & second){
+				  dxgi_modes.end(),
+				  [](const DXGI_MODE_DESC & first, const DXGI_MODE_DESC & second){
 
-			return first.Width < second.Width ||
-				first.Width == second.Width &&
-				(first.Height < second.Height ||
-				first.Height == second.Height &&
-				first.RefreshRate.Numerator * second.RefreshRate.Denominator > second.RefreshRate.Numerator * first.RefreshRate.Denominator);
+					return first.Width < second.Width ||
+						   first.Width == second.Width &&
+						   (first.Height < second.Height ||
+						   first.Height == second.Height &&
+						   first.RefreshRate.Numerator * second.RefreshRate.Denominator > second.RefreshRate.Numerator * first.RefreshRate.Denominator);
 
-		});
+				  });
 
 		//Keeps the highest refresh rate for each resolution combination and discards everything else
 		dxgi_modes.erase(std::unique(dxgi_modes.begin(),
-			dxgi_modes.end(),
-			[](const DXGI_MODE_DESC & first, const DXGI_MODE_DESC & second){
+									 dxgi_modes.end(),
+									 [](const DXGI_MODE_DESC & first, const DXGI_MODE_DESC & second){
 
-			return first.Width == second.Width &&
-				first.Height == second.Height;
+										return first.Width == second.Width &&
+											   first.Height == second.Height;
 
-		}),
-			dxgi_modes.end());
+									 }),
+						 dxgi_modes.end());
 
 		//Map DXGI_MODE_DESC to VideoMode
 		vector<VideoMode> video_modes(dxgi_modes.size());
 
 		std::transform(dxgi_modes.begin(),
-			dxgi_modes.end(),
-			video_modes.begin(),
-			[](const DXGI_MODE_DESC & mode)
-		{
+					   dxgi_modes.end(),
+					   video_modes.begin(),
+				  	   [](const DXGI_MODE_DESC & mode)
+					   {
 
-			return DXGIModeToVideoMode(mode);
+							return DXGIModeToVideoMode(mode);
 
-		});
+					   });
 
 		return video_modes;
 
@@ -233,8 +232,8 @@ namespace{
 
 			//If the maximum supported quality is 0 the mode is not supported 	
 			THROW_ON_FAIL(device.CheckMultisampleQualityLevels(kVideoFormat,
-				sample_count,
-				&sample_quality_max));
+															   sample_count,
+															   &sample_quality_max));
 
 			if (sample_quality_max > 0){
 
@@ -403,29 +402,29 @@ DX11Graphics::DX11Graphics(){
 
 	//DXGI Factory
 	THROW_ON_FAIL(CreateDXGIFactory(__uuidof(IDXGIFactory),
-		(void**)(&factory)));
+								    (void**)(&factory)));
 
 	//DXGI Adapter
 	THROW_ON_FAIL(factory->EnumAdapters(kPrimaryOutputIndex,
-		&adapter));
+										&adapter));
 
 	//DXGI Device
 	THROW_ON_FAIL(D3D11CreateDevice(kDefaultAdapter,
-		D3D_DRIVER_TYPE_HARDWARE,
-		0,
-		0,
-		&kFeatureLevel,
-		1,
-		D3D11_SDK_VERSION,
-		&device,
-		nullptr,
-		nullptr));
+									D3D_DRIVER_TYPE_HARDWARE,
+									0,
+									0,
+									&kFeatureLevel,
+									1,
+									D3D11_SDK_VERSION,
+									&device,
+									nullptr,
+									nullptr));
 
 	// Binds the objects to their smart pointers
 	
-	factory_.reset(factory);
-	adapter_.reset(adapter);
-	device_.reset(device);
+	factory_ = std::move(unique_com(factory));
+	adapter_ = std::move(unique_com(adapter));
+	device_ = std::move(unique_com(device));
 	
 }
 
@@ -472,7 +471,6 @@ DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & fa
 
 	fullscreen_ = false;							//Windowed
 	vsync_ = false;									//Disabled by default
-	antialiasing_mode_ = AntialiasingMode::NONE;	//Disabled by default
 	video_mode_ = video_mode;
 
 	UpdateSwapChain();
@@ -485,8 +483,8 @@ DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & fa
 
 																	//Resize the swapchain buffer
 																	swap_chain_->ResizeBuffers(kBuffersCount,
-																							   0,	//Will fit the client width
-																							   0,	//Will fit the client height
+																							   0,						//Will fit the client width
+																							   0,						//Will fit the client height
 																							   kVideoFormat,
 																							   0);
 
@@ -500,13 +498,24 @@ DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & fa
 
 																 });
 
+	on_settings_changed_listener_ = Graphics::OnSettingsChanged().AddListener([this](const Graphics::Settings& old_settings, const Graphics::Settings& new_settings){
+
+		// If antialiasing mode changed the swapchain must be recreated
+		if (old_settings.antialiasing != new_settings.antialiasing){
+
+			UpdateSwapChain();
+
+		}
+
+	});
+
 	// Get the immediate context
 
 	ID3D11DeviceContext * context;
 
 	device_.GetImmediateContext(&context);
 
-	immediate_context_.reset(context);
+	immediate_context_ = std::move(unique_com(context));
 
 }
 
@@ -524,14 +533,6 @@ void DX11Output::SetVideoMode(const VideoMode & video_mode){
 	auto dxgi_mode = VideoModeToDXGIMode(video_mode);
 
 	swap_chain_->ResizeTarget(&dxgi_mode);	//Resizing the target will trigger the resizing of the backbuffer as well.
-
-}
-
-void DX11Output::SetAntialisingMode(const AntialiasingMode & antialiasing_mode){
-
-	antialiasing_mode_ = antialiasing_mode;
-
-	UpdateSwapChain();	//Swapchain needs to be recreated
 
 }
 
@@ -559,7 +560,7 @@ void DX11Output::UpdateSwapChain(){
 	dxgi_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
 
 	dxgi_desc.BufferDesc = VideoModeToDXGIMode(video_mode_);
-	dxgi_desc.SampleDesc = AntialiasingModeToSampleDesc(antialiasing_mode_);
+	dxgi_desc.SampleDesc = AntialiasingModeToSampleDesc(Graphics::GetSettings().antialiasing);
 
 	// Create the actual swap chain
 
@@ -569,7 +570,7 @@ void DX11Output::UpdateSwapChain(){
 										   &dxgi_desc,
 										   &swap_chain));
 
-	swap_chain_.reset(swap_chain);
+	swap_chain_ = std::move(unique_com(swap_chain));
 
 	UpdateViews();
 	
@@ -648,8 +649,8 @@ void DX11Output::UpdateViews(){
 	ID3D11Texture2D * back_buffer;
 
 	swap_chain_->GetBuffer(0,
-		__uuidof(back_buffer),
-		reinterpret_cast<void**>(&back_buffer));
+						   __uuidof(back_buffer),
+						   reinterpret_cast<void**>(&back_buffer));
 	
 	if (!render_target_){
 
