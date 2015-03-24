@@ -233,19 +233,21 @@ namespace gi_lib{
 
 			public:
 				
-				Variable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_offset);
+				Variable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset);
 
 			protected:
 								
-				virtual void Set(void * buffer, size_t size) override;
+				virtual void Set(const void * buffer, size_t size) override;
 
 			private:
 
-				InstanceImpl& instance_impl_;
+				InstanceImpl* instance_impl_;
 
 				size_t buffer_index_;
 
-				size_t variable_offset_;		///< \brief Offset of the variable from the beginning of the buffer.
+				size_t variable_offset_;		///< \brief Offset of the variable from the beginning of the buffer in bytes.
+
+				size_t variable_size_;			///< \brief Size of the variable in bytes.
 
 			};
 
@@ -260,7 +262,7 @@ namespace gi_lib{
 
 			private:
 
-				InstanceImpl& instance_impl_;
+				InstanceImpl* instance_impl_;
 
 				size_t resource_index_;
 

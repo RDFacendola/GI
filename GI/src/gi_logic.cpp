@@ -18,7 +18,15 @@ GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {
 	
-	auto ah = graphics_.GetResources().Load<Material, CompileFromFile>({ Application::GetDirectory() + L"Data\\phong.fx", false });
+	shared_ptr<Material> ah = graphics_.GetResources().Load<Material, CompileFromFile>({ Application::GetDirectory() + L"Data\\phong.fx", false });
+
+	auto v = ah->GetVariable("sciared");
+
+	float fff[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+	v->Set(fff);
+
+	auto r = ah->GetResource("ps_map");
 
 	// Graphics setup
 

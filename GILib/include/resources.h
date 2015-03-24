@@ -183,7 +183,7 @@ namespace gi_lib{
 			/// \brief Set the variable value.
 			/// \param buffer Pointer to the buffer holding the data to write.
 			/// \param size Size of the buffer.
-			virtual void Set(void * buffer, size_t size) = 0;
+			virtual void Set(const void * buffer, size_t size) = 0;
 
 		};
 
@@ -215,5 +215,13 @@ namespace gi_lib{
 		virtual shared_ptr<Resource> GetResource(const string& name) = 0;
 
 	};
+
+	template<typename TValue>
+	void Material::Variable::Set(const TValue& value){
+
+		Set(static_cast<const void*>(&value),
+			sizeof(TValue));
+
+	}
 	
 }

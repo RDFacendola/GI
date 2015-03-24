@@ -130,7 +130,7 @@ namespace{
 		/// \param source Buffer to read from.
 		/// \param size Size of the buffer to read in bytes.
 		/// \param offset Offset from the beginning of the constant buffer in bytes.
-		void Write(void * source, size_t size, size_t offset);
+		void Write(const void * source, size_t size, size_t offset);
 
 		/// \brief Get the hardware buffer reference.
 		ID3D11Buffer& GetBuffer();
@@ -205,7 +205,7 @@ namespace{
 
 	}
 
-	void BufferStatus::Write(void * source, size_t size, size_t offset){
+	void BufferStatus::Write(const void * source, size_t size, size_t offset){
 
 		memcpy_s(static_cast<char*>(data_) + offset,
 				 size_ - offset,
@@ -497,7 +497,7 @@ struct DX11Material::InstanceImpl{
 	/// \brief No assignment operator.
 	InstanceImpl& operator=(const InstanceImpl&) = delete;
 	
-	void SetVariable(size_t index, void * data, size_t size, size_t offset);
+	void SetVariable(size_t index, const void * data, size_t size, size_t offset);
 
 	void SetResource(size_t index, shared_ptr<ShaderResource> resource);
 	
@@ -569,7 +569,7 @@ reflection_(reflection){
 
 }
 
-void DX11Material::InstanceImpl::SetVariable(size_t index, void * data, size_t size, size_t offset){
+void DX11Material::InstanceImpl::SetVariable(size_t index, const void * data, size_t size, size_t offset){
 
 	buffer_status_[index].Write(data, size, offset);
 
@@ -716,26 +716,33 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 
 //----------------------------  MATERIAL :: VARIABLE -------------------------------//
 
-DX11Material::Variable::Variable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_offset) :
-instance_impl_(instance_impl),
+DX11Material::Variable::Variable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset) :
+instance_impl_(&instance_impl),
 buffer_index_(buffer_index),
+variable_size_(variable_size),
 variable_offset_(variable_offset){}
 
-void DX11Material::Variable::Set(void * buffer, size_t size){
+void DX11Material::Variable::Set(const void * buffer, size_t size){
 
-	instance_impl_.SetVariable(buffer_index_, buffer, size, variable_offset_);
+	if (size > variable_size_){
+
+		THROW(L"Wrong variable size.");
+
+	}
+
+	instance_impl_->SetVariable(buffer_index_, buffer, size, variable_offset_);
 
 }
 
 //----------------------------  MATERIAL :: RESOURCE -------------------------------//
 
 DX11Material::Resource::Resource(InstanceImpl& instance_impl, size_t resource_index) :
-instance_impl_(instance_impl),
+instance_impl_(&instance_impl),
 resource_index_(resource_index){}
 
 void DX11Material::Resource::Set(shared_ptr<ShaderResource> resource){
 
-	instance_impl_.SetResource(resource_index_, resource);
+	instance_impl_->SetResource(resource_index_, resource);
 
 }
 
@@ -768,11 +775,34 @@ DX11Material::~DX11Material(){
 
 shared_ptr<Material::Variable> DX11Material::GetVariable(const string& name){
 
-	
+	auto& buffers = shared_impl_->reflection.buffers;
 
-	//return make_shared<DX11Material::Variable>(*private_impl_, buffer_index, variable_offset);
+	size_t buffer_index = 0;
 
-	return nullptr;
+	for (auto& buffer : buffers){
+
+		auto it = std::find_if(buffer.variables.begin(),
+							   buffer.variables.end(),
+							   [&name](const ShaderVariableDesc& desc){
+
+									return desc.name == name;
+
+							   });
+
+		if (it != buffer.variables.end()){
+
+			return make_shared<DX11Material::Variable>(*private_impl_,
+													   buffer_index,
+													   it->size,
+													   it->offset);
+
+		}
+
+		++buffer_index;
+
+	}
+		
+	THROW(L"Could not find the specified shader variable.");
 
 }
 
@@ -788,6 +818,12 @@ shared_ptr<Material::Resource> DX11Material::GetResource(const string& name){
 
 						   });
 
+	if (it == resources.end()){
+
+		THROW(L"Could not find the specified shader resource.");
+
+	}
+
 	return make_shared<DX11Material::Resource>(*private_impl_,
 											   std::distance(resources.begin(),
 															 it));
@@ -796,7 +832,16 @@ shared_ptr<Material::Resource> DX11Material::GetResource(const string& name){
 
 size_t DX11Material::GetSize() const{
 
-	return 0;
+	auto& buffers = shared_impl_->reflection.buffers;
+
+	return std::accumulate(buffers.begin(),
+						   buffers.end(),
+						   static_cast<size_t>(0),
+						   [](size_t size, const ShaderBufferDesc& desc){
+
+								return size + desc.size;
+
+						   });
 
 }
 
