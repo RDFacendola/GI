@@ -30,7 +30,7 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 
 	output_ = graphics_.CreateOutput(*this, p.video_modes[0]);
 
-	Graphics::SetSettings({ 1, AntialiasingMode::MSAA_8X });
+	graphics_.SetSettings({ 16, AntialiasingMode::MSAA_8X });
 
 	// Camera setup
 	
