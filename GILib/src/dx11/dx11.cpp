@@ -53,6 +53,22 @@ namespace{
 
 	}
 
+	D3D11_FILTER AnisotropyLevelToFilter(unsigned int anisotropy_level){
+
+		return anisotropy_level > 0 ?
+			   D3D11_FILTER_ANISOTROPIC :		// Anisotropic filtering
+			   D3D11_FILTER_MIN_MAG_MIP_LINEAR;	// Trilinear filtering
+
+	}
+
+	D3D11_TEXTURE_ADDRESS_MODE TextureMappingToAddressMode(TextureMapping mapping){
+
+		return mapping == TextureMapping::WRAP ?
+			   D3D11_TEXTURE_ADDRESS_WRAP :
+			   D3D11_TEXTURE_ADDRESS_CLAMP;
+
+	}
+
 	/// \brief Reflect a shader input inside the specified vector.
 	/// The method won't reflect resources already inside the resource vector.
 	/// \tparam TType Type of the reflected structure. The type must me expose a field "name" used to uniquely identify the reflected resource.
@@ -541,6 +557,7 @@ HRESULT gi_lib::dx11::MakeVertexBuffer(ID3D11Device& device, const void* vertice
 	init_data.SysMemPitch = 0;
 	init_data.SysMemSlicePitch = 0;
 
+	// Create the buffer
 	return device.CreateBuffer(&buffer_desc, 
 							   &init_data,
 							   buffer);
@@ -564,7 +581,7 @@ HRESULT gi_lib::dx11::MakeIndexBuffer(ID3D11Device& device, const unsigned int* 
 	init_data.SysMemPitch = 0;
 	init_data.SysMemSlicePitch = 0;
 
-	// Create the buffer with the device.
+	// Create the buffer
 	return device.CreateBuffer(&buffer_desc, 
 							   &init_data, 
 							   buffer);
@@ -582,9 +599,37 @@ HRESULT gi_lib::dx11::MakeConstantBuffer(ID3D11Device& device, size_t size, ID3D
 	buffer_desc.MiscFlags = 0;
 	buffer_desc.StructureByteStride = 0;
 
-	// Create the buffer with the device.
+	// Create the buffer
 	return device.CreateBuffer(&buffer_desc, 
 							   nullptr, 
 							   buffer);
+
+}
+
+HRESULT gi_lib::dx11::MakeSampler(ID3D11Device& device, TextureMapping texture_mapping, unsigned int anisotropy_level, ID3D11SamplerState** sampler){
+
+	auto address_mode = TextureMappingToAddressMode(texture_mapping); // Same for each coordinate.
+
+	auto filter = AnisotropyLevelToFilter(anisotropy_level);
+
+	D3D11_SAMPLER_DESC desc;
+	
+	desc.Filter = filter;
+	desc.AddressU = address_mode;
+	desc.AddressV = address_mode;
+	desc.AddressW = address_mode;
+	desc.MipLODBias = 0.0f;								// This could be used to reduce the texture quality, however it will waste VRAM. 
+	desc.MaxAnisotropy = anisotropy_level;
+	desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	//desc.BorderColor[0] = 1.0f;						// Whatever, not used.
+	//desc.BorderColor[1] = 1.0f;
+	//desc.BorderColor[2] = 1.0f;
+	//desc.BorderColor[3] = 1.0f;
+	desc.MinLOD = -FLT_MAX;
+	desc.MaxLOD = FLT_MAX;
+	
+	// Create the sampler state
+	return device.CreateSamplerState(&desc, 
+									 sampler);
 
 }

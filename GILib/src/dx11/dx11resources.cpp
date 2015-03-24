@@ -4,6 +4,7 @@
 #include "dx11resources.h"
 
 #include <set>
+#include <map>
 #include <unordered_map>
 #include <math.h>
 
@@ -16,8 +17,11 @@
 #include "..\..\include\enums.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\scope_guard.h"
+#include "..\..\include\bundles.h"
+#include "..\..\include\observable.h"
 
 #include "dx11.h"
+#include "dx11graphics.h"
 
 using namespace std;
 using namespace gi_lib;
@@ -28,77 +32,17 @@ using namespace DirectX;
 using namespace Eigen;
 
 namespace{
+	
+	/////////////////////////// TEXTURE 2D //////////////////////////////
 
 	/// \brief Ratio between a Bit and a Byte size.
 	const float kBitOverByte = 1.0f / 8.0f;
 
 	/// \brief Size ration between two consecutive MIP levels of a texture 2D.
 	const float kMIPRatio2D = 1.0f / 4.0f;
-		
-	/// \brief Describes the current status of a buffer.
-	class BufferStatus{
 
-	public:
+	//////////////////////////// MESH ////////////////////////////////////
 
-		/// \brief Create a new buffer status.
-		/// \param device Device used to create the constant buffer.
-		/// \param size Size of the buffer to create.
-		BufferStatus(ID3D11Device& device, size_t size);
-
-		/// \brief No copy constructor.
-		BufferStatus(const BufferStatus&) = delete;
-
-		/// \brief Move constructor.
-		/// \param Instance to move.
-		BufferStatus(BufferStatus&& other);
-
-		/// \brief No assignment operator.
-		BufferStatus& operator=(const BufferStatus&) = delete;
-
-		/// \brief Destructor.
-		~BufferStatus();
-		
-		/// \brief Write inside the constant buffer.
-		/// \param source Buffer to read from.
-		/// \param size Size of the buffer to read in bytes.
-		/// \param offset Offset from the beginning of the constant buffer in bytes.
-		void Write(void * source, size_t size, size_t offset);
-
-		/// \brief Get the hardware buffer reference.
-		ID3D11Buffer& GetBuffer();
-
-		/// \brief Get the hardware buffer reference.
-		const ID3D11Buffer& GetBuffer() const;
-
-	private:
-
-		unique_ptr<ID3D11Buffer, COMDeleter> buffer_;		/// \brief Constant buffer to bound to the graphic pipeline.
-
-		void * data_;										/// \brief Buffer containing the data to send to the constant buffer.
-
-		bool dirty_;										/// \brief Whether the constant buffer should be updated.
-
-		size_t size_;										/// \brief Size of the buffer in bytes.
-
-	};
-
-	/// \brief Bundle of shader resources that will be bound to the pipeline.
-	struct ShaderBundle{
-
-		vector<ID3D11Buffer*> buffers;						/// \brief Buffer binding status.
-
-		vector<ID3D11ShaderResourceView*> resources;		/// \brief Resource binding status.
-		
-		vector<ID3D11SamplerState*> samplers;				/// \brief Sampler binding status.
-
-		/// \brief Default constructor;
-		ShaderBundle();
-
-		/// \brief Move constructor.
-		ShaderBundle(ShaderBundle&& other);
-
-	};
-	
 	template <typename TVertexFormat>
 	Bounds VerticesToBounds(const std::vector<TVertexFormat> & vertices){
 
@@ -140,7 +84,85 @@ namespace{
 
 	}
 
-	/////////////////////////// BUFFER STATUS ///////////////////////////
+	/////////////////////////// MATERIAL ////////////////////////////////
+
+	/// \brief Bundle of shader resources that will be bound to the pipeline.
+	struct ShaderBundle{
+
+		vector<ID3D11Buffer*> buffers;						/// \brief Buffer binding.
+
+		vector<ID3D11ShaderResourceView*> resources;		/// \brief Resource binding.
+
+		vector<ID3D11SamplerState*> samplers;				/// \brief Sampler binding.
+
+		/// \brief Default constructor;
+		ShaderBundle();
+
+		/// \brief Move constructor.
+		ShaderBundle(ShaderBundle&& other);
+
+	};
+
+	/// \brief Describes the current status of a buffer.
+	class BufferStatus{
+
+	public:
+
+		/// \brief Create a new buffer status.
+		/// \param device Device used to create the constant buffer.
+		/// \param size Size of the buffer to create.
+		BufferStatus(ID3D11Device& device, size_t size);
+
+		/// \brief No copy constructor.
+		BufferStatus(const BufferStatus&) = delete;
+
+		/// \brief Move constructor.
+		/// \param Instance to move.
+		BufferStatus(BufferStatus&& other);
+
+		/// \brief No assignment operator.
+		BufferStatus& operator=(const BufferStatus&) = delete;
+
+		/// \brief Destructor.
+		~BufferStatus();
+
+		/// \brief Write inside the constant buffer.
+		/// \param source Buffer to read from.
+		/// \param size Size of the buffer to read in bytes.
+		/// \param offset Offset from the beginning of the constant buffer in bytes.
+		void Write(void * source, size_t size, size_t offset);
+
+		/// \brief Get the hardware buffer reference.
+		ID3D11Buffer& GetBuffer();
+
+		/// \brief Get the hardware buffer reference.
+		const ID3D11Buffer& GetBuffer() const;
+
+	private:
+
+		unique_ptr<ID3D11Buffer, COMDeleter> buffer_;		/// \brief Constant buffer to bound to the graphic pipeline.
+
+		void * data_;										/// \brief Buffer containing the data to send to the constant buffer.
+
+		bool dirty_;										/// \brief Whether the constant buffer should be updated.
+
+		size_t size_;										/// \brief Size of the buffer in bytes.
+
+	};
+
+	//------------------------- SHADER BUNDLE -------------------------//
+
+	ShaderBundle::ShaderBundle(){}
+
+	ShaderBundle::ShaderBundle(ShaderBundle&& other){
+
+		buffers = std::move(other.buffers);
+		resources = std::move(other.resources);
+		samplers = std::move(other.samplers);
+
+	}
+
+	//------------------------- BUFFER STATUS -------------------------//
 
 	BufferStatus::BufferStatus(ID3D11Device& device, size_t size){
 
@@ -206,18 +228,6 @@ namespace{
 
 	}
 
-	////////////////////////// SHADER BUNDLE /////////////////////////////
-
-	ShaderBundle::ShaderBundle(){}
-
-	ShaderBundle::ShaderBundle(ShaderBundle&& other){
-
-		buffers = std::move(other.buffers);
-		resources = std::move(other.resources);
-		samplers = std::move(other.samplers);
-
-	}
-	
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
@@ -480,18 +490,37 @@ DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildIndexedNormalTextured& bundl
 /// \brief Private implementation of DX11Material.
 struct DX11Material::InstanceImpl{
 
-	vector<BufferStatus> buffer_status;									///< \brief Status of constant buffers.
-
-	vector<shared_ptr<ShaderResource>> resources_status;				///< \brief Status of bound resources.
-
 	unordered_map<ShaderType, ShaderBundle> bundles;					///< \brief Bundles of resources bound to shaders.
 	
 	InstanceImpl(ID3D11Device& device, const ShaderReflection& reflection);
 
+	/// \brief No assignment operator.
+	InstanceImpl& operator=(const InstanceImpl&) = delete;
+	
+	void SetVariable(size_t index, void * data, size_t size, size_t offset);
+
+	void SetResource(size_t index, shared_ptr<ShaderResource> resource);
+	
 private:
 
-	void AddBundle(ShaderType shader_type, const ShaderReflection& reflection);
+	void AddBundle(ShaderType shader_type);
 
+	void UpdateSamplerStates();
+
+	void UpdateResourceViews();
+
+	vector<BufferStatus> buffer_status_;								///< \brief Status of constant buffers.
+
+	vector<shared_ptr<ShaderResource>> resources_;						///< \brief Status of bound resources.
+
+	ShaderType resource_dirty_mask_;									///< \brief Dirty mask used to determine which bundle needs to be updated resource-wise.
+
+	shared_ptr<DX11Sampler> sampler_;									///< \brief Default sampler.
+	
+	ListenerKey on_sampler_changed_listener_;
+
+	const ShaderReflection& reflection_;
+		
 };
 
 /// \brief Shared implementation of DX11Material.
@@ -507,45 +536,71 @@ struct DX11Material::MaterialImpl{
 
 //----------------------------  MATERIAL :: INSTANCE IMPL -------------------------------//
 
-DX11Material::InstanceImpl::InstanceImpl(ID3D11Device& device, const ShaderReflection& reflection){
+DX11Material::InstanceImpl::InstanceImpl(ID3D11Device& device, const ShaderReflection& reflection) :
+reflection_(reflection){
 
 	// Buffer status
 	for (auto& buffer : reflection.buffers){
 
-		buffer_status.push_back(BufferStatus(device, buffer.size));
+		buffer_status_.push_back(BufferStatus(device, buffer.size));
 
 	}
 
 	// Resource status (empty)
-	resources_status.resize(reflection.resources.size());
+	resources_.resize(reflection.resources.size());
+
+	// Sampler status (default)
+	sampler_ = DX11Graphics::GetInstance().GetResources().Load<DX11Sampler, SingletonBundle>({});
+	
+	on_sampler_changed_listener_ = sampler_->OnSamplerChanged().AddListener([this](DX11Sampler&){
+
+		UpdateSamplerStates();
+
+	});
 
 	// Bundles
-	AddBundle(ShaderType::VERTEX_SHADER, reflection);
-	AddBundle(ShaderType::HULL_SHADER, reflection);
-	AddBundle(ShaderType::DOMAIN_SHADER, reflection);
-	AddBundle(ShaderType::GEOMETRY_SHADER, reflection);
-	AddBundle(ShaderType::PIXEL_SHADER, reflection);
+	AddBundle(ShaderType::VERTEX_SHADER);
+	AddBundle(ShaderType::HULL_SHADER);
+	AddBundle(ShaderType::DOMAIN_SHADER);
+	AddBundle(ShaderType::GEOMETRY_SHADER);
+	AddBundle(ShaderType::PIXEL_SHADER);
+
+	resource_dirty_mask_ = ShaderType::NONE;
 
 }
 
-void DX11Material::InstanceImpl::AddBundle(ShaderType shader_type, const ShaderReflection& reflection){
+void DX11Material::InstanceImpl::SetVariable(size_t index, void * data, size_t size, size_t offset){
+
+	buffer_status_[index].Write(data, size, offset);
+
+}
+
+void DX11Material::InstanceImpl::SetResource(size_t index, shared_ptr<ShaderResource> resource){
+
+	resources_[index] = resource;
+
+	resource_dirty_mask_ |= reflection_.resources[index].shader_usage;	// Let the bundle know that the resource status changed.
+
+}
+
+void DX11Material::InstanceImpl::AddBundle(ShaderType shader_type){
 
 	ShaderBundle bundle;
 
 	// Buffers, built once, updated automatically.
-	for (int buffer_index = 0; buffer_index < buffer_status.size(); ++buffer_index){
+	for (int buffer_index = 0; buffer_index < buffer_status_.size(); ++buffer_index){
 
-		if (reflection.buffers[buffer_index].shader_usage && shader_type){
+		if (reflection_.buffers[buffer_index].shader_usage && shader_type){
 
-			bundle.buffers.push_back(&buffer_status[buffer_index].GetBuffer());
+			bundle.buffers.push_back(&buffer_status_[buffer_index].GetBuffer());
 
 		}
 
 	}
 
-	// Resources, built on demand
-	bundle.resources.resize(std::count_if(reflection.resources.begin(),
-										  reflection.resources.end(),
+	// Resources, built once, update by need (when the material is bound to the pipeline).
+	bundle.resources.resize(std::count_if(reflection_.resources.begin(),
+										  reflection_.resources.end(),
 										  [shader_type](const ShaderResourceDesc& resource_desc){ 
 		
 											  return resource_desc.shader_usage && shader_type; 
@@ -553,17 +608,68 @@ void DX11Material::InstanceImpl::AddBundle(ShaderType shader_type, const ShaderR
 										  }));
 	
 	// Samplers, built once, updated on demand (happens only when system options are changed)
-	for (auto& sampler : reflection.samplers){
+	auto sampler_state = &(sampler_->GetSamplerState());
+
+	for (auto& sampler : reflection_.samplers){
 
 		if (sampler.shader_usage && shader_type){
 
-			bundle.samplers.push_back(nullptr);		// The sampler pointer is a function of the sampler name and the current settings
+			bundle.samplers.push_back(sampler_state);
 
 		}
 
 	}
 
 	bundles[shader_type] = std::move(bundle);
+
+}
+
+void DX11Material::InstanceImpl::UpdateSamplerStates(){
+
+	auto sampler_state = &(sampler_->GetSamplerState());	// The sampler state is unique, just override every sampler state in each bundle with the same object.
+
+	for (auto& bundle : bundles){
+
+		auto& samplers = bundle.second.samplers;
+
+		for (size_t sampler_index = 0; sampler_index < samplers.size(); ++sampler_index){
+
+			samplers[sampler_index] = sampler_state;
+
+		}
+
+	}
+
+}
+
+void DX11Material::InstanceImpl::UpdateResourceViews(){
+
+	size_t resource_index;
+	size_t bind_point;
+
+	for (auto& bundle : bundles){
+
+		if (resource_dirty_mask_ && bundle.first){		// Dirty bundles only.
+
+			auto& resource_views = bundle.second.resources;
+
+			for (resource_index = 0, bind_point = 0; resource_index < resource_views.size(); ++resource_index){
+
+				if (reflection_.resources[resource_index].shader_usage && bundle.first){
+
+					resource_views[bind_point] = &resource_view(*resources_[resource_index]);	// Get the Sampler State from the resource pointer.
+
+					++bind_point;
+
+				}
+
+			}
+
+		}
+
+	}
+
+	resource_dirty_mask_ = ShaderType::NONE;
 
 }
 
@@ -608,6 +714,31 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 
 }
 
+//----------------------------  MATERIAL :: VARIABLE -------------------------------//
+
+DX11Material::Variable::Variable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_offset) :
+instance_impl_(instance_impl),
+buffer_index_(buffer_index),
+variable_offset_(variable_offset){}
+
+void DX11Material::Variable::Set(void * buffer, size_t size){
+
+	instance_impl_.SetVariable(buffer_index_, buffer, size, variable_offset_);
+
+}
+
+//----------------------------  MATERIAL :: RESOURCE -------------------------------//
+
+DX11Material::Resource::Resource(InstanceImpl& instance_impl, size_t resource_index) :
+instance_impl_(instance_impl),
+resource_index_(resource_index){}
+
+void DX11Material::Resource::Set(shared_ptr<ShaderResource> resource){
+
+	instance_impl_.SetResource(resource_index_, resource);
+
+}
+
 //----------------------------  MATERIAL -------------------------------//
 
 DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
@@ -628,9 +759,18 @@ DX11Material::DX11Material(ID3D11Device& device, const InstantiateFromMaterial& 
 	
 }
 
-DX11Material::~DX11Material(){}
+DX11Material::~DX11Material(){
+
+	private_impl_ = nullptr;	// Must be destroyed before the shared implementation!
+	shared_impl_ = nullptr;
+
+}
 
 shared_ptr<Material::Variable> DX11Material::GetVariable(const string& name){
+
+	
+
+	//return make_shared<DX11Material::Variable>(*private_impl_, buffer_index, variable_offset);
 
 	return nullptr;
 
@@ -638,12 +778,83 @@ shared_ptr<Material::Variable> DX11Material::GetVariable(const string& name){
 
 shared_ptr<Material::Resource> DX11Material::GetResource(const string& name){
 
-	return nullptr;
+	auto& resources = shared_impl_->reflection.resources;
+
+	auto it = std::find_if(resources.begin(),
+						   resources.end(),
+						   [&name](const ShaderResourceDesc& desc){
+
+								return desc.name == name;
+
+						   });
+
+	return make_shared<DX11Material::Resource>(*private_impl_,
+											   std::distance(resources.begin(),
+															 it));
 
 }
 
 size_t DX11Material::GetSize() const{
 
 	return 0;
+
+}
+
+///////////////////////////// SAMPLER ////////////////////////////////////////////////
+
+DX11Sampler::DX11Sampler(ID3D11Device&, const SingletonBundle&){
+
+	RebuildSampler();
+
+	DX11Graphics::GetInstance().OnSettingsChanged().AddListener([this](const GraphicsSettings& old_settings, const GraphicsSettings& new_settings){
+
+		if (old_settings.anisotropy_level != new_settings.anisotropy_level){
+
+			RebuildSampler();
+
+		}
+
+	});
+
+}
+
+void DX11Sampler::RebuildSampler(){
+
+	auto& graphics = DX11Graphics::GetInstance();
+
+	ID3D11SamplerState * sampler;
+
+	THROW_ON_FAIL(MakeSampler(graphics.GetDevice(), 
+							  TextureMapping::WRAP,
+							  graphics.GetSettings().anisotropy_level,
+							  &sampler));
+
+	sampler_ = std::move(unique_com(sampler));
+
+	on_sampler_changed_.Notify(*this);
+	
+}
+
+size_t DX11Sampler::GetSize() const{
+
+	return sizeof(D3D11_SAMPLER_DESC);
+
+}
+
+ID3D11SamplerState& DX11Sampler::GetSamplerState(){
+
+	return *sampler_;
+
+}
+
+const ID3D11SamplerState& DX11Sampler::GetSamplerState() const{
+
+	return *sampler_;
+
+}
+
+Observable<DX11Sampler&>& DX11Sampler::OnSamplerChanged(){
+
+	return on_sampler_changed_;
 
 }

@@ -310,7 +310,9 @@ namespace{
 		template <typename TResource, typename TBundle>
 		static LoaderMap::value_type Register(){
 
-			auto key = make_pair(std::type_index(typeid(TResource)), std::type_index(typeid(TBundle)));
+			auto key = make_pair(std::type_index(typeid(TResource)), 
+								 std::type_index(typeid(TBundle)));
+
 			auto value = LoadResource < TResource, TBundle >;
 
 			return LoaderMap::value_type(key, value);
@@ -326,7 +328,8 @@ namespace{
 	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, LoadFromFile>(),
 												 Loader::Register<Mesh, BuildIndexedNormalTextured>(),
 												 Loader::Register<Material, CompileFromFile>(), 
-												 Loader::Register<Material, InstantiateFromMaterial>() };
+												 Loader::Register<Material, InstantiateFromMaterial>(),
+												 Loader::Register<DX11Sampler, SingletonBundle>() };
 
 	/// \brief Utility class for rendering stuffs.
 	class RenderHelper{
@@ -394,7 +397,7 @@ DX11Graphics & DX11Graphics::GetInstance(){
 
 }
 
-DX11Graphics::DX11Graphics(){
+DX11Graphics::DX11Graphics(): Graphics(){
 
 	IDXGIFactory * factory;
 	IDXGIAdapter * adapter;
@@ -498,7 +501,7 @@ DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & fa
 
 																 });
 
-	on_settings_changed_listener_ = Graphics::OnSettingsChanged().AddListener([this](const Graphics::Settings& old_settings, const Graphics::Settings& new_settings){
+	on_settings_changed_listener_ = DX11Graphics::GetInstance().OnSettingsChanged().AddListener([this](const GraphicsSettings& old_settings, const GraphicsSettings& new_settings){
 
 		// If antialiasing mode changed the swapchain must be recreated
 		if (old_settings.antialiasing != new_settings.antialiasing){
@@ -560,7 +563,7 @@ void DX11Output::UpdateSwapChain(){
 	dxgi_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
 
 	dxgi_desc.BufferDesc = VideoModeToDXGIMode(video_mode_);
-	dxgi_desc.SampleDesc = AntialiasingModeToSampleDesc(Graphics::GetSettings().antialiasing);
+	dxgi_desc.SampleDesc = AntialiasingModeToSampleDesc(DX11Graphics::GetInstance().GetSettings().antialiasing);
 
 	// Create the actual swap chain
 

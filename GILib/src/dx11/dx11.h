@@ -21,16 +21,16 @@ namespace gi_lib{
 
 	namespace dx11{
 
-		/// \brief Shader type.
+		/// \brief Shader type. Flags can be combined with the | operator.
 		ENUM_FLAGS(ShaderType, unsigned int){
 
-			NONE = 0u,
+			NONE = 0u,					///< \brief No shader.
 
-			VERTEX_SHADER = 1u,
-			HULL_SHADER = 2u,
-			DOMAIN_SHADER = 4u,
-			GEOMETRY_SHADER = 8u,
-			PIXEL_SHADER = 16u,
+			VERTEX_SHADER = 1u,			///< \brief Vertex shader.
+			HULL_SHADER = 2u,			///< \brief Hull shader.
+			DOMAIN_SHADER = 4u,			///< \brief Domain shader.
+			GEOMETRY_SHADER = 8u,		///< \brief Geometry shader.
+			PIXEL_SHADER = 16u,			///< \brief Pixel shader.
 
 		};
 
@@ -42,6 +42,14 @@ namespace gi_lib{
 			TEXTURE_2D,			///< \brief 2D texture.
 			TEXTURE_3D,			///< \brief 3D texture.
 			TEXTURE_CUBE		///< \brief Cube texture.
+
+		};
+
+		/// \brief Texture mapping technique.
+		enum class TextureMapping : unsigned int{
+
+			WRAP,				///< \brief Repeat the texture for texture coordinates outside the boundary [0;1] every integer.
+			CLAMP				///< \brief Texture coordinates below 0 or above 1 are set to 0 and 1 respectively instead.
 
 		};
 
@@ -244,6 +252,12 @@ namespace gi_lib{
 		template <typename TShader>
 		HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, TShader** shader, ShaderReflection* reflection = nullptr, wstring* errors = nullptr);
 
+		/// \brief Create a sampler state.
+		/// \param device Device used to create the sampler.
+		/// \param texture_mapping Texture mapping mode while sampling.
+		/// \param anisotropy_level Maximum anisotropy level. Set to 0 to disable anisotropic filtering and enable trilinear filtering.
+		/// \param sampler Pointer to the object that will hold the sampler if the method succeeds..
+		HRESULT MakeSampler(ID3D11Device& device, TextureMapping texture_mapping, unsigned int anisotropy_level, ID3D11SamplerState** sampler);
 	}
 
 }

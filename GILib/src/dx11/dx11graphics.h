@@ -111,6 +111,8 @@ namespace gi_lib{
 
 		public:
 
+			using Resources::Load;
+
 			/// \brief No copy constructor.
 			DX11Resources(const DX11Resources &) = delete;
 
@@ -147,6 +149,8 @@ namespace gi_lib{
 			virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode) override;
 
 			virtual DX11Resources & GetResources() override;
+
+			ID3D11Device& GetDevice();
 
 		private:
 
@@ -189,6 +193,14 @@ namespace gi_lib{
 		inline shared_ptr<RenderTarget> DX11Output::GetRenderTarget(){
 
 			return std::static_pointer_cast<RenderTarget>(render_target_);
+
+		}
+
+		// Graphics
+
+		inline ID3D11Device& DX11Graphics::GetDevice(){
+
+			return *device_;
 
 		}
 

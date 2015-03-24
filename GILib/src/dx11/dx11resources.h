@@ -30,27 +30,19 @@ namespace gi_lib{
 
 		class DX11Texture2D;
 		class DX11Mesh;
+		class DX11Sampler;
 		
 		/// \brief Base interface for DirectX11 resources that can be bound as shader resources.
-		class DX11ShaderResource{
+		/// \author Raffaele D. Facendola
+		class DX11ShaderResource : public ShaderResource {
 
 		public:
 
 			virtual ~DX11ShaderResource(){}
 
-			/// \brief Get the number of shader resource views associated to this resource.
-			/// \return Returns the number of shader resource views associated to this resource.
-			virtual unsigned int GetShaderViewCount() const = 0;
-
 			/// \brief Get the shader resource view associated to this shader resource.
-			/// \param index Index of the shader view to get.
 			/// \return Returns the shader resource view associated to this shader resource.
-			virtual const ID3D11ShaderResourceView& GetShaderView(unsigned int index) const = 0;
-
-			/// \brief Get the shader resource view associated to this shader resource.
-			/// \param index Index of the shader view to get.
-			/// \return Returns the shader resource view associated to this shader resource.
-			virtual ID3D11ShaderResourceView& GetShaderView(unsigned int index) = 0;
+			virtual ID3D11ShaderResourceView& GetShaderView() = 0;
 
 		};
 
@@ -80,11 +72,7 @@ namespace gi_lib{
 
 			virtual unsigned int GetMipMapCount() const override;
 
-			virtual unsigned int GetShaderViewCount() const override;
-
-			virtual const ID3D11ShaderResourceView& GetShaderView(unsigned int index) const override;
-
-			virtual ID3D11ShaderResourceView& GetShaderView(unsigned int index) override;
+			virtual ID3D11ShaderResourceView& GetShaderView() override;
 
 		private:
 
@@ -243,9 +231,21 @@ namespace gi_lib{
 			/// \brief Material variable.
 			class Variable : public Material::Variable{
 
-			protected:
+			public:
+				
+				Variable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_offset);
 
+			protected:
+								
 				virtual void Set(void * buffer, size_t size) override;
+
+			private:
+
+				InstanceImpl& instance_impl_;
+
+				size_t buffer_index_;
+
+				size_t variable_offset_;		///< \brief Offset of the variable from the beginning of the buffer.
 
 			};
 
@@ -254,7 +254,15 @@ namespace gi_lib{
 
 			public:
 
+				Resource(InstanceImpl& instance_impl, size_t resource_index);
+
 				virtual void Set(shared_ptr<ShaderResource> resource) override;
+
+			private:
+
+				InstanceImpl& instance_impl_;
+
+				size_t resource_index_;
 
 			};
 			
@@ -264,8 +272,51 @@ namespace gi_lib{
 			
 		};
 
+		/// \brief DirectX11 sampler.
+		/// \author Raffaele D. Facendola.
+		class DX11Sampler : public Resource{
+
+		public:
+
+			/// \brief Create a new default sampler state.
+			/// \param device Device used to create the sampler.
+			/// \param bundle Not used.
+			DX11Sampler(ID3D11Device& device, const SingletonBundle& bundle);
+
+			virtual size_t GetSize() const override;
+
+			/// \brief Get the sampler state.
+			/// \return Return the sampler state.
+			ID3D11SamplerState& GetSamplerState();
+
+			/// \brief Get the sampler state.
+			/// \return Return the sampler state.
+			const ID3D11SamplerState& GetSamplerState() const;
+
+			/// \brief Event triggered when the sampler state changed.
+			/// Sampler change according to the graphics settings.
+			Observable<DX11Sampler&>& OnSamplerChanged();
+
+		private:
+
+			void RebuildSampler();
+
+			unique_ptr<ID3D11SamplerState, COMDeleter> sampler_;
+
+			Event<DX11Sampler&> on_sampler_changed_;
+
+		};
+
 		/// \brief DirectX11 resource mapping template.
 		template<typename TResource> struct ResourceMapping;
+
+		/// \brief Shader resource mapping.
+		template<> struct ResourceMapping < ShaderResource > {
+
+			/// \brief Concrete type associated to a shader resource.
+			using TMapped = DX11ShaderResource;
+
+		};
 
 		/// \brief Texture 2D mapping
 		template<> struct ResourceMapping < Texture2D > {
@@ -299,12 +350,21 @@ namespace gi_lib{
 
 		};
 
+		/// \brief Sampler mapping.
+		/// Actually a sampler is an internal resource, so the mapping is the resource type itself.
+		template<> struct ResourceMapping < DX11Sampler > {
+
+			/// \brief Concrete type associated to a sampler.
+			using TMapped = DX11Sampler;
+
+		};
+
 		/// \brief Performs a resource cast from an abstract type to a concrete type.
 		/// \tparam TResource Type of the resource to cast.
 		/// \param resource The shared pointer to the resource to cast.
 		/// \return Returns a shared pointer to the casted resource.
 		template <typename TResource>
-		typename ResourceMapping<TResource>::TMapped & resource_cast(TResource & resource){
+		typename ResourceMapping<TResource>::TMapped& resource_cast(TResource& resource){
 
 			return static_cast<typename ResourceMapping<TResource>::TMapped&>(resource);
 
@@ -315,12 +375,19 @@ namespace gi_lib{
 		/// \param resource The shared pointer to the resource to cast.
 		/// \return Returns a shared pointer to the casted resource.
 		template <typename TResource>
-		typename const ResourceMapping<TResource>::TMapped & resource_cast(const TResource & resource){
+		typename const ResourceMapping<TResource>::TMapped& resource_cast(const TResource& resource){
 
 			return static_cast<const typename ResourceMapping<TResource>::TMapped&>(resource);
 
 		}
 		
+		/// \brief Get the shader resource view of a resource.
+		inline ID3D11ShaderResourceView& resource_view(ShaderResource& resource){
+
+			return static_cast<DX11ShaderResource&>(resource).GetShaderView();
+
+		}
+
 		//
 
 		inline unsigned int DX11Texture2D::GetWidth() const{
@@ -341,21 +408,9 @@ namespace gi_lib{
 
 		}
 
-		inline unsigned int DX11Texture2D::GetShaderViewCount() const{
-
-			return 1;
-			
-		}
-
-		inline ID3D11ShaderResourceView & DX11Texture2D::GetShaderView(unsigned int){
+		inline ID3D11ShaderResourceView & DX11Texture2D::GetShaderView(){
 
 			return *shader_view_;
-		}
-
-		inline const ID3D11ShaderResourceView & DX11Texture2D::GetShaderView(unsigned int) const{
-
-			return *shader_view_;
-
 		}
 
 		// DX11RenderTarget
