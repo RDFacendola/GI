@@ -57,10 +57,12 @@ bool Resources::ResourceMapKey::operator<(const ResourceMapKey & other) const{
 
 ////////////////////// GRAPHICS ////////////////////////////////
 
-Graphics::Settings Graphics::settings_ = Graphics::Settings{ 0, AntialiasingMode::NONE };
+Graphics::Graphics() :
+settings_({ 0, AntialiasingMode::NONE }),
+on_settings_changed_(){
 
-Event<const Graphics::Settings&, const Graphics::Settings&> Graphics::on_settings_changed_ = Event<const Graphics::Settings&, const Graphics::Settings&>();
 
+}
 
 Graphics& Graphics::GetAPI(API api){
 
@@ -80,13 +82,13 @@ Graphics& Graphics::GetAPI(API api){
 
 }
 
-Graphics::Settings Graphics::GetSettings(){
+GraphicsSettings Graphics::GetSettings(){
 
 	return settings_;
 
 }
 
-void Graphics::SetSettings(const Settings& settings){
+void Graphics::SetSettings(const GraphicsSettings& settings){
 
 	auto old_settings = settings_;
 
@@ -96,7 +98,7 @@ void Graphics::SetSettings(const Settings& settings){
 
 }
 
-Observable<const Graphics::Settings&, const Graphics::Settings&>& Graphics::OnSettingsChanged(){
+Observable<const GraphicsSettings&, const GraphicsSettings&>& Graphics::OnSettingsChanged(){
 
 	return on_settings_changed_;
 

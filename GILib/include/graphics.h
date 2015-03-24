@@ -80,6 +80,15 @@ namespace gi_lib{
 		
 	};
 
+	/// \brief Graphics settings.
+	struct GraphicsSettings{
+
+		unsigned int anisotropy_level;		///< \brief Global maximum anisotropy level. Values between 0 (no anisotropy) to AdapterProfile::max_anisotropy.
+
+		AntialiasingMode antialiasing;		///< \brief Global antialiasing mode.
+
+	};
+
 	/// \brief A color.
 	union Color{
 
@@ -151,13 +160,13 @@ namespace gi_lib{
 		Resources();
 
 		/// \brief Default destructor;
-		~Resources(){};
+		virtual ~Resources(){};
 		
 		template <typename TResource, typename TBundle, typename use_cache<TBundle>::type* = nullptr>
-		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Load(const typename TBundle& bundle);
+		shared_ptr<TResource> Load(const typename TBundle& bundle);
 
 		template <typename TResource, typename TBundle, typename no_cache<TBundle>::type* = nullptr>
-		std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Load(const typename TBundle& bundle);
+		shared_ptr<TResource> Load(const typename TBundle& bundle);
 
 		/// \brief Get the amount of memory used by the resources loaded.
 		size_t GetSize();
@@ -212,30 +221,21 @@ namespace gi_lib{
 	class Graphics{
 
 	public:
-
-		/// \brief Graphics settings.
-		struct Settings{
-
-			unsigned int anisotropy_level;		///< \brief Global maximum anisotropy level. Values between 0 (no anisotropy) to AdapterProfile::max_anisotropy.
-
-			AntialiasingMode antialiasing;		///< \brief Global antialiasing mode.
-
-		};
-
+		
 		/// \brief Get a reference to a specific graphical subsystem.
 		static Graphics& GetAPI(API api);
 		
 		/// \brief Get the current settings.
 		/// \return Returns the current settings.
-		static Settings GetSettings();
+		GraphicsSettings GetSettings();
 
 		/// \brief Set the settings.
 		/// \param settings The new settings to apply.
-		static void SetSettings(const Settings& settings);
+		void SetSettings(const GraphicsSettings& settings);
 
 		/// \brief Event triggered when settings change.
 		/// \return Returns an observable interface that notifies listeners when the settings change.
-		static Observable<const Settings&, const Settings&>& OnSettingsChanged();
+		Observable<const GraphicsSettings&, const GraphicsSettings&>& OnSettingsChanged();
 
 		/// \brief Default destructor;
 		virtual ~Graphics(){}
@@ -253,18 +253,22 @@ namespace gi_lib{
 		/// \return Returns the resource manager.
 		virtual Resources & GetResources() = 0;
 
+	protected:
+
+		Graphics();
+
 	private:
 
-		static Settings settings_;
+		GraphicsSettings settings_;
 
-		static Event<const Settings&, const Settings&> on_settings_changed_;	///< \brief Triggered when settings change. Arguments are the old settings and the new ones.
+		Event<const GraphicsSettings&, const GraphicsSettings&> on_settings_changed_;	///< \brief Triggered when settings change. Arguments are the old settings and the new ones.
 
 	};
 
 	//
 
 	template <typename TResource, typename TBundle, typename use_cache<TBundle>::type*>
-	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Resources::Load(const typename TBundle & bundle){
+	shared_ptr<TResource> Resources::Load(const typename TBundle & bundle){
 
 		// Cached version
 
@@ -303,7 +307,7 @@ namespace gi_lib{
 	}
 
 	template <typename TResource, typename TBundle, typename no_cache<TBundle>::type*>
-	std::enable_if_t<std::is_base_of<Resource, TResource>::value, shared_ptr<TResource> > Resources::Load(const typename TBundle & bundle){
+	shared_ptr<TResource> Resources::Load(const typename TBundle & bundle){
 
 		// Uncached version
 
