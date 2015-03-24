@@ -52,7 +52,7 @@ namespace gi_lib{
 	};
 
 	/// \brief Base interface for graphical resources that can also be bound to the pipeline as shader resources.
-	class ShaderResource : public Resource{
+	class ShaderResource{
 
 	public:
 
@@ -63,7 +63,7 @@ namespace gi_lib{
 
 	/// \brief Base interface for plain textures.
 	/// \author Raffaele D. Facendola.
-	class Texture2D : public ShaderResource{
+	class Texture2D : public Resource, public ShaderResource{
 
 	public:
 
