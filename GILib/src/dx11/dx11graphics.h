@@ -45,10 +45,8 @@ namespace gi_lib{
 
 			/// \brief Create a new DirectX11 output window.
 			/// \param window The window where the final image will be displayed.
-			/// \param device The device used to create the resources.
-			/// \param factory The factory used to create the swapchain.
 			/// \param video_mode Video mode used to initialize the output.
-			DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & factory, const VideoMode & video_mode);
+			DX11Output(Window & window, const VideoMode & video_mode);
 
 			/// \brief Default destructor.
 			~DX11Output();
@@ -65,7 +63,9 @@ namespace gi_lib{
 
 			virtual bool IsVSync() const override;
 
-			virtual void Draw(Scene & scene) override;
+			virtual void SetAntialiasing(AntialiasingMode antialiasing) override;
+
+			virtual AntialiasingMode GetAntialiasing() const override;
 
 			virtual shared_ptr<RenderTarget> GetRenderTarget() override;
 
@@ -73,9 +73,7 @@ namespace gi_lib{
 
 			void UpdateSwapChain();
 
-			void UpdateViews();
-
-			void Draw(Camera & camera, const vector<SceneNode *> & nodes);
+			void UpdateBackbuffer();
 
 			VideoMode video_mode_;
 			
@@ -83,21 +81,15 @@ namespace gi_lib{
 
 			bool vsync_;
 
+			AntialiasingMode antialiasing_;
+
 			// Listeners
 
 			ListenerKey on_window_resized_listener_;
-
-			ListenerKey on_settings_changed_listener_;
-
+			
 			// DirectX stuffs
 
 			Window & window_;
-
-			ID3D11Device & device_;
-
-			unique_ptr<ID3D11DeviceContext, COMDeleter> immediate_context_;
-
-			IDXGIFactory & factory_;
 
 			unique_ptr<IDXGISwapChain, COMDeleter> swap_chain_;
 
@@ -152,6 +144,10 @@ namespace gi_lib{
 
 			ID3D11Device& GetDevice();
 
+			IDXGIFactory& GetFactory();
+
+			IDXGIAdapter& GetAdapter();
+
 		private:
 
 			DX11Graphics();
@@ -190,17 +186,33 @@ namespace gi_lib{
 
 		}
 
+		inline AntialiasingMode DX11Output::GetAntialiasing() const{
+
+			return antialiasing_;
+
+		}
+
 		inline shared_ptr<RenderTarget> DX11Output::GetRenderTarget(){
 
 			return std::static_pointer_cast<RenderTarget>(render_target_);
 
 		}
 
-		// Graphics
-
 		inline ID3D11Device& DX11Graphics::GetDevice(){
 
 			return *device_;
+
+		}
+		
+		inline IDXGIFactory& DX11Graphics::GetFactory(){
+
+			return *factory_;
+
+		}
+
+		inline IDXGIAdapter& DX11Graphics::GetAdapter(){
+
+			return *adapter_;
 
 		}
 

@@ -49,6 +49,11 @@ resource_type_id(std::type_index(typeid(void))),
 bundle_type_id(resource_type_id)
 {}
 
+Resources::ResourceMapKey::ResourceMapKey(type_index resource_type, type_index bundle_type, size_t key) :
+resource_type_id(resource_type),
+bundle_type_id(bundle_type),
+cache_key(key){}
+
 bool Resources::ResourceMapKey::operator<(const ResourceMapKey & other) const{
 
 	return memcmp(this, &other, sizeof(ResourceMapKey)) < 0;
@@ -57,12 +62,7 @@ bool Resources::ResourceMapKey::operator<(const ResourceMapKey & other) const{
 
 ////////////////////// GRAPHICS ////////////////////////////////
 
-Graphics::Graphics() :
-settings_({ 0, AntialiasingMode::NONE }),
-on_settings_changed_(){
-
-
-}
+Graphics::Graphics(){}
 
 Graphics& Graphics::GetAPI(API api){
 
@@ -79,27 +79,5 @@ Graphics& Graphics::GetAPI(API api){
 			THROW(L"Specified API is not supported.");
 
 	}
-
-}
-
-GraphicsSettings Graphics::GetSettings(){
-
-	return settings_;
-
-}
-
-void Graphics::SetSettings(const GraphicsSettings& settings){
-
-	auto old_settings = settings_;
-
-	settings_ = settings;
-
-	on_settings_changed_.Notify(old_settings, settings_);
-
-}
-
-Observable<const GraphicsSettings&, const GraphicsSettings&>& Graphics::OnSettingsChanged(){
-
-	return on_settings_changed_;
 
 }

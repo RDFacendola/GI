@@ -31,7 +31,7 @@ namespace gi_lib{
 	class Resource;
 	class Scene;
 
-	/// \brief Enumeration of all supported graphical API.
+	/// \brief Enumeration of all the supported API.
 	enum class API{
 
 		DIRECTX_11,		///< DirectX 11.0
@@ -78,15 +78,6 @@ namespace gi_lib{
 		Vector2f position;									///< \brief Position of the top-left corner in screen units. Valid range between 0 (top/left) and 1 (bottom/right)).
 		Vector2f extents;									///< \brief Extents of the viewport in screen units. Valid range between 0 and 1 (full size).
 		
-	};
-
-	/// \brief Graphics settings.
-	struct GraphicsSettings{
-
-		unsigned int anisotropy_level;		///< \brief Global maximum anisotropy level. Values between 0 (no anisotropy) to AdapterProfile::max_anisotropy.
-
-		AntialiasingMode antialiasing;		///< \brief Global antialiasing mode.
-
 	};
 
 	/// \brief A color.
@@ -138,8 +129,13 @@ namespace gi_lib{
 		/// \return Returns true if VSync is enabled, false otherwise.
 		virtual bool IsVSync() const = 0;
 
-		/// \brief Draw the specified scene and commit.
-		virtual void Draw(Scene & scene) = 0;
+		/// \brief Set the hardware antialiasing mode.
+		/// \param antialiasing The new antialiasing mode.
+		virtual void SetAntialiasing(AntialiasingMode antialiasing) = 0;
+
+		/// \brief Get the current antialiasing mode.
+		/// \return Return the current antialiasing mode.
+		virtual AntialiasingMode GetAntialiasing() const = 0;
 
 		/// \brief Get the render target associated to this output.
 		/// \return Returns the render target associated to this output.
@@ -168,7 +164,7 @@ namespace gi_lib{
 		template <typename TResource, typename TBundle, typename no_cache<TBundle>::type* = nullptr>
 		shared_ptr<TResource> Load(const typename TBundle& bundle);
 
-		/// \brief Get the amount of memory used by the resources loaded.
+		/// \brief Get the amount of memory used by the loaded resources.
 		size_t GetSize();
 
 	protected:
@@ -187,6 +183,9 @@ namespace gi_lib{
 			
 			/// \brief Default constructor.
 			ResourceMapKey();
+
+			/// \brief Create a new resource map key.
+			ResourceMapKey(type_index resource_type, type_index bundle_type, size_t key);
 
 			/// \brief Lesser comparison operator.
 			bool operator<(const ResourceMapKey & other) const;
@@ -225,18 +224,6 @@ namespace gi_lib{
 		/// \brief Get a reference to a specific graphical subsystem.
 		static Graphics& GetAPI(API api);
 		
-		/// \brief Get the current settings.
-		/// \return Returns the current settings.
-		GraphicsSettings GetSettings();
-
-		/// \brief Set the settings.
-		/// \param settings The new settings to apply.
-		void SetSettings(const GraphicsSettings& settings);
-
-		/// \brief Event triggered when settings change.
-		/// \return Returns an observable interface that notifies listeners when the settings change.
-		Observable<const GraphicsSettings&, const GraphicsSettings&>& OnSettingsChanged();
-
 		/// \brief Default destructor;
 		virtual ~Graphics(){}
 
@@ -257,27 +244,18 @@ namespace gi_lib{
 
 		Graphics();
 
-	private:
-
-		GraphicsSettings settings_;
-
-		Event<const GraphicsSettings&, const GraphicsSettings&> on_settings_changed_;	///< \brief Triggered when settings change. Arguments are the old settings and the new ones.
-
 	};
 
-	//
+	// Resources
 
 	template <typename TResource, typename TBundle, typename use_cache<TBundle>::type*>
 	shared_ptr<TResource> Resources::Load(const typename TBundle & bundle){
 
 		// Cached version
 
-		ResourceMapKey key;
-
-		key.resource_type_id = std::type_index(typeid(TResource));
-		key.bundle_type_id = std::type_index(typeid(TBundle));
-
-		key.cache_key = bundle.GetCacheKey();
+		ResourceMapKey key(std::type_index(typeid(TResource)),
+						   std::type_index(typeid(TBundle)),
+						   bundle.GetCacheKey());
 
 		auto it = resources_.find(key);
 

@@ -18,16 +18,6 @@ GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {
 	
-	shared_ptr<Material> ah = graphics_.GetResources().Load<Material, CompileFromFile>({ Application::GetDirectory() + L"Data\\phong.fx", false });
-
-	auto v = ah->GetVariable("sciared");
-
-	float fff[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-	v->Set(fff);
-
-	auto r = ah->GetResource("ps_map");
-
 	// Graphics setup
 
 	SetTitle(kWindowTitle);
@@ -37,8 +27,6 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	auto p = graphics_.GetAdapterProfile();
 
 	output_ = graphics_.CreateOutput(*this, p.video_modes[0]);
-
-	graphics_.SetSettings({ 16, AntialiasingMode::MSAA_8X });
 
 	// Camera setup
 	
@@ -69,8 +57,6 @@ GILogic::~GILogic(){
 
 void GILogic::Update(const Time & time){
 	
-	//scene_.Update(time);
+	scene_.Update(time);
 
-	output_->Draw(scene_);
-	
 }

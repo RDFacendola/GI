@@ -5,12 +5,6 @@
 using namespace gi_lib;
 using namespace std;
 
-size_t SingletonBundle::GetCacheKey() const{
-
-	return 0;
-
-}
-
 size_t LoadFromFile::GetCacheKey() const{
 
 	std::string wfile(file_name.begin(), file_name.end());

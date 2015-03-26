@@ -93,7 +93,7 @@ namespace{
 
 		vector<ID3D11ShaderResourceView*> resources;		/// \brief Resource binding.
 
-		vector<ID3D11SamplerState*> samplers;				/// \brief Sampler binding.
+		unsigned int sampler_count;							/// \brief Number of sampler needed by the shader. The actual sampler is defined by the renderer.
 
 		/// \brief Default constructor;
 		ShaderBundle();
@@ -158,7 +158,7 @@ namespace{
 
 		buffers = std::move(other.buffers);
 		resources = std::move(other.resources);
-		samplers = std::move(other.samplers);
+		sampler_count = other.sampler_count;
 
 	}
 
@@ -505,8 +505,6 @@ private:
 
 	void AddBundle(ShaderType shader_type);
 
-	void UpdateSamplerStates();
-
 	void UpdateResourceViews();
 
 	vector<BufferStatus> buffer_status_;								///< \brief Status of constant buffers.
@@ -514,10 +512,6 @@ private:
 	vector<shared_ptr<ShaderResource>> resources_;						///< \brief Status of bound resources.
 
 	ShaderType resource_dirty_mask_;									///< \brief Dirty mask used to determine which bundle needs to be updated resource-wise.
-
-	shared_ptr<DX11Sampler> sampler_;									///< \brief Default sampler.
-	
-	ListenerKey on_sampler_changed_listener_;
 
 	const ShaderReflection& reflection_;
 		
@@ -548,15 +542,6 @@ reflection_(reflection){
 
 	// Resource status (empty)
 	resources_.resize(reflection.resources.size());
-
-	// Sampler status (default)
-	sampler_ = DX11Graphics::GetInstance().GetResources().Load<DX11Sampler, SingletonBundle>({});
-	
-	on_sampler_changed_listener_ = sampler_->OnSamplerChanged().AddListener([this](DX11Sampler&){
-
-		UpdateSamplerStates();
-
-	});
 
 	// Bundles
 	AddBundle(ShaderType::VERTEX_SHADER);
@@ -607,38 +592,16 @@ void DX11Material::InstanceImpl::AddBundle(ShaderType shader_type){
 	
 										  }));
 	
-	// Samplers, built once, updated on demand (happens only when system options are changed)
-	auto sampler_state = &(sampler_->GetSamplerState());
+	// Sampler count, never changes
+	bundle.sampler_count = static_cast<unsigned int>(std::count_if(reflection_.samplers.begin(),
+													 reflection_.samplers.end(),
+													 [shader_type](const ShaderSamplerDesc& sampler_desc){
+	
+														return sampler_desc.shader_usage && shader_type;
 
-	for (auto& sampler : reflection_.samplers){
-
-		if (sampler.shader_usage && shader_type){
-
-			bundle.samplers.push_back(sampler_state);
-
-		}
-
-	}
+													  }));
 
 	bundles[shader_type] = std::move(bundle);
-
-}
-
-void DX11Material::InstanceImpl::UpdateSamplerStates(){
-
-	auto sampler_state = &(sampler_->GetSamplerState());	// The sampler state is unique, just override every sampler state in each bundle with the same object.
-
-	for (auto& bundle : bundles){
-
-		auto& samplers = bundle.second.samplers;
-
-		for (size_t sampler_index = 0; sampler_index < samplers.size(); ++sampler_index){
-
-			samplers[sampler_index] = sampler_state;
-
-		}
-
-	}
 
 }
 
@@ -779,6 +742,8 @@ shared_ptr<Material::Variable> DX11Material::GetVariable(const string& name){
 
 	size_t buffer_index = 0;
 
+	// O(#total variables)
+
 	for (auto& buffer : buffers){
 
 		auto it = std::find_if(buffer.variables.begin(),
@@ -809,6 +774,8 @@ shared_ptr<Material::Variable> DX11Material::GetVariable(const string& name){
 shared_ptr<Material::Resource> DX11Material::GetResource(const string& name){
 
 	auto& resources = shared_impl_->reflection.resources;
+
+	// O(#total resources)
 
 	auto it = std::find_if(resources.begin(),
 						   resources.end(),
@@ -842,64 +809,5 @@ size_t DX11Material::GetSize() const{
 								return size + desc.size;
 
 						   });
-
-}
-
-///////////////////////////// SAMPLER ////////////////////////////////////////////////
-
-DX11Sampler::DX11Sampler(ID3D11Device&, const SingletonBundle&){
-
-	RebuildSampler();
-
-	DX11Graphics::GetInstance().OnSettingsChanged().AddListener([this](const GraphicsSettings& old_settings, const GraphicsSettings& new_settings){
-
-		if (old_settings.anisotropy_level != new_settings.anisotropy_level){
-
-			RebuildSampler();
-
-		}
-
-	});
-
-}
-
-void DX11Sampler::RebuildSampler(){
-
-	auto& graphics = DX11Graphics::GetInstance();
-
-	ID3D11SamplerState * sampler;
-
-	THROW_ON_FAIL(MakeSampler(graphics.GetDevice(), 
-							  TextureMapping::WRAP,
-							  graphics.GetSettings().anisotropy_level,
-							  &sampler));
-
-	sampler_ = std::move(unique_com(sampler));
-
-	on_sampler_changed_.Notify(*this);
-	
-}
-
-size_t DX11Sampler::GetSize() const{
-
-	return sizeof(D3D11_SAMPLER_DESC);
-
-}
-
-ID3D11SamplerState& DX11Sampler::GetSamplerState(){
-
-	return *sampler_;
-
-}
-
-const ID3D11SamplerState& DX11Sampler::GetSamplerState() const{
-
-	return *sampler_;
-
-}
-
-Observable<DX11Sampler&>& DX11Sampler::OnSamplerChanged(){
-
-	return on_sampler_changed_;
 
 }

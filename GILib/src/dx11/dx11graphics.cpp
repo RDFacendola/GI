@@ -328,8 +328,7 @@ namespace{
 	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, LoadFromFile>(),
 												 Loader::Register<Mesh, BuildIndexedNormalTextured>(),
 												 Loader::Register<Material, CompileFromFile>(), 
-												 Loader::Register<Material, InstantiateFromMaterial>(),
-												 Loader::Register<DX11Sampler, SingletonBundle>() };
+												 Loader::Register<Material, InstantiateFromMaterial>() };
 
 	/// \brief Utility class for rendering stuffs.
 	class RenderHelper{
@@ -453,7 +452,7 @@ AdapterProfile DX11Graphics::GetAdapterProfile() const{
 
 unique_ptr<Output> DX11Graphics::CreateOutput(Window & window, const VideoMode & video_mode){
 
-	return std::make_unique<DX11Output>(window, *device_, *factory_, video_mode);
+	return std::make_unique<DX11Output>(window, video_mode);
 
 }
 
@@ -467,13 +466,13 @@ DX11Resources & DX11Graphics::GetResources(){
 
 //////////////////////////////////// OUTPUT //////////////////////////////////////////
 
-DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & factory, const VideoMode & video_mode) :
-	window_(window),
-	device_(device),
-	factory_(factory){
+DX11Output::DX11Output(Window & window, const VideoMode & video_mode) :
+	window_(window){
 
-	fullscreen_ = false;							//Windowed
-	vsync_ = false;									//Disabled by default
+	fullscreen_ = false;							// Windowed
+	vsync_ = false;									// Disabled by default
+	antialiasing_ = AntialiasingMode::NONE;			// Disabled by default.
+
 	video_mode_ = video_mode;
 
 	UpdateSwapChain();
@@ -497,28 +496,9 @@ DX11Output::DX11Output(Window & window, ID3D11Device & device, IDXGIFactory & fa
 																	
 																	video_mode_ = DXGIModeToVideoMode(desc.BufferDesc);
 
-																	UpdateViews();
+																	UpdateBackbuffer();
 
 																 });
-
-	on_settings_changed_listener_ = DX11Graphics::GetInstance().OnSettingsChanged().AddListener([this](const GraphicsSettings& old_settings, const GraphicsSettings& new_settings){
-
-		// If antialiasing mode changed the swapchain must be recreated
-		if (old_settings.antialiasing != new_settings.antialiasing){
-
-			UpdateSwapChain();
-
-		}
-
-	});
-
-	// Get the immediate context
-
-	ID3D11DeviceContext * context;
-
-	device_.GetImmediateContext(&context);
-
-	immediate_context_ = std::move(unique_com(context));
 
 }
 
@@ -548,7 +528,18 @@ void DX11Output::SetFullscreen(bool fullscreen){
 
 }
 
-///Create a new swapchain given its description
+void DX11Output::SetAntialiasing(AntialiasingMode antialiasing){
+
+	if (antialiasing_ != antialiasing){
+
+		antialiasing_ = antialiasing;
+
+		UpdateSwapChain();
+
+	}
+
+}
+
 void DX11Output::UpdateSwapChain(){
 
 	// Description from video mode and antialiasing mode
@@ -563,91 +554,31 @@ void DX11Output::UpdateSwapChain(){
 	dxgi_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
 
 	dxgi_desc.BufferDesc = VideoModeToDXGIMode(video_mode_);
-	dxgi_desc.SampleDesc = AntialiasingModeToSampleDesc(DX11Graphics::GetInstance().GetSettings().antialiasing);
+	dxgi_desc.SampleDesc = AntialiasingModeToSampleDesc(antialiasing_);
 
 	// Create the actual swap chain
 
 	IDXGISwapChain * swap_chain;
 		
-	THROW_ON_FAIL(factory_.CreateSwapChain(&device_,
-										   &dxgi_desc,
-										   &swap_chain));
+	auto& graphics = DX11Graphics::GetInstance();
+
+	auto& factory = graphics.GetFactory();
+	auto& device = graphics.GetDevice();
+
+	THROW_ON_FAIL(factory.CreateSwapChain(&device,
+										  &dxgi_desc,
+										  &swap_chain));
 
 	swap_chain_ = std::move(unique_com(swap_chain));
 
-	UpdateViews();
+	UpdateBackbuffer();
 	
 	// Restore the fullscreen state
 	SetFullscreen(fullscreen_);
 
 }
 
-// Draw the specified scene
-void DX11Output::Draw(Scene & scene){
-
-	// Draw the scene from every camera (High priority cameras are rendered first)
-	for (auto camera : scene.GetCameras()){
-
-		// Objects seen from the camera
-		auto nodes = scene.GetBVH().GetIntersections(camera->GetViewFrustum());
-
-		Draw(*camera, nodes);
-
-	}
-
-	swap_chain_->Present(IsVSync() ? 1 : 0,
-						 0);
-
-	immediate_context_->ClearState();
-
-}
-
-void DX11Output::Draw(Camera & camera, const vector<SceneNode *> & nodes){
-
-	// vvvvvv changes for every type of renderer, different paths ecc vvvvvvvvvvv
-
-	// Setup the renderer
-
-	// For each node n
-	//    For each material m of n
-	//       Setup m
-	//       Draw n
-
-	// Finalize
-
-	/*
-	// Will bind and clear the camera's target correctly
-	RenderHelper::SetupRenderTarget(camera, *immediate_context_);
-
-	// Draw every node using the given technique (!?)
-
-	Aspect * aspect;
-
-	DX11MaterialInstance * dx11_material;
-
-	for (auto node : nodes){
-
-		aspect = node->GetComponent<Aspect>();
-				
-		if (aspect != nullptr){
-
-			for (auto material : aspect->GetMaterials()){
-
-				dx11_material = & resource_cast(*material);
-
-				// Set the shader status
-				// Draw!
-
-			}
-
-		}
-		
-	}
-	*/
-
-}
-
-void DX11Output::UpdateViews(){
+void DX11Output::UpdateBackbuffer(){
 
 	ID3D11Texture2D * back_buffer;
 

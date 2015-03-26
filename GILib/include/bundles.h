@@ -40,16 +40,6 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Bundle used to load singleton resources without additional parameters.
-	struct SingletonBundle{
-
-		USE_CACHE
-
-		/// \brief Get the cache key associated to the singleton.
-		size_t GetCacheKey() const;
-
-	};
-
 	/// \brief Bundle used to load a resource from a file.
 
 	/// Almost every resource can be loaded straight from a file.

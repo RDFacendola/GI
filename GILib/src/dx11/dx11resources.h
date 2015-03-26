@@ -274,41 +274,6 @@ namespace gi_lib{
 			
 		};
 
-		/// \brief DirectX11 sampler.
-		/// \author Raffaele D. Facendola.
-		class DX11Sampler : public Resource{
-
-		public:
-
-			/// \brief Create a new default sampler state.
-			/// \param device Device used to create the sampler.
-			/// \param bundle Not used.
-			DX11Sampler(ID3D11Device& device, const SingletonBundle& bundle);
-
-			virtual size_t GetSize() const override;
-
-			/// \brief Get the sampler state.
-			/// \return Return the sampler state.
-			ID3D11SamplerState& GetSamplerState();
-
-			/// \brief Get the sampler state.
-			/// \return Return the sampler state.
-			const ID3D11SamplerState& GetSamplerState() const;
-
-			/// \brief Event triggered when the sampler state changed.
-			/// Sampler change according to the graphics settings.
-			Observable<DX11Sampler&>& OnSamplerChanged();
-
-		private:
-
-			void RebuildSampler();
-
-			unique_ptr<ID3D11SamplerState, COMDeleter> sampler_;
-
-			Event<DX11Sampler&> on_sampler_changed_;
-
-		};
-
 		/// \brief DirectX11 resource mapping template.
 		template<typename TResource> struct ResourceMapping;
 
