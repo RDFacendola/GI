@@ -23,8 +23,14 @@ using ::Eigen::Matrix;
 
 namespace gi_lib{
 
-	class Resource;
+	enum class BlendMode;
+	enum class AntialiasingMode;
+
+	class IResource;
+	class IBindable;
+
 	class Texture2D;
+	class RenderTarget;
 	class Mesh;
 	class Material;
 
@@ -39,11 +45,11 @@ namespace gi_lib{
 	
 	/// \brief Base interface for graphical resources.
 	/// \author Raffaele D. Facendola.
-	class Resource{
+	class IResource{
 
 	public:
 
-		virtual ~Resource(){}
+		virtual ~IResource(){}
 
 		/// \brief Get the memory footprint of this resource.
 		/// \return Returns the size of the resource, in bytes.
@@ -51,19 +57,19 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Base interface for graphical resources that can also be bound to the pipeline as shader resources.
-	class ShaderResource{
+	/// \brief Base interface for resources that can be bound to the pipeline as shader resources.
+	class IBindable{
 
 	public:
 
 		/// \brief Needed for virtual classes.
-		virtual ~ShaderResource(){}
+		virtual ~IBindable(){}
 
 	};
 
 	/// \brief Base interface for plain textures.
 	/// \author Raffaele D. Facendola.
-	class Texture2D : public Resource, public ShaderResource{
+	class Texture2D : public IResource, public IBindable{
 
 	public:
 
@@ -90,7 +96,7 @@ namespace gi_lib{
 	/// It may also have its how depth and stencil buffer.
 	/// This class handles Multi Render Targets (MRT) as well.
 	/// \author Raffaele D. Facendola.
-	class RenderTarget : public Resource{
+	class RenderTarget : public IResource{
 
 	public:
 
@@ -127,12 +133,17 @@ namespace gi_lib{
 		/// The aspect ratio is Width/Height.
 		/// \return Returns the aspect ratio of the render target.
 		virtual float GetAspectRatio() const = 0;
+
+		/// \brief Get the antialiasing mode of the render target.
+		/// The antialiasing mode influences the number of samples per pixel for techniques like MSAA.
+		/// \return Return the antialiasing mode of the render target.
+		virtual AntialiasingMode GetAntialiasing() const = 0;
 		
 	};
 
 	/// \brief Base interface for meshes.
 	/// \author Raffaele D. Facendola.
-	class Mesh : public Resource{
+	class Mesh : public IResource{
 
 	public:
 
@@ -161,7 +172,7 @@ namespace gi_lib{
 	/// \brief Base interface for materials.
 
 	/// \author Raffaele D. Facendola
-	class Material : public Resource{
+	class Material : public IResource{
 
 	public:
 
@@ -197,7 +208,7 @@ namespace gi_lib{
 
 			/// \brief Set the resource value.
 			/// \param resource The resource to bind to the material.
-			virtual void Set(shared_ptr<ShaderResource> resource) = 0;
+			virtual void Set(shared_ptr<IBindable> resource) = 0;
 
 		};
 
@@ -213,6 +224,9 @@ namespace gi_lib{
 		/// \param name The name of the resource.
 		/// \return Returns a pointer to the resource matching the specified name.
 		virtual shared_ptr<Resource> GetResource(const string& name) = 0;
+
+		/// \brief Get the material blend mode.
+		virtual BlendMode GetBlendMode() const = 0;
 
 	};
 

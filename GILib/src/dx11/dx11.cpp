@@ -234,6 +234,8 @@ namespace{
 
 		}
 
+		reflection.shaders |= ShaderTraits<TShader>::flag;
+
 		return S_OK;
 
 	}

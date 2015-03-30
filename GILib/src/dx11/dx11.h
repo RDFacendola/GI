@@ -32,6 +32,8 @@ namespace gi_lib{
 			GEOMETRY_SHADER = 8u,		///< \brief Geometry shader.
 			PIXEL_SHADER = 16u,			///< \brief Pixel shader.
 
+			ALL = 31u,					///< \brief All shaders (bitwise-or of the above)
+
 		};
 
 		/// \brief Type of a shader resource.
@@ -101,6 +103,8 @@ namespace gi_lib{
 
 		/// \brief Description of a shader.
 		struct ShaderReflection{
+
+			ShaderType shaders;							///< \brief Shader presence.
 
 			vector<ShaderBufferDesc> buffers;			///< \brief Buffers.
 

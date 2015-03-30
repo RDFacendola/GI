@@ -270,7 +270,7 @@ namespace{
 	/// \brief Loader class. Maps every resource with their respective loader.
 	class Loader{
 
-		using LoaderFunction = unique_ptr<Resource>(*)(ID3D11Device &, const void *);
+		using LoaderFunction = unique_ptr<IResource>(*)(ID3D11Device &, const void *);
 		using LoaderKey = pair < std::type_index, std::type_index >;
 		using LoaderMap = map < LoaderKey, LoaderFunction >;
 
@@ -282,14 +282,14 @@ namespace{
 		/// \param device Device used to create the resource.
 		/// \param settings Settings used to load the resource.
 		/// \return Returns a shared pointer to the loaded resource.
-		static unique_ptr<Resource> Load(const std::type_index & resource_type, const std::type_index & bundle_type, ID3D11Device & device, const void * bundle){
+		static unique_ptr<IResource> Load(const std::type_index & resource_type, const std::type_index & bundle_type, ID3D11Device & device, const void * bundle){
 
 			auto key = make_pair(resource_type, bundle_type);
 
 			auto it = loader_map_.find(key);
 
 			return it == loader_map_.end() ?
-				unique_ptr<Resource>() :			// Not supported
+				unique_ptr<IResource>() :			// Not supported
 				it->second(device, bundle);
 			
 		}
@@ -298,7 +298,7 @@ namespace{
 
 		/// \brief Load routine dispatcher.
 		template <typename TResource, typename TBundle>
-		static unique_ptr<Resource> LoadResource(ID3D11Device & device, const void * settings){
+		static unique_ptr<IResource> LoadResource(ID3D11Device & device, const void * settings){
 
 			// The resource created is the mapped type of TResource (eg: Texture2D => DX11Texture2D)
 			return make_unique<typename ResourceMapping<TResource>::TMapped>(device,
@@ -601,7 +601,7 @@ void DX11Output::UpdateBackbuffer(){
 
 /////////////////////////////////// RESOURCES ///////////////////////////////////////////
 
-unique_ptr<Resource> DX11Resources::Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle){
+unique_ptr<IResource> DX11Resources::Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle){
 
 	return Loader::Load(resource_type, bundle_type, device_, bundle);
 

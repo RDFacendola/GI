@@ -28,8 +28,9 @@ using ::std::map;
 namespace gi_lib{
 
 	class Window;
-	class Resource;
 	class Scene;
+
+	class IResource;
 
 	/// \brief Enumeration of all the supported API.
 	enum class API{
@@ -46,6 +47,13 @@ namespace gi_lib{
 		MSAA_4X,		///< Multisample antialiasing, 4X.
 		MSAA_8X,		///< Multisample antialiasing, 8X.
 		MSAA_16X,		///< Multisample antialiasing, 16X.
+
+	};
+
+	/// \brief Describes how rendered pixels are blended with existing ones.
+	enum class BlendMode{
+
+		Opaque,					///< \brief The geometry is fully opaque.
 
 	};
 
@@ -193,7 +201,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Type of resource map values.
-		using ResourceMapValue =  weak_ptr < Resource >;
+		using ResourceMapValue =  weak_ptr < IResource >;
 
 		/// \brief Type of resource map. 
 		using ResourceMap = map < ResourceMapKey, ResourceMapValue >;
@@ -203,7 +211,7 @@ namespace gi_lib{
 		/// \param bundle_type Bundle's type index.
 		/// \param bundle Pointer to the bundle to be used to load the resource.
 		/// \return Returns a pointer to the loaded resource
-		virtual unique_ptr<Resource> Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle) = 0;
+		virtual unique_ptr<IResource> Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle) = 0;
 
 	private:
 
@@ -273,11 +281,11 @@ namespace gi_lib{
 		}
 
 		// Load the actual resource
-		auto resource = shared_ptr<Resource>(std::move(Load(type_index(typeid(TResource)),
+		auto resource = shared_ptr<IResource>(std::move(Load(type_index(typeid(TResource)),
 															std::type_index(typeid(TBundle)), 
 															&bundle)));
 
-		resources_[key] = std::weak_ptr<Resource>(resource);	// Stores a weak reference for caching reasons.
+		resources_[key] = std::weak_ptr<IResource>(resource);	// Stores a weak reference for caching reasons.
 
 		//  This cast is safe as long as the virtual LoadResource is implemented properly!
 		return static_pointer_cast<TResource>(resource);
@@ -290,9 +298,9 @@ namespace gi_lib{
 		// Uncached version
 
 		// Load the actual resource
-		auto resource = shared_ptr<Resource>(std::move(Load(type_index(typeid(TResource)),
-															std::type_index(typeid(TBundle)), 
-															&bundle)));
+		auto resource = shared_ptr<IResource>(std::move(Load(type_index(typeid(TResource)),
+															 std::type_index(typeid(TBundle)), 
+															 &bundle)));
 
 		//  This cast is safe as long as the virtual LoadResource is implemented properly!
 		return static_pointer_cast<TResource>(resource);

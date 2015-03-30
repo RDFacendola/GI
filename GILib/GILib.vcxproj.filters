@@ -84,6 +84,7 @@
       <Filter>pattern</Filter>
     </ClInclude>
     <ClInclude Include="src\dx11\dx11.h" />
+    <ClInclude Include="include\debug.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">

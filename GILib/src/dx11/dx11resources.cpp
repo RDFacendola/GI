@@ -19,6 +19,7 @@
 #include "..\..\include\scope_guard.h"
 #include "..\..\include\bundles.h"
 #include "..\..\include\observable.h"
+#include "..\..\include\debug.h"
 
 #include "dx11.h"
 #include "dx11graphics.h"
@@ -113,8 +114,9 @@ namespace{
 		/// \param size Size of the buffer to create.
 		BufferStatus(ID3D11Device& device, size_t size);
 
-		/// \brief No copy constructor.
-		BufferStatus(const BufferStatus&) = delete;
+		/// \brief Copy constructor
+		/// \param Instance to copy.
+		BufferStatus(const BufferStatus& other);
 
 		/// \brief Move constructor.
 		/// \param Instance to move.
@@ -169,8 +171,8 @@ namespace{
 		ID3D11Buffer * buffer;
 
 		THROW_ON_FAIL(MakeConstantBuffer(device,
-										  size,
-										  &buffer));
+										 size,
+										 &buffer));
 
 		buffer_.reset(buffer);
 
@@ -179,6 +181,34 @@ namespace{
 		size_ = size;
 
 		dirty_ = false;
+
+	}
+
+	BufferStatus::BufferStatus(const BufferStatus& other){
+
+		ID3D11Device* device;
+		ID3D11Buffer * buffer;
+
+		other.buffer_->GetDevice(&device);
+
+		COM_GUARD(device);
+
+		THROW_ON_FAIL(MakeConstantBuffer(*device,
+										 other.size_,
+										 &buffer));
+
+		buffer_.reset(buffer);
+
+		data_ = new char[other.size_];
+
+		size_ = other.size_;
+
+		dirty_ = true;			// lazily update the constant buffer.
+
+		memcpy_s(data_,			// copy the current content of the buffer.
+				 size_, 
+				 other.data_, 
+				 other.size_);
 
 	}
 
@@ -494,12 +524,14 @@ struct DX11Material::InstanceImpl{
 	
 	InstanceImpl(ID3D11Device& device, const ShaderReflection& reflection);
 
+	InstanceImpl(const InstanceImpl& impl);
+
 	/// \brief No assignment operator.
 	InstanceImpl& operator=(const InstanceImpl&) = delete;
 	
 	void SetVariable(size_t index, const void * data, size_t size, size_t offset);
 
-	void SetResource(size_t index, shared_ptr<ShaderResource> resource);
+	void SetResource(size_t index, shared_ptr<IBindable> resource);
 	
 private:
 
@@ -509,7 +541,7 @@ private:
 
 	vector<BufferStatus> buffer_status_;								///< \brief Status of constant buffers.
 
-	vector<shared_ptr<ShaderResource>> resources_;						///< \brief Status of bound resources.
+	vector<shared_ptr<IBindable>> resources_;							///< \brief Status of bound resources.
 
 	ShaderType resource_dirty_mask_;									///< \brief Dirty mask used to determine which bundle needs to be updated resource-wise.
 
@@ -522,10 +554,17 @@ struct DX11Material::MaterialImpl{
 
 	ShaderReflection reflection;													/// \brief Combined reflection of the shaders.
 
+	BlendMode blend_mode;															/// \brief Blend mode.
+
 	unordered_map<ShaderType, unique_ptr<ID3D11DeviceChild, COMDeleter>> shaders;	/// \brief Shader objects.
 
 	MaterialImpl(ID3D11Device& device, const CompileFromFile& bundle);
 	
+private:
+
+	template <typename TShader>
+	void MakeShader(ID3D11Device& device, const string& code, const string& file_name, bool mandatory);
+
 };
 
 //----------------------------  MATERIAL :: INSTANCE IMPL -------------------------------//
@@ -554,13 +593,28 @@ reflection_(reflection){
 
 }
 
+DX11Material::InstanceImpl::InstanceImpl(const InstanceImpl& impl) :
+buffer_status_(impl.buffer_status_),				// Copy ctor will copy the buffer status
+resources_(impl.resources_),						// Same resources bound
+resource_dirty_mask_(ShaderType::ALL),				// Used to lazily update the resources' shader views
+reflection_(impl.reflection_){
+
+	// Bundles
+	AddBundle(ShaderType::VERTEX_SHADER);
+	AddBundle(ShaderType::HULL_SHADER);
+	AddBundle(ShaderType::DOMAIN_SHADER);
+	AddBundle(ShaderType::GEOMETRY_SHADER);
+	AddBundle(ShaderType::PIXEL_SHADER);
+
+}
+
 void DX11Material::InstanceImpl::SetVariable(size_t index, const void * data, size_t size, size_t offset){
 
 	buffer_status_[index].Write(data, size, offset);
 
 }
 
-void DX11Material::InstanceImpl::SetResource(size_t index, shared_ptr<ShaderResource> resource){
+void DX11Material::InstanceImpl::SetResource(size_t index, shared_ptr<IBindable> resource){
 
 	resources_[index] = resource;
 
@@ -570,38 +624,42 @@ void DX11Material::InstanceImpl::SetResource(size_t index, shared_ptr<ShaderReso
 
 void DX11Material::InstanceImpl::AddBundle(ShaderType shader_type){
 
-	ShaderBundle bundle;
+	if (reflection_.shaders && shader_type){
+		
+		ShaderBundle bundle;
 
-	// Buffers, built once, updated automatically.
-	for (int buffer_index = 0; buffer_index < buffer_status_.size(); ++buffer_index){
+		// Buffers, built once, updated automatically.
+		for (int buffer_index = 0; buffer_index < buffer_status_.size(); ++buffer_index){
 
-		if (reflection_.buffers[buffer_index].shader_usage && shader_type){
+			if (reflection_.buffers[buffer_index].shader_usage && shader_type){
 
-			bundle.buffers.push_back(&buffer_status_[buffer_index].GetBuffer());
+				bundle.buffers.push_back(&buffer_status_[buffer_index].GetBuffer());
+
+			}
 
 		}
 
+		// Resources, built once, update by need (when the material is bound to the pipeline).
+		bundle.resources.resize(std::count_if(reflection_.resources.begin(),
+			reflection_.resources.end(),
+			[shader_type](const ShaderResourceDesc& resource_desc){
+
+			return resource_desc.shader_usage && shader_type;
+
+		}));
+
+		// Sampler count, never changes
+		bundle.sampler_count = static_cast<unsigned int>(std::count_if(reflection_.samplers.begin(),
+			reflection_.samplers.end(),
+			[shader_type](const ShaderSamplerDesc& sampler_desc){
+
+			return sampler_desc.shader_usage && shader_type;
+
+		}));
+
+		bundles[shader_type] = std::move(bundle);
+
 	}
-
-	// Resources, built once, update by need (when the material is bound to the pipeline).
-	bundle.resources.resize(std::count_if(reflection_.resources.begin(),
-										  reflection_.resources.end(),
-										  [shader_type](const ShaderResourceDesc& resource_desc){ 
-		
-											  return resource_desc.shader_usage && shader_type; 
-	
-										  }));
-	
-	// Sampler count, never changes
-	bundle.sampler_count = static_cast<unsigned int>(std::count_if(reflection_.samplers.begin(),
-													 reflection_.samplers.end(),
-													 [shader_type](const ShaderSamplerDesc& sampler_desc){
-	
-														return sampler_desc.shader_usage && shader_type;
-
-													  }));
-
-	bundles[shader_type] = std::move(bundle);
 
 }
 
@@ -644,36 +702,65 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 
 	string file_name = string(bundle.file_name.begin(), bundle.file_name.end());
 
-	wstring error;
-
-	ID3D11VertexShader* vs = nullptr;
-	ID3D11HullShader* hs = nullptr;
-	ID3D11DomainShader* ds = nullptr;
-	ID3D11GeometryShader* gs = nullptr;
-	ID3D11PixelShader* ps = nullptr;
-
 	auto rollback = make_scope_guard([&](){
 
-		release_com({ vs, hs, ds, gs, ps });
+		shaders.clear();
 
 	});
 
-	// Create everything
-	THROW_ON_FAIL(MakeShader(device, code, file_name, &vs, &reflection, &error), error);	// The vertex shader is mandatory.
-				  MakeShader(device, code, file_name, &hs, &reflection);
-				  MakeShader(device, code, file_name, &ds, &reflection);
-				  MakeShader(device, code, file_name, &gs, &reflection);
-	THROW_ON_FAIL(MakeShader(device, code, file_name, &ps, &reflection, &error), error);	// The pixel shader is mandatory.
-	
-	// Commit
-	shaders[ShaderType::VERTEX_SHADER] = unique_com(vs);
-	shaders[ShaderType::HULL_SHADER] = unique_com(hs);
-	shaders[ShaderType::DOMAIN_SHADER] = unique_com(ds);
-	shaders[ShaderType::GEOMETRY_SHADER] = unique_com(gs);
-	shaders[ShaderType::PIXEL_SHADER] = unique_com(ps);
+	// Shaders
 
+	reflection.shaders = ShaderType::NONE;
+
+	MakeShader<ID3D11VertexShader>(device, code, file_name, true);		// mandatory
+	MakeShader<ID3D11HullShader>(device, code, file_name, false);		// optional
+	MakeShader<ID3D11DomainShader>(device, code, file_name, false);		// optional
+	MakeShader<ID3D11GeometryShader>(device, code, file_name, false);	// optional
+	MakeShader<ID3D11PixelShader>(device, code, file_name, true);		// mandatory
+				
+	// Blend mode
+
+	TODO("Add support to other blend modes here.");
+
+	blend_mode = BlendMode::Opaque;
+	
 	// Dismiss
 	rollback.Dismiss();
+
+}
+
+template <typename TShader>
+void DX11Material::MaterialImpl::MakeShader(ID3D11Device& device, const string& code, const string& file_name, bool mandatory){
+
+	const wstring entry_point_exception_code = L"X3501";	// Exception code thrown when the entry point could not be found (ie: a shader doesn't exists).
+
+	TShader* shader;
+
+	wstring errors;
+
+	if (FAILED(::MakeShader(device, 
+							code,
+							file_name, 
+							&shader, 
+							&reflection, 
+							&errors))){
+
+		// Throws only if the compilation process fails when the entry point is found (on syntax error). 
+		// If the entry point is not found, throws only if the shader presence was mandatory.
+
+		if(mandatory ||
+		   errors.find(entry_point_exception_code) == wstring::npos){
+
+			THROW(errors);	
+
+		}
+
+	}
+	else{
+
+		shaders[ShaderTraits<TShader>::flag] = unique_com(shader);
+
+	}
 
 }
 
@@ -703,7 +790,7 @@ DX11Material::Resource::Resource(InstanceImpl& instance_impl, size_t resource_in
 instance_impl_(&instance_impl),
 resource_index_(resource_index){}
 
-void DX11Material::Resource::Set(shared_ptr<ShaderResource> resource){
+void DX11Material::Resource::Set(shared_ptr<IBindable> resource){
 
 	instance_impl_->SetResource(resource_index_, resource);
 
@@ -719,13 +806,13 @@ DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
 
 }
 
-DX11Material::DX11Material(ID3D11Device& device, const InstantiateFromMaterial& bundle){
+DX11Material::DX11Material(ID3D11Device&, const InstantiateFromMaterial& bundle){
 
 	auto& material = resource_cast(*bundle.base);
 	
 	shared_impl_ = material.shared_impl_;
 
-	private_impl_ = make_unique<InstanceImpl>(device, shared_impl_->reflection);	// TODO: copy the current status of the base material
+	private_impl_ = make_unique<InstanceImpl>(*material.private_impl_);
 	
 }
 
@@ -809,5 +896,11 @@ size_t DX11Material::GetSize() const{
 								return size + desc.size;
 
 						   });
+
+}
+
+BlendMode DX11Material::GetBlendMode() const{
+
+	return shared_impl_->blend_mode;
 
 }

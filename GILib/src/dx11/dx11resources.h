@@ -30,15 +30,14 @@ namespace gi_lib{
 
 		class DX11Texture2D;
 		class DX11Mesh;
-		class DX11Sampler;
 		
 		/// \brief Base interface for DirectX11 resources that can be bound as shader resources.
 		/// \author Raffaele D. Facendola
-		class DX11ShaderResource : public ShaderResource {
+		class DX11Bindable : public IBindable {
 
 		public:
 
-			virtual ~DX11ShaderResource(){}
+			virtual ~DX11Bindable(){}
 
 			/// \brief Get the shader resource view associated to this shader resource.
 			/// \return Returns the shader resource view associated to this shader resource.
@@ -48,7 +47,7 @@ namespace gi_lib{
 
 		/// \brief DirectX11 plain texture.
 		/// \author Raffaele D. Facendola.
-		class DX11Texture2D : public Texture2D, public DX11ShaderResource{
+		class DX11Texture2D : public Texture2D, public DX11Bindable{
 
 		public:
 			
@@ -120,6 +119,8 @@ namespace gi_lib{
 
 			virtual float GetAspectRatio() const override;
 
+			virtual AntialiasingMode GetAntialiasing() const override;
+
 			/// \brief Set new buffers for the render target.
 
 			/// \param buffers The list of buffers to bound
@@ -153,6 +154,8 @@ namespace gi_lib{
 			vector<shared_ptr<DX11Texture2D>> textures_;
 
 			shared_ptr<DX11Texture2D> zstencil_;
+
+			AntialiasingMode antialiasing_;
 
 		};
 
@@ -220,6 +223,8 @@ namespace gi_lib{
 
 			virtual shared_ptr<Material::Resource> GetResource(const string& name) override;
 
+			virtual BlendMode GetBlendMode() const override;
+
 		private:
 
 			/// \brief Holds the properties shared among material istances.
@@ -258,7 +263,7 @@ namespace gi_lib{
 
 				Resource(InstanceImpl& instance_impl, size_t resource_index);
 
-				virtual void Set(shared_ptr<ShaderResource> resource) override;
+				virtual void Set(shared_ptr<IBindable> resource) override;
 
 			private:
 
@@ -278,10 +283,10 @@ namespace gi_lib{
 		template<typename TResource> struct ResourceMapping;
 
 		/// \brief Shader resource mapping.
-		template<> struct ResourceMapping < ShaderResource > {
+		template<> struct ResourceMapping < IBindable > {
 
 			/// \brief Concrete type associated to a shader resource.
-			using TMapped = DX11ShaderResource;
+			using TMapped = DX11Bindable;
 
 		};
 
@@ -317,15 +322,6 @@ namespace gi_lib{
 
 		};
 
-		/// \brief Sampler mapping.
-		/// Actually a sampler is an internal resource, so the mapping is the resource type itself.
-		template<> struct ResourceMapping < DX11Sampler > {
-
-			/// \brief Concrete type associated to a sampler.
-			using TMapped = DX11Sampler;
-
-		};
-
 		/// \brief Performs a resource cast from an abstract type to a concrete type.
 		/// \tparam TResource Type of the resource to cast.
 		/// \param resource The shared pointer to the resource to cast.
@@ -349,9 +345,9 @@ namespace gi_lib{
 		}
 		
 		/// \brief Get the shader resource view of a resource.
-		inline ID3D11ShaderResourceView& resource_view(ShaderResource& resource){
+		inline ID3D11ShaderResourceView& resource_view(IBindable& resource){
 
-			return static_cast<DX11ShaderResource&>(resource).GetShaderView();
+			return static_cast<DX11Bindable&>(resource).GetShaderView();
 
 		}
 
@@ -399,7 +395,13 @@ namespace gi_lib{
 
 			// The aspect ratio is guaranteed to be the same for all the targets.
 			return static_cast<float>(textures_[0]->GetWidth()) /
-				static_cast<float>(textures_[0]->GetHeight());
+				   static_cast<float>(textures_[0]->GetHeight());
+
+		}
+
+		inline AntialiasingMode DX11RenderTarget::GetAntialiasing() const{
+
+			return antialiasing_;
 
 		}
 
