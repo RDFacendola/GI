@@ -2,6 +2,7 @@
 
 #include <streambuf>
 #include <fstream>
+#include <algorithm>
 
 #include "..\include\exceptions.h"
 #include "..\include\timer.h"

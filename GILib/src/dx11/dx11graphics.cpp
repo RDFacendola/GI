@@ -478,27 +478,28 @@ DX11Output::DX11Output(Window & window, const VideoMode & video_mode) :
 	UpdateSwapChain();
 
 	//Listeners
-	on_window_resized_listener_ = window_.OnResized().AddListener([this](Window &, unsigned int, unsigned int){
+	on_window_resized_listener_ = make_listener(window_.OnResized(),
+												[this](Window &, unsigned int, unsigned int){
 
-																	// Release the old back buffer
-																	render_target_->ResetBuffers();
+													// Release the old back buffer
+													render_target_->ResetBuffers();
 
-																	//Resize the swapchain buffer
-																	swap_chain_->ResizeBuffers(kBuffersCount,
-																							   0,						//Will fit the client width
-																							   0,						//Will fit the client height
-																							   kVideoFormat,
-																							   0);
+													//Resize the swapchain buffer
+													swap_chain_->ResizeBuffers(kBuffersCount,
+																				0,						//Will fit the client width
+																				0,						//Will fit the client height
+																				kVideoFormat,
+																				0);
 
-																	DXGI_SWAP_CHAIN_DESC desc;
+													DXGI_SWAP_CHAIN_DESC desc;
 
-																	swap_chain_->GetDesc(&desc);
+													swap_chain_->GetDesc(&desc);
 																	
-																	video_mode_ = DXGIModeToVideoMode(desc.BufferDesc);
+													video_mode_ = DXGIModeToVideoMode(desc.BufferDesc);
 
-																	UpdateBackbuffer();
+													UpdateBackbuffer();
 
-																 });
+												});
 
 }
 

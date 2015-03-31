@@ -19,6 +19,8 @@
 #include "observable.h"
 
 using ::std::shared_ptr;
+using ::std::weak_ptr;
+using ::std::unique_ptr;
 using ::std::map;
 using ::std::string;
 using ::std::wstring;
