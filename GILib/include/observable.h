@@ -21,7 +21,7 @@ namespace gi_lib{
 	/// \brief Tag associated to listener objects.
 	struct ListenerTag{};
 
-	/// \brief Listener type.
+	/// \brief Listener id type.
 	using ListenerId = Unique < ListenerTag > ;
 
 	/// \brief Observable object.
@@ -41,7 +41,7 @@ namespace gi_lib{
 
 		/// \brief Remove a listener object from this observable.
 		/// \param id Id of the listener to remove.
-		void RemoveListener(const ListenerId & id);
+		void RemoveListener(const ListenerId& id);
 
 	protected:
 

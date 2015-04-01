@@ -9,6 +9,7 @@
 #include "..\..\include\scene.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\resources.h"
+#include "..\..\include\renderers.h"
 #include "..\..\include\bundles.h"
 
 #include "dx11resources.h"
@@ -464,6 +465,12 @@ DX11Resources & DX11Graphics::GetResources(){
 
 }
 
+unique_ptr<IRenderer> DX11Graphics::CreateRenderer(const type_index & renderer_type, const type_index & renderer_args_type, const void * renderer_args) const{
+
+	return nullptr;
+
+}
+
 //////////////////////////////////// OUTPUT //////////////////////////////////////////
 
 DX11Output::DX11Output(Window & window, const VideoMode & video_mode) :
@@ -602,7 +609,7 @@ void DX11Output::UpdateBackbuffer(){
 
 /////////////////////////////////// RESOURCES ///////////////////////////////////////////
 
-unique_ptr<IResource> DX11Resources::Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle){
+unique_ptr<IResource> DX11Resources::Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle) const{
 
 	return Loader::Load(resource_type, bundle_type, device_, bundle);
 

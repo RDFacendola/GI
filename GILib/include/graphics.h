@@ -31,6 +31,7 @@ namespace gi_lib{
 	class Scene;
 
 	class IResource;
+	class IRenderer;
 
 	/// \brief Enumeration of all the supported API.
 	enum class API{
@@ -207,11 +208,13 @@ namespace gi_lib{
 		using ResourceMap = map < ResourceMapKey, ResourceMapValue >;
 
 		/// \brief Load a resource.
+		/// The method <i>requires</i> that <i>bundle<i> is compatible with <i>bundle_type</i>.
+		/// The method <i>ensures</i> that the returned object is compatible with the type <i>resource_type</i>.
 		/// \param resource_type Resource's type index.
 		/// \param bundle_type Bundle's type index.
 		/// \param bundle Pointer to the bundle to be used to load the resource.
 		/// \return Returns a pointer to the loaded resource
-		virtual unique_ptr<IResource> Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle) = 0;
+		virtual unique_ptr<IResource> Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle) const = 0;
 
 	private:
 
@@ -238,11 +241,16 @@ namespace gi_lib{
 		/// \brief Get the video card's parameters and capabilities.
 		virtual AdapterProfile GetAdapterProfile() const = 0;
 
-		/// \brief Initialize an output.
+		/// \brief Create an output.
 		/// \param window The window used to display the output.
 		/// \param video_mode The initial window mode.
 		/// \return Returns a pointer to the new output.
 		virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode) = 0;
+
+		/// \brief Create a renderer.
+		/// \return Returns a pointer to the new renderer.
+		template <typename TRenderer, typename TRendererArgs>
+		unique_ptr<TRenderer> CreateRenderer(const typename TRendererArgs& renderer_args);
 
 		/// \brief Get the resource manager.
 		/// \return Returns the resource manager.
@@ -252,17 +260,26 @@ namespace gi_lib{
 
 		Graphics();
 
+		/// \brief Create a renderer.
+		/// The method <i>requires</i> that <i>renderer_args<i> is compatible with <i>renderer_type</i>.
+		/// The method <i>ensures</i> that the returned object is compatible with the type <i>renderer_type</i>.
+		/// \param renderer_type Type of the renderer to create.
+		/// \param renderer_args_type Type of the renderer arguments.
+		/// \param renderer_args Pointer to the renderer arguments.
+		/// \return Returns a pointer to the new renderer.
+		virtual unique_ptr<IRenderer> CreateRenderer(const type_index & renderer_type, const type_index & renderer_args_type, const void * renderer_args) const = 0;
+
 	};
 
-	// Resources
+	///////////////////////////////// RESOURCES ////////////////////////////////////
 
 	template <typename TResource, typename TBundle, typename use_cache<TBundle>::type*>
 	shared_ptr<TResource> Resources::Load(const typename TBundle & bundle){
 
 		// Cached version
 
-		ResourceMapKey key(std::type_index(typeid(TResource)),
-						   std::type_index(typeid(TBundle)),
+		ResourceMapKey key(type_index(typeid(TResource)),
+						   type_index(typeid(TBundle)),
 						   bundle.GetCacheKey());
 
 		auto it = resources_.find(key);
@@ -282,12 +299,13 @@ namespace gi_lib{
 
 		// Load the actual resource
 		auto resource = shared_ptr<IResource>(std::move(Load(type_index(typeid(TResource)),
-															std::type_index(typeid(TBundle)), 
-															&bundle)));
+															 type_index(typeid(TBundle)), 
+															 &bundle)));
 
 		resources_[key] = std::weak_ptr<IResource>(resource);	// Stores a weak reference for caching reasons.
 
-		//  This cast is safe as long as the virtual LoadResource is implemented properly!
+		// Downcast from IResource to TResource. The cast here is safe (see: Load(.) contract).
+
 		return static_pointer_cast<TResource>(resource);
 		
 	}
@@ -299,11 +317,25 @@ namespace gi_lib{
 
 		// Load the actual resource
 		auto resource = shared_ptr<IResource>(std::move(Load(type_index(typeid(TResource)),
-															 std::type_index(typeid(TBundle)), 
+															 type_index(typeid(TBundle)), 
 															 &bundle)));
 
-		//  This cast is safe as long as the virtual LoadResource is implemented properly!
+		// Downcast from IResource to TResource. The cast here is safe (see: Load(.) contract).
+
 		return static_pointer_cast<TResource>(resource);
+
+	}
+	
+	///////////////////////////////// GRAPHICS ////////////////////////////////////
+
+	template <typename TRenderer, typename TRendererArgs>
+	unique_ptr<TRenderer> Graphics::CreateRenderer(const typename TRendererArgs& renderer_args){
+
+		// Downcast from IRenderer to TRenderer. The cast here is safe (see: CreateRenderer(.) contract).
+
+		return unique_ptr<TRenderer>(static_cast<TRenderer*>(CreateRenderer(type_index(typeid(TRenderer)),
+																			type_index(typeid(TRendererArgs)),
+																			&renderer_args).release()));
 
 	}
 

@@ -3,6 +3,7 @@
 #include <string>
 
 #include <resources.h>
+#include <renderers.h>
 
 #include <scene.h>
 #include <fbx\fbx.h>
@@ -27,6 +28,8 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	auto p = graphics_.GetAdapterProfile();
 
 	output_ = graphics_.CreateOutput(*this, p.video_modes[0]);
+
+	auto r = graphics_.CreateRenderer<TiledDeferredRenderer, LoadFromFile>({ L"" });
 
 	// Camera setup
 	

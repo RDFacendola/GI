@@ -55,6 +55,11 @@ namespace gi_lib{
 		/// \return Returns the size of the resource, in bytes.
 		virtual size_t GetSize() const = 0;
 
+	protected:
+
+		/// \brief Protected constructor. Prevent instantiation.
+		IResource(){}
+
 	};
 
 	/// \brief Base interface for resources that can be bound to the pipeline as shader resources.
@@ -64,6 +69,11 @@ namespace gi_lib{
 
 		/// \brief Needed for virtual classes.
 		virtual ~IBindable(){}
+
+	protected:
+
+		/// \brief Protected constructor. Prevent instantiation.
+		IBindable(){}
 
 	};
 
