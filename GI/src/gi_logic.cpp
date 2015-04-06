@@ -15,6 +15,12 @@ using namespace ::Eigen;
 
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
+void Foo(int a, int b){
+
+
+
+}
+
 GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {

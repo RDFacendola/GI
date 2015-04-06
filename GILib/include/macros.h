@@ -68,3 +68,11 @@ CONCATENATE(anon_, __COUNTER__)
 CONCATENATE(anon_, __LINE__)
 
 #endif
+
+/// \brief SFINAE trick for template type constraints.
+#define DERIVES_FROM(derived, base) \
+typename std::enable_if<std::is_base_of<base, derived>::value>::type* = nullptr
+
+/// \brief Replaced by "t" if "derived" derives from "base"
+#define DERIVES_FROM_T(derived, base, t) \
+std::enable_if_t<std::is_base_of<base, derived>::value, t>
