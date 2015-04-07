@@ -50,6 +50,8 @@ namespace gi_lib{
 		
 		using ComponentMapType = unordered_multimap < type_index, shared_ptr<__SceneComponent > > ;
 		
+		using IteratorPair = pair < ComponentMapType::iterator, ComponentMapType::iterator >;
+
 	public:
 
 		/// \brief Iterator to a scene component.
@@ -172,7 +174,7 @@ namespace gi_lib{
 
 	private:
 
-		pair<ComponentMapType::iterator, ComponentMapType::iterator> AddComponent(shared_ptr<__SceneComponent> component);
+		IteratorPair AddComponent(shared_ptr<__SceneComponent> component);
 
 		void RemoveComponents(type_index component_type);
 
@@ -352,10 +354,14 @@ namespace gi_lib{
 
 		__SceneComponent();
 
+		template < typename TType >
+		bool InstanceOf();
+
+		vector<type_index> GetTypes();
+
 	protected:
 
-		template < typename TType>
-		bool InstanceOf();
+		virtual void GetTypes(vector<type_index>& types);
 
 	private:
 
