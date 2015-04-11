@@ -132,7 +132,7 @@ namespace gi_lib{
 		/// \param Arguments Arguments to pass to the interface's constructor.
 		/// \return Returns a pointer to the newely-created interface.
 		template <typename TInterface, typename... TArgs>
-		DERIVES_FROM_T(TInterface, Interface, TInterface*) AddInterface(TArgs&&... arguments);
+		TInterface* AddInterface(TArgs&&... arguments);
 
 		/// \brief Remove this interface.
 		/// \remarks If this interface was the last one, the object gets destroyed. In this case the method has the same effect of "delete this".
@@ -140,31 +140,31 @@ namespace gi_lib{
 
 		/// \brief Remove all the interfaces that can be casted to TInterface (base or derived).
 		/// \tparam TInterface Type of interface to test against.
-		template <typename TInterface, DERIVES_FROM(TInterface, Interface)>
+		template <typename TInterface>
 		void RemoveInterfaces();
 
 		/// \brief Get the first interface that can be casted to TInterface.
 		/// \tparam TInterface Type of interface to test against.
 		/// \return Returns a pointer to the first interface that can be casted to TInterface or null if no such interface exists.
-		template <typename TInterface, DERIVES_FROM(TInterface, Interface)>
+		template <typename TInterface>
 		TInterface* GetInterface();
 
 		/// \brief Get the first interface that can be casted to TInterface.
 		/// \tparam TInterface Type of interface to test against.
 		/// \return Returns a pointer to the first interface that can be casted to TInterface or null if no such interface exists.
-		template <typename TInterface, DERIVES_FROM(TInterface, Interface)>
+		template <typename TInterface>
 		const TInterface* GetInterface() const;
 
 		/// \brief Get a range containing all the interfaces that can be casted to TInterface.
 		/// \tparam TInterface Type of interface to test against.
 		/// \return Returns a range containing all the interfaces that can be casted to TInterface.
-		template <typename TInterface, DERIVES_FROM(TInterface, Interface)>
+		template <typename TInterface>
 		range<TInterface> GetInterfaces();
 
 		/// \brief Get a range containing all the interfaces that can be casted to TInterface.
 		/// \tparam TInterface Type of interface to test against.
 		/// \return Returns a range containing all the interfaces that can be casted to TInterface.
-		template <typename TInterface, DERIVES_FROM(TInterface, Interface)>
+		template <typename TInterface>
 		const_range<TInterface> GetInterfaces() const;
 
 		/// \brief Get the set of all the types this interface can be safely casted to.
@@ -204,7 +204,7 @@ namespace gi_lib{
 	}
 
 	template <typename TInterface, typename... TArgs>
-	DERIVES_FROM_T(TInterface, Interface, TInterface*) Interface::AddInterface(TArgs&&... arguments){
+	TInterface* Interface::AddInterface(TArgs&&... arguments){
 
 		return static_cast<TInterface*>(GetArbiter().AddInterface(make_unique<TInterface>(std::forward(arguments)...)));
 
@@ -216,28 +216,28 @@ namespace gi_lib{
 
 	}
 
-	template <typename TInterface, DERIVES_FROM_DEF(TInterface, Interface)>
+	template <typename TInterface>
 	void Interface::RemoveInterfaces(){
 
 		GetArbiter().RemoveInterfaces(type_index(typeid(TInterface)));
 
 	}
 
-	template <typename TInterface, DERIVES_FROM_DEF(TInterface, Interface)>
+	template <typename TInterface>
 	TInterface* Interface::GetInterface(){
 
 		return static_cast<TInterface*>(GetArbiter().GetInterface(type_index(typeid(TInterface))));
 
 	}
 
-	template <typename TInterface, DERIVES_FROM_DEF(TInterface, Interface)>
+	template <typename TInterface>
 	const TInterface* Interface::GetInterface() const{
 
 		return static_cast<TInterface*>(GetArbiter().GetInterface(type_index(typeid(TInterface))));
 
 	}
 
-	template <typename TInterface, DERIVES_FROM_DEF(TInterface, Interface)>
+	template <typename TInterface>
 	Interface::range<TInterface> Interface::GetInterfaces(){
 
 		auto range = GetArbiter().GetInterfaces(type_index(typeid(TInterface)));
@@ -249,7 +249,7 @@ namespace gi_lib{
 
 	}
 
-	template <typename TInterface, DERIVES_FROM_DEF(TInterface, Interface)>
+	template <typename TInterface>
 	Interface::const_range<TInterface> Interface::GetInterfaces() const{
 
 		auto range = GetArbiter().GetInterfaces(type_index(typeid(TInterface)));

@@ -70,6 +70,12 @@ protected:
 
 };
 
+class Blahh{
+
+public:
+
+};
+
 
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
@@ -80,17 +86,8 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	Durr* durr = new Durr();
 
 	Hurr* hurr = durr->AddInterface<Hurr>();
+
 	
-	delete durr;
-
-
-	for (auto& it : durr->GetInterfaces<Hurr>()){
-
-		auto add = &it;
-
-		add->DoHurr();
-
-	}
 
 	// Graphics setup
 
