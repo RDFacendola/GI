@@ -26,6 +26,8 @@
     <ClInclude Include="include\enums.h" />
     <ClInclude Include="include\gimath.h" />
     <ClInclude Include="include\bundles.h" />
+    <ClInclude Include="include\multi_inferface.h" />
+    <ClInclude Include="include\range.h" />
     <ClInclude Include="include\renderers.h" />
     <ClInclude Include="include\scope_guard.h" />
     <ClInclude Include="include\windows\os_windows.h" />
@@ -55,6 +57,7 @@
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
     <ClCompile Include="src\bvh.cpp" />
     <ClCompile Include="src\bundles.cpp" />
+    <ClCompile Include="src\multi_interface.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\timer.cpp" />
     <ClCompile Include="src\windows\os_windows.cpp" />

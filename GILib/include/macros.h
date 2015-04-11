@@ -69,10 +69,17 @@ CONCATENATE(anon_, __LINE__)
 
 #endif
 
-/// \brief SFINAE trick for template type constraints.
-#define DERIVES_FROM(derived, base) \
-typename std::enable_if<std::is_base_of<base, derived>::value>::type* = nullptr
+/// \brief SFINAE trick for template type constraints. Use during definion.
+#define DERIVES_FROM_DEF(derived, base) \
+typename std::enable_if<std::is_base_of<base, derived>::value>::type*
 
-/// \brief Replaced by "t" if "derived" derives from "base"
+/// \brief SFINAE trick for template type constraints. use during declaration.
+#define DERIVES_FROM(derived, base) \
+DERIVES_FROM_DEF(derived, base) = nullptr
+
+/// \brief Replaced by "t" if "derived" derives from "base". Use during declaration.
 #define DERIVES_FROM_T(derived, base, t) \
 std::enable_if_t<std::is_base_of<base, derived>::value, t>
+
+#define CONVERTIBLE_TO(from, to) \
+typename std::enable_if<std::is_convertible<from, to>::value>::type* = nullptr
