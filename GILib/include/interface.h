@@ -164,6 +164,9 @@ namespace gi_lib{
 		/// Used to determine the types this interface can be casted to.
 		virtual void GetTypes(vector<type_index>& types) const;
 
+		/// \brief Protected ctor to prevent instantiation.
+		Interface();
+
 	private:
 
 		template <typename TInterface>

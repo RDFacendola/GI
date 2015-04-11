@@ -158,6 +158,9 @@ InterfaceArbiter::range InterfaceArbiter::GetInterfaces(type_index interface_typ
 
 /////////////////////////////// INTERFACE /////////////////////////////
 
+Interface::Interface() :
+arbiter_(nullptr){}
+
 Interface::~Interface(){
 
 	if (arbiter_){
