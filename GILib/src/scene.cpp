@@ -6,62 +6,6 @@
 using namespace ::gi_lib;
 using namespace ::std;
 
-/////////////////////////// __SCENE NODE ////////////////////////////////////
-
-void __SceneNode::RemoveComponent(__SceneComponent& component){
-
-	// O(#types * #avg_components_per_type)
-
-	for (auto type : component.GetTypes()){
-
-		auto range = component_map_.equal_range(type);
-
-		for (auto it = range.first; it != range.second; ++it){
-
-			if (it->second.get() == std::addressof(component)){
-
-				component_map_.erase(it);
-
-				break;	// One component per type maximum.
-
-			}
-
-		}
-
-	}
-
-}
-
-__SceneNode::IteratorPair __SceneNode::AddComponent(shared_ptr<__SceneComponent> component){
-
-	// Adds a new key for each type the component can be casted to.
-
-	for (auto type : component->GetTypes()){
-
-		component_map_.insert(ComponentMapType::value_type{ type, component });
-
-	}
-
-}
-
-void __SceneNode::RemoveComponents(type_index component_type){
-	
-	__SceneComponent* component;
-
-	auto it = component_map_.find(component_type);
-
-	while (it != component_map_.end()){
-
-		component = it->second.get();
-
-		++it;
-
-		RemoveComponent(*component);
-
-	}
-
-}
-
 /////////////////////////// SCENE NODE //////////////////////////////////////
 
 SceneNode::SceneNode(Scene & scene, const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags) :

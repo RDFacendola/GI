@@ -5,6 +5,8 @@
 #include <resources.h>
 #include <renderers.h>
 
+#include <interface.h>
+
 #include <scene.h>
 #include <fbx\fbx.h>
 #include <Eigen/Geometry>
@@ -14,12 +16,6 @@ using namespace ::gi_lib;
 using namespace ::Eigen;
 
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
-
-void Foo(int a, int b){
-
-
-
-}
 
 GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))

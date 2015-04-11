@@ -86,8 +86,8 @@
     <ClInclude Include="src\dx11\dx11.h" />
     <ClInclude Include="include\debug.h" />
     <ClInclude Include="include\renderers.h" />
-    <ClInclude Include="include\multi_inferface.h" />
     <ClInclude Include="include\range.h" />
+    <ClInclude Include="include\interface.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -127,6 +127,6 @@
       <Filter>os</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\dx11.cpp" />
-    <ClCompile Include="src\multi_interface.cpp" />
+    <ClCompile Include="src\interface.cpp" />
   </ItemGroup>
 </Project>
