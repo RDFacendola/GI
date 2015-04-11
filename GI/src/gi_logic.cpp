@@ -11,9 +11,65 @@
 #include <fbx\fbx.h>
 #include <Eigen/Geometry>
 
+#include <typeindex>
+#include <typeinfo>
+
 using namespace ::std;
 using namespace ::gi_lib;
 using namespace ::Eigen;
+
+class Hurr : public Interface{
+
+public:
+
+	int crap = 42;
+
+	void DoHurr(){}
+
+	virtual ~Hurr(){
+
+		crap = 999;
+
+	}
+
+protected:
+
+	virtual void GetTypes(vector<type_index>& types) const{
+
+		types.push_back(std::type_index(typeid(Hurr)));
+
+		Interface::GetTypes(types);
+
+	}
+
+};
+
+class Durr : public Hurr{
+
+public:
+
+	int more_crap = 47;
+
+	void DoDurr(){}
+	
+	virtual ~Durr(){
+
+		more_crap = 999;
+
+	}
+	
+protected:
+
+	virtual void GetTypes(vector<type_index>& types) const{
+
+		types.push_back(std::type_index(typeid(Durr)));
+
+		Hurr::GetTypes(types);
+
+	}
+
+};
+
 
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
@@ -21,6 +77,21 @@ GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {
 	
+	Durr* durr = new Durr();
+
+	Hurr* hurr = durr->AddInterface<Hurr>();
+	
+	delete durr;
+
+
+	for (auto& it : durr->GetInterfaces<Hurr>()){
+
+		auto add = &it;
+
+		add->DoHurr();
+
+	}
+
 	// Graphics setup
 
 	SetTitle(kWindowTitle);

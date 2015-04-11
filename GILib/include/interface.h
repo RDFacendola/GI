@@ -46,10 +46,6 @@ namespace gi_lib{
 		/// \brief No copy constructor.
 		InterfaceArbiter(const InterfaceArbiter&) = delete;
 
-		/// \brief Destructor. 
-		/// Destroy every interface managed by this instance.
-		~InterfaceArbiter();
-
 		/// \brief Add a new interface.
 		/// \param interface_ptr Pointer to the interface to add and manage via the arbiter.
 		/// \return Returns a pointer to the interface.
@@ -58,7 +54,12 @@ namespace gi_lib{
 		/// \brief Remove an interface and delete it.
 		/// \param interface_ptr Pointer to the interface to delete.
 		/// \param suppress_destructor Whether to delete the interface or simply remove it. This parameter is useful to remove partially-destroyed interfaces.
-		void RemoveInterface(Interface* interface_ptr, bool suppress_destructor = false);
+		void RemoveInterface(Interface* interface_ptr);
+
+		/// \brief Destroy the arbiter and every assigned interface.
+		/// \param instigator The interface which caused the arbiter destruction. This interface is no longer managed by the arbiter and may be reused.
+		/// \remark This method actually calls "delete" on the instance!
+		void Destroy(Interface* instigator);
 
 		/// \brief Remove all the interfaces matching the specified type and delete them.
 		/// \param interface_type Type of the interfaces to remove.
@@ -79,6 +80,11 @@ namespace gi_lib{
 		/// \remarks The method is guaranteed to run in constant time.
 		range GetInterfaces(type_index interface_type);
 
+	protected:
+
+		/// \brief Destroy the arbiter and every interface associated to it.
+		~InterfaceArbiter();
+
 	private:
 
 		vector<unique_ptr<Interface>> interfaces_;		///< \brief List of the interfaces managed by the arbiter.
@@ -97,10 +103,17 @@ namespace gi_lib{
 	public:
 
 		template <typename TInterface>
-		using iterator = std::iterator < std::input_iterator_tag, TInterface > ;
+		struct IteratorMapper{
+			
+			TInterface& operator()(InterfaceArbiter::iterator& iterator);
+
+		};
+		
+		template <typename TInterface>
+		using iterator = IteratorWrapper < InterfaceArbiter::iterator, TInterface, IteratorMapper<TInterface> >;
 
 		template <typename TInterface>
-		using const_iterator = std::iterator < std::input_iterator_tag, const TInterface > ;
+		using const_iterator = IteratorWrapper < InterfaceArbiter::iterator, const TInterface, IteratorMapper<TInterface> >;
 
 		template <typename TInterface>
 		using range = Range < iterator < TInterface > > ;
@@ -169,12 +182,6 @@ namespace gi_lib{
 
 	private:
 
-		template <typename TInterface>
-		using iterator_wrapper = IteratorWrapper < InterfaceArbiter::range::iterator, TInterface > ;
-
-		template <typename TInterface>
-		using const_iterator_wrapper = IteratorWrapper < InterfaceArbiter::range::iterator, const TInterface >;
-
 		/// \brief Get the arbiter reference.
 		/// \return Returns a reference to the arbiter.
 		InterfaceArbiter& GetArbiter();
@@ -188,6 +195,13 @@ namespace gi_lib{
 	};
 
 	///////////////////////// INTERFACE ////////////////////////////
+
+	template <typename TInterface>
+	TInterface& Interface::IteratorMapper<TInterface>::operator()(InterfaceArbiter::iterator& iterator){
+
+		return *static_cast<TInterface*>(iterator->second);
+		
+	}
 
 	template <typename TInterface, typename... TArgs>
 	DERIVES_FROM_T(TInterface, Interface, TInterface*) Interface::AddInterface(TArgs&&... arguments){
@@ -228,8 +242,10 @@ namespace gi_lib{
 
 		auto range = GetArbiter().GetInterfaces(type_index(typeid(TInterface)));
 
-		return range<TInterface>(iterator_wrapper<TInterface>(range.begin()),
-								 iterator_wrapper<TInterface>(range.end()));
+		IteratorMapper<TInterface> mapper;
+
+		return Interface::range<TInterface>(iterator<TInterface>(range.begin(), mapper),
+										    iterator<TInterface>(range.end(), mapper));
 
 	}
 
@@ -238,8 +254,8 @@ namespace gi_lib{
 
 		auto range = GetArbiter().GetInterfaces(type_index(typeid(TInterface)));
 
-		return const_range<TInterface>(const_iterator_wrapper<TInterface>(range.begin()),
-									   const_iterator_wrapper<TInterface>(range.end()));
+		return const_range<TInterface>(const_iterator<TInterface>(range.begin(), mapper),
+									   const_iterator<TInterface>(range.end(), mapper));
 	}
 
 

@@ -50,7 +50,7 @@ InterfaceArbiter::~InterfaceArbiter(){
 
 	for (auto& interface_ptr : interfaces_){
 
-		interface_ptr->arbiter_ = nullptr;	// The interface won't call the arbiter's destructor (since we are already deleting it).
+		interface_ptr->arbiter_ = nullptr;	// Severs the relationship between the arbiter and the interfaces to prevent circular destruction
 
 	}
 
@@ -73,9 +73,13 @@ Interface* InterfaceArbiter::AddInterface(unique_ptr<Interface> interface_ptr){
 
 	}
 
+	interf->arbiter_ = this;
+		 
+	return interf;
+
 }
 
-void InterfaceArbiter::RemoveInterface(Interface* interface_ptr, bool suppress_destructor){
+void InterfaceArbiter::RemoveInterface(Interface* interface_ptr){
 
 	auto it = std::find_if(interfaces_.begin(),
 						   interfaces_.end(),
@@ -91,17 +95,47 @@ void InterfaceArbiter::RemoveInterface(Interface* interface_ptr, bool suppress_d
 
 		UnmapInterface(interface_ptr, interface_map_);
 
-		if (suppress_destructor){
+		it->get()->arbiter_ = nullptr;
 
-			it->release();		// This is equal to interface_ptr
+		interfaces_.erase(it);	// Will call the interface dtor
+			
+		if (interfaces_.size() == 0){
+
+			delete this;	// The last interface was removed, the arbiter is no longer needed.
 
 		}
 
-		interfaces_.erase(it);	// Will call the interface dtor, eventually
-
 	}
+
+
+}
+
+void InterfaceArbiter::Destroy(Interface* instigator){
+
+	auto it = std::find_if(interfaces_.begin(),
+						   interfaces_.end(),
+						   [instigator](const unique_ptr<Interface>& ptr){
+
+								return ptr.get() == instigator;
+
+						   });
+
+	// O(#types * #interfaces_per_type)
+
+	if (it != interfaces_.end()){
+		
+		instigator->arbiter_ = false;
+
+		it->release();		// instigator is freed.
+
+		interfaces_.erase(it);
+				
+	}
+
+	delete this;
 	
 }
+
 
 void InterfaceArbiter::RemoveInterfaces(type_index interface_type){
 
@@ -136,6 +170,12 @@ void InterfaceArbiter::RemoveInterfaces(type_index interface_type){
 	interfaces_.erase(end,
 					  interfaces_.end());
 
+	if (interfaces_.size() == 0){
+
+		delete this;	// The last interface was removed, the arbiter is no longer needed.
+
+	}
+
 }
 
 Interface* InterfaceArbiter::GetInterface(type_index interface_type){
@@ -165,19 +205,10 @@ Interface::~Interface(){
 
 	if (arbiter_){
 
-		// Destructor called explicitly (ie: delete this).
-
-		arbiter_->RemoveInterface(this, true);	// Remove this interface, no destruction is required (we're already destroying the object)
-
-		delete arbiter_;						// Destroy the arbiter and every other interface associated to the entity.
-
-	}
-	else{
-
-		// Destructor called via the arbiter (only this interface needs to be destroyed)
-
-		// Do nothing
-
+		// If the interface was destroyed explicitly (ie delete this), the arbiter and every other interface must be destroyed as well.
+		
+		arbiter_->Destroy(this);
+		
 	}
 
 }

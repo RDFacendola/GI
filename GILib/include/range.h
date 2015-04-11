@@ -70,35 +70,37 @@ namespace gi_lib{
 	};
 
 	/// \brief Wraps an input iterator that dereferences to another type.
-	template <typename TIterator, typename TWrapped>
+	template <typename TIterator, typename TWrapped, typename TMapper>
 	struct IteratorWrapper : std::iterator<std::input_iterator_tag, TWrapped>{
 
 		/// \brief Create a new iterator.
 		/// \param iterator Iterator to wrap.
-		IteratorWrapper(const TIterator& iterator);
+		IteratorWrapper(const TIterator& iterator, TMapper mapper);
 
 		/// \brief Copy constructor.
 		/// \param iterator Iterator to copy.
-		IteratorWrapper(const IteratorWrapper& iterator);
+		IteratorWrapper(const IteratorWrapper<TIterator, TWrapped, TMapper>& iterator);
 
 		/// \brief Test for equality.
-		bool operator==(const IteratorWrapper<TIterator, TWrapped>& other);
+		bool operator==(const IteratorWrapper<TIterator, TWrapped, TMapper>& other);
 
 		/// \brief Test for inequality.
-		bool operator!=(const IteratorWrapper<TIterator, TWrapped>& other);
+		bool operator!=(const IteratorWrapper<TIterator, TWrapped, TMapper>& other);
 
 		/// \brief Dereferencing operator.
-		reference operator*();
+		TWrapped& operator*();
 
 		/// \brief Prefix increment.
-		IteratorWrapper<TIterator, TWrapped>& operator++();
+		IteratorWrapper<TIterator, TWrapped, TMapper>& operator++();
 
 		/// \brief Postfix increment.
-		IteratorWrapper<TIterator, TWrapped> operator++(int);
+		IteratorWrapper<TIterator, TWrapped, TMapper> operator++(int);
 
 	private:
 
 		TIterator iterator_;	/// \brief Wrapped iterator.
+
+		TMapper mapper_;		/// \brief Used to map a value from the original wrapped iterator to the new type.
 
 	};
 
@@ -164,38 +166,39 @@ namespace gi_lib{
 	
 	///////////////////////////////// ITERATOR WRAPPER /////////////////////////////////////////
 
-	template <typename TIterator, typename TWrapped>
-	IteratorWrapper<TIterator, TWrapped>::IteratorWrapper(const TIterator& iterator) :
-		iterator_(iterator){}
+	template <typename TIterator, typename TWrapped, typename TMapper>
+	IteratorWrapper<TIterator, TWrapped, TMapper>::IteratorWrapper(const TIterator& iterator, TMapper mapper) :
+		iterator_(iterator),
+		mapper_(mapper){}
 
-	template <typename TIterator, typename TWrapped>
-	IteratorWrapper<TIterator, TWrapped>::IteratorWrapper(const IteratorWrapper& iterator) :
-		iterator_(iterator.iterator_){}
+	template <typename TIterator, typename TWrapped, typename TMapper>
+	IteratorWrapper<TIterator, TWrapped, TMapper>::IteratorWrapper(const IteratorWrapper<TIterator, TWrapped, TMapper>& iterator) :
+		iterator_(iterator.iterator_),
+		mapper_(iterator.mapper_){}
 
-	template <typename TIterator, typename TWrapped>
-	bool IteratorWrapper<TIterator, TWrapped>::operator==(const IteratorWrapper<TIterator, TWrapped>& other){
+	template <typename TIterator, typename TWrapped, typename TMapper>
+	bool IteratorWrapper<TIterator, TWrapped, TMapper>::operator==(const IteratorWrapper<TIterator, TWrapped, TMapper>& other){
 
 		return iterator_ == other.iterator_;
 
 	}
 
-	template <typename TIterator, typename TWrapped>
-	bool IteratorWrapper<TIterator, TWrapped>::operator!=(const IteratorWrapper<TIterator, TWrapped>& other){
+	template <typename TIterator, typename TWrapped, typename TMapper>
+	bool IteratorWrapper<TIterator, TWrapped, TMapper>::operator!=(const IteratorWrapper<TIterator, TWrapped, TMapper>& other){
 
 		return iterator_ != other.iterator_;
 
 	}
 
-	template <typename TIterator, typename TWrapped>
-	typename IteratorWrapper<TIterator, TWrapped>::reference IteratorWrapper<TIterator, TWrapped>::operator*(){
+	template <typename TIterator, typename TWrapped, typename TMapper>
+	typename TWrapped& IteratorWrapper<TIterator, TWrapped, TMapper>::operator*(){
 
-		return static_cast<TWrapped&>(*iterator_);
+		return mapper_(iterator_);
 
 	}
 
-	template <typename TIterator, typename TWrapped>
-	IteratorWrapper<TIterator, TWrapped>& IteratorWrapper<TIterator, TWrapped>::operator++(){
-
+	template <typename TIterator, typename TWrapped, typename TMapper>
+	IteratorWrapper<TIterator, TWrapped, TMapper>& IteratorWrapper<TIterator, TWrapped, TMapper>::operator++(){
 
 		++iterator_;
 
@@ -203,10 +206,10 @@ namespace gi_lib{
 
 	}
 
-	template <typename TIterator, typename TWrapped>
-	IteratorWrapper<TIterator, TWrapped> IteratorWrapper<TIterator, TWrapped>::operator++(int){
+	template <typename TIterator, typename TWrapped, typename TMapper>
+	IteratorWrapper<TIterator, TWrapped, TMapper> IteratorWrapper<TIterator, TWrapped, TMapper>::operator++(int){
 
-		IteratorWrapper<TIterator, TWrapped> old(iterator_);
+		IteratorWrapper<TIterator, TWrapped, TMapper> old(iterator_, mapper_);
 
 		++iterator_;
 
