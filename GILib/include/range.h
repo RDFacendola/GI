@@ -3,6 +3,8 @@
 ///
 /// \author Raffaele D. Facendola
 
+#pragma once
+
 #include <cstddef>
 #include <utility>
 #include <iterator>
@@ -61,7 +63,7 @@ namespace gi_lib{
 		/// \return Returns true if the range is empty, false otherwise.
 		bool IsEmpty();
 
-	private:
+	protected:
 
 		iterator begin_;	///< \brief Points to the first element of the range.
 

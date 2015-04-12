@@ -35,17 +35,17 @@ namespace gi_lib{
 		/// \brief Tests for equality.
 		/// \param other The other instance to test against.
 		/// \return Returns true if this object and "other" are the same, returns false otherwise.
-		bool operator==(const Unique & other) const;
+		bool operator==(const Unique& other) const;
 
 		/// \brief Tests for inequality.
 		/// \param other The other instance to test against.
 		/// \return Returns true if this object and "other" are NOT the same, returns false otherwise.
-		bool operator!=(const Unique & other) const;
+		bool operator!=(const Unique& other) const;
 
 		/// \brief Less-than operator.
 		/// \param other The other instance to test against.
 		/// \return Returns true if this object's key is lesser than other's key. Returns false otherwise.
-		bool operator <(const Unique & other) const;
+		bool operator <(const Unique& other) const;
 
 	private:
 

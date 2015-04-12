@@ -136,7 +136,6 @@ void InterfaceArbiter::Destroy(Interface* instigator){
 	
 }
 
-
 void InterfaceArbiter::RemoveInterfaces(type_index interface_type){
 
 	auto range = interface_map_.equal_range(interface_type);

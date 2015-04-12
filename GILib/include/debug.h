@@ -3,6 +3,8 @@
 ///
 /// \author Raffaele D. Facendola
 
+#pragma once
+
 #ifdef SUPPRESS_TODOS
 
 /// \brief TODO. The application should work, functionalities are limited though.

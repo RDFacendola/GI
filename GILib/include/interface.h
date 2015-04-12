@@ -3,6 +3,8 @@
 ///
 /// \author Raffaele D. Facendola
 
+#pragma once
+
 #include <typeinfo>
 #include <typeindex>
 #include <memory>

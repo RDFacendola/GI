@@ -6,164 +6,212 @@
 using namespace ::gi_lib;
 using namespace ::std;
 
-/////////////////////////// SCENE NODE //////////////////////////////////////
+////////////////////////////////////// SCENE NODE /////////////////////////////////////
 
-SceneNode::SceneNode(Scene & scene, const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags) :
+SceneNode::SceneNode(Scene& scene, const wstring& name) :
 scene_(scene),
 name_(name),
-tags_(tags),
-unique_(Unique<SceneNode>::MakeUnique()),
+uid_(Unique<SceneNode>::MakeUnique()){}
+
+Scene& SceneNode::GetScene(){
+
+	return scene_;
+
+}
+
+const Scene& SceneNode::GetScene() const{
+
+	return scene_;
+
+}
+
+const wstring& SceneNode::GetName() const{
+
+
+	return name_;
+
+}
+
+const Unique<SceneNode> SceneNode::GetUid() const{
+
+	return uid_;
+
+}
+
+bool SceneNode::operator==(const SceneNode & other) const{
+
+	return uid_ == other.uid_;
+
+}
+
+bool SceneNode::operator!=(const SceneNode & other) const{
+
+	return uid_ != other.uid_;
+
+}
+
+void SceneNode::GetTypes(vector<type_index>& types) const{
+	
+	Interface::GetTypes(types);
+
+	types.push_back(type_index(typeid(SceneNode)));
+
+}
+
+////////////////////////////////////// TRANSFORM /////////////////////////////////////
+
+Transform::Transform() :
+Transform(Translation3f(Vector3f::Zero()), 
+		  Quaternionf::Identity(),
+		  AlignedScaling3f(Vector3f::Ones())){}
+
+Transform::Transform(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling) :
 parent_(nullptr),
-position_(position),
+translation_(translation),
 rotation_(rotation),
 scale_(scaling),
 local_dirty_(true),
-world_dirty_(true),
-world_changed_(true){
+world_dirty_(true){}
+
+const Translation3f & Transform::GetTranslation() const{
+
+	return translation_;
 
 }
 
-SceneNode::~SceneNode(){
+void Transform::SetTranslation(const Translation3f & translation){
 
-	// Will destroy the children recursively...
+	translation_ = translation;
+
+	SetDirty(false);	// World and local
 
 }
 
-void SceneNode::PreUpdate(const Time & time){
+const Quaternionf & Transform::GetRotation() const{
 
-	world_changed_ = false;
-	
-	// Update the node hierarchy
-	for (auto & child : children_){
+	return rotation_;
 
-		child->PreUpdate(time);
+}
+
+void Transform::SetRotation(const Quaternionf & rotation){
+
+	rotation_ = rotation;
+
+	SetDirty(false);	// World and local
+
+}
+
+const AlignedScaling3f & Transform::GetScale() const{
+
+	return scale_;
+
+}
+
+void Transform::SetScale(const AlignedScaling3f & scale){
+
+	scale_ = scale;
+
+	SetDirty(false);	// World and local
+
+}
+
+const Affine3f & Transform::GetLocalTransform() const{
+
+	if (local_dirty_){
+
+		local_transform_ = scale_ * rotation_ * translation_;
+
+		local_dirty_ = false;
+
+		SetDirty(true);	 // The world matrix needs to be recalculated
+
+	}
+
+	return local_transform_;
+
+}
+
+const Affine3f & Transform::GetWorldTransform() const{
+
+	auto local_transform = GetLocalTransform();
+
+	if (world_dirty_){
+
+		world_transform_ = parent_ ?
+						   parent_->GetWorldTransform() * local_transform :
+						   local_transform;
+
+		world_dirty_ = false;
+
+	}
+
+	return world_transform_;
+
+}
+
+Transform* Transform::GetParent(){
+
+	return parent_;
+
+}
+
+const Transform* Transform::GetParent() const{
+
+	return parent_;
+
+}
+
+void Transform::SetParent(Transform* parent){
+
+	// Remove from the old parent
+	if (parent_ != nullptr){
+
+		auto& parent_children = parent->children_;
+
+		parent_children.erase(std::remove(parent_children.begin(),
+										  parent_children.end(),
+										  this),
+							  parent_children.end());
+
+	}
+
+	// Add to the new one
+	parent_ = parent;
+
+	if (parent != nullptr){
+
+		parent->children_.push_back(this);
 
 	}
 
 }
 
-void SceneNode::Update(const Time & time){
+Transform::range Transform::GetChildren(){
 
-	// Update the components
-	for (auto & it : components_){
-
-		if (it->IsEnabled()){
-
-			it->Update(time);
-
-		}
-
-	}
-
-	// Update the hierarchy
-	for (auto & child : children_){
-
-		child->Update(time);
-
-	}
+	return range(children_.begin(),
+				 children_.end());
 
 }
 
-void SceneNode::PostUpdate(const Time & time){
+Transform::const_range Transform::GetChildren() const{
 
-	// Post-update the components
-	for (auto & it : components_){
-
-		if (it->IsEnabled()){
-
-			it->PostUpdate(time);
-
-		}
-
-	}
-
-	// Post-Update the hierarchy
-	for (auto & child : children_){
-
-		child->PostUpdate(time);
-
-	}
+	return const_range(children_.cbegin(),
+					   children_.cend());
 
 }
 
-// Transformation & Hierarchy
+void Transform::GetTypes(vector<type_index>& types) const{
 
-void SceneNode::SetParent(SceneNode & parent){
-	
-	// Prevents the root from changing parent...
-	assert(parent_ != nullptr);
+	Interface::GetTypes(types);
 
-	//Move from the old parent to the new one
-
-	parent.AddNode(parent_->MoveNode(*this));
-
-	parent_ = addressof(parent);
-
-	// The world matrix changed...
-	SetDirty(true);
+	types.push_back(type_index(typeid(Transform)));
 	
 }
 
-SceneNode & SceneNode::AddNode(unique_ptr<SceneNode> && node){
-	
-	auto & node_ref = *node;
-
-	children_.push_back(std::move(node));
-
-	node_ref.parent_ = this;
-
-	return node_ref;
-	
-}
-
-unique_ptr<SceneNode> SceneNode::MoveNode(SceneNode & node){
-	
-	auto it = std::find_if(children_.begin(),
-		children_.end(),
-		[&node](unique_ptr<SceneNode> & node_ptr){
-
-		return node_ptr.get() == addressof(node);
-
-	});
-
-	if (it != children_.end()){
-
-		// Move the found node outside the children array and erase the old position.
-
-		auto node_ptr = std::move(*it);
-
-		children_.erase(it);
-
-		return node_ptr;
-
-	}
-	else{
-
-		return nullptr;	//Should never happen, though.
-
-	}
-	
-}
-
-void SceneNode::DestroyNode(SceneNode & node){
-
-	children_.erase(std::remove_if(children_.begin(),
-		children_.end(),
-		[&node](const unique_ptr<SceneNode> & node_ptr){
-
-			return node_ptr.get() == addressof(node);
-
-		}),
-		children_.end());
-
-}
-
-void SceneNode::SetDirty(bool world_only) const{
+void Transform::SetDirty(bool world_only) const{
 
 	local_dirty_ |= !world_only;
 	world_dirty_ = true;
-
-	world_changed_ = true;
 
 	// Dirtens every world matrix on the children
 
@@ -172,182 +220,5 @@ void SceneNode::SetDirty(bool world_only) const{
 		child->SetDirty(true);
 
 	}
-
-}
-
-void SceneNode::UpdateLocalTransform() const{
-
-	if (local_dirty_){
-
-		local_transform_ = scale_ * rotation_ * position_;
-
-		local_dirty_ = false;
-		
-		// this node and its children have their world transform dirty...
-		SetDirty(true);
-
-	}
-
-}
-
-void SceneNode::UpdateWorldTransform() const{
-
-	UpdateLocalTransform();
-
-	if (world_dirty_){
-
-		if (GetParent()){
-
-			// Local transform first, world transform then
-			world_transform_ = parent_->GetWorldTransform() * local_transform_;
-
-		}
-		else{
-
-			// A root have no parent
-			world_transform_ = local_transform_;
-
-		}
-		
-		world_dirty_ = false;
-
-	}
-
-}
-
-void SceneNode::FindNodeByName(const wstring & name, vector<SceneNode *> & nodes){
-
-	if (name_ == name){
-
-		nodes.push_back(this);
-
-	}
-
-	for (auto & child : children_){
-
-		child->FindNodeByName(name, nodes);
-
-	}
-
-}
-
-void SceneNode::FindNodeByTag(std::initializer_list<wstring> & tags, vector<SceneNode *> nodes){
-
-	if (HasTags(tags)){
-
-		nodes.push_back(this);
-
-	}
-
-	for (auto & child : children_){
-
-		child->FindNodeByTag(tags, nodes);
-
-	}
-
-}
-
-/////////////////////////// SCENE ///////////////////////////////////////////
-
-Scene::Scene(){
-
-	root_ = make_unique<SceneNode>(*this, L"", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()), initializer_list < wstring > {});
-	bvh_ = make_unique<Octree>();
-
-}
-
-Scene::~Scene(){
-
-	root_ = nullptr;
-	bvh_ = nullptr;
-
-}
-
-SceneNode & Scene::CreateNode(const wstring & name, const Translation3f & position, const Quaternionf & rotation, const AlignedScaling3f & scaling, initializer_list<wstring> tags){
-
-	return root_->AddNode(make_unique<SceneNode>(*this, name, position, rotation, scaling, tags));
-
-}
-
-SceneNode & Scene::CreateNode(){
-
-	return CreateNode(L"", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()), {});
-
-}
-
-void Scene::DestroyNode(SceneNode & node){
-	
-	auto parent = node.GetParent();
-
-	if (parent){
-
-		parent->DestroyNode(node);
-
-	}
-	else{
-
-		// We are deleting the root and replacing it with a new one!
-		root_ = make_unique<SceneNode>(*this, L"", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()), initializer_list < wstring > {});
-
-	}
-
-}
-
-vector<SceneNode *> Scene::FindNodeByName(const wstring & name){
-
-	vector<SceneNode *> nodes;
-
-	root_->FindNodeByName(name, nodes);
-
-	return nodes;
-
-}
-
-vector<SceneNode *> Scene::FindNodeByTag(std::initializer_list<wstring> tags){
-
-	vector<SceneNode *> nodes;
-
-	root_->FindNodeByTag(tags, nodes);
-
-	return nodes;
-
-}
-
-void Scene::Update(const Time & time){
-
-	root_->PreUpdate(time);
-	root_->Update(time);
-	root_->PostUpdate(time);
-
-}
-
-void Scene::AddCamera(Camera & camera){
-
-	cameras_.push_back(std::addressof(camera));
-
-	SortCamerasByPriority();
-	
-}
-
-void Scene::RemoveCamera(Camera & camera){
-
-	cameras_.erase(std::remove(cameras_.begin(),
-		cameras_.end(),
-		std::addressof(camera)),
-		cameras_.end());
-
-	SortCamerasByPriority();
-
-}
-
-void Scene::SortCamerasByPriority(){
-
-	std::sort(cameras_.begin(),
-		cameras_.end(),
-		[](const Camera * first, const Camera * second){
-
-		return first->GetPriority() < second->GetPriority();
-
-	});
 
 }
