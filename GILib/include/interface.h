@@ -14,6 +14,8 @@
 
 #include "macros.h"
 #include "range.h"
+#include "debug.h"
+#include "observable.h"
 
 using std::type_index;
 using std::unique_ptr;
@@ -23,49 +25,83 @@ using std::pair;
 
 namespace gi_lib{
 
-	class Interface;
-	class InterfaceArbiter;
+	class Object;
 
-	/// \brief Manages the communication between different interfaces.
-	/// An arbiter is alive as long as it holds at least one interface: whenever the last one is deleted, the arbiter is destroyed.
-	/// \author Raffaele D. Facendola.
-	class InterfaceArbiter{
+	class Interface;
+
+	/// \brief Multi-interface object where interfaces can be plugged into.
+	/// \author Raffaele D. Facendola
+	class Object{
 
 	public:
 
-		/// \brief Type of the multimap used to associate a type index to the interfaces.
 		using InterfaceMapType = unordered_multimap < type_index, Interface* > ;
 
-		/// \brief Type of the iterator used to iterate trough interfaces.
-		using iterator = InterfaceMapType::iterator;
-		
-		/// \brief Type of the interfaces range.
-		using range = Range < iterator > ;
+		using InterfaceMapIterator = InterfaceMapType::iterator;
 
-		/// \brief Create a new arbiter and assign a new interface to it.
-		InterfaceArbiter(unique_ptr<Interface> interface_ptr);
+		using InterfaceMapRange = Range < InterfaceMapIterator > ;
 
-		/// \brief No copy constructor.
-		InterfaceArbiter(const InterfaceArbiter&) = delete;
+		template <typename TInterface>
+		struct IteratorMapper{
+
+			TInterface& operator()(InterfaceMapIterator& iterator);
+
+		};
+
+		template <typename TInterface>
+		using iterator = IteratorWrapper < InterfaceMapIterator, TInterface, IteratorMapper<TInterface> > ;
+
+		template <typename TInterface>
+		using const_iterator = IteratorWrapper < InterfaceMapIterator, const TInterface, IteratorMapper<TInterface> > ;
+
+		template <typename TInterface>
+		using range = Range < iterator < TInterface > > ;
+
+		template <typename TInterface>
+		using const_range = Range < const_iterator< TInterface > > ;
+
+		/// \brief Create a new interface and adds it to the current object.
+		/// \tparam TInterface Type of the interface to add.
+		/// \tparam TArgs Type of the arguments to pass to the interface's constructor.
+		/// \param Arguments Arguments to pass to the interface's constructor.
+		/// \return Returns a pointer to the newely-created interface.
+		template < typename TInterface, typename... TArgs >
+		TInterface* AddInterface(TArgs&&... arguments);
+
+		/// \brief Remove an interface from this object.
+		/// \param ptr Pointer to the interface to remove.
+		void RemoveInterface(Interface* ptr);
+
+		/// \brief Get the first interface that can be casted to TInterface.
+		/// \tparam TInterface Type of interface to test against.
+		/// \return Returns a pointer to the first interface that can be casted to TInterface or null if no such interface exists.
+		template < typename TInterface >
+		TInterface* GetInterface();
+
+		/// \brief Get the first interface that can be casted to TInterface.
+		/// \tparam TInterface Type of interface to test against.
+		/// \return Returns a pointer to the first interface that can be casted to TInterface or null if no such interface exists.
+		template < typename TInterface >
+		const TInterface* GetInterface() const;
+
+		/// \brief Get a range containing all the interfaces that can be casted to TInterface.
+		/// \tparam TInterface Type of interface to test against.
+		/// \return Returns a range containing all the interfaces that can be casted to TInterface.
+		template < typename TInterface >
+		range<TInterface> GetInterfaces();
+
+		/// \brief Get a range containing all the interfaces that can be casted to TInterface.
+		/// \tparam TInterface Type of interface to test against.
+		/// \return Returns a range containing all the interfaces that can be casted to TInterface.
+		template < typename TInterface >
+		const_range<TInterface> GetInterfaces() const;
+
+	private:
 
 		/// \brief Add a new interface.
-		/// \param interface_ptr Pointer to the interface to add and manage via the arbiter.
+		/// \param ptr Pointer to the interface to add and manage via the arbiter.
 		/// \return Returns a pointer to the interface.
-		Interface* AddInterface(unique_ptr<Interface> interface_ptr);
-
-		/// \brief Remove an interface and delete it.
-		/// \param interface_ptr Pointer to the interface to delete.
-		/// \param suppress_destructor Whether to delete the interface or simply remove it. This parameter is useful to remove partially-destroyed interfaces.
-		void RemoveInterface(Interface* interface_ptr);
-
-		/// \brief Destroy the arbiter and every assigned interface.
-		/// \param instigator The interface which caused the arbiter destruction. This interface is no longer managed by the arbiter and may be reused.
-		/// \remark This method actually calls "delete" on the instance!
-		void Destroy(Interface* instigator);
-
-		/// \brief Remove all the interfaces matching the specified type and delete them.
-		/// \param interface_type Type of the interfaces to remove.
-		void RemoveInterfaces(type_index interface_type);
+		Interface* AddInterface(unique_ptr<Interface> ptr);
 
 		/// \brief Get the first interface matching the specified type.
 		/// The returned pointer is guaranteed to be an instance of the specified type.
@@ -80,70 +116,33 @@ namespace gi_lib{
 		/// \return Returns a pair of iterators. The first element points to the begin of the range, while the second points to one element past the end of the range.
 		///			If no interface could be found, the range is empty and both the elements point at the same (invalid) location.
 		/// \remarks The method is guaranteed to run in constant time.
-		range GetInterfaces(type_index interface_type);
+		InterfaceMapRange GetInterfaces(type_index interface_type);
 
-	protected:
-
-		/// \brief Destroy the arbiter and every interface associated to it.
-		~InterfaceArbiter();
-
-	private:
-
-		vector<unique_ptr<Interface>> interfaces_;		///< \brief List of the interfaces managed by the arbiter.
+		vector<unique_ptr<Interface>> interfaces_;		///< \brief List of the interfaces.
 
 		InterfaceMapType interface_map_;				///< \brief Associate the interface types with the actual interfaces to achieve constant lookup time.
 
 	};
 
-	/// \brief Class for every interface.
-	/// An interface exposes functionalities that can be added and removed at runtime.
+	/// \brief Base class for other interfaces.
+	/// \tparam TObject Sepecialized object type. Must derive from Object.
 	/// \auhtor Raffaele D. Facendola.
 	class Interface{
 
-		friend class InterfaceArbiter;
+		friend class Object;
 
 	public:
 
+		/// \brief Type of the range used to iterate trough object's interfaces.
 		template <typename TInterface>
-		struct IteratorMapper{
-			
-			TInterface& operator()(InterfaceArbiter::iterator& iterator);
+		using range = typename Object::range < TInterface > ;
 
-		};
-		
+		/// \brief Type of the range used to iterate trough object's constant interfaces.
 		template <typename TInterface>
-		using iterator = IteratorWrapper < InterfaceArbiter::iterator, TInterface, IteratorMapper<TInterface> >;
-
-		template <typename TInterface>
-		using const_iterator = IteratorWrapper < InterfaceArbiter::iterator, const TInterface, IteratorMapper<TInterface> >;
-
-		template <typename TInterface>
-		using range = Range < iterator < TInterface > > ;
-
-		template <typename TInterface>
-		using const_range = Range < const_iterator< TInterface > > ;
+		using const_range = typename Object::const_range < TInterface > ;
 
 		/// \brief Destroy the interface.
-		/// If an interface is deleted explicitly, this method causes the destruction of every other interface associated to the entity in order to prevent memory leaks.
-		/// If the real intention was to remove the functionalities associated to this particular interface, consider using the RemoveInterface method instead.
 		virtual ~Interface();
-
-		/// \brief Create a new interface and adds it to the current object.
-		/// \tparam TInterface Type of the interface to add.
-		/// \tparam TArgs Type of the arguments to pass to the interface's constructor.
-		/// \param Arguments Arguments to pass to the interface's constructor.
-		/// \return Returns a pointer to the newely-created interface.
-		template <typename TInterface, typename... TArgs>
-		TInterface* AddInterface(TArgs&&... arguments);
-
-		/// \brief Remove this interface.
-		/// \remarks If this interface was the last one, the object gets destroyed. In this case the method has the same effect of "delete this".
-		void RemoveInterface();
-
-		/// \brief Remove all the interfaces that can be casted to TInterface (base or derived).
-		/// \tparam TInterface Type of interface to test against.
-		template <typename TInterface>
-		void RemoveInterfaces();
 
 		/// \brief Get the first interface that can be casted to TInterface.
 		/// \tparam TInterface Type of interface to test against.
@@ -169,6 +168,14 @@ namespace gi_lib{
 		template <typename TInterface>
 		const_range<TInterface> GetInterfaces() const;
 
+		/// \brief Get the object this interface refers to.
+		/// \return Returns the object this interface refers to.
+		Object* GetObject();
+
+		/// \brief Get the object this interface refers to.
+		/// \return Returns the object this interface refers to.
+		const Object* GetObject() const;
+
 		/// \brief Get the set of all the types this interface can be safely casted to.
 		/// \return Return the set of all the types this interface can be safely casted to.
 		vector<type_index> GetTypes() const;
@@ -184,81 +191,92 @@ namespace gi_lib{
 
 	private:
 
-		/// \brief Get the arbiter reference.
-		/// \return Returns a reference to the arbiter.
-		InterfaceArbiter& GetArbiter();
+		Object* object_;					///< \brief Object this interface refers to.
 
-		/// \brief Get the arbiter reference.
-		/// \return Returns a reference to the arbiter.
-		const InterfaceArbiter& GetArbiter() const;
-		
-		mutable InterfaceArbiter* arbiter_;			///< \brief Used to communicate with other interfaces.
-		
 	};
 
-	///////////////////////// INTERFACE ////////////////////////////
+	///////////////////////// OBJECT ////////////////////////////
 
 	template <typename TInterface>
-	TInterface& Interface::IteratorMapper<TInterface>::operator()(InterfaceArbiter::iterator& iterator){
+	TInterface& Object::IteratorMapper<TInterface>::operator()(InterfaceMapIterator& iterator){
 
 		return *static_cast<TInterface*>(iterator->second);
-		
-	}
-
-	template <typename TInterface, typename... TArgs>
-	TInterface* Interface::AddInterface(TArgs&&... arguments){
-
-		return static_cast<TInterface*>(GetArbiter().AddInterface(make_unique<TInterface>(std::forward(arguments)...)));
 
 	}
 
-	inline void Interface::RemoveInterface(){
+	template < typename TInterface, typename... TArgs >
+	TInterface* Object::AddInterface(TArgs&&... arguments){
 
-		GetArbiter().RemoveInterface(this);
+		return static_cast<TInterface*>(AddInterface(make_unique<TInterface>(std::forward(arguments)...)));
 
 	}
 
 	template <typename TInterface>
-	void Interface::RemoveInterfaces(){
+	TInterface* Object::GetInterface(){
 
-		GetArbiter().RemoveInterfaces(type_index(typeid(TInterface)));
+		return static_cast<TInterface*>(GetInterface(type_index(typeid(TInterface))));
 
 	}
 
+	template <typename TInterface>
+	const TInterface* Object::GetInterface() const{
+
+		return static_cast<TInterface*>(GetInterface(type_index(typeid(TInterface))));
+
+	}
+	
+	template <typename TInterface>
+	Object::range<TInterface> Object::GetInterfaces(){
+
+		auto r = GetInterfaces(type_index(typeid(TInterface)));
+
+		IteratorMapper<TInterface> mapper;
+
+		return range<TInterface>(iterator<TInterface>(r.begin(), mapper),
+								 iterator<TInterface>(r.end(), mapper));
+
+	}
+
+	template <typename TInterface>
+	Object::const_range<TInterface> Object::GetInterfaces() const{
+		
+		auto r = GetInterfaces(type_index(typeid(TInterface)));
+
+		IteratorMapper<TInterface> mapper;
+
+		return const_range<TInterface>(const_iterator<TInterface>(r.begin(), mapper),
+									   const_iterator<TInterface>(r.end(), mapper));
+
+	}
+
+	///////////////////////// INTERFACE ////////////////////////////
+	
 	template <typename TInterface>
 	TInterface* Interface::GetInterface(){
 
-		return static_cast<TInterface*>(GetArbiter().GetInterface(type_index(typeid(TInterface))));
+		return object_->GetInterface<TInterface>();
 
 	}
 
 	template <typename TInterface>
 	const TInterface* Interface::GetInterface() const{
 
-		return static_cast<TInterface*>(GetArbiter().GetInterface(type_index(typeid(TInterface))));
+		return object_->GetInterface<TInterface>();
 
 	}
 
 	template <typename TInterface>
 	Interface::range<TInterface> Interface::GetInterfaces(){
 
-		auto range = GetArbiter().GetInterfaces(type_index(typeid(TInterface)));
-
-		IteratorMapper<TInterface> mapper;
-
-		return Interface::range<TInterface>(iterator<TInterface>(range.begin(), mapper),
-										    iterator<TInterface>(range.end(), mapper));
+		return object_->GetInterfaces<TInterface>();
 
 	}
 
 	template <typename TInterface>
 	Interface::const_range<TInterface> Interface::GetInterfaces() const{
 
-		auto range = GetArbiter().GetInterfaces(type_index(typeid(TInterface)));
+		return object_->GetInterfaces<TInterface>();
 
-		return const_range<TInterface>(const_iterator<TInterface>(range.begin(), mapper),
-									   const_iterator<TInterface>(range.end(), mapper));
 	}
-
 
 }
