@@ -213,7 +213,11 @@ namespace gi_lib{
 	template <typename TArgument>
 	void Event<TArgument>::Notify(TArgument& argument){
 
-		for (auto& it : listeners_){
+		ListenerMapType listeners = ListenerMapType(listeners_);
+
+		for (auto& it : listeners){
+
+			// The callback may modify the listener list...
 
 			it.second.callback(*(it.second.listener), argument);
 
