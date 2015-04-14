@@ -555,24 +555,30 @@ LRESULT Window::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARA
 
 	switch (message_id)
 	{
-	case WM_CLOSE:
+	case WM_CLOSE:{
 
 		//Dispose this window
 		gi_lib::Application::GetInstance().DisposeWindow(GetHandle());
 
-		on_closed_.Notify(OnClosedEventArgs{ this });
+		OnClosedEventArgs args{ this };
+
+		on_closed_.Notify(args);
 
 		break;
-
-	case WM_SIZE:
+	}
+	case WM_SIZE:{
 
 		//The window has been resized
-		on_resized_.Notify(OnResizedEventArgs{ this,
-											   LOWORD(lparameter),
-											   HIWORD(lparameter) });
+
+		OnResizedEventArgs args{ this,
+								 LOWORD(lparameter),
+								 HIWORD(lparameter) };
+				
+		on_resized_.Notify(args);
 
 		break;
-
+	
+	}
 	default:
 		break;
 
