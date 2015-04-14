@@ -82,8 +82,8 @@ namespace{
 
 ///////////////////// EXCEPTION //////////////////////
 
-Exception::Exception(const wstring& message, const wstring& location):
-message_(message),
+Exception::Exception(const wstring& error, const wstring& location):
+error_(error),
 location_(location){
 
 #ifdef _WIN32
@@ -101,12 +101,12 @@ location_(location){
 }
 
 Exception::Exception(const Exception& other) :
-message_(other.message_),
+error_(other.error_),
 location_(other.location_),
 stack_trace_(other.stack_trace_){}
 
 Exception::Exception(Exception&& other):
-message_(std::move(other.message_)),
+error_(std::move(other.error_)),
 location_(std::move(other.location_)),
 stack_trace_(std::move(other.stack_trace_)){}
 
@@ -118,9 +118,9 @@ Exception& Exception::operator=(Exception other){
 
 }
 
-const wstring& Exception::GetMessage() const{
+const wstring& Exception::GetError() const{
 
-	return message_;
+	return error_;
 }
 
 const wstring& Exception::GetLocation() const{
@@ -137,7 +137,7 @@ const wstring& Exception::GetStackTrace() const{
 
 void Exception::Swap(Exception& other){
 
-	std::swap(message_, other.message_);
+	std::swap(error_, other.error_);
 	std::swap(location_, other.location_);
 	std::swap(stack_trace_, other.stack_trace_);
 

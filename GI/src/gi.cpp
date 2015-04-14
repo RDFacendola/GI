@@ -33,7 +33,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//Unhandled exception!
 		wstringstream stream;
 		
-		stream << e.GetMessage()
+		stream << e.GetError()
 			   << std::endl
 			   << e.GetLocation()
 			   << std::endl
