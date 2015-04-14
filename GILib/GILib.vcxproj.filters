@@ -128,5 +128,6 @@
     </ClCompile>
     <ClCompile Include="src\dx11\dx11.cpp" />
     <ClCompile Include="src\interface.cpp" />
+    <ClCompile Include="src\exceptions.cpp" />
   </ItemGroup>
 </Project>

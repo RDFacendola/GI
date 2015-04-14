@@ -5,21 +5,11 @@
 
 #pragma once
 
-#pragma comment(lib, "StackWalker")
-
 #include <string>
-#include <iomanip>
-#include <string>
-#include <sstream>
-#include <map>
-
-#include <StackWalker.h>
 
 #include "macros.h"
 
 using ::std::wstring;
-using ::std::stringstream;
-using ::std::map;
 
 /// \brief Debug boilerplate used to localize exceptions.
 /// The format is "<File>:<Line> (<Function>)"
@@ -33,147 +23,49 @@ using ::std::map;
 #define THROW(message) throw Exception(message, EXCEPTION_LOCATION_W)
 
 namespace gi_lib{
-
-	/// \brief Manages the stack trace.
-	/// \author Raffaele D. Facendola
-	class StackTrace : public StackWalker{
-
-	public:
-
-		/// \brief Default constructor.
-		StackTrace() : StackWalker(StackWalkOptions::RetrieveNone) {}
-
-		/// \brief Get the current stack trace.
-		/// \return Returns the current stack trace as a string.
-		inline wstring GetStackTrace(){
-
-			//Remove the content of the stack trace
-			stack_trace.str("");
-
-			ShowCallstack();
-
-			auto trace = stack_trace.str();
-
-			return wstring(trace.begin(), trace.end());
-
-		}
-
-	protected:
-
-		/// \brief Callback used to log each stack entry.
-		/// \param eType Type of the entry.
-		/// \param entry Details about the entry.
-		virtual void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &entry){
-
-			StackWalker::OnCallstackEntry(eType, entry);
-
-			if (entry.offset == 0){
-
-				return;	//Invalid entry
-
-			}
-
-			stack_trace << entry.moduleName
-						<< " - "
-						<< entry.undFullName
-						<< " ("
-						<< std::to_string(entry.lineNumber)
-						<< ")"
-						<< std::endl;
-
-		}
-
-	private:
-
-		stringstream stack_trace;
-
-	};
-
+	
 	/// \brief Runtime exception
-	/// \note A convenient way to throw a runtime exception is the following:
-	/// \code {.cpp}
-	/// throw RuntimeException("message", {{L"arg0", L"value0"}, {L"arg1", L"value1"}})
-	/// \endcode
 	/// \author Raffaele D. Facendola
 	class Exception{
 
 	public:
 
-		/// \brief Move ctor.
-		/// \param other The r-value reference to the object to move.
-		Exception(Exception && other){
-
-			where_ = std::move(other.where_);
-			what_ = std::move(other.what_);
-			stack_trace_ = std::move(other.stack_trace_);
-			
-		}
-
-		/// \brief Creates a new exception.
-		/// \param error_message The error message associated to the exception
-		Exception(const wstring & what, const wstring & location){
-
-			StackTrace e;
-
-			where_ = location;
-			what_ = what;
-			stack_trace_ = e.GetStackTrace();
-
-		}
-
-		/// \brief Unified assigment operator.
-		/// \param other The value to assign to this object.
-		inline Exception & operator=(Exception other){
-
-			other.Swap(*this);
-
-			return *this;
-
-		}
-
-		/// \brief What happened.
-		/// \return Returns a string with the exception cause.
-		const wstring & GetWhat() const{
-
-			return what_;
-
-		}
-
-		/// \brief Where the exception was thrown.
-		/// \return Returns a string containing the location where the exception was thrown from.
-		const wstring & GetWhere() const{
-
-			return where_;
-
-		}
-
-		/// \brief Get the stack trace.
-		/// \return Returns the stack trace.
-		const wstring & GetStackTrace() const{
-
-			return stack_trace_;
-
-		}
-
-	private:
-
-		/// \brief Swap.
-		inline void Swap(Exception & other){
-
-			std::swap(where_, other.where_);
-			std::swap(what_, other.what_);
-			std::swap(stack_trace_, other.stack_trace_);
-
-		}
-
-		/// \brief Location of the exception.
-		wstring where_;
-
-		/// \brief What happened.
-		wstring what_;
-
-		wstring stack_trace_;
+		/// \brief Create a new exception.
+		/// \param message Message associated to the exception.
+		/// \param location Location of the exception.
+		Exception(const wstring& message, const wstring& location);
 		
+		/// \brief Copy constructor.
+		/// \param other Instance to copy from.
+		Exception(const Exception& other);
+
+		/// \brief Move constructor.
+		/// \param other Instance to move.
+		Exception(Exception&& other);
+
+		/// \brief Unified assignment operator.
+		Exception& operator=(Exception other);
+
+		/// \brief Get the message associatrd with the exception.
+		const wstring& GetMessage() const;
+
+		/// \brief Get the location of the exception.
+		const wstring& GetLocation() const;
+
+		/// \brief Get the full stack trace.
+		const wstring& GetStackTrace() const;
+				
+	private:
+		
+		/// \brief Swap this exception with another one.
+		void Swap(Exception& other);
+
+		wstring message_;			///< \brief Message associated with the exception.
+
+		wstring location_;			///< \brief Where the exception occured.
+		
+		wstring stack_trace_;		///< \brief Full stack trace.
+
 	};
 
 }

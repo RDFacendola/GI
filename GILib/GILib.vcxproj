@@ -50,6 +50,7 @@
     <ClCompile Include="src\components.cpp" />
     <ClCompile Include="src\dx11\dx11.cpp" />
     <ClCompile Include="src\dx11\dx11resources.cpp" />
+    <ClCompile Include="src\exceptions.cpp" />
     <ClCompile Include="src\fbx\fbx.cpp" />
     <ClCompile Include="src\gimath.cpp" />
     <ClCompile Include="src\graphics.cpp" />
