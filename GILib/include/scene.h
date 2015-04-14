@@ -9,16 +9,19 @@
 #include <typeindex>
 #include <typeinfo>
 #include <string>
+#include <map>
 
 #include "interface.h"
 #include "timer.h"
 #include "gimath.h"
 #include "range.h"
 #include "unique.h"
+#include "observable.h"
 
 using ::std::vector;
 using ::std::wstring;
 using ::std::type_index;
+using ::std::map;
 using ::Eigen::Affine3f;
 using ::Eigen::Translation3f;
 using ::Eigen::AlignedScaling3f;
@@ -34,21 +37,49 @@ namespace gi_lib{
 	/// \author Raffaele D. Facendola
 	class Scene{
 
+	public:
+
+		/// \brief Default constructor.
+		Scene();
+
+		/// \brief No copy constructor.
+		Scene(const Scene&) = delete;
+
+		/// \brief Create a new scene node.
+		/// \param name The name of the scene node.
+		/// \return Returns the created scene node.
+		SceneNode* CreateNode(const wstring& name);
+
+		/// \brief Create a new scene node with Transform interface.
+		/// \param name The name of the scene node.
+		/// \param translation Local translation.
+		/// \param rotation Local rotation.
+		/// \param scaling Local scaling.
+		/// \return Returns the created scene node.
+		SceneNode* CreateNode(const wstring& name, const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling);
+
+		
+	private:
+
 
 
 	};
 
 	/// \brief Base interface for all scene nodes.
 	/// Exposes properties to identify the node.
+	/// This interface can only be instantiated within a scene
 	/// \author Raffaele D. Facendola
 	class SceneNode : public Interface{
 
+		friend class Scene;
+
 	public:
 
-		/// \brief Create a new scene node.
-		/// \param scene The scene this node is associated to.
-		/// \param name The node name.
-		SceneNode(Scene& scene, const wstring& name);
+		/// \brief No copy constructor.
+		SceneNode(const SceneNode&) = delete;
+
+		/// \brief Destructor.
+		virtual ~SceneNode();
 
 		/// \brief Get the scene this node is associated to.
 		/// \return Returns the scene this node is associated to.
@@ -77,15 +108,21 @@ namespace gi_lib{
 
 	protected:
 
-		virtual void GetTypes(vector<type_index>& types) const override;
+		virtual void GetTypes(set<type_index>& types) const override;
 
 	private:
 
-		Scene& scene_;
+		/// \brief Create a new scene node.
+		/// \param object The composite object this interface is plugged into.
+		/// \param scene The scene this node is associated to.
+		/// \param name The node name.
+		SceneNode(Object& object, Scene& scene, const wstring& name);
 
-		const wstring name_;
+		Scene& scene_;						///< \brief Scene owning this node.
 
-		const Unique<SceneNode> uid_;
+		const wstring name_;				///< \brief Name of the node.
+
+		const Unique<SceneNode> uid_;		///< \brief Unique id of the node.
 
 	};
 
@@ -106,13 +143,15 @@ namespace gi_lib{
 
 		/// \brief Create a new transform interface.
 		/// The local transform is initialized as an identity matrix.
-		Transform();
+		/// \param object The composite object this interface is plugged into.
+		Transform(Object& object);
 
 		/// \brief Create a new transform interface.
+		/// \param object The composite object this interface is plugged into.
 		/// \param translation Local translation.
 		/// \param rotation Local rotation.
 		/// \param scaling Local scaling.
-		Transform(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling);
+		Transform(Object& object, const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling);
 
 		/// \brief Get the translation.
 		/// \return Returns the translation component.
@@ -168,7 +207,7 @@ namespace gi_lib{
 
 	protected:
 
-		virtual void GetTypes(vector<type_index>& types) const override;
+		virtual void GetTypes(set<type_index>& types) const override;
 
 	private:
 

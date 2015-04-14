@@ -30,6 +30,4 @@ private:
 
 	Scene scene_;
 
-	Camera * camera_;
-
 };

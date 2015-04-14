@@ -37,7 +37,7 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	auto r = graphics_.CreateRenderer<TiledDeferredRenderer, LoadFromFile>({ L"" });
 
 	// Camera setup
-	
+	/*
 	auto & camera_node = scene_.CreateNode();
 
 	camera_ = camera_node.AddComponent<Camera>(output_->GetRenderTarget());	// The camera will render directly on the backbuffer
@@ -46,14 +46,14 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	camera_->SetNearPlane(1);
 	camera_->SetFieldOfView(Math::kPi * 0.5f);
 	camera_->SetProjectionMode(Camera::ProjectionMode::kPerspective);
-	
+	*/
 	//Scene import
 
 	//FBXImporter::GetInstance().ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", scene_.CreateNode(), graphics_.GetResources());
 
 	// Bounding volume hierarchy rebuild
 	
-	scene_.GetBVH().Rebuild();
+	//scene_.GetBVH().Rebuild();
 
 }
 
@@ -65,6 +65,6 @@ GILogic::~GILogic(){
 
 void GILogic::Update(const Time & time){
 	
-	scene_.Update(time);
+	//scene_.Update(time);
 
 }

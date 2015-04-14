@@ -15,6 +15,7 @@
 #include "timer.h"
 #include "maybe.h"
 #include "observable.h"
+#include "interface.h"
 
 using ::Eigen::Affine3f;
 using ::Eigen::Translation3f;
@@ -26,73 +27,13 @@ using ::std::reference_wrapper;
 
 namespace gi_lib{
 
-	/// \brief Scene object component.
-	/// \author Raffaele D. Facendola
-	class NodeComponent{
-
-		friend class SceneNode;
-
-	public:
-
-		/// \brief Create a new node component.
-		/// \param node The node this component belongs to.
-		NodeComponent(SceneNode & node);
-
-		/// \brief No copy constructor.
-		NodeComponent(const NodeComponent &) = delete;
-
-		/// \brief No assignment operator.
-		NodeComponent & operator=(const NodeComponent &) = delete;
-
-		virtual ~NodeComponent();
-
-		/// \brief Get the node this component belongs to.
-
-		/// \return Returns the component's owner reference.
-		SceneNode & GetNode();
-
-		/// \brief Get the node this component belongs to.
-
-		/// \return Returns the component's owner reference.
-		const SceneNode & GetNode() const;
-
-		/// \brief Check wheter this component is enabled.
-		/// \return Returns true if the component is enabled, false otherwise.
-		bool IsEnabled() const;
-
-		/// \brief Enable or disable the component.
-		/// \param enabled Specify true to enable the component, false to disable it.
-		void SetEnabled(bool enabled);
-
-	protected:
-
-		/// \brief Update the component.
-
-		/// \param time The current application time.
-		virtual void Update(const Time & time) = 0;
-
-		/// \brief Method called after all Update methods have been called.
-		
-		/// The method is intended to update the internal state of the component based on the state of others.
-		/// Avoid cross-component update here!
-		/// \param time The current time application time.
-		virtual void PostUpdate(const Time & time);
-
-	private:
-
-		bool enabled_;
-
-		SceneNode & node_;
-
-	};
-
 	/// \brief Contains informations about an axis-aligned bounding box surrounding the node.
-	class Boundable : public NodeComponent{
+	class Boundable : public Interface{
 
 	public:
 
 		/// \brief Create a new boundable component.
-		Boundable(SceneNode & node, const Bounds & bounds);
+		Boundable(Object& object, const Bounds & bounds);
 
 		virtual ~Boundable();
 
@@ -119,7 +60,7 @@ namespace gi_lib{
 
 		Bounds bounds_;
 
-		Event<Boundable &> on_bounds_changed_;
+		Event<Boundable&> on_bounds_changed_;
 
 	};
 
@@ -129,9 +70,8 @@ namespace gi_lib{
 	public:
 
 		/// \brief Create a new geometry component.
-		/// \param node The node this component belongs to.
 		/// \param mesh Pointer to the mesh bound to this component.
-		Geometry(SceneNode & node, shared_ptr<Mesh> mesh);
+		Geometry(Object& object, shared_ptr<Mesh> mesh);
 
 		/// \brief Set a new mesh.
 		/// \param mesh Pointer to the mesh to set.
@@ -149,7 +89,9 @@ namespace gi_lib{
 
 		virtual void Update(const Time & time);
 
-		virtual void PostUpdate(const Time & time) override;
+		virtual void PostUpdate(const Time & time);
+
+		virtual void GetTypes(set<type_index>& types) const override;
 
 	private:
 
@@ -159,43 +101,9 @@ namespace gi_lib{
 		
 	};
 
-	/// \brief Component used to describe the aspect of the objects on screen.
-	class Aspect : public NodeComponent{
-
-	public:
-
-		/// \brief Create an empty aspect component.
-		Aspect(SceneNode & node);
-
-		/// \brief Destroy the component instance.
-		virtual ~Aspect();
-
-		/// \brief Get the materials' vector.
-		/// \return Returns the materials' vector.
-		vector<shared_ptr<Material>> & GetMaterials();
-		
-		/// \brief Get the materials' vector.
-		/// \return Returns the materials' vector.
-		const vector<shared_ptr<Material>> & GetMaterials() const;
-
-		/// \brief Set the materials' vector.
-		/// \param materials The new materials' vector.
-		void SetMaterials(const vector<shared_ptr<Material>> & materials);
-
-	protected:
-
-		virtual void Update(const Time & time) override;
-
-	private:
-
-		vector<shared_ptr<Material>> materials_;
-
-	};
-
-	/// \brief Component used to display the scene.
-	
-	/// The position of the camera is given by the transform component of the node this camera is attached to.
-	class Camera : public NodeComponent{
+	/// \brief A virtual camera used to display the scene.
+	/// The position and rotation of the camera are given by the Transform component.
+	class Camera : public Interface{
 
 	public:
 
@@ -203,7 +111,7 @@ namespace gi_lib{
 		enum class ProjectionMode{
 
 			kPerspective,						///< \brief Perspective projection.
-			//kOrthographic,						///< \brief Orthographic projection.
+			kOrthographic,						///< \brief Orthographic projection.
 
 		};
 
@@ -219,9 +127,8 @@ namespace gi_lib{
 		/// \brief Default constructor.
 
 		/// The default camera is perspective
-		/// \param node The node this component belongs to.
 		/// \param target The render target of the camera.
-		Camera(SceneNode & node, shared_ptr<RenderTarget> target);
+		Camera(Object& object, shared_ptr<RenderTarget> target);
 
 		~Camera();
 
@@ -373,34 +280,6 @@ namespace gi_lib{
 
 	};
 
-	// Node component
-
-	inline SceneNode & NodeComponent::GetNode(){
-
-		return node_;
-
-	}
-
-	inline const SceneNode & NodeComponent::GetNode() const{
-
-		return node_;
-
-	}
-
-	inline bool NodeComponent::IsEnabled() const{
-
-		return enabled_;
-
-	}
-
-	inline void NodeComponent::SetEnabled(bool enabled){
-
-		enabled_ = enabled;
-
-	}
-
-	inline void NodeComponent::PostUpdate(const Time &){}
-
 	// Boundable
 
 	inline Bounds Boundable::GetBounds() const{
@@ -409,7 +288,7 @@ namespace gi_lib{
 
 	}
 
-	inline Observable<Boundable&> & Boundable::OnBoundsChanged(){
+	inline Observable<Boundable&>& Boundable::OnBoundsChanged(){
 
 		return on_bounds_changed_;
 
@@ -443,28 +322,6 @@ namespace gi_lib{
 	}
 
 	inline void Geometry::Update(const Time &){}
-
-	// Aspect
-
-	inline vector<shared_ptr<Material>> & Aspect::GetMaterials(){
-
-		return materials_;
-
-	}
-
-	inline const vector<shared_ptr<Material>> & Aspect::GetMaterials() const{
-
-		return materials_;
-
-	}
-
-	inline void Aspect::SetMaterials(const vector<shared_ptr<Material>> & materials){
-
-		materials_ = materials;
-
-	}
-
-	inline void Aspect::Update(const Time &){}
 
 	// Camera
 

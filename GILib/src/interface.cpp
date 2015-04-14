@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "..\include\exceptions.h"
+
 using namespace ::gi_lib;
 using namespace ::std;
 
@@ -40,62 +42,69 @@ namespace{
 
 /////////////////////////////// OBJECT ////////////////////////////////////
 
+Object::Object() :
+alive_(true){}
+
 Object::~Object(){
 
-	// Detach the interfaces from the object
+	alive_ = false;
 
-	for (auto& i : interfaces_){
+	for (auto p : interface_set_){
 
-		i->object_ = nullptr;
+		delete p;
 
 	}
-	
-	// The unique_ptr will take care of the interfaces' destruction.
 
 }
 
-Interface* Object::AddInterface(unique_ptr<Interface> ptr){
+void Object::AddInterface(Interface* ptr){
 
-	auto interf = ptr.get();
+	if (alive_){
 
-	interfaces_.push_back(std::move(ptr));
+		interface_set_.insert(ptr);
 
-	interf->object_ = this;
+		// Map each interface type - O(#types)
 
-	// Map each interface type - O(#types)
+		for (auto& type : ptr->GetTypes()){
 
-	for (auto& type : interf->GetTypes()){
+			interface_map_.insert(InterfaceMapType::value_type(type, ptr));
 
-		interface_map_.insert(InterfaceMapType::value_type(type, interf));
+		}
 
 	}
+	else{
 
-	return interf;
+		// This happens only when an interface is added during another interface's destructor.
+		// This is likely to be a poor design choice (an explicit method would be better).
 
+		THROW(L"Unable to add an interface to an object that's being destroyed");
+
+	}
+	
 }
 
 void Object::RemoveInterface(Interface* ptr){
 
-	auto it = std::find_if(interfaces_.begin(),
-						   interfaces_.end(),
-						   [ptr](const unique_ptr<Interface>& p){
+	// If the object is dying, we don't bother deleting a single interface...
 
-								return p.get() == ptr;	
+	if (alive_){
 
-						   });
+		auto it = interface_set_.find(ptr);
 
-	// O(#types * #interfaces_per_type)
+		// O(#types * #interfaces_per_type)
 
-	if (it != interfaces_.end()){
+		if (it != interface_set_.end()){
 
-		UnmapInterface(ptr, interface_map_);
+			UnmapInterface(ptr, interface_map_);
 
-		ptr->object_ = nullptr;
-		
-		interfaces_.erase(it);	// unique_ptr will call the interface destructor.
+			delete *it;					// Delete the interface
+
+			interface_set_.erase(it);	// Remove the element
 			
-	}
+		}
 
+	}
+	
 }
 
 Interface* Object::GetInterface(type_index interface_type){
@@ -108,53 +117,61 @@ Interface* Object::GetInterface(type_index interface_type){
 
 }
 
-Object::InterfaceMapRange Object::GetInterfaces(type_index interface_type){
+Range < Object::InterfaceMapType::iterator > Object::GetInterfaces(type_index interface_type){
 
-	auto r = interface_map_.equal_range(interface_type);
+	return Range < InterfaceMapType::iterator >(interface_map_.equal_range(interface_type));
 
-	return InterfaceMapRange(r);
+}
+
+void Object::Destroy(){
+
+	delete this;
 
 }
 
 /////////////////////////////// INTERFACE /////////////////////////////
 
-Interface::Interface() :
-object_(nullptr){}
+Interface::Interface(Object& object) :
+object_(object){
+
+	object_.AddInterface(this);
+
+}
 
 Interface::~Interface(){
 
-	if (object_ != nullptr){
+	object_.RemoveInterface(this);
 
-		object_->RemoveInterface(this);
+}
+
+Object& Interface::GetComposite(){
+
+	return object_;
+
+}
+
+const Object& Interface::GetComposite() const{
+
+	return object_;
+
+}
+
+set<type_index> Interface::GetTypes() const{
+
+	// The set is needed to prevent multiple inclusion of the same type
+	
+	set<type_index> types;
 		
-	}
-
-}
-
-Object* Interface::GetObject(){
-
-	return object_;
-
-}
-
-const Object* Interface::GetObject() const{
-
-	return object_;
-
-}
-
-vector<type_index> Interface::GetTypes() const{
-
-	vector<type_index> types;
-
 	GetTypes(types);
 
 	return types;
 
 }
 
-void Interface::GetTypes(vector<type_index>& types) const{
+void Interface::GetTypes(set<type_index>& types) const{
 
-	types.push_back(type_index(typeid(Interface)));
+	types.insert(type_index(typeid(Interface)));
 
 }
+
+

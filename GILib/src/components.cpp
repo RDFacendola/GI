@@ -3,32 +3,26 @@
 #include "..\include\scene.h"
 #include "..\include\gimath.h"
 
+#include "..\include\exceptions.h"
+
 using namespace gi_lib;
 using namespace std;
 
-///////////////////// NODE COMPONENT ///////////////////
-
-NodeComponent::NodeComponent(SceneNode & node) :
-	node_(node),
-	enabled_(true){}
-
-NodeComponent::~NodeComponent(){}
-
 /////////////////////// BOUNDABLE ///////////////////////////////////////
 
-Boundable::Boundable(SceneNode & node, const Bounds & bounds) :
-NodeComponent(node),
+Boundable::Boundable(Object& object, const Bounds& bounds) :
+Interface(object),
 bounds_(bounds){
 
 	// Add the volume to the BVH
-	GetNode().GetScene().GetBVH().AddBoundable(*this);
+	//GetNode().GetScene().GetBVH().AddBoundable(*this);
 
 }
 
 Boundable::~Boundable(){
 
 	// Remove the volume from the BVH
-	GetNode().GetScene().GetBVH().RemoveBoundable(*this);
+	//GetNode().GetScene().GetBVH().RemoveBoundable(*this);
 
 }
 
@@ -43,15 +37,15 @@ void Boundable::SetBounds(const Bounds & bounds){
 
 /////////////////////// GEOMETRY ///////////////////////////////////////
 
-Geometry::Geometry(SceneNode & node, shared_ptr<Mesh> mesh) :
-	Boundable(node, mesh->GetBounds()),
+Geometry::Geometry(Object& object, shared_ptr<Mesh> mesh) :
+	Boundable(object, mesh->GetBounds()),
 	mesh_(mesh),
 	dirty_(true){}
 
 void Geometry::PostUpdate(const Time &){
 
 	// Update the bounds of the geometry 
-
+	/*
 	auto & node = GetNode();
 
 	if (node.IsWorldTransformChanged() ||
@@ -62,28 +56,23 @@ void Geometry::PostUpdate(const Time &){
 		dirty_ = false;
 
 	}
-	
+	*/
 
 }
 
-/////////////////////// ASPECT ///////////////////////////////////////
+void Geometry::GetTypes(set<type_index>& types) const{
 
-Aspect::Aspect(SceneNode & node) :
-NodeComponent(node){}
+	Boundable::GetTypes(types);
 
-Aspect::~Aspect(){}
+	types.insert(type_index(typeid(Geometry)));
+
+}
 
 /////////////////////// CAMERA /////////////////////////////////////////
 
-Camera::Camera(SceneNode & node, shared_ptr<RenderTarget> target) :
-NodeComponent(node),
+Camera::Camera(Object& object, shared_ptr<RenderTarget> target) :
+Interface(object),
 target_(target){
-
-	if (!target_){
-
-		THROW(L"Render target must not be null!");
-
-	}
 
 	projection_mode_ = ProjectionMode::kPerspective;
 	clear_mode_ = ClearMode::kColor;
@@ -106,14 +95,14 @@ target_(target){
 	priority_ = 0;
 
 	//Add the camera to the sorted list
-	GetNode().GetScene().AddCamera(*this);
+	//GetNode().GetScene().AddCamera(*this);
 
 }
 
 Camera::~Camera(){
 
 	// Remove this camera from the camera list
-	GetNode().GetScene().RemoveCamera(*this);
+	//GetNode().GetScene().RemoveCamera(*this);
 
 }
 
@@ -121,7 +110,9 @@ void Camera::SetPriority(int priority){
 
 	priority_ = priority;
 
-	GetNode().GetScene().SortCamerasByPriority();
+	
+
+	//GetNode().GetScene().SortCamerasByPriority();
 
 }
 
@@ -135,8 +126,10 @@ void Camera::Update(const Time &){
 
 Frustum Camera::GetViewFrustum() const{
 	
-	auto view_matrix = GetNode().GetWorldTransform().inverse();	//View matrix
+	auto transform = GetInterface<Transform>();
 
+	auto view_matrix = transform->GetWorldTransform().inverse();	// View matrix
+	
 	// Projection matrix (Using D3D left-handed notation, should not change the final result though)
 
 	auto proj_matrix = Projective3f::Identity();

@@ -228,11 +228,13 @@ vector<SceneNode *> Octree::GetIntersections(const Frustum & frustum) const{
 
 	// Returns the node list from the boundable list.
 
+	/*
 	std::transform(objects.begin(), objects.end(), nodes.begin(), [](Boundable * boundable){
 
 		return std::addressof(boundable->GetNode());
 
 	});
+	*/
 
 	return nodes;
 

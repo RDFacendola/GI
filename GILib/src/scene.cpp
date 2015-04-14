@@ -6,12 +6,21 @@
 using namespace ::gi_lib;
 using namespace ::std;
 
+////////////////////////////////////// SCENE //////////////////////////////////////////
+
+Scene::Scene(){
+
+}
+
 ////////////////////////////////////// SCENE NODE /////////////////////////////////////
 
-SceneNode::SceneNode(Scene& scene, const wstring& name) :
+SceneNode::SceneNode(Object& object, Scene& scene, const wstring& name) :
+Interface(object),
 scene_(scene),
 name_(name),
 uid_(Unique<SceneNode>::MakeUnique()){}
+
+SceneNode::~SceneNode(){}
 
 Scene& SceneNode::GetScene(){
 
@@ -50,22 +59,24 @@ bool SceneNode::operator!=(const SceneNode & other) const{
 
 }
 
-void SceneNode::GetTypes(vector<type_index>& types) const{
+void SceneNode::GetTypes(set<type_index>& types) const{
 	
 	Interface::GetTypes(types);
 
-	types.push_back(type_index(typeid(SceneNode)));
+	types.insert(type_index(typeid(SceneNode)));
 
 }
 
 ////////////////////////////////////// TRANSFORM /////////////////////////////////////
 
-Transform::Transform() :
-Transform(Translation3f(Vector3f::Zero()), 
+Transform::Transform(Object& object) :
+Transform(object,
+		  Translation3f(Vector3f::Zero()), 
 		  Quaternionf::Identity(),
 		  AlignedScaling3f(Vector3f::Ones())){}
 
-Transform::Transform(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling) :
+Transform::Transform(Object& object, const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling) :
+Interface(object),
 parent_(nullptr),
 translation_(translation),
 rotation_(rotation),
@@ -200,11 +211,11 @@ Transform::const_range Transform::GetChildren() const{
 
 }
 
-void Transform::GetTypes(vector<type_index>& types) const{
+void Transform::GetTypes(set<type_index>& types) const{
 
 	Interface::GetTypes(types);
 
-	types.push_back(type_index(typeid(Transform)));
+	types.insert(type_index(typeid(Transform)));
 	
 }
 

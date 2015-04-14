@@ -276,7 +276,7 @@ namespace{
 	void BuildMesh(const FbxMesh & mesh, SceneNode & node, Resources & resources);
 
 	/// \brief Builds an indexed mesh with texture coordinates.
-	template<> void BuildMesh<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, Resources & resources){
+	template<> void BuildMesh<VertexFormatNormalTextured>(const FbxMesh& mesh, SceneNode& node, Resources& resources){
 		
 		BuildIndexedNormalTextured bundle;
 
@@ -284,7 +284,7 @@ namespace{
 
 		bundle.vertices = ReadVertices<VertexFormatNormalTextured>(mesh);
 		
-		node.AddComponent<Geometry>(resources.Load<Mesh, BuildIndexedNormalTextured>(bundle));
+		auto geometry = new Geometry(node.GetComposite(), resources.Load<Mesh, BuildIndexedNormalTextured>(bundle));
 
 	}
 
@@ -343,11 +343,13 @@ namespace{
 		}
 
 		// Add the rendering component
-		
+
+		/*
 		auto aspect = node.AddComponent<Aspect>();
 
 		aspect->SetMaterials(materials);
-		
+		*/
+
 	}
 	
 	/// \brief Attempts to load a mesh inside a scene.
@@ -393,11 +395,11 @@ namespace{
 		Quaternionf rotation = Quaternionf(FbxQuaternionToEigenQuaternionf(node_transform.GetQ())).normalized();
 		AlignedScaling3f scaling = AlignedScaling3f(FbxVector4ToEigenVector3f(node_transform.GetS()));
 			
-		Scene & scene = scene_root.GetScene();
+		Scene& scene = scene_root.GetScene();
 
-		auto & scene_node = scene.CreateNode(node_name, position, rotation, scaling, {});
+		auto scene_node = scene.CreateNode(node_name, position, rotation, scaling);
 		
-		scene_node.SetParent(scene_root);
+		//scene_node->SetParent(scene_root);
 
 		FbxNodeAttribute * attribute;
 
@@ -409,7 +411,7 @@ namespace{
 			if (attribute->GetAttributeType() == FbxNodeAttribute::EType::eMesh){
 
 				// Model object
-				BuildObject(*static_cast<FbxMesh*>(attribute), scene_node, base_path, resources);
+				BuildObject(*static_cast<FbxMesh*>(attribute), *scene_node, base_path, resources);
 				
 			}
 				
@@ -420,7 +422,7 @@ namespace{
 		for (int child_index = 0; child_index < fbx_node->GetChildCount(); ++child_index){
 
 			// The instantiated scene node becomes the root of the next level.
-			WalkFbxScene(fbx_node->GetChild(child_index), scene_node, base_path, resources);
+			WalkFbxScene(fbx_node->GetChild(child_index), *scene_node, base_path, resources);
 
 		}
 
