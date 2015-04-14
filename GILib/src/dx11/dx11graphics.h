@@ -85,7 +85,7 @@ namespace gi_lib{
 
 			// Listeners
 
-			Listener on_window_resized_listener_;
+			unique_ptr<Listener> on_window_resized_listener_;
 			
 			// DirectX stuffs
 

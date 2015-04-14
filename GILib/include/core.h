@@ -232,6 +232,22 @@ namespace gi_lib{
 
 	public:
 
+		struct OnClosedEventArgs{
+
+			Window* window;
+
+		};
+
+		struct OnResizedEventArgs{
+
+			Window* window;
+
+			unsigned int width;
+
+			unsigned height;
+
+		};
+
 		/// \brief Create a new window.
 		/// \remarks The window is created with default style and dimensions.
 		Window();
@@ -256,19 +272,19 @@ namespace gi_lib{
 
 		/// \brief Event fired when the window has been closed.
 		/// \return Returns an observable event which notifies when the window is closed.
-		Observable<Window&> & OnClosed();
+		Observable<OnClosedEventArgs> & OnClosed();
 
 		/// \brief Event fired when the window has been resized.
 		/// \return Returns an observable event which notifies when the window is resized.
-		Observable<Window&, unsigned int, unsigned int> & OnResized();
+		Observable<OnResizedEventArgs> & OnResized();
 
 	protected:
 
 		/// \brief The window has been closed.
-		Event<Window &> on_closed_;
+		Event<OnClosedEventArgs> on_closed_;
 
 		/// \brief The window has been resized.
-		Event<Window &, unsigned int, unsigned int> on_resized_;
+		Event<OnResizedEventArgs> on_resized_;
 
 	private:
 
@@ -313,13 +329,13 @@ namespace gi_lib{
 
 	}
 
-	inline Observable<Window&> & Window::OnClosed(){
+	inline Observable<Window::OnClosedEventArgs> & Window::OnClosed(){
 
 		return on_closed_;
 
 	}
 
-	inline Observable<Window&, unsigned int, unsigned int> & Window::OnResized(){
+	inline Observable<Window::OnResizedEventArgs> & Window::OnResized(){
 
 		return on_resized_;
 

@@ -331,60 +331,6 @@ namespace{
 												 Loader::Register<Material, CompileFromFile>(), 
 												 Loader::Register<Material, InstantiateFromMaterial>() };
 
-	/// \brief Utility class for rendering stuffs.
-	class RenderHelper{
-
-	public:
-
-		static void SetupRenderTarget(Camera & camera, ID3D11DeviceContext & context){
-
-			auto & target = resource_cast(*camera.GetRenderTarget());
-
-			target.Bind(context);
-
-			ClearRenderTarget(camera, context);
-			
-		}
-
-	private:
-
-		static void ClearRenderTarget(Camera & camera, ID3D11DeviceContext & context){
-
-			// TODO: This will clear the entire render target, regardless of the camera viewport.
-			// This usually won't be a problem, however if there are more than one camera drawing to a single render target,
-			// the additional cameras will overwrite everything unless their clear mode is set to "none".
-			// Also depth stencil "tricks" are not supported yet.
-
-			auto & target = resource_cast(*camera.GetRenderTarget());
-
-			switch (camera.GetClearMode()){
-
-			case Camera::ClearMode::kColor:
-
-				// Color and depth-stencil
-				target.ClearTargets(context, camera.GetClearColor());
-				target.ClearDepthStencil(context, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-				break;
-
-			case Camera::ClearMode::kDepthOnly:
-
-				// Depth stencil only
-				target.ClearDepthStencil(context, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-				break;
-
-			default:
-
-				// Do nothing
-				break;
-
-			}
-
-		}
-
-	};
-
 }
 
 //////////////////////////////////// GRAPHICS ////////////////////////////////////
@@ -485,28 +431,27 @@ DX11Output::DX11Output(Window & window, const VideoMode & video_mode) :
 	UpdateSwapChain();
 
 	//Listeners
-	on_window_resized_listener_ = make_listener(window_.OnResized(),
-												[this](Window &, unsigned int, unsigned int){
+	on_window_resized_listener_ = window_.OnResized().Subscribe([this](Listener&, Window::OnResizedEventArgs&){
 
-													// Release the old back buffer
-													render_target_->ResetBuffers();
+		// Release the old back buffer
+		render_target_->ResetBuffers();
 
-													//Resize the swapchain buffer
-													swap_chain_->ResizeBuffers(kBuffersCount,
-																				0,						//Will fit the client width
-																				0,						//Will fit the client height
-																				kVideoFormat,
-																				0);
+		//Resize the swapchain buffer
+		swap_chain_->ResizeBuffers(kBuffersCount,
+								   0,						//Will fit the client width
+								   0,						//Will fit the client height
+								   kVideoFormat,
+								   0);
 
-													DXGI_SWAP_CHAIN_DESC desc;
+		DXGI_SWAP_CHAIN_DESC desc;
 
-													swap_chain_->GetDesc(&desc);
-																	
-													video_mode_ = DXGIModeToVideoMode(desc.BufferDesc);
+		swap_chain_->GetDesc(&desc);
 
-													UpdateBackbuffer();
+		video_mode_ = DXGIModeToVideoMode(desc.BufferDesc);
 
-												});
+		UpdateBackbuffer();
+
+	});
 
 }
 

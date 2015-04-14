@@ -5,220 +5,219 @@
 
 #pragma once
 
+#include <map>
 #include <functional>
-#include <vector>
-#include <tuple>
 #include <memory>
+#include <tuple>
 
 #include "unique.h"
 
-using ::std::tuple;
+using ::std::map;
 using ::std::function;
 using ::std::unique_ptr;
+using ::std::tuple;
 
 namespace gi_lib{
 
-	/// \brief Tag associated to listener objects.
+	class BaseObservable;
+	class Listener;
+
+	/// \brief Tag associated to listener's identifiers.
 	struct ListenerTag{};
+	
+	/// \brief Represents a listener-to-subject relationship.
+	/// \author Raffaele D. Facendola.
+	class Listener{
 
-	/// \brief Listener id type.
-	using ListenerId = Unique < ListenerTag > ;
-
-	/// \brief Observable object.
-	/// \tparam TArguments Type of arguments this observable delivers to the listeners during notification.
-	/// \author Raffaele D. Facendola
-	template <typename... TArguments>
-	class Observable{
+		friend class BaseObservable;
 
 	public:
 
-		/// \brief Add a new listener to this observable.
-		/// \tparam TFunctor Type of listener object.
-		/// \param functor Actual listener object.
-		/// \return Returns the listener id.
-		template<typename TFunctor>
-		ListenerId AddListener(TFunctor functor);
+		/// \brief Create a new listener.
+		/// \param observable Subject.
+		/// \param id Unique id.
+		Listener(BaseObservable* observable, Unique<ListenerTag> id);
 
-		/// \brief Remove a listener object from this observable.
-		/// \param id Id of the listener to remove.
-		void RemoveListener(const ListenerId& id);
-
-	protected:
-
-		using ListenerTableEntry = tuple < ListenerId, function<void(TArguments...)> > ;		///< \brief <id; handler> pair
-
-		std::vector< ListenerTableEntry > listener_table_;										///< \brief List of listeners.
-		
-	};
-
-	/// \brief Event object.
-	/// \tparam TArguments Type of arguments this observable delivers to the listeners during notification.
-	/// \author Raffaele D. Facendola
-	template <typename... TArguments>
-	class Event: public Observable<TArguments...>{
-
-	public:
-
-		/// \brief Notify all the listener objects.
-		/// \param args Arguments that will be delivered to each listener object.
-		void Notify(TArguments&&... args);
-
-	};
-		
-	/// \brief Base interface for listener guards.
-	class BaseListener{
-
-	public:
-
-		/// \brief Virtual destructor.
-		virtual ~BaseListener(){}
-
-	protected:
-
-		/// \brief Protected constructor, prevent instantiation.
-		BaseListener(){}
-
-	};
-
-	/// \brief RAII guard for listener objects.
-	/// \author Raffaele D. Facendola
-	template <typename... TArguments>
-	class ListenerGuard : public BaseListener{
-
-	public:
-
-		/// \brief Create a new listener guard.
-		/// \param subject The object being observed.
-		/// \param listener_id Id associated to the listener.
-		ListenerGuard(Observable<TArguments...>& subject, ListenerId listener_id);
+		/// \brief Default constructor.
+		Listener();
 
 		/// \brief No copy constructor.
-		ListenerGuard(const ListenerGuard<TArguments...>&) = delete;
+		Listener(const Listener&) = delete;
 
-		/// \brief Move constructor.
-		/// \param other Instance to move.
-		ListenerGuard(ListenerGuard<TArguments...>&& other);
+		/// \brief No assignment operator.
+		Listener& operator=(Listener) = delete;
 
-		/// \brief Unified assignment operator.
-		/// \param other Instance to assign.
-		ListenerGuard<TArguments...> operator=(ListenerGuard<TArguments...> other);
+		/// \brief Destructor.
+		~Listener();
 
-		/// \brief Virtual destructor.
-		virtual ~ListenerGuard();
+		/// \brief Unsubscribe from the current event.
+		void Unsubscribe();
+		
+		/// \brief Get the listener's id.
+		/// \return Returns the listener's id.
+		Unique<ListenerTag> GetId();
 
 	private:
 
-		/// \brief Remove the listener from the subject.
-		void RemoveListener();
+		/// \brief Invalidate the state of the listener.
+		void Invalidate();
 
-		Observable<TArguments...>* subject_;	///< \brief Object being observed.
+		Unique<ListenerTag> id_;	///< \brief Unique identifier.
 
-		ListenerId listener_id_;				///< \brief Listener id.
+		BaseObservable* subject_;	///< \brief Observed object.
 
 	};
 
-	/////////////////////////////// OBSERVABLE /////////////////////////////// 
+	/// \brief Base class for observable objects.
+	/// \author Raffaele D. Facendola.
+	class BaseObservable{
 
-	template <typename... TArguments>
-	template<typename TFunctor>
-	ListenerId Observable<TArguments...>::AddListener(TFunctor functor){
+		friend class Listener;
 
-		ListenerId id = ListenerId::MakeUnique();
+	public:
 
-		listener_table_.push_back(std::make_tuple(id, 
-											      std::move(functor)));
+		/// \brief Default constructor.
+		BaseObservable();
 
-		return id;
+		/// \brief No copy constructor.
+		BaseObservable(const BaseObservable&) = delete;
 
-	}
+		/// \brief Destructor.
+		virtual ~BaseObservable();
 
-	template <typename... TArguments>
-	void Observable<TArguments...>::RemoveListener(const ListenerId & id){
-
-		listener_table_.erase(std::remove_if(listener_table_.begin(),
-											 listener_table_.end(),
-											 [&id](const ListenerTableEntry& entry){
-
-												return std::get<0>(entry) == id;
-
-											 }),
-							  listener_table_.end());
-
-	}
-
-	/////////////////////////////// EVENT /////////////////////////////// 
-
-	template <typename... TArguments>
-	void Event<TArguments...>::Notify(TArguments&&... args){
-
-		for (auto& entry : listener_table_){
-
-			std::get<1>(entry)(std::forward<TArguments>(args)...);
-
-		}
-
-	}
+		/// \brief No assignment operator.
+		BaseObservable& operator=(const BaseObservable&) = delete;
 		
-	/////////////////////////////// LISTENER GUARD /////////////////////////////// 
+	protected:
 
-	template <typename... TArguments>
-	ListenerGuard<TArguments...>::ListenerGuard(Observable<TArguments...>& subject, ListenerId listener_id) :
-		subject_(std::addressof(subject)),
-		listener_id_(listener_id)
-	{}
+		/// \brief Unsubscribe a listener by id.
+		virtual void Unsubscribe(Unique<ListenerTag> listener_id) = 0;
 
-	template <typename... TArguments>
-	ListenerGuard<TArguments...>::ListenerGuard(ListenerGuard<TArguments...>&& other) :
-		subject_(other.subject_),
-		listener_id_(other.listener_id_)
-	{
+		/// \brief Invalidate a listener.
+		virtual void Invalidate(Listener& listener);
+
+		/// \brief Generate a new listener.
+		unique_ptr<Listener> GenerateListener();
+
+	private:
+
+		/// \brief Unsubscribe a listener from the observable object.
+		void Unsubscribe(Listener& listener);
+
+	};
+
+	/// \brief Observable object.
+	/// \tparam TArgument Type of the argument that is sent during notification.
+	/// \author Raffaele D. Facendola.
+	template <typename TArgument>
+	class Observable : public BaseObservable{
+
+	public:
+
+		/// \brief Default constructor.
+		Observable();
+
+		/// \brief Destructor.
+		virtual ~Observable();
+
+		/// \brief Subscribe a listener to the current instance.
+		/// The provided listener function must have signature (Listener&, TArgument&) -> void.
+		/// \tparam TListener Type of the listener function.
+		template <typename TListener>
+		unique_ptr<Listener> Subscribe(TListener listener);
+
+	protected:
+
+		struct ListenerEntry{
+
+			Listener* listener;
+
+			function<void(Listener&, TArgument&)> callback;
+
+		};
+
+		using ListenerMapType = map < Unique<ListenerTag>, ListenerEntry >;
+
+		virtual void Unsubscribe(Unique<ListenerTag> listener_id) override;
+
+		ListenerMapType listeners_;		///< \brief Map of the listeners.
+
+	};
+
+	/// \brief Observable event.
+	/// \tparam TArgument Type of the argument that is sent during notification.
+	/// \author Raffaele D. Facendola.
+	template <typename TArgument>
+	class Event : public Observable < TArgument > {
+
+	public:
+
+		/// \brief Destructor.
+		virtual ~Event();
+
+		/// \brief Notify all the listeners.
+		void Notify(TArgument& argument);
+
+	};
+
+	////////////////////// OBSERVABLE ///////////////////////////
 	
-		other.subject_ = nullptr;
+	template <typename TArgument>
+	Observable<TArgument>::Observable(){}
 
-	}
+	template <typename TArgument>
+	Observable<TArgument>::~Observable(){
 
-	template <typename... TArguments>
-	ListenerGuard<TArguments...> ListenerGuard<TArguments...>::operator=(ListenerGuard<TArguments...> other){
+		// Invalidate all the listeners
 
-		std::swap(subject_, other.subject_);
-		std::swap(listener_id_, other.listener_id_);
+		for (auto& it : listeners_){
 
-	}
-
-	template <typename... TArguments>
-	ListenerGuard<TArguments...>::~ListenerGuard(){
-
-		RemoveListener();
-
-	}
-
-	template <typename... TArguments>
-	void ListenerGuard<TArguments...>::RemoveListener(){
-
-		if (subject_ != nullptr){
-
-			subject_->RemoveListener(listener_id_);
-			subject_ = nullptr;
+			Invalidate(*(it.second.listener));
 
 		}
 
 	}
 
-	/////////////////////////////// MISC /////////////////////////////// 
+	template <typename TArgument>
+	template <typename TListener>
+	unique_ptr<Listener> Observable<TArgument>::Subscribe(TListener listener){
 
-	/// \brief Global type for listener guards.
-	using Listener = unique_ptr < BaseListener > ;
+		auto listener_ptr = GenerateListener();
+				
+		listeners_.insert(ListenerMapType::value_type(listener_ptr->GetId(),
+													  ListenerEntry{ listener_ptr.get(),
+																	 std::move(listener) }));
 
-	/// \brief Create a new listener guard.
-	/// \tparam TFunctor Type of functor called during notifications.
-	/// \tparam TArguments Type of the arguments passed during notifications.
-	/// \param subject Object being observed.
-	/// \param listener_func Functor called during notifications.
-	template <typename TFunctor, typename... TArguments>
-	Listener make_listener(Observable<TArguments...>& subject, TFunctor listener_func){
+		return listener_ptr;
 
-		return make_unique<ListenerGuard<TArguments...>>(subject,
-														 subject.AddListener(std::move(listener_func)));
+	}
+
+	template <typename TArgument>
+	void Observable<TArgument>::Unsubscribe(Unique<ListenerTag> listener_id){
+
+		auto it = listeners_.find(listener_id);
+
+		if (it != listeners_.end()){
+
+			listeners_.erase(it);
+
+		}
+
+	}
+
+	////////////////////// EVENT ///////////////////////////
+
+	template <typename TArgument>
+	Event<TArgument>::~Event(){}
+
+	template <typename TArgument>
+	void Event<TArgument>::Notify(TArgument& argument){
+
+		for (auto& it : listeners_){
+
+			it.second.callback(*(it.second.listener), argument);
+
+		}
 
 	}
 
