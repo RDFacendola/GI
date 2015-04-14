@@ -31,9 +31,9 @@ namespace gi_lib{
 	public:
 
 		/// \brief Create a new exception.
-		/// \param message Message associated to the exception.
+		/// \param error Error message associated to the exception.
 		/// \param location Location of the exception.
-		Exception(const wstring& message, const wstring& location);
+		Exception(const wstring& error, const wstring& location);
 		
 		/// \brief Copy constructor.
 		/// \param other Instance to copy from.
@@ -46,8 +46,8 @@ namespace gi_lib{
 		/// \brief Unified assignment operator.
 		Exception& operator=(Exception other);
 
-		/// \brief Get the message associatrd with the exception.
-		const wstring& GetMessage() const;
+		/// \brief Get the error message associated with the exception.
+		const wstring& GetError() const;
 
 		/// \brief Get the location of the exception.
 		const wstring& GetLocation() const;
@@ -60,7 +60,7 @@ namespace gi_lib{
 		/// \brief Swap this exception with another one.
 		void Swap(Exception& other);
 
-		wstring message_;			///< \brief Message associated with the exception.
+		wstring error_;				///< \brief Message associated with the exception.
 
 		wstring location_;			///< \brief Where the exception occured.
 		
