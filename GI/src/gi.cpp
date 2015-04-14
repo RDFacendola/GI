@@ -1,4 +1,5 @@
 #include <Windows.h>
+
 #include <string>
 #include <sstream>
 
@@ -7,6 +8,7 @@
 
 #include "..\include\gi_logic.h"
 
+#undef GetMessage	// Nice naming there.... 
 
 using ::std::wstring;
 using ::std::wstringstream;
@@ -31,9 +33,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//Unhandled exception!
 		wstringstream stream;
 		
-		stream << e.GetWhat()
+		stream << e.GetMessage()
 			   << std::endl
-			   << e.GetWhere()
+			   << e.GetLocation()
 			   << std::endl
 			   << e.GetStackTrace()
 			   << std::endl
