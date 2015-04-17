@@ -6,6 +6,7 @@
 #include <renderers.h>
 
 #include <interface.h>
+#include <range.h>
 
 #include <scene.h>
 #include <fbx\fbx.h>
@@ -20,10 +21,31 @@ using namespace ::Eigen;
 
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
+struct Foo{
+
+	void DoFoo(){}
+
+	void DoBar(){}
+
+};
+
+
 GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {
+
+	using mtype = Foo*;
+
+	vector<mtype> v;
+
+	Range<vector<mtype>::iterator> ran(v.begin(), v.end());
+
+	auto it = v.begin();
+
 	
+	
+
+
 	// Graphics setup
 
 	SetTitle(kWindowTitle);

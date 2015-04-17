@@ -10,8 +10,7 @@ using namespace std;
 
 /////////////////////// BOUNDABLE ///////////////////////////////////////
 
-Boundable::Boundable(Object& object, const Bounds& bounds) :
-Interface(object),
+Boundable::Boundable(const Bounds& bounds):
 bounds_(bounds){
 
 	// Add the volume to the BVH
@@ -35,10 +34,24 @@ void Boundable::SetBounds(const Bounds & bounds){
 
 }
 
+Boundable::TypeSet Boundable::GetTypes() const{
+
+	auto types = Component::GetTypes();
+
+	types.insert(type_index(typeid(Boundable)));
+
+	return types;
+
+}
+
+void Boundable::Initialize(){}
+
+void Boundable::Finalize(){}
+
 /////////////////////// GEOMETRY ///////////////////////////////////////
 
-Geometry::Geometry(Object& object, shared_ptr<Mesh> mesh) :
-	Boundable(object, mesh->GetBounds()),
+Geometry::Geometry(shared_ptr<Mesh> mesh) :
+	Boundable(mesh->GetBounds()),
 	mesh_(mesh),
 	dirty_(true){}
 
@@ -60,18 +73,23 @@ void Geometry::PostUpdate(const Time &){
 
 }
 
-void Geometry::GetTypes(set<type_index>& types) const{
+Geometry::TypeSet Geometry::GetTypes() const{
 
-	Boundable::GetTypes(types);
+	auto types = Boundable::GetTypes();
 
 	types.insert(type_index(typeid(Geometry)));
 
+	return types;
+
 }
+
+void Geometry::Initialize(){}
+
+void Geometry::Finalize(){}
 
 /////////////////////// CAMERA /////////////////////////////////////////
 
-Camera::Camera(Object& object, shared_ptr<RenderTarget> target) :
-Interface(object),
+Camera::Camera(shared_ptr<RenderTarget> target) :
 target_(target){
 
 	projection_mode_ = ProjectionMode::kPerspective;
@@ -126,7 +144,7 @@ void Camera::Update(const Time &){
 
 Frustum Camera::GetViewFrustum() const{
 	
-	auto transform = GetInterface<Transform>();
+	auto transform = GetComponents<Transform>();
 
 	auto view_matrix = transform->GetWorldTransform().inverse();	// View matrix
 	
@@ -177,3 +195,17 @@ Frustum Camera::GetViewFrustum() const{
 	return frustum;
 
 }
+
+Camera::TypeSet Camera::GetTypes() const{
+
+	auto types = Component::GetTypes();
+
+	types.insert(type_index(typeid(Camera)));
+
+	return types;
+
+}
+
+void Camera::Initialize(){}
+
+void Camera::Finalize(){}

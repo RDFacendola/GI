@@ -28,12 +28,12 @@ using ::std::reference_wrapper;
 namespace gi_lib{
 
 	/// \brief Contains informations about an axis-aligned bounding box surrounding the node.
-	class Boundable : public Interface{
+	class Boundable : public Component{
 
 	public:
 
 		/// \brief Create a new boundable component.
-		Boundable(Object& object, const Bounds & bounds);
+		Boundable(const Bounds & bounds);
 
 		virtual ~Boundable();
 
@@ -48,7 +48,13 @@ namespace gi_lib{
 		/// \return Returns a reference to the observable event raised after the bounds have changed.
 		Observable<Boundable&> & OnBoundsChanged();
 		
+		virtual TypeSet GetTypes() const override;
+
 	protected:
+
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
 		
 		virtual void Update(const Time & time) = 0;
 
@@ -71,7 +77,7 @@ namespace gi_lib{
 
 		/// \brief Create a new geometry component.
 		/// \param mesh Pointer to the mesh bound to this component.
-		Geometry(Object& object, shared_ptr<Mesh> mesh);
+		Geometry(shared_ptr<Mesh> mesh);
 
 		/// \brief Set a new mesh.
 		/// \param mesh Pointer to the mesh to set.
@@ -85,13 +91,18 @@ namespace gi_lib{
 		/// \return Returns a pointer to this component's mesh.
 		shared_ptr<const Mesh> GetMesh() const;
 		
+		virtual TypeSet GetTypes() const override;
+
 	protected:
+
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
 
 		virtual void Update(const Time & time);
 
 		virtual void PostUpdate(const Time & time);
 
-		virtual void GetTypes(set<type_index>& types) const override;
 
 	private:
 
@@ -103,7 +114,7 @@ namespace gi_lib{
 
 	/// \brief A virtual camera used to display the scene.
 	/// The position and rotation of the camera are given by the Transform component.
-	class Camera : public Interface{
+	class Camera : public Component{
 
 	public:
 
@@ -128,7 +139,7 @@ namespace gi_lib{
 
 		/// The default camera is perspective
 		/// \param target The render target of the camera.
-		Camera(Object& object, shared_ptr<RenderTarget> target);
+		Camera(shared_ptr<RenderTarget> target);
 
 		~Camera();
 
@@ -238,7 +249,13 @@ namespace gi_lib{
 		/// \return Return the current view frustum.
 		Frustum GetViewFrustum() const;
 
+		virtual TypeSet GetTypes() const override;
+
 	protected:
+
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
 
 		/// \brief Update the component.
 

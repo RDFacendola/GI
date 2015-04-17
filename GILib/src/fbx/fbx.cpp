@@ -284,7 +284,7 @@ namespace{
 
 		bundle.vertices = ReadVertices<VertexFormatNormalTextured>(mesh);
 		
-		auto geometry = new Geometry(node.GetComposite(), resources.Load<Mesh, BuildIndexedNormalTextured>(bundle));
+		auto geometry = Component::Create<Geometry>(resources.Load<Mesh, BuildIndexedNormalTextured>(bundle));
 
 	}
 

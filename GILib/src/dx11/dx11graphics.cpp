@@ -431,7 +431,7 @@ DX11Output::DX11Output(Window & window, const VideoMode & video_mode) :
 	UpdateSwapChain();
 
 	//Listeners
-	on_window_resized_listener_ = window_.OnResized().Subscribe([this](Listener& l, Window::OnResizedEventArgs&){
+	on_window_resized_listener_ = window_.OnResized().Subscribe([this](Listener&, Window::OnResizedEventArgs&){
 
 		// Release the old back buffer
 		render_target_->ResetBuffers();

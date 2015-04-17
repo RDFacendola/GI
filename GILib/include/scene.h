@@ -69,7 +69,7 @@ namespace gi_lib{
 	/// Exposes properties to identify the node.
 	/// This interface can only be instantiated within a scene
 	/// \author Raffaele D. Facendola
-	class SceneNode : public Interface{
+	class SceneNode : public Component{
 
 		friend class Scene;
 
@@ -77,6 +77,11 @@ namespace gi_lib{
 
 		/// \brief No copy constructor.
 		SceneNode(const SceneNode&) = delete;
+
+		/// \brief Create a new scene node.
+		/// \param scene The scene this node is associated to.
+		/// \param name The node name.
+		SceneNode(Scene& scene, const wstring& name);
 
 		/// \brief Destructor.
 		virtual ~SceneNode();
@@ -106,17 +111,15 @@ namespace gi_lib{
 		/// \param other The other node to test against.
 		bool operator!=(const SceneNode & other) const;
 
+		virtual TypeSet GetTypes() const override;
+
 	protected:
 
-		virtual void GetTypes(set<type_index>& types) const override;
+		virtual void Initialize() override;
 
+		virtual void Finalize() override;
+		
 	private:
-
-		/// \brief Create a new scene node.
-		/// \param object The composite object this interface is plugged into.
-		/// \param scene The scene this node is associated to.
-		/// \param name The node name.
-		SceneNode(Object& object, Scene& scene, const wstring& name);
 
 		Scene& scene_;						///< \brief Scene owning this node.
 
@@ -129,7 +132,7 @@ namespace gi_lib{
 	/// \brief Interface for objects inside a 3d space.
 	/// The composite tranformation is calculated by applying the scaling first, the rotation second and the translation last.
 	/// \author Raffaele D. Facendola
-	class Transform : public Interface{
+	class Transform : public Component{
 
 	public:
 
@@ -143,15 +146,13 @@ namespace gi_lib{
 
 		/// \brief Create a new transform interface.
 		/// The local transform is initialized as an identity matrix.
-		/// \param object The composite object this interface is plugged into.
-		Transform(Object& object);
+		Transform();
 
 		/// \brief Create a new transform interface.
-		/// \param object The composite object this interface is plugged into.
 		/// \param translation Local translation.
 		/// \param rotation Local rotation.
 		/// \param scaling Local scaling.
-		Transform(Object& object, const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling);
+		Transform(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling);
 
 		/// \brief Get the translation.
 		/// \return Returns the translation component.
@@ -205,9 +206,13 @@ namespace gi_lib{
 		/// \return Returns an iterable range over the transform's children.
 		const_range GetChildren() const;
 
+		virtual TypeSet GetTypes() const override;
+
 	protected:
 
-		virtual void GetTypes(set<type_index>& types) const override;
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
 
 	private:
 
@@ -222,7 +227,7 @@ namespace gi_lib{
 
 		Translation3f translation_;				///< \brief Translation component.
 
-		Quaternionf rotation_;					///< \brief Rotaiton component.
+		Quaternionf rotation_;					///< \brief Rotation component.
 
 		AlignedScaling3f scale_;				///< \brief Scale component.
 

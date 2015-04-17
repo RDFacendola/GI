@@ -14,8 +14,7 @@ Scene::Scene(){
 
 ////////////////////////////////////// SCENE NODE /////////////////////////////////////
 
-SceneNode::SceneNode(Object& object, Scene& scene, const wstring& name) :
-Interface(object),
+SceneNode::SceneNode(Scene& scene, const wstring& name) :
 scene_(scene),
 name_(name),
 uid_(Unique<SceneNode>::MakeUnique()){}
@@ -59,24 +58,28 @@ bool SceneNode::operator!=(const SceneNode & other) const{
 
 }
 
-void SceneNode::GetTypes(set<type_index>& types) const{
-	
-	Interface::GetTypes(types);
+SceneNode::TypeSet SceneNode::GetTypes() const{
+
+	auto types = Component::GetTypes();
 
 	types.insert(type_index(typeid(SceneNode)));
 
+	return types;
+
 }
+
+void SceneNode::Initialize(){}
+
+void SceneNode::Finalize(){}
 
 ////////////////////////////////////// TRANSFORM /////////////////////////////////////
 
-Transform::Transform(Object& object) :
-Transform(object,
-		  Translation3f(Vector3f::Zero()), 
+Transform::Transform() :
+Transform(Translation3f(Vector3f::Zero()), 
 		  Quaternionf::Identity(),
 		  AlignedScaling3f(Vector3f::Ones())){}
 
-Transform::Transform(Object& object, const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling) :
-Interface(object),
+Transform::Transform(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling) :
 parent_(nullptr),
 translation_(translation),
 rotation_(rotation),
@@ -211,13 +214,19 @@ Transform::const_range Transform::GetChildren() const{
 
 }
 
-void Transform::GetTypes(set<type_index>& types) const{
+Transform::TypeSet Transform::GetTypes() const{
 
-	Interface::GetTypes(types);
+	auto types = Component::GetTypes();
 
 	types.insert(type_index(typeid(Transform)));
-	
+
+	return types;
+
 }
+
+void Transform::Initialize(){}
+
+void Transform::Finalize(){}
 
 void Transform::SetDirty(bool world_only) const{
 

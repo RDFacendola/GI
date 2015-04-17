@@ -9,21 +9,21 @@ using namespace ::std;
 
 namespace{
 
-	void UnmapInterface(Interface* interface_ptr, Object::InterfaceMapType& map){
+	void UnmapInterface(Component* component, Component::ComponentMap& map){
 
 		// O(#types * #interfaces_per_type)
 
-		for (auto type : interface_ptr->GetTypes()){
+		for (auto type : component->GetTypes()){
 
 			auto range = map.equal_range(type);
 
 			while (range.first != range.second){
 
-				if (range.first->second == interface_ptr){
+				if (range.first->second == component){
 
-					map.erase(range.first);		// An interface exists at most once for each type.
+					map.erase(range.first);		
 
-					break;
+					break; // At most once per type
 
 				}
 				else{
@@ -40,138 +40,165 @@ namespace{
 
 }
 
-/////////////////////////////// OBJECT ////////////////////////////////////
+/////////////////////////////// COMPONENT :: ARBITER //////////////////////////////
 
-Object::Object() :
-alive_(true){}
+class Component::Arbiter{
 
-Object::~Object(){
+public:
 
-	alive_ = false;
+	using ComponentSet = set < Component* >;
 
-	for (auto p : interface_set_){
+	using ComponentMap = unordered_multimap < type_index, Component* >;
 
-		delete p;
+	using range = Component::map_range;
+
+	Arbiter();
+
+	~Arbiter();
+
+	void AddComponent(Component* component);
+
+	void RemoveComponent(Component* component);
+
+	void RemoveAll();
+
+	range GetComponents(type_index type);
+
+private:
+
+	void DeleteComponent(ComponentSet::iterator it);
+
+	ComponentSet component_set_;
+
+	ComponentMap component_map_;
+
+	bool autodestroy_;
+
+};
+
+Component::Arbiter::Arbiter() :
+autodestroy_(true){}
+
+Component::Arbiter::~Arbiter(){
+
+	autodestroy_ = false;		// This ensures that this destructor is called exactly once
+
+	// Loop needed because Component::Finalize may still add or remove other components. An iteration may not be sufficient.
+
+	while (!component_set_.empty()){
+
+		DeleteComponent(component_set_.begin());
 
 	}
 
 }
 
-void Object::AddInterface(Interface* ptr){
+void Component::Arbiter::AddComponent(Component* component){
 
-	if (alive_){
+	component_set_.insert(component);
 
-		interface_set_.insert(ptr);
+	// Map each component type - O(#types)
 
-		// Map each interface type - O(#types)
+	for (auto& type : component->GetTypes()){
 
-		for (auto& type : ptr->GetTypes()){
+		component_map_.insert(ComponentMap::value_type(type, component));
 
-			interface_map_.insert(InterfaceMapType::value_type(type, ptr));
+	}
+
+	component->arbiter_ = this;
+
+	// The initialization must occur after the registration because if Component::Initialize removes the last interface, 
+	// the arbiter would be destroyed erroneously.
+
+	component->Initialize();		// Cross-component construction
+
+}
+
+void Component::Arbiter::RemoveComponent(Component* component){
+
+	auto it = component_set_.find(component);
+	
+	if (it != component_set_.end()){
+
+		DeleteComponent(it);
+
+		if (autodestroy_ &&
+			component_set_.empty()){
+
+			delete this;	// Autodestruction
 
 		}
 
 	}
-	else{
-
-		// This happens only when an interface is added during another interface's destructor.
-		// This is likely to be a poor design choice (an explicit method would be better).
-
-		THROW(L"Unable to add an interface to an object that's being destroyed");
-
-	}
 	
 }
 
-void Object::RemoveInterface(Interface* ptr){
+Component::Arbiter::range Component::Arbiter::GetComponents(type_index type){
 
-	// If the object is dying, we don't bother deleting a single interface...
-
-	if (alive_){
-
-		auto it = interface_set_.find(ptr);
-
-		// O(#types * #interfaces_per_type)
-
-		if (it != interface_set_.end()){
-
-			UnmapInterface(ptr, interface_map_);
-
-			delete *it;					// Delete the interface
-
-			interface_set_.erase(it);	// Remove the element
-			
-		}
-
-	}
-	
-}
-
-Interface* Object::GetInterface(type_index interface_type){
-
-	auto it = interface_map_.find(interface_type);
-
-	return it != interface_map_.end() ?
-		   it->second :
-		   nullptr;
+	return range(component_map_.equal_range(type));
 
 }
 
-Range < Object::InterfaceMapType::iterator > Object::GetInterfaces(type_index interface_type){
+void Component::Arbiter::DeleteComponent(ComponentSet::iterator it){
 
-	return Range < InterfaceMapType::iterator >(interface_map_.equal_range(interface_type));
+	auto component = *it;
 
-}
+	component->Finalize();							// Cross-component destruction
 
-void Object::Destroy(){
+	component->arbiter_ = nullptr;					// No really needed, ensures that the dtor of the component won't access the other components.
 
-	delete this;
+	component_set_.erase(it);
 
-}
+	UnmapInterface(component, component_map_);
 
-/////////////////////////////// INTERFACE /////////////////////////////
-
-Interface::Interface(Object& object) :
-object_(object){
-
-	object_.AddInterface(this);
+	delete component;								// Independent destruction
 
 }
 
-Interface::~Interface(){
 
-	object_.RemoveInterface(this);
+/////////////////////////////// COMPONENT /////////////////////////////////////////
 
-}
+Component::Component() :
+arbiter_(nullptr){}
 
-Object& Interface::GetComposite(){
+Component::~Component(){}
 
-	return object_;
+void Component::RemoveComponent(){
 
-}
-
-const Object& Interface::GetComposite() const{
-
-	return object_;
+	arbiter_->RemoveComponent(this);
 
 }
 
-set<type_index> Interface::GetTypes() const{
+void Component::Dispose(){
 
-	// The set is needed to prevent multiple inclusion of the same type
-	
+	delete arbiter_;
+
+}
+
+Component::TypeSet Component::GetTypes() const{
+
 	set<type_index> types;
-		
-	GetTypes(types);
+
+	types.insert(type_index(typeid(Component)));
 
 	return types;
 
 }
 
-void Interface::GetTypes(set<type_index>& types) const{
+Component::map_range Component::GetComponents(type_index type) const{
 
-	types.insert(type_index(typeid(Interface)));
+	return arbiter_->GetComponents(type);
 
 }
 
+void Component::Setup(Arbiter* arbiter){
 
+	arbiter->AddComponent(this);
+
+}
+
+void Component::Setup(){
+
+	Setup(new Arbiter());
+
+}
