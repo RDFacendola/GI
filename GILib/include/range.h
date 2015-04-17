@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <utility>
 #include <iterator>
+#include <type_traits>
 
 using std::pair;
 using std::iterator;
@@ -47,9 +48,11 @@ namespace gi_lib{
 		/// \return Returns an iterator pointing past the end of the range.
 		iterator end();
 
-		/// \brief Dereference the head of the range.
-		/// Undefined behaviour if the range is empty.
+		/// \brief Reference to the element pointed by head.
 		reference operator*();
+
+		/// \brief Pointer to the element pointed by head.
+		pointer operator->();
 
 		/// \brief Moves the head of the range forward by one element. Prefix.
 		/// \return Returns the reference to this range.
@@ -72,37 +75,42 @@ namespace gi_lib{
 	};
 
 	/// \brief Wraps an input iterator that dereferences to another type.
-	template <typename TIterator, typename TWrapped, typename TMapper>
+	template <typename TIterator, typename TWrapped, typename TReferenceMap, typename TPointerMap>
 	struct IteratorWrapper : std::iterator<std::input_iterator_tag, TWrapped>{
 
 		/// \brief Create a new iterator.
 		/// \param iterator Iterator to wrap.
-		IteratorWrapper(const TIterator& iterator, TMapper mapper);
+		IteratorWrapper(const TIterator& iterator, TReferenceMap reference_map, TPointerMap pointer_map);
 
 		/// \brief Copy constructor.
 		/// \param iterator Iterator to copy.
-		IteratorWrapper(const IteratorWrapper<TIterator, TWrapped, TMapper>& iterator);
+		IteratorWrapper(const IteratorWrapper& iterator);
 
 		/// \brief Test for equality.
-		bool operator==(const IteratorWrapper<TIterator, TWrapped, TMapper>& other);
+		bool operator==(const IteratorWrapper& other);
 
 		/// \brief Test for inequality.
-		bool operator!=(const IteratorWrapper<TIterator, TWrapped, TMapper>& other);
+		bool operator!=(const IteratorWrapper& other);
 
 		/// \brief Dereferencing operator.
-		TWrapped& operator*();
+		reference operator*();
+
+		/// \brief Arrow operator.
+		pointer operator->();
 
 		/// \brief Prefix increment.
-		IteratorWrapper<TIterator, TWrapped, TMapper>& operator++();
+		IteratorWrapper& operator++();
 
 		/// \brief Postfix increment.
-		IteratorWrapper<TIterator, TWrapped, TMapper> operator++(int);
+		IteratorWrapper operator++(int);
 
 	private:
 
-		TIterator iterator_;	/// \brief Wrapped iterator.
+		TIterator iterator_;				/// \brief Wrapped iterator.
 
-		TMapper mapper_;		/// \brief Used to map a value from the original wrapped iterator to the new type.
+		TReferenceMap reference_map_;		/// \brief Maps the reference type.
+
+		TPointerMap pointer_map_;			/// \brief Maps the pointer type.
 
 	};
 
@@ -135,7 +143,14 @@ namespace gi_lib{
 	template <typename TIterator>
 	inline typename Range<TIterator>::reference Range<TIterator>::operator*(){
 
-		return *begin_;
+		return begin_.operator*();
+
+	}
+
+	template <typename TIterator>
+	inline typename Range<TIterator>::pointer Range<TIterator>::operator->(){
+
+		return begin_.operator->();
 
 	}
 
@@ -168,39 +183,48 @@ namespace gi_lib{
 	
 	///////////////////////////////// ITERATOR WRAPPER /////////////////////////////////////////
 
-	template <typename TIterator, typename TWrapped, typename TMapper>
-	IteratorWrapper<TIterator, TWrapped, TMapper>::IteratorWrapper(const TIterator& iterator, TMapper mapper) :
+	template <typename typename TIterator, typename TWrapped, typename TReferenceMap, typename TPointerMap>
+	IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap >::IteratorWrapper(const TIterator& iterator, TReferenceMap reference_map, TPointerMap pointer_map) :
 		iterator_(iterator),
-		mapper_(mapper){}
+		reference_map_(reference_map),
+		pointer_map_(pointer_map){}
 
-	template <typename TIterator, typename TWrapped, typename TMapper>
-	IteratorWrapper<TIterator, TWrapped, TMapper>::IteratorWrapper(const IteratorWrapper<TIterator, TWrapped, TMapper>& iterator) :
+	template <typename typename TIterator, typename TWrapped, typename TReferenceMap, typename TPointerMap>
+	IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap >::IteratorWrapper(const IteratorWrapper& iterator) :
 		iterator_(iterator.iterator_),
-		mapper_(iterator.mapper_){}
+		reference_map_(iterator.reference_map_),
+		pointer_map_(iterator.pointer_map_){}
 
-	template <typename TIterator, typename TWrapped, typename TMapper>
-	bool IteratorWrapper<TIterator, TWrapped, TMapper>::operator==(const IteratorWrapper<TIterator, TWrapped, TMapper>& other){
+	template <typename typename TIterator, typename TWrapped, typename TReferenceMap, typename TPointerMap>
+	bool IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap >::operator==(const IteratorWrapper& other){
 
 		return iterator_ == other.iterator_;
 
 	}
 
-	template <typename TIterator, typename TWrapped, typename TMapper>
-	bool IteratorWrapper<TIterator, TWrapped, TMapper>::operator!=(const IteratorWrapper<TIterator, TWrapped, TMapper>& other){
+	template <typename typename TIterator, typename TWrapped, typename TReferenceMap, typename TPointerMap>
+	bool IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap >::operator!=(const IteratorWrapper& other){
 
 		return iterator_ != other.iterator_;
 
 	}
 
-	template <typename TIterator, typename TWrapped, typename TMapper>
-	typename TWrapped& IteratorWrapper<TIterator, TWrapped, TMapper>::operator*(){
+	template <typename typename TIterator, typename TWrapped, typename TReferenceMap, typename TPointerMap>
+	typename IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap >::reference IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap >::operator*(){
 
-		return mapper_(iterator_);
+		return reference_map_(iterator_);
 
 	}
 
-	template <typename TIterator, typename TWrapped, typename TMapper>
-	IteratorWrapper<TIterator, TWrapped, TMapper>& IteratorWrapper<TIterator, TWrapped, TMapper>::operator++(){
+	template <typename typename TIterator, typename TWrapped, typename TReferenceMap, typename TPointerMap>
+	typename IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap >::pointer IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap >::operator->(){
+
+		return pointer_map_(iterator_);
+
+	}
+
+	template <typename typename TIterator, typename TWrapped, typename TReferenceMap, typename TPointerMap>
+	IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap >& IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap >::operator++(){
 
 		++iterator_;
 
@@ -208,10 +232,10 @@ namespace gi_lib{
 
 	}
 
-	template <typename TIterator, typename TWrapped, typename TMapper>
-	IteratorWrapper<TIterator, TWrapped, TMapper> IteratorWrapper<TIterator, TWrapped, TMapper>::operator++(int){
+	template <typename typename TIterator, typename TWrapped, typename TReferenceMap, typename TPointerMap>
+	IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap > IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap >::operator++(int){
 
-		IteratorWrapper<TIterator, TWrapped, TMapper> old(iterator_, mapper_);
+		IteratorWrapper< TIterator, TWrapped, TReferenceMap, TPointerMap > old(*this);
 
 		++iterator_;
 
