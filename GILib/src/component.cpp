@@ -1,4 +1,4 @@
-#include "..\include\interface.h"
+#include "..\include\component.h"
 
 #include <algorithm>
 
@@ -9,6 +9,9 @@ using namespace ::std;
 
 namespace{
 
+	/// \brief Unmaps a component from a given multimap.
+	/// \param component Component to remove.
+	/// \param map Map where the component should be unmapped from.
 	void UnmapInterface(Component* component, Component::ComponentMap& map){
 
 		// O(#types * #interfaces_per_type)
@@ -42,6 +45,7 @@ namespace{
 
 /////////////////////////////// COMPONENT :: ARBITER //////////////////////////////
 
+/// \brief Enables intra-component communications.
 class Component::Arbiter{
 
 public:

@@ -1,0 +1,230 @@
+/// \file component.h
+/// \brief Component-based entity classes and methods.
+///
+/// \author Raffaele D. Facendola
+
+#pragma once
+
+#include <typeinfo>
+#include <typeindex>
+#include <memory>
+#include <unordered_map>
+#include <set>
+#include <iterator>
+
+#include "macros.h"
+#include "range.h"
+
+using std::type_index;
+using std::unordered_multimap;
+using std::set;
+
+namespace gi_lib{
+
+	/// \brief Represents a component of a component-based entity.
+	/// A component-based entity is an abstract object which exposes different capabilities through components.
+	/// These components may be accessed, removed or added at runtime seamlessy.
+	/// The entity may have different components of a same type (each of which is a separate object from the others) and may query for components polymorphically.
+	/// If an entity has a component of type Derived derived from Base, the entity will responds to both the type Derived and Base.
+	/// \auhtor Raffaele D. Facendola.
+	class Component{
+
+	public:
+
+		/// \brief Type of the set containing the components.
+		using ComponentSet = set < Component* >;
+
+		/// \brief Type of the multimap associating the components to their type.
+		using ComponentMap = unordered_multimap < type_index, Component* >;
+
+		/// \brief Type of the type set used to determine the type of a component.
+		using TypeSet = set < type_index >;
+
+		/// \brief Functor used to map an entry from the multimap to a component reference.
+		template <typename TComponent>
+		struct ReferenceMap{
+
+			/// \brief Maps an iterator to the component pointed by it.
+			/// \param iterator Iterator to map.
+			/// \return Returns a reference to the component.
+			TComponent& operator()(ComponentMap::iterator& iterator);
+
+		};
+
+		/// \brief Functor used to map an entry from the multimap to a component pointer.
+		template <typename TComponent>
+		struct PointerMap{
+
+			/// \brief Maps an iterator to the component pointed by it.
+			/// \param iterator Iterator to map.
+			/// \return Returns a pointer to the component.
+			TComponent* operator()(ComponentMap::iterator& iterator);
+
+		};
+
+		/// \brief Type of the iterator.
+		template <typename TComponent>
+		using iterator = IteratorWrapper < ComponentMap::iterator, TComponent, ReferenceMap<TComponent>, PointerMap<TComponent> > ;
+
+		/// \brief Type of the constant iterator.
+		template <typename TComponent>
+		using const_iterator = IteratorWrapper < ComponentMap::iterator, const TComponent, ReferenceMap<TComponent>, PointerMap<TComponent> >;
+
+		/// \brief Range of components.
+		template <typename TComponent>
+		using range = Range < iterator< TComponent > > ;
+
+		/// \brief Range of constant components.
+		template <typename TComponent>
+		using const_range = Range < const_iterator< TComponent > >;
+
+		/// \brief Range of components stored inside the component map.
+		using map_range = Range < ComponentMap::iterator >;
+
+		/// \brief Default constructor.
+		Component();
+
+		/// \brief No copy constructor.
+		Component(const Component&) = delete;
+
+		/// \brief Virtual destructor for inheritance purposes.
+		virtual ~Component();
+
+		/// \brief No assignment operator.
+		Component& operator=(const Component&) = delete;
+
+		/// \brief Create and add a new component to the current composite object.
+		/// \tparam TComponent Type of the component to create.
+		/// \tparam TArgs Types of the arguments to pass to the component's constructor.
+		/// \return Returns a pointer to the newly-created component.
+		template <typename TComponent, typename... TArgs>
+		TComponent* AddComponent(TArgs&&... arguments);
+
+		/// \brief Remove this component from the current composite object.
+		/// \remarks Other components are not deleted, meaning that the object may still exist in memory.
+		///          If the intention was to delete the entire object, consider using the Dispose method instead.
+		/// \remarks If this component was the last one, the composite object is deleted as well.
+		/// \see Dispose
+		void RemoveComponent();
+
+		/// \brief Gets all the component matching a type.
+		/// \tparam TComponent Type of component to get.
+		/// \return Returns a range of all the stored components that match the specified type.
+		template <typename TComponent>
+		range<TComponent> GetComponents();
+
+		/// \brief Gets all the component matching a type.
+		/// \tparam TComponent Type of component to get.
+		/// \return Returns a range of all the stored components that match the specified type.
+		template <typename TComponent>
+		const_range<TComponent> GetComponents() const;
+
+		/// \brief Get all the component types.
+		/// \return Returns a set of types this component can be safely casted to.
+		virtual TypeSet GetTypes() const;
+
+		/// \brief Delete this component and every other component.
+		void Dispose();
+
+		/// \brief Create a new component.
+		/// \tparam TComponent Type of the component to create.
+		/// \tparam TArgs Types of the arguments to pass to the component's constructor.
+		/// \return Returns a pointer to the newly-created component.
+		template <typename TComponent, typename... TArgs>
+		static TComponent* Create(TArgs&&... arguments);
+
+	protected:
+
+		/// \brief Initialize the component.
+		/// Use this method for cross-component initialization.
+		/// This method is called right after the constructor. AddComponent, RemoveComponent and GetComponents methods are guaranteed to work.
+		virtual void Initialize() = 0;
+
+		/// \brief Finalize the component
+		/// Use this method for cross-component finalization.
+		/// This method is called right before the destructor. AddComponent, RemoveComponent and GetComponents methods are guaranteed to work.
+		virtual void Finalize() = 0;
+
+	private:
+
+		class Arbiter;
+
+		/// \brief Get the components matching a specified type.
+		/// \param type Type of the components to get.
+		/// \return Returns a range containing all the components matching the given type.
+		map_range GetComponents(type_index type) const;
+
+		/// \brief Set the arbiter and call the Initialize method.
+		/// \param arbiter Arbiter associated to the current composite entity.
+		void Setup(Arbiter* arbiter);
+
+		/// \brief Create a new entity and call the Initialize method.
+		void Setup();
+
+		Arbiter* arbiter_;	///< \brief Enables intra-component communication.
+		
+	};
+
+	////////////////// COMPONENT /////////////////////
+
+	template <typename TComponent, typename... TArgs>
+	static TComponent* Component::Create(TArgs&&... arguments){
+
+		TComponent* component = new TComponent(std::forward<TArgs&&>(arguments)...);
+
+		component->Setup();
+
+		return component;
+
+	}
+
+	template <typename TComponent, typename... TArgs>
+	TComponent* Component::AddComponent(TArgs&&... arguments){
+
+		TComponent* component = new TComponent(std::forward<TArgs&&>(arguments)...);
+
+		component->Setup(arbiter_);
+
+		return component;
+
+	}
+
+	template <typename TComponent>
+	Component::range<TComponent> Component::GetComponents(){
+
+		auto components = GetComponents(type_index(typeid(TComponent)));
+
+		return range<TComponent>(iterator<TComponent>(components.begin(), ReferenceMap<TComponent>(), PointerMap<TComponent>()),
+								 iterator<TComponent>(components.end(), ReferenceMap<TComponent>(), PointerMap<TComponent>()));
+
+	}
+
+	template <typename TComponent>
+	Component::const_range<TComponent> Component::GetComponents() const{
+
+		auto components = GetComponents(type_index(typeid(TComponent)));
+
+		return const_range<TComponent>(const_iterator<TComponent>(components.begin(), ReferenceMap<TComponent>(), PointerMap<TComponent>()),
+									   const_iterator<TComponent>(components.end(), ReferenceMap<TComponent>(), PointerMap<TComponent>()));
+
+	}
+
+	//////////////////////// COMPONENT::REFERENCE MAP /////////////////////
+
+	template <typename TComponent>
+	TComponent& Component::ReferenceMap<TComponent>::operator()(Component::ComponentMap::iterator& iterator){
+
+		return *static_cast<TComponent*>(iterator->second);
+
+	}
+
+	//////////////////////// COMPONENT::POINTER MAP ///////////////////////
+	
+	template <typename TComponent>
+	TComponent* Component::PointerMap<TComponent>::operator()(Component::ComponentMap::iterator& iterator){
+
+		return static_cast<TComponent*>(iterator->second);
+
+	}
+
+}

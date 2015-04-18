@@ -87,7 +87,7 @@
     <ClInclude Include="include\debug.h" />
     <ClInclude Include="include\renderers.h" />
     <ClInclude Include="include\range.h" />
-    <ClInclude Include="include\interface.h" />
+    <ClInclude Include="include\component.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -127,8 +127,8 @@
       <Filter>os</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\dx11.cpp" />
-    <ClCompile Include="src\interface.cpp" />
     <ClCompile Include="src\exceptions.cpp" />
     <ClCompile Include="src\observable.cpp" />
+    <ClCompile Include="src\component.cpp" />
   </ItemGroup>
 </Project>

@@ -11,7 +11,7 @@
 #include <string>
 #include <map>
 
-#include "interface.h"
+#include "component.h"
 #include "timer.h"
 #include "gimath.h"
 #include "range.h"

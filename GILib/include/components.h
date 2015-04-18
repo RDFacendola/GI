@@ -15,7 +15,7 @@
 #include "timer.h"
 #include "maybe.h"
 #include "observable.h"
-#include "interface.h"
+#include "component.h"
 
 using ::Eigen::Affine3f;
 using ::Eigen::Translation3f;

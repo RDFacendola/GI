@@ -26,7 +26,7 @@
     <ClInclude Include="include\enums.h" />
     <ClInclude Include="include\gimath.h" />
     <ClInclude Include="include\bundles.h" />
-    <ClInclude Include="include\interface.h" />
+    <ClInclude Include="include\component.h" />
     <ClInclude Include="include\range.h" />
     <ClInclude Include="include\renderers.h" />
     <ClInclude Include="include\scope_guard.h" />
@@ -58,7 +58,7 @@
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
     <ClCompile Include="src\bvh.cpp" />
     <ClCompile Include="src\bundles.cpp" />
-    <ClCompile Include="src\interface.cpp" />
+    <ClCompile Include="src\component.cpp" />
     <ClCompile Include="src\observable.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="src\timer.cpp" />

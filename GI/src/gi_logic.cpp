@@ -5,7 +5,7 @@
 #include <resources.h>
 #include <renderers.h>
 
-#include <interface.h>
+#include <component.h>
 #include <range.h>
 
 #include <scene.h>
