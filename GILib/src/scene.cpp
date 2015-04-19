@@ -46,18 +46,6 @@ const Unique<SceneNode> SceneNode::GetUid() const{
 
 }
 
-bool SceneNode::operator==(const SceneNode & other) const{
-
-	return uid_ == other.uid_;
-
-}
-
-bool SceneNode::operator!=(const SceneNode & other) const{
-
-	return uid_ != other.uid_;
-
-}
-
 SceneNode::TypeSet SceneNode::GetTypes() const{
 
 	auto types = Component::GetTypes();
@@ -79,11 +67,11 @@ Transform(Translation3f(Vector3f::Zero()),
 		  Quaternionf::Identity(),
 		  AlignedScaling3f(Vector3f::Ones())){}
 
-Transform::Transform(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling) :
+Transform::Transform(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scale) :
 parent_(nullptr),
 translation_(translation),
 rotation_(rotation),
-scale_(scaling),
+scale_(scale),
 local_dirty_(true),
 world_dirty_(true){}
 
@@ -137,8 +125,6 @@ const Affine3f & Transform::GetLocalTransform() const{
 
 		local_dirty_ = false;
 
-		SetDirty(true);	 // The world matrix needs to be recalculated
-
 	}
 
 	return local_transform_;
@@ -147,9 +133,9 @@ const Affine3f & Transform::GetLocalTransform() const{
 
 const Affine3f & Transform::GetWorldTransform() const{
 
-	auto local_transform = GetLocalTransform();
-
 	if (world_dirty_){
+
+		auto local_transform = GetLocalTransform();
 
 		world_transform_ = parent_ ?
 						   parent_->GetWorldTransform() * local_transform :
@@ -228,17 +214,28 @@ void Transform::Initialize(){}
 
 void Transform::Finalize(){}
 
-void Transform::SetDirty(bool world_only) const{
+void Transform::SetDirty(bool world_only){
 
 	local_dirty_ |= !world_only;
+
 	world_dirty_ = true;
 
-	// Dirtens every world matrix on the children
+	OnTransformChangedEventArgs args{ this };
 
-	for (auto & child : children_){
+	on_transform_changed_.Notify(args);
 
-		child->SetDirty(true);
+	// Invalidate the children recursively
+
+	for (auto& child : children_){
+
+		child->SetDirty(true);	// Children's matrix needs to be recalculated
 
 	}
+
+}
+
+Observable<Transform::OnTransformChangedEventArgs>& Transform::OnTransformChanged(){
+
+	return on_transform_changed_;
 
 }

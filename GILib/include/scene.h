@@ -65,9 +65,8 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Base interface for all scene nodes.
-	/// Exposes properties to identify the node.
-	/// This interface can only be instantiated within a scene
+	/// \brief Base component for all scene nodes.
+	/// Exposes properties to identify the node and the scene it belongs to.
 	/// \author Raffaele D. Facendola
 	class SceneNode : public Component{
 
@@ -103,14 +102,6 @@ namespace gi_lib{
 		/// \return Returns the node unique identifier.
 		const Unique<SceneNode> GetUid() const;
 
-		/// \brief Check whether this node and the specified one are actually the same objects.
-		/// \param other The other node to test against.
-		bool operator==(const SceneNode & other) const;
-
-		/// \brief Check whether this node and the specified one are not the same object.
-		/// \param other The other node to test against.
-		bool operator!=(const SceneNode & other) const;
-
 		virtual TypeSet GetTypes() const override;
 
 	protected:
@@ -129,20 +120,23 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Interface for objects inside a 3d space.
+	/// \brief Expose 3D-space transform capabilities.
 	/// The composite tranformation is calculated by applying the scaling first, the rotation second and the translation last.
 	/// \author Raffaele D. Facendola
 	class Transform : public Component{
 
 	public:
 
-		using iterator = vector<Transform*>::iterator;
+		/// \brief Arguments for the OnTransformChanged event.
+		struct OnTransformChangedEventArgs{
 
-		using const_iterator = vector<Transform*>::const_iterator;
+			Transform* transform;	///< \brief Transform node who triggered the event.
 
-		using range = Range < iterator > ;
+		};
 
-		using const_range = Range < const_iterator > ;
+		using range = Range < vector<Transform*>::iterator >;
+
+		using const_range = Range < vector<Transform*>::const_iterator >;
 
 		/// \brief Create a new transform interface.
 		/// The local transform is initialized as an identity matrix.
@@ -151,8 +145,8 @@ namespace gi_lib{
 		/// \brief Create a new transform interface.
 		/// \param translation Local translation.
 		/// \param rotation Local rotation.
-		/// \param scaling Local scaling.
-		Transform(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling);
+		/// \param scale Local scale.
+		Transform(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scale);
 
 		/// \brief Get the translation.
 		/// \return Returns the translation component.
@@ -208,6 +202,9 @@ namespace gi_lib{
 
 		virtual TypeSet GetTypes() const override;
 
+		/// \brief Event triggered when either the local or the composite transform matrix has been changed.
+		Observable<OnTransformChangedEventArgs>& OnTransformChanged();
+
 	protected:
 
 		virtual void Initialize() override;
@@ -219,7 +216,7 @@ namespace gi_lib{
 		/// \brief Signals that the local or the world transform needs to be calculated again.
 		/// This method will dirty every child node.
 		/// \param world_only Set this to true to dirten the world matrix only, set this to false to dirten both the local and the world matrix.
-		void SetDirty(bool world_only) const;	
+		void SetDirty(bool world_only);	
 
 		Transform* parent_;						///< \brief Parent transform.
 
@@ -238,6 +235,8 @@ namespace gi_lib{
 		mutable bool local_dirty_;				///< \brief The local transform needs to be recalculated.
 
 		mutable bool world_dirty_;				///< \brief The world transform needs to be calculated.
+
+		Event< OnTransformChangedEventArgs > on_transform_changed_;		///< \brief Triggered when the transform matrix has been changed.
 
 	};
 

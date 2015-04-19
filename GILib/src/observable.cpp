@@ -69,3 +69,7 @@ void BaseObservable::Unsubscribe(Listener& listener){
 	listener.Invalidate();
 
 }
+
+////////////////////// EVENT ARGS ///////////////////////////
+
+const EventArgs EventArgs::kEmpty = EventArgs();

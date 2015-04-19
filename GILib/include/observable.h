@@ -106,10 +106,18 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Dummy structure used as arguments for events that do not have any arguments to relay.
+	struct EventArgs{
+	
+		/// \brief Empty event arguments.
+		static const EventArgs kEmpty;
+	
+	};
+
 	/// \brief Observable object.
 	/// \tparam TArgument Type of the argument that is sent during notification.
 	/// \author Raffaele D. Facendola.
-	template <typename TArgument>
+	template <typename TArgument = EventArgs>
 	class Observable : public BaseObservable{
 
 	public:
