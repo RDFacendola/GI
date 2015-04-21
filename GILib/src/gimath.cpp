@@ -21,7 +21,9 @@ namespace {
 
 }
 
-Bounds Bounds::Transformed(const Affine3f & transform) const{
+///////////////////////////////////////// AABB /////////////////////////////////////////
+
+AABB AABB::operator*(const Affine3f& transform) const{
 
 	/// Theory on: http://dev.theomader.com/transform-bounding-boxes/
 
@@ -47,22 +49,38 @@ Bounds Bounds::Transformed(const Affine3f & transform) const{
 
 	}
 
-	return Bounds{ 0.5f * (max_transformed + min_transformed),
-		0.5f * (max_transformed - min_transformed) };
+	return AABB{ 0.5f * (max_transformed + min_transformed),
+				 0.5f * (max_transformed - min_transformed) };
 		
 }
 
-bool Bounds::Inside(const Bounds & other) const{
+bool AABB::Inside(const AABB& other) const{
 
 	return std::abs(other.center(0) - center(0)) < other.half_extents(0) - half_extents(0) &&
-		std::abs(other.center(1) - center(1)) < other.half_extents(1) - half_extents(1) &&
-		std::abs(other.center(2) - center(2)) < other.half_extents(2) - half_extents(2);
+		   std::abs(other.center(1) - center(1)) < other.half_extents(1) - half_extents(1) &&
+		   std::abs(other.center(2) - center(2)) < other.half_extents(2) - half_extents(2);
 
 }
 
-//////////////////////////// FRUSTUM /////////////////////////////////////
+///////////////////////////////////////// SPHERE /////////////////////////////////////////
 
-bool Frustum::Intersect(const Bounds & bounds) const{
+Sphere Sphere::FromAABB(const AABB& aabb){
+
+	return Sphere{ aabb.center ,
+				   aabb.half_extents.norm() };	// Implies a square root.
+
+}
+
+Sphere Sphere::FromAABBSquared(const AABB& aabb){
+
+	return Sphere{ aabb.center,
+				   aabb.half_extents.squaredNorm() };	// Faster than FromAABB
+
+}
+
+///////////////////////////////////////// FRUSTUM /////////////////////////////////////////
+
+bool Frustum::Intersect(const AABB& bounds) const{
 
 	/// Theory on: http://www.gamedev.net/page/resources/_/technical/general-programming/useless-snippet-2-aabbfrustum-test-r3342
 
