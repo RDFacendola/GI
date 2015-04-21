@@ -17,6 +17,9 @@
 #include "range.h"
 #include "unique.h"
 #include "observable.h"
+#include "resources.h"
+#include "graphics.h"
+#include "spatial hierarchy\volume_hierarchy.h"
 
 using ::std::vector;
 using ::std::wstring;
@@ -30,12 +33,12 @@ using ::Eigen::Quaternionf;
 namespace gi_lib{
 
 	class Scene;
-	class SceneNode;
-	class Transform;
+	class NodeComponent;
+	class TransformComponent;
 
 	/// \brief Represents a scene and all its content.
 	/// \author Raffaele D. Facendola
-	class Scene{
+	class Scene : public Component{
 
 	public:
 
@@ -45,45 +48,38 @@ namespace gi_lib{
 		/// \brief No copy constructor.
 		Scene(const Scene&) = delete;
 
-		/// \brief Create a new scene node.
-		/// \param name The name of the scene node.
-		/// \return Returns the created scene node.
-		SceneNode* CreateNode(const wstring& name);
+		virtual TypeSet GetTypes() const override;
 
-		/// \brief Create a new scene node with Transform interface.
-		/// \param name The name of the scene node.
-		/// \param translation Local translation.
-		/// \param rotation Local rotation.
-		/// \param scaling Local scaling.
-		/// \return Returns the created scene node.
-		SceneNode* CreateNode(const wstring& name, const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scaling);
+	protected:
 
-		
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
+
 	private:
 
 
 
 	};
 
-	/// \brief Base component for all scene nodes.
-	/// Exposes properties to identify the node and the scene it belongs to.
+	/// \brief Node component used to link a scene to its nodes.
 	/// \author Raffaele D. Facendola
-	class SceneNode : public Component{
+	class NodeComponent : public Component{
 
 		friend class Scene;
 
 	public:
 
 		/// \brief No copy constructor.
-		SceneNode(const SceneNode&) = delete;
+		NodeComponent(const NodeComponent&) = delete;
 
 		/// \brief Create a new scene node.
 		/// \param scene The scene this node is associated to.
 		/// \param name The node name.
-		SceneNode(Scene& scene, const wstring& name);
+		NodeComponent(Scene& scene, const wstring& name);
 
 		/// \brief Destructor.
-		virtual ~SceneNode();
+		virtual ~NodeComponent();
 
 		/// \brief Get the scene this node is associated to.
 		/// \return Returns the scene this node is associated to.
@@ -100,7 +96,7 @@ namespace gi_lib{
 
 		/// \brief Get the node unique identifier.
 		/// \return Returns the node unique identifier.
-		const Unique<SceneNode> GetUid() const;
+		const Unique<NodeComponent> GetUid() const;
 
 		virtual TypeSet GetTypes() const override;
 
@@ -116,37 +112,37 @@ namespace gi_lib{
 
 		const wstring name_;				///< \brief Name of the node.
 
-		const Unique<SceneNode> uid_;		///< \brief Unique id of the node.
+		const Unique<NodeComponent> uid_;	///< \brief Unique id of the node.
 
 	};
 
 	/// \brief Expose 3D-space transform capabilities.
 	/// The composite tranformation is calculated by applying the scaling first, the rotation second and the translation last.
 	/// \author Raffaele D. Facendola
-	class Transform : public Component{
+	class TransformComponent : public Component{
 
 	public:
 
 		/// \brief Arguments for the OnTransformChanged event.
 		struct OnTransformChangedEventArgs{
 
-			Transform* transform;	///< \brief Transform node who triggered the event.
+			TransformComponent* transform;	///< \brief Transform node who triggered the event.
 
 		};
 
-		using range = Range < vector<Transform*>::iterator >;
+		using range = Range < vector<TransformComponent*>::iterator >;
 
-		using const_range = Range < vector<Transform*>::const_iterator >;
+		using const_range = Range < vector<TransformComponent*>::const_iterator >;
 
 		/// \brief Create a new transform interface.
 		/// The local transform is initialized as an identity matrix.
-		Transform();
+		TransformComponent();
 
 		/// \brief Create a new transform interface.
 		/// \param translation Local translation.
 		/// \param rotation Local rotation.
 		/// \param scale Local scale.
-		Transform(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scale);
+		TransformComponent(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scale);
 
 		/// \brief Get the translation.
 		/// \return Returns the translation component.
@@ -182,15 +178,15 @@ namespace gi_lib{
 
 		/// \brief Get the parent transform.
 		/// \return Returns the parent transform. If this transform is a root, returns nullptr instead.
-		Transform* GetParent();
+		TransformComponent* GetParent();
 
 		/// \brief Get the parent transform.
 		/// \return Returns the parent transform. If this transform is a root, returns nullptr instead.
-		const Transform* GetParent() const;
+		const TransformComponent* GetParent() const;
 
 		/// \brief Set the parent transform.
 		/// \param parent The new parent transform. Set to nullptr to make this instance a root.
-		void SetParent(Transform* parent);
+		void SetParent(TransformComponent* parent);
 
 		/// \brief Get the transform's children.
 		/// \return Returns an iterable range over the transform's children.
@@ -218,9 +214,9 @@ namespace gi_lib{
 		/// \param world_only Set this to true to dirten the world matrix only, set this to false to dirten both the local and the world matrix.
 		void SetDirty(bool world_only);	
 
-		Transform* parent_;						///< \brief Parent transform.
+		TransformComponent* parent_;			///< \brief Parent transform.
 
-		vector<Transform*> children_;			///< \brief Children transforms.
+		vector<TransformComponent*> children_;	///< \brief Children transforms.
 
 		Translation3f translation_;				///< \brief Translation component.
 
@@ -239,6 +235,149 @@ namespace gi_lib{
 		Event< OnTransformChangedEventArgs > on_transform_changed_;		///< \brief Triggered when the transform matrix has been changed.
 
 	};
+
+	/// \brief Static mesh component.
+	/// \author Raffaele D. Facendola.
+	class StaticMeshComponent : public VolumeComponent{
+
+	public:
+
+		/// \brief Create an empty static mesh component.
+		StaticMeshComponent();
+
+		/// \brief Create a new static mesh component.
+		/// \param Static mesh associated to this component
+		StaticMeshComponent(shared_ptr<Mesh> mesh);
+		
+		/// \brief Get the mesh associated to this component.
+		/// \return Return the mesh associated to this component.
+		shared_ptr<Mesh> GetMesh();
+
+		/// \brief Get the mesh associated to this component.
+		/// \return Return the mesh associated to this component.
+		shared_ptr<const Mesh> GetMesh() const;
+
+		/// \brief Set the mesh associated to this component.
+		/// \param mesh The new mesh to associate.
+		void SetMesh(shared_ptr<Mesh> mesh);
+
+		virtual TypeSet GetTypes() const override;
+
+	protected:
+
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
+
+	private:
+
+		shared_ptr<Mesh> mesh_;		///< \brief Static mesh.
+
+	};
+
+	/// \brief Basic class for camera components.
+	/// \author Raffaele D. Facendola.
+	class CameraComponent : public Component{
+
+	public:
+
+		/// \brief Clear mode for the render target.
+		enum class ClearMode{
+
+			kNone,								///< \brief Do no clear.
+			kDepthOnly,							///< \brief Clear the depth buffer and only.
+			kColor,								///< \brief Clear the depth buffer and the color buffer.
+
+		};
+
+		/// \brief Create a new camera component.
+		CameraComponent();
+
+		/// \brief Virtual destructor.
+		virtual ~CameraComponent();
+
+		/// \brief Get the viewport.
+		/// \return Returns the viewport.
+		Viewport GetViewport() const;
+
+		/// \brief Set the viewport.
+		/// \param viewport The new viewport.
+		void SetViewport(const Viewport & viewport);
+
+		/// \brief Get the near clipping plane.
+		/// \return Returns the near clipping plane in world units.
+		float GetMinimumDistance() const;
+
+		/// \brief Set the near clipping plane.
+		/// \param distance The near clipping plane in world units. 
+		void SetMinimumDistance(float distance);
+
+		/// \brief Get the far clipping plane.
+		/// \return Returns the far clipping plane in world units.
+		float GetMaximumDistance() const;
+
+		/// \brief Get the far clipping plane.
+		/// \return Returns the far clipping plane in world units.
+		void SetMaximumDistance(float distance);
+
+		/// \brief Get the clear mode.
+		/// \return Returns the clear mode.
+		ClearMode GetClearMode() const;
+
+		/// \brief Set the clear mode.
+		/// \param clear_mode The new clear mode.
+		void SetClearMode(ClearMode clear_mode);
+
+		/// \brief Get the clear color.
+		/// This value has an actual meaning only if the clear mode is kColor.
+		/// \returns The clear color.
+		Color GetClearColor() const;
+
+		/// \brief Set the clear color.
+		/// This value has an actual meaning only if the clear mode is kColor.
+		/// \param color The new clear color.
+		void SetClearColor(Color color);
+
+		/// \brief Get the clear depth.
+		/// This value has an actual meaning only if the clear mode is kDepthOnly or kColor.
+		/// \return Returns the clear depth normalized in the range 0 (minimum distance) and 1 (maximum distance).
+		float GetClearDepth() const;
+
+		/// \brief Set the clear depth.
+		/// This value has an actual meaning only if the clear mode is kDepthOnly or kColor.
+		/// \param depth The new clear depth normalized in the range 0 (minimum distance) and 1 (maximum distance). Values outside this range are clamped.
+		void SetClearDepth(float depth);
+
+		virtual Frustum GetViewFrustum() const = 0;
+
+		virtual TypeSet GetTypes() const override;
+
+	protected:
+
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
+
+	private:
+
+		shared_ptr<RenderTarget> render_target_;
+
+	};
+
+	class PerspectiveCameraComponent : public CameraComponent{
+
+	public:
+
+		/// \brief Get the vertical field of view in radians.
+		/// \return Return the field of view in radians.
+		float GetFieldOfView() const;
+
+		/// \brief Set the vertical field of view in randians.
+		/// \param fov The new vertical field of view in radians.
+		void SetFieldOfView(float fov);
+
+	};
+
 
 
 }

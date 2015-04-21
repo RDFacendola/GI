@@ -12,62 +12,62 @@ Scene::Scene(){
 
 }
 
-////////////////////////////////////// SCENE NODE /////////////////////////////////////
+////////////////////////////////////// NODE COMPONENT /////////////////////////////////////
 
-SceneNode::SceneNode(Scene& scene, const wstring& name) :
+NodeComponent::NodeComponent(Scene& scene, const wstring& name) :
 scene_(scene),
 name_(name),
-uid_(Unique<SceneNode>::MakeUnique()){}
+uid_(Unique<NodeComponent>::MakeUnique()){}
 
-SceneNode::~SceneNode(){}
+NodeComponent::~NodeComponent(){}
 
-Scene& SceneNode::GetScene(){
-
-	return scene_;
-
-}
-
-const Scene& SceneNode::GetScene() const{
+Scene& NodeComponent::GetScene(){
 
 	return scene_;
 
 }
 
-const wstring& SceneNode::GetName() const{
+const Scene& NodeComponent::GetScene() const{
+
+	return scene_;
+
+}
+
+const wstring& NodeComponent::GetName() const{
 
 
 	return name_;
 
 }
 
-const Unique<SceneNode> SceneNode::GetUid() const{
+const Unique<NodeComponent> NodeComponent::GetUid() const{
 
 	return uid_;
 
 }
 
-SceneNode::TypeSet SceneNode::GetTypes() const{
+NodeComponent::TypeSet NodeComponent::GetTypes() const{
 
 	auto types = Component::GetTypes();
 
-	types.insert(type_index(typeid(SceneNode)));
+	types.insert(type_index(typeid(NodeComponent)));
 
 	return types;
 
 }
 
-void SceneNode::Initialize(){}
+void NodeComponent::Initialize(){}
 
-void SceneNode::Finalize(){}
+void NodeComponent::Finalize(){}
 
-////////////////////////////////////// TRANSFORM /////////////////////////////////////
+////////////////////////////////////// TRANSFORM COMPONENT /////////////////////////////////////
 
-Transform::Transform() :
-Transform(Translation3f(Vector3f::Zero()), 
-		  Quaternionf::Identity(),
-		  AlignedScaling3f(Vector3f::Ones())){}
+TransformComponent::TransformComponent() :
+TransformComponent(Translation3f(Vector3f::Zero()),
+				   Quaternionf::Identity(),
+				   AlignedScaling3f(Vector3f::Ones())){}
 
-Transform::Transform(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scale) :
+TransformComponent::TransformComponent(const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scale) :
 parent_(nullptr),
 translation_(translation),
 rotation_(rotation),
@@ -75,13 +75,13 @@ scale_(scale),
 local_dirty_(true),
 world_dirty_(true){}
 
-const Translation3f & Transform::GetTranslation() const{
+const Translation3f & TransformComponent::GetTranslation() const{
 
 	return translation_;
 
 }
 
-void Transform::SetTranslation(const Translation3f & translation){
+void TransformComponent::SetTranslation(const Translation3f & translation){
 
 	translation_ = translation;
 
@@ -89,13 +89,13 @@ void Transform::SetTranslation(const Translation3f & translation){
 
 }
 
-const Quaternionf & Transform::GetRotation() const{
+const Quaternionf & TransformComponent::GetRotation() const{
 
 	return rotation_;
 
 }
 
-void Transform::SetRotation(const Quaternionf & rotation){
+void TransformComponent::SetRotation(const Quaternionf & rotation){
 
 	rotation_ = rotation;
 
@@ -103,13 +103,13 @@ void Transform::SetRotation(const Quaternionf & rotation){
 
 }
 
-const AlignedScaling3f & Transform::GetScale() const{
+const AlignedScaling3f & TransformComponent::GetScale() const{
 
 	return scale_;
 
 }
 
-void Transform::SetScale(const AlignedScaling3f & scale){
+void TransformComponent::SetScale(const AlignedScaling3f & scale){
 
 	scale_ = scale;
 
@@ -117,7 +117,7 @@ void Transform::SetScale(const AlignedScaling3f & scale){
 
 }
 
-const Affine3f & Transform::GetLocalTransform() const{
+const Affine3f & TransformComponent::GetLocalTransform() const{
 
 	if (local_dirty_){
 
@@ -131,7 +131,7 @@ const Affine3f & Transform::GetLocalTransform() const{
 
 }
 
-const Affine3f & Transform::GetWorldTransform() const{
+const Affine3f & TransformComponent::GetWorldTransform() const{
 
 	if (world_dirty_){
 
@@ -149,19 +149,19 @@ const Affine3f & Transform::GetWorldTransform() const{
 
 }
 
-Transform* Transform::GetParent(){
+TransformComponent* TransformComponent::GetParent(){
 
 	return parent_;
 
 }
 
-const Transform* Transform::GetParent() const{
+const TransformComponent* TransformComponent::GetParent() const{
 
 	return parent_;
 
 }
 
-void Transform::SetParent(Transform* parent){
+void TransformComponent::SetParent(TransformComponent* parent){
 
 	// Remove from the old parent
 	if (parent_ != nullptr){
@@ -186,35 +186,35 @@ void Transform::SetParent(Transform* parent){
 
 }
 
-Transform::range Transform::GetChildren(){
+TransformComponent::range TransformComponent::GetChildren(){
 
 	return range(children_.begin(),
 				 children_.end());
 
 }
 
-Transform::const_range Transform::GetChildren() const{
+TransformComponent::const_range TransformComponent::GetChildren() const{
 
 	return const_range(children_.cbegin(),
 					   children_.cend());
 
 }
 
-Transform::TypeSet Transform::GetTypes() const{
+TransformComponent::TypeSet TransformComponent::GetTypes() const{
 
 	auto types = Component::GetTypes();
 
-	types.insert(type_index(typeid(Transform)));
+	types.insert(type_index(typeid(TransformComponent)));
 
 	return types;
 
 }
 
-void Transform::Initialize(){}
+void TransformComponent::Initialize(){}
 
-void Transform::Finalize(){}
+void TransformComponent::Finalize(){}
 
-void Transform::SetDirty(bool world_only){
+void TransformComponent::SetDirty(bool world_only){
 
 	local_dirty_ |= !world_only;
 
@@ -234,8 +234,61 @@ void Transform::SetDirty(bool world_only){
 
 }
 
-Observable<Transform::OnTransformChangedEventArgs>& Transform::OnTransformChanged(){
+Observable<TransformComponent::OnTransformChangedEventArgs>& TransformComponent::OnTransformChanged(){
 
 	return on_transform_changed_;
 
 }
+
+////////////////////////////////////// STATIC MESH COMPONENT /////////////////////////////////////
+
+StaticMeshComponent::StaticMeshComponent() :
+StaticMeshComponent(nullptr){}
+
+StaticMeshComponent::StaticMeshComponent(shared_ptr<Mesh> mesh) :
+VolumeComponent(mesh->GetBounds()),
+mesh_(mesh){}
+
+shared_ptr<Mesh> StaticMeshComponent::GetMesh(){
+
+	return mesh_;
+
+}
+
+shared_ptr<const Mesh> StaticMeshComponent::GetMesh() const{
+
+	return static_pointer_cast<const Mesh>(mesh_);
+
+}
+
+void StaticMeshComponent::SetMesh(shared_ptr<Mesh> mesh){
+
+	mesh_ = mesh;
+
+	SetBoundingBox(mesh->GetBounds());
+
+}
+
+StaticMeshComponent::TypeSet StaticMeshComponent::GetTypes() const{
+	
+	auto types = VolumeComponent::GetTypes();
+
+	types.insert(type_index(typeid(StaticMeshComponent)));
+
+	return types;
+
+}
+
+void StaticMeshComponent::Initialize(){
+
+	VolumeComponent::Initialize();
+
+}
+
+void StaticMeshComponent::Finalize(){
+
+	VolumeComponent::Finalize();
+
+}
+
+////////////////////////////////////// CAMERA COMPONENT /////////////////////////////////////
