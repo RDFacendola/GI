@@ -66,6 +66,8 @@ public:
 
 	void RemoveAll();
 
+	Component* GetComponent(type_index type);
+
 	range GetComponents(type_index type);
 
 private:
@@ -137,6 +139,16 @@ void Component::Arbiter::RemoveComponent(Component* component){
 	
 }
 
+Component* Component::Arbiter::GetComponent(type_index type){
+
+	auto it = component_map_.find(type);
+
+	return it != component_map_.end() ?
+		   it->second :
+		   nullptr;
+
+}
+
 Component::Arbiter::range Component::Arbiter::GetComponents(type_index type){
 
 	return range(component_map_.equal_range(type));
@@ -186,6 +198,12 @@ Component::TypeSet Component::GetTypes() const{
 	types.insert(type_index(typeid(Component)));
 
 	return types;
+
+}
+
+Component* Component::GetComponent(type_index type) const{
+
+	return arbiter_->GetComponent(type);
 
 }
 

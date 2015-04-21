@@ -107,6 +107,18 @@ namespace gi_lib{
 		/// \see Dispose
 		void RemoveComponent();
 
+		/// \brief Return the first component matching a type.
+		/// \tparam TComponent Type of component to get.
+		/// \return Returns a pointer to the first component that matches the specified type.
+		template <typename TComponent>
+		TComponent* GetComponent();
+
+		/// \brief Return the first component matching a type.
+		/// \tparam TComponent Type of component to get.
+		/// \return Returns a pointer to the first component that matches the specified type.
+		template <typename TComponent>
+		const TComponent* GetComponent() const;
+
 		/// \brief Gets all the component matching a type.
 		/// \tparam TComponent Type of component to get.
 		/// \return Returns a range of all the stored components that match the specified type.
@@ -149,11 +161,16 @@ namespace gi_lib{
 
 		class Arbiter;
 
+		/// \brief Return the first component matching a type.
+		/// \tparam TComponent Type of component to get.
+		/// \return Returns a pointer to the first component that matches the specified type.
+		Component* GetComponent(type_index type) const;
+
 		/// \brief Get the components matching a specified type.
 		/// \param type Type of the components to get.
 		/// \return Returns a range containing all the components matching the given type.
 		map_range GetComponents(type_index type) const;
-
+				
 		/// \brief Set the arbiter and call the Initialize method.
 		/// \param arbiter Arbiter associated to the current composite entity.
 		void Setup(Arbiter* arbiter);
@@ -186,6 +203,20 @@ namespace gi_lib{
 		component->Setup(arbiter_);
 
 		return component;
+
+	}
+
+	template <typename TComponent>
+	TComponent* Component::GetComponent(){
+
+		return static_cast<TComponent*>(GetComponent(type_index(typeid(TComponent))));
+		
+	}
+
+	template <typename TComponent>
+	const TComponent* Component::GetComponent() const{
+
+		return static_cast<const TComponent*>(GetComponent(type_index(typeid(TComponent))));
 
 	}
 
