@@ -54,9 +54,6 @@
     <ClInclude Include="include\scene.h">
       <Filter>scene</Filter>
     </ClInclude>
-    <ClInclude Include="include\components.h">
-      <Filter>scene</Filter>
-    </ClInclude>
     <ClInclude Include="include\graphics.h">
       <Filter>graphics</Filter>
     </ClInclude>
@@ -73,9 +70,6 @@
     <ClInclude Include="include\scope_guard.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\bvh.h">
-      <Filter>scene</Filter>
-    </ClInclude>
     <ClInclude Include="include\windows\os_windows.h">
       <Filter>os</Filter>
     </ClInclude>
@@ -88,6 +82,11 @@
     <ClInclude Include="include\renderers.h" />
     <ClInclude Include="include\range.h" />
     <ClInclude Include="include\component.h" />
+    <ClInclude Include="include\spatial hierarchy\volume_hierarchy.h">
+      <Filter>scene</Filter>
+    </ClInclude>
+    <ClInclude Include="include\spatial hierarchy\octree.h" />
+    <ClInclude Include="include\gilib.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -120,9 +119,6 @@
     <ClCompile Include="src\gimath.cpp">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\bvh.cpp">
-      <Filter>scene</Filter>
-    </ClCompile>
     <ClCompile Include="src\windows\os_windows.cpp">
       <Filter>os</Filter>
     </ClCompile>
@@ -130,5 +126,9 @@
     <ClCompile Include="src\exceptions.cpp" />
     <ClCompile Include="src\observable.cpp" />
     <ClCompile Include="src\component.cpp" />
+    <ClCompile Include="src\spatial hierarchy\volume_hierarchy.cpp">
+      <Filter>scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\spatial hierarchy\octree.cpp" />
   </ItemGroup>
 </Project>

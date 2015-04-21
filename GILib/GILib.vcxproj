@@ -20,8 +20,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\fnv1.h" />
-    <ClInclude Include="include\bvh.h" />
-    <ClInclude Include="include\components.h" />
+    <ClInclude Include="include\gilib.h" />
+    <ClInclude Include="include\spatial hierarchy\octree.h" />
+    <ClInclude Include="include\spatial hierarchy\volume_hierarchy.h" />
     <ClInclude Include="include\debug.h" />
     <ClInclude Include="include\enums.h" />
     <ClInclude Include="include\gimath.h" />
@@ -56,7 +57,8 @@
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
-    <ClCompile Include="src\bvh.cpp" />
+    <ClCompile Include="src\spatial hierarchy\octree.cpp" />
+    <ClCompile Include="src\spatial hierarchy\volume_hierarchy.cpp" />
     <ClCompile Include="src\bundles.cpp" />
     <ClCompile Include="src\component.cpp" />
     <ClCompile Include="src\observable.cpp" />

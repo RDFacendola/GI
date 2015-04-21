@@ -8,85 +8,6 @@
 using namespace gi_lib;
 using namespace std;
 
-/////////////////////// BOUNDABLE ///////////////////////////////////////
-
-Boundable::Boundable(const Bounds& bounds):
-bounds_(bounds){
-
-	// Add the volume to the BVH
-	//GetNode().GetScene().GetBVH().AddBoundable(*this);
-
-}
-
-Boundable::~Boundable(){
-
-	// Remove the volume from the BVH
-	//GetNode().GetScene().GetBVH().RemoveBoundable(*this);
-
-}
-
-void Boundable::SetBounds(const Bounds & bounds){
-
-	bounds_ = bounds;
-
-	// Notify the event to the observers.
-	on_bounds_changed_.Notify(*this);
-
-}
-
-Boundable::TypeSet Boundable::GetTypes() const{
-
-	auto types = Component::GetTypes();
-
-	types.insert(type_index(typeid(Boundable)));
-
-	return types;
-
-}
-
-void Boundable::Initialize(){}
-
-void Boundable::Finalize(){}
-
-/////////////////////// GEOMETRY ///////////////////////////////////////
-
-Geometry::Geometry(shared_ptr<Mesh> mesh) :
-	Boundable(mesh->GetBounds()),
-	mesh_(mesh),
-	dirty_(true){}
-
-void Geometry::PostUpdate(const Time &){
-
-	// Update the bounds of the geometry 
-	/*
-	auto & node = GetNode();
-
-	if (node.IsWorldTransformChanged() ||
-		dirty_){
-
-		SetBounds( mesh_->GetBounds().Transformed(node.GetWorldTransform()) );
-
-		dirty_ = false;
-
-	}
-	*/
-
-}
-
-Geometry::TypeSet Geometry::GetTypes() const{
-
-	auto types = Boundable::GetTypes();
-
-	types.insert(type_index(typeid(Geometry)));
-
-	return types;
-
-}
-
-void Geometry::Initialize(){}
-
-void Geometry::Finalize(){}
-
 /////////////////////// CAMERA /////////////////////////////////////////
 
 Camera::Camera(shared_ptr<RenderTarget> target) :
@@ -96,7 +17,7 @@ target_(target){
 	clear_mode_ = ClearMode::kColor;
 
 	// The entire render surface.
-	viewport_.position = Vector2f::Zero();		
+	viewport_.position = Vector2f::Zero();
 	viewport_.extents = Vector2f::Ones();
 
 	aspect_ratio_ = target_->GetAspectRatio();
@@ -114,31 +35,6 @@ target_(target){
 
 	//Add the camera to the sorted list
 	//GetNode().GetScene().AddCamera(*this);
-
-}
-
-Camera::~Camera(){
-
-	// Remove this camera from the camera list
-	//GetNode().GetScene().RemoveCamera(*this);
-
-}
-
-void Camera::SetPriority(int priority){
-
-	priority_ = priority;
-
-	
-
-	//GetNode().GetScene().SortCamerasByPriority();
-
-}
-
-void Camera::Update(const Time &){
-
-	// Update the aspect ratio
-
-	aspect_ratio_ = target_->GetAspectRatio();
 
 }
 
@@ -196,16 +92,3 @@ Frustum Camera::GetViewFrustum() const{
 
 }
 
-Camera::TypeSet Camera::GetTypes() const{
-
-	auto types = Component::GetTypes();
-
-	types.insert(type_index(typeid(Camera)));
-
-	return types;
-
-}
-
-void Camera::Initialize(){}
-
-void Camera::Finalize(){}

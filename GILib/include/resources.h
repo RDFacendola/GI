@@ -151,7 +151,7 @@ namespace gi_lib{
 		
 	};
 
-	/// \brief Base interface for meshes.
+	/// \brief Base interface for static meshes.
 	/// \author Raffaele D. Facendola.
 	class Mesh : public IResource{
 
@@ -175,7 +175,7 @@ namespace gi_lib{
 
 		/// \brief Get the bounds of the mesh.
 		/// \return Returns the bounds of the mesh in object space.
-		virtual Bounds GetBounds() const = 0;
+		virtual AABB GetBounds() const = 0;
 
 	};
 
