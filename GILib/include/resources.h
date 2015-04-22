@@ -174,8 +174,8 @@ namespace gi_lib{
 		virtual size_t GetLODCount() const = 0;
 
 		/// \brief Get the bounds of the mesh.
-		/// \return Returns the bounds of the mesh in object space.
-		virtual AABB GetBounds() const = 0;
+		/// \return Returns the bounding box of the mesh in object space.
+		virtual const AABB& GetBoundingBox() const = 0;
 
 	};
 

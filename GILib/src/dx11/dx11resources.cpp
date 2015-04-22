@@ -45,11 +45,11 @@ namespace{
 	//////////////////////////// MESH ////////////////////////////////////
 
 	template <typename TVertexFormat>
-	Bounds VerticesToBounds(const std::vector<TVertexFormat> & vertices){
+	AABB VerticesToBounds(const std::vector<TVertexFormat> & vertices){
 
 		if (vertices.size() == 0){
 
-			return Bounds{ Vector3f::Zero(), Vector3f::Zero() };
+			return AABB{ Vector3f::Zero(), Vector3f::Zero() };
 
 		}
 
@@ -80,7 +80,7 @@ namespace{
 
 		}
 
-		return Bounds{ 0.5f * (max_corner + min_corner),
+		return AABB{ 0.5f * (max_corner + min_corner),
 					   max_corner - min_corner };
 
 	}
@@ -511,7 +511,7 @@ DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildIndexedNormalTextured& bundl
 	LOD_count_ = 1;
 	size_ = vb_size + ib_size;
 
-	bounds_ = VerticesToBounds(bundle.vertices);
+	bounding_box_ = VerticesToBounds(bundle.vertices);
 
 }
 

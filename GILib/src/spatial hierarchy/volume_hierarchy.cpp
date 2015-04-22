@@ -49,11 +49,11 @@ const AABB& VolumeComponent::GetBoundingBox() const{
 
 }
 
-const Sphere& VolumeComponent::GetBoundingSphereSquared() const{
+const Sphere& VolumeComponent::GetBoundingSphere() const{
 
 	if (is_sphere_dirty_){
 
-		bounding_sphere_ = Sphere::FromAABBSquared(GetBoundingBox());
+		bounding_sphere_ = Sphere::FromAABB(GetBoundingBox());
 
 		is_sphere_dirty_ = false;
 

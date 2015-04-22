@@ -18,7 +18,6 @@
 #include "..\..\include\resources.h"
 #include "..\..\include\bundles.h"
 #include "..\..\include\scene.h"
-#include "..\..\include\components.h"
 
 using namespace std;
 using namespace gi_lib;

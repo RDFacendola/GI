@@ -11,23 +11,22 @@
 
 namespace gi_lib{
 	
-	/// \brief Represents an uniform octree.
-	/// The octree subdivides the specified region as much as possible.
-	/// This solution works best for applications where the volumes are distribuited uniformly throughout the domain.
-	/// For other applications it may cause an excessive consumption of memory.
+	/// \brief Represents an uniform tree.
+	/// The tree subdivides its domain in equally sized cells recursively.
+	/// This solution works best for applications where the volumes are distribuited uniformly throughout the domain, however it has a large memory footprint.
 	/// \author Raffaele D. Facendola
-	class UniformOctreeComponent : public VolumeHierarchyComponent
+	class UniformTreeComponent : public VolumeHierarchyComponent
 	{
 
 	public:
 
 		/// \brief Create a new octree.
 		/// \param domain Region of space to subdivide.
-		/// \param min_size Minimum size per octree node.
-		UniformOctreeComponent(const AABB& domain, const Vector3f& min_size);
+		/// \param splits Number of times to split on each axis.
+		UniformTreeComponent(const AABB& domain, const Vector3i& splits);
 
 		/// \brief Destructor.
-		virtual ~UniformOctreeComponent();
+		virtual ~UniformTreeComponent();
 
 		virtual void AddVolume(VolumeComponent* volume) override;
 
@@ -40,19 +39,18 @@ namespace gi_lib{
 	protected:
 
 		/// \brief Create a new uniform octree.
-		/// \param parent Parent space containing this octree.
+		/// \param parent Parent space containing this tree.
 		/// \param domain Region of space to subdivide.
-		/// \param min_size Minimum size per octree node.
-		UniformOctreeComponent(UniformOctreeComponent* parent, const AABB& domain, const Vector3f& min_size);
+		/// \param splits Number of times to split on each axis.
+		UniformTreeComponent(UniformTreeComponent* parent, const AABB& domain, const Vector3i& splits);
 
 		virtual void Initialize() override;
 
 		virtual void Finalize() override;
 
-		/// \brief Split the current space in at most 8 subspaces.
-		/// \param Minimum size per octree node.
-		/// \return Returns true if the node was successfully splitted, returns false otherwise.
-		bool Split(const Vector3f& min_size);
+		/// \brief Split the current space at most once on each axis.
+		/// \param splits Number of splits left on each axis.
+		void Split(const Vector3i& splits);
 
 		/// \brief Get all the volume component who intersects with the given frustum.
 		/// \param frustum Frustum.
@@ -62,13 +60,13 @@ namespace gi_lib{
 		///          Fine tests, however, achieve lesser performances and produce no false positive.
 		void GetIntersections(const Frustum& frustum, PrecisionLevel precision, vector<VolumeComponent*>& intersection) const;
 
-		UniformOctreeComponent* parent_;					///< \brief Parent space.
+		UniformTreeComponent* parent_;						///< \brief Parent space.
 
-		vector<UniformOctreeComponent*> children_;			///< \brief Subspaces.
+		vector<UniformTreeComponent*> children_;			///< \brief Subspaces.
 
 		vector<VolumeComponent*> volumes_;					///< \brief Volumes contained in this node.
 
-		AABB bounds_;										///< \brief Bounds of the octree node.
+		AABB bounding_box_;									///< \brief Bounds of the octree node.
 
 		unsigned int volume_count_;							///< \brief Cumulative volume count.
 

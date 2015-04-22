@@ -31,6 +31,7 @@ namespace gi_lib{
 		enum class PrecisionLevel{
 
 			Coarse,				///< \brief A coarse test may produce false positives.
+			Medium,				///< \brief A medium-grained test that could produce some false positive.
 			Fine,				///< \brief A fine-grained test never produce false positives.
 			
 		};
@@ -84,9 +85,9 @@ namespace gi_lib{
 		/// \return Returns the transformed bouding box.
 		const AABB& GetBoundingBox() const;
 
-		/// \brief Get the transformed bounding sphere with squared radius.
-		/// \return Returns the transformed bounding sphere with squared radius.
-		const Sphere& GetBoundingSphereSquared() const;
+		/// \brief Get the transformed bounding sphere.
+		/// \return Returns the transformed bounding sphere.
+		const Sphere& GetBoundingSphere() const;
 
 		/// \brief Event that is signaled whenever the bounds change.
 		/// \return Returns the event that is signaled whenever the bounds change.
@@ -122,7 +123,7 @@ namespace gi_lib{
 
 		mutable bool is_box_dirty_;								///< \brief Whether the bounds needs to be recalculated.
 
-		mutable Sphere bounding_sphere_;						///< \brief Bounding sphere with squared radius. Calculated by need.
+		mutable Sphere bounding_sphere_;						///< \brief Bounding sphere. Calculated by need.
 
 		mutable bool is_sphere_dirty_;							///< \brief Is the bounding sphere dirty?
 

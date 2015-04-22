@@ -178,7 +178,7 @@ namespace gi_lib{
 
 			virtual size_t GetLODCount() const override;
 
-			virtual Bounds GetBounds() const override;
+			virtual const AABB& GetBoundingBox() const override;
 
 		private:
 
@@ -194,7 +194,7 @@ namespace gi_lib{
 
 			size_t size_;
 
-			Bounds bounds_;
+			AABB bounding_box_;
 			
 		};
 
@@ -461,9 +461,9 @@ namespace gi_lib{
 
 		}
 
-		inline Bounds DX11Mesh::GetBounds() const{
+		inline const AABB& DX11Mesh::GetBoundingBox() const{
 
-			return bounds_;
+			return bounding_box_;
 
 		}
 

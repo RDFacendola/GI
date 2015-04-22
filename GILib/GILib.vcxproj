@@ -21,7 +21,7 @@
   <ItemGroup>
     <ClInclude Include="external\fnv1.h" />
     <ClInclude Include="include\gilib.h" />
-    <ClInclude Include="include\spatial hierarchy\octree.h" />
+    <ClInclude Include="include\spatial hierarchy\uniform_tree.h" />
     <ClInclude Include="include\spatial hierarchy\volume_hierarchy.h" />
     <ClInclude Include="include\debug.h" />
     <ClInclude Include="include\enums.h" />
@@ -48,7 +48,6 @@
     <ClInclude Include="include\macros.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\components.cpp" />
     <ClCompile Include="src\dx11\dx11.cpp" />
     <ClCompile Include="src\dx11\dx11resources.cpp" />
     <ClCompile Include="src\exceptions.cpp" />
@@ -57,7 +56,7 @@
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
-    <ClCompile Include="src\spatial hierarchy\octree.cpp" />
+    <ClCompile Include="src\spatial hierarchy\uniform_tree.cpp" />
     <ClCompile Include="src\spatial hierarchy\volume_hierarchy.cpp" />
     <ClCompile Include="src\bundles.cpp" />
     <ClCompile Include="src\component.cpp" />

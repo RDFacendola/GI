@@ -28,6 +28,9 @@
 using ::Eigen::Vector2f;
 using ::Eigen::Vector3f;
 using ::Eigen::Vector4f;
+using ::Eigen::Vector2i;
+using ::Eigen::Vector3i;
+using ::Eigen::Vector4i;
 using ::Eigen::Affine3f;
 
 namespace gi_lib{
@@ -35,10 +38,8 @@ namespace gi_lib{
 	/// \brief Intersection types.
 	ENUM_FLAGS(IntersectionType, unsigned int){
 
-		kSeparate,		///< \brief Separate objects.
-		kOverlapping,	///< \brief Overlapping objects
-		kInside,		///< \brief The first object is completely inside the second object
-		kOutside,		///< \brief The first object is completely outside the second object
+		kNone,			///< \brief No intersection.
+		kIntersect,		///< \brief Intersection.
 		
 	};
 
@@ -73,24 +74,29 @@ namespace gi_lib{
 		/// \return Returns a sphere which is an approximation of the specified box.
 		static Sphere FromAABB(const AABB& aabb);
 
-		/// \brief Approximate the specified box with a sphere with a squared radius.
-		/// \param aabb Box to approximate
-		/// \return Returns a sphere which is an approximation of the specified box but with a squared radius.
-		static Sphere FromAABBSquared(const AABB& aabb);
-
 	};
 
-	/// \brief Frustum represented by 6 planes
-	struct Frustum{
+	/// \brief Represents a frustum.
+	class Frustum{
 
-		/// \brief Planes composing the frustum.
-
-		/// The order of the planes is not defined.
-		Vector4f planes[6];
-
-		/// \brief Check whether the frustum contains or intersect a given aabb.
+	public:
+		
+		/// \brief Intersection test between the frustum and an axis-aligned bounding box.
 		/// \param aabb The AABB to test against.
-		bool Intersect(const AABB& aabb) const;
+		IntersectionType Intersect(const AABB& aabb) const;
+
+		/// \brief Intersection test between the frustum a sphere.
+		/// The test is cheaper than the axis-aligned one.
+		/// \param sphere The sphere to test against.
+		IntersectionType Intersect(const Sphere& sphere) const;
+
+	private:
+
+		static const size_t kFrustumPlanes = 6;
+
+		Vector4f planes[kFrustumPlanes];			///< \brief Planes defining the frustum. The normals point towards the center of the frustum and are normalized.
+
+		Vector3f abs_normals[kFrustumPlanes];		///< \brief Absolute normal values for each plane.
 
 	};
 	
@@ -120,7 +126,6 @@ namespace gi_lib{
 		static float DegToRad(float degrees);
 
 		/// \brief Check whether two numbers are essentially equal.
-
 		/// \param a The first number to test.
 		/// \param b The second number to test.
 		/// \param epsilon The maximum error percentage. Defines the error range around the smallest number between a and b.
