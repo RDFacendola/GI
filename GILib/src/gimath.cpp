@@ -60,11 +60,27 @@ AABB AABB::operator*(const Affine3f& transform) const{
 		
 }
 
-bool AABB::Inside(const AABB& other) const{
+IntersectionType AABB::Intersect(const AABB& other) const{
 
-	return std::abs(other.center(0) - center(0)) < other.half_extents(0) - half_extents(0) &&
-		   std::abs(other.center(1) - center(1)) < other.half_extents(1) - half_extents(1) &&
-		   std::abs(other.center(2) - center(2)) < other.half_extents(2) - half_extents(2);
+	float diff[3];
+
+	if ((diff[0] = std::fabs(other.center(0) - center(0)) - half_extents(0)) >= other.half_extents(0) ||
+		(diff[1] = std::fabs(other.center(1) - center(1)) - half_extents(1)) >= other.half_extents(1) ||
+		(diff[2] = std::fabs(other.center(2) - center(2)) - half_extents(2)) >= other.half_extents(2)){
+
+		return IntersectionType::kNone;		// Strictly separated
+
+	}
+
+	if (diff[0] < -other.half_extents(0) &&
+		diff[1] < -other.half_extents(1) &&
+		diff[2] < -other.half_extents(2)){
+
+		return IntersectionType::kInside;	// Strictly enclosed
+
+	}
+
+	return IntersectionType::kIntersect;	// Intersection
 
 }
 

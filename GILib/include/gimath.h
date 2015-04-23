@@ -40,7 +40,8 @@ namespace gi_lib{
 
 		kNone,			///< \brief No intersection.
 		kIntersect,		///< \brief Intersection.
-		
+		kInside,		///< \brief Fully enclosure.
+
 	};
 
 	/// \brief Axis-aligned bounding box.
@@ -55,10 +56,10 @@ namespace gi_lib{
 		/// \return Returns a new bounding box which is the transformed version of this instance.
 		AABB operator*(const Affine3f& transform) const;
 
-		/// \brief Check whether this bounds are strictly inside the specified ones.
-		/// \param other The bounds to check inclusion against.
-		/// \return Returns true if the bounds are strictly contained inside 'other', false otherwise.
-		bool Inside(const AABB& other) const;
+		/// \brief Intersection test between two axis-aligned bounding boxes.
+		/// \param aabb The AABB to test against.
+		/// \return Returns the classification of the intersection between this instance and the specified box.
+		IntersectionType Intersect(const AABB& aabb) const;
 
 	};
 
