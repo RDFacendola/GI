@@ -37,16 +37,22 @@ namespace gi_lib{
 		virtual TypeSet GetTypes() const override;
 
 	protected:
+		
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
+
+	private:
+
+		struct Impl;
+
+		struct Node;
 
 		/// \brief Create a new uniform octree.
 		/// \param parent Parent space containing this tree.
 		/// \param domain Region of space to subdivide.
 		/// \param splits Number of times to split on each axis.
 		UniformTreeComponent(UniformTreeComponent* parent, const AABB& domain, const Vector3i& splits);
-
-		virtual void Initialize() override;
-
-		virtual void Finalize() override;
 
 		/// \brief Split the current space at most once on each axis.
 		/// \param splits Number of splits left on each axis.
@@ -60,11 +66,16 @@ namespace gi_lib{
 		///          Fine tests, however, achieve lesser performances and produce no false positive.
 		void GetIntersections(const Frustum& frustum, PrecisionLevel precision, vector<VolumeComponent*>& intersection) const;
 
+		/// \brief Check whether a particular volume is fully enclosed in this subspace.
+		/// \param volume Volume to check.
+		/// \return Returns true if the volume is fully enclosed in this subspace, returns false otherwise.
+		bool Encloses(const VolumeComponent& volume);
+
 		UniformTreeComponent* parent_;						///< \brief Parent space.
 
 		vector<UniformTreeComponent*> children_;			///< \brief Subspaces.
 
-		vector<VolumeComponent*> volumes_;					///< \brief Volumes contained in this node.
+		vector<Node*> nodes_;								///< \brief Volumes contained in this subspace.
 
 		AABB bounding_box_;									///< \brief Bounds of the octree node.
 
