@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <assert.h>
 
+#include "..\include\gilib.h"
+
 using namespace ::gi_lib;
 using namespace ::std;
 
@@ -240,13 +242,103 @@ Observable<TransformComponent::OnTransformChangedEventArgs>& TransformComponent:
 
 }
 
+///////////////////////// VOLUME COMPONENT /////////////////////////
+
+VolumeComponent::VolumeComponent() :
+VolumeComponent(AABB{ Vector3f::Zero(),
+Vector3f::Zero() }){}
+
+VolumeComponent::VolumeComponent(const AABB& bounds) :
+bounding_box_(bounds),
+is_box_dirty_(true),
+is_sphere_dirty_(true){}
+
+VolumeComponent::~VolumeComponent(){}
+
+const AABB& VolumeComponent::GetBoundingBox() const{
+
+	if (is_box_dirty_){
+
+		transformed_bounds_ = bounding_box_ * transform_->GetWorldTransform();
+
+		is_box_dirty_ = false;
+
+	}
+
+	return transformed_bounds_;
+
+}
+
+const Sphere& VolumeComponent::GetBoundingSphere() const{
+
+	if (is_sphere_dirty_){
+
+		bounding_sphere_ = Sphere::FromAABB(GetBoundingBox());
+
+		is_sphere_dirty_ = false;
+
+	}
+
+	return bounding_sphere_;
+
+}
+
+Observable<VolumeComponent::OnBoundsChangedEventArgs>& VolumeComponent::OnBoundsChanged(){
+
+	return on_bounds_changed_;
+
+}
+
+VolumeComponent::TypeSet VolumeComponent::GetTypes() const{
+
+	auto types = Component::GetTypes();
+
+	types.insert(type_index(typeid(VolumeComponent)));
+
+	return types;
+
+}
+
+void VolumeComponent::Initialize(){
+
+	transform_ = GetComponent<TransformComponent>();
+
+	on_transform_changed_lister_ = transform_->OnTransformChanged().Subscribe([this](_, _){
+
+		SetDirty();	// The world matrix of the transform component changed.
+
+	});
+
+}
+
+void VolumeComponent::Finalize(){}
+
+void VolumeComponent::SetBoundingBox(const AABB& bounds){
+
+	bounding_box_ = bounds;
+
+	SetDirty();	// The bounds changed
+
+}
+
+void VolumeComponent::SetDirty(){
+
+	is_box_dirty_ = true;
+	is_sphere_dirty_ = true;
+
+	OnBoundsChangedEventArgs args{ this };
+
+	on_bounds_changed_.Notify(args);
+
+}
+
 ////////////////////////////////////// STATIC MESH COMPONENT /////////////////////////////////////
 
 StaticMeshComponent::StaticMeshComponent() :
 StaticMeshComponent(nullptr){}
 
 StaticMeshComponent::StaticMeshComponent(shared_ptr<Mesh> mesh) :
-VolumeComponent(mesh->GetBounds()),
+VolumeComponent(mesh->GetBoundingBox()),
 mesh_(mesh){}
 
 shared_ptr<Mesh> StaticMeshComponent::GetMesh(){
@@ -265,7 +357,7 @@ void StaticMeshComponent::SetMesh(shared_ptr<Mesh> mesh){
 
 	mesh_ = mesh;
 
-	SetBoundingBox(mesh->GetBounds());
+	SetBoundingBox(mesh->GetBoundingBox());
 
 }
 
