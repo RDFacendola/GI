@@ -40,35 +40,24 @@ namespace gi_lib{
 		/// \brief Type of the type set used to determine the type of a component.
 		using TypeSet = set < type_index >;
 
-		/// \brief Functor used to map an entry from the multimap to a component reference.
-		template <typename TComponent>
-		struct ReferenceMap{
-
-			/// \brief Maps an iterator to the component pointed by it.
-			/// \param iterator Iterator to map.
-			/// \return Returns a reference to the component.
-			TComponent& operator()(ComponentMap::iterator& iterator);
-
-		};
-
 		/// \brief Functor used to map an entry from the multimap to a component pointer.
 		template <typename TComponent>
-		struct PointerMap{
+		struct ComponentMapper{
 
 			/// \brief Maps an iterator to the component pointed by it.
-			/// \param iterator Iterator to map.
+			/// \param pointer Pointer to the object to map.
 			/// \return Returns a pointer to the component.
-			TComponent* operator()(ComponentMap::iterator& iterator);
+			TComponent* operator()(const ComponentMap::iterator::reference component_pair);
 
 		};
 
 		/// \brief Type of the iterator.
 		template <typename TComponent>
-		using iterator = IteratorWrapper < ComponentMap::iterator, TComponent, ReferenceMap<TComponent>, PointerMap<TComponent> > ;
+		using iterator = IteratorWrapper < ComponentMap::iterator, TComponent, ComponentMapper<TComponent> >;
 
 		/// \brief Type of the constant iterator.
 		template <typename TComponent>
-		using const_iterator = IteratorWrapper < ComponentMap::iterator, const TComponent, ReferenceMap<TComponent>, PointerMap<TComponent> >;
+		using const_iterator = IteratorWrapper < ComponentMap::iterator, const TComponent, ComponentMapper<TComponent> >;
 
 		/// \brief Range of components.
 		template <typename TComponent>
@@ -225,8 +214,8 @@ namespace gi_lib{
 
 		auto components = GetComponents(type_index(typeid(TComponent)));
 
-		return range<TComponent>(iterator<TComponent>(components.begin(), ReferenceMap<TComponent>(), PointerMap<TComponent>()),
-								 iterator<TComponent>(components.end(), ReferenceMap<TComponent>(), PointerMap<TComponent>()));
+		return range<TComponent>(iterator<TComponent>(components.begin()),
+								 iterator<TComponent>(components.end()));
 
 	}
 
@@ -235,26 +224,17 @@ namespace gi_lib{
 
 		auto components = GetComponents(type_index(typeid(TComponent)));
 
-		return const_range<TComponent>(const_iterator<TComponent>(components.begin(), ReferenceMap<TComponent>(), PointerMap<TComponent>()),
-									   const_iterator<TComponent>(components.end(), ReferenceMap<TComponent>(), PointerMap<TComponent>()));
+		return const_range<TComponent>(const_iterator<TComponent>(components.begin()),
+									   const_iterator<TComponent>(components.end()));
 
 	}
 
-	//////////////////////// COMPONENT::REFERENCE MAP /////////////////////
-
-	template <typename TComponent>
-	TComponent& Component::ReferenceMap<TComponent>::operator()(Component::ComponentMap::iterator& iterator){
-
-		return *static_cast<TComponent*>(iterator->second);
-
-	}
-
-	//////////////////////// COMPONENT::POINTER MAP ///////////////////////
+	//////////////////////// COMPONENT::COMPONENT MAPPER ///////////////////////
 	
 	template <typename TComponent>
-	TComponent* Component::PointerMap<TComponent>::operator()(Component::ComponentMap::iterator& iterator){
+	TComponent* Component::ComponentMapper<TComponent>::operator()(const ComponentMap::iterator::reference component_pair){
 
-		return static_cast<TComponent*>(iterator->second);
+		return static_cast<TComponent*>(component_pair.second);
 
 	}
 
