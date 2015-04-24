@@ -405,8 +405,7 @@ void UniformTreeComponent::RemoveVolume(VolumeComponent* volume){
 	delete *it;
 
 	nodes.erase(it);	// We are sure the node exists, right?
-
-
+	
 }
 
 vector<VolumeComponent*> UniformTreeComponent::GetIntersections(const Frustum& frustum, PrecisionLevel precision) const{

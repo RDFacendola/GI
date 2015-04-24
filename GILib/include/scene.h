@@ -349,14 +349,6 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Clear mode for the render target.
-		enum class ClearMode{
-
-			kNone,								///< \brief Do no clear.
-			kDepthOnly,							///< \brief Clear the depth buffer and only.
-			kColor,								///< \brief Clear the depth buffer and the color buffer.
-
-		};
 
 		/// \brief Create a new camera component.
 		CameraComponent();
@@ -364,59 +356,39 @@ namespace gi_lib{
 		/// \brief Virtual destructor.
 		virtual ~CameraComponent();
 
-		/// \brief Get the viewport.
-		/// \return Returns the viewport.
-		Viewport GetViewport() const;
+		/// \brief Get the projection type.
+		/// \return Returns the projection type.
+		ProjectionType GetProjectionType() const;
 
-		/// \brief Set the viewport.
-		/// \param viewport The new viewport.
-		void SetViewport(const Viewport & viewport);
+		/// \brief Set the projection type.
+		/// \param projection_type The new projection type.
+		void SetProjectionType(ProjectionType projection_type);
 
-		/// \brief Get the near clipping plane.
-		/// \return Returns the near clipping plane in world units.
+		/// \brief Get the vertical field of view in radians.
+		/// This value is only used when the projection type is "Perspective".
+		/// \return Returns the vertical field of view in radians.
+		float GetFieldOfView() const;
+
+		/// \brief Set the veritical field of view.
+		/// This value is only used when the projection type is "Perspective".
+		/// \param field_of_view Vertical field of view, in radians.
+		void SetFieldOfView(float field_of_view);
+
+		/// \brief Get the near clipping plane distance.
+		/// \return Returns the near clipping plane distance.
 		float GetMinimumDistance() const;
 
-		/// \brief Set the near clipping plane.
-		/// \param distance The near clipping plane in world units. 
-		void SetMinimumDistance(float distance);
-
-		/// \brief Get the far clipping plane.
-		/// \return Returns the far clipping plane in world units.
+		/// \brief Set the near clipping plane distance.
+		/// \param minimum_distance The distance of the near clipping plane.
+		void SetMinimumDistance(float minimum_distance);
+		
+		/// \brief Get the far clipping plane distance.
+		/// \return Returns the far clipping plane distance.
 		float GetMaximumDistance() const;
 
-		/// \brief Get the far clipping plane.
-		/// \return Returns the far clipping plane in world units.
-		void SetMaximumDistance(float distance);
-
-		/// \brief Get the clear mode.
-		/// \return Returns the clear mode.
-		ClearMode GetClearMode() const;
-
-		/// \brief Set the clear mode.
-		/// \param clear_mode The new clear mode.
-		void SetClearMode(ClearMode clear_mode);
-
-		/// \brief Get the clear color.
-		/// This value has an actual meaning only if the clear mode is kColor.
-		/// \returns The clear color.
-		Color GetClearColor() const;
-
-		/// \brief Set the clear color.
-		/// This value has an actual meaning only if the clear mode is kColor.
-		/// \param color The new clear color.
-		void SetClearColor(Color color);
-
-		/// \brief Get the clear depth.
-		/// This value has an actual meaning only if the clear mode is kDepthOnly or kColor.
-		/// \return Returns the clear depth normalized in the range 0 (minimum distance) and 1 (maximum distance).
-		float GetClearDepth() const;
-
-		/// \brief Set the clear depth.
-		/// This value has an actual meaning only if the clear mode is kDepthOnly or kColor.
-		/// \param depth The new clear depth normalized in the range 0 (minimum distance) and 1 (maximum distance). Values outside this range are clamped.
-		void SetClearDepth(float depth);
-
-		virtual Frustum GetViewFrustum() const = 0;
+		/// \brief Set the far clipping plane distance.
+		/// \param maximum_distance The distance of the far clipping plane.
+		void SetMaximumDistance(float maximum_distance);
 
 		virtual TypeSet GetTypes() const override;
 
@@ -428,23 +400,16 @@ namespace gi_lib{
 
 	private:
 
-		shared_ptr<RenderTarget> render_target_;
+		ProjectionType projection_type_;	///< \brief Projection type.
+
+		float field_of_view_;				///< \brief Vertical field of view.
+
+		float minimum_distance_;			///< \brief Near clipping plane distance.
+
+		float maximum_distance_;			///< \brief Far clipping plane distance.
 
 	};
 
-	class PerspectiveCameraComponent : public CameraComponent{
-
-	public:
-
-		/// \brief Get the vertical field of view in radians.
-		/// \return Return the field of view in radians.
-		float GetFieldOfView() const;
-
-		/// \brief Set the vertical field of view in randians.
-		/// \param fov The new vertical field of view in radians.
-		void SetFieldOfView(float fov);
-
-	};
 
 
 

@@ -384,3 +384,76 @@ void StaticMeshComponent::Finalize(){
 }
 
 ////////////////////////////////////// CAMERA COMPONENT /////////////////////////////////////
+
+CameraComponent::CameraComponent(){
+
+	projection_type_ = ProjectionType::Perspective;
+	field_of_view_ = Math::DegToRad(60);
+	minimum_distance_ = 1.0f;
+	maximum_distance_ = 10000.f;
+
+}
+
+CameraComponent::~CameraComponent(){}
+
+ProjectionType CameraComponent::GetProjectionType() const{
+
+	return projection_type_;
+
+}
+
+void CameraComponent::SetProjectionType(ProjectionType projection_type){
+
+	projection_type_ = projection_type;
+
+}
+
+float CameraComponent::GetFieldOfView() const{
+
+	return field_of_view_;
+
+}
+
+void CameraComponent::SetFieldOfView(float field_of_view){
+
+	field_of_view_ = field_of_view;
+
+}
+
+float CameraComponent::GetMinimumDistance() const{
+
+	return minimum_distance_;
+
+}
+
+void CameraComponent::SetMinimumDistance(float minimum_distance){
+
+	minimum_distance_ = minimum_distance;
+
+}
+
+float CameraComponent::GetMaximumDistance() const{
+
+	return maximum_distance_;
+
+}
+
+void CameraComponent::SetMaximumDistance(float maximum_distance){
+
+	maximum_distance_ = maximum_distance;
+
+}
+
+CameraComponent::TypeSet CameraComponent::GetTypes() const{
+
+	auto types = Component::GetTypes();
+
+	types.insert(type_index(typeid(StaticMeshComponent)));
+
+	return types;
+
+}
+
+void CameraComponent::Initialize(){}
+
+void CameraComponent::Finalize(){}

@@ -58,6 +58,14 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Describes a projection type.
+	enum class ProjectionType{
+
+		Perspective,			///< \brief Perspective projection.
+		Ortographic				///< \brief Ortographic projection.
+
+	};
+
 	/// \brief Describes a video mode.
 	struct VideoMode{
 
