@@ -37,7 +37,7 @@ namespace gi_lib{
 
 	/// \brief Represents a scene and all its content.
 	/// \author Raffaele D. Facendola
-	class Scene : public Component{
+	class Scene{
 
 	public:
 
@@ -47,13 +47,18 @@ namespace gi_lib{
 		/// \brief No copy constructor.
 		Scene(const Scene&) = delete;
 
-		virtual TypeSet GetTypes() const override;
+		/// \brief Create a new empty node.
+		/// \param name The name of the node.
+		/// \return Returns a pointer to the created node.
+		NodeComponent* CreateNode(const wstring& name);
 
-	protected:
-
-		virtual void Initialize() override;
-
-		virtual void Finalize() override;
+		/// \brief Create a new scene node with a TransformComponent.
+		/// \param name The name of the node.
+		/// \param translation Node translation.
+		/// \param rotation Node rotation.
+		/// \param scale Node scale.
+		/// \return Returns a pointer to the created node.
+		TransformComponent* CreateNode(const wstring& name, const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scale);
 
 	private:
 

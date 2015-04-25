@@ -10,9 +10,11 @@
 #include <algorithm>
 #include <fbxsdk.h>
 
+#include "..\..\include\gilib.h"
+#include "..\..\include\gimath.h"
+#include "..\..\include\range.h"
 #include "..\..\include\fbx\fbx.h"
 #include "..\..\include\core.h"
-#include "..\..\include\gimath.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\graphics.h"
 #include "..\..\include\resources.h"
@@ -20,63 +22,183 @@
 #include "..\..\include\scene.h"
 
 using namespace std;
-using namespace gi_lib;
 using namespace Eigen;
+
+using gi_lib::TransformComponent;
+using gi_lib::NodeComponent;
+using gi_lib::to_wstring;
 
 namespace{
 
-	/// \brief Map a 4-element fbx vector to a 3-element Eigen one.
-	/// \param src The source vector to convert.
-	/// \return Returns a 3-element vector. The last element of the source is discarded.
-	inline Vector3f FbxVector4ToEigenVector3f(const FbxVector4 & src){
+	/// \brief Functor used to convert a fbx vertex attribute type to a native one.
+	/// \tparam TVertexAttributeFormat Type of the vertex attribute.
+	template <typename TVertexAttributeFormat>
+	struct Converter;
 
-		return Vector3f(static_cast<float>(src.mData[0]),
-			static_cast<float>(src.mData[1]),
-			static_cast<float>(src.mData[2]));
-		
+	/// \brief Converts a 4-element vector to a native 3-element vector.
+	template <> struct Converter<FbxVector4> {
+
+		/// \brief Native type.
+		using TConverted = Vector3f;
+
+		/// \brief Converts a 4-element vector to a native 3-element vector.
+		/// \param vector Attribute to convert.
+		/// \return Returns the first 3 elements of the original vector.
+		TConverted operator()(const FbxVector4& vector){
+
+			return Vector3f(static_cast<float>(vector.mData[0]),
+							static_cast<float>(vector.mData[1]),
+							static_cast<float>(vector.mData[2]));
+
+		}
+
+	};
+
+	/// \brief Converts a 4-element vector to a native 2-element vector.
+	template <> struct Converter<FbxVector2> {
+
+		/// \brief Native type.
+		using TConverted = Vector2f;
+
+		/// \brief Converts a 2-element vector to a native 2-element vector.
+		/// \param vector Attribute to convert.
+		/// \return Returns the same elements of the original vector.
+		TConverted operator()(const FbxVector2& vector){
+
+			return Vector2f(static_cast<float>(vector.mData[0]),
+							static_cast<float>(vector.mData[1]));
+
+		}
+
+	};
+
+	/// \brief Extract the translation component of a matrix.
+	/// \param transform The transformation matrix.
+	/// \return Returns the translation component of the given transformation matrix.
+	Translation3f GetTranslation(const FbxAMatrix& transform){
+
+		auto translation = transform.GetT();
+
+		return Translation3f(static_cast<float>(translation.mData[0]),
+							 static_cast<float>(translation.mData[1]),
+							 static_cast<float>(translation.mData[2]));
+
 	}
 
-	/// \brief Map a 2-element fbx vector to a 2-element Eigen one.
-	/// \param src The source vector to convert.
-	/// \return Returns a 2-element vector.
-	inline Vector2f FbxVector2ToEigenVector2f(const FbxVector2 & src){
+	/// \brief Extract the rotation component of a matrix.
+	/// \param transform The transformation matrix.
+	/// \return Returns the rotation component of the given transformation matrix.
+	Quaternionf GetRotation(const FbxAMatrix& transform){
 
-		return Vector2f(static_cast<float>(src.mData[0]),
-			static_cast<float>(src.mData[1]));
+		auto rotation = transform.GetQ();
+
+		return Quaternionf(static_cast<float>(rotation.mData[0]),
+						   static_cast<float>(rotation.mData[1]),
+						   static_cast<float>(rotation.mData[2]),
+						   static_cast<float>(rotation.mData[3]));
 
 	}
 
-	/// \brief Map a fbx matrix to an Eigen 4x4 affine transformation.
-	inline Affine3f FbxMatrixToEigenAffine3f(const FbxMatrix & matrix){
+	/// \brief Extract the scale component of a matrix.
+	/// \param transform The transformation matrix.
+	/// \return Returns the scale component of the given transformation matrix.
+	AlignedScaling3f GetScale(const FbxAMatrix& transform){
 
-		Affine3f affine;
+		auto scale = transform.GetS();
 
-		auto data = affine.data();
+		return AlignedScaling3f(static_cast<float>(scale.mData[0]),
+								static_cast<float>(scale.mData[1]),
+								static_cast<float>(scale.mData[2]));
 
-		for (int column_index = 0; column_index < 4; ++column_index){
+	}
 
-			for (int row_index = 0; row_index < 4; ++row_index){
 
-				*data = static_cast<float>(matrix.Get(row_index, column_index));
-				
-				++data;
+
+	/// \brief Write some attributes inside the provided vertex buffer.
+	/// \tparam TVertexFormat Type of vertex.
+	/// \tparam TAttributeFormat Type of attributes.
+	/// \tparam TWriter Type of the writer.
+	/// \param attributes Buffer containing the attributes to write.
+	/// \param vertices Vertex buffer the attributes will be written to.
+	/// \param Writer used to write the attribute inside the vertex
+	template <typename TVertexFormat, typename TAttributeFormat, typename TAttributeMap>
+	void WriteAttribute(const TAttributeFormat* attributes, vector<TVertexFormat> & vertices, TAttributeMap attribute_map){
+
+		Converter<TAttributeFormat> converter;
+
+		for (auto& vertex : vertices){
+
+			attribute_map(vertex) = converter(*attributes);
+
+			++attributes;
+
+		}
+
+	}
+
+	/// \brief Write some attributes inside the provided vertex buffer.
+	/// \tparam TVertexFormat Type of vertex.
+	/// \tparam TAttributeFormat Type of attributes.
+	/// \tparam TWriter Type of the writer.
+	/// \param attributes Layer element containing the attributes to write.
+	/// \param vertices Vertex buffer the attributes will be written to.
+	/// \param Writer used to write the attribute inside the vertex
+	template <typename TVertexFormat, typename TAttributeFormat, typename TAttributeMap>
+	void WriteAttribute(const FbxLayerElementTemplate<TAttributeFormat>& attributes, vector<TVertexFormat>& vertices, TAttributeMap attribute_map){
+
+		Converter<TAttributeFormat> converter;
+
+		auto& direct_array = attributes.GetDirectArray();
+		auto& index_array = attributes.GetIndexArray();
+
+		switch (attributes.GetReferenceMode()){
+
+			case FbxLayerElement::EReferenceMode::eIndex:
+			case FbxLayerElement::EReferenceMode::eIndexToDirect:
+			{
+
+				auto direct_buffer = static_cast<TAttributeFormat*>(direct_array.GetLocked(FbxLayerElementArray::eReadLock));
+				auto index_buffer = static_cast<int*>(index_array.GetLocked(FbxLayerElementArray::eReadLock));
+
+				for (auto& vertex : vertices){
+
+					attribute_map(vertex) = converter(direct_buffer[*index_buffer]);
+
+					++index_buffer;
+
+				}
+
+				direct_array.ReadUnlock();
+				index_array.ReadUnlock();
+
+				break;
 
 			}
-			
+
+			case FbxLayerElement::EReferenceMode::eDirect:
+			{
+
+				auto direct_buffer = static_cast<TAttributeFormat*>(direct_array.GetLocked(FbxLayerElementArray::eReadLock));
+
+				for (auto& vertex : vertices){
+
+					attribute_map(vertex) = converter(*direct_buffer);
+
+					++direct_buffer;
+
+				}
+
+				direct_array.ReadUnlock();
+				
+				break;
+
+			}
+
 		}
-		
-		return affine;
 
 	}
 
-	inline Quaternionf FbxQuaternionToEigenQuaternionf(const FbxQuaternion & quaternion){
 
-		return Quaternionf(static_cast<float>(quaternion.mData[0]),
-			static_cast<float>(quaternion.mData[1]),
-			static_cast<float>(quaternion.mData[2]),
-			static_cast<float>(quaternion.mData[3]));
-
-	}
 
 	/// \brief Check whether the mesh defines UV coordinates.
 	bool HasTextureCoordinates(const FbxMesh & mesh){
@@ -100,328 +222,164 @@ namespace{
 
 	}
 
-	/// \brief Write some attributes inside the provided vertex buffer.
-	/// \tparam TVertexFormat Type of vertex.
-	/// \tparam TAttributeFormat Type of attributes.
-	/// \tparam TWriter Type of the writer.
-	/// \param attributes Buffer containing the attributes to write.
-	/// \param vertices Vertex buffer the attributes will be written to.
-	/// \param Writer used to write the attribute inside the vertex
-	template <typename TVertexFormat, typename TAttributeFormat, typename TWriter>
-	void WriteAttribute(const TAttributeFormat * attributes, vector<TVertexFormat> & vertices, TWriter writer){
 
-		for (auto & vertex : vertices){
 
-			writer(vertex, *attributes);
 
-			++attributes;
 
-		}
+	template <typename TVertexFormat>
+	void ImportVerticesAttributes(const FbxMesh& mesh, vector<TVertexFormat>& vertices);
+
+	template <> void ImportVerticesAttributes<gi_lib::VertexFormatNormalTextured>(const FbxMesh& mesh, vector<gi_lib::VertexFormatNormalTextured>& vertices){
+
+		WriteAttribute(&mesh.GetControlPoints()[0], vertices, gi_lib::VertexFormatNormalTextured::Position());
+		WriteAttribute(*mesh.GetLayer(0)->GetNormals(), vertices, gi_lib::VertexFormatNormalTextured::Normal());
+		WriteAttribute(*mesh.GetLayer(0)->GetUVs(), vertices, gi_lib::VertexFormatNormalTextured::TexCoord());
 
 	}
 
-	/// \brief Write some attributes inside the provided vertex buffer.
-	/// \tparam TVertexFormat Type of vertex.
-	/// \tparam TAttributeFormat Type of attributes.
-	/// \tparam TWriter Type of the writer.
-	/// \param attributes Layer element containing the attributes to write.
-	/// \param vertices Vertex buffer the attributes will be written to.
-	/// \param Writer used to write the attribute inside the vertex
-	template <typename TVertexFormat, typename TAttributeFormat, typename TWriter>
-	void WriteAttribute(const FbxLayerElementTemplate<TAttributeFormat> & attributes, vector<TVertexFormat> & vertices, TWriter writer){
+	/// \brief Import the index buffer of a mesh.
+	/// \param mesh The mesh containing the indices to read.
+	/// \return Returns a vector containing the indices of the specified mesh.
+	vector<unsigned int> ImportMeshIndices(const FbxMesh& mesh){
 
-		auto & direct_array = attributes.GetDirectArray();
-		auto & index_array = attributes.GetIndexArray();
+		auto indices = mesh.GetPolygonVertices();
 
-		switch (attributes.GetReferenceMode()){
-
-			case FbxLayerElement::EReferenceMode::eIndex:
-			case FbxLayerElement::EReferenceMode::eIndexToDirect:
-			{
-
-				auto direct_buffer = static_cast<TAttributeFormat*>(direct_array.GetLocked(FbxLayerElementArray::eReadLock));
-				auto index_buffer = static_cast<int*>(index_array.GetLocked(FbxLayerElementArray::eReadLock));
-
-				for (auto & vertex : vertices){
-
-					writer(vertex, direct_buffer[*index_buffer]);
-
-					++index_buffer;
-
-				}
-
-				direct_array.ReadUnlock();
-				index_array.ReadUnlock();
-
-				break;
-
-			}
-
-			case FbxLayerElement::EReferenceMode::eDirect:
-			{
-
-				auto direct_buffer = static_cast<TAttributeFormat*>(direct_array.GetLocked(FbxLayerElementArray::eReadLock));
-
-				for (auto & vertex : vertices){
-
-					writer(vertex, *direct_buffer);
-
-					++direct_buffer;
-
-				}
-
-				direct_array.ReadUnlock();
-				
-				break;
-
-			}
-
-		}
-
+		return vector<unsigned int>(&indices[0],
+									&indices[0] + mesh.GetPolygonVertexCount());
+		
 	}
 
-	/// \brief Read the vertices from a fbx mesh.
-	template <typename TFormat>
-	vector<TFormat> ReadVertices(const FbxMesh & mesh);
+	/// \brief Import the vertex buffer of a mesh.
+	/// \tparam TVertexFormat Format of the vertices to read.
+	/// \param mesh The mesh containing the vertices to read.
+	/// \return Returns a vector containing the vertex of the specified mesh.
+	template <typename TVertexFormat>
+	vector<TVertexFormat> ImportMeshVertices(const FbxMesh& mesh){
 
-	/// \brief Read normal texture vertex from a fbx mesh.
-	template <> vector<VertexFormatNormalTextured> ReadVertices<VertexFormatNormalTextured>(const FbxMesh & mesh){
+		vector<TVertexFormat> vertices(mesh.GetControlPointsCount());
 
-		// Position + Texture Coordinates
+		ImportVerticesAttributes(mesh, vertices);
 
-		vector<VertexFormatNormalTextured> vertices;
-
-		vertices.resize(mesh.GetControlPointsCount());
-
-		WriteAttribute(&mesh.GetControlPoints()[0], vertices, [](VertexFormatNormalTextured & vertex, const FbxVector4 position){ vertex.position = FbxVector4ToEigenVector3f(position); });
-		WriteAttribute(*mesh.GetLayer(0)->GetNormals(), vertices, [](VertexFormatNormalTextured & vertex, const FbxVector4 normal){ vertex.normal = FbxVector4ToEigenVector3f(normal); });
-		WriteAttribute(*mesh.GetLayer(0)->GetUVs(), vertices, [](VertexFormatNormalTextured & vertex, const FbxVector2 tex_coord){ vertex.tex_coord = FbxVector2ToEigenVector2f(tex_coord); });
-			
 		return vertices;
 
 	}
 
-	/// \brief Read the indices of a fbx mesh.
-	vector<unsigned int> ReadIndices(const FbxMesh & mesh){
-	
-		auto index_buffer = mesh.GetPolygonVertices();
+	template <typename TVertexFormat>
+	void ImportMesh(FbxMesh& mesh, TransformComponent&){
 
-		// Resize the vertex buffer
-		vector<unsigned int> indices;
+		gi_lib::BuildFromVertices<TVertexFormat> bundle;	
 
-		// Check whether the index buffer is trivial (ie the i-th position contains i as value, typical of unindexed mesh)
+		bundle.indices = ImportMeshIndices(mesh);
 
-		bool trivial = true;
+		bundle.vertices = ImportMeshVertices<TVertexFormat>(mesh);
 
-		for (int i = 0; i < mesh.GetPolygonVertexCount(); ++i){
-
-			if (index_buffer[i] != i){
-
-				trivial = false;		//The index buffer is not "trivial"
-
-				break;
-				
-			}
-
-		}
-
-		if (trivial){
-
-			return indices;
-
-		}
-
-		// Copy the index buffer elsewhere
-
-		indices.resize(mesh.GetPolygonVertexCount());
-
-		std::copy(&index_buffer[0],
-			&index_buffer[0] + indices.size(),
-			indices.begin());
-
-		return indices;
+		// TODO: Create the static mesh component!
 
 	}
 
-	/// \brief Loads the first texture found inside a fbx property
-	/// \param property The fbx property to read.
-	/// \param base_path The path of the fbx file.
-	/// \param resource Manager used to load the resources.
-	shared_ptr<Texture2D> LoadTexture(FbxProperty property, const wstring & base_path, Resources & resources){
 
-		int count = property.GetSrcObjectCount<FbxFileTexture>();
+	void ImportMesh(FbxMesh& mesh, TransformComponent& node){
 
-		if (count > 0){
+		// Dispatch the correct "ImportMesh" based on the attributes of the mesh.
 
-			auto & texture = *property.GetSrcObject<FbxFileTexture>(0);
-
-			string file_name = texture.GetFileName();
-
-			wstring w_file_name(file_name.begin(), file_name.end());
-
-			return resources.Load<Texture2D, LoadFromFile>({ base_path + w_file_name });
-
-		}
-		else{
-
-			return nullptr;
-
-		}
-
-	}
-
-	/// \brief Build mesh method template. Used to dispatch different build methods. 
-	template<typename TVertexFormat>
-	void BuildMesh(const FbxMesh & mesh, SceneNode & node, Resources & resources);
-
-	/// \brief Builds an indexed mesh with texture coordinates.
-	template<> void BuildMesh<VertexFormatNormalTextured>(const FbxMesh& mesh, SceneNode& node, Resources& resources){
-		
-		BuildIndexedNormalTextured bundle;
-
-		bundle.indices = ReadIndices(mesh);
-
-		bundle.vertices = ReadVertices<VertexFormatNormalTextured>(mesh);
-		
-		auto geometry = Component::Create<Geometry>(resources.Load<Mesh, BuildIndexedNormalTextured>(bundle));
-
-	}
-
-	/// \brief Build material method template. Used to dispatch different build methods.
-	template<typename TVertexFormat>
-	void BuildMaterial(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Resources & resources);
-
-	/// \brief Builds a material with proper shader and textures.
-	template<> void BuildMaterial<VertexFormatNormalTextured>(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Resources & resources){
-
-		// Phong shader
-		auto base_material = resources.Load<Material, LoadFromFile>({ Resources::kPhongShaderFile });
-
-		auto diffuse_map_index = base_material->GetResource("diffuse_map");
-
-		// Materials
-
-		auto & parent = *mesh.GetNode();
-
-		vector<shared_ptr<Material>> materials;
-
-		for (int m = 0; m < parent.GetSrcObjectCount<FbxSurfaceMaterial>(); ++m){
-
-			auto material_instance = resources.Load<Material, InstantiateFromMaterial>({ base_material });
-
-			auto &surface = *parent.GetSrcObject<FbxSurfaceMaterial>(m);
-
-			// Load diffuse 
-
-			auto diffuse = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sDiffuse), base_path, resources);
-			
-			if (diffuse){
-
-				//material_instance->SetTexture(diffuse_map_index, diffuse);
-
-			}
-			else{
-
-				continue;
-
-			}
-			
-
-			/*
-
-			(specular and bumpmap are not bound to sponza mesh for some reason...)
-
-			auto specular = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sSpecular), base_path, resources);
-			auto bump = LoadTexture(surface.FindProperty(FbxSurfaceMaterial::sBump), base_path, resources);
-
-			material->GetParameterByName("specular_map")->Write(specular);
-			material->GetParameterByName("bump_map")->Write(bump);
-			*/
-			materials.push_back(material_instance);
-
-		}
-
-		// Add the rendering component
-
-		/*
-		auto aspect = node.AddComponent<Aspect>();
-
-		aspect->SetMaterials(materials);
-		*/
-
-	}
-	
-	/// \brief Attempts to load a mesh inside a scene.
-
-	/// The methods load the mesh from fbx and loads it inside the scene. If the original mesh is not supported this method does nothing.
-	void BuildObject(const FbxMesh & mesh, SceneNode & node, const wstring & base_path, Resources & resources){
-
-		if (!mesh.IsTriangleMesh()){
-
-			// No triangle mesh, no party!
-			return;
-
-		}
-
-		//Assumptions: byControlPoint is the only mapping mode supported (other are just ignored).
-
-		if (HasTextureCoordinates(mesh)  &&
+		if (HasTextureCoordinates(mesh) &&
 			HasNormals(mesh)){
 
-			BuildMesh<VertexFormatNormalTextured>(mesh, node, resources);
-			BuildMaterial<VertexFormatNormalTextured>(mesh, node, base_path, resources);
-			
+			ImportMesh<gi_lib::VertexFormatNormalTextured>(mesh, node);
+
+			// TODO: Read materials here
+
 		}
-				
+
+
 	}
 
-	/// \brief Walk the fbx scene and imports the nodes to a scene.
-	/// \param fbx_node Current fbx scene node.
-	/// \param scene_root Scene root where to import the nodes to.
-	/// \param base_path The path of the fbx file.
-	/// \param resources Manager used to load various resources.
-	void WalkFbxScene(FbxNode * fbx_node, SceneNode & scene_root, const wstring & base_path, Resources & resources){
+	/// \brief Import a new component described by a fbx attribute.
+	/// \param attribute The attribute to import.
+	/// \param node The node where the imported component will be attached to.
+	void ImportAttribute(FbxNodeAttribute& attribute, TransformComponent& node){
 
-		// Node data
-		string name = fbx_node->GetName();
-		
-		//Create a new node and attach it to the scene
-		auto node_name = wstring(name.begin(), name.end());
-		auto node_transform = fbx_node->EvaluateLocalTransform();
+		switch (attribute.GetAttributeType()){
 
-		// Position, rotation and scaling of the object
-		Translation3f position = Translation3f(FbxVector4ToEigenVector3f(node_transform.GetT()));
-		Quaternionf rotation = Quaternionf(FbxQuaternionToEigenQuaternionf(node_transform.GetQ())).normalized();
-		AlignedScaling3f scaling = AlignedScaling3f(FbxVector4ToEigenVector3f(node_transform.GetS()));
-			
-		Scene& scene = scene_root.GetScene();
+		case FbxNodeAttribute::EType::eMesh:
 
-		auto scene_node = scene.CreateNode(node_name, position, rotation, scaling);
-		
-		//scene_node->SetParent(scene_root);
+			ImportMesh(static_cast<FbxMesh&>(attribute),
+					   node);
 
-		FbxNodeAttribute * attribute;
+			break;
 
-		// Attributes
-		for (int attribute_index = 0; attribute_index < fbx_node->GetNodeAttributeCount(); ++attribute_index){
+		default:
 
-			attribute = fbx_node->GetNodeAttributeByIndex(attribute_index);
+			// Do nothing, yay
+			break;
 
-			if (attribute->GetAttributeType() == FbxNodeAttribute::EType::eMesh){
+		}
 
-				// Model object
-				BuildObject(*static_cast<FbxMesh*>(attribute), *scene_node, base_path, resources);
-				
-			}
+	}
+
+	/// \brief Import a Fbx Node inside a scene and attach it to a parent node.
+	/// \param fbx_node Node to import.
+	/// \param parent Parent node where the imported node will be attached.
+	/// \return Returns the imported node.
+	TransformComponent* ImportNode(FbxNode& fbx_node, TransformComponent& parent){
+
+		auto& scene = parent.GetComponent<NodeComponent>()->GetScene();
+
+		auto transform = fbx_node.EvaluateLocalTransform();	// Local transformation of the node.
+
+		auto imported_node = scene.CreateNode(to_wstring(fbx_node.GetName()),
+											  GetTranslation(transform),
+											  GetRotation(transform),
+											  GetScale(transform));
+
+		imported_node->SetParent(&parent);
+
+		return imported_node;
+
+	}
+
+	/// \brief Recursively import a FbxScene.
+	/// \param fbx_node Root of the scene.
+	/// \param parent Node where the imported ones will be attached hierarchically.
+	void ImportScene(FbxNode& fbx_root, TransformComponent& parent){
+
+		// Basic components, such as node component and transform component.
+
+		auto node = ImportNode(fbx_root,
+							   parent);
+
+		// Other components, stored as fbx attributes.
+
+		for (int attribute_index = 0; attribute_index < fbx_root.GetNodeAttributeCount(); ++attribute_index){
+
+			ImportAttribute(*fbx_root.GetNodeAttributeByIndex(attribute_index),
+							*node);
 				
 		}
 
-		// Recursion - Depth-first
+		// Recursion - depth-first to save memory
 
-		for (int child_index = 0; child_index < fbx_node->GetChildCount(); ++child_index){
+		for (int child_index = 0; child_index < fbx_root.GetChildCount(); ++child_index){
 
-			// The instantiated scene node becomes the root of the next level.
-			WalkFbxScene(fbx_node->GetChild(child_index), *scene_node, base_path, resources);
+			ImportScene(*fbx_root.GetChild(child_index),
+						*node);
+						
+
+		}
+
+	}
+	
+	/// \brief Recursively import a FbxScene.
+	/// \param fbx_scene Scene to import.
+	/// \param parent Node where the imported ones will be attached hierarchically.
+	void ImportScene(FbxScene& fbx_scene, TransformComponent& root){
+
+		auto fbx_root = fbx_scene.GetRootNode();
+
+		if (fbx_root){
+
+			ImportScene(*fbx_root,
+						root);
 
 		}
 
@@ -429,114 +387,122 @@ namespace{
 
 }
 
-/////////////////////// FBX IMPORTER ///////////////////////
+/////////////////////// FBXSDK ///////////////////////
 
-/// \brief Deleter used by COM IUnknown interface.
-
-struct FBXImporter::FbxSDK{
+struct gi_lib::FbxImporter::FbxSDK{
 
 	/// \brief Manager of the Fbx SDK.
-	FbxManager * manager;
+	FbxManager* manager;
 
 	/// \brief Settings used during the import or export.
-	FbxIOSettings * settings;
+	FbxIOSettings* settings;
 
 	/// \brief Used to convert the imported geometry.
-	FbxGeometryConverter * converter;
+	FbxGeometryConverter* converter;
+	
+	/// \brief Create the Fbx SDK implementation object.
+	FbxSDK();
 
-	~FbxSDK(){
+	/// \brief Destructor.
+	~FbxSDK();
 
-		if (converter){
-
-			delete converter;
-
-		}
-
-		if (settings){
-
-			settings->Destroy();
-
-		}
-
-		if (manager){
-
-			manager->Destroy();
-
-		}
-
-	}
-
+	/// \brief Read a scene from file.
+	/// \param file_name Name of the file containing the scene.
+	/// \return Returns a pointer to the imported scene.
+	FbxScene* ReadSceneOrDie(const wstring& file_name);
+	
 };
 
-FBXImporter::FBXImporter(){
+gi_lib::FbxImporter::FbxSDK::FbxSDK(){
 
-	// Pimpl FBX objects
+	manager = FbxManager::Create();
 
-	fbx_sdk_ = new FbxSDK();
+	settings = FbxIOSettings::Create(manager,
+									 IOSROOT);
 
-	fbx_sdk_->manager = FbxManager::Create();
-
-	fbx_sdk_->settings = FbxIOSettings::Create(fbx_sdk_->manager, IOSROOT);
-
-	fbx_sdk_->converter = new FbxGeometryConverter(fbx_sdk_->manager);
+	converter = new FbxGeometryConverter(manager);
 
 }
 
-FBXImporter::~FBXImporter(){
+gi_lib::FbxImporter::FbxSDK::~FbxSDK(){
 
-	delete fbx_sdk_;
+	if (converter){
 
-}
-
-void FBXImporter::ImportScene(const wstring & file_name, SceneNode & scene_root, Resources & resources){
-
-	// Create the importer
-	string fbx_path = string(file_name.begin(), file_name.end());
-	
-	auto fbx_importer = FbxImporter::Create(fbx_sdk_->manager, "");
-
-	if (!fbx_importer->Initialize(fbx_path.c_str(), -1, fbx_sdk_->manager->GetIOSettings())) {
-
-		string error = fbx_importer->GetStatus().GetErrorString();
-
-		wstring werror = wstring(error.begin(), error.end());
-
-		THROW(L"FbxImporter::Initialize() failed.\n" + werror);
+		delete converter;
 
 	}
 
-	// Populate a new scene object.
-	auto fbx_scene = FbxScene::Create(fbx_sdk_->manager, "");
+	if (settings){
+
+		settings->Destroy();
+
+	}
+
+	if (manager){
+
+		manager->Destroy();
+
+	}
+
+}
+
+FbxScene* gi_lib::FbxImporter::FbxSDK::ReadSceneOrDie(const wstring& file_name){
+
+	// Create the importer
+	
+	auto fbx_importer = ::FbxImporter::Create(manager, "");
+	
+	if (!fbx_importer->Initialize(to_string(file_name).c_str(),
+								  -1,
+								  manager->GetIOSettings())) {
+
+		THROW(L"FbxImporter::Initialize() failed.\n" + to_wstring(fbx_importer->GetStatus().GetErrorString()));
+
+	}
+
+	// Populate a scene object.
+
+	auto fbx_scene = FbxScene::Create(manager, "");
 
 	fbx_importer->Import(fbx_scene);
 
 	fbx_importer->Destroy();
 
 	// Triangulate the scene (Better to do this offline, as it is heavily time-consuming)
-	if (!fbx_sdk_->converter->Triangulate(fbx_scene, true)){
+
+	if (!converter->Triangulate(fbx_scene, true)){
 
 		THROW(L"FbxGeometryConverter::Triangulate() failed.\n");
 
 	}
 
-	auto app_directory = Application::GetDirectory();
-
-	auto base_directory = Application::GetBaseDirectory(file_name.substr(app_directory.length(),
-		file_name.length() - app_directory.length()));
-
-	// Walk the hierarchy
-	auto root_node = fbx_scene->GetRootNode();
-
-	if (root_node){
-
-		for (int child_index = 0; child_index < root_node->GetChildCount(); ++child_index){
-
-			WalkFbxScene(root_node->GetChild(child_index), scene_root, base_directory, resources);
-
-		}
-
-	}
-
-	fbx_scene->Destroy();
+	return fbx_scene;
 
 }
+
+/////////////////////// FBX IMPORTER ///////////////////////
+
+gi_lib::FbxImporter::FbxImporter() :
+fbx_sdk_(make_unique<FbxSDK>()){}
+
+gi_lib::FbxImporter::~FbxImporter(){}
+
+void gi_lib::FbxImporter::ImportScene(const wstring& file_name, TransformComponent& root, Resources& resources){
+
+	auto scene = fbx_sdk_->ReadSceneOrDie(file_name);	// Use RAII, ImportScene may throw...
+	
+	::ImportScene(*scene,
+				  root);
+
+	scene->Destroy();
+
+}
+
+/*
+
+auto app_directory = Application::GetDirectory();
+
+auto base_directory = Application::GetBaseDirectory(file_name.substr(app_directory.length(),
+													file_name.length() - app_directory.length()));
+
+*/

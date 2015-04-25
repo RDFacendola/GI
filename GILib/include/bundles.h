@@ -41,7 +41,6 @@ namespace gi_lib{
 	};
 
 	/// \brief Bundle used to load a resource from a file.
-
 	/// Almost every resource can be loaded straight from a file.
 	struct LoadFromFile{
 
@@ -56,9 +55,10 @@ namespace gi_lib{
 	};
 
 	/// \brief Bundle used to load a resource from an indexed, normal-textured set of vertices.
-
+	/// \tparam TVertexFormat Format of the vertices.
 	/// Used to build a mesh.
-	struct BuildIndexedNormalTextured{
+	template <typename TVertexFormat>
+	struct BuildFromVertices{
 
 		NO_CACHE
 
@@ -66,7 +66,7 @@ namespace gi_lib{
 		vector<unsigned int> indices;
 
 		/// \brief Vertices' data.
-		vector<VertexFormatNormalTextured> vertices;
+		vector<TVertexFormat> vertices;
 
 	};
 

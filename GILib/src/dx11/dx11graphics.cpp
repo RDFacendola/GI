@@ -327,7 +327,7 @@ namespace{
 	// Add support for new resources HERE!
 
 	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, LoadFromFile>(),
-												 Loader::Register<Mesh, BuildIndexedNormalTextured>(),
+												 Loader::Register<Mesh, BuildFromVertices<VertexFormatNormalTextured>>(),
 												 Loader::Register<Material, CompileFromFile>(), 
 												 Loader::Register<Material, InstantiateFromMaterial>() };
 

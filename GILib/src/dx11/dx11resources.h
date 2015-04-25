@@ -168,7 +168,7 @@ namespace gi_lib{
 			/// \brief Create a new DirectX11 mesh.
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to create the mesh.
-			DX11Mesh(ID3D11Device & device, const BuildIndexedNormalTextured& bundle);
+			DX11Mesh(ID3D11Device & device, const BuildFromVertices<VertexFormatNormalTextured>& bundle);
 
 			virtual size_t GetSize() const override;
 

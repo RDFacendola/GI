@@ -41,6 +41,30 @@ namespace gi_lib{
 		Vector3f normal;			///< Vertex normal.
 		Vector2f tex_coord;			///< Texture coordinates.
 
+		struct Position{
+
+			Vector3f& operator()(VertexFormatNormalTextured& vertex);
+
+			const Vector3f& operator()(const VertexFormatNormalTextured& vertex);
+
+		};
+
+		struct Normal{
+
+			Vector3f& operator()(VertexFormatNormalTextured& vertex);
+
+			const Vector3f& operator()(const VertexFormatNormalTextured& vertex);
+
+		};
+
+		struct TexCoord{
+
+			Vector2f& operator()(VertexFormatNormalTextured& vertex);
+
+			const Vector2f& operator()(const VertexFormatNormalTextured& vertex);
+
+		};
+
 	};
 	
 	/// \brief Base interface for graphical resources.
@@ -248,4 +272,42 @@ namespace gi_lib{
 
 	}
 	
+	/////////////////////////// VERTEX FORMAT NORMAL TEXTURED //////////////////////////////
+
+	inline Vector3f& VertexFormatNormalTextured::Position::operator()(VertexFormatNormalTextured& vertex){
+
+		return vertex.position;
+
+	}
+
+	inline const Vector3f& VertexFormatNormalTextured::Position::operator()(const VertexFormatNormalTextured& vertex){
+
+		return vertex.position;
+
+	}
+
+	inline Vector3f& VertexFormatNormalTextured::Normal::operator()(VertexFormatNormalTextured& vertex){
+
+		return vertex.normal;
+
+	}
+
+	inline const Vector3f& VertexFormatNormalTextured::Normal::operator()(const VertexFormatNormalTextured& vertex){
+
+		return vertex.normal;
+
+	}
+
+	inline Vector2f& VertexFormatNormalTextured::TexCoord::operator()(VertexFormatNormalTextured& vertex){
+
+		return vertex.tex_coord;
+
+	}
+	
+	inline const Vector2f& VertexFormatNormalTextured::TexCoord::operator()(const VertexFormatNormalTextured& vertex){
+
+		return vertex.tex_coord;
+	}
+
+
 }

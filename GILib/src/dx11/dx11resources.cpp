@@ -473,7 +473,7 @@ void DX11RenderTarget::ClearTargets(ID3D11DeviceContext & context, Color color){
 
 ///////////////////////////// MESH ////////////////////////////////////////////////
 
-DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildIndexedNormalTextured& bundle){
+DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildFromVertices<VertexFormatNormalTextured>& bundle){
 
 	// Normal, textured mesh.
 

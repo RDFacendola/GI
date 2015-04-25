@@ -77,7 +77,7 @@ namespace gi_lib{
 	/// \brief Wraps an input iterator that dereferences to another type.
 	/// \tparam TPointerMap Type of the functor that maps the iterator's value. It requires operator()(TIterator::reference) -> TWrapped*
 	template <typename TIterator, typename TWrapped, typename TPointerMap>
-	struct IteratorWrapper : std::iterator<std::input_iterator_tag, TWrapped>{
+	struct IteratorWrapper : std::iterator<std::forward_iterator_tag, TWrapped>{
 
 		/// \brief Create a new iterator.
 		/// \param iterator Iterator to wrap.

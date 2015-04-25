@@ -69,6 +69,15 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	camera_->SetFieldOfView(Math::kPi * 0.5f);
 	camera_->SetProjectionMode(Camera::ProjectionMode::kPerspective);
 	*/
+
+	auto node = scene_.CreateNode(L"root", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()));
+
+	FbxImporter fbx_importer;
+
+	fbx_importer.ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", 
+							 *node,
+							 graphics_.GetResources());
+
 	//Scene import
 
 	//FBXImporter::GetInstance().ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", scene_.CreateNode(), graphics_.GetResources());
