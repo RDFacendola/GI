@@ -77,7 +77,7 @@ namespace gi_lib{
 	/// \brief Wraps an input iterator that dereferences to another type.
 	/// \tparam TPointerMap Type of the functor that maps the iterator's value. It requires operator()(TIterator::reference) -> TWrapped*
 	template <typename TIterator, typename TWrapped, typename TPointerMap>
-	struct IteratorWrapper : std::iterator<std::forward_iterator_tag, TWrapped>{
+	struct IteratorWrapper : std::iterator < std::forward_iterator_tag, TWrapped > {
 
 		/// \brief Create a new iterator.
 		/// \param iterator Iterator to wrap.
@@ -118,6 +118,63 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Wraps a collection and an iterator. The iterator is used to visit the collection in a non-linear way.
+	/// \tparam TDirect Type of the collection. Must support the bracket operator: TDirect::operator[](...) -> TType&
+	/// \tparam TIndex Type of the index iterator. Must be compliant with an input iterator.
+	/// \tparam TType Type of elements referenced by the collection. See TDirect.
+	template <typename TDirect, typename TIndex, typename TType>
+	struct IndexedIterator : std::iterator < std::forward_iterator_tag, TType > {
+
+		/// \brief Create a new iterator.
+		/// \param direct Direct collection.
+		/// \param index Index iterator used as offset.
+		IndexedIterator(TDirect direct, TIndex index);
+
+		/// \brief Copy constructor.
+		/// \param iterator Iterator to copy.
+		IndexedIterator(const IndexedIterator& iterator);
+
+		/// \brief Test for equality.
+		bool operator==(const IndexedIterator& other);
+
+		/// \brief Test for inequality.
+		bool operator!=(const IndexedIterator& other);
+
+		/// \brief Dereferencing operator.
+		reference operator*();
+
+		/// \brief Arrow operator.
+		pointer operator->();
+
+		/// \brief Prefix increment.
+		IndexedIterator& operator++();
+
+		/// \brief Postfix increment.
+		IndexedIterator operator++(int);
+
+	private:
+
+		TDirect direct_;				/// \brief Direct collection.
+
+		TIndex index_;					/// \brief Indirect iterator.
+
+	};
+
+	/// \brief Utility function to make indexed iterators.
+	/// \param direct Direct collection.
+	/// \param index Index iterator.
+	template <typename TDirect, typename TIndex>
+	auto make_indexed(TDirect&& direct, TIndex&& index) -> IndexedIterator < typename std::remove_reference<TDirect&&>::type, 
+																		     typename std::remove_reference<TIndex&&>::type, 
+																		     typename std::remove_reference<decltype(*direct)>::type > {
+
+		return IndexedIterator < std::remove_reference<TDirect&&>::type, 
+								 std::remove_reference<TIndex&&>::type, 
+								 std::remove_reference<decltype(*direct)>::type >( std::forward<TDirect&&>(direct),
+																				   std::forward<TIndex&&>(index) );
+
+	}
+
 	///////////////////////////////// RANGE /////////////////////////////////////////
 
 	template <typename TIterator>
@@ -129,7 +186,7 @@ namespace gi_lib{
 	Range<TIterator>::Range(iterator begin, iterator end) :
 		begin_(begin),
 		end_(end){}
-	
+
 	template <typename TIterator>
 	inline typename Range<TIterator>::iterator Range<TIterator>::begin(){
 
@@ -184,52 +241,52 @@ namespace gi_lib{
 		return begin_ == end_;
 
 	}
-	
+
 	///////////////////////////////// ITERATOR WRAPPER /////////////////////////////////////////
 
-	template <typename typename TIterator, typename TWrapped, typename TPointerMap>
+	template <typename TIterator, typename TWrapped, typename TPointerMap>
 	IteratorWrapper< TIterator, TWrapped, TPointerMap >::IteratorWrapper(const TIterator& iterator, TPointerMap pointer_map) :
 		iterator_(iterator),
 		pointer_map_(pointer_map){}
 
-	template <typename typename TIterator, typename TWrapped, typename TPointerMap>
+	template <typename TIterator, typename TWrapped, typename TPointerMap>
 	IteratorWrapper< TIterator, TWrapped, TPointerMap >::IteratorWrapper(const TIterator& iterator) :
 		iterator_(iterator){}
 
-	template <typename typename TIterator, typename TWrapped, typename TPointerMap>
+	template <typename TIterator, typename TWrapped, typename TPointerMap>
 	IteratorWrapper< TIterator, TWrapped, TPointerMap >::IteratorWrapper(const IteratorWrapper& iterator) :
 		iterator_(iterator.iterator_),
 		pointer_map_(iterator.pointer_map_){}
 
-	template <typename typename TIterator, typename TWrapped, typename TPointerMap>
+	template <typename TIterator, typename TWrapped, typename TPointerMap>
 	bool IteratorWrapper< TIterator, TWrapped, TPointerMap >::operator==(const IteratorWrapper& other){
 
 		return iterator_ == other.iterator_;
 
 	}
 
-	template <typename typename TIterator, typename TWrapped, typename TPointerMap>
+	template <typename TIterator, typename TWrapped, typename TPointerMap>
 	bool IteratorWrapper< TIterator, TWrapped, TPointerMap >::operator!=(const IteratorWrapper& other){
 
 		return iterator_ != other.iterator_;
 
 	}
 
-	template <typename typename TIterator, typename TWrapped, typename TPointerMap>
+	template <typename TIterator, typename TWrapped, typename TPointerMap>
 	typename IteratorWrapper< TIterator, TWrapped, TPointerMap >::reference IteratorWrapper< TIterator, TWrapped, TPointerMap >::operator*(){
 
 		return *pointer_map_(*iterator_);
 
 	}
 
-	template <typename typename TIterator, typename TWrapped, typename TPointerMap>
+	template <typename TIterator, typename TWrapped, typename TPointerMap>
 	typename IteratorWrapper< TIterator, TWrapped, TPointerMap >::pointer IteratorWrapper< TIterator, TWrapped, TPointerMap >::operator->(){
 
 		return pointer_map_(*iterator_);
 
 	}
 
-	template <typename typename TIterator, typename TWrapped, typename TPointerMap>
+	template <typename TIterator, typename TWrapped, typename TPointerMap>
 	IteratorWrapper< TIterator, TWrapped, TPointerMap >& IteratorWrapper< TIterator, TWrapped, TPointerMap >::operator++(){
 
 		++iterator_;
@@ -238,7 +295,7 @@ namespace gi_lib{
 
 	}
 
-	template <typename typename TIterator, typename TWrapped, typename TPointerMap>
+	template <typename TIterator, typename TWrapped, typename TPointerMap>
 	IteratorWrapper< TIterator, TWrapped, TPointerMap > IteratorWrapper< TIterator, TWrapped, TPointerMap >::operator++(int){
 
 		IteratorWrapper< TIterator, TWrapped, TPointerMap > old(*this);
@@ -249,4 +306,64 @@ namespace gi_lib{
 
 	}
 
+	///////////////////////////////// INDEXED ITERATOR /////////////////////////////////////////
+
+	template <typename TDirect, typename TIndex, typename TType>
+	IndexedIterator<TDirect, TIndex, TType>::IndexedIterator(TDirect direct, TIndex index) :
+		direct_(direct),
+		index_(index){}
+
+	template <typename TDirect, typename TIndex, typename TType>
+	IndexedIterator<TDirect, TIndex, TType>::IndexedIterator(const IndexedIterator& iterator) :
+		direct_(iterator.direct_),
+		index_(iterator.index_){}
+
+	template <typename TDirect, typename TIndex, typename TType>
+	bool IndexedIterator<TDirect, TIndex, TType>::operator==(const IndexedIterator& other){
+
+		return direct_[*index_] == other.direct_[*other.index_];
+
+	}
+
+	template <typename TDirect, typename TIndex, typename TType>
+	bool IndexedIterator<TDirect, TIndex, TType>::operator!=(const IndexedIterator& other){
+
+		return direct_[*index_] != other.direct_[*other.index_];
+
+	}
+
+	template <typename TDirect, typename TIndex, typename TType>
+	typename IndexedIterator<TDirect, TIndex, TType>::reference IndexedIterator<TDirect, TIndex, TType>::operator*(){
+
+		return direct_[*index_];
+
+	}
+
+	template <typename TDirect, typename TIndex, typename TType>
+	typename IndexedIterator<TDirect, TIndex, TType>::pointer IndexedIterator<TDirect, TIndex, TType>::operator->(){
+
+		return &(direct_[*index_]);
+
+	}
+
+	template <typename TDirect, typename TIndex, typename TType>
+	IndexedIterator<TDirect, TIndex, TType>& IndexedIterator<TDirect, TIndex, TType>::operator++(){
+
+		++index_;
+
+		return *this;
+
+	}
+
+	template <typename TDirect, typename TIndex, typename TType>
+	IndexedIterator<TDirect, TIndex, TType> IndexedIterator<TDirect, TIndex, TType>::operator++(int){
+
+		IndexedIterator<TDirect, TIndex, TType> old(*this);
+
+		++index_;
+
+		return old;
+
+	}
+	
 }
