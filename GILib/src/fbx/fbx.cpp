@@ -25,6 +25,7 @@
 using namespace std;
 using namespace Eigen;
 
+using gi_lib::Resources;
 using gi_lib::TransformComponent;
 using gi_lib::NodeComponent;
 using gi_lib::to_wstring;
@@ -294,7 +295,7 @@ namespace{
 
 
 	template <typename TVertexFormat>
-	void ImportMesh(FbxMesh& mesh, TransformComponent& node){
+	void ImportMesh(FbxMesh& mesh, TransformComponent& node, Resources& resources){
 
 		gi_lib::BuildFromVertices<TVertexFormat> bundle;	
 
@@ -302,7 +303,9 @@ namespace{
 
 		bundle.vertices = ImportMeshVertices<TVertexFormat>(mesh);
 
-		// TODO: Create the static mesh component!
+		// Create the mesh component
+
+		node.AddComponent<gi_lib::MeshComponent>(resources.Load<gi_lib::Mesh, gi_lib::BuildFromVertices<TVertexFormat>>(bundle));
 
 	}
 
@@ -310,14 +313,16 @@ namespace{
 	/// \brief Import a mesh as a component.
 	/// \param mesh Mesh to import.
 	/// \param node Node where the component will be attached.
-	void ImportMesh(FbxMesh& mesh, TransformComponent& node){
+	void ImportMesh(FbxMesh& mesh, TransformComponent& node, Resources& resources){
 
 		// Dispatch the correct "ImportMesh" based on the attributes of the mesh.
 
 		if (HasTextureCoordinates(mesh) &&
 			HasNormals(mesh)){
 
-			ImportMesh<gi_lib::VertexFormatNormalTextured>(mesh, node);
+			ImportMesh<gi_lib::VertexFormatNormalTextured>(mesh, 
+														   node,
+														   resources);
 
 			// TODO: Read materials here
 
@@ -329,14 +334,15 @@ namespace{
 	/// \brief Import a new component described by a fbx attribute.
 	/// \param attribute The attribute to import.
 	/// \param node The node where the imported component will be attached to.
-	void ImportAttribute(FbxNodeAttribute& attribute, TransformComponent& node){
+	void ImportAttribute(FbxNodeAttribute& attribute, TransformComponent& node, Resources& resources){
 
 		switch (attribute.GetAttributeType()){
 
 		case FbxNodeAttribute::EType::eMesh:
 
 			ImportMesh(static_cast<FbxMesh&>(attribute),
-					   node);
+					   node,
+					   resources);
 
 			break;
 
@@ -373,7 +379,7 @@ namespace{
 	/// \brief Recursively import a FbxScene.
 	/// \param fbx_node Root of the scene.
 	/// \param parent Node where the imported ones will be attached hierarchically.
-	void ImportScene(FbxNode& fbx_root, TransformComponent& parent){
+	void ImportScene(FbxNode& fbx_root, TransformComponent& parent, Resources& resources){
 
 		// Basic components, such as node component and transform component.
 
@@ -385,7 +391,8 @@ namespace{
 		for (int attribute_index = 0; attribute_index < fbx_root.GetNodeAttributeCount(); ++attribute_index){
 
 			ImportAttribute(*fbx_root.GetNodeAttributeByIndex(attribute_index),
-							*node);
+							*node,
+							resources);
 				
 		}
 
@@ -394,7 +401,8 @@ namespace{
 		for (int child_index = 0; child_index < fbx_root.GetChildCount(); ++child_index){
 
 			ImportScene(*fbx_root.GetChild(child_index),
-						*node);
+						*node,
+						resources);
 						
 
 		}
@@ -404,14 +412,15 @@ namespace{
 	/// \brief Recursively import a FbxScene.
 	/// \param fbx_scene Scene to import.
 	/// \param parent Node where the imported ones will be attached hierarchically.
-	void ImportScene(FbxScene& fbx_scene, TransformComponent& root){
+	void ImportScene(FbxScene& fbx_scene, TransformComponent& root, Resources& resources){
 
 		auto fbx_root = fbx_scene.GetRootNode();
 
 		if (fbx_root){
 
 			ImportScene(*fbx_root,
-						root);
+						root,
+						resources);
 
 		}
 
@@ -524,7 +533,8 @@ void gi_lib::FbxImporter::ImportScene(const wstring& file_name, TransformCompone
 	auto scene = fbx_sdk_->ReadSceneOrDie(file_name);	// Use RAII, ImportScene may throw...
 	
 	::ImportScene(*scene,
-				  root);
+				  root,
+				  resources);
 
 	scene->Destroy();
 
