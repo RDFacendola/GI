@@ -10,6 +10,7 @@
 #include <typeinfo>
 #include <string>
 #include <map>
+#include <memory>
 
 #include "component.h"
 #include "timer.h"
@@ -22,8 +23,8 @@
 
 using ::std::vector;
 using ::std::wstring;
-using ::std::type_index;
-using ::std::map;
+using ::std::unique_ptr;
+
 using ::Eigen::Affine3f;
 using ::Eigen::Translation3f;
 using ::Eigen::AlignedScaling3f;
@@ -44,6 +45,9 @@ namespace gi_lib{
 		/// \brief Default constructor.
 		Scene();
 
+		/// \brief Scene destructor.
+		~Scene();
+
 		/// \brief No copy constructor.
 		Scene(const Scene&) = delete;
 
@@ -62,7 +66,7 @@ namespace gi_lib{
 
 	private:
 
-
+		vector<unique_ptr<NodeComponent>> nodes_;
 
 	};
 
@@ -309,18 +313,18 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Static mesh component.
+	/// \brief Mesh component.
 	/// \author Raffaele D. Facendola.
-	class StaticMeshComponent : public VolumeComponent{
+	class MeshComponent : public VolumeComponent{
 
 	public:
 
-		/// \brief Create an empty static mesh component.
-		StaticMeshComponent();
+		/// \brief Create an empty mesh component.
+		MeshComponent();
 
-		/// \brief Create a new static mesh component.
+		/// \brief Create a new mesh component.
 		/// \param Static mesh associated to this component
-		StaticMeshComponent(shared_ptr<Mesh> mesh);
+		MeshComponent(shared_ptr<Mesh> mesh);
 		
 		/// \brief Get the mesh associated to this component.
 		/// \return Return the mesh associated to this component.
@@ -414,8 +418,5 @@ namespace gi_lib{
 		float maximum_distance_;			///< \brief Far clipping plane distance.
 
 	};
-
-
-
 
 }

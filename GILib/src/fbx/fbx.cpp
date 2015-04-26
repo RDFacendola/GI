@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 #include <fbxsdk.h>
+#include <type_traits>
 
 #include "..\..\include\gilib.h"
 #include "..\..\include\gimath.h"
@@ -27,6 +28,9 @@ using namespace Eigen;
 using gi_lib::TransformComponent;
 using gi_lib::NodeComponent;
 using gi_lib::to_wstring;
+
+using gi_lib::IndexedIterator;
+using gi_lib::make_indexed;
 
 namespace{
 
@@ -72,6 +76,45 @@ namespace{
 
 	};
 
+	/// \brief Extract the position of a vertex.
+	template <typename TVertexFormat>
+	struct Position{
+
+		/// \brief Extract the position of a vertex.
+		Vector3f& operator()(TVertexFormat& vertex){
+
+			return vertex.position;
+
+		}
+		
+	};
+
+	/// \brief Extract the normal of a vertex.
+	template <typename TVertexFormat>
+	struct Normal{
+
+		/// \brief Extract the normal of a vertex.
+		Vector3f& operator()(TVertexFormat& vertex){
+
+			return vertex.normal;
+
+		}
+
+	};
+
+	/// \brief Extract the texture coordinate of a vertex.
+	template <typename TVertexFormat>
+	struct TexCoord{
+
+		/// \brief Extract the texture coordinate of a vertex.
+		Vector2f& operator()(TVertexFormat& vertex){
+
+			return vertex.tex_coord;
+
+		}
+
+	};
+
 	/// \brief Extract the translation component of a matrix.
 	/// \param transform The transformation matrix.
 	/// \return Returns the translation component of the given transformation matrix.
@@ -112,7 +155,31 @@ namespace{
 
 	}
 
+	/// \brief Check whether the mesh defines UV coordinates in the first layer.
+	/// \param mesh Mesh to check.
+	/// \return Returns true if the mesh defines UV coordinates in the first layer, returns false otherwise.
+	bool HasTextureCoordinates(const FbxMesh& mesh){
 
+		auto layer = mesh.GetLayer(0);
+
+		return layer != nullptr &&
+			   layer->GetUVs() != nullptr &&
+			   layer->GetUVs()->GetMappingMode() == FbxLayerElement::EMappingMode::eByControlPoint;
+
+	}
+
+	/// \brief Check whether the mesh defines normals in the first layer.
+	/// \param mesh Mesh to check.
+	/// \return Returns true if the mesh defines normals in the first layer, returns false otherwise.
+	bool HasNormals(const FbxMesh & mesh){
+
+		auto layer = mesh.GetLayer(0);
+
+		return layer != nullptr &&
+			   layer->GetNormals() != nullptr &&
+			   layer->GetNormals()->GetMappingMode() == FbxLayerElement::EMappingMode::eByControlPoint;
+
+	}
 
 	/// \brief Write some attributes inside the provided vertex buffer.
 	/// \tparam TVertexFormat Type of vertex.
@@ -122,9 +189,9 @@ namespace{
 	/// \param vertices Vertex buffer the attributes will be written to.
 	/// \param Writer used to write the attribute inside the vertex
 	template <typename TVertexFormat, typename TAttributeFormat, typename TAttributeMap>
-	void WriteAttribute(const TAttributeFormat* attributes, vector<TVertexFormat> & vertices, TAttributeMap attribute_map){
+	void WriteAttribute(TAttributeFormat attributes, vector<TVertexFormat>& vertices, TAttributeMap attribute_map){
 
-		Converter<TAttributeFormat> converter;
+		Converter<remove_reference<decltype(*attributes)>::type> converter;
 
 		for (auto& vertex : vertices){
 
@@ -144,103 +211,79 @@ namespace{
 	/// \param vertices Vertex buffer the attributes will be written to.
 	/// \param Writer used to write the attribute inside the vertex
 	template <typename TVertexFormat, typename TAttributeFormat, typename TAttributeMap>
-	void WriteAttribute(const FbxLayerElementTemplate<TAttributeFormat>& attributes, vector<TVertexFormat>& vertices, TAttributeMap attribute_map){
-
-		Converter<TAttributeFormat> converter;
+	void WriteLayerAttribute(const FbxLayerElementTemplate<TAttributeFormat>& attributes, vector<TVertexFormat>& vertices, TAttributeMap attribute_map){
 
 		auto& direct_array = attributes.GetDirectArray();
-		auto& index_array = attributes.GetIndexArray();
+		
+		auto direct_buffer = static_cast<TAttributeFormat*>(direct_array.GetLocked(FbxLayerElementArray::eReadLock));
 
 		switch (attributes.GetReferenceMode()){
 
-			case FbxLayerElement::EReferenceMode::eIndex:
-			case FbxLayerElement::EReferenceMode::eIndexToDirect:
-			{
+		case FbxLayerElement::EReferenceMode::eIndex:
+		case FbxLayerElement::EReferenceMode::eIndexToDirect:
+		{
 
-				auto direct_buffer = static_cast<TAttributeFormat*>(direct_array.GetLocked(FbxLayerElementArray::eReadLock));
-				auto index_buffer = static_cast<int*>(index_array.GetLocked(FbxLayerElementArray::eReadLock));
+			// Indirect mapping
 
-				for (auto& vertex : vertices){
+			auto& index_array = attributes.GetIndexArray();
 
-					attribute_map(vertex) = converter(direct_buffer[*index_buffer]);
+			auto index_buffer = static_cast<int*>(index_array.GetLocked(FbxLayerElementArray::eReadLock));
 
-					++index_buffer;
+			WriteAttribute(make_indexed(direct_buffer, index_buffer), 
+						   vertices, 
+						   attribute_map);
 
-				}
+			index_array.ReadUnlock();
 
-				direct_array.ReadUnlock();
-				index_array.ReadUnlock();
-
-				break;
-
-			}
-
-			case FbxLayerElement::EReferenceMode::eDirect:
-			{
-
-				auto direct_buffer = static_cast<TAttributeFormat*>(direct_array.GetLocked(FbxLayerElementArray::eReadLock));
-
-				for (auto& vertex : vertices){
-
-					attribute_map(vertex) = converter(*direct_buffer);
-
-					++direct_buffer;
-
-				}
-
-				direct_array.ReadUnlock();
-				
-				break;
-
-			}
+			break;
 
 		}
 
-	}
+		case FbxLayerElement::EReferenceMode::eDirect:
+		{
 
+			// Direct mapping
 
+			WriteAttribute(direct_buffer, 
+						   vertices, 
+						   attribute_map);
 
-	/// \brief Check whether the mesh defines UV coordinates.
-	bool HasTextureCoordinates(const FbxMesh & mesh){
+			break;
 
-		auto layer = mesh.GetLayer(0);
+		}
 
-		return layer != nullptr &&
-			layer->GetUVs() != nullptr &&
-			layer->GetUVs()->GetMappingMode() == FbxLayerElement::EMappingMode::eByControlPoint;
+		}
 
-	}
-
-	/// \brief Check whether the mesh defines normals.
-	bool HasNormals(const FbxMesh & mesh){
-
-		auto layer = mesh.GetLayer(0);
-
-		return layer != nullptr &&
-			layer->GetNormals() != nullptr &&
-			layer->GetNormals()->GetMappingMode() == FbxLayerElement::EMappingMode::eByControlPoint;
+		direct_array.ReadUnlock();
 
 	}
 
-
-
-
-
+	/// \brief Import the vertices of a mesh.
+	/// \param mesh Mesh whose vertices needs to be imported.
+	/// \return Returns a vector with the imported vertices.
 	template <typename TVertexFormat>
-	void ImportVerticesAttributes(const FbxMesh& mesh, vector<TVertexFormat>& vertices);
+	vector<TVertexFormat> ImportMeshVertices(FbxMesh& mesh);
 
-	template <> void ImportVerticesAttributes<gi_lib::VertexFormatNormalTextured>(const FbxMesh& mesh, vector<gi_lib::VertexFormatNormalTextured>& vertices){
+	/// \brief Import the vertices of a mesh.
+	/// \param mesh Mesh whose vertices needs to be imported.
+	/// \return Returns a vector with the imported vertices.
+	template <> vector<gi_lib::VertexFormatNormalTextured> ImportMeshVertices<gi_lib::VertexFormatNormalTextured>(FbxMesh& mesh){
 
-		WriteAttribute(&mesh.GetControlPoints()[0], vertices, gi_lib::VertexFormatNormalTextured::Position());
-		WriteAttribute(*mesh.GetLayer(0)->GetNormals(), vertices, gi_lib::VertexFormatNormalTextured::Normal());
-		WriteAttribute(*mesh.GetLayer(0)->GetUVs(), vertices, gi_lib::VertexFormatNormalTextured::TexCoord());
+		vector<gi_lib::VertexFormatNormalTextured> vertices(mesh.GetControlPointsCount());
+
+		WriteAttribute(&mesh.GetControlPoints()[0], vertices, Position<gi_lib::VertexFormatNormalTextured>());				// Position
+
+		WriteLayerAttribute(*mesh.GetLayer(0)->GetNormals(), vertices, Normal<gi_lib::VertexFormatNormalTextured>());		// Normal, taken from the first layer.
+		WriteLayerAttribute(*mesh.GetLayer(0)->GetUVs(), vertices, TexCoord<gi_lib::VertexFormatNormalTextured>());			// Texture coordinates, taken from the first layer.
+
+		return vertices;
 
 	}
 
 	/// \brief Import the index buffer of a mesh.
 	/// \param mesh The mesh containing the indices to read.
 	/// \return Returns a vector containing the indices of the specified mesh.
-	vector<unsigned int> ImportMeshIndices(const FbxMesh& mesh){
+	vector<unsigned int> ImportMeshIndices(FbxMesh& mesh){
 
 		auto indices = mesh.GetPolygonVertices();
 
@@ -249,23 +292,9 @@ namespace{
 		
 	}
 
-	/// \brief Import the vertex buffer of a mesh.
-	/// \tparam TVertexFormat Format of the vertices to read.
-	/// \param mesh The mesh containing the vertices to read.
-	/// \return Returns a vector containing the vertex of the specified mesh.
-	template <typename TVertexFormat>
-	vector<TVertexFormat> ImportMeshVertices(const FbxMesh& mesh){
-
-		vector<TVertexFormat> vertices(mesh.GetControlPointsCount());
-
-		ImportVerticesAttributes(mesh, vertices);
-
-		return vertices;
-
-	}
 
 	template <typename TVertexFormat>
-	void ImportMesh(FbxMesh& mesh, TransformComponent&){
+	void ImportMesh(FbxMesh& mesh, TransformComponent& node){
 
 		gi_lib::BuildFromVertices<TVertexFormat> bundle;	
 
@@ -278,6 +307,9 @@ namespace{
 	}
 
 
+	/// \brief Import a mesh as a component.
+	/// \param mesh Mesh to import.
+	/// \param node Node where the component will be attached.
 	void ImportMesh(FbxMesh& mesh, TransformComponent& node){
 
 		// Dispatch the correct "ImportMesh" based on the attributes of the mesh.

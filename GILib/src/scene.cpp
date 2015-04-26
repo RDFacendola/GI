@@ -14,6 +14,32 @@ Scene::Scene(){
 
 }
 
+Scene::~Scene(){
+
+}
+
+NodeComponent* Scene::CreateNode(const wstring& name){
+
+	auto node = Component::Create<NodeComponent>(*this, name);
+
+	nodes_.push_back(unique_ptr<NodeComponent>(node));
+
+	return node;
+
+}
+
+TransformComponent* Scene::CreateNode(const wstring& name, const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scale){
+
+	auto node = Component::Create<NodeComponent>(*this, name);
+
+	auto transform = node->AddComponent<TransformComponent>(translation, rotation, scale);
+
+	nodes_.push_back(unique_ptr<NodeComponent>(node));	// Node and transform are the same entity. When node is deleted, transform is deleted as well.
+
+	return transform;
+
+}
+
 ////////////////////////////////////// NODE COMPONENT /////////////////////////////////////
 
 NodeComponent::NodeComponent(Scene& scene, const wstring& name) :
@@ -332,28 +358,28 @@ void VolumeComponent::SetDirty(){
 
 }
 
-////////////////////////////////////// STATIC MESH COMPONENT /////////////////////////////////////
+////////////////////////////////////// MESH COMPONENT /////////////////////////////////////
 
-StaticMeshComponent::StaticMeshComponent() :
-StaticMeshComponent(nullptr){}
+MeshComponent::MeshComponent() :
+mesh_(nullptr){}
 
-StaticMeshComponent::StaticMeshComponent(shared_ptr<Mesh> mesh) :
+MeshComponent::MeshComponent(shared_ptr<Mesh> mesh) :
 VolumeComponent(mesh->GetBoundingBox()),
 mesh_(mesh){}
 
-shared_ptr<Mesh> StaticMeshComponent::GetMesh(){
+shared_ptr<Mesh> MeshComponent::GetMesh(){
 
 	return mesh_;
 
 }
 
-shared_ptr<const Mesh> StaticMeshComponent::GetMesh() const{
+shared_ptr<const Mesh> MeshComponent::GetMesh() const{
 
 	return static_pointer_cast<const Mesh>(mesh_);
 
 }
 
-void StaticMeshComponent::SetMesh(shared_ptr<Mesh> mesh){
+void MeshComponent::SetMesh(shared_ptr<Mesh> mesh){
 
 	mesh_ = mesh;
 
@@ -361,23 +387,23 @@ void StaticMeshComponent::SetMesh(shared_ptr<Mesh> mesh){
 
 }
 
-StaticMeshComponent::TypeSet StaticMeshComponent::GetTypes() const{
+MeshComponent::TypeSet MeshComponent::GetTypes() const{
 	
 	auto types = VolumeComponent::GetTypes();
 
-	types.insert(type_index(typeid(StaticMeshComponent)));
+	types.insert(type_index(typeid(MeshComponent)));
 
 	return types;
 
 }
 
-void StaticMeshComponent::Initialize(){
+void MeshComponent::Initialize(){
 
 	VolumeComponent::Initialize();
 
 }
 
-void StaticMeshComponent::Finalize(){
+void MeshComponent::Finalize(){
 
 	VolumeComponent::Finalize();
 
@@ -448,7 +474,7 @@ CameraComponent::TypeSet CameraComponent::GetTypes() const{
 
 	auto types = Component::GetTypes();
 
-	types.insert(type_index(typeid(StaticMeshComponent)));
+	types.insert(type_index(typeid(CameraComponent)));
 
 	return types;
 
