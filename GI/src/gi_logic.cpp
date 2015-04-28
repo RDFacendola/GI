@@ -17,6 +17,7 @@
 
 using namespace ::std;
 using namespace ::gi_lib;
+using namespace ::gi_lib::fbx;
 using namespace ::Eigen;
 
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
@@ -29,6 +30,17 @@ struct Foo{
 
 };
 
+class MaterialImporter : public IMaterialImporter{
+
+	virtual void OnImportMaterial(MaterialCollection& materials, MeshComponent& mesh){
+
+		// Add the proper material component here
+
+
+	}
+
+}
+;
 
 GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))
@@ -72,11 +84,11 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 
 	auto node = scene_.CreateNode(L"root", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()));
 
-	FbxImporter fbx_importer;
+	FbxImporter fbx_importer(MaterialImporter(),
+							 graphics_.GetResources());
 
 	fbx_importer.ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", 
-							 *node,
-							 graphics_.GetResources());
+							 *node);
 
 	//Scene import
 

@@ -232,7 +232,7 @@ wstring Application::GetDirectory(){
 
 }
 
-wstring Application::GetBaseDirectory(const wstring & file_name){
+wstring Application::GetBaseDirectory(const wstring& file_name){
 
 #ifdef _WIN32
 
@@ -257,7 +257,7 @@ wstring Application::GetBaseDirectory(const wstring & file_name){
 	
 #else
 
-#error "Not supported");
+#error "Not supported";
 
 #endif
 

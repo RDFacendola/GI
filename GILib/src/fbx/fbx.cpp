@@ -21,17 +21,16 @@
 #include "..\..\include\resources.h"
 #include "..\..\include\bundles.h"
 #include "..\..\include\scene.h"
+#include "..\..\include\scope_guard.h"
 
 using namespace std;
 using namespace Eigen;
+using namespace gi_lib;
 
-using gi_lib::Resources;
-using gi_lib::TransformComponent;
-using gi_lib::NodeComponent;
-using gi_lib::to_wstring;
-
-using gi_lib::IndexedIterator;
-using gi_lib::make_indexed;
+using gi_lib::fbx::IMaterial;
+using gi_lib::fbx::IMaterialImporter;
+using gi_lib::fbx::IProperty;
+using gi_lib::fbx::MaterialCollection;
 
 namespace{
 
@@ -77,6 +76,25 @@ namespace{
 
 	};
 
+	/// \brief Converts a 3-element double to a native 3-element vector.
+	template <> struct Converter < FbxDouble3 > {
+
+		/// \brief Native type.
+		using TConverted = Vector3f;
+
+		/// \brief Converts a 2-element vector to a native 2-element vector.
+		/// \param vector Attribute to convert.
+		/// \return Returns the same elements of the original vector.
+		TConverted operator()(const FbxDouble3& vector){
+			
+			return Vector3f(static_cast<float>(vector.mData[0]),
+							static_cast<float>(vector.mData[1]),
+							static_cast<float>(vector.mData[2]));
+
+		}
+
+	};
+
 	/// \brief Extract the position of a vertex.
 	template <typename TVertexFormat>
 	struct Position{
@@ -113,6 +131,17 @@ namespace{
 			return vertex.tex_coord;
 
 		}
+
+	};
+
+	/// \brief Objects needed while importing.
+	struct ImportContext{
+
+		IMaterialImporter* material_importer;
+
+		Resources* resources;
+
+		wstring base_directory;
 
 	};
 
@@ -156,6 +185,105 @@ namespace{
 
 	}
 
+	/// \brief Wrapper around the FbxProperty
+	class Property : public IProperty{
+
+	public:
+
+		/// \brief Create a fbx material property wrapper.
+		/// \param property Property to wrap.
+		Property(FbxProperty property,
+				 const wstring& base_directory) :
+			property_(property),
+			base_directory_(base_directory){}
+
+		virtual wstring GetName() const override{
+
+			return to_wstring(property_.GetNameAsCStr());
+
+		}
+
+		virtual float ReadFloat() const override{
+
+			return static_cast<float>(property_.Get<FbxDouble>());
+
+		}
+
+		virtual Vector3f ReadVector3() const override{
+
+			return Converter<FbxDouble3>()(property_.Get<FbxDouble3>());
+
+		}
+
+		virtual vector<wstring> EnumerateTextures() const override{
+
+			vector<wstring> textures;
+
+			FbxFileTexture* texture;
+
+			for (int texture_index = 0; texture_index < property_.GetSrcObjectCount<FbxFileTexture>(); ++texture_index){
+
+				texture = property_.GetSrcObject<FbxFileTexture>(texture_index);
+
+				textures.push_back( base_directory_ + to_wstring(texture->GetFileName()));
+
+			}
+
+			return textures;
+
+		}
+
+
+	private:
+
+		FbxProperty property_;				///< \brief Fbx property
+
+		wstring base_directory_;			///< \brief Base directory.
+
+	};
+
+	/// \brief Wrapper around the FbxSurfaceMaterial.
+	class Material : public IMaterial{
+
+	public:
+
+		Material(FbxSurfaceMaterial* material,
+				 const wstring& base_directory) :
+			material_(material),
+			base_directory_(base_directory){}
+
+		virtual wstring GetName() const override{
+
+			return to_wstring(material_->GetName());
+
+		}
+
+		virtual unique_ptr<IProperty> operator[](const wstring& property_name) const override{
+
+			auto property = material_->FindProperty(to_string(property_name).c_str());
+			
+			if (property.IsValid()){
+
+				return make_unique<Property>(property, base_directory_);
+
+			}
+			else{
+
+				return nullptr;
+
+			}
+
+
+		}
+
+	private:
+
+		FbxSurfaceMaterial* material_;		///< \brief Fbx material
+
+		wstring base_directory_;			///< \brief Base directory.
+
+	};
+	
 	/// \brief Check whether the mesh defines UV coordinates in the first layer.
 	/// \param mesh Mesh to check.
 	/// \return Returns true if the mesh defines UV coordinates in the first layer, returns false otherwise.
@@ -179,7 +307,7 @@ namespace{
 		return layer != nullptr &&
 			   layer->GetNormals() != nullptr &&
 			   layer->GetNormals()->GetMappingMode() == FbxLayerElement::EMappingMode::eByControlPoint;
-
+		
 	}
 
 	/// \brief Write some attributes inside the provided vertex buffer.
@@ -268,14 +396,14 @@ namespace{
 	/// \brief Import the vertices of a mesh.
 	/// \param mesh Mesh whose vertices needs to be imported.
 	/// \return Returns a vector with the imported vertices.
-	template <> vector<gi_lib::VertexFormatNormalTextured> ImportMeshVertices<gi_lib::VertexFormatNormalTextured>(FbxMesh& mesh){
+	template <> vector<VertexFormatNormalTextured> ImportMeshVertices<VertexFormatNormalTextured>(FbxMesh& mesh){
 
-		vector<gi_lib::VertexFormatNormalTextured> vertices(mesh.GetControlPointsCount());
+		vector<VertexFormatNormalTextured> vertices(mesh.GetControlPointsCount());
 
 		WriteAttribute(&mesh.GetControlPoints()[0], vertices, Position<gi_lib::VertexFormatNormalTextured>());				// Position
 
-		WriteLayerAttribute(*mesh.GetLayer(0)->GetNormals(), vertices, Normal<gi_lib::VertexFormatNormalTextured>());		// Normal, taken from the first layer.
-		WriteLayerAttribute(*mesh.GetLayer(0)->GetUVs(), vertices, TexCoord<gi_lib::VertexFormatNormalTextured>());			// Texture coordinates, taken from the first layer.
+		WriteLayerAttribute(*mesh.GetLayer(0)->GetNormals(), vertices, Normal<VertexFormatNormalTextured>());				// Normal, taken from the first layer.
+		WriteLayerAttribute(*mesh.GetLayer(0)->GetUVs(), vertices, TexCoord<VertexFormatNormalTextured>());					// Texture coordinates, taken from the first layer.
 
 		return vertices;
 
@@ -292,10 +420,9 @@ namespace{
 									&indices[0] + mesh.GetPolygonVertexCount());
 		
 	}
-
-
+	
 	template <typename TVertexFormat>
-	void ImportMesh(FbxMesh& mesh, TransformComponent& node, Resources& resources){
+	MeshComponent* ImportMesh(FbxMesh& mesh, TransformComponent& node, const ImportContext& context){
 
 		gi_lib::BuildFromVertices<TVertexFormat> bundle;	
 
@@ -305,36 +432,55 @@ namespace{
 
 		// Create the mesh component
 
-		node.AddComponent<gi_lib::MeshComponent>(resources.Load<gi_lib::Mesh, gi_lib::BuildFromVertices<TVertexFormat>>(bundle));
+		return node.AddComponent<MeshComponent>(context.resources->Load<Mesh, BuildFromVertices<TVertexFormat>>(bundle));
 
 	}
+	
+	/// \brief Import the mesh materials.
+	/// \param mesh The mesh whose materials will be imported.
+	void ImportMaterials(const FbxMesh& mesh, MeshComponent& mesh_component, const ImportContext& context){
 
+		auto& fbx_node = *mesh.GetNode();
+
+		MaterialCollection materials;
+
+		for (int material_index = 0; material_index < fbx_node.GetSrcObjectCount<FbxSurfaceMaterial>(); ++material_index){
+
+			materials.push_back(make_unique<Material>(fbx_node.GetSrcObject<FbxSurfaceMaterial>(material_index),
+													  context.base_directory));
+				
+		}
+
+		context.material_importer->OnImportMaterial(materials, mesh_component);
+
+	}
 
 	/// \brief Import a mesh as a component.
 	/// \param mesh Mesh to import.
 	/// \param node Node where the component will be attached.
-	void ImportMesh(FbxMesh& mesh, TransformComponent& node, Resources& resources){
+	void ImportMesh(FbxMesh& mesh, TransformComponent& node, const ImportContext& context){
 
 		// Dispatch the correct "ImportMesh" based on the attributes of the mesh.
 
 		if (HasTextureCoordinates(mesh) &&
 			HasNormals(mesh)){
 
-			ImportMesh<gi_lib::VertexFormatNormalTextured>(mesh, 
-														   node,
-														   resources);
+			auto mesh_component = ImportMesh<gi_lib::VertexFormatNormalTextured>(mesh, 
+																				 node,
+																				 context);
 
-			// TODO: Read materials here
+			ImportMaterials(mesh, 
+							*mesh_component,
+							context);
 
 		}
-
 
 	}
 
 	/// \brief Import a new component described by a fbx attribute.
 	/// \param attribute The attribute to import.
 	/// \param node The node where the imported component will be attached to.
-	void ImportAttribute(FbxNodeAttribute& attribute, TransformComponent& node, Resources& resources){
+	void ImportAttribute(FbxNodeAttribute& attribute, TransformComponent& node, const ImportContext& context){
 
 		switch (attribute.GetAttributeType()){
 
@@ -342,7 +488,7 @@ namespace{
 
 			ImportMesh(static_cast<FbxMesh&>(attribute),
 					   node,
-					   resources);
+					   context);
 
 			break;
 
@@ -379,7 +525,7 @@ namespace{
 	/// \brief Recursively import a FbxScene.
 	/// \param fbx_node Root of the scene.
 	/// \param parent Node where the imported ones will be attached hierarchically.
-	void ImportScene(FbxNode& fbx_root, TransformComponent& parent, Resources& resources){
+	void ImportScene(FbxNode& fbx_root, TransformComponent& parent, const ImportContext& context){
 
 		// Basic components, such as node component and transform component.
 
@@ -392,7 +538,7 @@ namespace{
 
 			ImportAttribute(*fbx_root.GetNodeAttributeByIndex(attribute_index),
 							*node,
-							resources);
+							context);
 				
 		}
 
@@ -402,7 +548,7 @@ namespace{
 
 			ImportScene(*fbx_root.GetChild(child_index),
 						*node,
-						resources);
+						context);
 						
 
 		}
@@ -412,7 +558,7 @@ namespace{
 	/// \brief Recursively import a FbxScene.
 	/// \param fbx_scene Scene to import.
 	/// \param parent Node where the imported ones will be attached hierarchically.
-	void ImportScene(FbxScene& fbx_scene, TransformComponent& root, Resources& resources){
+	void ImportScene(FbxScene& fbx_scene, TransformComponent& root, const ImportContext& context){
 
 		auto fbx_root = fbx_scene.GetRootNode();
 
@@ -420,7 +566,7 @@ namespace{
 
 			ImportScene(*fbx_root,
 						root,
-						resources);
+						context);
 
 		}
 
@@ -430,7 +576,7 @@ namespace{
 
 /////////////////////// FBXSDK ///////////////////////
 
-struct gi_lib::FbxImporter::FbxSDK{
+struct fbx::FbxImporter::FbxSDK{
 
 	/// \brief Manager of the Fbx SDK.
 	FbxManager* manager;
@@ -440,7 +586,7 @@ struct gi_lib::FbxImporter::FbxSDK{
 
 	/// \brief Used to convert the imported geometry.
 	FbxGeometryConverter* converter;
-	
+
 	/// \brief Create the Fbx SDK implementation object.
 	FbxSDK();
 
@@ -454,7 +600,7 @@ struct gi_lib::FbxImporter::FbxSDK{
 	
 };
 
-gi_lib::FbxImporter::FbxSDK::FbxSDK(){
+fbx::FbxImporter::FbxSDK::FbxSDK(){
 
 	manager = FbxManager::Create();
 
@@ -465,7 +611,7 @@ gi_lib::FbxImporter::FbxSDK::FbxSDK(){
 
 }
 
-gi_lib::FbxImporter::FbxSDK::~FbxSDK(){
+fbx::FbxImporter::FbxSDK::~FbxSDK(){
 
 	if (converter){
 
@@ -487,7 +633,7 @@ gi_lib::FbxImporter::FbxSDK::~FbxSDK(){
 
 }
 
-FbxScene* gi_lib::FbxImporter::FbxSDK::ReadSceneOrDie(const wstring& file_name){
+FbxScene* fbx::FbxImporter::FbxSDK::ReadSceneOrDie(const wstring& file_name){
 
 	// Create the importer
 	
@@ -523,28 +669,35 @@ FbxScene* gi_lib::FbxImporter::FbxSDK::ReadSceneOrDie(const wstring& file_name){
 
 /////////////////////// FBX IMPORTER ///////////////////////
 
-gi_lib::FbxImporter::FbxImporter() :
-fbx_sdk_(make_unique<FbxSDK>()){}
+fbx::FbxImporter::FbxImporter(IMaterialImporter& material_importer, Resources& resources) :
+fbx_sdk_(make_unique<FbxSDK>()),
+material_importer_(material_importer),
+resources_(resources){}
 
-gi_lib::FbxImporter::~FbxImporter(){}
+fbx::FbxImporter::~FbxImporter(){}
 
-void gi_lib::FbxImporter::ImportScene(const wstring& file_name, TransformComponent& root, Resources& resources){
+void fbx::FbxImporter::ImportScene(const wstring& file_name, TransformComponent& root){
 
-	auto scene = fbx_sdk_->ReadSceneOrDie(file_name);	// Use RAII, ImportScene may throw...
+	auto scene = fbx_sdk_->ReadSceneOrDie(file_name);
+
+	// Something may throw during the import, this is needed to destroy the scene.
 	
+	auto guard = make_scope_guard([scene](){
+
+		scene->Destroy();
+
+	});
+
+	// Context setup
+
+	ImportContext context{ &material_importer_, 
+						   &resources_, 
+						   Application::GetBaseDirectory(file_name) };
+
+	// Actual import
+
 	::ImportScene(*scene,
 				  root,
-				  resources);
-
-	scene->Destroy();
-
+				  context);
+	
 }
-
-/*
-
-auto app_directory = Application::GetDirectory();
-
-auto base_directory = Application::GetBaseDirectory(file_name.substr(app_directory.length(),
-													file_name.length() - app_directory.length()));
-
-*/
