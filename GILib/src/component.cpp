@@ -191,6 +191,18 @@ void Component::Dispose(){
 
 }
 
+Observable<Component::OnDisposedEventArgs>& Component::OnDisposed(){
+
+	return on_disposed_event_;
+
+}
+
+Observable<Component::OnRemovedEventArgs>& Component::OnRemoved(){
+
+	return on_removed_event_;
+
+}
+
 Component::TypeSet Component::GetTypes() const{
 
 	set<type_index> types;

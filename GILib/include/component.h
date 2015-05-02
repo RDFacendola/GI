@@ -14,6 +14,7 @@
 
 #include "macros.h"
 #include "range.h"
+#include "observable.h"
 
 using std::type_index;
 using std::unordered_multimap;
@@ -24,8 +25,9 @@ namespace gi_lib{
 	/// \brief Represents a component of a component-based entity.
 	/// A component-based entity is an abstract object which exposes different capabilities through components.
 	/// These components may be accessed, removed or added at runtime seamlessy.
-	/// The entity may have different components of a same type (each of which is a separate object from the others) and may query for components polymorphically.
+	/// The entity may have different components of the same type (each of which is a separate object from the others) and may query for components polymorphically.
 	/// If an entity has a component of type Derived derived from Base, the entity will responds to both the type Derived and Base.
+	/// Components <b>must<\b> be created via Component::Create<TComponent>(...) and destroyed via Component::Dispose().
 	/// \auhtor Raffaele D. Facendola.
 	class Component{
 
@@ -69,6 +71,21 @@ namespace gi_lib{
 
 		/// \brief Range of components stored inside the component map.
 		using map_range = Range < ComponentMap::iterator >;
+
+		/// \brief Arguments of the OnRemoved event.
+		struct OnRemovedEventArgs{
+
+			Component* component;	///< \brief Component that has been removed.
+
+		};
+
+		/// \brief Arguments of the OnDisposed event.
+		struct OnDisposedEventArgs{
+
+			Component* component;	///< \brief Any component of the entity that has been disposed.
+
+		};
+
 
 		/// \brief Default constructor.
 		Component();
@@ -127,6 +144,16 @@ namespace gi_lib{
 		/// \brief Delete this component and every other component.
 		void Dispose();
 
+		/// \brief Event triggered when the composite object is being disposed.
+		/// The event is ensured to be triggered before the destruction of any component.
+		/// \return Returns the event triggered when the composite object is being disposed.
+		Observable<OnDisposedEventArgs>& OnDisposed();
+
+		/// \brief Event triggered when this component is being removed from the composite object.
+		/// The event is ensured to be triggered before the destrution of this component.
+		/// \return Return the event triggered when this component is being removed from the composite object.
+		Observable<OnRemovedEventArgs>& OnRemoved();
+
 		/// \brief Create a new component.
 		/// \tparam TComponent Type of the component to create.
 		/// \tparam TArgs Types of the arguments to pass to the component's constructor.
@@ -167,7 +194,11 @@ namespace gi_lib{
 		/// \brief Create a new entity and call the Initialize method.
 		void Setup();
 
-		Arbiter* arbiter_;	///< \brief Enables intra-component communication.
+		Arbiter* arbiter_;								///< \brief Enables intra-component communication.
+
+		Event<OnDisposedEventArgs> on_disposed_event_;	///< \brief Dispose event.
+
+		Event<OnRemovedEventArgs> on_removed_event_;	///< \brief Component remove event.
 		
 	};
 
