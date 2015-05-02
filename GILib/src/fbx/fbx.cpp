@@ -272,8 +272,7 @@ namespace{
 				return nullptr;
 
 			}
-
-
+			
 		}
 
 	private:
@@ -391,44 +390,134 @@ namespace{
 	/// \param mesh Mesh whose vertices needs to be imported.
 	/// \return Returns a vector with the imported vertices.
 	template <typename TVertexFormat>
-	vector<TVertexFormat> ImportMeshVertices(FbxMesh& mesh);
+	void ImportMeshVertices(FbxMesh& mesh, BuildFromVertices<TVertexFormat>& bundle);
 
 	/// \brief Import the vertices of a mesh.
 	/// \param mesh Mesh whose vertices needs to be imported.
 	/// \return Returns a vector with the imported vertices.
-	template <> vector<VertexFormatNormalTextured> ImportMeshVertices<VertexFormatNormalTextured>(FbxMesh& mesh){
+	template <> void ImportMeshVertices<VertexFormatNormalTextured>(FbxMesh& mesh, BuildFromVertices<VertexFormatNormalTextured>& bundle){
 
-		vector<VertexFormatNormalTextured> vertices(mesh.GetControlPointsCount());
+		bundle.vertices.resize(mesh.GetControlPointsCount());
 
-		WriteAttribute(&mesh.GetControlPoints()[0], vertices, Position<gi_lib::VertexFormatNormalTextured>());				// Position
+		WriteAttribute(&mesh.GetControlPoints()[0], bundle.vertices, Position<gi_lib::VertexFormatNormalTextured>());			// Position
 
-		WriteLayerAttribute(*mesh.GetLayer(0)->GetNormals(), vertices, Normal<VertexFormatNormalTextured>());				// Normal, taken from the first layer.
-		WriteLayerAttribute(*mesh.GetLayer(0)->GetUVs(), vertices, TexCoord<VertexFormatNormalTextured>());					// Texture coordinates, taken from the first layer.
-
-		return vertices;
+		WriteLayerAttribute(*mesh.GetLayer(0)->GetNormals(), bundle.vertices, Normal<VertexFormatNormalTextured>());			// Normal, taken from the first layer.
+		WriteLayerAttribute(*mesh.GetLayer(0)->GetUVs(), bundle.vertices, TexCoord<VertexFormatNormalTextured>());				// Texture coordinates, taken from the first layer.
 
 	}
 
-	/// \brief Import the index buffer of a mesh.
-	/// \param mesh The mesh containing the indices to read.
-	/// \return Returns a vector containing the indices of the specified mesh.
-	vector<unsigned int> ImportMeshIndices(FbxMesh& mesh){
+	/// \brief Import the mesh index buffer and subsets.
+	/// The mesh <b>must<\b> be a triangle mesh, ie every polygon must have exactly 3 vertices.
+	/// \param mesh Source mesh.
+	/// \param bundle Store the imported index buffer and subset.
+	template <typename TVertexFormat>
+	void ImportMeshIndices(FbxMesh& mesh, BuildFromVertices<TVertexFormat>& bundle){
 
-		auto indices = mesh.GetPolygonVertices();
+		int polygon_size = 3;											// Triangle
 
-		return vector<unsigned int>(&indices[0],
-									&indices[0] + mesh.GetPolygonVertexCount());
-		
+		auto polygon_vertices = mesh.GetPolygonVertices();				// Original index buffer
+		auto polygon_vertex_count = mesh.GetPolygonVertexCount();		// Indices count
+
+		FbxLayerElementArrayTemplate<int>* material_indices;			// Material indices per polygon
+
+		if (mesh.GetMaterialIndices(&material_indices)){
+
+			// Sort by material index using counting sort, O(material_count + polygon_count)
+
+			auto material_count = mesh.GetNode()->GetSrcObjectCount<FbxSurfaceMaterial>();
+
+			int material_index;
+			int polygon_index;
+			int vertex_index;
+
+			vector<size_t> count(material_count);
+			
+			// Count material indices
+
+			for (polygon_index = 0; polygon_index < mesh.GetPolygonCount(); ++polygon_index){
+
+				material_index = material_indices->GetAt(polygon_index);
+
+				++(count[material_index]);
+
+			}
+
+			// Starting index for each material index
+
+			size_t total = 0;
+			size_t aux_count;
+
+			bundle.subsets.resize(material_count);
+
+			for (material_index = 0; material_index < material_count; ++material_index){
+
+				aux_count = count[material_index];
+
+				// Setup the mesh subset relative to the material index
+
+				bundle.subsets[material_index].start_index = total * polygon_size;
+				bundle.subsets[material_index].count = aux_count * polygon_size;
+
+				count[material_index] = total;
+
+				total += aux_count;
+
+			}
+
+			// Sort the indices
+
+			bundle.indices.resize(polygon_vertex_count);	// Output index buffer
+
+			size_t base_input_index;
+			size_t base_output_index;
+
+			for (polygon_index = 0; polygon_index < mesh.GetPolygonCount(); ++polygon_index){
+				
+				material_index = material_indices->GetAt(polygon_index);
+				
+				// Source and destination index offset
+
+				base_input_index = mesh.GetPolygonVertexIndex(polygon_index);
+
+				base_output_index = polygon_size * count[material_index];
+
+				// Copy the entire polygon
+
+				for (vertex_index = 0; vertex_index < polygon_size; ++vertex_index){
+
+					bundle.indices[base_output_index + vertex_index] = polygon_vertices[base_input_index + vertex_index];
+
+				}
+						
+				// Next
+
+				++(count[material_index]);
+
+			}
+
+		}
+		else{
+
+			// If no material index is found, just use the same material (0) for the entire mesh
+
+			bundle.indices.assign(polygon_vertices,
+								  polygon_vertices + polygon_vertex_count);
+
+			bundle.subsets.push_back(MeshSubset{ 0, polygon_vertex_count });
+
+		}
+
 	}
-	
+
 	template <typename TVertexFormat>
 	MeshComponent* ImportMesh(FbxMesh& mesh, TransformComponent& node, const ImportContext& context){
 
-		gi_lib::BuildFromVertices<TVertexFormat> bundle;	
+		// Create the bundle used to build the mesh
 
-		bundle.indices = ImportMeshIndices(mesh);
+		BuildFromVertices<TVertexFormat> bundle;	
 
-		bundle.vertices = ImportMeshVertices<TVertexFormat>(mesh);
+		ImportMeshIndices(mesh, bundle);
+		ImportMeshVertices(mesh, bundle);
 
 		// Create the mesh component
 

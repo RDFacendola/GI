@@ -180,11 +180,17 @@ namespace gi_lib{
 
 			virtual const AABB& GetBoundingBox() const override;
 
+			virtual size_t GetMaterialCount() const override;
+
+			virtual const MeshSubset& GetSubset(unsigned int material_index) const override;
+
 		private:
 
 			unique_ptr<ID3D11Buffer, COMDeleter> vertex_buffer_;
 
 			unique_ptr<ID3D11Buffer, COMDeleter> index_buffer_;
+
+			vector<MeshSubset> subsets_;
 
 			size_t vertex_count_;
 
@@ -222,8 +228,6 @@ namespace gi_lib{
 			virtual shared_ptr<Material::Variable> GetVariable(const string& name) override;
 
 			virtual shared_ptr<Material::Resource> GetResource(const string& name) override;
-
-			virtual BlendMode GetBlendMode() const override;
 
 		private:
 
@@ -432,38 +436,6 @@ namespace gi_lib{
 		inline shared_ptr<const Texture2D> DX11RenderTarget::GetZStencil() const{
 
 			return std::static_pointer_cast<const Texture2D>(zstencil_);
-
-		}
-
-		// DX11Mesh
-
-		inline size_t DX11Mesh::GetVertexCount() const{
-
-			return vertex_count_;
-
-		}
-
-		inline size_t DX11Mesh::GetPolygonCount() const{
-
-			return polygon_count_;
-
-		}
-
-		inline size_t DX11Mesh::GetLODCount() const{
-
-			return LOD_count_;
-
-		}
-
-		inline size_t DX11Mesh::GetSize() const{
-
-			return size_;
-
-		}
-
-		inline const AABB& DX11Mesh::GetBoundingBox() const{
-
-			return bounding_box_;
 
 		}
 

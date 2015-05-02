@@ -256,7 +256,7 @@ namespace gi_lib{
 
 		/// \brief Get the window's handle.
 		/// \return Returns a constant reference to the window's handle.
-		const WindowHandle & GetHandle() const;
+		const WindowHandle& GetHandle() const;
 
 		/// \brief Set the window's title.
 		/// \param title The title to show in the title bar.
@@ -323,19 +323,19 @@ namespace gi_lib{
 
 	}
 
-	inline const WindowHandle & Window::GetHandle() const{
+	inline const WindowHandle& Window::GetHandle() const{
 
 		return handle_;
 
 	}
 
-	inline Observable<Window::OnClosedEventArgs> & Window::OnClosed(){
+	inline Observable<Window::OnClosedEventArgs>& Window::OnClosed(){
 
 		return on_closed_;
 
 	}
 
-	inline Observable<Window::OnResizedEventArgs> & Window::OnResized(){
+	inline Observable<Window::OnResizedEventArgs>& Window::OnResized(){
 
 		return on_resized_;
 

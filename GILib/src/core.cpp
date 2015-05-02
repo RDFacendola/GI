@@ -60,7 +60,7 @@ CpuProfile System::GetCPUProfile(){
 
 	if (!QueryPerformanceFrequency(&frequency)){
 
-THROW(L"Your system does not support high-resolution performance counter");
+		THROW(L"Your system does not support high-resolution performance counter");
 
 	}
 
@@ -302,7 +302,7 @@ wstring Application::GetName(bool extension){
 
 }
 
-void Application::DisposeWindow(const WindowHandle & handle){
+void Application::DisposeWindow(const WindowHandle& handle){
 
 	//The shared pointer's destructor will take care of destroying the window correctly
 	auto window = windows_.find(handle);
@@ -315,7 +315,7 @@ void Application::DisposeWindow(const WindowHandle & handle){
 	
 }
 
-weak_ptr<Window> Application::GetWindow(const WindowHandle & handle){
+weak_ptr<Window> Application::GetWindow(const WindowHandle& handle){
 
 	auto window = windows_.find(handle);
 
@@ -351,7 +351,7 @@ void Application::Join(){
 		}
 
 		//Shared time to enforce coherence (windows may use their own timer to have the actual time).
-		for (auto & window : windows_){
+		for (auto& window : windows_){
 
 			(window.second)->Update(timer.GetTime());
 
@@ -421,7 +421,7 @@ Window::WindowClass::WindowClass(){
 
 	//Extract the first icon found into the executable
 	window_icon_ = ExtractIcon(instance,
-		Application::GetInstance().GetPath().c_str(), 0);
+							   Application::GetInstance().GetPath().c_str(), 0);
 
 	WNDCLASS window_description;
 

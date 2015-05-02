@@ -46,18 +46,6 @@ GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11))
 {
 
-	using mtype = Foo*;
-
-	vector<mtype> v;
-
-	Range<vector<mtype>::iterator> ran(v.begin(), v.end());
-
-	auto it = v.begin();
-
-	
-	
-
-
 	// Graphics setup
 
 	SetTitle(kWindowTitle);
@@ -82,21 +70,16 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	camera_->SetProjectionMode(Camera::ProjectionMode::kPerspective);
 	*/
 
-	auto node = scene_.CreateNode(L"root", Translation3f(Vector3f::Zero()), Quaternionf::Identity(), AlignedScaling3f(Vector3f::Ones()));
+	auto node = scene_.CreateNode(L"root", 
+								  Translation3f(Vector3f::Zero()), 
+								  Quaternionf::Identity(), 
+								  AlignedScaling3f(Vector3f::Ones()));
 
 	FbxImporter fbx_importer(MaterialImporter(),
 							 graphics_.GetResources());
 
 	fbx_importer.ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", 
 							 *node);
-
-	//Scene import
-
-	//FBXImporter::GetInstance().ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", scene_.CreateNode(), graphics_.GetResources());
-
-	// Bounding volume hierarchy rebuild
-	
-	//scene_.GetBVH().Rebuild();
 
 }
 
@@ -106,7 +89,7 @@ GILogic::~GILogic(){
 
 }
 
-void GILogic::Update(const Time & time){
+void GILogic::Update(const Time& time){
 	
 	//scene_.Update(time);
 

@@ -8,6 +8,8 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <typeinfo>
+#include <typeindex>
 
 #include "gimath.h"
 
@@ -15,6 +17,7 @@ using ::std::vector;
 using ::std::shared_ptr;
 using ::std::wstring;
 using ::std::string;
+
 using ::Eigen::Vector2f;
 using ::Eigen::Vector3f;
 using ::Eigen::Affine3f;
@@ -23,7 +26,6 @@ using ::Eigen::Matrix;
 
 namespace gi_lib{
 
-	enum class BlendMode;
 	enum class AntialiasingMode;
 
 	class IResource;
@@ -40,6 +42,15 @@ namespace gi_lib{
 		Vector3f position;			///< Position of the vertex.
 		Vector3f normal;			///< Vertex normal.
 		Vector2f tex_coord;			///< Texture coordinates.
+
+	};
+	
+	/// \brief Subset of a mesh.
+	struct MeshSubset{
+
+		size_t start_index;			///< \brief Start index.
+
+		size_t count;				///< \brief Index count.
 
 	};
 	
@@ -177,6 +188,15 @@ namespace gi_lib{
 		/// \return Returns the bounding box of the mesh in object space.
 		virtual const AABB& GetBoundingBox() const = 0;
 
+		/// \brief Total number of materials used by this mesh.
+		/// \return Returns the total number of materials used by this mesh.
+		virtual size_t GetMaterialCount() const = 0;
+
+		/// \brief Get a mesh subset.
+		/// \param material_index Index of the material assigned to the subset.
+		/// \return Returns the mesh subset whose assigned material index is equal to the specified one.
+		virtual const MeshSubset& GetSubset(unsigned int material_index) const = 0;
+		
 	};
 
 	/// \brief Base interface for materials.
@@ -204,7 +224,7 @@ namespace gi_lib{
 			/// \brief Set the variable value.
 			/// \param buffer Pointer to the buffer holding the data to write.
 			/// \param size Size of the buffer.
-			virtual void Set(const void * buffer, size_t size) = 0;
+			virtual void Set(const void* buffer, size_t size) = 0;
 
 		};
 
@@ -235,10 +255,9 @@ namespace gi_lib{
 		/// \return Returns a pointer to the resource matching the specified name.
 		virtual shared_ptr<Resource> GetResource(const string& name) = 0;
 
-		/// \brief Get the material blend mode.
-		virtual BlendMode GetBlendMode() const = 0;
-
 	};
+
+	///////////////////////////////////////// MATERIAL ////////////////////////////////////
 
 	template<typename TValue>
 	void Material::Variable::Set(const TValue& value){

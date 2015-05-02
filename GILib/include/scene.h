@@ -348,7 +348,7 @@ namespace gi_lib{
 
 	private:
 
-		shared_ptr<Mesh> mesh_;		///< \brief Static mesh.
+		shared_ptr<Mesh> mesh_;							///< \brief 3D model.
 
 	};
 

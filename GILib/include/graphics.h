@@ -51,13 +51,6 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Describes how rendered pixels are blended with existing ones.
-	enum class BlendMode{
-
-		Opaque,					///< \brief The geometry is fully opaque.
-
-	};
-
 	/// \brief Describes a projection type.
 	enum class ProjectionType{
 

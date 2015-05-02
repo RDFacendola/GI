@@ -480,7 +480,7 @@ DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildFromVertices<VertexFormatNor
 	size_t vb_size = bundle.vertices.size() * sizeof(VertexFormatNormalTextured);
 	size_t ib_size = bundle.indices.size() * sizeof(unsigned int);
 	
-	ID3D11Buffer * buffer;
+	ID3D11Buffer* buffer;
 	
 	THROW_ON_FAIL(MakeVertexBuffer(device,
 								   &(bundle.vertices[0]),
@@ -488,6 +488,8 @@ DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildFromVertices<VertexFormatNor
 								   &buffer));
 
 	vertex_buffer_.reset(buffer);
+
+	buffer = nullptr;
 
 	if (bundle.indices.size() > 0){
 
@@ -498,7 +500,7 @@ DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildFromVertices<VertexFormatNor
 	
 		index_buffer_.reset(buffer);
 
-		polygon_count_ = bundle.indices.size();
+		polygon_count_ = bundle.indices.size() / 3;
 
 	}
 	else{
@@ -507,11 +509,55 @@ DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildFromVertices<VertexFormatNor
 
 	}
 
+	subsets_ = bundle.subsets;
+
 	vertex_count_ = bundle.vertices.size();
 	LOD_count_ = 1;
 	size_ = vb_size + ib_size;
 
 	bounding_box_ = VerticesToBounds(bundle.vertices);
+
+}
+
+size_t DX11Mesh::GetVertexCount() const{
+
+	return vertex_count_;
+
+}
+
+size_t DX11Mesh::GetPolygonCount() const{
+
+	return polygon_count_;
+
+}
+
+size_t DX11Mesh::GetLODCount() const{
+
+	return LOD_count_;
+
+}
+
+size_t DX11Mesh::GetSize() const{
+
+	return size_;
+
+}
+
+const AABB& DX11Mesh::GetBoundingBox() const{
+
+	return bounding_box_;
+
+}
+
+size_t DX11Mesh::GetMaterialCount() const{
+
+	return subsets_.size();
+
+}
+
+const MeshSubset& DX11Mesh::GetSubset(unsigned int material_index) const{
+
+	return subsets_[material_index];
 
 }
 
@@ -553,8 +599,6 @@ private:
 struct DX11Material::MaterialImpl{
 
 	ShaderReflection reflection;													/// \brief Combined reflection of the shaders.
-
-	BlendMode blend_mode;															/// \brief Blend mode.
 
 	unordered_map<ShaderType, unique_ptr<ID3D11DeviceChild, COMDeleter>> shaders;	/// \brief Shader objects.
 
@@ -717,13 +761,7 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 	MakeShader<ID3D11DomainShader>(device, code, file_name, false);		// optional
 	MakeShader<ID3D11GeometryShader>(device, code, file_name, false);	// optional
 	MakeShader<ID3D11PixelShader>(device, code, file_name, true);		// mandatory
-				
-	// Blend mode
-
-	TODO("Add support to other blend modes here.");
-
-	blend_mode = BlendMode::Opaque;
-	
+					
 	// Dismiss
 	rollback.Dismiss();
 
@@ -896,11 +934,5 @@ size_t DX11Material::GetSize() const{
 								return size + desc.size;
 
 						   });
-
-}
-
-BlendMode DX11Material::GetBlendMode() const{
-
-	return shared_impl_->blend_mode;
 
 }

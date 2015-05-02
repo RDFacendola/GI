@@ -68,6 +68,10 @@ namespace gi_lib{
 		/// \brief Vertices' data.
 		vector<TVertexFormat> vertices;
 
+		/// \brief Mesh subsets.
+		/// The position inside the vector specifies the material index assigned to that subset.
+		vector<MeshSubset> subsets;
+
 	};
 
 	/// \brief Bundle used to instantiate an material from another one.
