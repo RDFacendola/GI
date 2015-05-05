@@ -75,7 +75,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;E:\libs\stack_walker\lib\$(Configuration)\;E:\libs\DirectXTK\Bin\Desktop_2013\$(Platform)\$(Configuration)\;E:\libs\DirectXTex\DirectXTex\Bin\Desktop_2013\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;$(SolutionDir)Libs\stack_walker\lib\$(Configuration)\;$(SolutionDir)Libs\DirectXTK\Bin\Desktop_2013\$(Platform)\$(Configuration)\;$(SolutionDir)Libs\DirectXTex\DirectXTex\Bin\Desktop_2013\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
@@ -88,7 +88,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;E:\libs\stack_walker\lib\$(Configuration)\;E:\libs\DirectXTK\Bin\Desktop_2013\$(Platform)\$(Configuration)\;E:\libs\DirectXTex\DirectXTex\Bin\Desktop_2013\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;$(SolutionDir)Libs\stack_walker\lib\$(Configuration)\;$(SolutionDir)Libs\DirectXTK\Bin\Desktop_2013\$(Platform)\$(Configuration)\;$(SolutionDir)Libs\DirectXTex\DirectXTex\Bin\Desktop_2013\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
@@ -115,7 +115,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)GILib\include;E:\libs\stack_walker\include;E:\libs\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)GILib\include;$(SolutionDir)Libs\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
@@ -124,7 +124,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>gi_lib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>E:\libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);E:\libs\Effects11\Bin\Desktop_2013\x64\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);$(SolutionDir)Libs\Effects11\Bin\Desktop_2013\x64\$(Configuration)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -156,7 +156,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)GILib\include;E:\libs\stack_walker\include;E:\libs\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)GILib\include;$(SolutionDir)Libs\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -166,7 +166,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>gi_lib.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>E:\libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);E:\libs\Effects11\Bin\Desktop_2013\x64\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);$(SolutionDir)Libs\Effects11\Bin\Desktop_2013\x64\$(Configuration)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

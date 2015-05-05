@@ -154,7 +154,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;SUPPRESS_TODOS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
-      <AdditionalIncludeDirectories>E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;E:\libs\FBX SDK\2015.1\include;E:\libs\Eigen;E:\libs\Effects11\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Libs\stack_walker\include;$(SolutionDir)Libs\DirectXTK\Inc;$(SolutionDir)Libs\DirectXTex\DirectXTex;$(SolutionDir)Libs\FBX SDK\2015.1\include;$(SolutionDir)Libs\Eigen;$(SolutionDir)Libs\Effects11\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -166,7 +166,7 @@
     </Link>
     <Lib>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>E:\libs\stack_walker\lib\$(Configuration);E:\libs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);E:\libs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);E:\libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);E:\libs\Effects11\Bin\Desktop_2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Libs\stack_walker\lib\$(Configuration);$(SolutionDir)Libs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)Libs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)Libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);$(SolutionDir)Libs\Effects11\Bin\Desktop_2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Lib>
   </ItemDefinitionGroup>
@@ -203,7 +203,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;SUPPRESS_TODOS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>E:\libs\stack_walker\include;E:\libs\DirectXTK\Inc;E:\libs\DirectXTex\DirectXTex;E:\libs\FBX SDK\2015.1\include;E:\libs\Eigen;E:\libs\Effects11\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Libs\stack_walker\include;$(SolutionDir)Libs\DirectXTK\Inc;$(SolutionDir)Libs\DirectXTex\DirectXTex;$(SolutionDir)Libs\FBX SDK\2015.1\include;$(SolutionDir)Libs\Eigen;$(SolutionDir)Libs\Effects11\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -218,7 +218,7 @@
     </Link>
     <Lib>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>E:\libs\stack_walker\lib\$(Configuration);E:\libs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);E:\libs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);E:\libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);E:\libs\Effects11\Bin\Desktop_2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)Libs\stack_walker\lib\$(Configuration);$(SolutionDir)Libs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)Libs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)Libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);$(SolutionDir)Libs\Effects11\Bin\Desktop_2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
