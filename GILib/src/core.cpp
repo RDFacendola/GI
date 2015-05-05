@@ -190,7 +190,9 @@ string IO::ReadFile(const wstring& file_name){
 
 	// Size of the file
 	file_stream.seekg(0, std::ios::end);
-	content.reserve(file_stream.tellg());
+
+	content.reserve(static_cast<size_t>(file_stream.tellg()));
+
 	file_stream.seekg(0, std::ios::beg);
 
 	content.assign((std::istreambuf_iterator<char>(file_stream)),

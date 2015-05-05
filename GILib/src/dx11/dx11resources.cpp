@@ -673,7 +673,7 @@ void DX11Material::InstanceImpl::AddBundle(ShaderType shader_type){
 		ShaderBundle bundle;
 
 		// Buffers, built once, updated automatically.
-		for (int buffer_index = 0; buffer_index < buffer_status_.size(); ++buffer_index){
+		for (size_t buffer_index = 0; buffer_index < buffer_status_.size(); ++buffer_index){
 
 			if (reflection_.buffers[buffer_index].shader_usage && shader_type){
 

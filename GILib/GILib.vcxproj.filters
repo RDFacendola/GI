@@ -60,7 +60,6 @@
     <ClInclude Include="include\fbx\fbx.h">
       <Filter>FBX</Filter>
     </ClInclude>
-    <ClInclude Include="external\fnv1.h" />
     <ClInclude Include="include\bundles.h">
       <Filter>graphics</Filter>
     </ClInclude>
@@ -87,6 +86,7 @@
     </ClInclude>
     <ClInclude Include="include\gilib.h" />
     <ClInclude Include="include\spatial hierarchy\uniform_tree.h" />
+    <ClInclude Include="external\fnv1.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
