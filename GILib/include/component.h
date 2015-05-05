@@ -144,11 +144,6 @@ namespace gi_lib{
 		/// \brief Delete this component and every other component.
 		void Dispose();
 
-		/// \brief Event triggered when the composite object is being disposed.
-		/// The event is ensured to be triggered before the destruction of any component.
-		/// \return Returns the event triggered when the composite object is being disposed.
-		Observable<OnDisposedEventArgs>& OnDisposed();
-
 		/// \brief Event triggered when this component is being removed from the composite object.
 		/// The event is ensured to be triggered before the destrution of this component.
 		/// \return Return the event triggered when this component is being removed from the composite object.
@@ -195,8 +190,6 @@ namespace gi_lib{
 		void Setup();
 
 		Arbiter* arbiter_;								///< \brief Enables intra-component communication.
-
-		Event<OnDisposedEventArgs> on_disposed_event_;	///< \brief Dispose event.
 
 		Event<OnRemovedEventArgs> on_removed_event_;	///< \brief Component remove event.
 		

@@ -159,6 +159,14 @@ void Component::Arbiter::DeleteComponent(ComponentSet::iterator it){
 
 	auto component = *it;
 
+	// Notify the remove event before.
+
+	OnRemovedEventArgs args{ component };
+
+	component->on_removed_event_.Notify(args);
+
+	// Actual deletion
+
 	component->Finalize();							// Cross-component destruction
 
 	component->arbiter_ = nullptr;					// No really needed, ensures that the dtor of the component won't access the other components.
@@ -188,12 +196,6 @@ void Component::RemoveComponent(){
 void Component::Dispose(){
 
 	delete arbiter_;
-
-}
-
-Observable<Component::OnDisposedEventArgs>& Component::OnDisposed(){
-
-	return on_disposed_event_;
 
 }
 
