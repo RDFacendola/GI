@@ -1,5 +1,6 @@
 #pragma comment(lib,"DirectXTK")
 #pragma comment(lib,"DirectXTex")
+#pragma comment(lib,"dxguid.lib")
 
 #include "dx11resources.h"
 
@@ -406,7 +407,7 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 		
 	target.GetDesc(&desc);
 
-	MakeDepthStencil(*device, desc.Width, desc.Height, &zstencil, &zstencil_view);
+	THROW_ON_FAIL(MakeDepthStencil(*device, desc.Width, desc.Height, &zstencil, &zstencil_view));
 
 	zstencil_ = make_shared<DX11Texture2D>(*zstencil, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);				// This is the only format compatible with R24G8_TYPELESS used to create the depth buffer resource
 	zstencil_view_ = unique_ptr<ID3D11DepthStencilView, COMDeleter>(zstencil_view, COMDeleter{});
@@ -432,17 +433,17 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext & context){
 	vector<ID3D11RenderTargetView *> target_view_array(target_views_.size());
 
 	std::transform(target_views_.begin(),
-		target_views_.end(),
-		target_view_array.begin(),
-		[](unique_ptr<ID3D11RenderTargetView, COMDeleter> & target_view){
+				   target_views_.end(),
+				   target_view_array.begin(),
+				   [](unique_ptr<ID3D11RenderTargetView, COMDeleter> & target_view){
 
 			return target_view.get();
 
 		});
 
 	context.OMSetRenderTargets(static_cast<unsigned int>(target_view_array.size()),
-		&target_view_array[0],
-		zstencil_view_.get());
+							   &target_view_array[0],
+							   zstencil_view_.get());
 
 }
 
