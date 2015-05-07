@@ -69,26 +69,26 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;$(SolutionDir)Libs\bin\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;$(SolutionDir)Libs\bin\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;$(SolutionDir)Libs\bin\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)bin\gi_lib\$(Platform)\$(Configuration)\;$(SolutionDir)Libs\bin\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)</TargetName>
