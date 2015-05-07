@@ -13,12 +13,6 @@ using namespace gi_lib;
 
 //////////////////////// RESOURCES //////////////////////////////
 
-#ifdef _WIN32
-
-wchar_t * Resources::kPhongShaderFile = L"Data\\built-in\\phong.fx";
-
-#endif
-
 Resources::Resources(){}
 
 size_t Resources::GetSize(){

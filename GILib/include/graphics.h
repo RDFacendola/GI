@@ -159,9 +159,6 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Filename of the built-in phong shader.
-		static wchar_t * kPhongShaderFile;
-
 		/// \brief Default constructor.
 		Resources();
 
@@ -219,11 +216,8 @@ namespace gi_lib{
 
 	private:
 
-		// Map of the immutable resources
+		// Cached resources map
 		ResourceMap resources_;
-
-		// Base path for the resources
-		wstring base_path_;
 
 	};
 
