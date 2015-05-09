@@ -13,25 +13,20 @@
 using namespace gi_lib;
 using namespace std;
 
-#ifdef _WIN32
-
-#include <PathCch.h>
-
-#pragma comment(lib, "Pathcch")
-
-#endif
-
-/////////////////////////////////// GLOBALS /////////////////////////////////////////
+namespace{
 
 #ifdef _WIN32
 
-const wstring gi_lib::kExtensionSeparator = L".";
+	const wstring kExtensionSeparator = L".";
 
-const wstring gi_lib::kPathSeparator = L"\\";
+	const wstring kPathSeparator = L"\\";
 
-const unsigned int gi_lib::kUnitLabelLength = 3;
+	const unsigned int kUnitLabelLength = 3;
 
 #endif
+
+}
+
 
 //////////////////////////////////// SYSTEM /////////////////////////////////////////
 
@@ -238,25 +233,14 @@ wstring Application::GetBaseDirectory(const wstring& file_name){
 
 #ifdef _WIN32
 
-	wstring temp(file_name);
+	static wchar_t* separators = L"\\/:";
 
-	// This doesn't work, only God knows why
-	//auto hr = PathCchRemoveExtension(&temp[0], temp.size());
+	auto index = file_name.find_last_of(separators);
 
-	// This is done only if an extension was found
-	if (PathCchRemoveFileSpec(&temp[0], temp.size()) == S_OK){
-
-		temp.resize(temp.find(L'\0'));
+	return index != wstring::npos ?
+		   file_name.substr(0, index + 1) :
+		   file_name;
 		
-		return temp + kPathSeparator;
-
-	}
-	else{
-
-		return wstring();
-
-	}
-	
 #else
 
 #error "Not supported";

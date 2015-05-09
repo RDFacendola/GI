@@ -118,7 +118,7 @@ namespace gi_lib{
 
 		protected:
 
-			virtual unique_ptr<IResource> Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle) const override;
+			virtual unique_ptr<IResource> Load(const type_index& resource_type, const type_index& load_args_type, const void* load_args) const override;
 
 		private:
 
@@ -150,7 +150,7 @@ namespace gi_lib{
 
 		protected:
 
-			virtual unique_ptr<IRenderer> CreateRenderer(const type_index & renderer_type, const type_index & renderer_args_type, const void * renderer_args) const override;
+			virtual unique_ptr<IRenderer> CreateRenderer(const type_index& renderer_type, const type_index& renderer_args_type, const void* renderer_args) const override;
 
 		private:
 

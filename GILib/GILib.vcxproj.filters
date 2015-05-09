@@ -78,7 +78,6 @@
     </ClInclude>
     <ClInclude Include="src\dx11\dx11.h" />
     <ClInclude Include="include\debug.h" />
-    <ClInclude Include="include\renderers.h" />
     <ClInclude Include="include\range.h" />
     <ClInclude Include="include\component.h" />
     <ClInclude Include="include\spatial hierarchy\volume_hierarchy.h">
@@ -87,6 +86,7 @@
     <ClInclude Include="include\gilib.h" />
     <ClInclude Include="include\spatial hierarchy\uniform_tree.h" />
     <ClInclude Include="external\fnv1.h" />
+    <ClInclude Include="include\renderers\renderers.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">

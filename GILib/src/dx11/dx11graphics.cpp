@@ -9,7 +9,7 @@
 #include "..\..\include\scene.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\resources.h"
-#include "..\..\include\renderers.h"
+#include "..\..\include\renderers\renderers.h"
 #include "..\..\include\bundles.h"
 
 #include "dx11resources.h"
@@ -268,8 +268,8 @@ namespace{
 
 	}
 
-	/// \brief Loader class. Maps every resource with their respective loader.
-	class Loader{
+	/// \brief Resource loader class. Maps every resource with their respective loader.
+	class ResourceLoader{
 
 		using LoaderFunction = unique_ptr<IResource>(*)(ID3D11Device &, const void *);
 		using LoaderKey = pair < std::type_index, std::type_index >;
@@ -283,15 +283,15 @@ namespace{
 		/// \param device Device used to create the resource.
 		/// \param settings Settings used to load the resource.
 		/// \return Returns a shared pointer to the loaded resource.
-		static unique_ptr<IResource> Load(const std::type_index & resource_type, const std::type_index & bundle_type, ID3D11Device & device, const void * bundle){
+		static unique_ptr<IResource> Load(const std::type_index& resource_type, const std::type_index& bundle_type, ID3D11Device& device, const void * bundle){
 
 			auto key = make_pair(resource_type, bundle_type);
 
 			auto it = loader_map_.find(key);
 
 			return it == loader_map_.end() ?
-				unique_ptr<IResource>() :			// Not supported
-				it->second(device, bundle);
+						 unique_ptr<IResource>() :			// Not supported
+						 it->second(device, bundle);
 			
 		}
 
@@ -326,10 +326,10 @@ namespace{
 
 	// Add support for new resources HERE!
 
-	const Loader::LoaderMap Loader::loader_map_{ Loader::Register<Texture2D, LoadFromFile>(),
-												 Loader::Register<Mesh, BuildFromVertices<VertexFormatNormalTextured>>(),
-												 Loader::Register<Material, CompileFromFile>(), 
-												 Loader::Register<Material, InstantiateFromMaterial>() };
+	const ResourceLoader::LoaderMap ResourceLoader::loader_map_{ ResourceLoader::Register<Texture2D, LoadFromFile>(),
+																 ResourceLoader::Register<Mesh, BuildFromVertices<VertexFormatNormalTextured>>(),
+																 ResourceLoader::Register<Material, CompileFromFile>(),
+																 ResourceLoader::Register<Material, InstantiateFromMaterial>() };
 
 }
 
@@ -411,7 +411,7 @@ DX11Resources & DX11Graphics::GetResources(){
 
 }
 
-unique_ptr<IRenderer> DX11Graphics::CreateRenderer(const type_index & renderer_type, const type_index & renderer_args_type, const void * renderer_args) const{
+unique_ptr<IRenderer> DX11Graphics::CreateRenderer(const type_index& renderer_type, const type_index& renderer_args_type, const void* renderer_args) const{
 
 	return nullptr;
 
@@ -556,6 +556,6 @@ void DX11Output::UpdateBackbuffer(){
 
 unique_ptr<IResource> DX11Resources::Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle) const{
 
-	return Loader::Load(resource_type, bundle_type, device_, bundle);
+	return ResourceLoader::Load(resource_type, bundle_type, device_, bundle);
 
 }

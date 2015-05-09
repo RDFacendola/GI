@@ -40,15 +40,6 @@ namespace gi_lib{
 
 #endif
 
-	/// \brief Separator used to separate a file name from its extension.
-	extern const wstring kExtensionSeparator;
-
-	/// \brief Separator used to separate different directory's levels.
-	extern const wstring kPathSeparator;
-
-	/// \brief Maximum length for an unit label.
-	extern const unsigned int kUnitLabelLength;
-
 	/// \brief Describes the CPU's capabilities.
 	/// \author Raffaele D. Facendola
 	struct CpuProfile{
@@ -174,12 +165,10 @@ namespace gi_lib{
 		/// \return Returns the application directory.
 		static wstring GetDirectory();
 
-		/// \brief Get the base directory starting from the file name.
-
-		/// The functions returns the base directory of the specified file, trailing separator included.
-		/// If the provided parameter is not a full qualified name the behaviour of the function is undefined.
-		/// \param file_name Full file name.
-		/// \return Returns the file name parameter stripped of the file name and file extension.
+		/// \brief Strips the file name out of a file path.
+		/// \param file_name Full file path.
+		/// \return Returns the file path stripped of the file name and file extension.
+		/// \return The trailing slash is always included.
 		static wstring GetBaseDirectory(const wstring & file_name);
 
 		/// \brief Get the full application path.

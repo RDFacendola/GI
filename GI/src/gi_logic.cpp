@@ -3,7 +3,7 @@
 #include <string>
 
 #include <resources.h>
-#include <renderers.h>
+#include <renderers\renderers.h>
 
 #include <component.h>
 #include <range.h>
@@ -54,7 +54,8 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 	
 	auto p = graphics_.GetAdapterProfile();
 
-	output_ = graphics_.CreateOutput(*this, p.video_modes[0]);
+	output_ = graphics_.CreateOutput(*this, 
+									 p.video_modes[0]);
 
 	auto r = graphics_.CreateRenderer<TiledDeferredRenderer, LoadFromFile>({ L"" });
 
@@ -80,6 +81,8 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 
 	fbx_importer.ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", 
 							 *node);
+
+	auto size = graphics_.GetResources().GetSize();
 
 }
 

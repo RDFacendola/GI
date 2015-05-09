@@ -10,7 +10,6 @@
 #include <memory>
 #include <typeindex>
 #include <typeinfo>
-#include <map>
 #include <tuple>
 
 #include "resources.h"
@@ -23,7 +22,6 @@ using ::std::shared_ptr;
 using ::std::unique_ptr;
 using ::std::weak_ptr;
 using ::std::type_index;
-using ::std::map;
 
 namespace gi_lib{
 
@@ -163,61 +161,53 @@ namespace gi_lib{
 		Resources();
 
 		/// \brief Default destructor;
-		virtual ~Resources(){};
+		virtual ~Resources();
 		
-		template <typename TResource, typename TBundle, typename use_cache<TBundle>::type* = nullptr>
-		shared_ptr<TResource> Load(const typename TBundle& bundle);
+		/// \brief Loads a resource.
+		/// \tparam TResource Type of the resource to load. Must derive from IResource.
+		/// \tparam TLoadArgs Type of the load arguments passed to the object. Arguments must expose caching capabilities.
+		/// \param load_args Arguments that will be passed to the resource's constructor.
+		/// \return Returns the loaded resource if possible, returns null otherwise. If the resource was already loaded, returns a pointer to the existing instance instead.
+		template <typename TResource, typename TLoadArgs, typename use_cache<TLoadArgs>::type* = nullptr>
+		shared_ptr<TResource> Load(const typename TLoadArgs& load_args);
 
-		template <typename TResource, typename TBundle, typename no_cache<TBundle>::type* = nullptr>
-		shared_ptr<TResource> Load(const typename TBundle& bundle);
+		/// \brief Loads a resource.
+		/// \tparam TResource Type of the resource to load. Must derive from IResource.
+		/// \tparam TLoadArgs Type of the load arguments passed to the object.
+		/// \param load_args Arguments that will be passed to the resource's constructor.
+		/// \return Returns a new loaded resource instance if possible, returns null otherwise.
+		template <typename TResource, typename TLoadArgs, typename no_cache<TLoadArgs>::type* = nullptr>
+		shared_ptr<TResource> Load(const typename TLoadArgs& load_args);
 
 		/// \brief Get the amount of memory used by the loaded resources.
-		size_t GetSize();
+		size_t GetSize() const;
 
 	protected:
-
-		/// \brief Used as key to address the resource map flyweight.
-		struct ResourceMapKey{
-
-			/// \brief Type index associated to the type of the resource to load.
-			type_index resource_type_id;
-
-			/// \brief Type index associated to the bundle type used to load the resource.
-			type_index bundle_type_id;
-
-			/// \brief Unique cache key associated to the bundle used to load the resource.
-			size_t cache_key;
-			
-			/// \brief Default constructor.
-			ResourceMapKey();
-
-			/// \brief Create a new resource map key.
-			ResourceMapKey(type_index resource_type, type_index bundle_type, size_t key);
-
-			/// \brief Lesser comparison operator.
-			bool operator<(const ResourceMapKey & other) const;
-			
-		};
-
-		/// \brief Type of resource map values.
-		using ResourceMapValue =  weak_ptr < IResource >;
-
-		/// \brief Type of resource map. 
-		using ResourceMap = map < ResourceMapKey, ResourceMapValue >;
 
 		/// \brief Load a resource.
 		/// The method <i>requires</i> that <i>bundle<i> is compatible with <i>bundle_type</i>.
 		/// The method <i>ensures</i> that the returned object is compatible with the type <i>resource_type</i>.
 		/// \param resource_type Resource's type index.
-		/// \param bundle_type Bundle's type index.
-		/// \param bundle Pointer to the bundle to be used to load the resource.
+		/// \param load_args_type Bundle's type index.
+		/// \param load_args Pointer to the bundle to be used to load the resource.
 		/// \return Returns a pointer to the loaded resource
-		virtual unique_ptr<IResource> Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle) const = 0;
+		virtual unique_ptr<IResource> Load(const type_index& resource_type, const type_index& load_args_type, const void* load_args) const = 0;
 
 	private:
 
-		// Cached resources map
-		ResourceMap resources_;
+		/// \brief Private implementation of the class.
+		struct Impl;
+
+		/// \brief Loads a resource from cache.
+		/// \return Returns a pointer to the cached resource if any, otherwise returns a new instance. Returns null if the resource was not supported.
+		shared_ptr<IResource> LoadFromCache(const type_index& resource_type, const type_index& load_args_type, size_t cache_key, const void* load_args);
+
+		/// \brief Loads a resource instance.
+		/// \return Returns the resource loaded.
+		shared_ptr<IResource> LoadDirect(const type_index& resource_type, const type_index& load_args_type, const void* load_args);
+
+		/// \brief Opaque pointer to the implementation of the class.
+		unique_ptr<Impl> pimpl_;
 
 	};
 
@@ -262,62 +252,28 @@ namespace gi_lib{
 		/// \param renderer_args_type Type of the renderer arguments.
 		/// \param renderer_args Pointer to the renderer arguments.
 		/// \return Returns a pointer to the new renderer.
-		virtual unique_ptr<IRenderer> CreateRenderer(const type_index & renderer_type, const type_index & renderer_args_type, const void * renderer_args) const = 0;
+		virtual unique_ptr<IRenderer> CreateRenderer(const type_index& renderer_type, const type_index& renderer_args_type, const void* renderer_args) const = 0;
 
 	};
 
 	///////////////////////////////// RESOURCES ////////////////////////////////////
 
-	template <typename TResource, typename TBundle, typename use_cache<TBundle>::type*>
-	shared_ptr<TResource> Resources::Load(const typename TBundle & bundle){
+	template <typename TResource, typename TLoadArgs, typename use_cache<TLoadArgs>::type*>
+	shared_ptr<TResource> Resources::Load(const typename TLoadArgs& load_args){
 
-		// Cached version
-
-		ResourceMapKey key(type_index(typeid(TResource)),
-						   type_index(typeid(TBundle)),
-						   bundle.GetCacheKey());
-
-		auto it = resources_.find(key);
-
-		if (it != resources_.end()){
-
-			if (auto resource = it->second.lock()){
-
-				// The same resource already exists and is still valid.
-				return static_pointer_cast<TResource>(resource);
-
-			}
-
-			//Resource was expired...
-
-		}
-
-		// Load the actual resource
-		auto resource = shared_ptr<IResource>(std::move(Load(type_index(typeid(TResource)),
-															 type_index(typeid(TBundle)), 
-															 &bundle)));
-
-		resources_[key] = std::weak_ptr<IResource>(resource);	// Stores a weak reference for caching reasons.
-
-		// Downcast from IResource to TResource. The cast here is safe (see: Load(.) contract).
-
-		return static_pointer_cast<TResource>(resource);
-		
+		return static_pointer_cast<TResource>(LoadFromCache(type_index(typeid(TResource)),
+															type_index(typeid(TLoadArgs)),
+															load_args.GetCacheKey(),
+															&load_args));
+				
 	}
 
-	template <typename TResource, typename TBundle, typename no_cache<TBundle>::type*>
-	shared_ptr<TResource> Resources::Load(const typename TBundle & bundle){
+	template <typename TResource, typename TLoadArgs, typename no_cache<TLoadArgs>::type*>
+	shared_ptr<TResource> Resources::Load(const typename TLoadArgs& load_args){
 
-		// Uncached version
-
-		// Load the actual resource
-		auto resource = shared_ptr<IResource>(std::move(Load(type_index(typeid(TResource)),
-															 type_index(typeid(TBundle)), 
-															 &bundle)));
-
-		// Downcast from IResource to TResource. The cast here is safe (see: Load(.) contract).
-
-		return static_pointer_cast<TResource>(resource);
+		return static_pointer_cast<TResource>(LoadDirect(type_index(typeid(TResource)),
+														 type_index(typeid(TLoadArgs)),
+														 &load_args));
 
 	}
 	
