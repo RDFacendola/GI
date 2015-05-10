@@ -80,6 +80,7 @@ struct Resources::Impl{
 
 			if (auto resource = it->second.lock()){
 
+				// The resource was found and is still valid.
 				return resource;
 
 			}
@@ -177,9 +178,9 @@ size_t Resources::GetSize() const{
 
 }
 
-shared_ptr<IResource> Resources::LoadFromCache(const type_index& resource_type, const type_index& load_args_type, size_t cache_key, const void* load_args){
+shared_ptr<IResource> Resources::LoadFromCache(const type_index& resource_type, const type_index& args_type, const void* args, size_t cache_key){
 
-	ResourceCacheKey key = { resource_type, load_args_type, cache_key };
+	ResourceCacheKey key = { resource_type, args_type, cache_key };
 
 	auto resource = pimpl_->FetchFromCache(key);
 
@@ -187,9 +188,9 @@ shared_ptr<IResource> Resources::LoadFromCache(const type_index& resource_type, 
 
 		// The resource is not cached. Load it.
 
-		resource = shared_ptr<IResource>(std::move(Load(resource_type,
-														load_args_type,
-														load_args)));
+		resource = shared_ptr<IResource>(Load(resource_type,
+											  args_type,
+											  args));
 
 		pimpl_->StoreResource(key, resource);
 
@@ -199,11 +200,11 @@ shared_ptr<IResource> Resources::LoadFromCache(const type_index& resource_type, 
 	
 }
 
-shared_ptr<IResource> Resources::LoadDirect(const type_index& resource_type, const type_index& load_args_type, const void* load_args){
+shared_ptr<IResource> Resources::LoadDirect(const type_index& resource_type, const type_index& args_type, const void* args){
 
-	auto resource = shared_ptr<IResource>(std::move(Load(resource_type,
-														 load_args_type,
-														 load_args)));
+	auto resource = shared_ptr<IResource>(Load(resource_type,
+											   args_type,
+											   args));
 
 	pimpl_->StoreResource(resource);
 
@@ -214,6 +215,8 @@ shared_ptr<IResource> Resources::LoadDirect(const type_index& resource_type, con
 ////////////////////// GRAPHICS ////////////////////////////////
 
 Graphics::Graphics(){}
+
+Graphics::~Graphics(){}
 
 Graphics& Graphics::GetAPI(API api){
 

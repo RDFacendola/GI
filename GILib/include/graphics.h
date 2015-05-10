@@ -104,6 +104,30 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Base interface for renderers.
+	/// \author Raffaele D. Facendola
+	class IRenderer{
+
+	public:
+
+		/// \brief Virtual destructor.
+		virtual ~IRenderer(){}
+
+		/// \brief Get the scene the renderer refers to.
+		/// \return Returns the scene the renderer refers to.
+		virtual Scene& GetScene() = 0;
+
+		/// \brief Get the scene the renderer refers to.
+		/// \return Returns the scene the renderer refers to.
+		virtual const Scene& GetScene() const = 0;
+
+	protected:
+
+		/// \brief Protected constructor. Prevent instantiation.
+		IRenderer(){}
+
+	};
+
 	/// \brief Interface used to display an image to an output.
 	/// \author Raffaele D. Facendola
 	class Output{
@@ -168,16 +192,16 @@ namespace gi_lib{
 		/// \tparam TLoadArgs Type of the load arguments passed to the object. Arguments must expose caching capabilities.
 		/// \param load_args Arguments that will be passed to the resource's constructor.
 		/// \return Returns the loaded resource if possible, returns null otherwise. If the resource was already loaded, returns a pointer to the existing instance instead.
-		template <typename TResource, typename TLoadArgs, typename use_cache<TLoadArgs>::type* = nullptr>
-		shared_ptr<TResource> Load(const typename TLoadArgs& load_args);
+		template <typename TResource, typename TArgs, typename use_cache<TArgs>::type* = nullptr>
+		shared_ptr<TResource> Load(const typename TArgs& args);
 
 		/// \brief Loads a resource.
 		/// \tparam TResource Type of the resource to load. Must derive from IResource.
 		/// \tparam TLoadArgs Type of the load arguments passed to the object.
 		/// \param load_args Arguments that will be passed to the resource's constructor.
 		/// \return Returns a new loaded resource instance if possible, returns null otherwise.
-		template <typename TResource, typename TLoadArgs, typename no_cache<TLoadArgs>::type* = nullptr>
-		shared_ptr<TResource> Load(const typename TLoadArgs& load_args);
+		template <typename TResource, typename TArgs, typename no_cache<TArgs>::type* = nullptr>
+		shared_ptr<TResource> Load(const typename TArgs& args);
 
 		/// \brief Get the amount of memory used by the loaded resources.
 		size_t GetSize() const;
@@ -191,7 +215,7 @@ namespace gi_lib{
 		/// \param load_args_type Bundle's type index.
 		/// \param load_args Pointer to the bundle to be used to load the resource.
 		/// \return Returns a pointer to the loaded resource
-		virtual unique_ptr<IResource> Load(const type_index& resource_type, const type_index& load_args_type, const void* load_args) const = 0;
+		virtual IResource* Load(const type_index& resource_type, const type_index& args_type, const void* load_args) const = 0;
 
 	private:
 
@@ -200,11 +224,11 @@ namespace gi_lib{
 
 		/// \brief Loads a resource from cache.
 		/// \return Returns a pointer to the cached resource if any, otherwise returns a new instance. Returns null if the resource was not supported.
-		shared_ptr<IResource> LoadFromCache(const type_index& resource_type, const type_index& load_args_type, size_t cache_key, const void* load_args);
+		shared_ptr<IResource> LoadFromCache(const type_index& resource_type, const type_index& args_type, const void* args, size_t cache_key);
 
 		/// \brief Loads a resource instance.
 		/// \return Returns the resource loaded.
-		shared_ptr<IResource> LoadDirect(const type_index& resource_type, const type_index& load_args_type, const void* load_args);
+		shared_ptr<IResource> LoadDirect(const type_index& resource_type, const type_index& args_type, const void* args);
 
 		/// \brief Opaque pointer to the implementation of the class.
 		unique_ptr<Impl> pimpl_;
@@ -221,7 +245,7 @@ namespace gi_lib{
 		static Graphics& GetAPI(API api);
 		
 		/// \brief Default destructor;
-		virtual ~Graphics(){}
+		virtual ~Graphics();
 
 		/// \brief Get the video card's parameters and capabilities.
 		virtual AdapterProfile GetAdapterProfile() const = 0;
@@ -234,8 +258,8 @@ namespace gi_lib{
 
 		/// \brief Create a renderer.
 		/// \return Returns a pointer to the new renderer.
-		template <typename TRenderer, typename TRendererArgs>
-		unique_ptr<TRenderer> CreateRenderer(const typename TRendererArgs& renderer_args);
+		template <typename TRenderer, typename TArgs>
+		unique_ptr<TRenderer> CreateRenderer(const TArgs& args);
 
 		/// \brief Get the resource manager.
 		/// \return Returns the resource manager.
@@ -252,7 +276,7 @@ namespace gi_lib{
 		/// \param renderer_args_type Type of the renderer arguments.
 		/// \param renderer_args Pointer to the renderer arguments.
 		/// \return Returns a pointer to the new renderer.
-		virtual unique_ptr<IRenderer> CreateRenderer(const type_index& renderer_type, const type_index& renderer_args_type, const void* renderer_args) const = 0;
+		virtual IRenderer* CreateRenderer(const type_index& renderer_type, const type_index& args_type, const void* args) const = 0;
 
 	};
 
@@ -279,14 +303,14 @@ namespace gi_lib{
 	
 	///////////////////////////////// GRAPHICS ////////////////////////////////////
 
-	template <typename TRenderer, typename TRendererArgs>
-	unique_ptr<TRenderer> Graphics::CreateRenderer(const typename TRendererArgs& renderer_args){
+	template <typename TRenderer, typename TArgs>
+	unique_ptr<TRenderer> Graphics::CreateRenderer(const TArgs& args){
 
-		// Downcast from IRenderer to TRenderer. The cast here is safe (see: CreateRenderer(.) contract).
+		// Downcast from IRenderer to TRenderer. The cast here is safe.
 
 		return unique_ptr<TRenderer>(static_cast<TRenderer*>(CreateRenderer(type_index(typeid(TRenderer)),
-																			type_index(typeid(TRendererArgs)),
-																			&renderer_args).release()));
+																			type_index(typeid(TArgs)),
+																			&args)));
 
 	}
 

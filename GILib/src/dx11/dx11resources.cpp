@@ -263,8 +263,10 @@ namespace{
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
 
-DX11Texture2D::DX11Texture2D(ID3D11Device & device, const LoadFromFile& bundle){
+DX11Texture2D::DX11Texture2D(const LoadFromFile& bundle){
 	
+	auto& device = DX11Graphics::GetInstance().GetDevice();
+
 	DDS_ALPHA_MODE alpha_mode;
 	ID3D11Resource * resource;
 	ID3D11ShaderResourceView * shader_view;
@@ -474,7 +476,9 @@ void DX11RenderTarget::ClearTargets(ID3D11DeviceContext & context, Color color){
 
 ///////////////////////////// MESH ////////////////////////////////////////////////
 
-DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildFromVertices<VertexFormatNormalTextured>& bundle){
+DX11Mesh::DX11Mesh(const BuildFromVertices<VertexFormatNormalTextured>& bundle){
+
+	auto& device = DX11Graphics::GetInstance().GetDevice();
 
 	// Normal, textured mesh.
 
@@ -483,6 +487,8 @@ DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildFromVertices<VertexFormatNor
 	
 	ID3D11Buffer* buffer;
 	
+	// Vertices
+
 	THROW_ON_FAIL(MakeVertexBuffer(device,
 								   &(bundle.vertices[0]),
 								   vb_size,
@@ -491,6 +497,8 @@ DX11Mesh::DX11Mesh(ID3D11Device& device, const BuildFromVertices<VertexFormatNor
 	vertex_buffer_.reset(buffer);
 
 	buffer = nullptr;
+
+	// Indices
 
 	if (bundle.indices.size() > 0){
 
@@ -837,17 +845,19 @@ void DX11Material::Resource::Set(shared_ptr<IBindable> resource){
 
 //----------------------------  MATERIAL -------------------------------//
 
-DX11Material::DX11Material(ID3D11Device& device, const CompileFromFile& bundle){
+DX11Material::DX11Material(const CompileFromFile& args){
 
-	shared_impl_ = make_shared<MaterialImpl>(device, bundle);
+	auto& device = DX11Graphics::GetInstance().GetDevice();
+
+	shared_impl_ = make_shared<MaterialImpl>(device, args);
 
 	private_impl_ = make_unique<InstanceImpl>(device, shared_impl_->reflection);
 
 }
 
-DX11Material::DX11Material(ID3D11Device&, const InstantiateFromMaterial& bundle){
+DX11Material::DX11Material(const InstantiateFromMaterial& args){
 
-	auto& material = resource_cast(*bundle.base);
+	auto& material = resource_cast(*args.base);
 	
 	shared_impl_ = material.shared_impl_;
 

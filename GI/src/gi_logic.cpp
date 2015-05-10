@@ -3,7 +3,7 @@
 #include <string>
 
 #include <resources.h>
-#include <renderers\renderers.h>
+#include <renderers\deferred_renderer.h>
 
 #include <component.h>
 #include <range.h>
@@ -81,8 +81,6 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11))
 
 	fbx_importer.ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", 
 							 *node);
-
-	auto size = graphics_.GetResources().GetSize();
 
 }
 

@@ -86,7 +86,9 @@
     <ClInclude Include="include\gilib.h" />
     <ClInclude Include="include\spatial hierarchy\uniform_tree.h" />
     <ClInclude Include="external\fnv1.h" />
-    <ClInclude Include="include\renderers\renderers.h" />
+    <ClInclude Include="src\instance_builder.h" />
+    <ClInclude Include="include\renderers\deferred_renderer.h" />
+    <ClInclude Include="src\dx11\renderers\dx11deferred_renderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">

@@ -54,12 +54,12 @@ namespace gi_lib{
 			/// \brief Create a new texture from DDS file.
 			/// \param device The device used to create the texture.
 			/// \param bundle The bundle used to load the texture.
-			DX11Texture2D(ID3D11Device& device, const LoadFromFile& bundle);
+			DX11Texture2D(const LoadFromFile& args);
 
 			/// \brief Create a mew texture from an existing DirectX11 texture.
 			/// \param texture The DirectX11 texture.
 			/// \param format The format used when sampling from the texture.
-			DX11Texture2D(ID3D11Texture2D & texture, DXGI_FORMAT format);
+			DX11Texture2D(ID3D11Texture2D& texture, DXGI_FORMAT format);
 
 			virtual ~DX11Texture2D(){}
 
@@ -101,7 +101,7 @@ namespace gi_lib{
 
 			/// \param buffer Buffer reference.
 			/// \param device Device used to create the additional internal resources.
-			DX11RenderTarget(ID3D11Texture2D & target);
+			DX11RenderTarget(ID3D11Texture2D& target);
 
 			virtual ~DX11RenderTarget(){}
 
@@ -168,7 +168,7 @@ namespace gi_lib{
 			/// \brief Create a new DirectX11 mesh.
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to create the mesh.
-			DX11Mesh(ID3D11Device & device, const BuildFromVertices<VertexFormatNormalTextured>& bundle);
+			DX11Mesh(const BuildFromVertices<VertexFormatNormalTextured>& args);
 
 			virtual size_t GetSize() const override;
 
@@ -213,12 +213,12 @@ namespace gi_lib{
 			/// \brief Create a new DirectX11 material from shader code.
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to load the material.
-			DX11Material(ID3D11Device& device, const CompileFromFile& bundle);
+			DX11Material(const CompileFromFile& args);
 
 			/// \brief Instantiate a DirectX11 material from another one.
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to instantiate the material.
-			DX11Material(ID3D11Device& device, const InstantiateFromMaterial& bundle);
+			DX11Material(const InstantiateFromMaterial& args);
 			
 			/// \brief Default destructor.
 			~DX11Material();

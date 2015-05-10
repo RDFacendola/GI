@@ -7,12 +7,12 @@
 
 #include <dxgi.h>
 #include <d3d11.h>
-
 #include <memory>
+
+#include "dx11resources.h"
 
 #include "..\..\include\observable.h"
 #include "..\..\include\graphics.h"
-#include "dx11resources.h"
 
 using ::std::unique_ptr;
 
@@ -103,7 +103,9 @@ namespace gi_lib{
 
 		public:
 
-			using Resources::Load;
+			/// \brief Get the DX11 resources manager singleton.
+			/// \return Returns a reference to the DX11 resources manager singleton.
+			static DX11Resources& GetInstance();
 
 			/// \brief No copy constructor.
 			DX11Resources(const DX11Resources &) = delete;
@@ -111,18 +113,14 @@ namespace gi_lib{
 			/// \brief No assignment operator.
 			DX11Resources & operator=(const DX11Resources &) = delete;
 
-			/// \brief Create a new instance of DirectX11 resource manager.
-			/// \param device The device used to create the actual resources.
-			DX11Resources(ID3D11Device & device) :
-				device_(device){}
-
 		protected:
 
-			virtual unique_ptr<IResource> Load(const type_index& resource_type, const type_index& load_args_type, const void* load_args) const override;
+			virtual IResource* Load(const type_index& resource_type, const type_index& args_type, const void* args) const override;
 
 		private:
 
-			ID3D11Device & device_;
+			/// \brief Create a new instance of DirectX11 resource manager.
+			DX11Resources();
 
 		};
 
@@ -134,11 +132,11 @@ namespace gi_lib{
 
 			/// \brief Get the DirectX11 graphics singleton.
 			/// \return Returns a reference to the DirectX11 factory singleton.
-			static DX11Graphics & GetInstance();
+			static DX11Graphics& GetInstance();
 
 			virtual AdapterProfile GetAdapterProfile() const override ;
 
-			virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode) override;
+			virtual unique_ptr<Output> CreateOutput(Window& window, const VideoMode& video_mode) override;
 
 			virtual DX11Resources & GetResources() override;
 
@@ -150,7 +148,7 @@ namespace gi_lib{
 
 		protected:
 
-			virtual unique_ptr<IRenderer> CreateRenderer(const type_index& renderer_type, const type_index& renderer_args_type, const void* renderer_args) const override;
+			virtual IRenderer* CreateRenderer(const type_index& renderer_type, const type_index& args_type, const void* args) const override;
 
 		private:
 
@@ -164,7 +162,7 @@ namespace gi_lib{
 
 		};
 
-		// Output
+		/////////////////////// DX11OUTPUT /////////////////////
 
 		inline const VideoMode & DX11Output::GetVideoMode() const{
 
@@ -201,6 +199,8 @@ namespace gi_lib{
 			return std::static_pointer_cast<RenderTarget>(render_target_);
 
 		}
+
+		/////////////////////// DX11GRAPHICS ///////////////////
 
 		inline ID3D11Device& DX11Graphics::GetDevice(){
 

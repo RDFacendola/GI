@@ -1,21 +1,24 @@
 #include "dx11graphics.h"
 
-#include <map>
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "d3d11.lib")
 
 #include <d3d11.h>
 #include <dxgi.h>
+#include <map>
+
+#include "dx11resources.h"
+#include "renderers\dx11deferred_renderer.h"
+
+#include "..\instance_builder.h"
 
 #include "..\..\include\core.h"
 #include "..\..\include\scene.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\resources.h"
-#include "..\..\include\renderers\renderers.h"
 #include "..\..\include\bundles.h"
+#include "..\..\include\renderers\deferred_renderer.h"
 
-#include "dx11resources.h"
-
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3d11.lib")
 
 using namespace std;
 using namespace gi_lib;
@@ -268,152 +271,26 @@ namespace{
 
 	}
 
-	/// \brief Resource loader class. Maps every resource with their respective loader.
-	class ResourceLoader{
+	void RegisterDirectX11Resources(){
 
-		using LoaderFunction = unique_ptr<IResource>(*)(ID3D11Device &, const void *);
-		using LoaderKey = pair < std::type_index, std::type_index >;
-		using LoaderMap = map < LoaderKey, LoaderFunction >;
+		// Texture 2D
+		InstanceBuilder::Register<Texture2D, DX11Texture2D, LoadFromFile>();
 
-	public:
+		// Mesh
+		InstanceBuilder::Register<Mesh, DX11Mesh, BuildFromVertices<VertexFormatNormalTextured>>();
 
-		/// \brief Load a resource.
-		/// \param type_index Type of the resource to load.
-		/// \param load_mode Index of the load mode.
-		/// \param device Device used to create the resource.
-		/// \param settings Settings used to load the resource.
-		/// \return Returns a shared pointer to the loaded resource.
-		static unique_ptr<IResource> Load(const std::type_index& resource_type, const std::type_index& bundle_type, ID3D11Device& device, const void * bundle){
+		// Materials
+		InstanceBuilder::Register<Material, DX11Material, CompileFromFile>();
+		InstanceBuilder::Register<Material, DX11Material, InstantiateFromMaterial>();
 
-			auto key = make_pair(resource_type, bundle_type);
+	}
 
-			auto it = loader_map_.find(key);
+	void RegisterDirectX11Renderers(){
 
-			return it == loader_map_.end() ?
-						 unique_ptr<IResource>() :			// Not supported
-						 it->second(device, bundle);
-			
-		}
+		// Deferred renderers
+		//InstanceBuilder::Register<TiledDeferredRenderer, DX11TiledDeferredRenderer, 
 
-	private:
-
-		/// \brief Load routine dispatcher.
-		template <typename TResource, typename TBundle>
-		static unique_ptr<IResource> LoadResource(ID3D11Device & device, const void * settings){
-
-			// The resource created is the mapped type of TResource (eg: Texture2D => DX11Texture2D)
-			return make_unique<typename ResourceMapping<TResource>::TMapped>(device,
-																			 *static_cast<const TBundle*>(settings));
-
-		}
-
-		/// \brief Register the support for a resource type.
-		template <typename TResource, typename TBundle>
-		static LoaderMap::value_type Register(){
-
-			auto key = make_pair(std::type_index(typeid(TResource)), 
-								 std::type_index(typeid(TBundle)));
-
-			auto value = LoadResource < TResource, TBundle >;
-
-			return LoaderMap::value_type(key, value);
-
-		}
-			
-		static const LoaderMap loader_map_;
-
-	};
-
-	// Add support for new resources HERE!
-
-	const ResourceLoader::LoaderMap ResourceLoader::loader_map_{ ResourceLoader::Register<Texture2D, LoadFromFile>(),
-																 ResourceLoader::Register<Mesh, BuildFromVertices<VertexFormatNormalTextured>>(),
-																 ResourceLoader::Register<Material, CompileFromFile>(),
-																 ResourceLoader::Register<Material, InstantiateFromMaterial>() };
-
-}
-
-//////////////////////////////////// GRAPHICS ////////////////////////////////////
-
-DX11Graphics & DX11Graphics::GetInstance(){
-
-	static DX11Graphics graphics;
-
-	return graphics;
-
-}
-
-DX11Graphics::DX11Graphics(): Graphics(){
-
-	IDXGIFactory * factory;
-	IDXGIAdapter * adapter;
-	ID3D11Device * device;
-
-	//DXGI Factory
-	THROW_ON_FAIL(CreateDXGIFactory(__uuidof(IDXGIFactory),
-								    (void**)(&factory)));
-
-	//DXGI Adapter
-	THROW_ON_FAIL(factory->EnumAdapters(kPrimaryOutputIndex,
-										&adapter));
-
-	//DXGI Device
-	THROW_ON_FAIL(D3D11CreateDevice(kDefaultAdapter,
-									D3D_DRIVER_TYPE_HARDWARE,
-									0,
-									0,
-									&kFeatureLevel,
-									1,
-									D3D11_SDK_VERSION,
-									&device,
-									nullptr,
-									nullptr));
-
-	// Binds the objects to their smart pointers
-	
-	factory_ = std::move(unique_com(factory));
-	adapter_ = std::move(unique_com(adapter));
-	device_ = std::move(unique_com(device));
-	
-}
-
-AdapterProfile DX11Graphics::GetAdapterProfile() const{
-
-	AdapterProfile adapter_profile;
-	DXGI_ADAPTER_DESC adapter_desc;
-
-	THROW_ON_FAIL(adapter_->GetDesc(&adapter_desc));
-
-	adapter_profile.name = wstring(adapter_desc.Description);
-	adapter_profile.dedicated_memory = adapter_desc.DedicatedVideoMemory;
-	adapter_profile.shared_memory = adapter_desc.SharedSystemMemory;
-	adapter_profile.video_modes = EnumerateVideoModes(*adapter_);
-	adapter_profile.antialiasing_modes = EnumerateAntialiasingModes(*device_);
-
-	adapter_profile.max_anisotropy = D3D11_MAX_MAXANISOTROPY;
-	adapter_profile.max_mips = D3D11_REQ_MIP_LEVELS;
-
-	return adapter_profile;
-
-}
-
-unique_ptr<Output> DX11Graphics::CreateOutput(Window & window, const VideoMode & video_mode){
-
-	return std::make_unique<DX11Output>(window, video_mode);
-
-}
-
-DX11Resources & DX11Graphics::GetResources(){
-
-	static DX11Resources resources(*device_);
-
-	return resources;
-
-}
-
-unique_ptr<IRenderer> DX11Graphics::CreateRenderer(const type_index& renderer_type, const type_index& renderer_args_type, const void* renderer_args) const{
-
-	return nullptr;
+	}
 
 }
 
@@ -554,8 +431,113 @@ void DX11Output::UpdateBackbuffer(){
 
 /////////////////////////////////// RESOURCES ///////////////////////////////////////////
 
-unique_ptr<IResource> DX11Resources::Load(const type_index & resource_type, const type_index & bundle_type, const void * bundle) const{
+DX11Resources& DX11Resources::GetInstance(){
 
-	return ResourceLoader::Load(resource_type, bundle_type, device_, bundle);
+	static DX11Resources resource_manager;
 
+	return resource_manager;
+
+}
+
+DX11Resources::DX11Resources(){
+
+	RegisterDirectX11Resources();
+
+}
+
+IResource* DX11Resources::Load(const type_index& resource_type, const type_index& args_type, const void* args) const{
+
+	return static_cast<IResource*>(InstanceBuilder::Build(resource_type, 
+														  args_type, 
+														  args));
+	
+}
+
+//////////////////////////////////// GRAPHICS ////////////////////////////////////
+
+DX11Graphics & DX11Graphics::GetInstance(){
+
+	static DX11Graphics graphics;
+
+	return graphics;
+
+}
+
+DX11Graphics::DX11Graphics(): Graphics(){
+
+	IDXGIFactory * factory;
+	IDXGIAdapter * adapter;
+	ID3D11Device * device;
+
+	//DXGI Factory
+	THROW_ON_FAIL(CreateDXGIFactory(__uuidof(IDXGIFactory),
+								    (void**)(&factory)));
+
+	//DXGI Adapter
+	THROW_ON_FAIL(factory->EnumAdapters(kPrimaryOutputIndex,
+										&adapter));
+
+	//DXGI Device
+	THROW_ON_FAIL(D3D11CreateDevice(kDefaultAdapter,
+									D3D_DRIVER_TYPE_HARDWARE,
+									0,
+									0,
+									&kFeatureLevel,
+									1,
+									D3D11_SDK_VERSION,
+									&device,
+									nullptr,
+									nullptr));
+
+	// Binds the objects to their smart pointers
+	
+	factory_ = std::move(unique_com(factory));
+	adapter_ = std::move(unique_com(adapter));
+	device_ = std::move(unique_com(device));
+	
+	// Register the renderers
+
+	RegisterDirectX11Renderers();
+
+}
+
+AdapterProfile DX11Graphics::GetAdapterProfile() const{
+
+	AdapterProfile adapter_profile;
+	DXGI_ADAPTER_DESC adapter_desc;
+
+	THROW_ON_FAIL(adapter_->GetDesc(&adapter_desc));
+
+	adapter_profile.name = wstring(adapter_desc.Description);
+	adapter_profile.dedicated_memory = adapter_desc.DedicatedVideoMemory;
+	adapter_profile.shared_memory = adapter_desc.SharedSystemMemory;
+	adapter_profile.video_modes = EnumerateVideoModes(*adapter_);
+	adapter_profile.antialiasing_modes = EnumerateAntialiasingModes(*device_);
+
+	adapter_profile.max_anisotropy = D3D11_MAX_MAXANISOTROPY;
+	adapter_profile.max_mips = D3D11_REQ_MIP_LEVELS;
+
+	return adapter_profile;
+
+}
+
+unique_ptr<Output> DX11Graphics::CreateOutput(Window& window, const VideoMode& video_mode){
+
+	return std::make_unique<DX11Output>(window, 
+										video_mode);
+
+}
+
+DX11Resources& DX11Graphics::GetResources(){
+
+	return DX11Resources::GetInstance();
+
+}
+
+IRenderer* DX11Graphics::CreateRenderer(const type_index& renderer_type, const type_index& args_type, const void* args) const{
+
+	return static_cast<IRenderer*>(InstanceBuilder::Build(renderer_type,
+														  args_type,
+														  args));
+	
 }
