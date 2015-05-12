@@ -28,7 +28,7 @@ namespace gi_lib{
 		/// \tparam TConcrete Concrete class to instantiate. Must derive from TClass.
 		/// \tparam TArgs Type of the arguments required by the instance's constructor.
 		/// A single class can be registered multiple times with different argument types.
-		template <typename TClass, typename TConcrete, typename TArgs, DERIVES_FROM(TConcrete, TClass)>
+		template <typename TClass, typename TConcrete, typename TArgs/*, DERIVES_FROM(TConcrete, TClass)*/>
 		static void Register();
 
 		/// \brief Register a new class.
@@ -49,7 +49,7 @@ namespace gi_lib{
 	private:
 
 		using BuilderMap = map < pair < type_index, type_index >,
-								 function<void *(const void *)> >;		// Instance constructor
+								 function<void* (const void*)> >;		// Instance constructor
 
 		static BuilderMap builder_map_;									///< \brief Maps a class type and its arguments to the proper construction function.
 
@@ -59,7 +59,7 @@ namespace gi_lib{
 
 	InstanceBuilder::BuilderMap InstanceBuilder::builder_map_;
 
-	template <typename TClass, typename TConcrete, typename TArgs, DERIVES_FROM_DEF(TConcrete, TClass)>
+	template <typename TClass, typename TConcrete, typename TArgs/*, DERIVES_FROM_DEF(TConcrete, TClass)*/>
 	void InstanceBuilder::Register(){
 
 		// Unique key

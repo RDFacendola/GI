@@ -110,7 +110,7 @@ namespace gi_lib{
 	class IRenderer{
 
 	public:
-
+		
 		/// \brief Virtual destructor.
 		virtual ~IRenderer(){}
 
@@ -263,8 +263,8 @@ namespace gi_lib{
 
 		/// \brief Create a renderer.
 		/// \return Returns a pointer to the new renderer.
-		template <typename TRenderer, typename TArgs>
-		unique_ptr<TRenderer> CreateRenderer(const TArgs& args);
+		template <typename TRenderer>
+		unique_ptr<TRenderer> CreateRenderer(Scene& scene);
 
 		/// \brief Get the resource manager.
 		/// \return Returns the resource manager.
@@ -278,10 +278,9 @@ namespace gi_lib{
 		/// The method <i>requires</i> that <i>renderer_args<i> is compatible with <i>renderer_type</i>.
 		/// The method <i>ensures</i> that the returned object is compatible with the type <i>renderer_type</i>.
 		/// \param renderer_type Type of the renderer to create.
-		/// \param renderer_args_type Type of the renderer arguments.
-		/// \param renderer_args Pointer to the renderer arguments.
+		/// \param scene Scene that will be bound to the new renderer.
 		/// \return Returns a pointer to the new renderer.
-		virtual IRenderer* CreateRenderer(const type_index& renderer_type, const type_index& args_type, const void* args) const = 0;
+		virtual IRenderer* CreateRenderer(const type_index& renderer_type, Scene& scene) const = 0;
 
 	};
 
@@ -308,14 +307,13 @@ namespace gi_lib{
 	
 	///////////////////////////////// GRAPHICS ////////////////////////////////////
 
-	template <typename TRenderer, typename TArgs>
-	unique_ptr<TRenderer> Graphics::CreateRenderer(const TArgs& args){
+	template <typename TRenderer>
+	unique_ptr<TRenderer> Graphics::CreateRenderer(Scene& scene){
 
 		// Downcast from IRenderer to TRenderer. The cast here is safe.
 
 		return unique_ptr<TRenderer>(static_cast<TRenderer*>(CreateRenderer(type_index(typeid(TRenderer)),
-																			type_index(typeid(TArgs)),
-																			&args)));
+																			scene)));
 
 	}
 

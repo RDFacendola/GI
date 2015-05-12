@@ -148,7 +148,7 @@ namespace gi_lib{
 
 		protected:
 
-			virtual IRenderer* CreateRenderer(const type_index& renderer_type, const type_index& args_type, const void* args) const override;
+			virtual IRenderer* CreateRenderer(const type_index& renderer_type, Scene& scene) const override;
 
 		private:
 

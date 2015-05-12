@@ -517,6 +517,12 @@ void CameraComponent::SetMaximumDistance(float maximum_distance){
 
 }
 
+Frustum CameraComponent::GetViewFrustum() const{
+
+	return Frustum();
+
+}
+
 CameraComponent::TypeSet CameraComponent::GetTypes() const{
 
 	auto types = Component::GetTypes();

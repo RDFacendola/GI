@@ -384,8 +384,7 @@ namespace gi_lib{
 	class CameraComponent : public Component{
 
 	public:
-
-
+		
 		/// \brief Create a new camera component.
 		CameraComponent();
 

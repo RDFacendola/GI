@@ -5,30 +5,39 @@
 
 #pragma once
 
-#include "..\..\..\include\renderers\deferred_renderer.h"
+#include "dx11renderer.h"
 
 #include "..\dx11graphics.h"
 
+#include "..\..\..\include\renderers\deferred_renderer.h"
+
 namespace gi_lib{
 
-	/// \brief Deferrend renderer with tiled lighting computation for DirectX11.
-	/// \author Raffaele D. Facendola
-	class DX11TiledDeferredRenderer : public TiledDeferredRenderer{
+	namespace dx11{
 
-	public:
+		/// \brief Deferrend renderer with tiled lighting computation for DirectX11.
+		/// \author Raffaele D. Facendola
+		class DX11TiledDeferredRenderer : public TiledDeferredRenderer{
 
-		/// \brief No copy constructor.
-		DX11TiledDeferredRenderer(const DX11TiledDeferredRenderer&) = delete;
+		public:
 
-		/// \brief Virtual destructor.
-		virtual ~DX11TiledDeferredRenderer();
+			/// \brief Create a new tiled deferred renderer.
+			/// \param arguments Arguments used to construct the renderer.
+			DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments);
 
-		/// \brief No assignment operator.
-		DX11TiledDeferredRenderer& operator=(DX11TiledDeferredRenderer&) = delete;
+			/// \brief No copy constructor.
+			DX11TiledDeferredRenderer(const DX11TiledDeferredRenderer&) = delete;
 
-		virtual void Draw(IOutput& output) override;
+			/// \brief Virtual destructor.
+			virtual ~DX11TiledDeferredRenderer();
 
-	};
+			/// \brief No assignment operator.
+			DX11TiledDeferredRenderer& operator=(DX11TiledDeferredRenderer&) = delete;
 
+			virtual void Draw(IOutput& output) override;
+
+		};
+
+	}
 
 }

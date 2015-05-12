@@ -262,6 +262,7 @@ namespace gi_lib{
 		/// \param anisotropy_level Maximum anisotropy level. Set to 0 to disable anisotropic filtering and enable trilinear filtering.
 		/// \param sampler Pointer to the object that will hold the sampler if the method succeeds..
 		HRESULT MakeSampler(ID3D11Device& device, TextureMapping texture_mapping, unsigned int anisotropy_level, ID3D11SamplerState** sampler);
+
 	}
 
 }

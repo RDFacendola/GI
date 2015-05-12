@@ -8,6 +8,8 @@
 #include <map>
 
 #include "dx11resources.h"
+
+#include "renderers\dx11renderer.h"
 #include "renderers\dx11deferred_renderer.h"
 
 #include "..\instance_builder.h"
@@ -17,6 +19,7 @@
 #include "..\..\include\exceptions.h"
 #include "..\..\include\resources.h"
 #include "..\..\include\bundles.h"
+
 #include "..\..\include\renderers\deferred_renderer.h"
 
 
@@ -288,7 +291,7 @@ namespace{
 	void RegisterDirectX11Renderers(){
 
 		// Deferred renderers
-		//InstanceBuilder::Register<TiledDeferredRenderer, DX11TiledDeferredRenderer, 
+		InstanceBuilder::Register<TiledDeferredRenderer, DX11TiledDeferredRenderer, RendererConstructionArgs>();
 
 	}
 
@@ -534,10 +537,13 @@ DX11Resources& DX11Graphics::GetResources(){
 
 }
 
-IRenderer* DX11Graphics::CreateRenderer(const type_index& renderer_type, const type_index& args_type, const void* args) const{
+IRenderer* DX11Graphics::CreateRenderer(const type_index& renderer_type, Scene& scene) const{
+
+	// The construction args are the same for every renderer
+	RendererConstructionArgs construction_args(scene);
 
 	return static_cast<IRenderer*>(InstanceBuilder::Build(renderer_type,
-														  args_type,
-														  args));
+														  type_index(typeid(RendererConstructionArgs)),
+														  &construction_args));
 	
 }

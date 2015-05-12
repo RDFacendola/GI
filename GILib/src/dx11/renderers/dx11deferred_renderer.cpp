@@ -2,10 +2,12 @@
 
 using namespace ::std;
 using namespace ::gi_lib;
+using namespace ::gi_lib::dx11;
 
-DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){
+DX11TiledDeferredRenderer::DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments) :
+TiledDeferredRenderer(arguments.scene){}
 
-}
+DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){}
 
 void DX11TiledDeferredRenderer::Draw(IOutput& output){
 

@@ -64,7 +64,7 @@ scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 	output_ = graphics_.CreateOutput(*this, 
 									 p.video_modes[0]);
 
-	auto r = graphics_.CreateRenderer<TiledDeferredRenderer, LoadFromFile>({ L"" });
+	auto r = graphics_.CreateRenderer<TiledDeferredRenderer>(scene_);
 
 	// Camera setup
 	/*
