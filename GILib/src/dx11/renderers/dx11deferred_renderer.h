@@ -5,8 +5,9 @@
 
 #pragma once
 
-#include "..\dx11graphics.h"
 #include "..\..\..\include\renderers\deferred_renderer.h"
+
+#include "..\dx11graphics.h"
 
 namespace gi_lib{
 
@@ -16,12 +17,16 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief No copy constructor.
+		DX11TiledDeferredRenderer(const DX11TiledDeferredRenderer&) = delete;
+
 		/// \brief Virtual destructor.
 		virtual ~DX11TiledDeferredRenderer();
 
-		virtual Scene& GetScene() override;
+		/// \brief No assignment operator.
+		DX11TiledDeferredRenderer& operator=(DX11TiledDeferredRenderer&) = delete;
 
-		virtual const Scene& GetScene() const override;
+		virtual void Draw(IOutput& output) override;
 
 	};
 
