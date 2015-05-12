@@ -10,9 +10,9 @@ using namespace ::std;
 
 ////////////////////////////////////// SCENE //////////////////////////////////////////
 
-Scene::Scene(){
-
-}
+Scene::Scene(unique_ptr<IVolumeHierarchy> volume_hierarchy) :
+main_camera_(nullptr),
+volume_hierarchy_(std::move(volume_hierarchy)){}
 
 Scene::~Scene(){
 
@@ -34,9 +34,40 @@ TransformComponent* Scene::CreateNode(const wstring& name, const Translation3f& 
 
 	auto transform = node->AddComponent<TransformComponent>(translation, rotation, scale);
 
-	nodes_.push_back(unique_ptr<NodeComponent>(node));	// Node and transform are the same entity. When node is deleted, transform is deleted as well.
+	// Node and transform are the same entity. When node is deleted, transform is deleted as well.
+	nodes_.push_back(unique_ptr<NodeComponent>(node));	
 
 	return transform;
+
+}
+
+CameraComponent* Scene::GetMainCamera(){
+
+	return main_camera_;
+
+}
+
+const CameraComponent* Scene::GetMainCamera() const{
+
+	return main_camera_;
+
+}
+
+void Scene::SetMainCamera(CameraComponent* main_camera){
+
+	main_camera_ = main_camera;
+
+}
+
+IVolumeHierarchy& Scene::GetVolumeHierarchy(){
+
+	return *volume_hierarchy_;
+
+}
+
+const IVolumeHierarchy& Scene::GetVolumeHierarchy() const{
+
+	return *volume_hierarchy_;
 
 }
 
@@ -272,7 +303,7 @@ Observable<TransformComponent::OnTransformChangedEventArgs>& TransformComponent:
 
 VolumeComponent::VolumeComponent() :
 VolumeComponent(AABB{ Vector3f::Zero(),
-Vector3f::Zero() }){}
+					  Vector3f::Zero() }){}
 
 VolumeComponent::VolumeComponent(const AABB& bounds) :
 bounding_box_(bounds),
@@ -327,6 +358,8 @@ VolumeComponent::TypeSet VolumeComponent::GetTypes() const{
 
 void VolumeComponent::Initialize(){
 
+	// Initialize the transform component
+
 	transform_ = GetComponent<TransformComponent>();
 
 	on_transform_changed_lister_ = transform_->OnTransformChanged().Subscribe([this](_, _){
@@ -335,9 +368,23 @@ void VolumeComponent::Initialize(){
 
 	});
 
+	// Plug the volume inside the volume hierarchy
+
+	GetComponent<NodeComponent>()->GetScene()
+								 .GetVolumeHierarchy()
+								 .AddVolume(this);
+
 }
 
-void VolumeComponent::Finalize(){}
+void VolumeComponent::Finalize(){
+
+	// Remove the volume from the hierarchy
+
+	GetComponent<NodeComponent>()->GetScene()
+								 .GetVolumeHierarchy()
+								 .RemoveVolume(this);
+
+}
 
 void VolumeComponent::SetBoundingBox(const AABB& bounds){
 

@@ -26,7 +26,7 @@ private:
 
 	Graphics & graphics_;
 
-	unique_ptr<Output> output_;
+	unique_ptr<IOutput> output_;
 
 	Scene scene_;
 

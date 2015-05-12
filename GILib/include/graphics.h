@@ -30,6 +30,7 @@ namespace gi_lib{
 
 	class IResource;
 	class IRenderer;
+	class IOutput;
 
 	/// \brief Enumeration of all the supported API.
 	enum class API{
@@ -121,6 +122,10 @@ namespace gi_lib{
 		/// \return Returns the scene the renderer refers to.
 		virtual const Scene& GetScene() const = 0;
 
+		/// \brief Draw the scene from the current main camera to the specified output.
+		/// \param output Output where the scene will be rendered.
+		virtual void Draw(IOutput& output) = 0;
+
 	protected:
 
 		/// \brief Protected constructor. Prevent instantiation.
@@ -130,12 +135,12 @@ namespace gi_lib{
 
 	/// \brief Interface used to display an image to an output.
 	/// \author Raffaele D. Facendola
-	class Output{
+	class IOutput{
 
 	public:
 
 		/// \brief Default destructor;
-		virtual ~Output(){}
+		virtual ~IOutput(){}
 
 		/// \brief Set the video mode.
 		/// \param video_mode The video mode to set.
@@ -254,7 +259,7 @@ namespace gi_lib{
 		/// \param window The window used to display the output.
 		/// \param video_mode The initial window mode.
 		/// \return Returns a pointer to the new output.
-		virtual unique_ptr<Output> CreateOutput(Window & window, const VideoMode & video_mode) = 0;
+		virtual unique_ptr<IOutput> CreateOutput(Window & window, const VideoMode & video_mode) = 0;
 
 		/// \brief Create a renderer.
 		/// \return Returns a pointer to the new renderer.

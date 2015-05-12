@@ -17,9 +17,11 @@ namespace gi_lib{
 	class VolumeComponent;
 	class VolumeHierarchyComponent;
 	
-	/// \brief Represents a volume hierarchy.
+	/// \brief Base interface for volume hierarchy.
+	/// Volumes added to the hierarchy must be manually removed upon destruction of the component.
+	/// The hierarchy will relocate automatically the node whenever its bounds change.
 	/// \author Raffaele D. Facendola
-	class VolumeHierarchyComponent : public Component{
+	class IVolumeHierarchy{
 
 	public:
 		
@@ -33,7 +35,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Virtual destructor.
-		virtual ~VolumeHierarchyComponent();
+		virtual ~IVolumeHierarchy();
 
 		/// \brief Add a new volume to the hierarchy.
 		/// \param volume The volume to add to the hierarchy.
@@ -49,8 +51,6 @@ namespace gi_lib{
 		/// \remarks Coarse tests are faster but may lead to false positives.
 		///          Fine tests, however, achieve lesser performances and produce no false positive.
 		virtual vector<VolumeComponent*> GetIntersections(const Frustum& frustum, PrecisionLevel precision) const = 0;
-
-		virtual TypeSet GetTypes() const override;
 
 	};
 

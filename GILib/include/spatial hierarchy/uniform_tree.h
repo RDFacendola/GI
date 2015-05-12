@@ -15,7 +15,7 @@ namespace gi_lib{
 	/// The tree subdivides its domain in equally sized cells recursively.
 	/// This solution works best for applications where the volumes are distribuited uniformly throughout the domain, however it has a large memory footprint.
 	/// \author Raffaele D. Facendola
-	class UniformTreeComponent : public VolumeHierarchyComponent
+	class UniformTree : public IVolumeHierarchy
 	{
 
 	public:
@@ -23,24 +23,16 @@ namespace gi_lib{
 		/// \brief Create a new octree.
 		/// \param domain Region of space to subdivide.
 		/// \param splits Number of times to split on each axis.
-		UniformTreeComponent(const AABB& domain, const Vector3i& splits);
+		UniformTree(const AABB& domain, const Vector3i& splits);
 
 		/// \brief Destructor.
-		virtual ~UniformTreeComponent();
+		virtual ~UniformTree();
 
 		virtual void AddVolume(VolumeComponent* volume) override;
 
 		virtual void RemoveVolume(VolumeComponent* volume) override;
 
 		virtual vector<VolumeComponent*> GetIntersections(const Frustum& frustum, PrecisionLevel precision) const;
-		
-		virtual TypeSet GetTypes() const override;
-
-	protected:
-		
-		virtual void Initialize() override;
-
-		virtual void Finalize() override;
 
 	private:
 
@@ -52,7 +44,7 @@ namespace gi_lib{
 		/// \param parent Parent space containing this tree.
 		/// \param domain Region of space to subdivide.
 		/// \param splits Number of times to split on each axis.
-		UniformTreeComponent(UniformTreeComponent* parent, const AABB& domain, const Vector3i& splits);
+		UniformTree(UniformTree* parent, const AABB& domain, const Vector3i& splits);
 
 		/// \brief Split the current space at most once on each axis.
 		/// \param splits Number of splits left on each axis.
@@ -71,9 +63,9 @@ namespace gi_lib{
 		/// \return Returns true if the volume is fully enclosed in this subspace, returns false otherwise.
 		bool Encloses(const VolumeComponent& volume);
 
-		UniformTreeComponent* parent_;						///< \brief Parent space.
+		UniformTree* parent_;						///< \brief Parent space.
 
-		vector<UniformTreeComponent*> children_;			///< \brief Subspaces.
+		vector<UniformTree*> children_;			///< \brief Subspaces.
 
 		vector<Node*> nodes_;								///< \brief Volumes contained in this subspace.
 

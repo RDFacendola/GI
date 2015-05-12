@@ -33,7 +33,7 @@ namespace gi_lib{
 
 		/// \brief DirectX11 object used to display an image to an output.
 		/// \author Raffaele D. Facendola
-		class DX11Output : public Output{
+		class DX11Output : public IOutput{
 
 		public:
 
@@ -136,7 +136,7 @@ namespace gi_lib{
 
 			virtual AdapterProfile GetAdapterProfile() const override ;
 
-			virtual unique_ptr<Output> CreateOutput(Window& window, const VideoMode& video_mode) override;
+			virtual unique_ptr<IOutput> CreateOutput(Window& window, const VideoMode& video_mode) override;
 
 			virtual DX11Resources & GetResources() override;
 

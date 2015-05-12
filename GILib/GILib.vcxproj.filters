@@ -130,5 +130,6 @@
     </ClCompile>
     <ClCompile Include="src\spatial hierarchy\uniform_tree.cpp" />
     <ClCompile Include="src\renderers\deferred_renderer.cpp" />
+    <ClCompile Include="src\dx11\renderers\dx11deferred_renderer.cpp" />
   </ItemGroup>
 </Project>

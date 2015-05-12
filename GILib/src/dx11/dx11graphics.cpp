@@ -521,7 +521,7 @@ AdapterProfile DX11Graphics::GetAdapterProfile() const{
 
 }
 
-unique_ptr<Output> DX11Graphics::CreateOutput(Window& window, const VideoMode& video_mode){
+unique_ptr<IOutput> DX11Graphics::CreateOutput(Window& window, const VideoMode& video_mode){
 
 	return std::make_unique<DX11Output>(window, 
 										video_mode);

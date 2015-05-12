@@ -20,6 +20,7 @@
 #include "observable.h"
 #include "resources.h"
 #include "graphics.h"
+#include "spatial hierarchy\volume_hierarchy.h"
 
 using ::std::vector;
 using ::std::wstring;
@@ -35,6 +36,7 @@ namespace gi_lib{
 	class Scene;
 	class NodeComponent;
 	class TransformComponent;
+	class CameraComponent;
 
 	/// \brief Represents a scene and all its content.
 	/// \author Raffaele D. Facendola
@@ -43,7 +45,7 @@ namespace gi_lib{
 	public:
 
 		/// \brief Default constructor.
-		Scene();
+		Scene(unique_ptr<IVolumeHierarchy> volume_hierarchy);
 
 		/// \brief Scene destructor.
 		~Scene();
@@ -64,9 +66,34 @@ namespace gi_lib{
 		/// \return Returns a pointer to the created node.
 		TransformComponent* CreateNode(const wstring& name, const Translation3f& translation, const Quaternionf& rotation, const AlignedScaling3f& scale);
 
+		/// \brief Get the main camera of the scene.
+		/// \return Returns the main camera of the scene.
+		CameraComponent* GetMainCamera();
+
+		/// \brief Get the main camera of the scene.
+		/// \return Returns the main camera of the scene.
+		const CameraComponent* GetMainCamera() const;
+
+		/// \brief Set the main camera of the scene.
+		/// \param The new main camera.
+		/// \remarks The camera component must belong to the scene.
+		void SetMainCamera(CameraComponent* camera);
+
+		/// \brief Get the volume hierarchy.
+		/// \return Returns the volume hierarchy.
+		IVolumeHierarchy& GetVolumeHierarchy();
+
+		/// \brief Get the volume hierarchy.
+		/// \return Returns the volume hierarchy.
+		const IVolumeHierarchy& GetVolumeHierarchy() const;
+
 	private:
 
-		vector<unique_ptr<NodeComponent>> nodes_;
+		vector<unique_ptr<NodeComponent>> nodes_;			///< \brief Nodes inside the scene.
+
+		CameraComponent* main_camera_;						///< \brief Main camera.
+
+		unique_ptr<IVolumeHierarchy> volume_hierarchy_;		///< \brief Scene volume hierarchy.
 
 	};
 
@@ -398,6 +425,10 @@ namespace gi_lib{
 		/// \brief Set the far clipping plane distance.
 		/// \param maximum_distance The distance of the far clipping plane.
 		void SetMaximumDistance(float maximum_distance);
+
+		/// \brief Get the view frustum.
+		/// \return Returns the view frustum.
+		Frustum GetViewFrustum() const;
 
 		virtual TypeSet GetTypes() const override;
 

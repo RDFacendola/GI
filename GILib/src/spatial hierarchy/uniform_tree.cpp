@@ -73,9 +73,9 @@ namespace{
 
 ////////////////////////////////// UNIFORMTREECOMPONENT :: NODE /////////////////////////////////////
 
-struct UniformTreeComponent::Node{
+struct UniformTree::Node{
 
-	Node(UniformTreeComponent* parent, VolumeComponent* volume);
+	Node(UniformTree* parent, VolumeComponent* volume);
 
 	/// \brief Push this node down the hierarchy.
 	void PushDown(bool force_insert = false);										
@@ -83,9 +83,9 @@ struct UniformTreeComponent::Node{
 	/// \brief Pull this node up the hierarchy.
 	void PullUp();	
 
-	void SetParent(UniformTreeComponent* new_parent);
+	void SetParent(UniformTree* new_parent);
 
-	UniformTreeComponent* parent_;							///< \brief Space containing this node
+	UniformTree* parent_;									///< \brief Space containing this node
 
 	VolumeComponent* volume_;								///< \brief Volume component inside this node
 
@@ -93,7 +93,7 @@ struct UniformTreeComponent::Node{
 
 };
 
-UniformTreeComponent::Node::Node(UniformTreeComponent* parent, VolumeComponent* volume) :
+UniformTree::Node::Node(UniformTree* parent, VolumeComponent* volume) :
 parent_(parent),
 volume_(volume){
 
@@ -107,7 +107,7 @@ volume_(volume){
 
 }
 
-void UniformTreeComponent::Node::PushDown(bool force_insert){
+void UniformTree::Node::PushDown(bool force_insert){
 
 	auto new_parent = parent_;
 
@@ -150,7 +150,7 @@ void UniformTreeComponent::Node::PushDown(bool force_insert){
 
 }
 
-void UniformTreeComponent::Node::PullUp(){
+void UniformTree::Node::PullUp(){
 
 	auto new_parent = parent_;
 
@@ -170,7 +170,7 @@ void UniformTreeComponent::Node::PullUp(){
 
 }
 
-void UniformTreeComponent::Node::SetParent(UniformTreeComponent* new_parent){
+void UniformTree::Node::SetParent(UniformTree* new_parent){
 
 	if (parent_ != new_parent){
 
@@ -200,39 +200,39 @@ void UniformTreeComponent::Node::SetParent(UniformTreeComponent* new_parent){
 
 ////////////////////////////////// UNIFORMTREECOMPONENT :: IMPL /////////////////////////////////////
 
-struct UniformTreeComponent::Impl{
+struct UniformTree::Impl{
 
-	template <VolumeHierarchyComponent::PrecisionLevel precision>
-	static void GetIntersections(const UniformTreeComponent* tree, const Frustum& frustum, vector<VolumeComponent*>& intersections);
+	template <IVolumeHierarchy::PrecisionLevel precision>
+	static void GetIntersections(const UniformTree* tree, const Frustum& frustum, vector<VolumeComponent*>& intersections);
 
 private:
 
 	/// \brief Simple wrapper around the Node struct.
 	struct VolumeMapper{
 
-		VolumeComponent** operator()(UniformTreeComponent::Node* node) const;
+		VolumeComponent** operator()(UniformTree::Node* node) const;
 
 	};
 
-	using iterator = vector<UniformTreeComponent::Node*>::const_iterator;
+	using iterator = vector<UniformTree::Node*>::const_iterator;
 
-	using iterator_wrapper = IteratorWrapper<vector<UniformTreeComponent::Node*>::const_iterator,
+	using iterator_wrapper = IteratorWrapper<vector<UniformTree::Node*>::const_iterator,
 											 VolumeComponent*,
 											 VolumeMapper>;
 	
-	template <VolumeHierarchyComponent::PrecisionLevel precision>
-	static void GetIntersections(const vector<UniformTreeComponent::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections);
+	template <IVolumeHierarchy::PrecisionLevel precision>
+	static void GetIntersections(const vector<UniformTree::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections);
 
 };
 
-VolumeComponent** UniformTreeComponent::Impl::VolumeMapper::operator()(UniformTreeComponent::Node* node) const{
+VolumeComponent** UniformTree::Impl::VolumeMapper::operator()(UniformTree::Node* node) const{
 
 	return &(node->volume_);
 
 }
 
-template <VolumeHierarchyComponent::PrecisionLevel precision>
-void UniformTreeComponent::Impl::GetIntersections(const UniformTreeComponent* tree, const Frustum& frustum, vector<VolumeComponent*>& intersections){
+template <IVolumeHierarchy::PrecisionLevel precision>
+void UniformTree::Impl::GetIntersections(const UniformTree* tree, const Frustum& frustum, vector<VolumeComponent*>& intersections){
 
 	// Stop the recursion if this space doesn't intersect or if the subspace has no volumes inside.
 
@@ -260,7 +260,7 @@ void UniformTreeComponent::Impl::GetIntersections(const UniformTreeComponent* tr
 }
 
 template <>
-void UniformTreeComponent::Impl::GetIntersections<VolumeHierarchyComponent::PrecisionLevel::Coarse>(const vector<UniformTreeComponent::Node*>& nodes, const Frustum&, vector<VolumeComponent*>& intersections){
+void UniformTree::Impl::GetIntersections<IVolumeHierarchy::PrecisionLevel::Coarse>(const vector<UniformTree::Node*>& nodes, const Frustum&, vector<VolumeComponent*>& intersections){
 
 	// Copy every volume without testing. This may lead to some false positive (even far away) but requires no further test.
 
@@ -275,7 +275,7 @@ void UniformTreeComponent::Impl::GetIntersections<VolumeHierarchyComponent::Prec
 }
 
 template <>
-void UniformTreeComponent::Impl::GetIntersections<VolumeHierarchyComponent::PrecisionLevel::Medium>(const vector<UniformTreeComponent::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections){
+void UniformTree::Impl::GetIntersections<IVolumeHierarchy::PrecisionLevel::Medium>(const vector<UniformTree::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections){
 
 	// Test each volume using the bounding sphere. May lead to some false positive near the frustum and is reasonably quick.
 
@@ -298,7 +298,7 @@ void UniformTreeComponent::Impl::GetIntersections<VolumeHierarchyComponent::Prec
 }
 
 template <>
-void UniformTreeComponent::Impl::GetIntersections<VolumeHierarchyComponent::PrecisionLevel::Fine>(const vector<UniformTreeComponent::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections){
+void UniformTree::Impl::GetIntersections<IVolumeHierarchy::PrecisionLevel::Fine>(const vector<UniformTree::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections){
 
 	// Test each volume using maximum precision. No false positive is reported, however the performances may be affected.
 
@@ -326,10 +326,10 @@ void UniformTreeComponent::Impl::GetIntersections<VolumeHierarchyComponent::Prec
 
 ///////////////////////////////////// UNIFORM TREE COMPONENT ////////////////////////////////////
 
-UniformTreeComponent::UniformTreeComponent(const AABB& domain, const Vector3i& splits) :
-UniformTreeComponent(nullptr, domain, splits){}
+UniformTree::UniformTree(const AABB& domain, const Vector3i& splits) :
+UniformTree(nullptr, domain, splits){}
 
-UniformTreeComponent::UniformTreeComponent(UniformTreeComponent* parent, const AABB& domain, const Vector3i& splits) :
+UniformTree::UniformTree(UniformTree* parent, const AABB& domain, const Vector3i& splits) :
 parent_(parent),
 bounding_box_(domain),
 volume_count_(0u){
@@ -338,7 +338,7 @@ volume_count_(0u){
 
 }
 
-UniformTreeComponent::~UniformTreeComponent(){
+UniformTree::~UniformTree(){
 
 	for (auto node : nodes_){
 
@@ -354,7 +354,7 @@ UniformTreeComponent::~UniformTreeComponent(){
 
 }
 
-void UniformTreeComponent::AddVolume(VolumeComponent* volume){
+void UniformTree::AddVolume(VolumeComponent* volume){
 
 	auto node = new Node(this, volume);
 
@@ -362,7 +362,7 @@ void UniformTreeComponent::AddVolume(VolumeComponent* volume){
 	
 }
 
-void UniformTreeComponent::RemoveVolume(VolumeComponent* volume){
+void UniformTree::RemoveVolume(VolumeComponent* volume){
 
 	auto tree = this;
 
@@ -408,7 +408,7 @@ void UniformTreeComponent::RemoveVolume(VolumeComponent* volume){
 	
 }
 
-vector<VolumeComponent*> UniformTreeComponent::GetIntersections(const Frustum& frustum, PrecisionLevel precision) const{
+vector<VolumeComponent*> UniformTree::GetIntersections(const Frustum& frustum, PrecisionLevel precision) const{
 
 	vector<VolumeComponent*> intersections;
 
@@ -422,21 +422,7 @@ vector<VolumeComponent*> UniformTreeComponent::GetIntersections(const Frustum& f
 
 }
 
-UniformTreeComponent::TypeSet UniformTreeComponent::GetTypes() const{
-
-	auto types = VolumeHierarchyComponent::GetTypes();
-
-	types.insert(type_index(typeid(UniformTreeComponent)));
-
-	return types;
-
-}
-
-void UniformTreeComponent::Initialize(){}
-
-void UniformTreeComponent::Finalize(){}
-
-void UniformTreeComponent::Split(const Vector3i& splits){
+void UniformTree::Split(const Vector3i& splits){
 
 	auto sub_splits = splits;
 	Vector3f sub_extents = bounding_box_.half_extents;
@@ -445,16 +431,16 @@ void UniformTreeComponent::Split(const Vector3i& splits){
 
 	for (auto& offset : GetSplitOffsets(sub_splits, sub_extents)){
 
-		children_.push_back(new UniformTreeComponent(this,
-													 AABB{ bounding_box_.center + offset.cwiseProduct(sub_extents),
-														   sub_extents },
-													 sub_splits));
+		children_.push_back(new UniformTree(this,
+											AABB{ bounding_box_.center + offset.cwiseProduct(sub_extents),
+												  sub_extents },
+											sub_splits));
 
 	}
 
 }
 
-void UniformTreeComponent::GetIntersections(const Frustum& frustum, PrecisionLevel precision, vector<VolumeComponent*>& intersections) const{
+void UniformTree::GetIntersections(const Frustum& frustum, PrecisionLevel precision, vector<VolumeComponent*>& intersections) const{
 
 	switch (precision){
 
@@ -477,7 +463,7 @@ void UniformTreeComponent::GetIntersections(const Frustum& frustum, PrecisionLev
 
 }
 
-bool UniformTreeComponent::Encloses(const VolumeComponent& volume){
+bool UniformTree::Encloses(const VolumeComponent& volume){
 
 	// False positive here are not acceptable here
 

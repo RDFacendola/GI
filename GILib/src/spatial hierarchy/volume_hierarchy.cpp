@@ -3,16 +3,6 @@
 using namespace std;
 using namespace gi_lib;
 
-///////////////////////// VOLUME HIERARCHY COMPONENT /////////////////////////
+///////////////////////// VOLUME HIERARCHY /////////////////////////
 
-VolumeHierarchyComponent::~VolumeHierarchyComponent(){}
-
-VolumeHierarchyComponent::TypeSet VolumeHierarchyComponent::GetTypes() const{
-
-	auto types = Component::GetTypes();
-
-	types.insert(type_index(typeid(VolumeHierarchyComponent)));
-
-	return types;
-
-}
+IVolumeHierarchy::~IVolumeHierarchy(){}
