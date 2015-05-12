@@ -58,6 +58,7 @@
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
+    <ClCompile Include="src\renderers\deferred_renderer.cpp" />
     <ClCompile Include="src\spatial hierarchy\uniform_tree.cpp" />
     <ClCompile Include="src\spatial hierarchy\volume_hierarchy.cpp" />
     <ClCompile Include="src\bundles.cpp" />

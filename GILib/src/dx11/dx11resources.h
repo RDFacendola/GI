@@ -180,9 +180,9 @@ namespace gi_lib{
 
 			virtual const AABB& GetBoundingBox() const override;
 
-			virtual size_t GetMaterialCount() const override;
+			virtual size_t GetSubsetCount() const override;
 
-			virtual const MeshSubset& GetSubset(unsigned int material_index) const override;
+			virtual const MeshSubset& GetSubset(unsigned int subset_index) const override;
 
 		private:
 

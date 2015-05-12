@@ -129,5 +129,6 @@
       <Filter>scene</Filter>
     </ClCompile>
     <ClCompile Include="src\spatial hierarchy\uniform_tree.cpp" />
+    <ClCompile Include="src\renderers\deferred_renderer.cpp" />
   </ItemGroup>
 </Project>

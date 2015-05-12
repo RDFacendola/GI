@@ -22,19 +22,15 @@ using namespace ::Eigen;
 
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
-struct Foo{
-
-	void DoFoo(){}
-
-	void DoBar(){}
-
-};
-
 class MaterialImporter : public IMaterialImporter{
 
 	virtual void OnImportMaterial(MaterialCollection& materials, MeshComponent& mesh){
 
-		// Add the proper material component here
+		// Add a renderer component for the deferred renderer.
+		mesh.AddComponent<DeferredRendererComponent>(mesh);
+
+		// Set the proper materials
+
 
 
 	}

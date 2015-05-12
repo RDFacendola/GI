@@ -188,14 +188,14 @@ namespace gi_lib{
 		/// \return Returns the bounding box of the mesh in object space.
 		virtual const AABB& GetBoundingBox() const = 0;
 
-		/// \brief Total number of materials used by this mesh.
-		/// \return Returns the total number of materials used by this mesh.
-		virtual size_t GetMaterialCount() const = 0;
+		/// \brief Total number of subsets used by this mesh.
+		/// \return Returns the total number of subsets used by this mesh.
+		virtual size_t GetSubsetCount() const = 0;
 
 		/// \brief Get a mesh subset.
-		/// \param material_index Index of the material assigned to the subset.
-		/// \return Returns the mesh subset whose assigned material index is equal to the specified one.
-		virtual const MeshSubset& GetSubset(unsigned int material_index) const = 0;
+		/// \param subset_index Index of the subset to get.
+		/// \return Returns the specified mesh subset.
+		virtual const MeshSubset& GetSubset(unsigned int subset_index) const = 0;
 		
 	};
 

@@ -558,15 +558,15 @@ const AABB& DX11Mesh::GetBoundingBox() const{
 
 }
 
-size_t DX11Mesh::GetMaterialCount() const{
+size_t DX11Mesh::GetSubsetCount() const{
 
 	return subsets_.size();
 
 }
 
-const MeshSubset& DX11Mesh::GetSubset(unsigned int material_index) const{
+const MeshSubset& DX11Mesh::GetSubset(unsigned int subset_index) const{
 
-	return subsets_[material_index];
+	return subsets_[subset_index];
 
 }
 
