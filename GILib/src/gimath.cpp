@@ -95,6 +95,12 @@ Sphere Sphere::FromAABB(const AABB& aabb){
 
 ///////////////////////////////////////// FRUSTUM /////////////////////////////////////////
 
+Frustum::Frustum(const Affine3f& transform, float field_of_view, float near_distance, float far_distance, float aspect_ratio){
+
+
+
+}
+
 IntersectionType Frustum::Intersect(const AABB& bounds) const{
 
 	/// Theory on: https://fgiesen.wordpress.com/2010/10/17/view-frustum-culling/
@@ -103,9 +109,9 @@ IntersectionType Frustum::Intersect(const AABB& bounds) const{
 
 	auto hcenter = ToHomogeneous(bounds.center);	// Needed to compute the distance as a dot product between two 4-elements vectors.
 
-	for (auto& plane : planes){
+	for (auto& plane : planes_){
 
-		if (plane.dot(hcenter) < -bounds.half_extents.dot(abs_normals[i])){
+		if (plane.dot(hcenter) < -bounds.half_extents.dot(abs_normals_[i])){
 
 			return IntersectionType::kNone;			// Outside the plane
 
@@ -123,7 +129,7 @@ IntersectionType Frustum::Intersect(const Sphere& sphere) const{
 
 	auto hcenter = ToHomogeneous(sphere.center);	// Needed to compute the distance as a dot product between two 4-elements vectors.
 
-	for (auto& plane : planes){
+	for (auto& plane : planes_){
 
 		if (plane.dot(hcenter) < -sphere.radius ){
 

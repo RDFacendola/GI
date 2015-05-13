@@ -51,6 +51,9 @@ namespace gi_lib{
 			/// \brief Default destructor.
 			~DX11Output();
 
+			/// \brief Send the backbuffer to the screen and flip the buffers.
+			void Present();
+
 			virtual void SetVideoMode(const VideoMode & video_mode) override;
 
 			virtual const VideoMode & GetVideoMode() const override;

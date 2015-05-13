@@ -22,6 +22,7 @@
 
 #include <math.h>
 #include <algorithm>
+#include <vector>
 
 #include "enums.h"
 
@@ -32,6 +33,8 @@ using ::Eigen::Vector2i;
 using ::Eigen::Vector3i;
 using ::Eigen::Vector4i;
 using ::Eigen::Affine3f;
+
+using ::std::vector;
 
 namespace gi_lib{
 
@@ -81,7 +84,15 @@ namespace gi_lib{
 	class Frustum{
 
 	public:
-		
+
+		/// \brief Create a frustum from a projective camera informations.
+		/// \param transform Camera world transform.
+		/// \param field_of_view Half vertical field of view, in radians.
+		/// \param near_distance Minimum projected distance.
+		/// \param far_distance Maximum projected distance.
+		/// \param aspect_ratio Width-to-height ratio.
+		Frustum(const Affine3f& transform, float field_of_view, float near_distance, float far_distance, float aspect_ratio);
+
 		/// \brief Intersection test between the frustum and an axis-aligned bounding box.
 		/// \param aabb The AABB to test against.
 		IntersectionType Intersect(const AABB& aabb) const;
@@ -95,9 +106,9 @@ namespace gi_lib{
 
 		static const size_t kFrustumPlanes = 6;
 
-		Vector4f planes[kFrustumPlanes];			///< \brief Planes defining the frustum. The normals point towards the center of the frustum and are normalized.
+		Vector4f planes_[kFrustumPlanes];			///< \brief Planes defining the frustum. The normals point towards the center of the frustum and are normalized.
 
-		Vector3f abs_normals[kFrustumPlanes];		///< \brief Absolute normal values for each plane.
+		Vector3f abs_normals_[kFrustumPlanes];		///< \brief Absolute normal values for each plane.
 
 	};
 	

@@ -61,12 +61,12 @@ namespace gi_lib{
 		unsigned int GetMaterialCount() const;
 
 		/// \brief Get a material.
-		/// \param material_index Index of the material to retrieve..
+		/// \param material_index Index of the material to retrieve.
 		/// \return Returns the specified material.
 		shared_ptr<DeferredRendererMaterial> GetMaterial(unsigned int material_index);
 
 		/// \brief Get a material.
-		/// \param material_index Index of the material to retrieve..
+		/// \param material_index Index of the material to retrieve.
 		/// \return Returns the specified material.
 		shared_ptr<const DeferredRendererMaterial> GetMaterial(unsigned int material_index) const;
 

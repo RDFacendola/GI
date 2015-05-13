@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include "..\include\gilib.h"
+#include "..\include\exceptions.h"
 
 using namespace ::gi_lib;
 using namespace ::std;
@@ -517,10 +518,25 @@ void CameraComponent::SetMaximumDistance(float maximum_distance){
 
 }
 
-Frustum CameraComponent::GetViewFrustum() const{
+Frustum CameraComponent::GetViewFrustum(float aspect_ratio) const{
 
-	return Frustum();
+	if (projection_type_ == ProjectionType::Perspective){
 
+		return Frustum(transform_->GetWorldTransform(),
+					   field_of_view_,
+					   minimum_distance_,
+					   maximum_distance_,
+					   aspect_ratio);
+
+	}
+	else{
+
+		// Orthographic projection
+
+		THROW(L"Orthographic projection not yet implemented!");
+
+	}
+	
 }
 
 CameraComponent::TypeSet CameraComponent::GetTypes() const{
@@ -533,6 +549,12 @@ CameraComponent::TypeSet CameraComponent::GetTypes() const{
 
 }
 
-void CameraComponent::Initialize(){}
+void CameraComponent::Initialize(){
+
+	// Initialize the transform component
+
+	transform_ = GetComponent<TransformComponent>();
+
+}
 
 void CameraComponent::Finalize(){}

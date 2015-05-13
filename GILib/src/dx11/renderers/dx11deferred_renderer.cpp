@@ -10,18 +10,39 @@ TiledDeferredRenderer(arguments.scene){}
 DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){}
 
 void DX11TiledDeferredRenderer::Draw(IOutput& output){
-
+	
 	// Scene to draw
 	auto& scene = GetScene();
 
-	// Main camera
-	auto& camera = *scene.GetMainCamera();
+	// The cast is safe as long as the client is not mixing different APIs.
+	auto& dx11output = static_cast<DX11Output&>(output);
 
-	// Nodes within the frustum culling
-	auto nodes = GetScene().GetVolumeHierarchy()
-						   .GetIntersections(camera.GetViewFrustum(),
-											 IVolumeHierarchy::PrecisionLevel::Medium);			// Avoids extreme false positive while keeping reasonably high performances.
+	// Draws only if there's a camera
 
+	if (scene.GetMainCamera()){
 
+		// Main camera
+		auto& camera = *scene.GetMainCamera();
+
+		// Render target
+		auto render_target = dx11output.GetRenderTarget();
+	
+		// Nodes within the frustum culling
+		auto nodes = GetScene().GetVolumeHierarchy()
+							   .GetIntersections(camera.GetViewFrustum(render_target->GetAspectRatio()),		// Updates the view frustum according to the output ratio.
+												 IVolumeHierarchy::PrecisionLevel::Medium);						// Avoids extreme false positive while keeping reasonably high performances.
+
+		for (auto&& node : nodes){
+
+			// Items to draw
+
+			auto drawables = node->GetComponents<DeferredRendererComponent>();
+
+		}
+
+	}
+
+	// Present the image
+	dx11output.Present();
 
 }

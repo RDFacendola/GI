@@ -25,7 +25,7 @@ using namespace ::Eigen;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
 /// \brief Size of the domain (for each edge).
-const float kDomainSize = 100.0f;
+const float kDomainSize = 1000.0f;
 
 /// \brief Number of times the domain is splitted along each axis.
 const unsigned int kDomainSubdivisions = 3;
@@ -59,24 +59,31 @@ scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 
 	Show();
 	
-	auto p = graphics_.GetAdapterProfile();
+	// Create the output window
 
 	output_ = graphics_.CreateOutput(*this, 
-									 p.video_modes[0]);
+									 graphics_.GetAdapterProfile().video_modes[0]);
 
-	auto r = graphics_.CreateRenderer<TiledDeferredRenderer>(scene_);
+	// Create the renderers
+
+	deferred_renderer_ = std::move(graphics_.CreateRenderer<TiledDeferredRenderer>(scene_));
 
 	// Camera setup
-	/*
-	auto & camera_node = scene_.CreateNode();
 
-	camera_ = camera_node.AddComponent<Camera>(output_->GetRenderTarget());	// The camera will render directly on the backbuffer
-	
-	camera_->SetFarPlane(1000);
-	camera_->SetNearPlane(1);
-	camera_->SetFieldOfView(Math::kPi * 0.5f);
-	camera_->SetProjectionMode(Camera::ProjectionMode::kPerspective);
-	*/
+	auto camera = scene_.CreateNode(L"MainCamera",
+									Translation3f(Vector3f::Ones()),
+									Quaternionf::Identity(),
+									AlignedScaling3f(Vector3f::Ones()))
+						->AddComponent<CameraComponent>();
+
+	camera->SetProjectionType(ProjectionType::Perspective);
+	camera->SetMinimumDistance(1.0f);
+	camera->SetMaximumDistance(1000.0f);
+	camera->SetFieldOfView(Math::kPi * 0.5f);
+
+	scene_.SetMainCamera(camera);
+
+	// Scene import
 
 	auto node = scene_.CreateNode(L"root", 
 								  Translation3f(Vector3f::Zero()), 
@@ -100,5 +107,7 @@ GILogic::~GILogic(){
 void GILogic::Update(const Time& time){
 	
 	//scene_.Update(time);
+
+	deferred_renderer_->Draw(*output_);
 
 }

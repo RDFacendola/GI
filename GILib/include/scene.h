@@ -426,8 +426,9 @@ namespace gi_lib{
 		void SetMaximumDistance(float maximum_distance);
 
 		/// \brief Get the view frustum.
+		/// \param aspect_ratio Width-to-height aspect ratio.
 		/// \return Returns the view frustum.
-		Frustum GetViewFrustum() const;
+		Frustum GetViewFrustum(float aspect_ratio) const;
 
 		virtual TypeSet GetTypes() const override;
 
@@ -446,6 +447,8 @@ namespace gi_lib{
 		float minimum_distance_;			///< \brief Near clipping plane distance.
 
 		float maximum_distance_;			///< \brief Far clipping plane distance.
+
+		TransformComponent* transform_;		///< \brief Transform component needed to compute the view frustum.
 
 	};
 
