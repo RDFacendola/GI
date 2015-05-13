@@ -78,7 +78,7 @@ struct UniformTree::Node{
 	Node(UniformTree* parent, VolumeComponent* volume);
 
 	/// \brief Push this node down the hierarchy.
-	void PushDown(bool force_insert = false);										
+	void PushDown();										
 
 	/// \brief Pull this node up the hierarchy.
 	void PullUp();	
@@ -99,6 +99,8 @@ volume_(volume){
 
 	++(parent_->volume_count_);
 
+	parent_->nodes_.push_back(this);
+
 	on_bounds_changed_listener_ = volume->OnBoundsChanged().Subscribe([this](_, _){
 
 		this->PullUp();	// Relocate the moving node
@@ -107,8 +109,8 @@ volume_(volume){
 
 }
 
-void UniformTree::Node::PushDown(bool force_insert){
-
+void UniformTree::Node::PushDown(){
+	
 	auto new_parent = parent_;
 
 	bool repeat;
@@ -137,16 +139,9 @@ void UniformTree::Node::PushDown(bool force_insert){
 
 	} while (repeat);	// Stop when every child rejected the volume
 
-	//
+	// Set the new parent
 
-	if (new_parent != parent_ ||
-		force_insert){
-
-		new_parent->nodes_.push_back(this);						//  Push inside the new parent
-
-		SetParent(new_parent);
-
-	}
+	SetParent(new_parent);
 
 }
 
@@ -166,7 +161,7 @@ void UniformTree::Node::PullUp(){
 	SetParent(new_parent);
 
 	// Find a more suitable subspace from the current parent
-	PushDown(new_parent != parent_);
+	PushDown();
 
 }
 
@@ -174,7 +169,7 @@ void UniformTree::Node::SetParent(UniformTree* new_parent){
 
 	if (parent_ != new_parent){
 
-		auto old_nodes = parent_->nodes_;
+		auto& old_nodes = parent_->nodes_;
 
 		auto it = std::find(old_nodes.begin(),
 							old_nodes.end(),
@@ -193,6 +188,8 @@ void UniformTree::Node::SetParent(UniformTree* new_parent){
 		}
 
 		parent_ = new_parent;								// Update parent reference
+
+		parent_->nodes_.push_back(this);					// Add the node to the new parent
 
 	}
 
@@ -358,7 +355,7 @@ void UniformTree::AddVolume(VolumeComponent* volume){
 
 	auto node = new Node(this, volume);
 
-	node->PushDown(true);
+	node->PushDown();
 	
 }
 
