@@ -60,9 +60,6 @@
     <ClInclude Include="include\fbx\fbx.h">
       <Filter>FBX</Filter>
     </ClInclude>
-    <ClInclude Include="include\bundles.h">
-      <Filter>graphics</Filter>
-    </ClInclude>
     <ClInclude Include="include\gimath.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -113,9 +110,6 @@
     <ClCompile Include="src\fbx\fbx.cpp">
       <Filter>FBX</Filter>
     </ClCompile>
-    <ClCompile Include="src\bundles.cpp">
-      <Filter>graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\gimath.cpp">
       <Filter>core</Filter>
     </ClCompile>
@@ -132,5 +126,8 @@
     <ClCompile Include="src\spatial hierarchy\uniform_tree.cpp" />
     <ClCompile Include="src\renderers\deferred_renderer.cpp" />
     <ClCompile Include="src\dx11\renderers\dx11deferred_renderer.cpp" />
+    <ClCompile Include="src\resources.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

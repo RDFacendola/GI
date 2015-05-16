@@ -13,7 +13,6 @@
 #include <tuple>
 
 #include "resources.h"
-#include "bundles.h"
 #include "observable.h"
 
 using ::std::wstring;
@@ -286,22 +285,22 @@ namespace gi_lib{
 
 	///////////////////////////////// RESOURCES ////////////////////////////////////
 
-	template <typename TResource, typename TLoadArgs, typename use_cache<TLoadArgs>::type*>
-	shared_ptr<TResource> Resources::Load(const typename TLoadArgs& load_args){
+	template <typename TResource, typename TArgs, typename use_cache<TArgs>::type*>
+	shared_ptr<TResource> Resources::Load(const typename TArgs& args){
 
 		return static_pointer_cast<TResource>(LoadFromCache(type_index(typeid(TResource)),
-															type_index(typeid(TLoadArgs)),
-															load_args.GetCacheKey(),
-															&load_args));
+															type_index(typeid(TArgs)),
+															args.GetCacheKey(),
+															&args));
 				
 	}
 
-	template <typename TResource, typename TLoadArgs, typename no_cache<TLoadArgs>::type*>
-	shared_ptr<TResource> Resources::Load(const typename TLoadArgs& load_args){
+	template <typename TResource, typename TArgs, typename no_cache<TArgs>::type*>
+	shared_ptr<TResource> Resources::Load(const typename TArgs& args){
 
 		return static_pointer_cast<TResource>(LoadDirect(type_index(typeid(TResource)),
-														 type_index(typeid(TLoadArgs)),
-														 &load_args));
+														 type_index(typeid(TArgs)),
+														 &args));
 
 	}
 	

@@ -18,7 +18,6 @@
 #include "..\..\include\scene.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\resources.h"
-#include "..\..\include\bundles.h"
 
 #include "..\..\include\renderers\deferred_renderer.h"
 
@@ -53,7 +52,7 @@ namespace{
 	/// \brief Default video format for the back buffer.
 	const DXGI_FORMAT kVideoFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
 
-	/// \brief Convert a dxgi sample desc to an antialiasing mode.
+	/// \brief Convert a DXGI sample desc to an antialiasing mode.
 	AntialiasingMode SampleDescToAntialiasingMode(const DXGI_SAMPLE_DESC & sample_desc){
 
 		if (sample_desc.Count == 1 && sample_desc.Quality == 0)		return AntialiasingMode::NONE;
@@ -111,7 +110,7 @@ namespace{
 
 	}
 
-	/// \brief Convert a video mode to a dxgi mode.
+	/// \brief Convert a video mode to a DXGI mode.
 	DXGI_MODE_DESC VideoModeToDXGIMode(const VideoMode & video_mode){
 
 		DXGI_MODE_DESC dxgi_mode;
@@ -128,7 +127,7 @@ namespace{
 
 	}
 
-	/// \brief Convert a dxgi mode to a video mode.
+	/// \brief Convert a DXGI mode to a video mode.
 	VideoMode DXGIModeToVideoMode(const DXGI_MODE_DESC & dxgi_mode){
 
 		VideoMode video_mode;
@@ -277,14 +276,17 @@ namespace{
 	void RegisterDirectX11Resources(){
 
 		// Texture 2D
-		InstanceBuilder::Register<Texture2D, DX11Texture2D, LoadFromFile>();
+		InstanceBuilder::Register<Texture2D, DX11Texture2D, Texture2D::FromFile>();
 
 		// Mesh
-		InstanceBuilder::Register<Mesh, DX11Mesh, BuildFromVertices<VertexFormatNormalTextured>>();
+		InstanceBuilder::Register<Mesh, DX11Mesh, Mesh::FromVertices<VertexFormatNormalTextured>>();
 
 		// Materials
-		InstanceBuilder::Register<Material, DX11Material, CompileFromFile>();
-		InstanceBuilder::Register<Material, DX11Material, InstantiateFromMaterial>();
+		InstanceBuilder::Register<Material, DX11Material, Material::CompileFromFile>();
+		InstanceBuilder::Register<Material, DX11Material, Material::Instantiate>();
+
+		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>();
+		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>();
 
 	}
 

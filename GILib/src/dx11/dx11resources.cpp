@@ -18,7 +18,6 @@
 #include "..\..\include\enums.h"
 #include "..\..\include\exceptions.h"
 #include "..\..\include\scope_guard.h"
-#include "..\..\include\bundles.h"
 #include "..\..\include\observable.h"
 #include "..\..\include\debug.h"
 
@@ -263,7 +262,7 @@ namespace{
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
 
-DX11Texture2D::DX11Texture2D(const LoadFromFile& bundle){
+DX11Texture2D::DX11Texture2D(const FromFile& bundle){
 	
 	auto& device = DX11Graphics::GetInstance().GetDevice();
 
@@ -378,7 +377,7 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 	auto& target = **targets.begin();
 
 	// Rollback guard ensures that the state of the render target is cleared on error
-	// (ie: if one buffer causes an exception, the entire operation is rollback'd)
+	// (i.e.: if one buffer causes an exception, the entire operation is rollback'd)
 
 	auto rollback = make_scope_guard([this](){
 	
@@ -476,7 +475,7 @@ void DX11RenderTarget::ClearTargets(ID3D11DeviceContext & context, Color color){
 
 ///////////////////////////// MESH ////////////////////////////////////////////////
 
-DX11Mesh::DX11Mesh(const BuildFromVertices<VertexFormatNormalTextured>& bundle){
+DX11Mesh::DX11Mesh(const FromVertices<VertexFormatNormalTextured>& bundle){
 
 	auto& device = DX11Graphics::GetInstance().GetDevice();
 
@@ -855,7 +854,7 @@ DX11Material::DX11Material(const CompileFromFile& args){
 
 }
 
-DX11Material::DX11Material(const InstantiateFromMaterial& args){
+DX11Material::DX11Material(const Instantiate& args){
 
 	auto& material = resource_cast(*args.base);
 	

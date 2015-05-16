@@ -13,7 +13,6 @@
 
 #include "..\..\include\graphics.h"
 #include "..\..\include\resources.h"
-#include "..\..\include\bundles.h"
 #include "..\..\include\windows\os_windows.h"
 
 using ::std::string;
@@ -54,7 +53,7 @@ namespace gi_lib{
 			/// \brief Create a new texture from DDS file.
 			/// \param device The device used to create the texture.
 			/// \param bundle The bundle used to load the texture.
-			DX11Texture2D(const LoadFromFile& args);
+			DX11Texture2D(const FromFile& args);
 
 			/// \brief Create a mew texture from an existing DirectX11 texture.
 			/// \param texture The DirectX11 texture.
@@ -168,7 +167,7 @@ namespace gi_lib{
 			/// \brief Create a new DirectX11 mesh.
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to create the mesh.
-			DX11Mesh(const BuildFromVertices<VertexFormatNormalTextured>& args);
+			DX11Mesh(const FromVertices<VertexFormatNormalTextured>& args);
 
 			virtual size_t GetSize() const override;
 
@@ -218,7 +217,7 @@ namespace gi_lib{
 			/// \brief Instantiate a DirectX11 material from another one.
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to instantiate the material.
-			DX11Material(const InstantiateFromMaterial& args);
+			DX11Material(const Instantiate& args);
 			
 			/// \brief Default destructor.
 			~DX11Material();
@@ -231,7 +230,7 @@ namespace gi_lib{
 
 		private:
 
-			/// \brief Holds the properties shared among material istances.
+			/// \brief Holds the properties shared among material instances.
 			struct MaterialImpl;
 
 			/// \brief Holds the private properties of this material instance.

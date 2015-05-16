@@ -19,7 +19,6 @@
 #include "..\..\include\exceptions.h"
 #include "..\..\include\graphics.h"
 #include "..\..\include\resources.h"
-#include "..\..\include\bundles.h"
 #include "..\..\include\scene.h"
 #include "..\..\include\scope_guard.h"
 
@@ -390,12 +389,12 @@ namespace{
 	/// \param mesh Mesh whose vertices needs to be imported.
 	/// \return Returns a vector with the imported vertices.
 	template <typename TVertexFormat>
-	void ImportMeshVertices(FbxMesh& mesh, BuildFromVertices<TVertexFormat>& bundle);
+	void ImportMeshVertices(FbxMesh& mesh, Mesh::FromVertices<TVertexFormat>& bundle);
 
 	/// \brief Import the vertices of a mesh.
 	/// \param mesh Mesh whose vertices needs to be imported.
 	/// \return Returns a vector with the imported vertices.
-	template <> void ImportMeshVertices<VertexFormatNormalTextured>(FbxMesh& mesh, BuildFromVertices<VertexFormatNormalTextured>& bundle){
+	template <> void ImportMeshVertices<VertexFormatNormalTextured>(FbxMesh& mesh, Mesh::FromVertices<VertexFormatNormalTextured>& bundle){
 
 		bundle.vertices.resize(mesh.GetControlPointsCount());
 
@@ -411,7 +410,7 @@ namespace{
 	/// \param mesh Source mesh.
 	/// \param bundle Store the imported index buffer and subset.
 	template <typename TVertexFormat>
-	void ImportMeshIndices(FbxMesh& mesh, BuildFromVertices<TVertexFormat>& bundle){
+	void ImportMeshIndices(FbxMesh& mesh, Mesh::FromVertices<TVertexFormat>& bundle){
 
 		int polygon_size = 3;											// Triangle
 
@@ -514,14 +513,14 @@ namespace{
 
 		// Create the bundle used to build the mesh
 
-		BuildFromVertices<TVertexFormat> bundle;	
+		Mesh::FromVertices<TVertexFormat> bundle;	
 
 		ImportMeshIndices(mesh, bundle);
 		ImportMeshVertices(mesh, bundle);
 
 		// Create the mesh component
 
-		return node.AddComponent<MeshComponent>(context.resources->Load<Mesh, BuildFromVertices<TVertexFormat>>(bundle));
+		return node.AddComponent<MeshComponent>(context.resources->Load<Mesh, Mesh::FromVertices<TVertexFormat>>(bundle));
 
 	}
 	

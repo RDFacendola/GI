@@ -27,7 +27,6 @@
     <ClInclude Include="include\debug.h" />
     <ClInclude Include="include\enums.h" />
     <ClInclude Include="include\gimath.h" />
-    <ClInclude Include="include\bundles.h" />
     <ClInclude Include="include\component.h" />
     <ClInclude Include="include\range.h" />
     <ClInclude Include="include\scope_guard.h" />
@@ -63,7 +62,7 @@
     <ClCompile Include="src\renderers\deferred_renderer.cpp" />
     <ClCompile Include="src\spatial hierarchy\uniform_tree.cpp" />
     <ClCompile Include="src\spatial hierarchy\volume_hierarchy.cpp" />
-    <ClCompile Include="src\bundles.cpp" />
+    <ClCompile Include="src\resources.cpp" />
     <ClCompile Include="src\component.cpp" />
     <ClCompile Include="src\observable.cpp" />
     <ClCompile Include="src\scene.cpp" />

@@ -26,6 +26,30 @@ using ::Eigen::Matrix;
 
 namespace gi_lib{
 
+	/// \brief Macro used to declare that the bundle will use the caching mechanism.
+	#define USE_CACHE \
+	using use_cache = void
+
+	/// \brief Macro used to declare that the bundle won't use the caching mechanism.
+	#define NO_CACHE \
+	using no_cache = void
+
+	/// \brief If T declares a type "use_cache", use_cache has a public member "type", otherwise there's no member.
+	template <typename T, typename T::use_cache* = nullptr>
+	struct use_cache{
+
+		using type = void;
+
+	};
+
+	/// \brief If T declares a type "no_cache", no_cache has a public member "type", otherwise there's no member.
+	template <typename T, typename T::no_cache* = nullptr>
+	struct no_cache{
+
+		using type = void;
+
+	};
+
 	enum class AntialiasingMode;
 
 	class IResource;
@@ -94,6 +118,19 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Cached structure used to load a texture 2D from file.	
+		struct FromFile{
+
+			USE_CACHE;
+
+			wstring file_name;		///< \brief Name of the file to load.
+
+			/// \brief Get the cache key associated to the structure.
+			/// \return Returns the cache key associated to the structure.
+			size_t GetCacheKey() const;
+
+		};
+
 		/// \brief Interface destructor.
 		virtual ~Texture2D(){}
 
@@ -105,8 +142,8 @@ namespace gi_lib{
 		/// \return Returns the height of the texture, in pixel.
 		virtual unsigned int GetHeight() const = 0;
 
-		/// \brief Get the mip map level count.
-		/// \return Returns the mip map level count.
+		/// \brief Get the MIP map level count.
+		/// \return Returns the MIP map level count.
 		virtual unsigned int GetMipMapCount() const = 0;
 
 	};
@@ -168,6 +205,21 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Structure used to build a mesh from an array of vertices.
+		/// \tparam TVertexFormat Format of each vertex.
+		template <typename TVertexFormat>
+		struct FromVertices{
+
+			NO_CACHE;
+
+			vector<unsigned int> indices;			///< \brief Indices definition.
+
+			vector<TVertexFormat> vertices;			///< \brief Vertices definition. 
+
+			vector<MeshSubset> subsets;				///< \brief Mesh subset definition.
+
+		};
+
 		virtual ~Mesh(){}
 
 		/// \brief Get the vertices count.
@@ -206,6 +258,28 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Structure used to compile a material from a file.
+		struct CompileFromFile{
+
+			USE_CACHE;
+
+			wstring file_name;			///< \brief Name of the file containing the material code.
+
+			/// \brief Get the cache key associated to the structure.
+			/// \return Returns the cache key associated to the structure.
+			size_t GetCacheKey() const;
+
+		};
+
+		/// \brief Structure used to instantiate an existing material.
+		struct Instantiate{
+
+			NO_CACHE;
+
+			shared_ptr<Material> base;	///< \brief Material to instantiate.
+
+		};
+		
 		/// \brief Interface for material variables.
 		class Variable{
 
