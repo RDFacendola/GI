@@ -85,13 +85,9 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Create a frustum from a projective camera informations.
-		/// \param transform Camera world transform.
-		/// \param field_of_view Half vertical field of view, in radians.
-		/// \param near_distance Minimum projected distance.
-		/// \param far_distance Maximum projected distance.
-		/// \param aspect_ratio Width-to-height ratio.
-		Frustum(const Affine3f& transform, float field_of_view, float near_distance, float far_distance, float aspect_ratio);
+		/// \brief Create a new frustum from six planes.
+		/// \param Contains the planes used to initialize the frustum. Must be 6.
+		Frustum(const vector<Vector4f>& planes);
 
 		/// \brief Intersection test between the frustum and an axis-aligned bounding box.
 		/// \param aabb The AABB to test against.
@@ -154,6 +150,24 @@ namespace gi_lib{
 		/// \param right Second operand.
 		static Vector3f Max(const Vector3f & left, const Vector3f & right);
 
+		/// \brief Converts 3-elements vector to an homogeneous vector.
+		/// \param vector The vector to convert.
+		/// \return Returns a 4-element vector where the first 3 elements are the same of the specified vector, and the last one is 1.
+		static Vector4f ToHomogeneous(const Vector3f& vector);
+
+		/// \brief Converts a 4-elements vector to a 3-elements vector.
+		/// \param vector The vector to convert.
+		/// \return Returns a 3-element vector where the elements are the first 3 elements of the specified vector.
+		/// \remarks The function will drop the 4th element.
+		static Vector3f ToVector3(const Vector4f& vector);
+
+		/// \brief Create a new plane from a point and a normal.
+		/// \param normal Normal of the plane. Must be normalized.
+		/// \param point Any point on the plane.
+		/// \return Returns a plane passing from the specified point with the given normal. The plane is in the form of Ax + By + Cz + D = 0.
+		/// \remarks If the normal vector is not normalized the result is undefined.
+		static Vector4f MakePlane(const Vector3f& normal, const Vector3f& point);
+
 	};
 
 	//////////////////////////////// MATH ////////////////////////
@@ -194,7 +208,31 @@ namespace gi_lib{
 
 
 	}
-		
 	
+	inline Vector4f Math::ToHomogeneous(const Vector3f& vector){
+
+		return Vector4f(vector(0), 
+						vector(1), 
+						vector(2), 
+						1.0f);
+
+	}
+
+	inline Vector3f Math::ToVector3(const Vector4f& vector){
+
+		return Vector3f(vector(0), 
+						vector(1), 
+						vector(2));
+
+	}
+
+	inline Vector4f Math::MakePlane(const Vector3f& normal, const Vector3f& point){
+
+		return Vector4f(normal(0),
+						normal(1),
+						normal(2),
+						-normal.dot(point));
+
+	}
 
 }

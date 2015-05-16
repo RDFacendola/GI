@@ -2,6 +2,8 @@
 
 #include <math.h>
 
+#include "..\include\exceptions.h"
+
 using namespace ::gi_lib;
 using namespace ::Eigen;
 
@@ -10,22 +12,6 @@ float Math::kPi = 3.1415926f;
 float Math::kDegToRad = Math::kPi / 180.0f;
 
 float Math::kRadToDeg = 1.0f / Math::kDegToRad;
-
-namespace {
-
-	Vector4f ToHomogeneous(const Vector3f & vector){
-
-		return Vector4f(vector(0), vector(1), vector(2), 1.0f);
-
-	}
-
-	Vector3f ToVector3f(const Vector4f & vector){
-
-		return Vector3f(vector(0), vector(1), vector(2));
-
-	}
-
-}
 
 ///////////////////////////////////////// AABB /////////////////////////////////////////
 
@@ -38,14 +24,14 @@ AABB AABB::operator*(const Affine3f& transform) const{
 	Vector3f min = center - half_extents;
 	Vector3f max = center + half_extents;
 
-	Vector3f min_transformed = ToVector3f(matrix.col(3));
-	Vector3f max_transformed = ToVector3f(matrix.col(3));
+	Vector3f min_transformed = Math::ToVector3(matrix.col(3));
+	Vector3f max_transformed = Math::ToVector3(matrix.col(3));
 
 	Vector3f a, b, col;
 
 	for (int i = 0; i < 3; i++){
 
-		col = ToVector3f(matrix.col(i));
+		col = Math::ToVector3(matrix.col(i));
 
 		a = col * min(i);
 		b = col * max(i);
@@ -95,29 +81,41 @@ Sphere Sphere::FromAABB(const AABB& aabb){
 
 ///////////////////////////////////////// FRUSTUM /////////////////////////////////////////
 
-Frustum::Frustum(const Affine3f& transform, float field_of_view, float near_distance, float far_distance, float aspect_ratio){
+Frustum::Frustum(const vector<Vector4f>& planes){
 
+	if (planes.size() != 6){
 
+		THROW(L"A frustum must have exactly 6 planes!");
 
+	}
+
+	for (int plane_index = 0; plane_index < 6; ++plane_index){
+
+		planes_[plane_index] = planes[plane_index].normalized();
+
+		abs_normals_[plane_index] = Math::ToVector3(planes_[plane_index]).cwiseAbs();
+
+	}
+	
 }
 
 IntersectionType Frustum::Intersect(const AABB& bounds) const{
 
 	/// Theory on: https://fgiesen.wordpress.com/2010/10/17/view-frustum-culling/
 
-	int i = 0;
+	int plane_index = 0;
 
-	auto hcenter = ToHomogeneous(bounds.center);	// Needed to compute the distance as a dot product between two 4-elements vectors.
+	auto hcenter = Math::ToHomogeneous(bounds.center);	// Needed to compute the distance as a dot product between two 4-elements vectors.
 
 	for (auto& plane : planes_){
 
-		if (plane.dot(hcenter) < -bounds.half_extents.dot(abs_normals_[i])){
+		if (plane.dot(hcenter) < -bounds.half_extents.dot(abs_normals_[plane_index])){
 
 			return IntersectionType::kNone;			// Outside the plane
 
 		}
 		
-		++i;
+		++plane_index;
 
 	}
 
@@ -127,7 +125,7 @@ IntersectionType Frustum::Intersect(const AABB& bounds) const{
 
 IntersectionType Frustum::Intersect(const Sphere& sphere) const{
 
-	auto hcenter = ToHomogeneous(sphere.center);	// Needed to compute the distance as a dot product between two 4-elements vectors.
+	auto hcenter = Math::ToHomogeneous(sphere.center);	// Needed to compute the distance as a dot product between two 4-elements vectors.
 
 	for (auto& plane : planes_){
 
