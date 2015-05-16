@@ -428,7 +428,7 @@ namespace gi_lib{
 		/// \brief Get the view frustum.
 		/// \param aspect_ratio Width-to-height aspect ratio.
 		/// \return Returns the view frustum.
-		Frustum GetViewFrustum(float aspect_ratio) const;
+		Frustum GetViewFrustum(float aspect_ratio = 1.0f) const;
 
 		virtual TypeSet GetTypes() const override;
 

@@ -79,7 +79,7 @@ scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 	camera->SetProjectionType(ProjectionType::Perspective);
 	camera->SetMinimumDistance(1.0f);
 	camera->SetMaximumDistance(1000.0f);
-	camera->SetFieldOfView(Math::kPi * 0.5f);
+	camera->SetFieldOfView(Math::DegToRad(45.0f));
 
 	scene_.SetMainCamera(camera);
 
@@ -92,10 +92,10 @@ scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 
 	FbxImporter fbx_importer(MaterialImporter(),
 							 graphics_.GetResources());
-
+	
 	fbx_importer.ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", 
 							 *node);
-
+	
 }
 
 GILogic::~GILogic(){

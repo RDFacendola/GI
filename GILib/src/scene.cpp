@@ -9,6 +9,56 @@
 using namespace ::gi_lib;
 using namespace ::std;
 
+namespace{
+
+	/// \brief Calculate the view frustum from a projective camera description.
+	/// \param camera_transform Camera transform matrix in world space.
+	/// \param near_distance Minimum projected distance in world units.
+	/// \param far_distance Maximum projected distance in world units.
+	/// \param field_of_view Half vertical field of view, in radians.
+	/// \param aspect_ratio Width-to-height aspect ratio.
+	Frustum ComputeProjectiveViewFrustum(const Affine3f& camera_transform, float near_distance, float far_distance, float field_of_view, float aspect_ratio){
+
+		// See: http://cgvr.cs.uni-bremen.de/teaching/cg_literatur/lighthouse3d_view_frustum_culling/
+
+		auto& camera_matrix = camera_transform.matrix();
+
+		// Camera position
+
+		auto camera_position = Math::ToVector3(camera_matrix.col(3));					// Position of the camera in world space.
+
+		// Camera directions
+
+		auto right_vector = Math::ToVector3(camera_matrix.row(0)).normalized();			// Right vector, from camera's point of view.
+
+		auto up_vector = Math::ToVector3(camera_matrix.row(1)).normalized();			// Up vector, from camera's point of view.
+
+		auto forward_vector = Math::ToVector3(camera_matrix.row(2)).normalized();		// Forward vector, from camera's point of view.
+
+		// Half dimensions
+
+		float half_height = near_distance * std::tanf(field_of_view);
+
+		Vector2f near_half_dim(half_height * aspect_ratio,									// Half dimensions of the near clipping plane 
+							   half_height);
+		// Center points
+
+		Vector3f near_center = forward_vector * near_distance;								// Center point of the near clipping plane (Calculated as the camera was @ 0;0;0).
+
+		Vector3f far_center = forward_vector * far_distance;								// Center point of the far clipping plane (calculated as the camera was @ 0;0;0).
+
+		// Create the frustum
+		return Frustum({ Math::MakePlane(forward_vector, near_center + camera_position),														// Near clipping plane
+						 Math::MakePlane(-forward_vector, far_center + camera_position),														// Far clipping plane
+						 Math::MakePlane(-up_vector.cross((near_center + right_vector * near_half_dim(0)).normalized()), camera_position),		// Right clipping plane. The result of the cross product is normalized since the two operands are orthogonal.
+						 Math::MakePlane( up_vector.cross((near_center - right_vector * near_half_dim(0)).normalized()), camera_position),		// Left clipping plane
+						 Math::MakePlane(right_vector.cross((near_center + up_vector * near_half_dim(1)).normalized()), camera_position),		// Top clipping plane
+						 Math::MakePlane(-right_vector.cross((near_center - up_vector * near_half_dim(1)).normalized()), camera_position) });	// Bottom clipping plane
+
+	}
+
+}
+
 ////////////////////////////////////// SCENE //////////////////////////////////////////
 
 Scene::Scene(unique_ptr<IVolumeHierarchy> volume_hierarchy) :
@@ -462,7 +512,7 @@ void MeshComponent::Finalize(){
 CameraComponent::CameraComponent(){
 
 	projection_type_ = ProjectionType::Perspective;
-	field_of_view_ = Math::DegToRad(60);
+	field_of_view_ = Math::DegToRad(45);
 	minimum_distance_ = 1.0f;
 	maximum_distance_ = 10000.f;
 
@@ -522,11 +572,11 @@ Frustum CameraComponent::GetViewFrustum(float aspect_ratio) const{
 
 	if (projection_type_ == ProjectionType::Perspective){
 
-		return Frustum(transform_->GetWorldTransform(),
-					   field_of_view_,
-					   minimum_distance_,
-					   maximum_distance_,
-					   aspect_ratio);
+		return ComputeProjectiveViewFrustum(transform_->GetWorldTransform(),
+											minimum_distance_,
+											maximum_distance_,
+											field_of_view_,
+											aspect_ratio);
 
 	}
 	else{
