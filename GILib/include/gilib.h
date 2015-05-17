@@ -10,6 +10,7 @@
 #include <codecvt>
 
 #include "macros.h"
+#include "exceptions.h"
 
 namespace gi_lib{
 
@@ -85,6 +86,8 @@ namespace gi_lib{
 			Object* subject_;				///< \brief Pointed object
 
 		};
+
+
 
 		size_t ref_count_;				///< \brief Number of strong references to this object.
 
@@ -246,8 +249,12 @@ namespace gi_lib{
 
 	inline Object::~Object(){
 
-		weak_object_->Clear();	// Clear the subject.
+		if (weak_object_){
 
+			weak_object_->Clear();	// Clear the subject.
+
+		}
+		
 	}
 
 	inline void Object::AddRef(){
@@ -272,7 +279,17 @@ namespace gi_lib{
 
 	inline Object::WeakObject::WeakObject(Object* subject) :
 		subject_(subject),
-		weak_count_(0){}
+		weak_count_(0){
+	
+		if (subject_->weak_object_){
+
+			THROW(L"The object has already a weak reference helper object!");
+
+		}
+
+		subject_->weak_object_ = this;
+	
+	}
 
 	inline Object::WeakObject::~WeakObject(){
 
