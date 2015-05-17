@@ -154,6 +154,67 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Weak reference to an object.
+	/// The pointer will add a weak reference during initialization and remove one during destruction.
+	/// \remarks This class is not thread safe.
+	/// \todo Make this class thread safe.
+	template <typename TObject>
+	class ObjectWeakPtr{
+
+	public:
+
+		/// \brief Create an empty pointer.
+		ObjectWeakPtr();
+
+		/// \brief Defines a pointer to an object.
+		/// \param object Object that will be pointed by this pointer.
+		ObjectWeakPtr(TObject* object);
+
+		/// \brief Copy constructor.
+		/// \param other Other pointer to copy.
+		ObjectWeakPtr(const ObjectWeakPtr<TObject>& other);
+
+		/// \brief Move constructor.
+		/// \param other Instance to move.
+		ObjectWeakPtr(ObjectWeakPtr<TObject>&& other);
+
+		/// \brief Destructor.
+		/// Decreases by one the weak reference count of the pointed object, if any.
+		~ObjectWeakPtr();
+
+		/// \brief Unified assignment operator.
+		ObjectWeakPtr<TObject>& operator=(ObjectWeakPtr<TObject> other);
+
+		/// \brief Equality operator.
+		/// \return Returns true if both this instance and the specified one points to the same object, returns false otherwise.
+		bool operator==(const ObjectWeakPtr<TObject>& other) const;
+
+		/// \brief Inequality operator.
+		/// \return Returns true if this instance and the specified one points to different objects, returns false otherwise.
+		bool operator!=(const ObjectWeakPtr<TObject>& other) const;
+
+		/// \brief Used to validate the pointed object.
+		/// \return Returns true if the pointed object is not null, returns false otherwise.
+		operator bool() const;
+
+		/// \brief Locks and create a strong reference to the pointed object.
+		/// \return Returns a strong reference to the pointed object if it was still valid, returns a pointer to null otherwise.
+		ObjectPtr<TObject> Lock();
+
+		/// \brief Release a weak reference from the pointed object.
+		void Release();
+
+	private:
+
+		/// \brief Add a weak reference to the pointed object.
+		void AddRef();
+
+		/// \brief Swaps this instance with another one.
+		void Swap(ObjectWeakPtr<TObject>& other);
+
+		WeakObject* object_ptr_;			/// \brief Pointer to the object.
+
+	};
 
 	/// \brief Converts a string to a wstring.
 	inline std::wstring to_wstring(const std::string& string)
