@@ -31,8 +31,6 @@ namespace gi_lib{
 	/// \author Raffaele D. Facendola
 	class Object{
 
-		friend class WeakObject;
-
 	public:
 
 		/// \brief Default destructor.
@@ -54,45 +52,47 @@ namespace gi_lib{
 		
 	private:
 
+		/// \brief Represents a weak reference to an object.
+		/// A weak reference won't prevent an object from being destroyed but can be locked to get a strong reference to it.
+		/// \author Raffaele D. Facendola
+		class WeakObject{
+
+		public:
+
+			/// \brief Create a weak reference to the given object.
+			/// \param subject Object to point.
+			WeakObject(Object* subject);
+
+			/// \brief Destructor.
+			/// Clear the weak reference from the object.
+			~WeakObject();
+
+			/// \brief Release the subject.
+			/// This method is called whenever the subject is destroyed.
+			void Clear();
+
+			/// \brief Add a weak reference to the object.
+			void AddRef();
+
+			/// \brief Release a weak reference to the object.
+			/// If the reference count drops to 0, this instance will be destroyed immediately.
+			void Release();
+
+		private:
+
+			size_t weak_count_;				///< \brief Number of weak references to the object.
+
+			Object* subject_;				///< \brief Pointed object
+
+		};
+
 		size_t ref_count_;				///< \brief Number of strong references to this object.
 
 		WeakObject* weak_object_;		///< \brief Pointer to a weak object helper (the pointer point to this object).
 
 	};
 
-	/// \brief Represents a weak reference to an object.
-	/// A weak reference won't prevent an object from being destroyed but can be locked to get a strong reference to it.
-	/// \author Raffaele D. Facendola
-	class WeakObject{
 
-	public:
-
-		/// \brief Create a weak reference to the given object.
-		/// \param subject Object to point.
-		WeakObject(Object* subject);
-
-		/// \brief Destructor.
-		/// Clear the weak reference from the object.
-		~WeakObject();
-
-		/// \brief Release the subject.
-		/// This method is called whenever the subject is destroyed.
-		void Clear();
-
-		/// \brief Add a weak reference to the object.
-		void AddRef();
-
-		/// \brief Release a weak reference to the object.
-		/// If the reference count drops to 0, this instance will be destroyed immediately.
-		void Release();
-
-	private:
-
-		size_t weak_count_;				///< \brief Number of weak references to the object.
-
-		Object* subject_;				///< \brief Pointed object
-
-	};
 
 	/// \brief Strong reference to an object.
 	/// The pointer will add a reference during initialization and remove one during destruction.
@@ -270,11 +270,11 @@ namespace gi_lib{
 
 	///////////////////////////////// WEAK OBJECT /////////////////////////////////
 
-	inline WeakObject::WeakObject(Object* subject) :
+	inline Object::WeakObject::WeakObject(Object* subject) :
 		subject_(subject),
 		weak_count_(0){}
 
-	inline WeakObject::~WeakObject(){
+	inline Object::WeakObject::~WeakObject(){
 
 		if (subject_){
 
@@ -285,19 +285,19 @@ namespace gi_lib{
 
 	}
 
-	inline void WeakObject::Clear(){
+	inline void Object::WeakObject::Clear(){
 
 		subject_ = nullptr;
 
 	}
 
-	inline void WeakObject::AddRef(){
+	inline void Object::WeakObject::AddRef(){
 
 		++weak_count_;
 
 	}
 
-	inline void WeakObject::Release(){
+	inline void Object::WeakObject::Release(){
 
 		--weak_count_;
 
