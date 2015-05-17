@@ -54,6 +54,8 @@ namespace gi_lib{
 
 		size_t ref_count_;				///< \brief Number of strong references to this object.
 
+		WeakObject* weak_object_;		///< \brief Pointer to a weak object helper (the pointer point to this object).
+
 	};
 
 	/// \brief Represents a weak reference to an object.
@@ -152,6 +154,7 @@ namespace gi_lib{
 
 	};
 
+
 	/// \brief Converts a string to a wstring.
 	inline std::wstring to_wstring(const std::string& string)
 	{
@@ -171,10 +174,12 @@ namespace gi_lib{
 	///////////////////////////////// OBJECT //////////////////////////////////
 
 	inline Object::Object() :
-		ref_count_(0){}
+		ref_count_(0),
+		weak_object_(nullptr){}
 
 	inline Object::~Object(){
 
+		weak_object_->Clear();	// Clear the subject.
 
 	}
 
