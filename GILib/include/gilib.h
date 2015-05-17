@@ -31,6 +31,8 @@ namespace gi_lib{
 	/// \author Raffaele D. Facendola
 	class Object{
 
+		friend class WeakObject;
+
 	public:
 
 		/// \brief Default destructor.
@@ -68,6 +70,10 @@ namespace gi_lib{
 		/// \brief Create a weak reference to the given object.
 		/// \param subject Object to point.
 		WeakObject(Object* subject);
+
+		/// \brief Destructor.
+		/// Clear the weak reference from the object.
+		~WeakObject();
 
 		/// \brief Release the subject.
 		/// This method is called whenever the subject is destroyed.
@@ -268,6 +274,17 @@ namespace gi_lib{
 		subject_(subject),
 		weak_count_(0){}
 
+	inline WeakObject::~WeakObject(){
+
+		if (subject_){
+
+			// Remove the weak reference from the subject.
+			subject_->weak_object_ = nullptr;
+
+		}
+
+	}
+
 	inline void WeakObject::Clear(){
 
 		subject_ = nullptr;
@@ -291,7 +308,6 @@ namespace gi_lib{
 		}
 
 	}
-
 
 	///////////////////////////////// OBJECT PTR //////////////////////////////////
 
