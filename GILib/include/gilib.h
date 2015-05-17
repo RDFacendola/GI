@@ -129,6 +129,14 @@ namespace gi_lib{
 		/// \return Returns true if the pointed object is not null, returns false otherwise.
 		operator bool() const;
 
+		/// \brief Arrow operator.
+		/// Access the managed object.
+		TObject* operator->();
+
+		/// \brief Arrow operator.
+		/// Access the managed object.
+		const TObject* operator->() const;
+
 		/// \brief Release the pointed object.
 		void Release();
 
@@ -190,23 +198,23 @@ namespace gi_lib{
 
 	///////////////////////////////// WEAK OBJECT /////////////////////////////////
 
-	WeakObject::WeakObject(Object* subject) :
+	inline WeakObject::WeakObject(Object* subject) :
 		subject_(subject_),
 		weak_count_(0){}
 
-	void WeakObject::Clear(){
+	inline void WeakObject::Clear(){
 
 		subject_ = nullptr;
 
 	}
 
-	void WeakObject::AddRef(){
+	inline void WeakObject::AddRef(){
 
 		++weak_count_;
 
 	}
 
-	void WeakObject::Release(){
+	inline void WeakObject::Release(){
 
 		--weak_count_;
 
@@ -277,6 +285,20 @@ namespace gi_lib{
 	inline ObjectPtr<TObject>::operator bool() const{
 
 		return object_ptr_ != nullptr;
+
+	}
+
+	template <typename TObject>
+	inline TObject* ObjectPtr<TObject>::operator->(){
+
+		return object_ptr_;
+
+	}
+
+	template <typename TObject>
+	inline const TObject* ObjectPtr<TObject>::operator->() const{
+
+		return object_ptr_;
 
 	}
 
