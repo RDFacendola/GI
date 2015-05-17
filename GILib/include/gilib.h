@@ -13,10 +13,13 @@
 
 namespace gi_lib{
 
-	class GIWeakObject;
+	class WeakObject;
+
+	template <typename TObject>
+	class ObjectPtr;
 
 	/// \brief Don't care.
-	/// Use this structure when you don't need a parameter in a lamba expression
+	/// Use this structure when you don't need a parameter in a lambda expression
 	struct _{
 
 		template <typename... TArguments>
@@ -50,6 +53,36 @@ namespace gi_lib{
 	private:
 
 		size_t ref_count_;				///< \brief Number of strong references to this object.
+
+	};
+
+	/// \brief Represents a weak reference to an object.
+	/// A weak reference won't prevent an object from being destroyed but can be locked to get a strong reference to it.
+	/// \author Raffaele D. Facendola
+	class WeakObject{
+
+	public:
+
+		/// \brief Create a weak reference to the given object.
+		/// \param subject Object to point.
+		WeakObject(Object* subject);
+
+		/// \brief Release the subject.
+		/// This method is called whenever the subject is destroyed.
+		void Clear();
+
+		/// \brief Add a weak reference to the object.
+		void AddRef();
+
+		/// \brief Release a weak reference to the object.
+		/// If the reference count drops to 0, this instance will be destroyed immediately.
+		void Release();
+
+	private:
+
+		size_t weak_count_;				///< \brief Number of weak references to the object.
+
+		Object* subject_;				///< \brief Pointed object
 
 	};
 
