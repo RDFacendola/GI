@@ -204,7 +204,7 @@ namespace gi_lib{
 	///////////////////////////////// WEAK OBJECT /////////////////////////////////
 
 	inline WeakObject::WeakObject(Object* subject) :
-		subject_(subject_),
+		subject_(subject),
 		weak_count_(0){}
 
 	inline void WeakObject::Clear(){
