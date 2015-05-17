@@ -172,7 +172,7 @@ namespace gi_lib{
 
 	inline void Object::AddRef(){
 
-		ref_count_++;
+		++ref_count_;
 
 	}
 
@@ -187,6 +187,37 @@ namespace gi_lib{
 		}
 
 	}
+
+	///////////////////////////////// WEAK OBJECT /////////////////////////////////
+
+	WeakObject::WeakObject(Object* subject) :
+		subject_(subject_),
+		weak_count_(0){}
+
+	void WeakObject::Clear(){
+
+		subject_ = nullptr;
+
+	}
+
+	void WeakObject::AddRef(){
+
+		++weak_count_;
+
+	}
+
+	void WeakObject::Release(){
+
+		--weak_count_;
+
+		if (weak_count_ == 0){
+
+			delete this;
+
+		}
+
+	}
+
 
 	///////////////////////////////// OBJECT PTR //////////////////////////////////
 
