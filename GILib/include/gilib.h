@@ -31,6 +31,36 @@ namespace gi_lib{
 
 	};
 	
+	/// \brief Used to count strong and weak references of a shared object.
+	/// Whenever the strong reference count drops to 0, the object is deleted.
+	/// Whenever the weak reference count drops to 0, this object is deleted.
+	/// The weak reference count is increased by 1 if the strong reference count is greater than 0.
+	class RefCountObject{
+
+		friend class Object;
+
+	private:
+
+		/// \brief Adds a strong reference.
+		void AddRef();
+
+		/// \brief Remove a strong reference.
+		void Release();
+
+		/// \brief Add a weak reference.
+		void AddWeakRef();
+
+		/// \brief Remove a weak reference.
+		void WeakRelease();
+
+		size_t ref_count_;		///< \brief Strong reference count.
+
+		size_t weak_count_;		///< \brief Weak reference count.
+
+		Object* object_;		///< \brief Actual object pointer.
+
+	};
+
 	/// \brief Base interface for every object whose life cycle is determined by a reference counter.
 	/// \author Raffaele D. Facendola
 	class Object{
