@@ -270,6 +270,8 @@ namespace gi_lib{
 
 		if (ref_count_ == 0){
 
+			delete object_;
+
 			object_ = nullptr;
 
 			WeakRelease();
