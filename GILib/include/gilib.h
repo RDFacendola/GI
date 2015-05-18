@@ -140,9 +140,7 @@ namespace gi_lib{
 		WeakObject* weak_object_;		///< \brief Pointer to a weak object helper (the pointer point to this object).
 
 	};
-
-
-
+	
 	/// \brief Strong reference to an object.
 	/// The pointer will add a reference during initialization and remove one during destruction.
 	/// \remarks This class is not thread safe.
@@ -284,6 +282,55 @@ namespace gi_lib{
 	{
 
 		return std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().to_bytes(wstring);
+
+	}
+
+	///////////////////////////////// REF COUNT OBJECT ////////////////////////
+
+	RefCountObject::RefCountObject(Object* object) :
+	object_(object){}
+
+	void RefCountObject::AddRef(){
+
+		if (ref_count_ == 0){
+
+			++weak_count_;
+
+		}
+
+		++ref_count_;
+
+	}
+
+	void RefCountObject::Release(){
+
+		--ref_count_;
+
+		if (ref_count_ == 0){
+
+			object_ = nullptr;
+
+			WeakRelease();
+
+		}
+
+	}
+
+	void RefCountObject::AddWeakRef(){
+
+		++weak_count_;
+
+	}
+
+	void RefCountObject::WeakRelease(){
+
+		--weak_count_;
+
+		if (weak_count_ == 0){
+
+			delete this;
+
+		}
 
 	}
 
