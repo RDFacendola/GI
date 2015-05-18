@@ -314,7 +314,7 @@ namespace gi_lib{
 	template <typename TObject>
 	inline ObjectPtr<TObject>::ObjectPtr(TObject* object) :
 		object_ptr_(object){
-
+		
 		AddRef();
 
 	}
@@ -428,10 +428,20 @@ namespace gi_lib{
 	template <typename TObject>
 	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(TObject* object){
 
+		ref_count_object_ = object ?
+							static_cast<Object*>(object)->ref_count_object_ :
+							nullptr;
+
+		AddRef();
+
 	}
 
 	template <typename TObject>
-	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(const ObjectWeakPtr<TObject>& other){
+	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(const ObjectWeakPtr<TObject>& other) :
+		ref_count_object_(other.ref_count_object_)
+	{
+
+		AddRef();
 
 	}
 
@@ -474,17 +484,17 @@ namespace gi_lib{
 	template <typename TObject>
 	inline ObjectWeakPtr<TObject>::operator bool() const{
 
-		return object_ptr_ &&
-			   object_ptr_->GetSubject() != nullptr;
+		return ref_count_object_ != nullptr &&
+			   ref_count_object_->object_ != nullptr;
 
 	}
 
 	template <typename TObject>
 	inline ObjectPtr<TObject> ObjectWeakPtr<TObject>::Lock(){
 
-		if (object_ptr_){
+		if (*this){
 
-			return ObjectPtr<TObject>(static_cast<TObject*>(object_ptr_->GetSubject()));
+			return ObjectPtr<TObject>(static_cast<TObject*>(ref_count_object_->object_));
 
 		}
 		else{
@@ -492,17 +502,17 @@ namespace gi_lib{
 			return ObjectPtr<TObject>();
 
 		}
-		
+				
 	}
 
 	template <typename TObject>
 	inline void ObjectWeakPtr<TObject>::Release(){
 
-		if (object_ptr_){
+		if (ref_count_object_){
 
-			object_ptr_->Release();
+			ref_count_object_->WeakRelease();
 
-			object_ptr_ = nullptr;
+			ref_count_object_ = nullptr;
 
 		}
 
@@ -511,9 +521,9 @@ namespace gi_lib{
 	template <typename TObject>
 	inline void ObjectWeakPtr<TObject>::AddRef(){
 
-		if (object_ptr_){
+		if (ref_count_object_){
 
-			object_ptr_->AddRef();
+			ref_count_object_->AddWeakRef();
 
 		}
 
@@ -522,8 +532,8 @@ namespace gi_lib{
 	template <typename TObject>
 	inline void ObjectWeakPtr<TObject>::Swap(ObjectWeakPtr<TObject>& other){
 
-		std::swap(object_ptr_,
-				  other.object_ptr_);
+		std::swap(ref_count_object_,
+				  other.ref_count_object_);
 
 	}
 
