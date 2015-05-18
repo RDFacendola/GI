@@ -14,10 +14,13 @@
 
 namespace gi_lib{
 
-	class WeakObject;
-
 	template <typename TObject>
 	class ObjectPtr;
+
+	template <typename TObject>
+	class ObjectWeakPtr;
+
+	class Object;
 
 	/// \brief Don't care.
 	/// Use this structure when you don't need a parameter in a lambda expression
@@ -31,6 +34,9 @@ namespace gi_lib{
 	/// \brief Base interface for every object whose life cycle is determined by a reference counter.
 	/// \author Raffaele D. Facendola
 	class Object{
+		
+		template <typename TObject>
+		friend class ObjectWeakPtr;
 
 	public:
 
@@ -79,6 +85,10 @@ namespace gi_lib{
 			/// If the reference count drops to 0, this instance will be destroyed immediately.
 			void Release();
 
+			/// \brief Get a pointer to the subject.
+			/// \return Returns a pointer to the subject.
+			Object* GetSubject();
+
 		private:
 
 			size_t weak_count_;				///< \brief Number of weak references to the object.
@@ -87,7 +97,9 @@ namespace gi_lib{
 
 		};
 
-
+		/// \brief Get the weak object.
+		/// The weak object is instantiated if it wasn't allocated.
+		WeakObject* GetWeakObject();
 
 		size_t ref_count_;				///< \brief Number of strong references to this object.
 
@@ -221,7 +233,7 @@ namespace gi_lib{
 		/// \brief Swaps this instance with another one.
 		void Swap(ObjectWeakPtr<TObject>& other);
 
-		WeakObject* object_ptr_;			/// \brief Pointer to the object.
+		Object::WeakObject* object_ptr_;			/// \brief Pointer to the object.
 
 	};
 
@@ -275,6 +287,18 @@ namespace gi_lib{
 
 	}
 
+	inline Object::WeakObject* Object::GetWeakObject(){
+
+		if (!weak_object_){
+
+			weak_object_ = new WeakObject(this);
+
+		}
+
+		return weak_object_;
+
+	}
+
 	///////////////////////////////// WEAK OBJECT /////////////////////////////////
 
 	inline Object::WeakObject::WeakObject(Object* subject) :
@@ -323,6 +347,12 @@ namespace gi_lib{
 			delete this;
 
 		}
+
+	}
+
+	inline Object* Object::WeakObject::GetSubject(){
+
+		return subject_;
 
 	}
 
@@ -430,6 +460,114 @@ namespace gi_lib{
 			object_ptr_->AddRef();
 
 		}
+
+	}
+
+	///////////////////////////////// WEAK OBJECT PTR ////////////////////////////////
+
+	template <typename TObject>
+	inline ObjectWeakPtr<TObject>::ObjectWeakPtr() :
+	object_ptr_(nullptr){}
+
+	template <typename TObject>
+	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(TObject* object){
+
+	}
+
+	template <typename TObject>
+	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(const ObjectWeakPtr<TObject>& other){
+
+	}
+
+	template <typename TObject>
+	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(ObjectWeakPtr<TObject>&& other) :
+	object_ptr_(other.object_ptr_){
+
+		other.object_ptr_ = nullptr;
+
+	}
+
+	template <typename TObject>
+	inline ObjectWeakPtr<TObject>::~ObjectWeakPtr(){
+
+		Release();
+
+	}
+
+	template <typename TObject>
+	inline ObjectWeakPtr<TObject>& ObjectWeakPtr<TObject>::operator=(ObjectWeakPtr<TObject> other){
+
+		other.Swap(*this);
+
+	}
+	
+	template <typename TObject>
+	inline bool ObjectWeakPtr<TObject>::operator==(const ObjectWeakPtr<TObject>& other) const{
+
+		return object_ptr_ == other.object_ptr_;
+
+	}
+
+	template <typename TObject>
+	inline bool ObjectWeakPtr<TObject>::operator!=(const ObjectWeakPtr<TObject>& other) const{
+
+		return object_ptr_ != other.object_ptr_;
+
+	}
+
+	template <typename TObject>
+	inline ObjectWeakPtr<TObject>::operator bool() const{
+
+		return object_ptr_ &&
+			   object_ptr_->GetSubject() != nullptr;
+
+	}
+
+	template <typename TObject>
+	inline ObjectPtr<TObject> ObjectWeakPtr<TObject>::Lock(){
+
+		if (object_ptr_){
+
+			return ObjectPtr<TObject>(static_cast<TObject*>(object_ptr_->GetSubject()));
+
+		}
+		else{
+
+			return ObjectPtr<TObject>();
+
+		}
+		
+	}
+
+	template <typename TObject>
+	inline void ObjectWeakPtr<TObject>::Release(){
+
+		if (object_ptr_){
+
+			object_ptr_->Release();
+
+			object_ptr_ = nullptr;
+
+		}
+
+	}
+
+	template <typename TObject>
+	inline void ObjectWeakPtr<TObject>::AddRef(){
+
+		if (object_ptr_){
+
+			object_ptr_->AddRef();
+
+		}
+
+	}
+
+	template <typename TObject>
+	inline void ObjectWeakPtr<TObject>::Swap(ObjectWeakPtr<TObject>& other){
+
+		std::swap(object_ptr_,
+				  other.object_ptr_);
 
 	}
 
