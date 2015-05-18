@@ -35,9 +35,16 @@ namespace gi_lib{
 	/// Whenever the strong reference count drops to 0, the object is deleted.
 	/// Whenever the weak reference count drops to 0, this object is deleted.
 	/// The weak reference count is increased by 1 if the strong reference count is greater than 0.
+	/// \author Raffaele D. Facendola.
 	class RefCountObject{
 
 		friend class Object;
+		
+		template <typename TObject>
+		friend class ObjectPtr;
+
+		template <typename TObject>
+		friend class ObjectWeapPtr;
 
 	private:
 
@@ -75,69 +82,18 @@ namespace gi_lib{
 	public:
 
 		/// \brief Default destructor.
-		/// The object is initialized with 0 strong reference count and no weak reference object.
 		Object();
 
-		/// \brief Virtual destructor.
+		/// \brief Virtual class.
 		virtual ~Object();
 
 		/// \brief No assignment operator.
+		/// An assignment operator would break the ref counter object.
 		Object& operator=(const Object&) = delete;
-
-		/// \brief Add a strong reference to the object.
-		void AddRef();
-
-		/// \brief Release a strong reference to the object.
-		/// If the reference count drops to 0, this instance will be destroyed immediately.
-		void Release();
 		
 	private:
 
-		/// \brief Represents a weak reference to an object.
-		/// A weak reference won't prevent an object from being destroyed but can be locked to get a strong reference to it.
-		/// \author Raffaele D. Facendola
-		class WeakObject{
-
-		public:
-
-			/// \brief Create a weak reference to the given object.
-			/// \param subject Object to point.
-			WeakObject(Object* subject);
-
-			/// \brief Destructor.
-			/// Clear the weak reference from the object.
-			~WeakObject();
-
-			/// \brief Release the subject.
-			/// This method is called whenever the subject is destroyed.
-			void Clear();
-
-			/// \brief Add a weak reference to the object.
-			void AddRef();
-
-			/// \brief Release a weak reference to the object.
-			/// If the reference count drops to 0, this instance will be destroyed immediately.
-			void Release();
-
-			/// \brief Get a pointer to the subject.
-			/// \return Returns a pointer to the subject.
-			Object* GetSubject();
-
-		private:
-
-			size_t weak_count_;				///< \brief Number of weak references to the object.
-
-			Object* subject_;				///< \brief Pointed object
-
-		};
-
-		/// \brief Get the weak object.
-		/// The weak object is instantiated if it wasn't allocated.
-		WeakObject* GetWeakObject();
-
-		size_t ref_count_;				///< \brief Number of strong references to this object.
-
-		WeakObject* weak_object_;		///< \brief Pointer to a weak object helper (the pointer point to this object).
+		RefCountObject* ref_count_object_;			///< \brief Reference counter.
 
 	};
 	
@@ -265,7 +221,7 @@ namespace gi_lib{
 		/// \brief Swaps this instance with another one.
 		void Swap(ObjectWeakPtr<TObject>& other);
 
-		Object::WeakObject* object_ptr_;			/// \brief Pointer to the object.
+		RefCountObject* ref_count_object_;			///< \brief Weak reference to the pointed object.
 
 	};
 
@@ -287,10 +243,10 @@ namespace gi_lib{
 
 	///////////////////////////////// REF COUNT OBJECT ////////////////////////
 
-	RefCountObject::RefCountObject(Object* object) :
+	inline RefCountObject::RefCountObject(Object* object) :
 	object_(object){}
 
-	void RefCountObject::AddRef(){
+	inline void RefCountObject::AddRef(){
 
 		if (ref_count_ == 0){
 
@@ -302,7 +258,7 @@ namespace gi_lib{
 
 	}
 
-	void RefCountObject::Release(){
+	inline void RefCountObject::Release(){
 
 		--ref_count_;
 
@@ -316,13 +272,13 @@ namespace gi_lib{
 
 	}
 
-	void RefCountObject::AddWeakRef(){
+	inline void RefCountObject::AddWeakRef(){
 
 		++weak_count_;
 
 	}
 
-	void RefCountObject::WeakRelease(){
+	inline void RefCountObject::WeakRelease(){
 
 		--weak_count_;
 
@@ -337,105 +293,9 @@ namespace gi_lib{
 	///////////////////////////////// OBJECT //////////////////////////////////
 
 	inline Object::Object() :
-		ref_count_(0),
-		weak_object_(nullptr){}
+		ref_count_object_(new RefCountObject(this)){}
 
-	inline Object::~Object(){
-
-		if (weak_object_){
-
-			weak_object_->Clear();	// Clear the subject.
-
-		}
-		
-	}
-
-	inline void Object::AddRef(){
-
-		++ref_count_;
-
-	}
-
-	inline void Object::Release(){
-
-		--ref_count_;
-
-		if (ref_count_ == 0){
-
-			delete this;
-
-		}
-
-	}
-
-	inline Object::WeakObject* Object::GetWeakObject(){
-
-		if (!weak_object_){
-
-			weak_object_ = new WeakObject(this);
-
-		}
-
-		return weak_object_;
-
-	}
-
-	///////////////////////////////// WEAK OBJECT /////////////////////////////////
-
-	inline Object::WeakObject::WeakObject(Object* subject) :
-		subject_(subject),
-		weak_count_(0){
-	
-		if (subject_->weak_object_){
-
-			THROW(L"The object has already a weak reference helper object!");
-
-		}
-
-		subject_->weak_object_ = this;
-	
-	}
-
-	inline Object::WeakObject::~WeakObject(){
-
-		if (subject_){
-
-			// Remove the weak reference from the subject.
-			subject_->weak_object_ = nullptr;
-
-		}
-
-	}
-
-	inline void Object::WeakObject::Clear(){
-
-		subject_ = nullptr;
-
-	}
-
-	inline void Object::WeakObject::AddRef(){
-
-		++weak_count_;
-
-	}
-
-	inline void Object::WeakObject::Release(){
-
-		--weak_count_;
-
-		if (weak_count_ == 0){
-
-			delete this;
-
-		}
-
-	}
-
-	inline Object* Object::WeakObject::GetSubject(){
-
-		return subject_;
-
-	}
+	inline Object::~Object(){}
 
 	///////////////////////////////// OBJECT PTR //////////////////////////////////
 
