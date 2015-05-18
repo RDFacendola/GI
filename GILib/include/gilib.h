@@ -41,6 +41,10 @@ namespace gi_lib{
 
 	private:
 
+		/// \brief Create a new reference count object with an actual pointer.
+		/// \param object The managed object pointer.
+		RefCountObject(Object* object);
+
 		/// \brief Adds a strong reference.
 		void AddRef();
 
