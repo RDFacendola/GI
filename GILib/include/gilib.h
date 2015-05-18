@@ -77,6 +77,9 @@ namespace gi_lib{
 	class Object{
 		
 		template <typename TObject>
+		friend class ObjectPtr;
+
+		template <typename TObject>
 		friend class ObjectWeakPtr;
 
 	public:
@@ -158,6 +161,9 @@ namespace gi_lib{
 
 		/// \brief Swaps this instance with another one.
 		void Swap(ObjectPtr<TObject>& other);
+
+		/// \brief Get the reference count object.
+		RefCountObject& GetRefCountObject();
 
 		TObject* object_ptr_;			/// \brief Pointer to the object.
 
@@ -385,7 +391,7 @@ namespace gi_lib{
 
 		if (object_ptr_){
 
-			object_ptr_->Release();
+			GetRefCountObject().Release();
 
 			object_ptr_ = nullptr;
 
@@ -398,9 +404,16 @@ namespace gi_lib{
 
 		if (object_ptr_){
 
-			object_ptr_->AddRef();
+			GetRefCountObject().AddRef();
 
 		}
+
+	}
+
+	template <typename TObject>
+	inline RefCountObject& ObjectPtr<TObject>::GetRefCountObject(){
+
+		return *static_cast<Object*>(object_ptr_)->ref_count_object_;
 
 	}
 
