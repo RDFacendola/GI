@@ -250,7 +250,9 @@ namespace gi_lib{
 	///////////////////////////////// REF COUNT OBJECT ////////////////////////
 
 	inline RefCountObject::RefCountObject(Object* object) :
-	object_(object){}
+	object_(object),
+	ref_count_(0),
+	weak_count_(0){}
 
 	inline void RefCountObject::AddRef(){
 
