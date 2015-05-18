@@ -147,9 +147,17 @@ namespace gi_lib{
 		/// Access the managed object.
 		TObject* operator->();
 
-		/// \brief Arrow operator.
+		/// \brief Constant arrow operator.
 		/// Access the managed object.
 		const TObject* operator->() const;
+
+		/// \brief Dereferencing operator.
+		/// Access the managed object.
+		TObject& operator*();
+
+		/// \brief Constant dereferencing operator.
+		/// Access the managed object.
+		const TObject& operator*() const;
 
 		/// \brief Release the pointed object.
 		void Release();
@@ -379,6 +387,20 @@ namespace gi_lib{
 	inline const TObject* ObjectPtr<TObject>::operator->() const{
 
 		return object_ptr_;
+
+	}
+
+	template <typename TObject>
+	inline TObject& ObjectPtr<TObject>::operator*(){
+
+		return *object_ptr_;
+
+	}
+
+	template <typename TObject>
+	inline const TObject& ObjectPtr<TObject>::operator*() const{
+
+		return *object_ptr_;
 
 	}
 
