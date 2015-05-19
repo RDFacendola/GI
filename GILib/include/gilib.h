@@ -117,13 +117,25 @@ namespace gi_lib{
 
 		/// \brief Defines a pointer to an object.
 		/// \param object Object that will be pointed by this pointer.
+		ObjectPtr(TObject* object);
+
+		/// \brief Defines a pointer to an object.
+		/// \param object Object that will be pointed by this pointer.
 		template <typename TOther>
 		ObjectPtr(TOther* object);
 
 		/// \brief Copy constructor.
 		/// \param other Other pointer to copy.
+		ObjectPtr(const ObjectPtr<TObject>& other);
+
+		/// \brief Copy constructor.
+		/// \param other Other pointer to copy.
 		template <typename TOther>
 		ObjectPtr(const ObjectPtr<TOther>& other);
+
+		/// \brief Move constructor.
+		/// \param other Instance to move.
+		ObjectPtr(ObjectPtr<TObject>&& other);
 
 		/// \brief Move constructor.
 		/// \param other Instance to move.
@@ -134,8 +146,19 @@ namespace gi_lib{
 		/// Decreases by one the reference count of the pointed object, if any.
 		~ObjectPtr();
 
-		/// \brief Unified assignment operator.
-		ObjectPtr<TObject>& operator=(ObjectPtr<TObject> other);
+		/// \brief Copy assignment.
+		ObjectPtr<TObject>& operator=(const ObjectPtr<TObject>& other);
+
+		/// \brief Copy assignment.
+		template <typename TOther>
+		ObjectPtr<TObject>& operator=(const ObjectPtr<TOther>& other);
+
+		/// \brief Move assignment.
+		ObjectPtr<TObject>& operator=(ObjectPtr<TObject>&& other);
+
+		/// \brief Move assignment.
+		template <typename TOther>
+		ObjectPtr<TObject>& operator=(ObjectPtr<TOther>&& other);
 
 		/// \brief Equality operator.
 		/// \return Returns true if both this instance and the specified one points to the same object, returns false otherwise.
@@ -168,9 +191,6 @@ namespace gi_lib{
 		/// \brief Add a reference to the pointed object.
 		void AddRef();
 
-		/// \brief Swaps this instance with another one.
-		void Swap(ObjectPtr<TObject>& other);
-
 		/// \brief Get the reference count object.
 		RefCountObject& GetRefCountObject();
 
@@ -198,8 +218,16 @@ namespace gi_lib{
 
 		/// \brief Defines a pointer to an object.
 		/// \param object Object that will be pointed by this pointer.
+		ObjectWeakPtr(TObject* object);
+
+		/// \brief Defines a pointer to an object.
+		/// \param object Object that will be pointed by this pointer.
 		template <typename TOther>
 		ObjectWeakPtr(TOther* object);
+
+		/// \brief Copy constructor.
+		/// \param other Other pointer to copy.
+		ObjectWeakPtr(const ObjectWeakPtr<TObject>& other);
 
 		/// \brief Copy constructor.
 		/// \param other Other pointer to copy.
@@ -208,8 +236,16 @@ namespace gi_lib{
 
 		/// \brief Create a weak pointer from a strong reference.
 		/// \param other Other pointer to copy.
+		ObjectWeakPtr(const ObjectPtr<TObject>& other);
+
+		/// \brief Create a weak pointer from a strong reference.
+		/// \param other Other pointer to copy.
 		template <typename TOther>
 		ObjectWeakPtr(const ObjectPtr<TOther>& other);
+
+		/// \brief Move constructor.
+		/// \param other Instance to move.
+		ObjectWeakPtr(ObjectWeakPtr<TObject>&& other);
 
 		/// \brief Move constructor.
 		/// \param other Instance to move.
@@ -220,8 +256,19 @@ namespace gi_lib{
 		/// Decreases by one the weak reference count of the pointed object, if any.
 		~ObjectWeakPtr();
 
-		/// \brief Unified assignment operator.
-		ObjectWeakPtr<TObject>& operator=(ObjectWeakPtr<TObject> other);
+		/// \brief Copy assignment.
+		ObjectWeakPtr<TObject>& operator=(const ObjectWeakPtr<TObject>& other);
+
+		/// \brief Copy assignment.
+		template <typename TOther>
+		ObjectWeakPtr<TObject>& operator=(const ObjectWeakPtr<TOther>& other);
+
+		/// \brief Move assignment.
+		ObjectWeakPtr<TObject>& operator=(ObjectWeakPtr<TObject>&& other);
+
+		/// \brief Move assignment.
+		template <typename TOther>
+		ObjectWeakPtr<TObject>& operator=(ObjectWeakPtr<TOther>&& other);
 
 		/// \brief Equality operator.
 		/// \return Returns true if both this instance and the specified one points to the same object, returns false otherwise.
@@ -250,9 +297,6 @@ namespace gi_lib{
 
 		/// \brief Add a weak reference to the pointed object.
 		void AddRef();
-
-		/// \brief Swaps this instance with another one.
-		void Swap(ObjectWeakPtr<TObject>& other);
 
 		RefCountObject* ref_count_object_;			///< \brief Weak reference to the pointed object.
 
@@ -351,9 +395,8 @@ namespace gi_lib{
 		ObjectPtr(){}
 
 	template <typename TObject>
-	template <typename TOther>
-	inline ObjectPtr<TObject>::ObjectPtr(TOther* object) :
-		object_ptr_(static_cast<TObject*>(object)){
+	inline ObjectPtr<TObject>::ObjectPtr(TObject* object) :
+		object_ptr_(object){
 		
 		AddRef();
 
@@ -361,8 +404,29 @@ namespace gi_lib{
 
 	template <typename TObject>
 	template <typename TOther>
+	inline ObjectPtr<TObject>::ObjectPtr(TOther* object) :
+		object_ptr_(static_cast<TObject*>(object)){
+
+		AddRef();
+
+	}
+
+	template <typename TObject>
+	inline ObjectPtr<TObject>::ObjectPtr(const ObjectPtr<TObject>& other) :
+		ObjectPtr(other.Get()){}
+
+	template <typename TObject>
+	template <typename TOther>
 	inline ObjectPtr<TObject>::ObjectPtr(const ObjectPtr<TOther>& other) :
 		ObjectPtr(static_cast<TObject*>(other.Get())){}
+
+	template <typename TObject>
+	inline ObjectPtr<TObject>::ObjectPtr(ObjectPtr<TObject>&& other) :
+		object_ptr_(other.Get()){
+
+		other.object_ptr_ = nullptr;
+
+	}
 
 	template <typename TObject>
 	template <typename TOther>
@@ -381,9 +445,46 @@ namespace gi_lib{
 	}
 
 	template <typename TObject>
-	inline ObjectPtr<TObject>& ObjectPtr<TObject>::operator=(ObjectPtr<TObject> other){
+	ObjectPtr<TObject>& ObjectPtr<TObject>::operator=(const ObjectPtr<TObject>& other){
 
-		other.Swap(*this);
+		object_ptr_ = other.object_ptr_;
+
+		AddRef();
+
+		return *this;
+
+	}
+
+	template <typename TObject>
+	template <typename TOther>
+	ObjectPtr<TObject>& ObjectPtr<TObject>::operator=(const ObjectPtr<TOther>& other){
+
+		object_ptr_ = static_cast<TObject*>(other.object_ptr_);
+
+		AddRef();
+
+		return *this;
+
+	}
+
+	template <typename TObject>
+	ObjectPtr<TObject>& ObjectPtr<TObject>::operator=(ObjectPtr<TObject>&& other){
+
+		object_ptr_ = other.object_ptr_;
+
+		other.object_ptr_ = nullptr;
+
+		return *this;
+
+	}
+
+	template <typename TObject>
+	template <typename TOther>
+	ObjectPtr<TObject>& ObjectPtr<TObject>::operator=(ObjectPtr<TOther>&& other){
+
+		object_ptr_ = static_cast<TObject*>(other.object_ptr_);
+
+		other.object_ptr_ = nullptr;
 
 		return *this;
 
@@ -432,14 +533,6 @@ namespace gi_lib{
 	}
 
 	template <typename TObject>
-	inline void ObjectPtr<TObject>::Swap(ObjectPtr<TObject>& other){
-
-		std::swap(object_ptr_, 
-				  other.object_ptr_);
-
-	}
-
-	template <typename TObject>
 	inline void ObjectPtr<TObject>::Release(){
 
 		if (object_ptr_){
@@ -481,11 +574,8 @@ namespace gi_lib{
 		ObjectWeakPtr(){}
 
 	template <typename TObject>
-	template <typename TOther>
-	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(TOther* object) :
+	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(TObject* object) :
 		ref_count_object_(static_cast<const Object*>(object)->ref_count_object_){
-		
-		static_assert(std::is_base_of<TObject, TOther>::value, "TOther must derive from TObject.");
 
 		AddRef();
 
@@ -493,13 +583,40 @@ namespace gi_lib{
 
 	template <typename TObject>
 	template <typename TOther>
+	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(TOther* object) :
+		ref_count_object_(static_cast<const Object*>(object)->ref_count_object_){
+
+		static_assert(std::is_base_of<TObject, TOther>::value, "TOther must derive from TObject.");
+
+		AddRef();
+
+	}
+
+	template <typename TObject>
+	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(const ObjectWeakPtr<TObject>& other) :
+		ObjectWeakPtr(other.Lock()){}
+
+	template <typename TObject>
+	template <typename TOther>
 	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(const ObjectWeakPtr<TOther>& other) :
 		ObjectWeakPtr(other.Lock()){}
+
+	template <typename TObject>
+	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(const ObjectPtr<TObject>& other) :
+		ObjectWeakPtr(other.Get()){}
 
 	template <typename TObject>
 	template <typename TOther>
 	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(const ObjectPtr<TOther>& other) :
 		ObjectWeakPtr(other.Get()){}
+
+	template <typename TObject>
+	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(ObjectWeakPtr<TObject>&& other) :
+		ref_count_object_(other.ref_count_object_){
+
+		other.ref_count_object_ = nullptr;
+
+	}
 
 	template <typename TObject>
 	template <typename TOther>
@@ -520,14 +637,54 @@ namespace gi_lib{
 	}
 
 	template <typename TObject>
-	inline ObjectWeakPtr<TObject>& ObjectWeakPtr<TObject>::operator=(ObjectWeakPtr<TObject> other){
+	ObjectWeakPtr<TObject>& ObjectWeakPtr<TObject>::operator=(const ObjectWeakPtr<TObject>& other){
 
-		other.Swap(*this);
+		ref_count_object_ = other.ref_count_object_;
+
+		AddRef();
 
 		return *this;
 
 	}
-	
+
+	template <typename TObject>
+	template <typename TOther>
+	ObjectWeakPtr<TObject>& ObjectWeakPtr<TObject>::operator=(const ObjectWeakPtr<TOther>& other){
+
+		static_assert(std::is_base_of<TObject, TOther>::value, "TOther must derive from TObject.");
+
+		ref_count_object_ = other.ref_count_object_;
+
+		AddRef();
+
+		return *this;
+
+	}
+
+	template <typename TObject>
+	ObjectWeakPtr<TObject>& ObjectWeakPtr<TObject>::operator=(ObjectWeakPtr<TObject>&& other){
+
+		ref_count_object_ = other.ref_count_object_;
+
+		other.ref_count_object_ = nullptr;
+
+		return *this;
+
+	}
+
+	template <typename TObject>
+	template <typename TOther>
+	ObjectWeakPtr<TObject>& ObjectWeakPtr<TObject>::operator=(ObjectWeakPtr<TOther>&& other){
+
+		static_assert(std::is_base_of<TObject, TOther>::value, "TOther must derive from TObject.");
+
+		ref_count_object_ = other.ref_count_object_;
+
+		other.ref_count_object_ = nullptr;
+
+		return *this;
+	}
+
 	template <typename TObject>
 	inline bool ObjectWeakPtr<TObject>::operator==(const ObjectWeakPtr<TObject>& other) const{
 
@@ -564,14 +721,6 @@ namespace gi_lib{
 			   static_cast<TObject*>(ref_count_object_->Get()) :
 			   nullptr;
 						
-	}
-
-	template <typename TObject>
-	inline void ObjectWeakPtr<TObject>::Swap(ObjectWeakPtr<TObject>& other){
-
-		std::swap(ref_count_object_,
-				  other.ref_count_object_);
-
 	}
 
 	template <typename TObject>
