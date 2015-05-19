@@ -26,13 +26,13 @@ mesh_component_(mesh_component){
 
 DeferredRendererComponent::~DeferredRendererComponent(){}
 
-shared_ptr<Mesh> DeferredRendererComponent::GetMesh(){
+ObjectPtr<Mesh> DeferredRendererComponent::GetMesh(){
 
 	return mesh_component_.GetMesh();
 
 }
 
-shared_ptr<const Mesh> DeferredRendererComponent::GetMesh() const{
+ObjectPtr<const Mesh> DeferredRendererComponent::GetMesh() const{
 
 	return mesh_component_.GetMesh();
 
@@ -44,19 +44,19 @@ unsigned int DeferredRendererComponent::GetMaterialCount() const{
 
 }
 
-shared_ptr<DeferredRendererMaterial> DeferredRendererComponent::GetMaterial(unsigned int material_index){
+ObjectPtr<DeferredRendererMaterial> DeferredRendererComponent::GetMaterial(unsigned int material_index){
 
 	return materials_[material_index];
 
 }
 
-shared_ptr<const DeferredRendererMaterial> DeferredRendererComponent::GetMaterial(unsigned int material_index) const{
+ObjectPtr<const DeferredRendererMaterial> DeferredRendererComponent::GetMaterial(unsigned int material_index) const{
 
 	return materials_[material_index];
 
 }
 
-void DeferredRendererComponent::SetMaterial(unsigned int material_index, shared_ptr<DeferredRendererMaterial> material){
+void DeferredRendererComponent::SetMaterial(unsigned int material_index, ObjectPtr<DeferredRendererMaterial> material){
 
 	materials_[material_index] = material;
 

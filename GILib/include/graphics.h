@@ -175,7 +175,7 @@ namespace gi_lib{
 
 		/// \brief Get the render target associated to this output.
 		/// \return Returns the render target associated to this output.
-		virtual shared_ptr<RenderTarget> GetRenderTarget() = 0;
+		virtual ObjectPtr<RenderTarget> GetRenderTarget() = 0;
 
 	};
 
@@ -197,7 +197,7 @@ namespace gi_lib{
 		/// \param load_args Arguments that will be passed to the resource's constructor.
 		/// \return Returns the loaded resource if possible, returns null otherwise. If the resource was already loaded, returns a pointer to the existing instance instead.
 		template <typename TResource, typename TArgs, typename use_cache<TArgs>::type* = nullptr>
-		shared_ptr<TResource> Load(const typename TArgs& args);
+		ObjectPtr<TResource> Load(const typename TArgs& args);
 
 		/// \brief Loads a resource.
 		/// \tparam TResource Type of the resource to load. Must derive from IResource.
@@ -205,7 +205,7 @@ namespace gi_lib{
 		/// \param load_args Arguments that will be passed to the resource's constructor.
 		/// \return Returns a new loaded resource instance if possible, returns null otherwise.
 		template <typename TResource, typename TArgs, typename no_cache<TArgs>::type* = nullptr>
-		shared_ptr<TResource> Load(const typename TArgs& args);
+		ObjectPtr<TResource> Load(const typename TArgs& args);
 
 		/// \brief Get the amount of memory used by the loaded resources.
 		size_t GetSize() const;
@@ -219,7 +219,7 @@ namespace gi_lib{
 		/// \param load_args_type Bundle's type index.
 		/// \param load_args Pointer to the bundle to be used to load the resource.
 		/// \return Returns a pointer to the loaded resource
-		virtual IResource* Load(const type_index& resource_type, const type_index& args_type, const void* load_args) const = 0;
+		virtual ObjectPtr<IResource> Load(const type_index& resource_type, const type_index& args_type, const void* load_args) const = 0;
 
 	private:
 
@@ -228,11 +228,11 @@ namespace gi_lib{
 
 		/// \brief Loads a resource from cache.
 		/// \return Returns a pointer to the cached resource if any, otherwise returns a new instance. Returns null if the resource was not supported.
-		shared_ptr<IResource> LoadFromCache(const type_index& resource_type, const type_index& args_type, const void* args, size_t cache_key);
+		ObjectPtr<IResource> LoadFromCache(const type_index& resource_type, const type_index& args_type, const void* args, size_t cache_key);
 
 		/// \brief Loads a resource instance.
 		/// \return Returns the resource loaded.
-		shared_ptr<IResource> LoadDirect(const type_index& resource_type, const type_index& args_type, const void* args);
+		ObjectPtr<IResource> LoadDirect(const type_index& resource_type, const type_index& args_type, const void* args);
 
 		/// \brief Opaque pointer to the implementation of the class.
 		unique_ptr<Impl> pimpl_;
@@ -286,21 +286,21 @@ namespace gi_lib{
 	///////////////////////////////// RESOURCES ////////////////////////////////////
 
 	template <typename TResource, typename TArgs, typename use_cache<TArgs>::type*>
-	shared_ptr<TResource> Resources::Load(const typename TArgs& args){
+	ObjectPtr<TResource> Resources::Load(const typename TArgs& args){
 
-		return static_pointer_cast<TResource>(LoadFromCache(type_index(typeid(TResource)),
-															type_index(typeid(TArgs)),
-															args.GetCacheKey(),
-															&args));
+		return LoadFromCache(type_index(typeid(TResource)),
+							 type_index(typeid(TArgs)),
+							 &args,
+							 args.GetCacheKey());
 				
 	}
 
 	template <typename TResource, typename TArgs, typename no_cache<TArgs>::type*>
-	shared_ptr<TResource> Resources::Load(const typename TArgs& args){
+	ObjectPtr<TResource> Resources::Load(const typename TArgs& args){
 
-		return static_pointer_cast<TResource>(LoadDirect(type_index(typeid(TResource)),
-														 type_index(typeid(TArgs)),
-														 &args));
+		return LoadDirect(type_index(typeid(TResource)),
+						  type_index(typeid(TArgs)),
+						  &args);
 
 	}
 	

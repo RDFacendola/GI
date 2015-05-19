@@ -27,24 +27,56 @@ const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 /// \brief Size of the domain (for each edge).
 const float kDomainSize = 1000.0f;
 
-/// \brief Number of times the domain is splitted along each axis.
+/// \brief Number of times the domain is split along each axis.
 const unsigned int kDomainSubdivisions = 3;
 
 class MaterialImporter : public IMaterialImporter{
 
-	virtual void OnImportMaterial(MaterialCollection& materials, MeshComponent& mesh){
+public:
 
-		// Add a renderer component for the deferred renderer.
-		mesh.AddComponent<DeferredRendererComponent>(mesh);
+	/// \brief Create a new material importer.
+	/// \param resources Factory used to load and instantiate materials.
+	MaterialImporter(Resources& resources) :
+	resources_(resources){
 
-		// Set the proper materials
-
-
+		base_material_ = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetDirectory() + L"Data\\deferred_material.fx" });
 
 	}
 
-}
-;
+	virtual void OnImportMaterial(MaterialCollection& materials, MeshComponent& mesh){
+
+		// Add a renderer component for the deferred renderer.
+		auto deferred_component = mesh.AddComponent<DeferredRendererComponent>(mesh);
+
+		// Instantiate the proper materials for each mesh subset.
+
+		for (unsigned int material_index = 0; material_index < deferred_component->GetMaterialCount(); ++material_index){
+
+			deferred_component->SetMaterial(material_index,
+											InstantiateMaterial(*materials[material_index]));
+			
+		}
+
+	}
+		
+private:
+
+	/// \brief Instantiate a concrete material.
+	ObjectPtr<DeferredRendererMaterial> InstantiateMaterial(IMaterial& material){
+
+		//auto material_instance = resources_.Load<DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>({ base_material_ });
+
+		// Set the proper textures...
+
+		return nullptr;
+
+	}
+
+	Resources& resources_;											///< \brief Used to load various materials.
+
+	ObjectPtr<DeferredRendererMaterial> base_material_;				///< \brief Base material for every game object.
+
+};
 
 GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11)),
@@ -90,8 +122,10 @@ scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 								  Quaternionf::Identity(), 
 								  AlignedScaling3f(Vector3f::Ones()));
 
-	FbxImporter fbx_importer(MaterialImporter(),
-							 graphics_.GetResources());
+	auto& resources = graphics_.GetResources();
+
+	FbxImporter fbx_importer(MaterialImporter(resources),
+							 resources);
 	
 	fbx_importer.ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", 
 							 *node);

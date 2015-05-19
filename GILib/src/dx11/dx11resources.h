@@ -13,6 +13,7 @@
 
 #include "..\..\include\graphics.h"
 #include "..\..\include\resources.h"
+#include "..\..\include\gilib.h"
 #include "..\..\include\windows\os_windows.h"
 
 using ::std::string;
@@ -32,11 +33,12 @@ namespace gi_lib{
 		
 		/// \brief Base interface for DirectX11 resources that can be bound as shader resources.
 		/// \author Raffaele D. Facendola
-		class DX11Bindable : public IBindable {
+		class DX11ResourceView : public IResourceView {
 
 		public:
 
-			virtual ~DX11Bindable(){}
+			/// \brief Virtual destructor.
+			virtual ~DX11ResourceView(){};
 
 			/// \brief Get the shader resource view associated to this shader resource.
 			/// \return Returns the shader resource view associated to this shader resource.
@@ -44,9 +46,37 @@ namespace gi_lib{
 
 		};
 
+		/// \brief Concrete templated resource view class.
+		/// This class will hold a strong reference to a resource (so it is is not released while the view is still being used somewhere)
+		/// and its shared resource view.
+		template <typename TResource>
+		class DX11ResourceViewTemplate : public DX11ResourceView{
+
+		public:
+
+			/// \brief Create a new resource view from a concrete resource type.
+			/// \param resource Resource associated to the view.
+			/// \param resource_view Shared resource view relative to the specified resource.
+			DX11ResourceViewTemplate(ObjectPtr<TResource> resource, ID3D11ShaderResourceView& resource_view);
+
+			/// \brief Virtual destructor.
+			virtual ~DX11ResourceViewTemplate();
+
+			/// \brief Get the resource's shader view.
+			/// \return Returns the resource's shader view.
+			virtual ID3D11ShaderResourceView& GetShaderView() override;
+			
+		private:
+
+			ObjectPtr<TResource> resource_;				///< \brief Strong reference to the resource.
+
+			ID3D11ShaderResourceView& resource_view_;	///< \brief Shader resource view.
+
+		};
+
 		/// \brief DirectX11 plain texture.
 		/// \author Raffaele D. Facendola.
-		class DX11Texture2D : public Texture2D, public DX11Bindable{
+		class DX11Texture2D : public Texture2D{
 
 		public:
 			
@@ -70,15 +100,15 @@ namespace gi_lib{
 
 			virtual unsigned int GetMipMapCount() const override;
 
-			virtual ID3D11ShaderResourceView& GetShaderView() override;
+			virtual ObjectPtr<IResourceView> GetView() override;
 
 		private:
 
 			void UpdateDescription();
-
+					
 			unique_ptr<ID3D11Texture2D, COMDeleter> texture_;
 
-			shared_ptr<ID3D11ShaderResourceView> shader_view_;
+			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;
 
 			unsigned int width_;
 
@@ -108,13 +138,13 @@ namespace gi_lib{
 
 			virtual unsigned int GetCount() const override;
 
-			virtual shared_ptr<Texture2D> GetTexture(int index) override;
+			virtual ObjectPtr<Texture2D> GetTexture(int index) override;
 
-			virtual shared_ptr<const Texture2D> GetTexture(int index) const override;
+			virtual ObjectPtr<const Texture2D> GetTexture(int index) const override;
 
-			virtual shared_ptr<Texture2D> GetZStencil() override;
+			virtual ObjectPtr<Texture2D> GetZStencil() override;
 
-			virtual shared_ptr<const Texture2D> GetZStencil() const override;
+			virtual ObjectPtr<const Texture2D> GetZStencil() const override;
 
 			virtual float GetAspectRatio() const override;
 
@@ -125,7 +155,7 @@ namespace gi_lib{
 			/// \param buffers The list of buffers to bound
 			void SetBuffers(std::initializer_list<ID3D11Texture2D*> targets);
 
-			/// \brief Releases al the buffers referenced by the render target.
+			/// \brief Releases all the buffers referenced by the render target.
 			void ResetBuffers();
 
 			/// \brief Bind the render target to the specified context.
@@ -136,7 +166,7 @@ namespace gi_lib{
 			/// \param context The context used to clear the view.
 			/// \param clear_flags Determines whether to clear the depth and\or the stencil buffer. (see: D3D11_CLEAR_FLAGS)
 			/// \param depth Depth value to store inside the depth buffer.
-			/// \param stencil Stencil valuet o store inside the stencil buffer.
+			/// \param stencil Stencil value to store inside the stencil buffer.
 			void ClearDepthStencil(ID3D11DeviceContext & context, unsigned int clear_flags, float depth, unsigned char stencil);
 
 			/// \brief Clear every target view.
@@ -150,9 +180,9 @@ namespace gi_lib{
 
 			unique_ptr < ID3D11DepthStencilView, COMDeleter > zstencil_view_;
 
-			vector<shared_ptr<DX11Texture2D>> textures_;
+			vector<ObjectPtr<DX11Texture2D>> textures_;
 
-			shared_ptr<DX11Texture2D> zstencil_;
+			ObjectPtr<DX11Texture2D> zstencil_;
 
 			AntialiasingMode antialiasing_;
 
@@ -224,9 +254,9 @@ namespace gi_lib{
 
 			virtual size_t GetSize() const override;
 
-			virtual shared_ptr<Material::Variable> GetVariable(const string& name) override;
+			virtual ObjectPtr<MaterialVariable> GetVariable(const string& name) override;
 
-			virtual shared_ptr<Material::Resource> GetResource(const string& name) override;
+			virtual ObjectPtr<MaterialResource> GetResource(const string& name) override;
 
 		private:
 
@@ -237,11 +267,11 @@ namespace gi_lib{
 			struct InstanceImpl;
 
 			/// \brief Material variable.
-			class Variable : public Material::Variable{
+			class DX11MaterialVariable : public MaterialVariable{
 
 			public:
 				
-				Variable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset);
+				DX11MaterialVariable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset);
 
 			protected:
 								
@@ -260,13 +290,13 @@ namespace gi_lib{
 			};
 
 			/// \brief Material resource.
-			class Resource : public Material::Resource{
+			class DX11MaterialResource : public MaterialResource{
 
 			public:
 
-				Resource(InstanceImpl& instance_impl, size_t resource_index);
+				DX11MaterialResource(InstanceImpl& instance_impl, size_t resource_index);
 
-				virtual void Set(shared_ptr<IBindable> resource) override;
+				virtual void Set(ObjectPtr<IResourceView> resource) override;
 
 			private:
 
@@ -286,10 +316,10 @@ namespace gi_lib{
 		template<typename TResource> struct ResourceMapping;
 
 		/// \brief Shader resource mapping.
-		template<> struct ResourceMapping < IBindable > {
+		template<> struct ResourceMapping < IResourceView > {
 
 			/// \brief Concrete type associated to a shader resource.
-			using TMapped = DX11Bindable;
+			using TMapped = DX11ResourceView;
 
 		};
 
@@ -330,9 +360,9 @@ namespace gi_lib{
 		/// \param resource The shared pointer to the resource to cast.
 		/// \return Returns a shared pointer to the casted resource.
 		template <typename TResource>
-		typename ResourceMapping<TResource>::TMapped& resource_cast(TResource& resource){
+		typename ObjectPtr<typename ResourceMapping<TResource>::TMapped> resource_cast(const ObjectPtr<TResource>& resource){
 
-			return static_cast<typename ResourceMapping<TResource>::TMapped&>(resource);
+			return resource;
 
 		}
 
@@ -341,20 +371,37 @@ namespace gi_lib{
 		/// \param resource The shared pointer to the resource to cast.
 		/// \return Returns a shared pointer to the casted resource.
 		template <typename TResource>
-		typename const ResourceMapping<TResource>::TMapped& resource_cast(const TResource& resource){
+		typename ObjectPtr<typename const ResourceMapping<TResource>::TMapped> resource_cast(const ObjectPtr<const TResource>& resource){
 
-			return static_cast<const typename ResourceMapping<TResource>::TMapped&>(resource);
+			return resource;
 
 		}
 		
 		/// \brief Get the shader resource view of a resource.
-		inline ID3D11ShaderResourceView& resource_view(IBindable& resource){
+		inline ID3D11ShaderResourceView& resource_view(IResourceView& resource){
 
-			return static_cast<DX11Bindable&>(resource).GetShaderView();
+			return static_cast<DX11ResourceView&>(resource).GetShaderView();
 
 		}
 
-		//
+		/////////////////////////////// DX11 RESOURCE VIEW TEMPLATE ///////////////////////////////
+
+		template <typename TResource>
+		inline DX11ResourceViewTemplate<TResource>::DX11ResourceViewTemplate(ObjectPtr<TResource> resource, ID3D11ShaderResourceView& resource_view) :
+		resource_(resource),
+		resource_view_(resource_view){}
+
+		template <typename TResource>
+		inline DX11ResourceViewTemplate<TResource>::~DX11ResourceViewTemplate(){}
+
+		template <typename TResource>
+		inline ID3D11ShaderResourceView& DX11ResourceViewTemplate<TResource>::GetShaderView(){
+
+			return resource_view_;
+
+		}
+
+		/////////////////////////////// DX11 TEXTURE2D ///////////////////////////////
 
 		inline unsigned int DX11Texture2D::GetWidth() const{
 
@@ -374,19 +421,21 @@ namespace gi_lib{
 
 		}
 
-		inline ID3D11ShaderResourceView & DX11Texture2D::GetShaderView(){
+		inline ObjectPtr<IResourceView> DX11Texture2D::GetView(){
 
-			return *shader_view_;
+			return new DX11ResourceViewTemplate<DX11Texture2D>(this,
+															   *shader_view_);
+
 		}
 
-		// DX11RenderTarget
-
+		/////////////////////////////// DX11 RENDER TARGET ///////////////////////////////
+		
 		inline size_t DX11RenderTarget::GetSize() const{
 
 			return std::accumulate(textures_.begin(), 
 								   textures_.end(), 
 								   static_cast<size_t>(0), 
-								   [](size_t size, const shared_ptr<DX11Texture2D> texture){ 
+								   [](size_t size, const ObjectPtr<DX11Texture2D>& texture){ 
 				
 										return size + texture->GetSize(); 
 			
@@ -414,27 +463,27 @@ namespace gi_lib{
 
 		}
 
-		inline shared_ptr<Texture2D> DX11RenderTarget::GetTexture(int index){
+		inline ObjectPtr<Texture2D> DX11RenderTarget::GetTexture(int index){
 
-			return std::static_pointer_cast<Texture2D>(textures_[index]);
-
-		}
-
-		inline shared_ptr<const Texture2D> DX11RenderTarget::GetTexture(int index) const{
-
-			return std::static_pointer_cast<const Texture2D>(textures_[index]);
+			return textures_[index];
 
 		}
 
-		inline shared_ptr<Texture2D> DX11RenderTarget::GetZStencil(){
+		inline ObjectPtr<const Texture2D> DX11RenderTarget::GetTexture(int index) const{
 
-			return std::static_pointer_cast<Texture2D>(zstencil_);
+			return textures_[index];
 
 		}
 
-		inline shared_ptr<const Texture2D> DX11RenderTarget::GetZStencil() const{
+		inline ObjectPtr<Texture2D> DX11RenderTarget::GetZStencil(){
 
-			return std::static_pointer_cast<const Texture2D>(zstencil_);
+			return zstencil_;
+
+		}
+
+		inline ObjectPtr<const Texture2D> DX11RenderTarget::GetZStencil() const{
+
+			return zstencil_;
 
 		}
 

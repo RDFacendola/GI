@@ -287,7 +287,7 @@ DX11Texture2D::DX11Texture2D(const FromFile& bundle){
 											  &alpha_mode) );						//Alpha informations
 
 	texture_.reset(static_cast<ID3D11Texture2D*>(resource));	
-	shader_view_.reset(shader_view, COMDeleter{});
+	shader_view_.reset(shader_view);
 
 	UpdateDescription();
 	
@@ -319,7 +319,7 @@ DX11Texture2D::DX11Texture2D(ID3D11Texture2D & texture, DXGI_FORMAT format){
 												   &shader_view));
 
 	texture_.reset(&texture);
-	shader_view_.reset(shader_view, COMDeleter{});
+	shader_view_.reset(shader_view);
 
 	UpdateDescription();
 
@@ -399,7 +399,8 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 													 nullptr,
 													 &render_target_view));
 
-		textures_.push_back(make_shared<DX11Texture2D>(*target, DXGI_FORMAT_UNKNOWN));
+		textures_.push_back(new DX11Texture2D(*target, DXGI_FORMAT_UNKNOWN));
+
 		target_views_.push_back(std::move(unique_ptr<ID3D11RenderTargetView, COMDeleter>(render_target_view, COMDeleter{})));
 
 	}
@@ -410,7 +411,8 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 
 	THROW_ON_FAIL(MakeDepthStencil(*device, desc.Width, desc.Height, &zstencil, &zstencil_view));
 
-	zstencil_ = make_shared<DX11Texture2D>(*zstencil, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);				// This is the only format compatible with R24G8_TYPELESS used to create the depth buffer resource
+	zstencil_ = new DX11Texture2D(*zstencil, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);					// This is the only format compatible with R24G8_TYPELESS used to create the depth buffer resource
+	
 	zstencil_view_ = unique_ptr<ID3D11DepthStencilView, COMDeleter>(zstencil_view, COMDeleter{});
 
 	// Everything went as it should have...
@@ -585,7 +587,7 @@ struct DX11Material::InstanceImpl{
 	
 	void SetVariable(size_t index, const void * data, size_t size, size_t offset);
 
-	void SetResource(size_t index, shared_ptr<IBindable> resource);
+	void SetResource(size_t index, ObjectPtr<DX11ResourceView> resource);
 	
 private:
 
@@ -595,7 +597,7 @@ private:
 
 	vector<BufferStatus> buffer_status_;								///< \brief Status of constant buffers.
 
-	vector<shared_ptr<IBindable>> resources_;							///< \brief Status of bound resources.
+	vector<ObjectPtr<DX11ResourceView>> resources_;						///< \brief Status of bound resources.
 
 	ShaderType resource_dirty_mask_;									///< \brief Dirty mask used to determine which bundle needs to be updated resource-wise.
 
@@ -666,7 +668,7 @@ void DX11Material::InstanceImpl::SetVariable(size_t index, const void * data, si
 
 }
 
-void DX11Material::InstanceImpl::SetResource(size_t index, shared_ptr<IBindable> resource){
+void DX11Material::InstanceImpl::SetResource(size_t index, ObjectPtr<DX11ResourceView> resource){
 
 	resources_[index] = resource;
 
@@ -812,13 +814,13 @@ void DX11Material::MaterialImpl::MakeShader(ID3D11Device& device, const string& 
 
 //----------------------------  MATERIAL :: VARIABLE -------------------------------//
 
-DX11Material::Variable::Variable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset) :
+DX11Material::DX11MaterialVariable::DX11MaterialVariable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset) :
 instance_impl_(&instance_impl),
 buffer_index_(buffer_index),
 variable_size_(variable_size),
 variable_offset_(variable_offset){}
 
-void DX11Material::Variable::Set(const void * buffer, size_t size){
+void DX11Material::DX11MaterialVariable::Set(const void * buffer, size_t size){
 
 	if (size > variable_size_){
 
@@ -832,13 +834,14 @@ void DX11Material::Variable::Set(const void * buffer, size_t size){
 
 //----------------------------  MATERIAL :: RESOURCE -------------------------------//
 
-DX11Material::Resource::Resource(InstanceImpl& instance_impl, size_t resource_index) :
+DX11Material::DX11MaterialResource::DX11MaterialResource(InstanceImpl& instance_impl, size_t resource_index) :
 instance_impl_(&instance_impl),
 resource_index_(resource_index){}
 
-void DX11Material::Resource::Set(shared_ptr<IBindable> resource){
+void DX11Material::DX11MaterialResource::Set(ObjectPtr<IResourceView> resource){
 
-	instance_impl_->SetResource(resource_index_, resource);
+	instance_impl_->SetResource(resource_index_, 
+								resource_cast(resource));
 
 }
 
@@ -856,11 +859,11 @@ DX11Material::DX11Material(const CompileFromFile& args){
 
 DX11Material::DX11Material(const Instantiate& args){
 
-	auto& material = resource_cast(*args.base);
+	auto material = resource_cast(args.base);
 	
-	shared_impl_ = material.shared_impl_;
+	shared_impl_ = material->shared_impl_;
 
-	private_impl_ = make_unique<InstanceImpl>(*material.private_impl_);
+	private_impl_ = make_unique<InstanceImpl>(*material->private_impl_);
 	
 }
 
@@ -871,7 +874,7 @@ DX11Material::~DX11Material(){
 
 }
 
-shared_ptr<Material::Variable> DX11Material::GetVariable(const string& name){
+ObjectPtr<Material::MaterialVariable> DX11Material::GetVariable(const string& name){
 
 	auto& buffers = shared_impl_->reflection.buffers;
 
@@ -891,10 +894,10 @@ shared_ptr<Material::Variable> DX11Material::GetVariable(const string& name){
 
 		if (it != buffer.variables.end()){
 
-			return make_shared<DX11Material::Variable>(*private_impl_,
-													   buffer_index,
-													   it->size,
-													   it->offset);
+			return new DX11MaterialVariable(*private_impl_,
+											buffer_index,
+											it->size,
+											it->offset);
 
 		}
 
@@ -906,7 +909,7 @@ shared_ptr<Material::Variable> DX11Material::GetVariable(const string& name){
 
 }
 
-shared_ptr<Material::Resource> DX11Material::GetResource(const string& name){
+ObjectPtr<Material::MaterialResource> DX11Material::GetResource(const string& name){
 
 	auto& resources = shared_impl_->reflection.resources;
 
@@ -926,9 +929,9 @@ shared_ptr<Material::Resource> DX11Material::GetResource(const string& name){
 
 	}
 
-	return make_shared<DX11Material::Resource>(*private_impl_,
-											   std::distance(resources.begin(),
-															 it));
+	return new DX11MaterialResource(*private_impl_,
+								    std::distance(resources.begin(),
+												  it));
 
 }
 

@@ -461,23 +461,23 @@ void VolumeComponent::SetDirty(){
 MeshComponent::MeshComponent() :
 mesh_(nullptr){}
 
-MeshComponent::MeshComponent(shared_ptr<Mesh> mesh) :
+MeshComponent::MeshComponent(ObjectPtr<Mesh> mesh) :
 VolumeComponent(mesh->GetBoundingBox()),
 mesh_(mesh){}
 
-shared_ptr<Mesh> MeshComponent::GetMesh(){
+ObjectPtr<Mesh> MeshComponent::GetMesh(){
 
 	return mesh_;
 
 }
 
-shared_ptr<const Mesh> MeshComponent::GetMesh() const{
+ObjectPtr<const Mesh> MeshComponent::GetMesh() const{
 
-	return static_pointer_cast<const Mesh>(mesh_);
+	return mesh_;
 
 }
 
-void MeshComponent::SetMesh(shared_ptr<Mesh> mesh){
+void MeshComponent::SetMesh(ObjectPtr<Mesh> mesh){
 
 	mesh_ = mesh;
 

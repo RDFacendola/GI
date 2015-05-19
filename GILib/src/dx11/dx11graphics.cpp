@@ -285,8 +285,8 @@ namespace{
 		InstanceBuilder::Register<Material, DX11Material, Material::CompileFromFile>();
 		InstanceBuilder::Register<Material, DX11Material, Material::Instantiate>();
 
-		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>();
-		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>();
+		//InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>();
+		//InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>();
 
 	}
 
@@ -430,7 +430,7 @@ void DX11Output::UpdateBackbuffer(){
 	
 	if (!render_target_){
 
-		render_target_ = std::make_shared<DX11RenderTarget>(*back_buffer);
+		render_target_ = new DX11RenderTarget(*back_buffer);
 
 	}
 	else{
@@ -457,7 +457,7 @@ DX11Resources::DX11Resources(){
 
 }
 
-IResource* DX11Resources::Load(const type_index& resource_type, const type_index& args_type, const void* args) const{
+ObjectPtr<IResource> DX11Resources::Load(const type_index& resource_type, const type_index& args_type, const void* args) const{
 
 	return static_cast<IResource*>(InstanceBuilder::Build(resource_type, 
 														  args_type, 

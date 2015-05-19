@@ -4,6 +4,16 @@ using namespace ::std;
 using namespace ::gi_lib;
 using namespace ::gi_lib::dx11;
 
+///////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////
+
+DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const CompileFromFile& args) :
+DX11Material(args){}
+
+DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const Instantiate& args) :
+DX11Material(args){}
+
+///////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////
+
 DX11TiledDeferredRenderer::DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments) :
 TiledDeferredRenderer(arguments.scene){}
 

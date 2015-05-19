@@ -26,6 +26,8 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Virtual destructor.
+		virtual ~DeferredRendererMaterial();
 
 	};
 
@@ -50,11 +52,11 @@ namespace gi_lib{
 
 		/// \brief Get the mesh component.
 		/// \return Returns the mesh component.
-		shared_ptr<Mesh> GetMesh();
+		ObjectPtr<Mesh> GetMesh();
 
 		/// \brief Get the mesh component.
 		/// \return Returns the mesh component.
-		shared_ptr<const Mesh> GetMesh() const;
+		ObjectPtr<const Mesh> GetMesh() const;
 
 		/// \brief Get the material count.
 		/// \return Returns the material count.
@@ -63,17 +65,17 @@ namespace gi_lib{
 		/// \brief Get a material.
 		/// \param material_index Index of the material to retrieve.
 		/// \return Returns the specified material.
-		shared_ptr<DeferredRendererMaterial> GetMaterial(unsigned int material_index);
+		ObjectPtr<DeferredRendererMaterial> GetMaterial(unsigned int material_index);
 
 		/// \brief Get a material.
 		/// \param material_index Index of the material to retrieve.
 		/// \return Returns the specified material.
-		shared_ptr<const DeferredRendererMaterial> GetMaterial(unsigned int material_index) const;
+		ObjectPtr<const DeferredRendererMaterial> GetMaterial(unsigned int material_index) const;
 
 		/// \brief Set a new material.
 		/// \param material_index Index of the material to set.
 		/// \param material New material
-		void SetMaterial(unsigned int material_index, shared_ptr<DeferredRendererMaterial> material);
+		void SetMaterial(unsigned int material_index, ObjectPtr<DeferredRendererMaterial> material);
 
 		virtual TypeSet GetTypes() const override;
 
@@ -89,11 +91,11 @@ namespace gi_lib{
 
 		unique_ptr<Listener> on_mesh_removed_listener_;					///< \brief Detects whether the mesh component have been removed from the object.
 
-		vector<shared_ptr<DeferredRendererMaterial>> materials_;		///< \brief List of materials (one per mesh subset)
+		vector<ObjectPtr<DeferredRendererMaterial>> materials_;			///< \brief List of materials (one per mesh subset)
 
 	};
 
-	/// \brief Deferrend renderer with tiled lighting computation.
+	/// \brief Deferred renderer with tiled lighting computation.
 	/// \author Raffaele D. Facendola
 	class TiledDeferredRenderer : public IRenderer{
 
@@ -122,6 +124,10 @@ namespace gi_lib{
 		Scene& scene_;		///< \brief Scene this render refers to.
 
 	};
+
+	////////////// DEFERRED RENDERER MATERIAL ////////////////
+
+	inline DeferredRendererMaterial::~DeferredRendererMaterial(){}
 
 }
 

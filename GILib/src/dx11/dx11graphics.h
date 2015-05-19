@@ -70,7 +70,7 @@ namespace gi_lib{
 
 			virtual AntialiasingMode GetAntialiasing() const override;
 
-			virtual shared_ptr<RenderTarget> GetRenderTarget() override;
+			virtual ObjectPtr<RenderTarget> GetRenderTarget() override;
 
 		private:
 
@@ -96,7 +96,7 @@ namespace gi_lib{
 
 			unique_ptr<IDXGISwapChain, COMDeleter> swap_chain_;
 
-			shared_ptr<DX11RenderTarget> render_target_;
+			ObjectPtr<DX11RenderTarget> render_target_;
 
 		};
 
@@ -118,7 +118,7 @@ namespace gi_lib{
 
 		protected:
 
-			virtual IResource* Load(const type_index& resource_type, const type_index& args_type, const void* args) const override;
+			virtual ObjectPtr<IResource> Load(const type_index& resource_type, const type_index& args_type, const void* args) const override;
 
 		private:
 
@@ -197,9 +197,9 @@ namespace gi_lib{
 
 		}
 
-		inline shared_ptr<RenderTarget> DX11Output::GetRenderTarget(){
+		inline ObjectPtr<RenderTarget> DX11Output::GetRenderTarget(){
 
-			return std::static_pointer_cast<RenderTarget>(render_target_);
+			return render_target_;
 
 		}
 

@@ -15,6 +15,7 @@
 #include "component.h"
 #include "timer.h"
 #include "gimath.h"
+#include "gilib.h"
 #include "range.h"
 #include "unique.h"
 #include "observable.h"
@@ -351,19 +352,19 @@ namespace gi_lib{
 
 		/// \brief Create a new mesh component.
 		/// \param Static mesh associated to this component
-		MeshComponent(shared_ptr<Mesh> mesh);
+		MeshComponent(ObjectPtr<Mesh> mesh);
 		
 		/// \brief Get the mesh associated to this component.
 		/// \return Return the mesh associated to this component.
-		shared_ptr<Mesh> GetMesh();
+		ObjectPtr<Mesh> GetMesh();
 
 		/// \brief Get the mesh associated to this component.
 		/// \return Return the mesh associated to this component.
-		shared_ptr<const Mesh> GetMesh() const;
+		ObjectPtr<const Mesh> GetMesh() const;
 
 		/// \brief Set the mesh associated to this component.
 		/// \param mesh The new mesh to associate.
-		void SetMesh(shared_ptr<Mesh> mesh);
+		void SetMesh(ObjectPtr<Mesh> mesh);
 
 		virtual TypeSet GetTypes() const override;
 
@@ -375,7 +376,7 @@ namespace gi_lib{
 
 	private:
 
-		shared_ptr<Mesh> mesh_;							///< \brief 3D model.
+		ObjectPtr<Mesh> mesh_;							///< \brief 3D model.
 
 	};
 

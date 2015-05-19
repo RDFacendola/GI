@@ -50,15 +50,13 @@ namespace{
 
 	};
 
+	/// \brief The resource cached simply maps a cache key to the proper resource.
 	/// \brief A cached resource is a weak smart pointer. If there's at least one pointer alive, the cached resource will be alive as well.
 	/// The cached resource is invalidated when the last pointer is destroyed.
-	using CachedResource = weak_ptr < IResource > ;
+	using ResourceCache = map < const ResourceCacheKey, ObjectWeakPtr < IResource > >;
 
-	/// \brief The resource cached simply maps a cache key to the proper resource.
-	using ResourceCache = map < const ResourceCacheKey, CachedResource > ;
-
-	/// \brif List of the loaded resources.
-	using ResourceList = vector < CachedResource > ;
+	/// \brief List of the loaded resources.
+	using ResourceList = vector < ObjectWeakPtr < IResource > >;
 
 }
 
@@ -72,13 +70,13 @@ struct Resources::Impl{
 
 	/// \brief Fetch a resource from cache.
 	/// \return Returns the cached resource if any, returns nullptr if the resource was expired or the key was not present.
-	shared_ptr<IResource> FetchFromCache(const ResourceCacheKey& cache_key){
+	ObjectPtr<IResource> FetchFromCache(const ResourceCacheKey& cache_key){
 
 		auto it = resource_cache_.find(cache_key);
 
 		if (it != resource_cache_.end()){
 
-			if (auto resource = it->second.lock()){
+			if (auto resource = it->second.Lock()){
 
 				// The resource was found and is still valid.
 				return resource;
@@ -106,7 +104,7 @@ struct Resources::Impl{
 	}
 	
 	/// \brief Store a cached resource.
-	void StoreResource(const ResourceCacheKey& cache_key, weak_ptr<IResource> resource){
+	void StoreResource(const ResourceCacheKey& cache_key, ObjectWeakPtr<IResource> resource){
 
 		resource_cache_[cache_key] = resource;		// Cache.
 
@@ -115,7 +113,7 @@ struct Resources::Impl{
 	}
 
 	/// \brief Store a resource.
-	void StoreResource(weak_ptr<IResource> resource){
+	void StoreResource(ObjectWeakPtr<IResource> resource){
 
 		resource_list_.push_back(resource);			// Resource list.
 
@@ -128,9 +126,9 @@ private:
 
 		resource_list_.erase(std::remove_if(resource_list_.begin(),
 											resource_list_.end(),
-											[](const CachedResource& resource){
+											[](const ObjectWeakPtr<IResource>& resource){
 
-												return resource.expired();
+												return resource.IsValid();
 											
 											}),
 							 resource_list_.end());
@@ -164,9 +162,9 @@ size_t Resources::GetSize() const{
 	return accumulate(resources.begin(),
 					  resources.end(),
 					  static_cast<size_t>(0),
-					  [](size_t accumulator, const CachedResource& resource){
+					  [](size_t accumulator, const ObjectWeakPtr<IResource>& resource){
 
-							if (auto locked_resource = resource.lock()){
+							if (auto locked_resource = resource.Lock()){
 
 								accumulator += locked_resource->GetSize();
 
@@ -178,9 +176,11 @@ size_t Resources::GetSize() const{
 
 }
 
-shared_ptr<IResource> Resources::LoadFromCache(const type_index& resource_type, const type_index& args_type, const void* args, size_t cache_key){
+ObjectPtr<IResource> Resources::LoadFromCache(const type_index& resource_type, const type_index& args_type, const void* args, size_t cache_key){
 
-	ResourceCacheKey key = { resource_type, args_type, cache_key };
+	ResourceCacheKey key = { resource_type, 
+							 args_type, 
+							 cache_key };
 
 	auto resource = pimpl_->FetchFromCache(key);
 
@@ -188,11 +188,18 @@ shared_ptr<IResource> Resources::LoadFromCache(const type_index& resource_type, 
 
 		// The resource is not cached. Load it.
 
-		resource = shared_ptr<IResource>(Load(resource_type,
-											  args_type,
-											  args));
+		resource = Load(resource_type,
+						args_type,
+						args);
 
-		pimpl_->StoreResource(key, resource);
+		// If the resource type is not supported, the result of Load is nullptr.
+
+		if (resource){
+
+			pimpl_->StoreResource(key,
+								  resource);
+
+		}
 
 	}
 	
@@ -200,14 +207,20 @@ shared_ptr<IResource> Resources::LoadFromCache(const type_index& resource_type, 
 	
 }
 
-shared_ptr<IResource> Resources::LoadDirect(const type_index& resource_type, const type_index& args_type, const void* args){
+ObjectPtr<IResource> Resources::LoadDirect(const type_index& resource_type, const type_index& args_type, const void* args){
 
-	auto resource = shared_ptr<IResource>(Load(resource_type,
-											   args_type,
-											   args));
+	auto resource = Load(resource_type,
+						 args_type,
+						 args);
 
-	pimpl_->StoreResource(resource);
+	// If the resource type is not supported, the result of Load is nullptr.
 
+	if (resource){
+
+		pimpl_->StoreResource(resource);
+
+	}
+	
 	return resource;
 
 }

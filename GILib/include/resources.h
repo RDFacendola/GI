@@ -11,6 +11,7 @@
 #include <typeinfo>
 #include <typeindex>
 
+#include "gilib.h"
 #include "gimath.h"
 
 using ::std::vector;
@@ -25,6 +26,16 @@ using ::Eigen::Projective3f;
 using ::Eigen::Matrix;
 
 namespace gi_lib{
+
+	enum class AntialiasingMode;
+
+	class IResource;
+	class IResourceView;
+
+	class Texture2D;
+	class RenderTarget;
+	class Mesh;
+	class Material;
 
 	/// \brief Macro used to declare that the bundle will use the caching mechanism.
 	#define USE_CACHE \
@@ -50,16 +61,6 @@ namespace gi_lib{
 
 	};
 
-	enum class AntialiasingMode;
-
-	class IResource;
-	class IBindable;
-
-	class Texture2D;
-	class RenderTarget;
-	class Mesh;
-	class Material;
-
 	/// \brief The vertex declares position, texture coordinates and normals.
 	struct VertexFormatNormalTextured{
 
@@ -79,8 +80,9 @@ namespace gi_lib{
 	};
 	
 	/// \brief Base interface for graphical resources.
+	/// Resources are reference counted.
 	/// \author Raffaele D. Facendola.
-	class IResource{
+	class IResource : public Object{
 
 	public:
 
@@ -97,24 +99,26 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Base interface for resources that can be bound to the pipeline as shader resources.
-	class IBindable{
+	/// \brief A resource view, used to bind resources to the graphic pipeline.
+	/// Resource views are reference counted.
+	/// \author Raffaele D. Facendola
+	class IResourceView : public Object{
 
 	public:
 
 		/// \brief Needed for virtual classes.
-		virtual ~IBindable(){}
+		virtual ~IResourceView(){}
 
 	protected:
 
 		/// \brief Protected constructor. Prevent instantiation.
-		IBindable(){}
+		IResourceView(){}
 
 	};
 
 	/// \brief Base interface for plain textures.
 	/// \author Raffaele D. Facendola.
-	class Texture2D : public IResource, public IBindable{
+	class Texture2D : public IResource{
 
 	public:
 
@@ -146,6 +150,11 @@ namespace gi_lib{
 		/// \return Returns the MIP map level count.
 		virtual unsigned int GetMipMapCount() const = 0;
 
+		/// \brief Get the view to this resource.
+		/// Use this view to bind the texture to the graphic pipeline.
+		/// \return Returns a pointer to this resource's view.
+		virtual ObjectPtr<IResourceView> GetView() = 0;
+
 	};
 
 	/// \brief Base interface for render targets.
@@ -167,24 +176,24 @@ namespace gi_lib{
 		/// \brief Get the texture associated to this render target.
 		/// \param index The index of the render target texture.
 		/// \return Returns the texture associated to the index-th render target.
-		virtual shared_ptr<Texture2D> GetTexture(int index) = 0;
+		virtual ObjectPtr<Texture2D> GetTexture(int index) = 0;
 
 		/// \brief Get the texture associated to this render target.
 		/// \param index The index of the render target texture.
 		/// \return Returns the texture associated to the index-th render target.
-		virtual shared_ptr<const Texture2D> GetTexture(int index) const = 0;
+		virtual ObjectPtr<const Texture2D> GetTexture(int index) const = 0;
 
 		/// \brief Get the texture associated to the depth stencil buffer.
 		
 		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.
 		/// \return Returns the texture associated to the depth stencil buffer used by this render target.
-		virtual shared_ptr<Texture2D> GetZStencil() = 0;
+		virtual ObjectPtr<Texture2D> GetZStencil() = 0;
 
 		/// \brief Get the texture associated to the depth stencil buffer.
 
 		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.
 		/// \return Returns the texture associated to the depth stencil buffer used by this render target.
-		virtual shared_ptr<const Texture2D> GetZStencil() const = 0;
+		virtual ObjectPtr<const Texture2D> GetZStencil() const = 0;
 
 		/// \brief Get the aspect ratio of the render target.
 
@@ -192,9 +201,9 @@ namespace gi_lib{
 		/// \return Returns the aspect ratio of the render target.
 		virtual float GetAspectRatio() const = 0;
 
-		/// \brief Get the antialiasing mode of the render target.
-		/// The antialiasing mode influences the number of samples per pixel for techniques like MSAA.
-		/// \return Return the antialiasing mode of the render target.
+		/// \brief Get the anti-aliasing mode of the render target.
+		/// The anti-aliasing mode influences the number of samples per pixel for techniques like MSAA.
+		/// \return Return the anti-aliasing mode of the render target.
 		virtual AntialiasingMode GetAntialiasing() const = 0;
 		
 	};
@@ -252,7 +261,6 @@ namespace gi_lib{
 	};
 
 	/// \brief Base interface for materials.
-
 	/// \author Raffaele D. Facendola
 	class Material : public IResource{
 
@@ -276,17 +284,17 @@ namespace gi_lib{
 
 			NO_CACHE;
 
-			shared_ptr<Material> base;	///< \brief Material to instantiate.
+			ObjectPtr<Material> base;	///< \brief Material to instantiate.
 
 		};
 		
 		/// \brief Interface for material variables.
-		class Variable{
+		class MaterialVariable : public Object{
 
 		public:
 
 			/// \brief Default destructor.
-			virtual ~Variable(){}
+			virtual ~MaterialVariable(){}
 
 			/// \brief Set the variable value.
 			/// \param value The value to set.
@@ -303,16 +311,16 @@ namespace gi_lib{
 		};
 
 		/// \brief Interface for material resources.
-		class Resource{
+		class MaterialResource : public Object{
 
 		public:
 
 			/// \brief Default destructor.
-			virtual ~Resource(){}
+			virtual ~MaterialResource(){}
 
 			/// \brief Set the resource value.
 			/// \param resource The resource to bind to the material.
-			virtual void Set(shared_ptr<IBindable> resource) = 0;
+			virtual void Set(ObjectPtr<IResourceView> resource) = 0;
 
 		};
 
@@ -321,20 +329,20 @@ namespace gi_lib{
 
 		/// \brief Get a material variable by name.
 		/// \param name The name of the variable.
-		/// \return Returns a pointer to the variable matching the specified name.
-		virtual shared_ptr<Variable> GetVariable(const string& name) = 0;
+		/// \return Returns a pointer to the variable matching the specified name if found, returns nullptr otherwise.
+		virtual ObjectPtr<MaterialVariable> GetVariable(const string& name) = 0;
 
 		/// \brief Get a material resource by name.
 		/// \param name The name of the resource.
-		/// \return Returns a pointer to the resource matching the specified name.
-		virtual shared_ptr<Resource> GetResource(const string& name) = 0;
+		/// \return Returns a pointer to the resource matching the specified name if found, returns nullptr otherwise.
+		virtual ObjectPtr<MaterialResource> GetResource(const string& name) = 0;
 
 	};
 
 	///////////////////////////////////////// MATERIAL ////////////////////////////////////
 
 	template<typename TValue>
-	void Material::Variable::Set(const TValue& value){
+	void Material::MaterialVariable::Set(const TValue& value){
 
 		Set(static_cast<const void*>(&value),
 			sizeof(TValue));

@@ -15,7 +15,26 @@ namespace gi_lib{
 
 	namespace dx11{
 
-		/// \brief Deferrend renderer with tiled lighting computation for DirectX11.
+		/// \brief Material for a DirectX11 deferred renderer.
+		/// A custom material should not be compiled from code directly since there's no way of knowing whether the code is compatible with the custom renderer.
+		/// \author Raffaele D. Facendola
+		class DX11DeferredRendererMaterial : public DeferredRendererMaterial, public DX11Material{
+
+		public:
+
+			/// \brief Create a new DirectX11 deferred material from shader code.
+			/// \param device The device used to load the graphical resources.
+			/// \param bundle Bundle used to load the material.
+			DX11DeferredRendererMaterial(const CompileFromFile& args);
+
+			/// \brief Instantiate a DirectX11 deferred material from another one.
+			/// \param device The device used to load the graphical resources.
+			/// \param bundle Bundle used to instantiate the material.
+			DX11DeferredRendererMaterial(const Instantiate& args);
+
+		};
+
+		/// \brief Deferred renderer with tiled lighting computation for DirectX11.
 		/// \author Raffaele D. Facendola
 		class DX11TiledDeferredRenderer : public TiledDeferredRenderer{
 
