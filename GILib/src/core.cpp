@@ -181,6 +181,14 @@ DesktopProfile System::GetDesktopProfile(){
 string IO::ReadFile(const wstring& file_name){
 
 	std::ifstream file_stream(file_name);
+
+	if (file_stream.bad()){
+
+		return "";
+
+	}
+
+
 	std::string content;
 
 	// Size of the file

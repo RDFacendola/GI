@@ -41,6 +41,8 @@ public:
 
 		base_material_ = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetDirectory() + L"Data\\deferred_material.fx" });
 
+		flag = 999;
+
 	}
 
 	virtual void OnImportMaterial(MaterialCollection& materials, MeshComponent& mesh){
@@ -64,13 +66,15 @@ private:
 	/// \brief Instantiate a concrete material.
 	ObjectPtr<DeferredRendererMaterial> InstantiateMaterial(IMaterial& material){
 
-		//auto material_instance = resources_.Load<DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>({ base_material_ });
+		auto material_instance = resources_.Load<DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>({ base_material_ });
 
 		// Set the proper textures...
 
-		return nullptr;
+		return material_instance;
 
 	}
+
+	unsigned int flag;
 
 	Resources& resources_;											///< \brief Used to load various materials.
 

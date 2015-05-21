@@ -48,7 +48,7 @@ namespace gi_lib{
 
 		/// \brief Concrete templated resource view class.
 		/// This class will hold a strong reference to a resource (so it is is not released while the view is still being used somewhere)
-		/// and its shared resource view.
+		/// and its shader resource view.
 		template <typename TResource>
 		class DX11ResourceViewTemplate : public DX11ResourceView{
 

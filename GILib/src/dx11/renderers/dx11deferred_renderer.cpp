@@ -7,10 +7,26 @@ using namespace ::gi_lib::dx11;
 ///////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////
 
 DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const CompileFromFile& args) :
-DX11Material(args){}
+material_(new DX11Material(args)){
+
+	if (!material_){
+
+		THROW(L"Could not compile the base material");
+
+	}
+
+}
 
 DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const Instantiate& args) :
-DX11Material(args){}
+material_(new DX11Material(args)){
+
+	if (!material_){
+
+		THROW(L"Could not instantiate a new material");
+
+	}
+
+}
 
 ///////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////
 

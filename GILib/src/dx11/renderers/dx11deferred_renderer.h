@@ -17,8 +17,9 @@ namespace gi_lib{
 
 		/// \brief Material for a DirectX11 deferred renderer.
 		/// A custom material should not be compiled from code directly since there's no way of knowing whether the code is compatible with the custom renderer.
+		/// A concrete deferred material is not a subclass of a DirectX11 material to prevent a DDoD. Composition is preferred here.
 		/// \author Raffaele D. Facendola
-		class DX11DeferredRendererMaterial : public DeferredRendererMaterial, public DX11Material{
+		class DX11DeferredRendererMaterial : public DeferredRendererMaterial{
 
 		public:
 
@@ -31,6 +32,20 @@ namespace gi_lib{
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to instantiate the material.
 			DX11DeferredRendererMaterial(const Instantiate& args);
+
+			virtual ObjectPtr<MaterialVariable> GetVariable(const string& name) override;
+
+			virtual ObjectPtr<MaterialResource> GetResource(const string& name) override;
+
+			virtual size_t GetSize() const override;
+
+			/// \brief Get the base material.
+			/// \return Returns a pointer to the base material.
+			ObjectPtr<DX11Material> GetMaterial();
+
+		private:
+
+			ObjectPtr<DX11Material> material_;		///< \brief DirectX11 material.
 
 		};
 
@@ -56,6 +71,32 @@ namespace gi_lib{
 			virtual void Draw(IOutput& output) override;
 
 		};
+
+		/////////////////////////////// DX11 DEFERRED RENDERER MATERIAL /////////////////////////
+
+		inline ObjectPtr<Material::MaterialVariable> DX11DeferredRendererMaterial::GetVariable(const string& name){
+
+			return material_->GetVariable(name);
+
+		}
+
+		inline ObjectPtr<Material::MaterialResource> DX11DeferredRendererMaterial::GetResource(const string& name){
+
+			return material_->GetResource(name);
+
+		}
+		
+		inline size_t DX11DeferredRendererMaterial::GetSize() const{
+
+			return material_->GetSize();
+
+		}
+
+		inline ObjectPtr<DX11Material> DX11DeferredRendererMaterial::GetMaterial(){
+
+			return material_;
+
+		}
 
 	}
 
