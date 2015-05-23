@@ -62,6 +62,9 @@ namespace{
 
 //////////////////////// RESOURCES :: IMPL //////////////////////////////
 
+/// \brief Private implementation of the Resources class.
+/// Cached resources are stored with two weak pointers (one for the cache and one for the resource list).
+/// Resource requiring no cache are stored with only one weak pointer (for the resource list).
 struct Resources::Impl{
 
 	Impl(Resources& subject);
@@ -135,9 +138,9 @@ private:
 			
 	}
 
-	mutable ResourceCache resource_cache_;		/// \brief Cached resources.
+	mutable ResourceCache resource_cache_;		/// \brief List of cached resources.
 
-	mutable ResourceList resource_list_;		/// \brief List of the loaded resources.
+	mutable ResourceList resource_list_;		/// \brief List of the loaded resources, either cached or not. Needed to compute the correct memory consumption.
 
 	Resources& subject_;						///< \brief Subject of the implementation.
 
