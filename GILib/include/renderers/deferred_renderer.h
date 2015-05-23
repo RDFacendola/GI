@@ -20,14 +20,35 @@ using ::std::unique_ptr;
 
 namespace gi_lib{
 
-	/// \brief Material used by deferred renderers.
+	/// \brief Exposes additional informations for a material used by a deferred renderer.
 	/// \author Raffaele D. Facendola
-	class DeferredRendererMaterial : public Material{
+	class DeferredRendererMaterial : public IResource{
 
 	public:
 
+		/// \brief Structure used to compile a deferred material from a file.
+		/// This structure is identical to the one used by the base material.
+		using CompileFromFile = Material::CompileFromFile;
+
+		/// \brief Structure used to instantiate an existing material.
+		struct Instantiate{
+
+			NO_CACHE;
+
+			ObjectPtr<DeferredRendererMaterial> base;	///< \brief Material to instantiate.
+
+		};
+		
 		/// \brief Virtual destructor.
 		virtual ~DeferredRendererMaterial();
+
+		/// \brief Get the base material.
+		/// \return Returns the base material.
+		virtual ObjectPtr<Material> GetMaterial() = 0;
+
+		/// \brief Get the base material.
+		/// \return Returns the base material.
+		virtual ObjectPtr<const Material> GetMaterial() const = 0;
 
 	};
 

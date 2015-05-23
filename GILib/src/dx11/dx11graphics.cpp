@@ -285,8 +285,8 @@ namespace{
 		InstanceBuilder::Register<Material, DX11Material, Material::CompileFromFile>();
 		InstanceBuilder::Register<Material, DX11Material, Material::Instantiate>();
 
-		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, Material::CompileFromFile>();
-		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, Material::Instantiate>();
+		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>();
+		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>();
 
 	}
 

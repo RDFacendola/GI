@@ -33,15 +33,11 @@ namespace gi_lib{
 			/// \param bundle Bundle used to instantiate the material.
 			DX11DeferredRendererMaterial(const Instantiate& args);
 
-			virtual ObjectPtr<MaterialVariable> GetVariable(const string& name) override;
+			virtual ObjectPtr<Material> GetMaterial() override;
 
-			virtual ObjectPtr<MaterialResource> GetResource(const string& name) override;
+			virtual ObjectPtr<const Material> GetMaterial() const override;
 
 			virtual size_t GetSize() const override;
-
-			/// \brief Get the base material.
-			/// \return Returns a pointer to the base material.
-			ObjectPtr<DX11Material> GetMaterial();
 
 		private:
 
@@ -71,32 +67,6 @@ namespace gi_lib{
 			virtual void Draw(IOutput& output) override;
 
 		};
-
-		/////////////////////////////// DX11 DEFERRED RENDERER MATERIAL /////////////////////////
-
-		inline ObjectPtr<Material::MaterialVariable> DX11DeferredRendererMaterial::GetVariable(const string& name){
-
-			return material_->GetVariable(name);
-
-		}
-
-		inline ObjectPtr<Material::MaterialResource> DX11DeferredRendererMaterial::GetResource(const string& name){
-
-			return material_->GetResource(name);
-
-		}
-		
-		inline size_t DX11DeferredRendererMaterial::GetSize() const{
-
-			return material_->GetSize();
-
-		}
-
-		inline ObjectPtr<DX11Material> DX11DeferredRendererMaterial::GetMaterial(){
-
-			return material_;
-
-		}
 
 	}
 

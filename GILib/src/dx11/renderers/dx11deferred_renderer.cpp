@@ -7,24 +7,38 @@ using namespace ::gi_lib::dx11;
 ///////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////
 
 DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const CompileFromFile& args) :
-material_(new DX11Material(args)){
+material_(new DX11Material(args))
+{
 
-	if (!material_){
 
-		THROW(L"Could not compile the base material");
-
-	}
 
 }
 
 DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const Instantiate& args) :
-material_(new DX11Material(args)){
+material_(new DX11Material(Material::Instantiate{ args.base->GetMaterial() })){
 
-	if (!material_){
+	
 
-		THROW(L"Could not instantiate a new material");
+}
 
-	}
+ObjectPtr<Material> DX11DeferredRendererMaterial::GetMaterial()
+{
+	
+	return material_;
+
+}
+
+size_t gi_lib::dx11::DX11DeferredRendererMaterial::GetSize() const
+{
+	
+	return material_->GetSize();
+
+}
+
+ObjectPtr<const Material> gi_lib::dx11::DX11DeferredRendererMaterial::GetMaterial() const
+{
+	
+	return material_;
 
 }
 
@@ -72,3 +86,4 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 	dx11output.Present();
 
 }
+

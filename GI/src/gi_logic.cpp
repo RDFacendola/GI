@@ -41,8 +41,6 @@ public:
 
 		base_material_ = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetDirectory() + L"Data\\deferred_material.fx" });
 
-		flag = 999;
-
 	}
 
 	virtual void OnImportMaterial(MaterialCollection& materials, MeshComponent& mesh){
@@ -73,8 +71,6 @@ private:
 		return material_instance;
 
 	}
-
-	unsigned int flag;
 
 	Resources& resources_;											///< \brief Used to load various materials.
 
@@ -128,7 +124,9 @@ scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 
 	auto& resources = graphics_.GetResources();
 
-	FbxImporter fbx_importer(MaterialImporter(resources),
+	MaterialImporter material_importer(resources);
+
+	FbxImporter fbx_importer(material_importer,
 							 resources);
 	
 	fbx_importer.ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", 
