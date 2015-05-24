@@ -41,6 +41,8 @@ public:
 
 		base_material_ = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetDirectory() + L"Data\\deferred_material.fx" });
 
+		base_texture_ = resources.Load<Texture2D, Texture2D::FromFile>({ Application::GetDirectory() + L"Data\\textures\\gi_flag.DDS" });
+
 	}
 
 	virtual void OnImportMaterial(MaterialCollection& materials, MeshComponent& mesh){
@@ -64,7 +66,13 @@ private:
 	/// \brief Instantiate a concrete material.
 	ObjectPtr<DeferredRendererMaterial> InstantiateMaterial(IMaterial& material){
 
-		auto material_instance = resources_.Load<DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>({ base_material_ });
+		ObjectPtr<DeferredRendererMaterial> material_instance = resources_.Load<DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>({ base_material_ });
+
+		auto base_material = material_instance->GetMaterial();
+
+		auto ps_map = base_material->GetResource("ps_map");
+
+		ps_map->Set(base_texture_->GetView());
 
 		// Set the proper textures...
 
@@ -75,6 +83,8 @@ private:
 	Resources& resources_;											///< \brief Used to load various materials.
 
 	ObjectPtr<DeferredRendererMaterial> base_material_;				///< \brief Base material for every game object.
+
+	ObjectPtr<Texture2D> base_texture_;								///< \brief Dummy texture.
 
 };
 

@@ -66,7 +66,36 @@ namespace gi_lib{
 
 			virtual void Draw(IOutput& output) override;
 
+		private:
+
+			unique_ptr<ID3D11DeviceContext, COMDeleter> immediate_context_;		///< \brief Immediate rendering context.
+
+			unique_ptr<ID3D11Buffer, COMDeleter> per_frame_constants_;			///< \brief Buffer containing the constants of each frame.
+
 		};
+
+		/////////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////////
+
+		inline ObjectPtr<Material> DX11DeferredRendererMaterial::GetMaterial()
+		{
+
+			return material_;
+
+		}
+
+		inline size_t gi_lib::dx11::DX11DeferredRendererMaterial::GetSize() const
+		{
+
+			return material_->GetSize();
+
+		}
+
+		inline ObjectPtr<const Material> gi_lib::dx11::DX11DeferredRendererMaterial::GetMaterial() const
+		{
+
+			return material_;
+
+		}
 
 	}
 
