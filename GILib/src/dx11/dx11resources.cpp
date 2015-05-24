@@ -134,10 +134,15 @@ namespace{
 		/// \param offset Offset from the beginning of the constant buffer in bytes.
 		void Write(const void * source, size_t size, size_t offset);
 
-		/// \brief Get the hardware buffer reference.
+		/// \brief Commit any uncommitted change to the constant buffer.
+		void Commit(ID3D11DeviceContext& context);
+
+		/// \brief Get the constant buffer.
+		/// \return Return the constant buffer.
 		ID3D11Buffer& GetBuffer();
 
-		/// \brief Get the hardware buffer reference.
+		/// \brief Get the constant buffer.
+		/// \return Return the constant buffer.
 		const ID3D11Buffer& GetBuffer() const;
 
 	private:
@@ -152,7 +157,7 @@ namespace{
 
 	};
 
-	//------------------------- SHADER BUNDLE -------------------------//
+	/////////////////////////// SHADER BUNDLE ///////////////////////////
 
 	ShaderBundle::ShaderBundle(){}
 
@@ -164,7 +169,7 @@ namespace{
 
 	}
 
-	//------------------------- BUFFER STATUS -------------------------//
+	/////////////////////////// BUFFER STATUS ///////////////////////////
 
 	BufferStatus::BufferStatus(ID3D11Device& device, size_t size){
 
@@ -246,6 +251,32 @@ namespace{
 
 	}
 
+	void BufferStatus::Commit(ID3D11DeviceContext& context){
+
+		if (dirty_){
+
+			D3D11_MAPPED_SUBRESOURCE mapped_buffer;
+
+			context.Map(buffer_.get(),			
+						0,
+						D3D11_MAP_WRITE_DISCARD,		// Discard the previous buffer
+						0,					
+						&mapped_buffer);
+
+			memcpy_s(mapped_buffer.pData,
+					 size_,
+					 data_,
+					 size_);
+			
+			context.Unmap(buffer_.get(),
+						  0);
+
+			dirty_ = false;
+
+		}
+
+	}
+
 	ID3D11Buffer& BufferStatus::GetBuffer(){
 
 		return *buffer_;
@@ -255,6 +286,127 @@ namespace{
 	const ID3D11Buffer& BufferStatus::GetBuffer() const{
 
 		return *buffer_;
+
+	}
+
+	/////////////////////////// MISC ////////////////////////////////////
+
+	/// \brief Convert a shader type to a numeric index.
+	/// \return Returns a number from 0 to 4 if the specified type was referring to a single shader type, returns -1 otherwise.
+	size_t ShaderTypeToIndex(ShaderType shader_type){
+
+		// Sorted from the most common to the least common
+
+		switch (shader_type){
+
+		case ShaderType::VERTEX_SHADER:		
+
+			return 0;
+
+		case ShaderType::PIXEL_SHADER:
+
+			return 4;
+
+		case ShaderType::GEOMETRY_SHADER:
+
+			return 3;
+
+		case ShaderType::HULL_SHADER:
+
+			return 1;
+
+		case ShaderType::DOMAIN_SHADER:
+
+			return 2;
+
+		default:
+
+			return -1;
+
+		}
+
+	}
+
+	/// \brief Convert a numeric index to a shader type.
+	/// \return Returns the shader type associated to the given numeric index.
+	ShaderType IndexToShaderType(size_t index){
+
+		switch (index){
+
+		case 0:
+		
+			return ShaderType::VERTEX_SHADER;
+
+		case 4:
+
+			return ShaderType::PIXEL_SHADER;
+
+		case 3:
+
+			return ShaderType::GEOMETRY_SHADER;
+		
+		case 1:
+
+			return ShaderType::HULL_SHADER;
+
+		case 2:
+			
+			return ShaderType::DOMAIN_SHADER;
+
+		default:
+
+			return ShaderType::NONE;
+
+		}
+
+	}
+
+	////////////////////////// DIRECTX 11 ///////////////////////////////
+
+	/// \brief Load a shader from code and return a pointer to the shader object.
+	/// \param device Device used to load the shader.
+	/// \param code HLSL code to compile.
+	/// \param file_name Name of the file used to resolve the #include directives.
+	/// \param mandatory Whether the compile success if compulsory or not.
+	/// \return Returns a pointer to the shader object if the method succeeded.
+	///			If the entry point couldn't be found the method will throw if the mandatory flag was true, or will return nullptr otherwise.
+	template <typename TShader>
+	unique_ptr<TShader, COMDeleter> MakeShader(ID3D11Device& device, const string& code, const string& file_name, bool mandatory, ShaderReflection& reflection){
+
+		const wstring entry_point_exception_code = L"X3501";	// Exception code thrown when the entry point could not be found (ie: a shader doesn't exists).
+
+		TShader* shader;
+
+		wstring errors;
+
+		if (FAILED(::MakeShader(device,
+								code,
+								file_name,
+								&shader,
+								&reflection,
+								&errors))){
+
+			// Throws only if the compilation process fails when the entry point is found (on syntax error). 
+			// If the entry point is not found, throws only if the shader presence was mandatory.
+
+			if (mandatory ||
+				errors.find(entry_point_exception_code) == wstring::npos){
+
+				THROW(errors);
+
+			}
+			else{
+
+				return nullptr;
+
+			}
+
+		}
+		else{
+
+			return unique_com(shader);
+
+		}
 
 	}
 
@@ -270,12 +422,9 @@ DX11Texture2D::DX11Texture2D(const FromFile& bundle){
 	ID3D11Resource * resource;
 	ID3D11ShaderResourceView * shader_view;
 
-	wstringstream file_name;
-
-	file_name << Application::GetInstance().GetDirectory() << bundle.file_name;
 
 	THROW_ON_FAIL( CreateDDSTextureFromFileEx(&device, 
-											  file_name.str().c_str(), 
+											  bundle.file_name.c_str(), 
 											  0,									// Load everything.
 											  D3D11_USAGE_IMMUTABLE, 
 											  D3D11_BIND_SHADER_RESOURCE, 
@@ -356,6 +505,18 @@ DX11RenderTarget::DX11RenderTarget(ID3D11Texture2D & target){
 
 }
 
+DX11RenderTarget::~DX11RenderTarget(){
+
+	for (auto&& target_view : target_views_){
+
+		target_view->Release();
+
+	}
+
+	zstencil_view_->Release();
+
+}
+
 void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> targets){
 
 	/// The render target view format and the shader resource view format for the render targets are the same of the textures they are generated from (DXGI_FORMAT_UNKNOWN).
@@ -371,8 +532,6 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 	D3D11_TEXTURE2D_DESC desc;
 
 	ID3D11RenderTargetView * render_target_view;
-
-	ID3D11DepthStencilView * zstencil_view;
 
 	auto& target = **targets.begin();
 
@@ -399,9 +558,10 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 													 nullptr,
 													 &render_target_view));
 
-		textures_.push_back(new DX11Texture2D(*target, DXGI_FORMAT_UNKNOWN));
+		textures_.push_back(new DX11Texture2D(*target, 
+											  DXGI_FORMAT_UNKNOWN));
 
-		target_views_.push_back(std::move(unique_ptr<ID3D11RenderTargetView, COMDeleter>(render_target_view, COMDeleter{})));
+		target_views_.push_back(render_target_view);
 
 	}
 
@@ -409,11 +569,14 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 		
 	target.GetDesc(&desc);
 
-	THROW_ON_FAIL(MakeDepthStencil(*device, desc.Width, desc.Height, &zstencil, &zstencil_view));
+	THROW_ON_FAIL(MakeDepthStencil(*device, 
+								   desc.Width, 
+								   desc.Height, 
+								   &zstencil, 
+								   &zstencil_view_));
 
 	zstencil_ = new DX11Texture2D(*zstencil, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);					// This is the only format compatible with R24G8_TYPELESS used to create the depth buffer resource
 	
-	zstencil_view_ = unique_ptr<ID3D11DepthStencilView, COMDeleter>(zstencil_view, COMDeleter{});
 
 	// Everything went as it should have...
 	rollback.Dismiss();
@@ -429,34 +592,13 @@ void DX11RenderTarget::ResetBuffers(){
 
 }
 
-void DX11RenderTarget::Bind(ID3D11DeviceContext & context){
+void DX11RenderTarget::ClearDepthStencil(ID3D11DeviceContext& context, unsigned int clear_flags, float depth, unsigned char stencil){
 
-	// Actual array of render target views.
-
-	vector<ID3D11RenderTargetView *> target_view_array(target_views_.size());
-
-	std::transform(target_views_.begin(),
-				   target_views_.end(),
-				   target_view_array.begin(),
-				   [](unique_ptr<ID3D11RenderTargetView, COMDeleter> & target_view){
-
-			return target_view.get();
-
-		});
-
-	context.OMSetRenderTargets(static_cast<unsigned int>(target_view_array.size()),
-							   &target_view_array[0],
-							   zstencil_view_.get());
-
-}
-
-void DX11RenderTarget::ClearDepthStencil(ID3D11DeviceContext & context, unsigned int clear_flags, float depth, unsigned char stencil){
-
-	context.ClearDepthStencilView(zstencil_view_.get(), clear_flags, depth, stencil);
+	context.ClearDepthStencilView(zstencil_view_, clear_flags, depth, stencil);
 	
 }
 
-void DX11RenderTarget::ClearTargets(ID3D11DeviceContext & context, Color color){
+void DX11RenderTarget::ClearTargets(ID3D11DeviceContext& context, Color color){
 
 	// The color is ARGB, however the method ClearRenderTargetView needs an RGBA.
 
@@ -467,12 +609,21 @@ void DX11RenderTarget::ClearTargets(ID3D11DeviceContext & context, Color color){
 	rgba_color[2] = color.color.blue;
 	rgba_color[3] = color.color.alpha;
 
-	for (auto & rt_view : target_views_){
+	for (auto & target_view : target_views_){
 
-		context.ClearRenderTargetView(rt_view.get(), rgba_color);
+		context.ClearRenderTargetView(target_view, 
+									  rgba_color);
 
 	}
 
+}
+
+void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
+
+	context.OMSetRenderTargets(static_cast<unsigned int>(target_views_.size()),
+							   &target_views_[0],
+							   zstencil_view_);
+	
 }
 
 ///////////////////////////// MESH ////////////////////////////////////////////////
@@ -524,6 +675,7 @@ DX11Mesh::DX11Mesh(const FromVertices<VertexFormatNormalTextured>& bundle){
 	vertex_count_ = bundle.vertices.size();
 	LOD_count_ = 1;
 	size_ = vb_size + ib_size;
+	vertex_stride_ = sizeof(VertexFormatNormalTextured);
 
 	bounding_box_ = VerticesToBounds(bundle.vertices);
 
@@ -571,13 +723,39 @@ const MeshSubset& DX11Mesh::GetSubset(unsigned int subset_index) const{
 
 }
 
+void DX11Mesh::Bind(ID3D11DeviceContext& context){
+
+	// Only 1 vertex stream is used.
+
+	unsigned int num_streams = 1;
+
+	ID3D11Buffer* vertex_buffer = vertex_buffer_.get();
+
+	unsigned int stride = static_cast<unsigned int>(vertex_stride_);
+
+	unsigned int offset = 0;
+	
+	// Bind the vertex buffer
+
+	context.IASetVertexBuffers(0,							// Start slot
+							   num_streams,
+							   &vertex_buffer,
+							   &stride,
+							   &offset);
+
+	// Bind the index buffer
+
+	context.IASetIndexBuffer(index_buffer_.get(),
+							 DXGI_FORMAT_R32_UINT,
+							 0);
+
+}
+
 ////////////////////////////// MATERIAL //////////////////////////////////////////////
 
 /// \brief Private implementation of DX11Material.
 struct DX11Material::InstanceImpl{
 
-	unordered_map<ShaderType, ShaderBundle> bundles;					///< \brief Bundles of resources bound to shaders.
-	
 	InstanceImpl(ID3D11Device& device, const ShaderReflection& reflection);
 
 	InstanceImpl(const InstanceImpl& impl);
@@ -589,11 +767,16 @@ struct DX11Material::InstanceImpl{
 
 	void SetResource(size_t index, ObjectPtr<DX11ResourceView> resource);
 	
+	/// \brief Write any uncommitted change to the constant buffers.
+	void Commit(ID3D11DeviceContext& context);
+
+	ShaderBundle shader_bundles[5];										/// <\brief Shader bundles for each shader.
+
 private:
 
-	void AddBundle(ShaderType shader_type);
+	void AddShaderBundle(ShaderType shader_type);
 
-	void UpdateResourceViews();
+	void CommitResources();
 
 	vector<BufferStatus> buffer_status_;								///< \brief Status of constant buffers.
 
@@ -608,25 +791,29 @@ private:
 /// \brief Shared implementation of DX11Material.
 struct DX11Material::MaterialImpl{
 
+	MaterialImpl(ID3D11Device& device, const CompileFromFile& bundle);
+
 	ShaderReflection reflection;													/// \brief Combined reflection of the shaders.
 
-	unordered_map<ShaderType, unique_ptr<ID3D11DeviceChild, COMDeleter>> shaders;	/// \brief Shader objects.
+	unique_ptr<ID3D11VertexShader, COMDeleter> vertex_shader;						/// \brief Pointer to the vertex shader.
 
-	MaterialImpl(ID3D11Device& device, const CompileFromFile& bundle);
+	unique_ptr<ID3D11HullShader, COMDeleter> hull_shader;							/// \brief Pointer to the hull shader.
+
+	unique_ptr<ID3D11DomainShader, COMDeleter> domain_shader;						/// \brief Pointer to the domain shader.
+
+	unique_ptr<ID3D11GeometryShader, COMDeleter> geometry_shader;					/// \brief Pointer to the geometry shader.
+
+	unique_ptr<ID3D11PixelShader, COMDeleter> pixel_shader;							/// \brief Pointer to the pixel shader.
 	
-private:
-
-	template <typename TShader>
-	void MakeShader(ID3D11Device& device, const string& code, const string& file_name, bool mandatory);
-
 };
 
-//----------------------------  MATERIAL :: INSTANCE IMPL -------------------------------//
+//////////////////////////////  MATERIAL :: INSTANCE IMPL //////////////////////////////
 
 DX11Material::InstanceImpl::InstanceImpl(ID3D11Device& device, const ShaderReflection& reflection) :
 reflection_(reflection){
 
 	// Buffer status
+
 	for (auto& buffer : reflection.buffers){
 
 		buffer_status_.push_back(BufferStatus(device, buffer.size));
@@ -634,14 +821,16 @@ reflection_(reflection){
 	}
 
 	// Resource status (empty)
+
 	resources_.resize(reflection.resources.size());
 
-	// Bundles
-	AddBundle(ShaderType::VERTEX_SHADER);
-	AddBundle(ShaderType::HULL_SHADER);
-	AddBundle(ShaderType::DOMAIN_SHADER);
-	AddBundle(ShaderType::GEOMETRY_SHADER);
-	AddBundle(ShaderType::PIXEL_SHADER);
+	// Shader bundles
+
+	AddShaderBundle(ShaderType::VERTEX_SHADER);
+	AddShaderBundle(ShaderType::HULL_SHADER);
+	AddShaderBundle(ShaderType::DOMAIN_SHADER);
+	AddShaderBundle(ShaderType::GEOMETRY_SHADER);
+	AddShaderBundle(ShaderType::PIXEL_SHADER);
 
 	resource_dirty_mask_ = ShaderType::NONE;
 
@@ -650,15 +839,16 @@ reflection_(reflection){
 DX11Material::InstanceImpl::InstanceImpl(const InstanceImpl& impl) :
 buffer_status_(impl.buffer_status_),				// Copy ctor will copy the buffer status
 resources_(impl.resources_),						// Same resources bound
-resource_dirty_mask_(ShaderType::ALL),				// Used to lazily update the resources' shader views
+resource_dirty_mask_(impl.reflection_.shaders),		// Used to lazily update the resources' shader views
 reflection_(impl.reflection_){
 
-	// Bundles
-	AddBundle(ShaderType::VERTEX_SHADER);
-	AddBundle(ShaderType::HULL_SHADER);
-	AddBundle(ShaderType::DOMAIN_SHADER);
-	AddBundle(ShaderType::GEOMETRY_SHADER);
-	AddBundle(ShaderType::PIXEL_SHADER);
+	// Shader bundles
+
+	AddShaderBundle(ShaderType::VERTEX_SHADER);
+	AddShaderBundle(ShaderType::HULL_SHADER);
+	AddShaderBundle(ShaderType::DOMAIN_SHADER);
+	AddShaderBundle(ShaderType::GEOMETRY_SHADER);
+	AddShaderBundle(ShaderType::PIXEL_SHADER);
 
 }
 
@@ -676,7 +866,7 @@ void DX11Material::InstanceImpl::SetResource(size_t index, ObjectPtr<DX11Resourc
 
 }
 
-void DX11Material::InstanceImpl::AddBundle(ShaderType shader_type){
+void DX11Material::InstanceImpl::AddShaderBundle(ShaderType shader_type){
 
 	if (reflection_.shaders && shader_type){
 		
@@ -695,44 +885,68 @@ void DX11Material::InstanceImpl::AddBundle(ShaderType shader_type){
 
 		// Resources, built once, update by need (when the material is bound to the pipeline).
 		bundle.resources.resize(std::count_if(reflection_.resources.begin(),
-			reflection_.resources.end(),
-			[shader_type](const ShaderResourceDesc& resource_desc){
+											  reflection_.resources.end(),
+											  [shader_type](const ShaderResourceDesc& resource_desc){
 
-			return resource_desc.shader_usage && shader_type;
+													return resource_desc.shader_usage && shader_type;
 
-		}));
+											  }));
 
 		// Sampler count, never changes
 		bundle.sampler_count = static_cast<unsigned int>(std::count_if(reflection_.samplers.begin(),
-			reflection_.samplers.end(),
-			[shader_type](const ShaderSamplerDesc& sampler_desc){
+																	   reflection_.samplers.end(),
+																	   [shader_type](const ShaderSamplerDesc& sampler_desc){
 
-			return sampler_desc.shader_usage && shader_type;
+																			return sampler_desc.shader_usage && shader_type;
 
-		}));
+																	   }));
 
-		bundles[shader_type] = std::move(bundle);
+		// Move it to the vector.
+
+		shader_bundles[ShaderTypeToIndex(shader_type)] = std::move(bundle);
 
 	}
 
 }
 
-void DX11Material::InstanceImpl::UpdateResourceViews(){
+void DX11Material::InstanceImpl::CommitResources(){
 
-	size_t resource_index;
-	size_t bind_point;
+	if (resource_dirty_mask_ == ShaderType::NONE){
 
-	for (auto& bundle : bundles){
+		// Most common case: no resource was touched.
 
-		if (resource_dirty_mask_ && bundle.first){		// Dirty bundles only.
+		return;
 
-			auto& resource_views = bundle.second.resources;
+	}
 
-			for (resource_index = 0, bind_point = 0; resource_index < resource_views.size(); ++resource_index){
+	size_t resource_index;							// Index of a resource within the global resource array.
+	size_t bind_point;								// Resource bind point relative to a particular shader.
+	size_t index = 0;								// Shader index
+	ShaderType shader_type;							// Type of the shader to update.
 
-				if (reflection_.resources[resource_index].shader_usage && bundle.first){
+	ObjectPtr<DX11ResourceView> resource_view;		// Current resource view
 
-					resource_views[bind_point] = &resource_view(*resources_[resource_index]);	// Get the Sampler State from the resource pointer.
+	for (auto&& bundle : shader_bundles){
+
+		shader_type = IndexToShaderType(index);
+
+		// Cycle through dirty bundles
+
+		if (resource_dirty_mask_ && shader_type){
+
+			auto& resource_views = bundle.resources;
+
+			// Cycle trough every resource. If any given resource is used by the current shader type, update the shader resource view vector's corresponding location.
+
+			for (resource_index = 0, bind_point = 0; resource_index < reflection_.resources.size(); ++resource_index){
+
+				if (reflection_.resources[resource_index].shader_usage && shader_type){
+
+					resource_view = resources_[resource_index];
+
+					resource_views[bind_point] = resource_view ?
+												 &resource_view->GetShaderView() :
+												 nullptr;
 
 					++bind_point;
 
@@ -742,13 +956,31 @@ void DX11Material::InstanceImpl::UpdateResourceViews(){
 
 		}
 
+		++index;
+
 	}
 
 	resource_dirty_mask_ = ShaderType::NONE;
 
 }
 
-//----------------------------  MATERIAL :: MATERIAL IMPL -------------------------------//
+void DX11Material::InstanceImpl::Commit(ID3D11DeviceContext& context){
+
+	// Commit dirty constant buffers
+
+	for (auto&& buffer : buffer_status_){
+
+		buffer.Commit(context);
+			
+	}
+
+	// Commit resource views
+
+	CommitResources();
+
+}
+
+//////////////////////////////  MATERIAL :: MATERIAL IMPL //////////////////////////////
 
 DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFromFile& bundle){
 	
@@ -758,7 +990,11 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 
 	auto rollback = make_scope_guard([&](){
 
-		shaders.clear();
+		vertex_shader = nullptr;
+		hull_shader = nullptr;
+		domain_shader = nullptr;
+		geometry_shader = nullptr;
+		pixel_shader = nullptr;
 
 	});
 
@@ -766,53 +1002,18 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 
 	reflection.shaders = ShaderType::NONE;
 
-	MakeShader<ID3D11VertexShader>(device, code, file_name, true);		// mandatory
-	MakeShader<ID3D11HullShader>(device, code, file_name, false);		// optional
-	MakeShader<ID3D11DomainShader>(device, code, file_name, false);		// optional
-	MakeShader<ID3D11GeometryShader>(device, code, file_name, false);	// optional
-	MakeShader<ID3D11PixelShader>(device, code, file_name, true);		// mandatory
+	vertex_shader = ::MakeShader<ID3D11VertexShader>(device, code, file_name, true, reflection);		// mandatory
+	hull_shader = ::MakeShader<ID3D11HullShader>(device, code, file_name, false, reflection);		// optional
+	domain_shader = ::MakeShader<ID3D11DomainShader>(device, code, file_name, false, reflection);		// optional
+	geometry_shader = ::MakeShader<ID3D11GeometryShader>(device, code, file_name, false, reflection);	// optional
+	pixel_shader = ::MakeShader<ID3D11PixelShader>(device, code, file_name, true, reflection);		// mandatory
 					
 	// Dismiss
 	rollback.Dismiss();
 
 }
 
-template <typename TShader>
-void DX11Material::MaterialImpl::MakeShader(ID3D11Device& device, const string& code, const string& file_name, bool mandatory){
-
-	const wstring entry_point_exception_code = L"X3501";	// Exception code thrown when the entry point could not be found (ie: a shader doesn't exists).
-
-	TShader* shader;
-
-	wstring errors;
-
-	if (FAILED(::MakeShader(device, 
-							code,
-							file_name, 
-							&shader, 
-							&reflection, 
-							&errors))){
-
-		// Throws only if the compilation process fails when the entry point is found (on syntax error). 
-		// If the entry point is not found, throws only if the shader presence was mandatory.
-
-		if(mandatory ||
-		   errors.find(entry_point_exception_code) == wstring::npos){
-
-			THROW(errors);	
-
-		}
-
-	}
-	else{
-
-		shaders[ShaderTraits<TShader>::flag] = unique_com(shader);
-
-	}
-
-}
-
-//----------------------------  MATERIAL :: VARIABLE -------------------------------//
+//////////////////////////////  MATERIAL :: VARIABLE //////////////////////////////
 
 DX11Material::DX11MaterialVariable::DX11MaterialVariable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset) :
 instance_impl_(&instance_impl),
@@ -832,7 +1033,7 @@ void DX11Material::DX11MaterialVariable::Set(const void * buffer, size_t size){
 
 }
 
-//----------------------------  MATERIAL :: RESOURCE -------------------------------//
+//////////////////////////////  MATERIAL :: RESOURCE //////////////////////////////
 
 DX11Material::DX11MaterialResource::DX11MaterialResource(InstanceImpl& instance_impl, size_t resource_index) :
 instance_impl_(&instance_impl),
@@ -845,7 +1046,7 @@ void DX11Material::DX11MaterialResource::Set(ObjectPtr<IResourceView> resource){
 
 }
 
-//----------------------------  MATERIAL -------------------------------//
+//////////////////////////////  MATERIAL //////////////////////////////
 
 DX11Material::DX11Material(const CompileFromFile& args){
 
@@ -947,5 +1148,109 @@ size_t DX11Material::GetSize() const{
 								return size + desc.size;
 
 						   });
+
+}
+
+void DX11Material::Commit(ID3D11DeviceContext& context){
+
+	// Update the constant buffers
+
+	private_impl_->Commit(context);
+
+	// Bind both shaders, resources and constant buffers to the pipeline
+
+	auto& bundles = private_impl_->shader_bundles;
+
+	static ID3D11SamplerState* samplers[] = { nullptr, nullptr, nullptr };
+
+	// Vertex shader
+
+	if (shared_impl_->vertex_shader){
+
+		// Shader
+
+		context.VSSetShader(shared_impl_->vertex_shader.get(),
+							nullptr,
+							0);
+
+		// Constant buffers
+
+		auto& bundle = bundles[ShaderTypeToIndex(ShaderType::VERTEX_SHADER)];
+
+		if (bundle.buffers.size() > 0){
+
+			context.VSSetConstantBuffers(0,
+										 bundle.buffers.size(),
+										 &bundle.buffers[0]);
+
+		}
+		
+
+		// Resources
+
+		if (bundle.resources.size() > 0){
+
+			context.VSSetShaderResources(0,
+										 bundle.resources.size(),
+										 &bundle.resources[0]);
+
+		}
+
+		// Samplers
+
+		if (bundle.sampler_count > 0){
+
+			context.VSSetSamplers(0,
+								  bundle.sampler_count,
+								  samplers);
+
+		}
+
+	}
+		
+	// Pixel shader
+
+	if (shared_impl_->pixel_shader){
+
+		// Shader
+
+		context.PSSetShader(shared_impl_->pixel_shader.get(),
+							nullptr,
+							0);
+
+		// Constant buffers
+
+		auto& bundle = bundles[ShaderTypeToIndex(ShaderType::PIXEL_SHADER)];
+
+		if (bundle.buffers.size() > 0){
+
+			context.PSSetConstantBuffers(0,
+										 bundle.buffers.size(),
+										 &bundle.buffers[0]);
+
+		}
+		
+
+		// Resources
+
+		if (bundle.resources.size() > 0){
+
+			context.PSSetShaderResources(0,
+										 bundle.resources.size(),
+										 &bundle.resources[0]);
+
+		}
+
+		// Samplers
+
+		if (bundle.sampler_count > 0){
+
+			context.PSSetSamplers(0,
+								  bundle.sampler_count,
+								  samplers);
+
+		}
+
+	}
 
 }

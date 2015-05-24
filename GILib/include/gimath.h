@@ -33,6 +33,7 @@ using ::Eigen::Vector2i;
 using ::Eigen::Vector3i;
 using ::Eigen::Vector4i;
 using ::Eigen::Affine3f;
+using ::Eigen::Matrix4f;
 
 using ::std::vector;
 

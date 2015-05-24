@@ -132,7 +132,7 @@ namespace gi_lib{
 			/// \param device Device used to create the additional internal resources.
 			DX11RenderTarget(ID3D11Texture2D& target);
 
-			virtual ~DX11RenderTarget(){}
+			virtual ~DX11RenderTarget();
 
 			virtual size_t GetSize() const override;
 
@@ -158,27 +158,26 @@ namespace gi_lib{
 			/// \brief Releases all the buffers referenced by the render target.
 			void ResetBuffers();
 
-			/// \brief Bind the render target to the specified context.
-			/// \param context The context to bound the render target to.
-			void Bind(ID3D11DeviceContext & context);
-
 			/// \brief Clear the depth stencil view.
 			/// \param context The context used to clear the view.
 			/// \param clear_flags Determines whether to clear the depth and\or the stencil buffer. (see: D3D11_CLEAR_FLAGS)
 			/// \param depth Depth value to store inside the depth buffer.
 			/// \param stencil Stencil value to store inside the stencil buffer.
-			void ClearDepthStencil(ID3D11DeviceContext & context, unsigned int clear_flags, float depth, unsigned char stencil);
+			void ClearDepthStencil(ID3D11DeviceContext& context, unsigned int clear_flags, float depth, unsigned char stencil);
 
 			/// \brief Clear every target view.
 			/// \param context The context used to clear the view.
 			/// \param color The color used to clear the targets.
-			void ClearTargets(ID3D11DeviceContext & context, Color color);
+			void ClearTargets(ID3D11DeviceContext& context, Color color);
+
+			/// \brief Bind the render target to the given render context.
+			void Bind(ID3D11DeviceContext& context);
 
 		private:
 			
-			vector<unique_ptr<ID3D11RenderTargetView, COMDeleter>> target_views_;
-
-			unique_ptr < ID3D11DepthStencilView, COMDeleter > zstencil_view_;
+			vector<ID3D11RenderTargetView*> target_views_;
+			
+			ID3D11DepthStencilView* zstencil_view_;
 
 			vector<ObjectPtr<DX11Texture2D>> textures_;
 
@@ -213,6 +212,9 @@ namespace gi_lib{
 
 			virtual const MeshSubset& GetSubset(unsigned int subset_index) const override;
 
+			/// \brief Bind the mesh to the given context.
+			void Bind(ID3D11DeviceContext& context);
+
 		private:
 
 			unique_ptr<ID3D11Buffer, COMDeleter> vertex_buffer_;
@@ -228,6 +230,8 @@ namespace gi_lib{
 			size_t LOD_count_;
 
 			size_t size_;
+
+			size_t vertex_stride_;											///< \brief Size of each vertex in bytes
 
 			AABB bounding_box_;
 			
@@ -257,6 +261,9 @@ namespace gi_lib{
 			virtual ObjectPtr<MaterialVariable> GetVariable(const string& name) override;
 
 			virtual ObjectPtr<MaterialResource> GetResource(const string& name) override;
+
+			/// \brief Commit all the constant buffers and bind the material to the pipeline.
+			void Commit(ID3D11DeviceContext& context);
 
 		private:
 
@@ -377,13 +384,6 @@ namespace gi_lib{
 
 		}
 		
-		/// \brief Get the shader resource view of a resource.
-		inline ID3D11ShaderResourceView& resource_view(IResourceView& resource){
-
-			return static_cast<DX11ResourceView&>(resource).GetShaderView();
-
-		}
-
 		/////////////////////////////// DX11 RESOURCE VIEW TEMPLATE ///////////////////////////////
 
 		template <typename TResource>
