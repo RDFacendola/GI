@@ -263,15 +263,225 @@ namespace gi_lib{
 		/// \param sampler Pointer to the object that will hold the sampler if the method succeeds..
 		HRESULT MakeSampler(ID3D11Device& device, TextureMapping texture_mapping, unsigned int anisotropy_level, ID3D11SamplerState** sampler);
 
+		/// \brief Bind a shader to a render context.
+		/// \param context Context the shader will be bound to.
+		/// \param shader Shader to bound.
+		template <typename TShader>
+		void SetShader(ID3D11DeviceContext& context, TShader* shader);
+
+		/// \brief Bind some constant buffers to a render context.
+		/// \param start_slot Slot where the first buffer will be bound to.
+		/// \param context Context the constant buffers will be bound to.
+		/// \param buffers Array containing the constant buffers.
+		/// \param count Number of buffers.
+		template <typename TShader>
+		void SetConstantBuffers(ID3D11DeviceContext& context, size_t start_slot, ID3D11Buffer* const * buffers, size_t count);
+
+		/// \brief Bind some shader resources to a render context.
+		/// \param start_slot Slot where the first resource will be bound to.
+		/// \param context Context the resources will be bound to.
+		/// \param buffers Array containing the shader resource views.
+		/// \param count Number of resources.
+		template <typename TShader>
+		void SetShaderResources(ID3D11DeviceContext& context, size_t start_slot, ID3D11ShaderResourceView* const * resources, size_t count);
+
+		/// \brief Bind some samplers to a render context.
+		/// \param start_slot Slot where the first sampler will be bound to.
+		/// \param context Context the samplers will be bound to.
+		/// \param buffers Array containing the sampler states.
+		/// \param count Number of samplers.
+		template <typename TShader>
+		void SetShaderSamplers(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const * samplers, size_t count);
+
 	}
 
 }
 
-//
+////////////////////////////// INLINE IMPLEMENTATION /////////////////////////////////
 
 template <typename TShader>
 inline HRESULT gi_lib::dx11::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, TShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	return ShaderTraits<TShader>::MakeShader(device, HLSL, source_file, shader, reflection, errors);
+
+}
+
+template<>
+inline void gi_lib::dx11::SetShader<ID3D11VertexShader>(ID3D11DeviceContext& context, ID3D11VertexShader* shader){
+
+	context.VSSetShader(shader,
+						nullptr,
+						0);
+
+}
+
+template<>
+inline void gi_lib::dx11::SetShader<ID3D11HullShader>(ID3D11DeviceContext& context, ID3D11HullShader* shader){
+	
+	context.HSSetShader(shader,
+						nullptr,
+						0);
+
+}
+
+template<>
+inline void gi_lib::dx11::SetShader<ID3D11DomainShader>(ID3D11DeviceContext& context, ID3D11DomainShader* shader){
+
+	context.DSSetShader(shader,
+						nullptr,
+						0);
+
+}
+
+template<>
+inline void gi_lib::dx11::SetShader<ID3D11GeometryShader>(ID3D11DeviceContext& context, ID3D11GeometryShader* shader){
+
+	context.GSSetShader(shader,
+						nullptr,
+						0);
+
+}
+
+template<>
+inline void gi_lib::dx11::SetShader<ID3D11PixelShader>(ID3D11DeviceContext& context, ID3D11PixelShader* shader){
+
+	context.PSSetShader(shader,
+						nullptr,
+						0);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetConstantBuffers<ID3D11VertexShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11Buffer* const * buffers, size_t count){
+
+	context.VSSetConstantBuffers(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 buffers);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetConstantBuffers<ID3D11HullShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11Buffer* const * buffers, size_t count){
+
+	context.HSSetConstantBuffers(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 buffers);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetConstantBuffers<ID3D11DomainShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11Buffer* const * buffers, size_t count){
+
+	context.DSSetConstantBuffers(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 buffers);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetConstantBuffers<ID3D11GeometryShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11Buffer* const * buffers, size_t count){
+
+	context.GSSetConstantBuffers(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 buffers);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetConstantBuffers<ID3D11PixelShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11Buffer* const * buffers, size_t count){
+
+	context.PSSetConstantBuffers(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 buffers);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderResources<ID3D11VertexShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11ShaderResourceView* const * resources, size_t count){
+
+	context.VSSetShaderResources(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 resources);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderResources<ID3D11HullShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11ShaderResourceView* const * resources, size_t count){
+	
+	context.HSSetShaderResources(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 resources);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderResources<ID3D11DomainShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11ShaderResourceView* const * resources, size_t count){
+
+	context.DSSetShaderResources(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 resources);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderResources<ID3D11GeometryShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11ShaderResourceView* const * resources, size_t count){
+
+	context.GSSetShaderResources(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 resources);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderResources<ID3D11PixelShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11ShaderResourceView* const * resources, size_t count){
+
+	context.PSSetShaderResources(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 resources);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderSamplers<ID3D11VertexShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const * samplers, size_t count){
+
+		context.VSSetSamplers(static_cast<UINT>(start_slot),
+							  static_cast<UINT>(count),
+							  samplers);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderSamplers<ID3D11HullShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const * samplers, size_t count){
+	
+		context.HSSetSamplers(static_cast<UINT>(start_slot),
+							  static_cast<UINT>(count),
+							  samplers);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderSamplers<ID3D11DomainShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const * samplers, size_t count){
+
+		context.DSSetSamplers(static_cast<UINT>(start_slot),
+							  static_cast<UINT>(count),
+							  samplers);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderSamplers<ID3D11GeometryShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const * samplers, size_t count){
+
+		context.GSSetSamplers(static_cast<UINT>(start_slot),
+							  static_cast<UINT>(count),
+							  samplers);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderSamplers<ID3D11PixelShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const * samplers, size_t count){
+
+		context.PSSetSamplers(static_cast<UINT>(start_slot),
+							  static_cast<UINT>(count),
+							  samplers);
 
 }
