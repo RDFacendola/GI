@@ -159,7 +159,8 @@ namespace{
 
 	/////////////////////////// SHADER BUNDLE ///////////////////////////
 
-	ShaderBundle::ShaderBundle(){}
+	ShaderBundle::ShaderBundle() :
+	sampler_count(0){}
 
 	ShaderBundle::ShaderBundle(ShaderBundle&& other){
 
@@ -321,7 +322,7 @@ namespace{
 
 		default:
 
-			return -1;
+			return static_cast<size_t>(-1);
 
 		}
 
@@ -410,6 +411,49 @@ namespace{
 
 	}
 
+	/// \brief Bind a shader along with its resources to a device context.
+	/// \param context The context where the shader will be bound.
+	/// \param shader Pointer to the shader. Can be nullptr to disable a pipeline stage.
+	/// \param bundle Bundle of resources associated to the shader.
+	template <typename TShader, typename TDeleter>
+	void BindShader(ID3D11DeviceContext& context, const unique_ptr<TShader, TDeleter>& shader_ptr, const ShaderBundle& bundle){
+
+		TShader* shader = shader_ptr ?
+						  shader_ptr.get() :
+						  nullptr;
+		// Shader
+
+		SetShader(context,
+				  shader);
+
+		// Constant buffers
+				
+		SetConstantBuffers<TShader>(context,
+									0,
+									bundle.buffers.size() > 0 ? &bundle.buffers[0] : nullptr,
+									bundle.buffers.size());
+
+		
+
+
+		// Resources
+
+		SetShaderResources<TShader>(context,
+									0,
+									bundle.resources.size() > 0 ? &bundle.resources[0] : nullptr,
+									bundle.resources.size());
+
+		// Samplers
+
+		static ID3D11SamplerState* samplers[] = { nullptr, nullptr, nullptr };
+
+		SetShaderSamplers<TShader>(context,
+								   0,
+								   bundle.sampler_count > 0 ? samplers : nullptr,
+								   bundle.sampler_count);
+
+	}
+		
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
@@ -501,19 +545,16 @@ void DX11Texture2D::UpdateDescription(){
 
 DX11RenderTarget::DX11RenderTarget(ID3D11Texture2D & target){
 
+	zstencil_ = nullptr;
+	zstencil_view_ = nullptr;
+	
 	SetBuffers({ &target });
 
 }
 
 DX11RenderTarget::~DX11RenderTarget(){
 
-	for (auto&& target_view : target_views_){
-
-		target_view->Release();
-
-	}
-
-	zstencil_view_->Release();
+	ResetBuffers();
 
 }
 
@@ -585,11 +626,34 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 
 void DX11RenderTarget::ResetBuffers(){
 
-	textures_.clear();
-	target_views_.clear();
-	zstencil_ = nullptr;
-	zstencil_view_ = nullptr;
+	// Release the targets
 
+	textures_.clear();
+	
+	// Release the target views
+
+	for (auto&& target_view : target_views_){
+
+		target_view->Release();
+
+	}
+
+	target_views_.clear();
+
+	// Release the zstencil
+
+	zstencil_ = nullptr;
+
+	// Release the zstencil view
+
+	if (zstencil_view_){
+
+		zstencil_view_->Release();
+
+		zstencil_view_ = nullptr;
+
+	}
+	
 }
 
 void DX11RenderTarget::ClearDepthStencil(ID3D11DeviceContext& context, unsigned int clear_flags, float depth, unsigned char stencil){
@@ -770,7 +834,7 @@ struct DX11Material::InstanceImpl{
 	/// \brief Write any uncommitted change to the constant buffers.
 	void Commit(ID3D11DeviceContext& context);
 
-	ShaderBundle shader_bundles[5];										/// <\brief Shader bundles for each shader.
+	unordered_map<ShaderType, ShaderBundle> shader_bundles;				/// <\brief Shader bundles for each shader.
 
 private:
 
@@ -903,7 +967,7 @@ void DX11Material::InstanceImpl::AddShaderBundle(ShaderType shader_type){
 
 		// Move it to the vector.
 
-		shader_bundles[ShaderTypeToIndex(shader_type)] = std::move(bundle);
+		shader_bundles[shader_type] = std::move(bundle);
 
 	}
 
@@ -919,28 +983,25 @@ void DX11Material::InstanceImpl::CommitResources(){
 
 	}
 
-	size_t resource_index;							// Index of a resource within the global resource array.
-	size_t bind_point;								// Resource bind point relative to a particular shader.
-	size_t index = 0;								// Shader index
-	ShaderType shader_type;							// Type of the shader to update.
+	size_t resource_index;								// Index of a resource within the global resource array.
+	size_t bind_point;									// Resource bind point relative to a particular shader.
+	size_t index = 0;									// Shader index
 
-	ObjectPtr<DX11ResourceView> resource_view;		// Current resource view
+	ObjectPtr<DX11ResourceView> resource_view;			// Current resource view
 
-	for (auto&& bundle : shader_bundles){
-
-		shader_type = IndexToShaderType(index);
+	for (auto&& bundle_entry : shader_bundles){		
 
 		// Cycle through dirty bundles
 
-		if (resource_dirty_mask_ && shader_type){
+		if (resource_dirty_mask_ && bundle_entry.first){
 
-			auto& resource_views = bundle.resources;
+			auto& resource_views = bundle_entry.second.resources;
 
 			// Cycle trough every resource. If any given resource is used by the current shader type, update the shader resource view vector's corresponding location.
 
 			for (resource_index = 0, bind_point = 0; resource_index < reflection_.resources.size(); ++resource_index){
 
-				if (reflection_.resources[resource_index].shader_usage && shader_type){
+				if (reflection_.resources[resource_index].shader_usage && bundle_entry.first){
 
 					resource_view = resources_[resource_index];
 
@@ -1157,100 +1218,28 @@ void DX11Material::Commit(ID3D11DeviceContext& context){
 
 	private_impl_->Commit(context);
 
-	// Bind both shaders, resources and constant buffers to the pipeline
+	// Bind Every shader to the pipeline
 
 	auto& bundles = private_impl_->shader_bundles;
 
-	static ID3D11SamplerState* samplers[] = { nullptr, nullptr, nullptr };
+	BindShader(context,
+			   shared_impl_->vertex_shader,
+			   bundles[ShaderType::VERTEX_SHADER]);
 
-	// Vertex shader
+	BindShader(context,
+			   shared_impl_->hull_shader,
+			   bundles[ShaderType::HULL_SHADER]);
 
-	if (shared_impl_->vertex_shader){
+	BindShader(context,
+			   shared_impl_->domain_shader,
+			   bundles[ShaderType::DOMAIN_SHADER]);
 
-		// Shader
+	BindShader(context,
+			   shared_impl_->geometry_shader,
+			   bundles[ShaderType::GEOMETRY_SHADER]);
 
-		context.VSSetShader(shared_impl_->vertex_shader.get(),
-							nullptr,
-							0);
-
-		// Constant buffers
-
-		auto& bundle = bundles[ShaderTypeToIndex(ShaderType::VERTEX_SHADER)];
-
-		if (bundle.buffers.size() > 0){
-
-			context.VSSetConstantBuffers(0,
-										 bundle.buffers.size(),
-										 &bundle.buffers[0]);
-
-		}
-		
-
-		// Resources
-
-		if (bundle.resources.size() > 0){
-
-			context.VSSetShaderResources(0,
-										 bundle.resources.size(),
-										 &bundle.resources[0]);
-
-		}
-
-		// Samplers
-
-		if (bundle.sampler_count > 0){
-
-			context.VSSetSamplers(0,
-								  bundle.sampler_count,
-								  samplers);
-
-		}
-
-	}
-		
-	// Pixel shader
-
-	if (shared_impl_->pixel_shader){
-
-		// Shader
-
-		context.PSSetShader(shared_impl_->pixel_shader.get(),
-							nullptr,
-							0);
-
-		// Constant buffers
-
-		auto& bundle = bundles[ShaderTypeToIndex(ShaderType::PIXEL_SHADER)];
-
-		if (bundle.buffers.size() > 0){
-
-			context.PSSetConstantBuffers(0,
-										 bundle.buffers.size(),
-										 &bundle.buffers[0]);
-
-		}
-		
-
-		// Resources
-
-		if (bundle.resources.size() > 0){
-
-			context.PSSetShaderResources(0,
-										 bundle.resources.size(),
-										 &bundle.resources[0]);
-
-		}
-
-		// Samplers
-
-		if (bundle.sampler_count > 0){
-
-			context.PSSetSamplers(0,
-								  bundle.sampler_count,
-								  samplers);
-
-		}
-
-	}
+	BindShader(context,
+			   shared_impl_->pixel_shader,
+			   bundles[ShaderType::PIXEL_SHADER]);
 
 }
