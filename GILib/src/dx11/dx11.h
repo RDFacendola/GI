@@ -12,6 +12,8 @@
 #include <d3dcompiler.h>
 
 #include "..\..\include\enums.h"
+#include "..\..\include\gimath.h"
+#include "..\..\include\windows\os_windows.h"
 
 using ::std::vector;
 using ::std::string;
@@ -178,7 +180,7 @@ namespace gi_lib{
 
 		};
 
-		/// \brief geomtry shader type traits.
+		/// \brief geometry shader type traits.
 		template<> struct ShaderTraits < ID3D11GeometryShader > {
 
 			static const ShaderType flag;		///< \brief Flag used to identify the shader type.
@@ -216,6 +218,15 @@ namespace gi_lib{
 			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11PixelShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
+
+		/// \brief Compile an HLSL code returning a bytecode.
+		/// \param HLSL HLSL code.
+		/// \param source_file File containing the HLSL code, used to resolve the #include directives.
+		/// \param bytecode If the method succeeds, it will contain the compiled bytecode.
+		/// \param error_string If the method fails, it will contain the error string. Optional.
+		/// \return Returns the com
+		template <typename TShader>
+		HRESULT Compile(const string& HLSL, const string& source_file, ID3DBlob** bytecode, wstring* error_string);
 
 		/// \brief Create a depth stencil suitable for the provided target.
 		/// \param device Device used to create the texture.
@@ -293,11 +304,64 @@ namespace gi_lib{
 		template <typename TShader>
 		void SetShaderSamplers(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const * samplers, size_t count);
 
+		/// \brief Compute the left-handed perspective projection matrix.
+		/// \param field_of_view Field of view, in radians.
+		/// \param aspect_ratio Width-to-height aspect ratio.
+		/// \param near_plane Distance of the near clipping plane.
+		/// \param far_plane Distance of the far clipping plane.
+		Matrix4f ComputePerspectiveProjectionLH(float field_of_view, float aspect_ratio, float near_plane, float far_plane);
+
 	}
 
 }
 
 ////////////////////////////// INLINE IMPLEMENTATION /////////////////////////////////
+
+template <typename TShader>
+HRESULT gi_lib::dx11::Compile(const string& HLSL, const string& source_file, ID3DBlob** bytecode, wstring* error_string){
+
+#ifdef _DEBUG
+
+	UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_SKIP_OPTIMIZATION;
+
+	D3D_SHADER_MACRO shader_macros[2] = { { "_DEBUG", "" }, { nullptr, nullptr } };
+
+#else
+
+	UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_OPTIMIZATION_LEVEL3;
+
+	const D3D_SHADER_MACRO* shader_macros = nullptr;
+
+#endif
+
+	ID3DBlob * errors;
+
+	auto hr = D3DCompile(HLSL.c_str(),
+						 HLSL.length(),
+						 source_file.c_str(),
+						 shader_macros,
+						 D3D_COMPILE_STANDARD_FILE_INCLUDE,
+						 ShaderTraits<TShader>::entry_point,
+						 ShaderTraits<TShader>::profile,
+						 compilation_flags,
+						 0,
+						 bytecode,
+						 &errors);
+
+	if (FAILED(hr) &&
+		error_string){
+
+		COM_GUARD(errors);
+
+		string err_string = static_cast<char*>(errors->GetBufferPointer());
+
+		*error_string = wstring(err_string.begin(), err_string.end());
+
+	}
+
+	return hr;
+
+}
 
 template <typename TShader>
 inline HRESULT gi_lib::dx11::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, TShader** shader, ShaderReflection* reflection, wstring* errors){

@@ -240,57 +240,6 @@ namespace{
 
 	}
 
-	/// \brief Compile an HLSL code.
-	/// \brief HLSL HLSL code to compile.
-	/// \brief source_file Used to resolve the #include directives.
-	/// \brief bytecode Pointer to the blob that will hold the compiled code if the method succeeds. Set to nullptr to ignore.
-	/// \brief errors Pointer to the blob that will hold the compilation errors if the method fails. Set to nullptr to ignore.
-	template <typename TShader>
-	HRESULT Compile(const string& HLSL, const string& source_file, ID3DBlob** bytecode, wstring* error_string){
-
-#ifdef _DEBUG
-
-		UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_SKIP_OPTIMIZATION;
-
-		D3D_SHADER_MACRO shader_macros[2] = { { "_DEBUG", "" }, { nullptr, nullptr } };
-
-#else
-
-		UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_OPTIMIZATION_LEVEL3;
-
-		const D3D_SHADER_MACRO* shader_macros = nullptr;
-
-#endif
-
-		ID3DBlob * errors;
-
-		auto hr = D3DCompile(HLSL.c_str(),
-							 HLSL.length(),
-							 source_file.c_str(),
-							 shader_macros,
-							 D3D_COMPILE_STANDARD_FILE_INCLUDE,
-							 ShaderTraits<TShader>::entry_point,
-							 ShaderTraits<TShader>::profile,
-							 compilation_flags,
-							 0,
-							 bytecode,
-							 &errors);
-				
-		if (FAILED(hr) &&
-			error_string){
-
-			COM_GUARD(errors);
-
-			string err_string = static_cast<char*>(errors->GetBufferPointer());
-
-			*error_string = wstring(err_string.begin(), err_string.end());
-
-		}
-
-		return hr;
-
-	}
-
 	template <typename TShader, typename TCreateShader>
 	HRESULT MakeShader(const string& HLSL, const string& source_file, TCreateShader CreateShader, TShader** shader, ShaderReflection* reflection, wstring* error_string){
 
@@ -633,5 +582,29 @@ HRESULT gi_lib::dx11::MakeSampler(ID3D11Device& device, TextureMapping texture_m
 	// Create the sampler state
 	return device.CreateSamplerState(&desc, 
 									 sampler);
+
+}
+
+Matrix4f gi_lib::dx11::ComputePerspectiveProjectionLH(float field_of_view, float aspect_ratio, float near_plane, float far_plane){
+
+	Matrix4f projection_matrix = Matrix4f::Identity();
+
+	auto height = 1.0f / std::tanf(field_of_view * 0.5f);
+
+	auto width = height / aspect_ratio;
+
+	projection_matrix(0, 0) = width;
+
+	projection_matrix(1, 1) = height;
+
+	projection_matrix(2, 2) = far_plane / (far_plane - near_plane);
+
+	projection_matrix(3, 3) = 0.f;
+
+	projection_matrix(2, 3) = -(near_plane * far_plane) / (far_plane - near_plane);
+
+	projection_matrix(3, 2) = 1.0f;
+
+	return projection_matrix;
 
 }
