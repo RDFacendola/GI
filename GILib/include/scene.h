@@ -88,9 +88,17 @@ namespace gi_lib{
 		/// \return Returns the volume hierarchy.
 		const IVolumeHierarchy& GetVolumeHierarchy() const;
 
+		/// \brief Get the list of the nodes created so far.
+		/// \return Returns the list of the nodes created so far.
+		const vector<NodeComponent*>& GetNodes() const;
+
+		/// \brief Get the list of the nodes created so far.
+		/// \return Returns the list of the nodes created so far.
+		vector<NodeComponent*>& GetNodes();
+
 	private:
 
-		vector<unique_ptr<NodeComponent>> nodes_;			///< \brief Nodes inside the scene.
+		vector<NodeComponent*> nodes_;						///< \brief Nodes inside the scene.
 
 		CameraComponent* main_camera_;						///< \brief Main camera.
 
@@ -153,7 +161,7 @@ namespace gi_lib{
 	};
 
 	/// \brief Expose 3D-space transform capabilities.
-	/// The composite tranformation is calculated by applying the scaling first, the rotation second and the translation last.
+	/// The composite transformation is calculated by applying the scaling first, the rotation second and the translation last.
 	/// \author Raffaele D. Facendola
 	class TransformComponent : public Component{
 
@@ -452,5 +460,19 @@ namespace gi_lib{
 		TransformComponent* transform_;		///< \brief Transform component needed to compute the view frustum.
 
 	};
+
+	////////////////////////////////// SCENE //////////////////////////////
+
+	inline const vector<NodeComponent*>& Scene::GetNodes() const{
+
+		return nodes_;
+
+	}
+
+	inline vector<NodeComponent*>& Scene::GetNodes(){
+
+		return nodes_;
+
+	}
 
 }
