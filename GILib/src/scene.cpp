@@ -67,13 +67,21 @@ volume_hierarchy_(std::move(volume_hierarchy)){}
 
 Scene::~Scene(){
 
+	for (auto&& node : nodes_){
+
+		delete node;
+
+	}
+
+	nodes_.clear();
+
 }
 
 NodeComponent* Scene::CreateNode(const wstring& name){
 
 	auto node = Component::Create<NodeComponent>(*this, name);
 
-	nodes_.push_back(unique_ptr<NodeComponent>(node));
+	nodes_.push_back(node);
 
 	return node;
 
@@ -86,7 +94,7 @@ TransformComponent* Scene::CreateNode(const wstring& name, const Translation3f& 
 	auto transform = node->AddComponent<TransformComponent>(translation, rotation, scale);
 
 	// Node and transform are the same entity. When node is deleted, transform is deleted as well.
-	nodes_.push_back(unique_ptr<NodeComponent>(node));	
+	nodes_.push_back(node);	
 
 	return transform;
 
