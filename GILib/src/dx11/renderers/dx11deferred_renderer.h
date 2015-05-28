@@ -70,8 +70,11 @@ namespace gi_lib{
 
 			unique_ptr<ID3D11DeviceContext, COMDeleter> immediate_context_;		///< \brief Immediate rendering context.
 
-			unique_ptr<ID3D11Buffer, COMDeleter> per_frame_constants_;			///< \brief Buffer containing the constants of each frame.
+			unique_ptr<ID3D11DepthStencilState, COMDeleter> depth_state_;		///< \brief Depth-stencil buffer state.
 
+			unique_ptr<ID3D11BlendState, COMDeleter> blend_state_;				///< \brief Output merger blending state.
+
+			unique_ptr<ID3D11RasterizerState, COMDeleter> rasterizer_state_;	///< \brief Rasterizer state.
 		};
 
 		/////////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////////

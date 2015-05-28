@@ -12,99 +12,6 @@ using namespace ::Eigen;
 
 namespace{
 
-	/// \brief Values that are constants for the entire frame.
-	__declspec(align(16))
-	struct PerFrameConstants
-	{
-
-		Matrix4f world_view_proj_matrix;		///< \brief Projection * View * World matrix.
-
-		Matrix4f world_view_matrix;				///< \brief View * World matrix.
-
-		Matrix4f view_proj_matrix;				///< \brief Projection * View matrix.
-
-		Matrix4f proj_matrix;					///< \brief Projection matrix.
-
-		// Float4
-
-		float near_plane;						///< \brief Near plane distance.
-
-		float far_plane;						///< \brief Far plane distance.
-
-		float z_plane;							///< \brief Unused.
-
-		float w_plane;							///< \brief Unused.
-
-		// Int4
-
-		unsigned int frame_width;				///< \brief Width of the GBuffer in pixels.
-
-		unsigned int frame_height;				///< \brief Height of the GBuffer in pixels.
-
-		unsigned int z_frame;					///< \brief Unused.
-
-		unsigned int w_frame;					///< \brief Unused.
-
-	};
-
-	/// \brief Compute the per-frame constants and fill a target constant buffer.
-	/// \param camera The viewer's camera.
-	/// \param render_target The render target where the scene will be rendered to.
-	/// \param render_context Render context used to map the buffer.
-	/// \param constant_buffer Target constant buffer.
-	void FillPerFrameConstants(CameraComponent& camera, RenderTarget& render_target, ID3D11DeviceContext& render_context, ID3D11Buffer& constant_buffer){
-
-		D3D11_MAPPED_SUBRESOURCE mapped_buffer;
-
-		// The view matrix is the inverse world matrix of the camera.
-		Matrix4f camera_view = camera.GetComponent<TransformComponent>()->GetWorldTransform().matrix().inverse();
-
-		Matrix4f camera_projection = Matrix4f::Identity();
-		
-		Matrix4f camera_view_projection = camera_projection * camera_view;
-
-		Matrix4f world_matrix = Matrix4f::Identity();
-
-		auto world_view_proj_matrix = world_matrix * camera_view_projection;
-
-		// Compute composite matrices
-				
-		render_context.Map(&constant_buffer,			// Target constant buffer
-						   0,							// First subresource
-						   D3D11_MAP_WRITE_DISCARD,		// Discard the previous buffer
-						   0,							// Flags
-						   &mapped_buffer);				
-
-		PerFrameConstants& buffer = *static_cast<PerFrameConstants *>(mapped_buffer.pData);
-
-		// Matrices
-
-		buffer.world_view_proj_matrix = world_view_proj_matrix;
-		buffer.world_view_matrix = camera_view * world_matrix;
-		buffer.view_proj_matrix = camera_view_projection;
-		buffer.proj_matrix = camera_projection;
-
-		// Camera planes
-
-		buffer.near_plane = camera.GetMinimumDistance();
-		buffer.far_plane = camera.GetMaximumDistance();
-		buffer.z_plane = 0.0f;
-		buffer.w_plane = 0.0f;
-
-		// Frame dimensions
-		
-		buffer.frame_width = render_target.GetTexture(0)->GetWidth();
-		buffer.frame_height = render_target.GetTexture(0)->GetHeight();
-		buffer.z_frame = 0;
-		buffer.w_frame = 0;
-		
-		// End of mapping
-
-		render_context.Unmap(&constant_buffer, 
-							 0);
-	
-	}
-
 	void DrawIndexedSubset(ID3D11DeviceContext& context, const MeshSubset& subset){
 
 		context.DrawIndexed(static_cast<unsigned int>(subset.count),
@@ -139,14 +46,78 @@ TiledDeferredRenderer(arguments.scene){
 
 	immediate_context_ = std::move(unique_com(context));
 
-	// Create the per-frame constants const buffer
-	ID3D11Buffer* per_frame_constants;
+	// Create the depth stencil state
 
-	MakeConstantBuffer(device, 
-					   sizeof(PerFrameConstants), 
-					   &per_frame_constants);
+	D3D11_DEPTH_STENCIL_DESC depth_state_desc;
 
-	per_frame_constants_ = std::move(unique_com(per_frame_constants));
+	ID3D11DepthStencilState* depth_state;
+	
+	depth_state_desc.DepthEnable = true;
+	depth_state_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depth_state_desc.DepthFunc = D3D11_COMPARISON_LESS;
+	depth_state_desc.StencilEnable = false;
+	depth_state_desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+	depth_state_desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+	
+	depth_state_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+	depth_state_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	depth_state_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	depth_state_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+
+	depth_state_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+	depth_state_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	depth_state_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	depth_state_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+
+	device.CreateDepthStencilState(&depth_state_desc,
+								   &depth_state);
+
+	depth_state_.reset(depth_state);
+
+	// Create the blend state
+
+	D3D11_BLEND_DESC blend_state_desc;
+
+	ID3D11BlendState* blend_state;
+	
+	blend_state_desc.AlphaToCoverageEnable = true;
+	blend_state_desc.IndependentBlendEnable = false;
+
+	blend_state_desc.RenderTarget[0].BlendEnable = false;
+	blend_state_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	blend_state_desc.RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
+	blend_state_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blend_state_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blend_state_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	blend_state_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blend_state_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	device.CreateBlendState(&blend_state_desc,
+							&blend_state);
+
+	blend_state_.reset(blend_state);
+
+	// Create the raster state.
+
+	D3D11_RASTERIZER_DESC rasterizer_state_desc;
+
+	ID3D11RasterizerState* rasterizer_state;
+
+	rasterizer_state_desc.FillMode = D3D11_FILL_SOLID;
+	rasterizer_state_desc.CullMode = D3D11_CULL_BACK;
+	rasterizer_state_desc.FrontCounterClockwise = false;
+	rasterizer_state_desc.DepthBias = 0;
+	rasterizer_state_desc.SlopeScaledDepthBias = 0.0f;
+	rasterizer_state_desc.DepthBiasClamp = 0.0f;
+	rasterizer_state_desc.DepthClipEnable = true;
+	rasterizer_state_desc.ScissorEnable = false;
+	rasterizer_state_desc.MultisampleEnable = false;
+	rasterizer_state_desc.AntialiasedLineEnable = false;
+
+	device.CreateRasterizerState(&rasterizer_state_desc,
+								 &rasterizer_state);
+
+	rasterizer_state_.reset(rasterizer_state);
 	
 }
 
@@ -170,20 +141,40 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 	
 		// Frustum culling
 
-		auto nodes = scene.GetVolumeHierarchy()
-						  .GetIntersections(camera.GetViewFrustum(render_target->GetAspectRatio()),		// Updates the view frustum according to the output ratio.
-										    IVolumeHierarchy::PrecisionLevel::Medium);					// Avoids extreme false positive while keeping reasonably high performances.
+//  		auto nodes = scene.GetVolumeHierarchy()
+//  						  .GetIntersections(camera.GetViewFrustum(render_target->GetAspectRatio()),		// Updates the view frustum according to the output ratio.
+//  										    IVolumeHierarchy::PrecisionLevel::Medium);					// Avoids extreme false positive while keeping reasonably high performances.
 
-		// Compute frame constants
 
-		FillPerFrameConstants(camera,
-							  *render_target,
-							  *immediate_context_,
-							  *per_frame_constants_);
+		auto nodes = scene.GetNodes();
 
 		// Setup of the render context
 
 		immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		// Viewport
+		D3D11_VIEWPORT viewport;
+
+		viewport.Width = static_cast<float>(render_target->GetTexture(0)->GetWidth());
+		viewport.Height = static_cast<float>(render_target->GetTexture(0)->GetHeight());
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+		viewport.TopLeftX = 0.0f;
+		viewport.TopLeftY = 0.0f;
+
+		immediate_context_->RSSetViewports(1, 
+										   &viewport);
+
+		immediate_context_->RSSetState(rasterizer_state_.get());
+
+		immediate_context_->OMSetDepthStencilState(depth_state_.get(), 
+												   0);
+
+		immediate_context_->OMSetBlendState(blend_state_.get(), 
+											0, 
+											0xFFFFFFFF);
+
+		// Set up render GBuffer render targets
 
 		render_target->ClearDepthStencil(*immediate_context_,
 										 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
@@ -194,8 +185,8 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 
 		color.color.alpha = 0.0f;
 		color.color.red = 0.0f;
-		color.color.green = 0.5f;
-		color.color.blue = 0.5f;
+		color.color.green = 0.0f;
+		color.color.blue = 0.0f;
 
 		render_target->ClearTargets(*immediate_context_, 
 									color);
@@ -203,6 +194,17 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 		// Bind the render target
 
 		render_target->Bind(*immediate_context_);
+
+		auto& camera_transform = *camera.GetComponent<TransformComponent>();
+
+		Matrix4f camera_view = camera_transform.GetWorldTransform().matrix().inverse();
+
+		Matrix4f camera_projection = ComputePerspectiveProjectionLH(camera.GetFieldOfView(),
+																	render_target->GetAspectRatio(),
+																	camera.GetMinimumDistance(),
+																	camera.GetMaximumDistance());
+
+		
 
 		// Draw GBuffer
 		for (auto&& node : nodes){
@@ -226,6 +228,13 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 
 					auto material = resource_cast(deferred_material->GetMaterial());
 
+
+					auto variable = material->GetVariable("gWorldViewProj");
+
+					auto world = drawable.GetComponent<TransformComponent>()->GetWorldTransform();
+
+					variable->Set(camera_projection * (camera_view * world));
+
 					material->Commit(*immediate_context_);
 
 					// Draw	the subset
@@ -242,12 +251,12 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 
 	}
 
-	// Restore the rendering context
-
-	immediate_context_->ClearState();
-
 	// Present the image
 	dx11output.Present();
 
+	// Restore the rendering context
+
+	immediate_context_->ClearState();
+	
 }
 

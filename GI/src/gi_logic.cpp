@@ -68,11 +68,25 @@ private:
 
 		ObjectPtr<DeferredRendererMaterial> material_instance = resources_.Load<DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>({ base_material_ });
 
+		ObjectPtr<Texture2D> diffuse_map;
+
 		auto base_material = material_instance->GetMaterial();
+
+		auto name = material[L"DiffuseColor"];
 
 		auto ps_map = base_material->GetResource("ps_map");
 
-		ps_map->Set(base_texture_->GetView());
+		for (auto&& texture_name : name->EnumerateTextures()){
+
+			diffuse_map = resources_.Load<Texture2D, Texture2D::FromFile>({ texture_name });
+
+			if (diffuse_map){
+
+				ps_map->Set(diffuse_map->GetView());
+
+			}
+
+		}
 
 		// Set the proper textures...
 
@@ -87,6 +101,8 @@ private:
 	ObjectPtr<Texture2D> base_texture_;								///< \brief Dummy texture.
 
 };
+
+TransformComponent* camera_transform;
 
 GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11)),
@@ -112,15 +128,16 @@ scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 
 	// Camera setup
 
-	auto camera = scene_.CreateNode(L"MainCamera",
-									Translation3f(Vector3f::Ones()),
-									Quaternionf::Identity(),
-									AlignedScaling3f(Vector3f::Ones()))
-						->AddComponent<CameraComponent>();
+	camera_transform = scene_.CreateNode(L"MainCamera",
+										 Translation3f(Vector3f(0.0f, 100.0f, 0.0f)),
+										 Quaternionf::Identity(),
+										 AlignedScaling3f(Vector3f::Ones() * 0.2f));
+
+	auto camera = camera_transform->AddComponent<CameraComponent>();
 
 	camera->SetProjectionType(ProjectionType::Perspective);
 	camera->SetMinimumDistance(1.0f);
-	camera->SetMaximumDistance(1000.0f);
+	camera->SetMaximumDistance(10000.0f);
 	camera->SetFieldOfView(Math::DegToRad(45.0f));
 
 	scene_.SetMainCamera(camera);
@@ -128,7 +145,7 @@ scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 	// Scene import
 
 	auto node = scene_.CreateNode(L"root", 
-								  Translation3f(Vector3f::Zero()), 
+								  Translation3f(Vector3f(0.0f, 0.0f, 0.0f)),
 								  Quaternionf::Identity(), 
 								  AlignedScaling3f(Vector3f::Ones()));
 
@@ -153,6 +170,15 @@ GILogic::~GILogic(){
 void GILogic::Update(const Time& time){
 	
 	//scene_.Update(time);
+
+	auto rotation = camera_transform->GetRotation();
+	
+	// Rotate by 1 radians per second along the Y axis.
+
+	rotation *= Quaternionf(Eigen::AngleAxisf(time.GetDeltaSeconds()* 0.1f, 
+											  Vector3f(0.0f, 1.0f, 0.0f)));
+
+	camera_transform->SetRotation(rotation);
 
 	deferred_renderer_->Draw(*output_);
 
