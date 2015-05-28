@@ -869,6 +869,8 @@ struct DX11Material::MaterialImpl{
 
 	unique_ptr<ID3D11PixelShader, COMDeleter> pixel_shader;							/// \brief Pointer to the pixel shader.
 	
+	unique_ptr<ID3D11InputLayout, COMDeleter> input_layout;							/// \brief Vertices input layout. (Associated to the material, sigh)
+
 };
 
 //////////////////////////////  MATERIAL :: INSTANCE IMPL //////////////////////////////
@@ -1068,7 +1070,56 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 	domain_shader = ::MakeShader<ID3D11DomainShader>(device, code, file_name, false, reflection);		// optional
 	geometry_shader = ::MakeShader<ID3D11GeometryShader>(device, code, file_name, false, reflection);	// optional
 	pixel_shader = ::MakeShader<ID3D11PixelShader>(device, code, file_name, true, reflection);		// mandatory
-					
+				
+	// Input layout
+
+	ID3D11InputLayout* input_layout;
+
+	// The bytecode is needed to validate the input layout. Genius idea...
+
+	ID3DBlob * bytecode;
+
+	THROW_ON_FAIL(Compile<ID3D11VertexShader>(code,
+											  file_name,
+											  &bytecode,
+											  nullptr));
+
+	COM_GUARD(bytecode);
+
+	D3D11_INPUT_ELEMENT_DESC input_elements[3];
+
+	input_elements[0].SemanticName = "SV_Position";
+	input_elements[0].SemanticIndex = 0;
+	input_elements[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	input_elements[0].InputSlot = 0;
+	input_elements[0].AlignedByteOffset = 0;
+	input_elements[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	input_elements[0].InstanceDataStepRate = 0;
+
+	input_elements[1].SemanticName = "NORMAL";
+	input_elements[1].SemanticIndex = 0;
+	input_elements[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	input_elements[1].InputSlot = 0;
+	input_elements[1].AlignedByteOffset = 12;
+	input_elements[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	input_elements[1].InstanceDataStepRate = 0;
+
+	input_elements[2].SemanticName = "TEXCOORD";
+	input_elements[2].SemanticIndex = 0;
+	input_elements[2].Format = DXGI_FORMAT_R32G32_FLOAT;
+	input_elements[2].InputSlot = 0;
+	input_elements[2].AlignedByteOffset = 24;
+	input_elements[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	input_elements[2].InstanceDataStepRate = 0;
+
+	THROW_ON_FAIL(device.CreateInputLayout(input_elements,
+										   3,
+										   bytecode->GetBufferPointer(),
+										   bytecode->GetBufferSize(),
+										   &input_layout));
+
+	this->input_layout.reset(input_layout);
+
 	// Dismiss
 	rollback.Dismiss();
 
@@ -1090,7 +1141,10 @@ void DX11Material::DX11MaterialVariable::Set(const void * buffer, size_t size){
 
 	}
 
-	instance_impl_->SetVariable(buffer_index_, buffer, size, variable_offset_);
+	instance_impl_->SetVariable(buffer_index_, 
+								buffer, 
+								size, 
+								variable_offset_);
 
 }
 
@@ -1217,6 +1271,10 @@ void DX11Material::Commit(ID3D11DeviceContext& context){
 	// Update the constant buffers
 
 	private_impl_->Commit(context);
+
+	// Set the vertex input layout
+
+	context.IASetInputLayout(shared_impl_->input_layout.get());
 
 	// Bind Every shader to the pipeline
 
