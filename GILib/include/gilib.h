@@ -447,7 +447,9 @@ namespace gi_lib{
 	template <typename TObject>
 	ObjectPtr<TObject>& ObjectPtr<TObject>::operator=(const ObjectPtr<TObject>& other){
 
-		object_ptr_ = other.object_ptr_;
+		Release();
+
+		object_ptr_ = static_cast<TObject*>(other.object_ptr_);
 
 		AddRef();
 
@@ -458,6 +460,8 @@ namespace gi_lib{
 	template <typename TObject>
 	template <typename TOther>
 	ObjectPtr<TObject>& ObjectPtr<TObject>::operator=(const ObjectPtr<TOther>& other){
+
+		Release();
 
 		object_ptr_ = static_cast<TObject*>(other.object_ptr_);
 
@@ -470,6 +474,8 @@ namespace gi_lib{
 	template <typename TObject>
 	ObjectPtr<TObject>& ObjectPtr<TObject>::operator=(ObjectPtr<TObject>&& other){
 
+		Release();
+
 		object_ptr_ = other.object_ptr_;
 
 		other.object_ptr_ = nullptr;
@@ -481,6 +487,8 @@ namespace gi_lib{
 	template <typename TObject>
 	template <typename TOther>
 	ObjectPtr<TObject>& ObjectPtr<TObject>::operator=(ObjectPtr<TOther>&& other){
+
+		Release();
 
 		object_ptr_ = static_cast<TObject*>(other.object_ptr_);
 
@@ -639,6 +647,8 @@ namespace gi_lib{
 	template <typename TObject>
 	ObjectWeakPtr<TObject>& ObjectWeakPtr<TObject>::operator=(const ObjectWeakPtr<TObject>& other){
 
+		Release();
+
 		ref_count_object_ = other.ref_count_object_;
 
 		AddRef();
@@ -653,6 +663,8 @@ namespace gi_lib{
 
 		static_assert(std::is_base_of<TObject, TOther>::value, "TOther must derive from TObject.");
 
+		Release();
+
 		ref_count_object_ = other.ref_count_object_;
 
 		AddRef();
@@ -663,6 +675,8 @@ namespace gi_lib{
 
 	template <typename TObject>
 	ObjectWeakPtr<TObject>& ObjectWeakPtr<TObject>::operator=(ObjectWeakPtr<TObject>&& other){
+
+		Release();
 
 		ref_count_object_ = other.ref_count_object_;
 
@@ -676,17 +690,20 @@ namespace gi_lib{
 	template <typename TOther>
 	ObjectWeakPtr<TObject>& ObjectWeakPtr<TObject>::operator=(ObjectWeakPtr<TOther>&& other){
 
-		static_assert(std::is_base_of<TObject, TOther>::value, "TOther must derive from TObject.");
+		Release();
 
 		ref_count_object_ = other.ref_count_object_;
 
 		other.ref_count_object_ = nullptr;
 
 		return *this;
+
 	}
 
 	template <typename TObject>
 	inline bool ObjectWeakPtr<TObject>::operator==(const ObjectWeakPtr<TObject>& other) const{
+
+		Release();
 
 		return object_ptr_ == other.object_ptr_;
 
