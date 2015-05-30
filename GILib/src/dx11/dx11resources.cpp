@@ -1221,7 +1221,7 @@ ObjectPtr<Material::MaterialVariable> DX11Material::GetVariable(const string& na
 
 	}
 		
-	THROW(L"Could not find the specified shader variable.");
+	return nullptr;
 
 }
 
@@ -1229,25 +1229,29 @@ ObjectPtr<Material::MaterialResource> DX11Material::GetResource(const string& na
 
 	auto& resources = shared_impl_->reflection.resources;
 
-	// O(#total resources)
+	if (resources.size() > 0){
+	
+		// O(#total resources)
 
-	auto it = std::find_if(resources.begin(),
-						   resources.end(),
-						   [&name](const ShaderResourceDesc& desc){
+		auto it = std::find_if(resources.begin(),
+							   resources.end(),
+							   [&name](const ShaderResourceDesc& desc){
 
-								return desc.name == name;
+									return desc.name == name;
 
-						   });
+							   });
 
-	if (it == resources.end()){
+		if (it != resources.end()){
 
-		THROW(L"Could not find the specified shader resource.");
+			return new DX11MaterialResource(*private_impl_,
+											std::distance(resources.begin(),
+														  it));
+			
+		}
 
 	}
 
-	return new DX11MaterialResource(*private_impl_,
-								    std::distance(resources.begin(),
-												  it));
+	return nullptr;
 
 }
 
