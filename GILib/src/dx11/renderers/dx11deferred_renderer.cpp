@@ -26,10 +26,32 @@ namespace{
 
 DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const CompileFromFile& args) :
 material_(new DX11Material(args))
-{}
+{
+
+	Setup();
+
+}
 
 DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const Instantiate& args) :
-material_(new DX11Material(Material::Instantiate{ args.base->GetMaterial() })){}
+material_(new DX11Material(Material::Instantiate{ args.base->GetMaterial() })){
+
+	Setup();
+
+}
+
+void DX11DeferredRendererMaterial::Setup(){
+
+	world_view_proj_ = material_->GetVariable("gWorldViewProj");
+	world_ = material_->GetVariable("gWorld");
+
+	if (!world_view_proj_ ||
+		!world_){
+
+		THROW(L"The shader is not compatible with a DX11DeferredRendererMaterial");
+
+	}
+
+}
 
 ///////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////
 
@@ -141,12 +163,11 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 	
 		// Frustum culling
 
-//  		auto nodes = scene.GetVolumeHierarchy()
-//  						  .GetIntersections(camera.GetViewFrustum(render_target->GetAspectRatio()),		// Updates the view frustum according to the output ratio.
-//  										    IVolumeHierarchy::PrecisionLevel::Medium);					// Avoids extreme false positive while keeping reasonably high performances.
+		auto camera_frustum = camera.GetViewFrustum(render_target->GetAspectRatio());
 
-
-		auto nodes = scene.GetNodes();
+  		auto nodes = scene.GetVolumeHierarchy()
+  						  .GetIntersections(camera_frustum,											// Updates the view frustum according to the output ratio.
+  										    IVolumeHierarchy::PrecisionLevel::Medium);				// Avoids extreme false positive while keeping reasonably high performances.
 
 		// Setup of the render context
 
@@ -197,14 +218,19 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 
 		auto& camera_transform = *camera.GetComponent<TransformComponent>();
 
-		Matrix4f camera_view = camera_transform.GetWorldTransform().matrix().inverse();
+		Matrix4f world_matrix;
+		Matrix4f view_matrix;
+		Matrix4f projection_matrix;
 
-		Matrix4f camera_projection = ComputePerspectiveProjectionLH(camera.GetFieldOfView(),
-																	render_target->GetAspectRatio(),
-																	camera.GetMinimumDistance(),
-																	camera.GetMaximumDistance());
+		ObjectPtr<DX11Mesh> mesh;
+		ObjectPtr<DX11DeferredRendererMaterial> material;
 
-		
+		view_matrix = camera_transform.GetWorldTransform().matrix().inverse();
+
+		projection_matrix = ComputePerspectiveProjectionLH(camera.GetFieldOfView(),
+														   render_target->GetAspectRatio(),
+														   camera.GetMinimumDistance(),
+														   camera.GetMaximumDistance());
 
 		// Draw GBuffer
 		for (auto&& node : nodes){
@@ -215,25 +241,24 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 
 				// Bind the mesh
 
-				auto mesh = resource_cast(drawable.GetMesh());
+				mesh = resource_cast(drawable.GetMesh());
 
 				mesh->Bind(*immediate_context_);
 
 				// For each subset
 				for (unsigned int subset_index = 0; subset_index < mesh->GetSubsetCount(); ++subset_index){
 
-					// Bind the material
+					material = drawable.GetMaterial(subset_index);
 					
-					auto deferred_material = drawable.GetMaterial(subset_index);
+					// Fill the constant buffers
 
-					auto material = resource_cast(deferred_material->GetMaterial());
+					world_matrix = drawable.GetComponent<TransformComponent>()->GetWorldTransform().matrix();
+					
+					material->SetWorldViewProjection(projection_matrix * view_matrix * world_matrix);
 
-
-					auto variable = material->GetVariable("gWorldViewProj");
-
-					auto world = drawable.GetComponent<TransformComponent>()->GetWorldTransform();
-
-					variable->Set(camera_projection * (camera_view * world));
+					material->SetWorld(world_matrix);
+					
+					// Bind the material
 
 					material->Commit(*immediate_context_);
 

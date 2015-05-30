@@ -37,11 +37,29 @@ namespace gi_lib{
 
 			virtual ObjectPtr<const Material> GetMaterial() const override;
 
+			/// \brief Set the world-view-projection matrix.
+			/// \param world_view_proj The value of the world-view-projection matrix.
+			void SetWorldViewProjection(const Matrix4f& world_view_proj);
+
+			/// \brief Set the world matrix.
+			/// \param world The value of the world matrix.
+			void SetWorld(const Matrix4f& world);
+
+			/// \brief Commit all the constant buffers and bind the material to the pipeline.
+			void Commit(ID3D11DeviceContext& context);
+
 			virtual size_t GetSize() const override;
 
 		private:
 
-			ObjectPtr<DX11Material> material_;		///< \brief DirectX11 material.
+			/// \brief Setup the material variables and resources.
+			void Setup();											
+
+			ObjectPtr<DX11Material> material_;							///< \brief DirectX11 material.
+
+			ObjectPtr<Material::MaterialVariable> world_view_proj_;		///< \brief Projection * View * World matrix product.
+
+			ObjectPtr<Material::MaterialVariable> world_;				///< \brief World matrix.
 
 		};
 
@@ -85,6 +103,31 @@ namespace gi_lib{
 			return material_;
 
 		}
+		
+		inline ObjectPtr<const Material> gi_lib::dx11::DX11DeferredRendererMaterial::GetMaterial() const
+		{
+
+			return material_;
+
+		}
+
+		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetWorldViewProjection(const Matrix4f& world_view_proj){
+
+			world_view_proj_->Set(world_view_proj);
+
+		}
+
+		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetWorld(const Matrix4f& world){
+
+			world_->Set(world);
+
+		}
+
+		inline void gi_lib::dx11::DX11DeferredRendererMaterial::Commit(ID3D11DeviceContext& context){
+
+			material_->Commit(context);
+
+		}
 
 		inline size_t gi_lib::dx11::DX11DeferredRendererMaterial::GetSize() const
 		{
@@ -93,12 +136,7 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<const Material> gi_lib::dx11::DX11DeferredRendererMaterial::GetMaterial() const
-		{
 
-			return material_;
-
-		}
 
 	}
 
