@@ -147,7 +147,7 @@ namespace{
 	/// \brief Extract the translation component of a matrix.
 	/// \param transform The transformation matrix.
 	/// \return Returns the translation component of the given transformation matrix.
-	Translation3f GetTranslation(const FbxAMatrix& transform){
+	inline Translation3f GetTranslation(const FbxAMatrix& transform){
 
 		auto translation = transform.GetT();
 
@@ -160,21 +160,21 @@ namespace{
 	/// \brief Extract the rotation component of a matrix.
 	/// \param transform The transformation matrix.
 	/// \return Returns the rotation component of the given transformation matrix.
-	Quaternionf GetRotation(const FbxAMatrix& transform){
+	inline Quaternionf GetRotation(const FbxAMatrix& transform){
 
 		auto rotation = transform.GetQ();
 
-		return Quaternionf(static_cast<float>(rotation.mData[0]),
-						   static_cast<float>(rotation.mData[1]),
-						   static_cast<float>(rotation.mData[2]),
-						   static_cast<float>(rotation.mData[3]));
+		return  Quaternionf(static_cast<float>(rotation.mData[3]),
+							static_cast<float>(rotation.mData[0]),
+							static_cast<float>(rotation.mData[1]),
+							static_cast<float>(rotation.mData[2]));
 
 	}
 
 	/// \brief Extract the scale component of a matrix.
 	/// \param transform The transformation matrix.
 	/// \return Returns the scale component of the given transformation matrix.
-	AlignedScaling3f GetScale(const FbxAMatrix& transform){
+	inline AlignedScaling3f GetScale(const FbxAMatrix& transform){
 
 		auto scale = transform.GetS();
 
@@ -509,18 +509,30 @@ namespace{
 	}
 
 	template <typename TVertexFormat>
-	MeshComponent* ImportMesh(FbxMesh& mesh, TransformComponent& node, const ImportContext& context){
+	MeshComponent* ImportMesh(FbxMesh& fbx_mesh, TransformComponent& node, const ImportContext& context){
 
 		// Create the bundle used to build the mesh
 
 		Mesh::FromVertices<TVertexFormat> bundle;	
 
-		ImportMeshIndices(mesh, bundle);
-		ImportMeshVertices(mesh, bundle);
+		ImportMeshIndices(fbx_mesh, bundle);
+		ImportMeshVertices(fbx_mesh, bundle);
 
 		// Create the mesh component
 
-		return node.AddComponent<MeshComponent>(context.resources->Load<Mesh, Mesh::FromVertices<TVertexFormat>>(bundle));
+		auto mesh = context.resources->Load<Mesh, Mesh::FromVertices<TVertexFormat>>(bundle);
+
+		if (mesh){
+
+			return node.AddComponent<MeshComponent>(mesh);
+
+		}
+		else{
+
+			return nullptr;
+
+
+		}
 
 	}
 	
