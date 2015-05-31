@@ -240,7 +240,7 @@ const Affine3f & TransformComponent::GetLocalTransform() const{
 
 	if (local_dirty_){
 
-		local_transform_ = scale_ * rotation_ * translation_;
+		local_transform_ = translation_ * rotation_ * scale_;
 
 		local_dirty_ = false;
 
