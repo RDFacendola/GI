@@ -212,11 +212,11 @@ namespace gi_lib{
 		/// \param scale The new scaling.
 		void SetScale(const AlignedScaling3f & scale);
 
-		/// \brief Get the local transfom.
+		/// \brief Get the local transform.
 		/// \return Returns the local transform matrix.
 		const Affine3f & GetLocalTransform() const;
 
-		/// \brief Get the global transfom.
+		/// \brief Get the global transform.
 		/// \return Returns the global transform matrix.
 		const Affine3f & GetWorldTransform() const;
 
@@ -439,6 +439,11 @@ namespace gi_lib{
 		/// \return Returns the view frustum.
 		Frustum GetViewFrustum(float aspect_ratio = 1.0f) const;
 
+		/// \brief Get the view transform matrix.
+		/// Use this matrix to convert from world-space to camera-space.
+		/// \return Return the view-space matrix.
+		Affine3f GetViewTransform() const;
+
 		virtual TypeSet GetTypes() const override;
 
 	protected:
@@ -472,6 +477,14 @@ namespace gi_lib{
 	inline vector<NodeComponent*>& Scene::GetNodes(){
 
 		return nodes_;
+
+	}
+
+	////////////////////////////////// CAMERA COMPONENT ///////////////////////////////////
+
+	inline Affine3f CameraComponent::GetViewTransform() const{
+
+		return transform_->GetWorldTransform().inverse();
 
 	}
 
