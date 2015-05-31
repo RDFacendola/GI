@@ -87,6 +87,7 @@
     <ClInclude Include="include\renderers\deferred_renderer.h" />
     <ClInclude Include="src\dx11\renderers\dx11deferred_renderer.h" />
     <ClInclude Include="src\dx11\renderers\dx11renderer.h" />
+    <ClInclude Include="include\input.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">

@@ -266,7 +266,7 @@ namespace gi_lib{
 		/// \brief Event fired when the window has been resized.
 		/// \return Returns an observable event which notifies when the window is resized.
 		Observable<OnResizedEventArgs> & OnResized();
-
+		
 	protected:
 
 		/// \brief The window has been closed.
@@ -298,7 +298,7 @@ namespace gi_lib{
 
 	};
 
-	//
+	//////////////////////////////////// APPLICATION /////////////////////////////////////
 
 	template<typename TWindow, typename... TArgs>
 	typename std::enable_if_t< std::is_base_of<Window, TWindow>::value, weak_ptr<TWindow>> 
@@ -311,6 +311,8 @@ namespace gi_lib{
 		return window;
 
 	}
+
+	//////////////////////////////////// WINDOW /////////////////////////////////////
 
 	inline const WindowHandle& Window::GetHandle() const{
 
