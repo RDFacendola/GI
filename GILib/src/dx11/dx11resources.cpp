@@ -14,6 +14,7 @@
 #include <DirectXMath.h>
 #include <Eigen/Core>
 
+#include "..\..\include\gimath.h"
 #include "..\..\include\core.h"
 #include "..\..\include\enums.h"
 #include "..\..\include\exceptions.h"
@@ -134,6 +135,13 @@ namespace{
 		/// \param offset Offset from the beginning of the constant buffer in bytes.
 		void Write(const void * source, size_t size, size_t offset);
 
+		/// \brief Write a value inside the constant buffer
+		/// \param value The value to write.
+		/// \param offset Offset from the beginning of the constant buffer in bytes.
+		/// \remarks This method should have better performances while working with smaller values.
+		template <typename TType>
+		void Write(const TType& value, size_t offset);
+
 		/// \brief Commit any uncommitted change to the constant buffer.
 		void Commit(ID3D11DeviceContext& context);
 
@@ -241,12 +249,21 @@ namespace{
 
 	}
 
-	void BufferStatus::Write(const void * source, size_t size, size_t offset){
+	inline void BufferStatus::Write(const void * source, size_t size, size_t offset){
 
 		memcpy_s(static_cast<char*>(data_) + offset,
 				 size_ - offset,
 				 source,
 				 size);
+
+		dirty_ = true;
+
+	}
+
+	template <typename TType>
+	inline void BufferStatus::Write(const TType& value, size_t offset){
+
+		*reinterpret_cast<TType*>((static_cast<char*>(data_)+offset)) = value;
 
 		dirty_ = true;
 
@@ -829,6 +846,9 @@ struct DX11Material::InstanceImpl{
 	
 	void SetVariable(size_t index, const void * data, size_t size, size_t offset);
 
+	template<typename TType>
+	void SetVariable(size_t index, const TType& value, size_t offset);
+
 	void SetResource(size_t index, ObjectPtr<DX11ResourceView> resource);
 	
 	/// \brief Write any uncommitted change to the constant buffers.
@@ -920,7 +940,17 @@ reflection_(impl.reflection_){
 
 void DX11Material::InstanceImpl::SetVariable(size_t index, const void * data, size_t size, size_t offset){
 
-	buffer_status_[index].Write(data, size, offset);
+	buffer_status_[index].Write(data, 
+								size, 
+								offset);
+
+}
+
+template<typename TType>
+void DX11Material::InstanceImpl::SetVariable(size_t index, const TType& value, size_t offset){
+
+	buffer_status_[index].Write(value, 
+								offset);
 
 }
 
