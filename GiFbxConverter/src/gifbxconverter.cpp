@@ -192,9 +192,11 @@ void Run(CommandMap & commands){
 		
 		if ((cmd = commands.find(kExtension)) != commands.end()){
 
-			cout << "Stripping extensions..." << std::endl;
+			cout << "Normalizing texture paths..." << std::endl;
 
-			fbx.StripExtension(*scene, cmd->second.size() <= 0 ? "" : cmd->second.front());
+			fbx.NormalizeTexturePaths(*scene, 
+									  input->second.front(),
+									  cmd->second.size() <= 0 ? "" : cmd->second.front());
 
 		}
 

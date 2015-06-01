@@ -10,6 +10,10 @@
 
 #include <Windows.h>
 
+#include "Shlwapi.h"
+
+#pragma comment(lib, "Shlwapi.lib")
+
 #endif
 
 #include <exception>
@@ -363,39 +367,39 @@ namespace{
 		vector<LayerElements> layers(mesh.GetLayerCount());
 
 		// Attempts layer elements roll. Vertex buffer is left untouched.
-		cout << "Re-indexing...";
+		cout << "Computing indexed mesh attributes...";
 
-		bool roll = true;
+		//bool roll = true;
 
-		for (int l = 0; l < layers.size(); ++l){
+		//for (int l = 0; l < layers.size(); ++l){
 
-			auto & layer = *mesh.GetLayer(l);
+		//	auto & layer = *mesh.GetLayer(l);
 
-			if (!RollElement(mesh, layer.GetNormals(), layers[l].normals) ||
-				!RollElement(mesh, layer.GetBinormals(), layers[l].binormals) ||
-				!RollElement(mesh, layer.GetTangents(), layers[l].tangents) ||
-				!RollElement(mesh, layer.GetUVs(), layers[l].uvs)){
+		//	if (!RollElement(mesh, layer.GetNormals(), layers[l].normals) ||
+		//		!RollElement(mesh, layer.GetBinormals(), layers[l].binormals) ||
+		//		!RollElement(mesh, layer.GetTangents(), layers[l].tangents) ||
+		//		!RollElement(mesh, layer.GetUVs(), layers[l].uvs)){
 
-				roll = false;
-				break;
-				
-			}
+		//		roll = false;
+		//		break;
+		//		
+		//	}
 
-		}
+		//}
 
-		if (roll){
+		//if (roll){
 
-			// Neither the vertex buffer, nor the index buffer change.
+		//	// Neither the vertex buffer, nor the index buffer change.
 
-			CommitRemap(mesh, nullptr, nullptr, layers);
+		//	CommitRemap(mesh, nullptr, nullptr, layers);
 
-			cout << "success!" << std::endl;
+		//	cout << "success!" << std::endl;
 
-			return;
+		//	return;
 
-		}
+		//}
 
-		cout << "\rUn-indexing...";
+		cout << "\rComputing unindexed mesh attributes...";
 
 		vector<FbxVector4> vertices;
 		vector<unsigned int> indices(mesh.GetPolygonVertexCount());
@@ -433,13 +437,11 @@ namespace{
 
 	}
 
-	void ReplacePropertyExtension(FbxProperty property, const string & extension){
+	void NormalizeTexturesPath(FbxProperty property, const string& base_path, const string& extension){
 
-		int count = property.GetSrcObjectCount<FbxFileTexture>();
+		for (int texture_index = 0; texture_index < property.GetSrcObjectCount<FbxFileTexture>(); ++texture_index){
 
-		for (int t = 0; t < count; ++t){
-
-			auto & texture = *property.GetSrcObject<FbxFileTexture>(t);
+			auto& texture = *property.GetSrcObject<FbxFileTexture>(texture_index);
 			
 			string texture_name = texture.GetFileName();
 
@@ -447,9 +449,25 @@ namespace{
 
 #ifdef _WIN32
 
-			char ext[_MAX_EXT];
+			char relative_path[MAX_PATH];
 
-			_splitpath_s(texture_name.c_str(), nullptr, 0, nullptr, 0, nullptr, 0, ext, _MAX_EXT);
+			if(PathRelativePathToA(relative_path,
+								   base_path.c_str(),
+								   FILE_ATTRIBUTE_NORMAL,
+								   texture_name.c_str(),
+								   FILE_ATTRIBUTE_NORMAL)){
+			
+				texture_name = relative_path;
+
+			}
+
+			char ext[_MAX_EXT];
+			
+			_splitpath_s(texture_name.c_str(), 
+						 nullptr, 0,
+						 nullptr, 0,
+						 nullptr, 0,
+						 ext, _MAX_EXT);
 
 			texture_name.erase(texture_name.end() - strnlen_s(ext, _MAX_EXT), texture_name.end());
 			
@@ -462,17 +480,22 @@ namespace{
 #endif
 			
 			texture.SetFileName(texture_name.c_str());
-								
+
+			texture_name = texture.GetFileName();
+											
 		}
 
 	}
 
 	/// \brief Extension replacing functor.
-	struct ReplaceExtension{
+	struct NormalizePath{
+
+		string base_path_;
 
 		string extension_;
 
-		ReplaceExtension(string extension) :
+		NormalizePath(string base_path, string extension) :
+			base_path_(std::move(base_path)),
 			extension_(std::move(extension)){}
 		
 		/// \brief Replace textures' extensions.
@@ -480,20 +503,24 @@ namespace{
 
 			auto & parent = *mesh.GetNode();
 
-			for (int m = 0; m < parent.GetSrcObjectCount<FbxSurfaceMaterial>(); ++m){
+			for (int material_index = 0; material_index < parent.GetSrcObjectCount<FbxSurfaceMaterial>(); ++material_index){
 
-				auto &material = *parent.GetSrcObject<FbxSurfaceMaterial>(m);
+				auto& material = *parent.GetSrcObject<FbxSurfaceMaterial>(material_index);
 
-				// Standard maps only...
-				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sEmissive), extension_);
-				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sAmbient), extension_);
-				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sDiffuse), extension_);
-				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sSpecular), extension_);
-				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sShininess), extension_);
-				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sBump), extension_);
-				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sNormalMap), extension_);
-				ReplacePropertyExtension(material.FindProperty(FbxSurfaceMaterial::sReflection), extension_);
+				auto material_property = material.GetFirstProperty();
 
+				while (material_property.IsValid()){
+
+					//cout << "Processing '" << string(material_property.GetNameAsCStr()) << "' attribute" << std::endl;
+
+					NormalizeTexturesPath(material_property,
+										  base_path_,
+										  extension_);
+
+					material_property = material.GetNextProperty(material_property);
+
+				}
+				
 			}
 
 		}
@@ -591,7 +618,7 @@ FBX::~FBX(){
 
 }
 
-FbxScene * FBX::Import(const string & path){
+FbxScene * FBX::Import(const string& path){
 
 	// Create the importer
 
@@ -631,7 +658,7 @@ FbxScene * FBX::Import(const string & path){
 	
 }
 
-void FBX::Triangulate(FbxScene & scene){
+void FBX::Triangulate(FbxScene& scene){
 
 	if (!converter_->Triangulate(&scene, true)){
 
@@ -641,15 +668,16 @@ void FBX::Triangulate(FbxScene & scene){
 
 }
 
-void FBX::RemapAttributes(FbxScene & scene){
+void FBX::RemapAttributes(FbxScene& scene){
 
 	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::RemapAttributes));
 
 }
 
-void FBX::StripExtension(FbxScene & scene, const string & extension){
+void FBX::NormalizeTexturePaths(FbxScene& scene, const string& base_path, const string& extension){
 	
-	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::ReplaceExtension{ extension }));
+	ProcessAttributes(*scene.GetRootNode(), filter_by_mesh(::NormalizePath{ base_path, 
+																			extension }));
 
 }
 

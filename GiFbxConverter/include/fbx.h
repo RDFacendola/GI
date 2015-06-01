@@ -40,10 +40,11 @@ namespace gi_lib{
 		/// \param scene The scene to remap the attributes of.
 		void RemapAttributes(FbxScene & scene);
 
-		/// \brief Strips the extension of every addressed texture.
+		/// \brief Normalizes the path of all the textures adressed by the scene.
 		/// \param scene The scene to process.
-		/// \param extension The extension taht will replace the old one.
-		void StripExtension(FbxScene & scene, const string & extension);
+		/// \param base_path The base path of the file.
+		/// \param extension The extension that will replace the old one.
+		void NormalizeTexturePaths(FbxScene & scene, const string& base_path, const string& extension);
 
 		/// \brief Export a fbx scene into a file.
 		/// \param scene The scene to export.
