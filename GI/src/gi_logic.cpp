@@ -16,7 +16,10 @@
 #include <typeindex>
 #include <typeinfo>
 
+#include "..\include\material_importer.h"
+
 using namespace ::std;
+using namespace ::gi;
 using namespace ::gi_lib;
 using namespace ::gi_lib::fbx;
 using namespace ::Eigen;
@@ -25,82 +28,10 @@ using namespace ::Eigen;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
 /// \brief Size of the domain (for each edge).
-const float kDomainSize = 1000.0f;
+const float kDomainSize = 2000.0f;
 
 /// \brief Number of times the domain is split along each axis.
-const unsigned int kDomainSubdivisions = 3;
-
-class MaterialImporter : public IMaterialImporter{
-
-public:
-
-	/// \brief Create a new material importer.
-	/// \param resources Factory used to load and instantiate materials.
-	MaterialImporter(Resources& resources) :
-	resources_(resources){
-
-		base_material_ = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetDirectory() + L"Data\\deferred_material.fx" });
-
-		base_texture_ = resources.Load<Texture2D, Texture2D::FromFile>({ Application::GetDirectory() + L"Data\\textures\\gi_flag.DDS" });
-
-	}
-
-	virtual void OnImportMaterial(MaterialCollection& materials, MeshComponent& mesh){
-
-		// Add a renderer component for the deferred renderer.
-		auto deferred_component = mesh.AddComponent<DeferredRendererComponent>(mesh);
-
-		// Instantiate the proper materials for each mesh subset.
-
-		for (unsigned int material_index = 0; material_index < deferred_component->GetMaterialCount(); ++material_index){
-
-			deferred_component->SetMaterial(material_index,
-											InstantiateMaterial(*materials[material_index]));
-			
-		}
-
-	}
-		
-private:
-
-	/// \brief Instantiate a concrete material.
-	ObjectPtr<DeferredRendererMaterial> InstantiateMaterial(IMaterial& material){
-
-		ObjectPtr<DeferredRendererMaterial> material_instance = resources_.Load<DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>({ base_material_ });
-
-		ObjectPtr<Texture2D> diffuse_map;
-
-		auto base_material = material_instance->GetMaterial();
-
-		auto name = material[L"DiffuseColor"];
-
-		auto ps_map = base_material->GetResource("ps_map");
-
-		for (auto&& texture_name : name->EnumerateTextures()){
-
-			diffuse_map = resources_.Load<Texture2D, Texture2D::FromFile>({ texture_name });
-
-			if (diffuse_map){
-
-				ps_map->Set(diffuse_map->GetView());
-
-			}
-
-		}
-
-		// Set the proper textures...
-
-		return material_instance;
-
-	}
-
-	Resources& resources_;											///< \brief Used to load various materials.
-
-	ObjectPtr<DeferredRendererMaterial> base_material_;				///< \brief Base material for every game object.
-
-	ObjectPtr<Texture2D> base_texture_;								///< \brief Dummy texture.
-
-};
+const unsigned int kDomainSubdivisions = 1;
 
 TransformComponent* camera_transform;
 
@@ -129,25 +60,28 @@ scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 	// Camera setup
 
 	camera_transform = scene_.CreateNode(L"MainCamera",
-										 Translation3f(Vector3f(0.0f, 100.0f, 0.0f)),
+										 Translation3f(Vector3f(0.0f, 300.0f, 0.0f)),
 										 Quaternionf::Identity(),
-										 AlignedScaling3f(Vector3f::Ones() * 0.2f));
+										 AlignedScaling3f(Vector3f::Ones()));
 
 	auto camera = camera_transform->AddComponent<CameraComponent>();
 
 	camera->SetProjectionType(ProjectionType::Perspective);
 	camera->SetMinimumDistance(1.0f);
 	camera->SetMaximumDistance(10000.0f);
-	camera->SetFieldOfView(Math::DegToRad(45.0f));
+	camera->SetFieldOfView(Math::DegToRad(90.0f));
 
 	scene_.SetMainCamera(camera);
+
+	camera_transform->SetRotation(Quaternionf(AngleAxisf(Math::DegToRad(90.0f),
+														 Vector3f(0.0f, 1.0f, 0.0f))));
 
 	// Scene import
 
 	auto node = scene_.CreateNode(L"root", 
 								  Translation3f(Vector3f(0.0f, 0.0f, 0.0f)),
 								  Quaternionf::Identity(), 
-								  AlignedScaling3f(Vector3f::Ones()));
+								  AlignedScaling3f(Vector3f::Ones() * 3.0f));
 
 	auto& resources = graphics_.GetResources();
 
@@ -156,7 +90,7 @@ scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 	FbxImporter fbx_importer(material_importer,
 							 resources);
 	
-	fbx_importer.ImportScene(Application::GetDirectory() + L"Data\\gisponza.fbx", 
+	fbx_importer.ImportScene(to_string(Application::GetDirectory()) + "Data\\oldsponza.fbx", 
 							 *node);
 	
 }
@@ -169,14 +103,14 @@ GILogic::~GILogic(){
 
 void GILogic::Update(const Time& time){
 	
-	//scene_.Update(time);
-
 	auto rotation = camera_transform->GetRotation();
-	
-	// Rotate by 1 radians per second along the Y axis.
 
-	rotation *= Quaternionf(Eigen::AngleAxisf(time.GetDeltaSeconds()* 0.1f, 
+	rotation *= Quaternionf(Eigen::AngleAxisf(time.GetDeltaSeconds()* 0.2f, 
 											  Vector3f(0.0f, 1.0f, 0.0f)));
+
+	auto angle = std::sinf(time.GetTotalSeconds() * 0.15f);
+
+	camera_transform->SetTranslation(Translation3f(angle * 1500.0f, 300.0f, 0.0f));
 
 	camera_transform->SetRotation(rotation);
 

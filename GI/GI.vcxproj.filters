@@ -3,8 +3,10 @@
   <ItemGroup>
     <ClCompile Include="src\gi_logic.cpp" />
     <ClCompile Include="src\gi.cpp" />
+    <ClCompile Include="src\material_importer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\gi_logic.h" />
+    <ClInclude Include="include\material_importer.h" />
   </ItemGroup>
 </Project>

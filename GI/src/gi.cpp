@@ -24,7 +24,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		auto & app = Application::GetInstance();
 		
-		app.AddWindow<GILogic>();
+		app.AddWindow<gi::GILogic>();
 
 		app.Join();
 

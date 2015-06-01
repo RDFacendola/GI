@@ -15,27 +15,32 @@ namespace gi_lib{
 
 }
 
-///Application's logic
-class GILogic : public Window{
+namespace gi{
 
-public:
+	///Application's logic
+	class GILogic : public Window{
 
-	GILogic();
+	public:
 
-	virtual ~GILogic();
+		GILogic();
 
-	/// \brief Update the window logic.
-	/// \param time The application-coherent time.
-	virtual void Update(const Time & time);
+		virtual ~GILogic();
 
-private:
+		/// \brief Update the window logic.
+		/// \param time The application-coherent time.
+		virtual void Update(const Time & time);
 
-	Graphics & graphics_;
+	private:
 
-	unique_ptr<IOutput> output_;
+		Graphics & graphics_;
 
-	unique_ptr<TiledDeferredRenderer> deferred_renderer_;
+		unique_ptr<IOutput> output_;
 
-	Scene scene_;
+		unique_ptr<TiledDeferredRenderer> deferred_renderer_;
 
-};
+		Scene scene_;
+
+	};
+
+}
+
