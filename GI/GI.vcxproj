@@ -172,11 +172,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\material_importer.cpp" />
     <ClCompile Include="src\gi.cpp" />
     <ClCompile Include="src\gi_logic.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\gi_logic.h" />
+    <ClInclude Include="include\material_importer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
