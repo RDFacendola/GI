@@ -2,7 +2,7 @@
 
 #include "..\dx11.h"
 #include "..\..\..\include\gimath.h"
-#include "..\..\..\include\windows\os_windows.h"
+#include "..\..\..\include\windows\win_os.h"
 
 using namespace ::std;
 using namespace ::gi_lib;

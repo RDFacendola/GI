@@ -14,7 +14,7 @@
 #include "..\..\include\graphics.h"
 #include "..\..\include\resources.h"
 #include "..\..\include\gilib.h"
-#include "..\..\include\windows\os_windows.h"
+#include "..\..\include\windows\win_os.h"
 
 using ::std::string;
 using ::std::wstring;

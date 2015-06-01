@@ -66,9 +66,6 @@
     <ClInclude Include="include\scope_guard.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="include\windows\os_windows.h">
-      <Filter>os</Filter>
-    </ClInclude>
     <ClInclude Include="include\enums.h" />
     <ClInclude Include="include\unique.h">
       <Filter>pattern</Filter>
@@ -88,6 +85,9 @@
     <ClInclude Include="src\dx11\renderers\dx11deferred_renderer.h" />
     <ClInclude Include="src\dx11\renderers\dx11renderer.h" />
     <ClInclude Include="include\input.h" />
+    <ClInclude Include="include\windows\win_os.h">
+      <Filter>os</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">

@@ -8,7 +8,7 @@
 #include "..\include\timer.h"
 
 // TODO: Remove this!
-#include "..\include\windows\os_windows.h"
+#include "..\include\windows\win_os.h"
 
 using namespace gi_lib;
 using namespace std;

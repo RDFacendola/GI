@@ -1,4 +1,4 @@
-/// \file os_windows.h
+/// \file win_os.h
 /// \brief Windows-specific interfaces.
 ///
 /// \author Raffaele D. Facendola
