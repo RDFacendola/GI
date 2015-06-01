@@ -27,10 +27,10 @@ using namespace std;
 using namespace Eigen;
 using namespace gi_lib;
 
-using gi_lib::fbx::IMaterial;
-using gi_lib::fbx::IMaterialImporter;
-using gi_lib::fbx::IProperty;
-using gi_lib::fbx::MaterialCollection;
+using gi_lib::fbx::IFbxMaterial;
+using gi_lib::fbx::IFbxMaterialImporter;
+using gi_lib::fbx::IFbxProperty;
+using gi_lib::fbx::FbxMaterialCollection;
 
 namespace{
 
@@ -137,7 +137,7 @@ namespace{
 	/// \brief Objects needed while importing.
 	struct ImportContext{
 
-		IMaterialImporter* material_importer;
+		IFbxMaterialImporter* material_importer;
 
 		Resources* resources;
 
@@ -180,7 +180,7 @@ namespace{
 	}
 
 	/// \brief Wrapper around the FbxProperty
-	class Property : public IProperty{
+	class Property : public IFbxProperty{
 
 	public:
 
@@ -196,7 +196,7 @@ namespace{
 
 		virtual vector<wstring> EnumerateTextures() const override;
 
-		virtual unique_ptr<IProperty> operator[](const wstring& subproperty_name) const override;
+		virtual unique_ptr<IFbxProperty> operator[](const wstring& subproperty_name) const override;
 		
 	private:
 
@@ -207,7 +207,7 @@ namespace{
 	};
 
 	/// \brief Wrapper around the FbxSurfaceMaterial.
-	class Material : public IMaterial{
+	class Material : public IFbxMaterial{
 
 	public:
 
@@ -215,7 +215,7 @@ namespace{
 
 		virtual wstring GetName() const override;
 
-		virtual unique_ptr<IProperty> operator[](const wstring& property_name) const override;
+		virtual unique_ptr<IFbxProperty> operator[](const wstring& property_name) const override;
 
 	private:
 
@@ -267,7 +267,7 @@ namespace{
 
 	}
 
-	unique_ptr<IProperty> Property::operator[](const wstring& subproperty_name) const{
+	unique_ptr<IFbxProperty> Property::operator[](const wstring& subproperty_name) const{
 
 		auto property = FindSubProperty(property_, 
 										to_string(subproperty_name));
@@ -290,7 +290,7 @@ namespace{
 
 	}
 
-	unique_ptr<IProperty> Material::operator[](const wstring& property_name) const{
+	unique_ptr<IFbxProperty> Material::operator[](const wstring& property_name) const{
 
 		auto property_string = to_string(property_name);
 
@@ -614,7 +614,7 @@ namespace{
 
 		auto& fbx_node = *mesh.GetNode();
 
-		MaterialCollection materials;
+		FbxMaterialCollection materials;
 
 		for (int material_index = 0; material_index < fbx_node.GetSrcObjectCount<FbxSurfaceMaterial>(); ++material_index){
 
@@ -841,7 +841,7 @@ FbxScene* fbx::FbxImporter::FbxSDK::ReadSceneOrDie(const wstring& file_name){
 
 /////////////////////// FBX IMPORTER ///////////////////////
 
-fbx::FbxImporter::FbxImporter(IMaterialImporter& material_importer, Resources& resources) :
+fbx::FbxImporter::FbxImporter(IFbxMaterialImporter& material_importer, Resources& resources) :
 fbx_sdk_(make_unique<FbxSDK>()),
 material_importer_(material_importer),
 resources_(resources){}

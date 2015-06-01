@@ -25,15 +25,15 @@ namespace gi_lib{
 
 	namespace fbx{
 		
-		class IMaterialImporter;
-		class IProperty;
-		class IMaterial;
+		class IFbxMaterialImporter;
+		class IFbxProperty;
+		class IFbxMaterial;
 
 		/// \brief Material collection for a single imported node.
-		using MaterialCollection = vector < unique_ptr< IMaterial > >;
+		using FbxMaterialCollection = vector < unique_ptr< IFbxMaterial > >;
 
 		/// \brief Interface used to import a concrete material
-		class IMaterialImporter{
+		class IFbxMaterialImporter{
 
 		public:
 
@@ -41,12 +41,12 @@ namespace gi_lib{
 			/// Use this interface to create the actual material component and setup the renderer components.
 			/// \param materials The collection of imported materials.
 			/// \param mesh The mesh whose materials have been imported.
-			virtual void OnImportMaterial(MaterialCollection& materials, MeshComponent& mesh) = 0;
+			virtual void OnImportMaterial(FbxMaterialCollection& materials, MeshComponent& mesh) = 0;
 
 		};
 
 		/// \brief A single material property.
-		class IProperty{
+		class IFbxProperty{
 
 		public:
 
@@ -71,12 +71,12 @@ namespace gi_lib{
 			/// \brief Get a subproperty by name.
 			/// You may use the pipe character "|" to access subproperties directly (e.g.: "prop|subprop|subsubprop").
 			/// \param property_name The subproperty name
-			virtual unique_ptr<IProperty> operator[](const wstring& subproperty_name) const = 0;
+			virtual unique_ptr<IFbxProperty> operator[](const wstring& subproperty_name) const = 0;
 
 		};
 
 		/// \brief A material description.
-		class IMaterial{
+		class IFbxMaterial{
 
 		public:
 
@@ -86,7 +86,7 @@ namespace gi_lib{
 			/// \brief Get a property by name.
 			/// You may use the pipe character "|" to access subproperties directly (e.g.: "prop|subprop|subsubprop").
 			/// \param property_name The property name
-			virtual unique_ptr<IProperty> operator[](const wstring& property_name) const = 0;
+			virtual unique_ptr<IFbxProperty> operator[](const wstring& property_name) const = 0;
 
 		};
 
@@ -97,7 +97,7 @@ namespace gi_lib{
 		public:
 			
 			/// \brief Constructor.
-			FbxImporter(IMaterialImporter& material_importer, Resources& resources);
+			FbxImporter(IFbxMaterialImporter& material_importer, Resources& resources);
 
 			/// \brief Destructor.
 			~FbxImporter();
@@ -117,7 +117,7 @@ namespace gi_lib{
 
 			unique_ptr<FbxSDK> fbx_sdk_;				///< \brief SDK object
 
-			IMaterialImporter& material_importer_;		///< \brief Used to create the concrete material components and renderer components.
+			IFbxMaterialImporter& material_importer_;		///< \brief Used to create the concrete material components and renderer components.
 
 			Resources& resources_;						///< \brief Used to load the resources.
 
