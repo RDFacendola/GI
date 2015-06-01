@@ -186,23 +186,21 @@ namespace{
 
 		/// \brief Create a fbx material property wrapper.
 		/// \param property Property to wrap.
-		Property(FbxProperty property, const wstring& base_directory);
+		Property(FbxProperty property);
 
-		virtual wstring GetName() const override;
+		virtual string GetName() const override;
 
 		virtual float ReadFloat() const override;
 
 		virtual Vector3f ReadVector3() const override;
 
-		virtual vector<wstring> EnumerateTextures() const override;
+		virtual vector<string> EnumerateTextures() const override;
 
-		virtual unique_ptr<IFbxProperty> operator[](const wstring& subproperty_name) const override;
+		virtual unique_ptr<IFbxProperty> operator[](const string& subproperty_name) const override;
 		
 	private:
 
 		FbxProperty property_;				///< \brief Fbx property
-
-		wstring base_directory_;			///< \brief Base directory.
 
 	};
 
@@ -211,29 +209,26 @@ namespace{
 
 	public:
 
-		Material(FbxSurfaceMaterial* material, const wstring& base_directory);
+		Material(FbxSurfaceMaterial* material);
 
-		virtual wstring GetName() const override;
+		virtual string GetName() const override;
 
-		virtual unique_ptr<IFbxProperty> operator[](const wstring& property_name) const override;
+		virtual unique_ptr<IFbxProperty> operator[](const string& property_name) const override;
 
 	private:
 
 		FbxSurfaceMaterial* material_;		///< \brief Fbx material
 
-		wstring base_directory_;			///< \brief Base directory.
-
 	};
 
 	///////////////////////////////////// PROPERTY ///////////////////////////////////////////
 
-	Property::Property(FbxProperty property, const wstring& base_directory) : 
-		property_(property),
-		base_directory_(base_directory){}
+	Property::Property(FbxProperty property) : 
+		property_(property){}
 
-	wstring Property::GetName() const{
+	string Property::GetName() const{
 
-		return to_wstring(property_.GetNameAsCStr());
+		return property_.GetNameAsCStr();
 
 	}
 
@@ -249,9 +244,9 @@ namespace{
 
 	}
 
-	vector<wstring> Property::EnumerateTextures() const{
+	vector<string> Property::EnumerateTextures() const{
 
-		vector<wstring> textures;
+		vector<string> textures;
 
 		FbxFileTexture* texture;
 
@@ -259,7 +254,7 @@ namespace{
 
 			texture = property_.GetSrcObject<FbxFileTexture>(texture_index);
 
-			textures.push_back(base_directory_ + to_wstring(texture->GetFileName()));
+			textures.push_back(texture->GetFileName());
 
 		}
 
@@ -267,47 +262,44 @@ namespace{
 
 	}
 
-	unique_ptr<IFbxProperty> Property::operator[](const wstring& subproperty_name) const{
+	unique_ptr<IFbxProperty> Property::operator[](const string& subproperty_name) const{
 
 		auto property = FindSubProperty(property_, 
-										to_string(subproperty_name));
+										subproperty_name);
 
 		return property.IsValid() ?
-			   make_unique<Property>(property, base_directory_) :
+			   make_unique<Property>(property) :
 			   nullptr;
 
 	}
 
 	///////////////////////////////////// MATERIAL ///////////////////////////////////////////
 
-	Material::Material(FbxSurfaceMaterial* material, const wstring& base_directory) :
-		material_(material),
-		base_directory_(base_directory){}
+	Material::Material(FbxSurfaceMaterial* material) :
+		material_(material){}
 
-	wstring Material::GetName() const{
+	string Material::GetName() const{
 
-		return to_wstring(material_->GetName());
+		return material_->GetName();
 
 	}
 
-	unique_ptr<IFbxProperty> Material::operator[](const wstring& property_name) const{
+	unique_ptr<IFbxProperty> Material::operator[](const string& property_name) const{
 
-		auto property_string = to_string(property_name);
+		auto base_separator = property_name.find_first_of("|");
 
-		auto base_separator = property_string.find_first_of("|");
-
-		auto property = material_->FindProperty(property_string.substr(0, base_separator).c_str());
+		auto property = material_->FindProperty(property_name.substr(0, base_separator).c_str());
 
 		if (property.IsValid() &&
 			base_separator != string::npos){
 
 			// Check the subproperties
-			property = FindSubProperty(property, property_string.substr(base_separator + 1));
+			property = FindSubProperty(property, property_name.substr(base_separator + 1));
 
 		}
 
 		return property.IsValid() ?
-			   make_unique<Property>(property, base_directory_) :
+			   make_unique<Property>(property) :
 			   nullptr;
 		
 	}
@@ -618,12 +610,13 @@ namespace{
 
 		for (int material_index = 0; material_index < fbx_node.GetSrcObjectCount<FbxSurfaceMaterial>(); ++material_index){
 
-			materials.push_back(make_unique<Material>(fbx_node.GetSrcObject<FbxSurfaceMaterial>(material_index),
-													  context.base_directory));
+			materials.push_back(make_unique<Material>(fbx_node.GetSrcObject<FbxSurfaceMaterial>(material_index)));
 				
 		}
 
-		context.material_importer->OnImportMaterial(materials, mesh_component);
+		context.material_importer->OnImportMaterial(context.base_directory,
+													materials,
+													mesh_component);
 
 	}
 
@@ -768,7 +761,7 @@ struct fbx::FbxImporter::FbxSDK{
 	/// \brief Read a scene from file.
 	/// \param file_name Name of the file containing the scene.
 	/// \return Returns a pointer to the imported scene.
-	FbxScene* ReadSceneOrDie(const wstring& file_name);
+	FbxScene* ReadSceneOrDie(const string& file_name);
 	
 };
 
@@ -805,13 +798,13 @@ fbx::FbxImporter::FbxSDK::~FbxSDK(){
 
 }
 
-FbxScene* fbx::FbxImporter::FbxSDK::ReadSceneOrDie(const wstring& file_name){
+FbxScene* fbx::FbxImporter::FbxSDK::ReadSceneOrDie(const string& file_name){
 
 	// Create the importer
 	
 	auto fbx_importer = ::FbxImporter::Create(manager, "");
 	
-	if (!fbx_importer->Initialize(to_string(file_name).c_str(),
+	if (!fbx_importer->Initialize(file_name.c_str(),
 								  -1,
 								  manager->GetIOSettings())) {
 
@@ -848,7 +841,7 @@ resources_(resources){}
 
 fbx::FbxImporter::~FbxImporter(){}
 
-void fbx::FbxImporter::ImportScene(const wstring& file_name, TransformComponent& root){
+void fbx::FbxImporter::ImportScene(const string& file_name, TransformComponent& root){
 
 	auto scene = fbx_sdk_->ReadSceneOrDie(file_name);
 
@@ -861,10 +854,10 @@ void fbx::FbxImporter::ImportScene(const wstring& file_name, TransformComponent&
 	});
 
 	// Context setup
-
+	
 	ImportContext context{ &material_importer_, 
 						   &resources_, 
-						   Application::GetBaseDirectory(file_name) };
+						   Application::GetBaseDirectory(to_wstring(file_name)) };
 
 	// Actual import
 

@@ -39,9 +39,10 @@ namespace gi_lib{
 
 			/// \brief Called when a material collection has been imported.
 			/// Use this interface to create the actual material component and setup the renderer components.
+			/// \param base_directory Directory of the file being imported.
 			/// \param materials The collection of imported materials.
 			/// \param mesh The mesh whose materials have been imported.
-			virtual void OnImportMaterial(FbxMaterialCollection& materials, MeshComponent& mesh) = 0;
+			virtual void OnImportMaterial(const wstring& base_directory, FbxMaterialCollection& materials, MeshComponent& mesh) = 0;
 
 		};
 
@@ -52,7 +53,7 @@ namespace gi_lib{
 
 			/// \brief Get the property name.
 			/// \return Returns the property name.
-			virtual wstring GetName() const = 0;
+			virtual string GetName() const = 0;
 
 			/// \brief Read a float value out of the property.
 			/// If the property cannot be read as float the behavior is undefined.
@@ -66,12 +67,12 @@ namespace gi_lib{
 
 			/// \brief Enumerate the textures associated to this property.
 			/// \return Returns the names of the textures associated to this property.
-			virtual vector<wstring> EnumerateTextures() const = 0;
+			virtual vector<string> EnumerateTextures() const = 0;
 
 			/// \brief Get a subproperty by name.
 			/// You may use the pipe character "|" to access subproperties directly (e.g.: "prop|subprop|subsubprop").
 			/// \param property_name The subproperty name
-			virtual unique_ptr<IFbxProperty> operator[](const wstring& subproperty_name) const = 0;
+			virtual unique_ptr<IFbxProperty> operator[](const string& subproperty_name) const = 0;
 
 		};
 
@@ -81,12 +82,12 @@ namespace gi_lib{
 		public:
 
 			/// \brief Get the material name.
-			virtual wstring GetName() const = 0;
+			virtual string GetName() const = 0;
 
 			/// \brief Get a property by name.
 			/// You may use the pipe character "|" to access subproperties directly (e.g.: "prop|subprop|subsubprop").
 			/// \param property_name The property name
-			virtual unique_ptr<IFbxProperty> operator[](const wstring& property_name) const = 0;
+			virtual unique_ptr<IFbxProperty> operator[](const string& property_name) const = 0;
 
 		};
 
@@ -109,7 +110,7 @@ namespace gi_lib{
 			/// \param file_name Name of the FBX file to import.
 			/// \param root The node where all the imported nodes will be attached hierarchically.
 			/// \param resources Used to load resources during the import process.
-			void ImportScene(const wstring& file_name, TransformComponent& root);
+			void ImportScene(const string& file_name, TransformComponent& root);
 
 		private:
 
