@@ -12,6 +12,7 @@
 #include "..\gimath.h"
 
 using ::std::wstring;
+using ::std::string;
 using ::std::shared_ptr;
 using ::std::unique_ptr;
 using ::std::vector;
@@ -67,6 +68,11 @@ namespace gi_lib{
 			/// \return Returns the names of the textures associated to this property.
 			virtual vector<wstring> EnumerateTextures() const = 0;
 
+			/// \brief Get a subproperty by name.
+			/// You may use the pipe character "|" to access subproperties directly (e.g.: "prop|subprop|subsubprop").
+			/// \param property_name The subproperty name
+			virtual unique_ptr<IProperty> operator[](const wstring& subproperty_name) const = 0;
+
 		};
 
 		/// \brief A material description.
@@ -78,6 +84,7 @@ namespace gi_lib{
 			virtual wstring GetName() const = 0;
 
 			/// \brief Get a property by name.
+			/// You may use the pipe character "|" to access subproperties directly (e.g.: "prop|subprop|subsubprop").
 			/// \param property_name The property name
 			virtual unique_ptr<IProperty> operator[](const wstring& property_name) const = 0;
 

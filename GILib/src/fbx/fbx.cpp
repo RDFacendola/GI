@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <fbxsdk.h>
 #include <type_traits>
+#include <sstream>
 
 #include "..\..\include\gilib.h"
 #include "..\..\include\gimath.h"
@@ -144,6 +145,175 @@ namespace{
 
 	};
 
+	/// \brief Find a subproperty by name.
+	/// \param base The property where the search will begin.
+	/// \param subproperty_name Name of the subproperty. You may use the pipe character "|" to access subproperties (e.g.: "prop|subprop|subsubprop").
+	/// \return Returns the specified subproperty if such property exists, otherwise returns an invalid property.
+	FbxProperty FindSubProperty(FbxProperty base, const string& subproperty_name){
+
+		string::size_type base_separator;
+
+		string rest = subproperty_name;
+
+		FbxProperty property = base;
+
+		for (;;){
+
+			base_separator = rest.find_first_of("|");
+
+			property = property.Find(rest.substr(0, base_separator).c_str());
+
+			if (!property.IsValid() ||
+				base_separator == string::npos){
+
+				// Exit if one of the properties is not found or the last one was checked.
+				break;
+
+			}
+
+			rest = rest.substr(base_separator + 1);
+			
+		}
+
+		return property;
+
+	}
+
+	/// \brief Wrapper around the FbxProperty
+	class Property : public IProperty{
+
+	public:
+
+		/// \brief Create a fbx material property wrapper.
+		/// \param property Property to wrap.
+		Property(FbxProperty property, const wstring& base_directory);
+
+		virtual wstring GetName() const override;
+
+		virtual float ReadFloat() const override;
+
+		virtual Vector3f ReadVector3() const override;
+
+		virtual vector<wstring> EnumerateTextures() const override;
+
+		virtual unique_ptr<IProperty> operator[](const wstring& subproperty_name) const override;
+		
+	private:
+
+		FbxProperty property_;				///< \brief Fbx property
+
+		wstring base_directory_;			///< \brief Base directory.
+
+	};
+
+	/// \brief Wrapper around the FbxSurfaceMaterial.
+	class Material : public IMaterial{
+
+	public:
+
+		Material(FbxSurfaceMaterial* material, const wstring& base_directory);
+
+		virtual wstring GetName() const override;
+
+		virtual unique_ptr<IProperty> operator[](const wstring& property_name) const override;
+
+	private:
+
+		FbxSurfaceMaterial* material_;		///< \brief Fbx material
+
+		wstring base_directory_;			///< \brief Base directory.
+
+	};
+
+	///////////////////////////////////// PROPERTY ///////////////////////////////////////////
+
+	Property::Property(FbxProperty property, const wstring& base_directory) : 
+		property_(property),
+		base_directory_(base_directory){}
+
+	wstring Property::GetName() const{
+
+		return to_wstring(property_.GetNameAsCStr());
+
+	}
+
+	float Property::ReadFloat() const{
+
+		return static_cast<float>(property_.Get<FbxDouble>());
+
+	}
+
+	Vector3f Property::ReadVector3() const{
+
+		return Converter<FbxDouble3>()(property_.Get<FbxDouble3>());
+
+	}
+
+	vector<wstring> Property::EnumerateTextures() const{
+
+		vector<wstring> textures;
+
+		FbxFileTexture* texture;
+
+		for (int texture_index = 0; texture_index < property_.GetSrcObjectCount<FbxFileTexture>(); ++texture_index){
+
+			texture = property_.GetSrcObject<FbxFileTexture>(texture_index);
+
+			textures.push_back(base_directory_ + to_wstring(texture->GetFileName()));
+
+		}
+
+		return textures;
+
+	}
+
+	unique_ptr<IProperty> Property::operator[](const wstring& subproperty_name) const{
+
+		auto property = FindSubProperty(property_, 
+										to_string(subproperty_name));
+
+		return property.IsValid() ?
+			   make_unique<Property>(property, base_directory_) :
+			   nullptr;
+
+	}
+
+	///////////////////////////////////// MATERIAL ///////////////////////////////////////////
+
+	Material::Material(FbxSurfaceMaterial* material, const wstring& base_directory) :
+		material_(material),
+		base_directory_(base_directory){}
+
+	wstring Material::GetName() const{
+
+		return to_wstring(material_->GetName());
+
+	}
+
+	unique_ptr<IProperty> Material::operator[](const wstring& property_name) const{
+
+		auto property_string = to_string(property_name);
+
+		auto base_separator = property_string.find_first_of("|");
+
+		auto property = material_->FindProperty(property_string.substr(0, base_separator).c_str());
+
+		if (property.IsValid() &&
+			base_separator != string::npos){
+
+			// Check the subproperties
+			property = FindSubProperty(property, property_string.substr(base_separator + 1));
+
+		}
+
+		return property.IsValid() ?
+			   make_unique<Property>(property, base_directory_) :
+			   nullptr;
+		
+	}
+
+	///////////////////////////////////// METHODS ////////////////////////////////////////////
+
 	/// \brief Extract the translation component of a matrix.
 	/// \param transform The transformation matrix.
 	/// \return Returns the translation component of the given transformation matrix.
@@ -183,105 +353,7 @@ namespace{
 								static_cast<float>(scale.mData[2]));
 
 	}
-
-	/// \brief Wrapper around the FbxProperty
-	class Property : public IProperty{
-
-	public:
-
-		/// \brief Create a fbx material property wrapper.
-		/// \param property Property to wrap.
-		Property(FbxProperty property,
-				 const wstring& base_directory) :
-			property_(property),
-			base_directory_(base_directory){}
-
-		virtual wstring GetName() const override{
-
-			return to_wstring(property_.GetNameAsCStr());
-
-		}
-
-		virtual float ReadFloat() const override{
-
-			return static_cast<float>(property_.Get<FbxDouble>());
-
-		}
-
-		virtual Vector3f ReadVector3() const override{
-
-			return Converter<FbxDouble3>()(property_.Get<FbxDouble3>());
-
-		}
-
-		virtual vector<wstring> EnumerateTextures() const override{
-
-			vector<wstring> textures;
-
-			FbxFileTexture* texture;
-
-			for (int texture_index = 0; texture_index < property_.GetSrcObjectCount<FbxFileTexture>(); ++texture_index){
-
-				texture = property_.GetSrcObject<FbxFileTexture>(texture_index);
-
-				textures.push_back( base_directory_ + to_wstring(texture->GetFileName()));
-
-			}
-
-			return textures;
-
-		}
-
-
-	private:
-
-		FbxProperty property_;				///< \brief Fbx property
-
-		wstring base_directory_;			///< \brief Base directory.
-
-	};
-
-	/// \brief Wrapper around the FbxSurfaceMaterial.
-	class Material : public IMaterial{
-
-	public:
-
-		Material(FbxSurfaceMaterial* material,
-				 const wstring& base_directory) :
-			material_(material),
-			base_directory_(base_directory){}
-
-		virtual wstring GetName() const override{
-
-			return to_wstring(material_->GetName());
-
-		}
-
-		virtual unique_ptr<IProperty> operator[](const wstring& property_name) const override{
-
-			auto property = material_->FindProperty(to_string(property_name).c_str());
-			
-			if (property.IsValid()){
-
-				return make_unique<Property>(property, base_directory_);
-
-			}
-			else{
-
-				return nullptr;
-
-			}
-			
-		}
-
-	private:
-
-		FbxSurfaceMaterial* material_;		///< \brief Fbx material
-
-		wstring base_directory_;			///< \brief Base directory.
-
-	};
-	
+		
 	/// \brief Check whether the mesh defines UV coordinates in the first layer.
 	/// \param mesh Mesh to check.
 	/// \return Returns true if the mesh defines UV coordinates in the first layer, returns false otherwise.
