@@ -279,7 +279,7 @@ namespace gi_lib{
 
 		/// \brief Update the window logic.
 		/// \param time The application-coherent time.
-		virtual void Update(const Time & time) = 0;
+		virtual void Update(const Time& time) = 0;
 
 		WindowHandle handle_;
 
