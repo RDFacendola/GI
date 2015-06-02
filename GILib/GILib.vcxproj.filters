@@ -88,6 +88,7 @@
     <ClInclude Include="include\windows\win_os.h">
       <Filter>os</Filter>
     </ClInclude>
+    <ClInclude Include="include\windows\win_core.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -130,5 +131,6 @@
     <ClCompile Include="src\resources.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\windows\win_core.cpp" />
   </ItemGroup>
 </Project>

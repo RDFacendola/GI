@@ -105,31 +105,39 @@ namespace gi_lib{
 	public:
 
 		System() = delete;
+		/// \brief Get the system singleton.
+		/// \return Returns a reference to the system singleton.
+		static System& GetInstance();
 
 		/// \brief Get the current operating system
 
 		/// \return Returns the current operating system
 		static OperatingSystem GetOperatingSystem();
+		virtual OperatingSystem GetOperatingSystem() = 0;
 
 		/// \brief Get the CPU capabilities.
 
 		/// \return Returns the CPU capabilities.
 		static CpuProfile GetCPUProfile();
+		virtual CpuProfile GetCPUProfile() = 0;
 
 		/// \brief Get the memory capabilities.
 
 		/// \return Returns the memory capabilities.
 		static MemoryProfile GetMemoryProfile();
+		virtual MemoryProfile GetMemoryProfile() = 0;
 
 		/// \brief Get informations about storage media
 
 		/// \return Returns informations about storage media.
 		static StorageProfile GetStorageProfile();
+		virtual StorageProfile GetStorageProfile() = 0;
 
 		/// \brief Get informations about user's desktop.
 
 		/// \return Returns informations about user's desktop.
 		static DesktopProfile GetDesktopProfile();
+		virtual DesktopProfile GetDesktopProfile() = 0;
 
 	};
 
