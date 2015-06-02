@@ -59,7 +59,9 @@ namespace{
 MaterialImporter::MaterialImporter(Resources& resources) :
 resources_(resources){
 
-	base_material_ = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetDirectory() + L"Data\\deferred_material.fx" });
+	auto& app = Application::GetInstance();
+
+	base_material_ = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ app.GetDirectory() + L"Data\\deferred_material.fx" });
 
 }
 

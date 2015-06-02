@@ -1077,9 +1077,12 @@ void DX11Material::InstanceImpl::Commit(ID3D11DeviceContext& context){
 
 DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFromFile& bundle){
 	
-	string code = IO::ReadFile(bundle.file_name);
+	auto& file_system = FileSystem::GetInstance();
 
-	string file_name = string(bundle.file_name.begin(), bundle.file_name.end());
+	string code = to_string(file_system.Read(bundle.file_name));
+
+	string file_name = string(bundle.file_name.begin(), 
+							  bundle.file_name.end());
 
 	auto rollback = make_scope_guard([&](){
 
@@ -1096,10 +1099,10 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 	reflection.shaders = ShaderType::NONE;
 
 	vertex_shader = ::MakeShader<ID3D11VertexShader>(device, code, file_name, true, reflection);		// mandatory
-	hull_shader = ::MakeShader<ID3D11HullShader>(device, code, file_name, false, reflection);		// optional
+	hull_shader = ::MakeShader<ID3D11HullShader>(device, code, file_name, false, reflection);			// optional
 	domain_shader = ::MakeShader<ID3D11DomainShader>(device, code, file_name, false, reflection);		// optional
 	geometry_shader = ::MakeShader<ID3D11GeometryShader>(device, code, file_name, false, reflection);	// optional
-	pixel_shader = ::MakeShader<ID3D11PixelShader>(device, code, file_name, true, reflection);		// mandatory
+	pixel_shader = ::MakeShader<ID3D11PixelShader>(device, code, file_name, true, reflection);			// mandatory
 				
 	// Input layout
 

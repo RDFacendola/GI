@@ -18,7 +18,7 @@ namespace gi_lib{
 namespace gi{
 
 	///Application's logic
-	class GILogic : public Window{
+	class GILogic : public IWindowLogic{
 
 	public:
 
@@ -26,10 +26,12 @@ namespace gi{
 
 		virtual ~GILogic();
 
-		/// \brief Update the window logic.
-		/// \param time The application-coherent time.
-		virtual void Update(const Time & time);
+	protected:
 
+		virtual void Initialize(Window& window) override;
+
+		virtual void Update(const Time & time) override;
+		
 	private:
 
 		Graphics & graphics_;

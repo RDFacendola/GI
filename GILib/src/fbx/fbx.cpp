@@ -854,10 +854,12 @@ void fbx::FbxImporter::ImportScene(const string& file_name, TransformComponent& 
 	});
 
 	// Context setup
+
+	auto& file_system = FileSystem::GetInstance();
 	
 	ImportContext context{ &material_importer_, 
 						   &resources_, 
-						   Application::GetBaseDirectory(to_wstring(file_name)) };
+						   file_system.GetDirectory(to_wstring(file_name)) };
 
 	// Actual import
 

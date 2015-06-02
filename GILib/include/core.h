@@ -94,7 +94,7 @@ namespace gi_lib{
 	/// \author Raffaele D. Facendola
 	enum class OperatingSystem{
 
-		WINDOWS		///< Windows OS
+		Windows		///< Windows OS
 
 	};
 
@@ -104,55 +104,55 @@ namespace gi_lib{
 
 	public:
 
-		System() = delete;
 		/// \brief Get the system singleton.
 		/// \return Returns a reference to the system singleton.
 		static System& GetInstance();
 
 		/// \brief Get the current operating system
-
 		/// \return Returns the current operating system
-		static OperatingSystem GetOperatingSystem();
 		virtual OperatingSystem GetOperatingSystem() = 0;
 
 		/// \brief Get the CPU capabilities.
 
 		/// \return Returns the CPU capabilities.
-		static CpuProfile GetCPUProfile();
 		virtual CpuProfile GetCPUProfile() = 0;
 
 		/// \brief Get the memory capabilities.
 
 		/// \return Returns the memory capabilities.
-		static MemoryProfile GetMemoryProfile();
 		virtual MemoryProfile GetMemoryProfile() = 0;
 
 		/// \brief Get informations about storage media
 
 		/// \return Returns informations about storage media.
-		static StorageProfile GetStorageProfile();
 		virtual StorageProfile GetStorageProfile() = 0;
 
 		/// \brief Get informations about user's desktop.
 
 		/// \return Returns informations about user's desktop.
-		static DesktopProfile GetDesktopProfile();
 		virtual DesktopProfile GetDesktopProfile() = 0;
 
 	};
 
-	// \brief Exposes Input\Output methods.
+	// \brief Exposes file system-related methods.
 	// \author Raffaele D. Facendola
-	class IO{
+	class FileSystem{
 
 	public:
 
-		IO() = delete;
+		/// \brief Get the file system singleton.
+		/// \return Returns a reference to the file system singleton.
+		static FileSystem& GetInstance();
 
-		// \brief Read an entire file.
-		
-		// \return Returns a string filled with the file content.
-		static string ReadFile(const wstring& file_name);
+		/// \brief Get the directory part of a full path.
+		/// \param file_name File name.
+		/// \return Returns the directory path of the specified file.
+		virtual wstring GetDirectory(const wstring& file_name) = 0;
+
+		/// \brief Read the content of a file.
+		/// \param file_name File to read.
+		/// \return Returns the content of the specified file.
+		virtual wstring Read(const wstring& file_name) = 0;
 
 	};
 
@@ -162,42 +162,27 @@ namespace gi_lib{
 
 	public:
 		
-		/// \brief Default destructor.
-		~Application();
-
 		/// \brief Get the application singleton.
 		/// \return Returns a reference to the application singleton.
-		static Application & GetInstance();
+		static Application& GetInstance();
+
+		/// \brief Get the application path.
+		/// \return Returns the application path.
+		virtual wstring GetPath() = 0;
 
 		/// \brief Get the application directory.
 		/// \return Returns the application directory.
-		static wstring GetDirectory();
-
-		/// \brief Strips the file name out of a file path.
-		/// \param file_name Full file path.
-		/// \return Returns the file path stripped of the file name and file extension.
-		/// \return The trailing slash is always included.
-		static wstring GetBaseDirectory(const wstring & file_name);
-
-		/// \brief Get the full application path.
-		/// \return Returns the full application path.
-		static wstring GetPath();
-
-		/// \brief Get the application name.
-		/// \param extension Set whether the extension should be returned or not.
-		/// \return Returns the application name including its extension eventually.
-		static wstring GetName(bool extension = true);
-
+		virtual wstring GetDirectory() = 0;
+		
 		/// \brief Create and add new window.
 
 		/// Create a new window with default style and dimensions.
-		/// \tparam TWindow Type of the window to create. It must derive from Window.
-		/// \tparam TArgs Type of the arguments to pass to the new instance's constructor.
-		/// \param arguments Arguments to pass to the new instance's constructor.
+		/// \tparam TLogic Type of the window logic associated to the window.
+		/// \tparam TArgs Type of the arguments to pass to the logic's constructor.
+		/// \param arguments Arguments to pass to the logic's constructor.
 		/// \return Returns a weak pointer to the new window.
-		template<typename TWindow, typename... TArgs>
-		typename std::enable_if_t< std::is_base_of<Window, TWindow>::value, weak_ptr<TWindow>> 
-			AddWindow(TArgs&&... arguments);
+		template<typename TLogic, typename... TArgs>
+		weak_ptr<Window> AddWindow(TArgs&&... arguments);
 
 		/// \brief Get a window by handle.
 		/// \param handle The handle of the window to find.
@@ -214,11 +199,28 @@ namespace gi_lib{
 		void Join();
 
 	private:
-
-		Application();
-
+		
 		map<WindowHandle, shared_ptr<Window>> windows_;
 		
+	};
+
+	/// \brief Represents the core logic of the application.
+	/// \author Raffaele D. Facendola.
+	class IWindowLogic{
+
+		friend class Window;
+
+	protected:
+
+		/// \brief Update the window logic.
+		/// \param window The window associated to this logic.
+		/// \param time The application time.
+		virtual void Update(const Time& time) = 0;
+
+		/// \brief Initialize the window logic.
+		/// \param window The window associated to this logic.
+		virtual void Initialize(Window& window) = 0;
+
 	};
 
 	/// \brief A window.
@@ -244,10 +246,10 @@ namespace gi_lib{
 			unsigned height;
 
 		};
-
+				
 		/// \brief Create a new window.
 		/// \remarks The window is created with default style and dimensions.
-		Window();
+		Window(unique_ptr<IWindowLogic> logic);
 
 		virtual ~Window();
 
@@ -285,9 +287,14 @@ namespace gi_lib{
 
 	private:
 
+		/// \brief Initializes the window.
+		void Initialize();
+
 		/// \brief Update the window logic.
 		/// \param time The application-coherent time.
-		virtual void Update(const Time& time) = 0;
+		void Update(const Time& time);
+
+		unique_ptr<IWindowLogic> logic_;		///< \brief The window logic.
 
 		WindowHandle handle_;
 
@@ -308,11 +315,10 @@ namespace gi_lib{
 
 	//////////////////////////////////// APPLICATION /////////////////////////////////////
 
-	template<typename TWindow, typename... TArgs>
-	typename std::enable_if_t< std::is_base_of<Window, TWindow>::value, weak_ptr<TWindow>> 
-	Application::AddWindow(TArgs&&... arguments){
+	template<typename TLogic, typename... TArgs>
+	typename weak_ptr<Window> Application::AddWindow(TArgs&&... arguments){
 
-		auto window = std::make_shared<TWindow>(std::forward<TArgs>(arguments)...);
+		auto window = make_shared<Window>(make_unique<TLogic>(std::forward<TArgs&&>(arguments)...));
 
 		windows_[window->GetHandle()] = window;
 
@@ -321,6 +327,15 @@ namespace gi_lib{
 	}
 
 	//////////////////////////////////// WINDOW /////////////////////////////////////
+
+	inline Window::Window(unique_ptr<IWindowLogic> logic) :
+	logic_(std::move(logic)){
+
+		Initialize();
+
+		logic_->Initialize(*this);
+
+	}
 
 	inline const WindowHandle& Window::GetHandle() const{
 

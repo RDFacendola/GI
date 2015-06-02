@@ -1,9 +1,5 @@
 #include "..\include\core.h"
 
-#include <streambuf>
-#include <fstream>
-#include <algorithm>
-
 #include "..\include\exceptions.h"
 #include "..\include\timer.h"
 
@@ -11,21 +7,6 @@
 
 using namespace gi_lib;
 using namespace std;
-
-namespace{
-
-#ifdef _WIN32
-
-	const wstring kExtensionSeparator = L".";
-
-	const wstring kPathSeparator = L"\\";
-
-	const unsigned int kUnitLabelLength = 3;
-
-#endif
-
-}
-
 
 //////////////////////////////////// SYSTEM /////////////////////////////////////////
 
@@ -41,123 +22,31 @@ System& System::GetInstance(){
 	
 }
 
-////////////////////// IO ////////////////////////////////////////
+////////////////////// FILESYSTEM ////////////////////////////////////////
 
-string IO::ReadFile(const wstring& file_name){
+FileSystem& FileSystem::GetInstance(){
 
-	std::ifstream file_stream(file_name);
+#ifdef _WIN32
 
-	if (file_stream.bad()){
+	static windows::FileSystem file_system;
 
-		return "";
+#endif
 
-	}
-
-
-	std::string content;
-
-	// Size of the file
-	file_stream.seekg(0, std::ios::end);
-
-	content.reserve(static_cast<size_t>(file_stream.tellg()));
-
-	file_stream.seekg(0, std::ios::beg);
-
-	content.assign((std::istreambuf_iterator<char>(file_stream)),
-				    std::istreambuf_iterator<char>());
-
-	return content;
+	return file_system;
 
 }
 
 ////////////////////// APPLICATION ///////////////////////////////
 
-Application::Application(){}
+Application& Application::GetInstance(){
 
-Application::~Application(){}
+#ifdef _WIN32
 
-Application & Application::GetInstance(){
+	static windows::Application application;
 
-	static Application application;
+#endif
 
 	return application;
-
-}
-
-wstring Application::GetDirectory(){
-
-#ifdef _WIN32
-
-	auto path = GetPath();
-
-	auto path_index = static_cast<unsigned int>(path.find_last_of(kPathSeparator));
-
-	return path.substr(0, path_index + 1);
-
-#else
-
-#error "Unsupported platform"
-
-#endif
-
-}
-
-wstring Application::GetBaseDirectory(const wstring& file_name){
-
-#ifdef _WIN32
-
-	static wchar_t* separators = L"\\/:";
-
-	auto index = file_name.find_last_of(separators);
-
-	return index != wstring::npos ?
-		   file_name.substr(0, index + 1) :
-		   file_name;
-		
-#else
-
-#error "Not supported";
-
-#endif
-
-}
-
-wstring Application::GetPath(){
-
-#ifdef _WIN32
-
-	wstring path(MAX_PATH + 1, 0);
-
-	GetModuleFileName(0, 
-					  &path[0], 
-					  static_cast<DWORD>(path.length()));
-
-	path.erase(std::remove(path.begin(),
-						   path.end(),
-						   0),
-			   path.end());
-
-	path.shrink_to_fit();
-
-	return path;
-
-#else
-
-#error "Unsupported platform"
-
-#endif
-
-}
-
-wstring Application::GetName(bool extension){
-
-	auto path = GetPath();
-
-	auto path_index = static_cast<unsigned int>(path.find_last_of(kPathSeparator));
-	auto extension_index = static_cast<unsigned int>(path.find_last_of(kExtensionSeparator));
-
-	return path.substr(path_index + 1,
-					   extension ? path.npos : extension_index - path_index - 1);
 
 }
 
@@ -363,7 +252,7 @@ bool Window::IsVisible(){
 
 }
 
-Window::Window(){
+void Window::Initialize(){
 
 #ifdef _WIN32
 
@@ -405,6 +294,12 @@ Window::~Window(){
 #error "Unsupported platform"
 
 #endif
+
+}
+
+void Window::Update(const Time& time){
+
+	logic_->Update(time);
 
 }
 

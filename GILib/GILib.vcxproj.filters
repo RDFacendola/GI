@@ -85,6 +85,7 @@
     <ClInclude Include="src\dx11\renderers\dx11deferred_renderer.h" />
     <ClInclude Include="src\dx11\renderers\dx11renderer.h" />
     <ClInclude Include="include\input.h" />
+    <ClInclude Include="include\windows\win_input.h" />
     <ClInclude Include="include\windows\win_os.h">
       <Filter>os</Filter>
     </ClInclude>
@@ -115,9 +116,6 @@
     <ClCompile Include="src\gimath.cpp">
       <Filter>core</Filter>
     </ClCompile>
-    <ClCompile Include="src\windows\os_windows.cpp">
-      <Filter>os</Filter>
-    </ClCompile>
     <ClCompile Include="src\dx11\dx11.cpp" />
     <ClCompile Include="src\exceptions.cpp" />
     <ClCompile Include="src\observable.cpp" />
@@ -130,6 +128,9 @@
     <ClCompile Include="src\dx11\renderers\dx11deferred_renderer.cpp" />
     <ClCompile Include="src\resources.cpp">
       <Filter>graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\windows\win_input.cpp">
+      <Filter>os</Filter>
     </ClCompile>
     <ClCompile Include="src\windows\win_core.cpp" />
   </ItemGroup>

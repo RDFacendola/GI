@@ -33,12 +33,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		//Unhandled exception!
 		wstringstream stream;
 		
-		stream << e.GetError()
-			   << std::endl
-			   << e.GetLocation()
-			   << std::endl
-			   << e.GetStackTrace()
-			   << std::endl
+		stream << e.GetError() << std::endl
+			   << e.GetLocation() << std::endl
+			   << e.GetStackTrace() << std::endl
 			   << "Stack trace has been copied to the clipboard";
 		
 		auto message = stream.str();

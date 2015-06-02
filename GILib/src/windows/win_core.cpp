@@ -3,16 +3,31 @@
 #include "..\..\Include\windows\win_core.h"
 
 #include <Windows.h>
+#include <string>
+#include <algorithm>
+#include <fstream>
 
 #include "..\..\Include\exceptions.h"
 
+using namespace std;
+
 using namespace gi_lib::windows;
+
+namespace{
+	
+	const wstring kExtensionSeparator = L".";
+
+	const wstring kPathSeparator = L"\\";
+
+	const unsigned int kUnitLabelLength = 3;
+
+}
 
 //////////////////////////////////// SYSTEM /////////////////////////////////////////
 
 gi_lib::OperatingSystem System::GetOperatingSystem(){
 
-	return OperatingSystem::WINDOWS;
+	return OperatingSystem::Windows;
 
 }
 
@@ -113,6 +128,76 @@ gi_lib::DesktopProfile System::GetDesktopProfile(){
 	desktop_profile.refresh_rate = devmode.dmDisplayFrequency;
 
 	return desktop_profile;
+
+}
+
+//////////////////////////////////// FILESYSTEM //////////////////////////////////////////
+
+wstring FileSystem::GetDirectory(const wstring& file_name){
+
+	static wchar_t* separators = L"\\/:";
+
+	auto index = file_name.find_last_of(separators);
+
+	return index != wstring::npos ?
+		   file_name.substr(0, index + 1) :
+		   file_name;
+
+}
+
+wstring FileSystem::Read(const wstring& file_name){
+
+	std::wifstream file_stream(file_name);
+
+	std::wstring content;
+
+	if (file_stream.good()){
+
+		// Reserve the size of the file
+		file_stream.seekg(0, std::ios::end);
+
+		content.reserve(static_cast<size_t>(file_stream.tellg()));
+
+		file_stream.seekg(0, std::ios::beg);
+
+		// Copy the content of the file.
+		content.assign((std::istreambuf_iterator<wchar_t>(file_stream)),
+						std::istreambuf_iterator<wchar_t>());
+
+	}
+		
+	return content;
+
+}
+
+//////////////////////////////////// APPLICATION /////////////////////////////////////////
+
+wstring Application::GetPath(){
+
+	wstring path(MAX_PATH + 1, 0);
+
+	GetModuleFileName(0,
+					  &path[0],
+					  static_cast<DWORD>(path.length()));
+
+	path.erase(std::remove(path.begin(),
+						   path.end(),
+						   0),
+			   path.end());
+
+	path.shrink_to_fit();
+
+	return path;
+
+}
+
+wstring Application::GetDirectory(){
+
+	auto path = GetPath();
+
+	auto path_index = static_cast<unsigned int>(path.find_last_of(kPathSeparator));
+
+	return path.substr(0, path_index + 1);
 
 }
 

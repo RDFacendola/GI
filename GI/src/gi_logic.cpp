@@ -40,17 +40,25 @@ graphics_(Graphics::GetAPI(API::DIRECTX_11)),
 scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 									 kDomainSize * Vector3f::Ones() },
 								kDomainSubdivisions * Vector3i::Ones()))
-{
+{}
+
+GILogic::~GILogic(){
+
+	output_ = nullptr;
+
+}
+
+void GILogic::Initialize(Window& window){
 
 	// Graphics setup
 
-	SetTitle(kWindowTitle);
+	window.SetTitle(kWindowTitle);
 
-	Show();
+	window.Show();
 	
 	// Create the output window
 
-	output_ = graphics_.CreateOutput(*this, 
+	output_ = graphics_.CreateOutput(window, 
 									 graphics_.GetAdapterProfile().video_modes[0]);
 
 	// Create the renderers
@@ -90,22 +98,18 @@ scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 	FbxImporter fbx_importer(material_importer,
 							 resources);
 	
-	fbx_importer.ImportScene(to_string(Application::GetDirectory()) + "Data\\oldsponza.fbx", 
+	auto& app = Application::GetInstance();
+
+	fbx_importer.ImportScene(to_string(app.GetDirectory()) + "Data\\oldsponza.fbx",
 							 *node);
-	
-}
-
-GILogic::~GILogic(){
-
-	output_ = nullptr;
 
 }
 
-void GILogic::Update(const Time& time){
-	
+void GILogic::Update(const Time & time){
+
 	auto rotation = camera_transform->GetRotation();
 
-	rotation *= Quaternionf(Eigen::AngleAxisf(time.GetDeltaSeconds()* 0.2f, 
+	rotation *= Quaternionf(Eigen::AngleAxisf(time.GetDeltaSeconds()* 0.2f,
 											  Vector3f(0.0f, 1.0f, 0.0f)));
 
 	auto angle = std::sinf(time.GetTotalSeconds() * 0.15f);
