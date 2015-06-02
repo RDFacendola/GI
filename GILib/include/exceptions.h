@@ -20,7 +20,7 @@ using ::std::wstring;
 #define EXCEPTION_LOCATION_W CONCATENATE(L, __FILE__) L":" TO_WSTRING(__LINE__) L" (" CONCATENATE(L, __FUNCTION__) L")"
 
 /// \brief Throws an exception.
-#define THROW(message) throw Exception(message, EXCEPTION_LOCATION_W)
+#define THROW(message) throw gi_lib::Exception(message, EXCEPTION_LOCATION_W)
 
 namespace gi_lib{
 	

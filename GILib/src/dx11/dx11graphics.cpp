@@ -301,7 +301,7 @@ namespace{
 
 //////////////////////////////////// OUTPUT //////////////////////////////////////////
 
-DX11Output::DX11Output(Window & window, const VideoMode & video_mode) :
+DX11Output::DX11Output(windows::Window & window, const VideoMode & video_mode) :
 	window_(window){
 
 	fullscreen_ = false;							// Windowed
@@ -533,9 +533,9 @@ AdapterProfile DX11Graphics::GetAdapterProfile() const{
 
 }
 
-unique_ptr<IOutput> DX11Graphics::CreateOutput(Window& window, const VideoMode& video_mode){
+unique_ptr<IOutput> DX11Graphics::CreateOutput(gi_lib::Window& window, const VideoMode& video_mode){
 
-	return std::make_unique<DX11Output>(window, 
+	return std::make_unique<DX11Output>(static_cast<windows::Window&>(window), 
 										video_mode);
 
 }

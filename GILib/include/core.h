@@ -5,41 +5,23 @@
 
 #pragma once
 
-#include <memory>
-#include <map>
 #include <string>
 #include <vector>
 
-#ifdef _WIN32
-
-#include <Windows.h>
-
-#endif
-
 #include "observable.h"
 
-using ::std::shared_ptr;
-using ::std::weak_ptr;
-using ::std::unique_ptr;
-using ::std::map;
-using ::std::string;
 using ::std::wstring;
 using ::std::vector;
 
 namespace gi_lib{
 	
 	class System;
+	class FileSystem;
 	class Application;
+	class IWindowLogic;
 	class Window;
 	class Time;
 	
-#ifdef _WIN32
-
-	/// \brief Type used to identify univocally a window instance.
-	using WindowHandle = HWND;
-
-#endif
-
 	/// \brief Describes the CPU's capabilities.
 	/// \author Raffaele D. Facendola
 	struct CpuProfile{
@@ -110,27 +92,27 @@ namespace gi_lib{
 
 		/// \brief Get the current operating system
 		/// \return Returns the current operating system
-		virtual OperatingSystem GetOperatingSystem() = 0;
+		virtual OperatingSystem GetOperatingSystem() const = 0;
 
 		/// \brief Get the CPU capabilities.
 
 		/// \return Returns the CPU capabilities.
-		virtual CpuProfile GetCPUProfile() = 0;
+		virtual CpuProfile GetCPUProfile() const = 0;
 
 		/// \brief Get the memory capabilities.
 
 		/// \return Returns the memory capabilities.
-		virtual MemoryProfile GetMemoryProfile() = 0;
+		virtual MemoryProfile GetMemoryProfile() const = 0;
 
 		/// \brief Get informations about storage media
 
 		/// \return Returns informations about storage media.
-		virtual StorageProfile GetStorageProfile() = 0;
+		virtual StorageProfile GetStorageProfile() const = 0;
 
 		/// \brief Get informations about user's desktop.
 
 		/// \return Returns informations about user's desktop.
-		virtual DesktopProfile GetDesktopProfile() = 0;
+		virtual DesktopProfile GetDesktopProfile() const = 0;
 
 	};
 
@@ -147,12 +129,12 @@ namespace gi_lib{
 		/// \brief Get the directory part of a full path.
 		/// \param file_name File name.
 		/// \return Returns the directory path of the specified file.
-		virtual wstring GetDirectory(const wstring& file_name) = 0;
+		virtual wstring GetDirectory(const wstring& file_name) const = 0;
 
 		/// \brief Read the content of a file.
 		/// \param file_name File to read.
 		/// \return Returns the content of the specified file.
-		virtual wstring Read(const wstring& file_name) = 0;
+		virtual wstring Read(const wstring& file_name) const = 0;
 
 	};
 
@@ -168,58 +150,46 @@ namespace gi_lib{
 
 		/// \brief Get the application path.
 		/// \return Returns the application path.
-		virtual wstring GetPath() = 0;
+		virtual wstring GetPath() const = 0;
 
 		/// \brief Get the application directory.
 		/// \return Returns the application directory.
-		virtual wstring GetDirectory() = 0;
+		virtual wstring GetDirectory() const = 0;
 		
-		/// \brief Create and add new window.
-
-		/// Create a new window with default style and dimensions.
-		/// \tparam TLogic Type of the window logic associated to the window.
-		/// \tparam TArgs Type of the arguments to pass to the logic's constructor.
-		/// \param arguments Arguments to pass to the logic's constructor.
-		/// \return Returns a weak pointer to the new window.
-		template<typename TLogic, typename... TArgs>
-		weak_ptr<Window> AddWindow(TArgs&&... arguments);
-
-		/// \brief Get a window by handle.
-		/// \param handle The handle of the window to find.
-		/// \return Returns a weak pointer to the matching window. Returns an empty pointer if no match was found.
-		weak_ptr<Window> GetWindow(const WindowHandle & handle);
-
-		/// /brief Dispose an existing window.
-
-		/// If a window is destroyed the handle is no longer valid.
-		/// /param handle The handle of the window do dispose
-		void DisposeWindow(const WindowHandle & handle);
-
 		/// \brief Wait until all the windows get closed.
-		void Join();
+		virtual void Join() = 0;
 
-	private:
-		
-		map<WindowHandle, shared_ptr<Window>> windows_;
-		
+		/// \brief Create a new window.
+		/// Create a new window with default style and dimensions.
+		/// \tparam TWindowLogic Type of the window logic associated to the window. Must derive from IWindowLogic.
+		/// \tparam TArguments Type of the arguments to pass to the logic's constructor.
+		/// \param arguments Arguments to pass to the logic's constructor.
+		/// \return Returns a reference to the new window.
+		template<typename TWindowLogic, typename... TArguments>
+		Window& AddWindow(TArguments&&... arguments);
+
+	protected:
+
+		/// \brief Create a new window.
+		/// \param logic Logic to associated to the window.
+		/// \return Returns a reference to the created window.
+		virtual Window& InstantiateWindow(unique_ptr<IWindowLogic> logic) = 0;
+
 	};
 
 	/// \brief Represents the core logic of the application.
 	/// \author Raffaele D. Facendola.
 	class IWindowLogic{
 
-		friend class Window;
-
-	protected:
-
-		/// \brief Update the window logic.
-		/// \param window The window associated to this logic.
-		/// \param time The application time.
-		virtual void Update(const Time& time) = 0;
+	public:
 
 		/// \brief Initialize the window logic.
 		/// \param window The window associated to this logic.
 		virtual void Initialize(Window& window) = 0;
+
+		/// \brief Update the window logic.
+		/// \param time The application time.
+		virtual void Update(const Time& time) = 0;
 
 	};
 
@@ -247,80 +217,65 @@ namespace gi_lib{
 
 		};
 				
+		/// \brief Create a new windows instance.
+		/// \tparam TWindowLogic Type of the logic associated to the window. Must derive from IWindowLogic.
+		/// \tparam TArguments Type of the arguments that will be passed to the window logic's constructor.
+		/// \param arguments Arguments that will be passed to the window logic's constructor.
+		/// \return Returns 
+		template <typename TWindowLogic, typename... TArguments>
+		static Window& CreateInstance(TArguments&&... arguments);
+
 		/// \brief Create a new window.
 		/// \remarks The window is created with default style and dimensions.
 		Window(unique_ptr<IWindowLogic> logic);
 
 		virtual ~Window();
 
-		/// \brief Get the window's handle.
-		/// \return Returns a constant reference to the window's handle.
-		const WindowHandle& GetHandle() const;
-
 		/// \brief Set the window's title.
 		/// \param title The title to show in the title bar.
-		void SetTitle(const wstring & title);
+		virtual void SetTitle(const wstring& title) = 0;
 
 		/// \brief Show or hide the window.
 		/// \param show Shows the window if "true", hides it otherwise.
-		void Show(bool show = true);
+		virtual void Show(bool show = true) = 0;
 
 		/// \brief Check whether this windows is visible or not.
 		/// \return Returns true if the window is not minimized, false otherwise.
-		bool IsVisible();
+		virtual bool IsVisible() = 0;
+
+		/// \brief Destroy this window.
+		virtual void Destroy() = 0;
 
 		/// \brief Event fired when the window has been closed.
 		/// \return Returns an observable event which notifies when the window is closed.
-		Observable<OnClosedEventArgs> & OnClosed();
+		virtual Observable<OnClosedEventArgs>& OnClosed();
 
 		/// \brief Event fired when the window has been resized.
 		/// \return Returns an observable event which notifies when the window is resized.
-		Observable<OnResizedEventArgs> & OnResized();
+		virtual Observable<OnResizedEventArgs>& OnResized();
 		
 	protected:
 
-		/// \brief The window has been closed.
-		Event<OnClosedEventArgs> on_closed_;
+		Event<OnClosedEventArgs> on_closed_;		///< \brief Fired when the window get closed.
 
-		/// \brief The window has been resized.
-		Event<OnResizedEventArgs> on_resized_;
-
-	private:
-
-		/// \brief Initializes the window.
-		void Initialize();
-
-		/// \brief Update the window logic.
-		/// \param time The application-coherent time.
-		void Update(const Time& time);
-
-		unique_ptr<IWindowLogic> logic_;		///< \brief The window logic.
-
-		WindowHandle handle_;
-
-#ifdef _WIN32
-
-		class WindowClass;
-
-		/// \brief Handle a Windows message.
-		/// \param message_id The message.
-		/// \param wparameter Additional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
-		/// \param lparameterAdditional message-specific information. The contents of this parameter depend on the value of the Msg parameter.
-		/// \return The return value specifies the result of the message processing and depends on the message sent.
-		virtual LRESULT ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
-
-#endif
+		Event<OnResizedEventArgs> on_resized_;		///< \brief Fired when the window get resized.
+			
+		unique_ptr<IWindowLogic> logic_;			///< \brief Pointer to the internal window logic.
 
 	};
 
 	//////////////////////////////////// APPLICATION /////////////////////////////////////
 
-	template<typename TLogic, typename... TArgs>
-	typename weak_ptr<Window> Application::AddWindow(TArgs&&... arguments){
+	template<typename TWindowLogic, typename... TArguments>
+	Window& Application::AddWindow(TArguments&&... arguments){
 
-		auto window = make_shared<Window>(make_unique<TLogic>(std::forward<TArgs&&>(arguments)...));
+		unique_ptr<IWindowLogic> logic_ptr = make_unique<TWindowLogic>(std::forward<TArguments&&>(arguments)...);
 
-		windows_[window->GetHandle()] = window;
+		auto& logic = *logic_ptr;
+
+		auto& window = InstantiateWindow(std::move(logic_ptr));
+
+		logic.Initialize(window);
 
 		return window;
 
@@ -329,19 +284,9 @@ namespace gi_lib{
 	//////////////////////////////////// WINDOW /////////////////////////////////////
 
 	inline Window::Window(unique_ptr<IWindowLogic> logic) :
-	logic_(std::move(logic)){
+	logic_(std::move(logic)){}
 
-		Initialize();
-
-		logic_->Initialize(*this);
-
-	}
-
-	inline const WindowHandle& Window::GetHandle() const{
-
-		return handle_;
-
-	}
+	inline Window::~Window(){}
 
 	inline Observable<Window::OnClosedEventArgs>& Window::OnClosed(){
 

@@ -258,7 +258,7 @@ namespace gi_lib{
 		/// \param window The window used to display the output.
 		/// \param video_mode The initial window mode.
 		/// \return Returns a pointer to the new output.
-		virtual unique_ptr<IOutput> CreateOutput(Window & window, const VideoMode & video_mode) = 0;
+		virtual unique_ptr<IOutput> CreateOutput(Window& window, const VideoMode& video_mode) = 0;
 
 		/// \brief Create a renderer.
 		/// \return Returns a pointer to the new renderer.

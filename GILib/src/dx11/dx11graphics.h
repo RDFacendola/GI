@@ -13,6 +13,7 @@
 
 #include "..\..\include\observable.h"
 #include "..\..\include\graphics.h"
+#include "..\..\include\windows\win_core.h"
 
 using ::std::unique_ptr;
 
@@ -46,7 +47,7 @@ namespace gi_lib{
 			/// \brief Create a new DirectX11 output window.
 			/// \param window The window where the final image will be displayed.
 			/// \param video_mode Video mode used to initialize the output.
-			DX11Output(Window & window, const VideoMode & video_mode);
+			DX11Output(windows::Window& window, const VideoMode& video_mode);
 
 			/// \brief Default destructor.
 			~DX11Output();
@@ -92,7 +93,7 @@ namespace gi_lib{
 			
 			// DirectX stuffs
 
-			Window & window_;
+			windows::Window& window_;
 
 			unique_ptr<IDXGISwapChain, COMDeleter> swap_chain_;
 
