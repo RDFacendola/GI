@@ -120,9 +120,59 @@ Mouse::Mouse(){
 
 void Mouse::UpdateStatus(const RAWMOUSE& mouse_status){
 
-	
+	// Buttons 
+
+	static unsigned short down_flags[] = { RI_MOUSE_BUTTON_1_DOWN, RI_MOUSE_BUTTON_2_DOWN, RI_MOUSE_BUTTON_3_DOWN, RI_MOUSE_BUTTON_4_DOWN, RI_MOUSE_BUTTON_5_DOWN };
+	static unsigned short up_flags[] = { RI_MOUSE_BUTTON_1_UP, RI_MOUSE_BUTTON_2_UP, RI_MOUSE_BUTTON_3_UP, RI_MOUSE_BUTTON_4_UP, RI_MOUSE_BUTTON_5_UP };
+
+	for (unsigned short button_index = 0; button_index < sizeof(down_flags) / sizeof(unsigned short); ++button_index){
+
+		if (mouse_status.usButtonFlags & down_flags[button_index]){
+
+			down_buttons_.insert(button_index);
+
+			pressed_buttons_.insert(button_index);
+
+		}
+		
+		if (mouse_status.usButtonFlags & up_flags[button_index]){
+
+			down_buttons_.erase(button_index);
+
+			released_buttons_.insert(button_index);
+
+		}
+		
+	}
+
+	// Wheel
+
+	if (mouse_status.usButtonFlags & RI_MOUSE_WHEEL){
 
 
+		wheel_delta_ += reinterpret_cast<const short&>(mouse_status.usButtonData);
+
+	}
+
+	// Cursor movement
+
+	if (!(mouse_status.usFlags & MOUSE_MOVE_ABSOLUTE)){
+
+		movement_ += Vector2f(static_cast<float>(mouse_status.lLastX),
+							  static_cast<float>(mouse_status.lLastY));
+
+	}
+
+	// Cursor position
+
+	POINT position;
+
+	if (GetCursorPos(&position)){
+
+		position_ = Vector2f(static_cast<float>(position.x),
+							 static_cast<float>(position.y));
+
+	}
 
 }
 
@@ -133,6 +183,11 @@ void Mouse::Flush(){
 	released_buttons_.clear();
 	pressed_buttons_.clear();
 
+	// Zero-out every delta
+
+	wheel_delta_ = 0.0f;
+	movement_ = Vector2f::Zero();
+	
 }
 
 /////////////////////////// KEYBOARD //////////////////////////////
