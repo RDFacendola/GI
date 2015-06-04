@@ -461,11 +461,13 @@ LRESULT Window::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARA
 
 	}
 
-	return DefWindowProc(handle_, 
-						 message_id, 
-						 wparameter, 
-						 lparameter);
+	// TODO: Refactor this to accept many receivers
+	LRESULT result;
 
+	return input_.ReceiveMessage(message_id, wparameter, lparameter, result) ?
+		   result :
+		   DefWindowProc(handle_, message_id, wparameter, lparameter);
+	
 }
 
 #endif

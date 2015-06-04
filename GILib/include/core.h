@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "observable.h"
+#include "input.h"
 
 using ::std::wstring;
 using ::std::vector;
@@ -197,8 +198,6 @@ namespace gi_lib{
 	/// \author Raffaele D. Facendola
 	class Window{
 
-		friend class Application;
-
 	public:
 
 		struct OnClosedEventArgs{
@@ -245,6 +244,10 @@ namespace gi_lib{
 
 		/// \brief Destroy this window.
 		virtual void Destroy() = 0;
+
+		/// \brief Get the input interface for this window.
+		/// \return Returns the input interface.
+		virtual const IInput& GetInput() const = 0;
 
 		/// \brief Event fired when the window has been closed.
 		/// \return Returns an observable event which notifies when the window is closed.

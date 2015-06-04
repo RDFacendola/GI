@@ -10,6 +10,7 @@
 #include <Windows.h>
 
 #include "..\core.h"
+#include "win_input.h"
 
 namespace gi_lib{
 
@@ -81,6 +82,8 @@ namespace gi_lib{
 			
 			virtual void Destroy() override;
 
+			virtual const Input& GetInput() const override;
+
 			/// \brief Get the window's handle.
 			/// \return Returns a constant reference to the window's handle.
 			HWND GetHandle() const;
@@ -88,12 +91,14 @@ namespace gi_lib{
 			/// \brief Update the window
 			void Update(const Time& time);
 
-			/// \brief Send a Windows message.
-			LRESULT Window::ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
+			/// \brief Windows message handler.
+			LRESULT ReceiveMessage(unsigned int message_id, WPARAM wparameter, LPARAM lparameter);
 
 		private:
 
 			HWND handle_;				///< \brief The window handle.
+
+			Input input_;				///< \brief Input manager.
 
 		};
 
@@ -163,6 +168,12 @@ namespace gi_lib{
 
 		///////////////////////////////////////// WINDOW //////////////////////////////////////////
 
+		inline const Input& Window::GetInput() const{
+
+			return input_;
+
+		}
+
 		inline HWND Window::GetHandle() const{
 
 			return handle_;
@@ -172,6 +183,9 @@ namespace gi_lib{
 		inline void Window::Update(const Time& time){
 
 			logic_->Update(time);
+
+			// Flush any pending state.
+			input_.Flush();
 
 		}
 
