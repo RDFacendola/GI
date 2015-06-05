@@ -11,6 +11,8 @@
 #include <memory>
 #include <numeric>
 
+#include "dx11.h"
+
 #include "..\..\include\graphics.h"
 #include "..\..\include\resources.h"
 #include "..\..\include\gilib.h"
@@ -319,6 +321,44 @@ namespace gi_lib{
 			
 		};
 
+		/// \brief Represents a DirectX11 sampler state.
+		/// \author Raffaele D. Facendola.
+		class DX11Sampler : public IResource{
+
+		public:
+
+			/// \brief Structure used to create a sampler state from a plain description.
+			struct FromDescription{
+
+				USE_CACHE;
+								
+				/// \brief Texture mapping.
+				TextureMapping texture_mapping;
+				
+				/// \brief Anisotropy level.
+				unsigned int anisotropy_level;
+				
+				/// \brief Get the cache key associated to the structure.
+				/// \return Returns the cache key associated to the structure.
+				size_t GetCacheKey() const;
+
+			};
+
+			/// \brief Create a sampler state from a plain description.
+			DX11Sampler(const FromDescription& description);
+
+			virtual size_t GetSize() const override;
+
+			/// \brief Get the sampler state.
+			/// \return Returns the sampler state.
+			ID3D11SamplerState& GetSamplerState() const;
+
+		private:
+
+			unique_ptr<ID3D11SamplerState, COMDeleter> sampler_state_;
+
+		};
+
 		/// \brief DirectX11 resource mapping template.
 		template<typename TResource> struct ResourceMapping;
 
@@ -487,6 +527,21 @@ namespace gi_lib{
 
 		}
 
+		/////////////////////////////// DX11 SAMPLER ///////////////////////////////
+
+		inline ID3D11SamplerState& DX11Sampler::GetSamplerState() const{
+
+			return *sampler_state_;
+
+		}
+
+		inline size_t DX11Sampler::GetSize() const
+		{
+			
+			return 0;
+
+		}
+		
 	}
 
 }
