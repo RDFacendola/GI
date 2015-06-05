@@ -80,9 +80,6 @@ void GILogic::Initialize(Window& window){
 	camera->SetMaximumDistance(10000.0f);
 	camera->SetFieldOfView(Math::DegToRad(90.0f));
 
-	camera_transform->SetRotation(Quaternionf(AngleAxisf(Math::DegToRad(90.0f),
-														 Vector3f(0.0f, 1.0f, 0.0f))));
-
 	scene_.SetMainCamera(camera);
 
 	// Scene import
