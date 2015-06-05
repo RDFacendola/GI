@@ -41,9 +41,20 @@ namespace gi_lib{
 			/// \param world_view_proj The value of the world-view-projection matrix.
 			void SetWorldViewProjection(const Matrix4f& world_view_proj);
 
+			/// \brief Set the world-view matrix.
+			/// \param world_view The value of the world-view matrix.
+			void SetWorldView(const Matrix4f& world_view);
+
 			/// \brief Set the world matrix.
 			/// \param world The value of the world matrix.
 			void SetWorld(const Matrix4f& world);
+
+			/// \brief Set the view matrix.
+			/// \param world The value of the view matrix.
+			void SetView(const Matrix4f& view);
+
+			
+			void SetLightView(const Vector4f& view_position);
 
 			/// \brief Commit all the constant buffers and bind the material to the pipeline.
 			void Commit(ID3D11DeviceContext& context);
@@ -59,7 +70,13 @@ namespace gi_lib{
 
 			ObjectPtr<Material::MaterialVariable> world_view_proj_;		///< \brief Projection * View * World matrix product.
 
+			ObjectPtr<Material::MaterialVariable> world_view_;			///< \brief World * View matrix product.
+
 			ObjectPtr<Material::MaterialVariable> world_;				///< \brief World matrix.
+
+			ObjectPtr<Material::MaterialVariable> view_;				///< \brief View matrix.
+
+			ObjectPtr<Material::MaterialVariable> light_view_;			///< \brief Light in view space.
 
 		};
 
@@ -113,13 +130,51 @@ namespace gi_lib{
 
 		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetWorldViewProjection(const Matrix4f& world_view_proj){
 
-			world_view_proj_->Set(world_view_proj);
+			if (world_view_proj_){
+
+				world_view_proj_->Set(world_view_proj);
+
+			}
 
 		}
 
+		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetWorldView(const Matrix4f& world_view){
+
+			if (world_view_){
+
+				world_view_->Set(world_view);
+
+			}
+			
+		}
+		
 		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetWorld(const Matrix4f& world){
 
-			world_->Set(world);
+			if (world_){
+
+				world_->Set(world);
+
+			}
+			
+		}
+
+		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetView(const Matrix4f& view){
+
+			if (view_){
+
+				view_->Set(view);
+
+			}
+
+		}
+	
+		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetLightView(const Vector4f& light_view){
+
+			if (light_view_){
+
+				light_view_->Set(light_view);
+
+			}
 
 		}
 
@@ -135,9 +190,7 @@ namespace gi_lib{
 			return material_->GetSize();
 
 		}
-
-
-
+		
 	}
 
 }

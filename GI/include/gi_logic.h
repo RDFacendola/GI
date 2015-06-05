@@ -42,6 +42,8 @@ namespace gi{
 
 		Scene scene_;
 
+		const IInput* input_;
+
 	};
 
 }

@@ -84,6 +84,7 @@
     <ClInclude Include="include\renderers\deferred_renderer.h" />
     <ClInclude Include="src\dx11\renderers\dx11deferred_renderer.h" />
     <ClInclude Include="src\dx11\renderers\dx11renderer.h" />
+    <ClInclude Include="include\components\fly_camera_component.h" />
     <ClInclude Include="include\input.h" />
     <ClInclude Include="include\windows\win_input.h" />
     <ClInclude Include="include\windows\win_os.h">

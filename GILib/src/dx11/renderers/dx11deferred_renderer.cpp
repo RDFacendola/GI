@@ -42,14 +42,10 @@ material_(new DX11Material(Material::Instantiate{ args.base->GetMaterial() })){
 void DX11DeferredRendererMaterial::Setup(){
 
 	world_view_proj_ = material_->GetVariable("gWorldViewProj");
+	world_view_ = material_->GetVariable("gWorldView");
 	world_ = material_->GetVariable("gWorld");
 
-	if (!world_view_proj_ ||
-		!world_){
-
-		THROW(L"The shader is not compatible with a DX11DeferredRendererMaterial");
-
-	}
+	light_view_ = material_->GetVariable("gLightView");
 
 }
 
@@ -216,21 +212,25 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 
 		render_target->Bind(*immediate_context_);
 
-		auto& camera_transform = *camera.GetComponent<TransformComponent>();
-
 		Matrix4f world_matrix;
 		Matrix4f view_matrix;
 		Matrix4f projection_matrix;
 
+		Matrix4f world_view_matrix;
+
 		ObjectPtr<DX11Mesh> mesh;
 		ObjectPtr<DX11DeferredRendererMaterial> material;
 
-		view_matrix = camera_transform.GetWorldTransform().matrix().inverse();
+		view_matrix = camera.GetViewTransform().matrix();
 
 		projection_matrix = ComputePerspectiveProjectionLH(camera.GetFieldOfView(),
 														   render_target->GetAspectRatio(),
 														   camera.GetMinimumDistance(),
 														   camera.GetMaximumDistance());
+
+		Vector4f light_position(700.0f, 30.0f, 0.0f, 1.0f);
+
+		Vector4f light_view_position;
 
 		// Draw GBuffer
 		for (auto&& node : nodes){
@@ -254,10 +254,20 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 
 					world_matrix = drawable.GetComponent<TransformComponent>()->GetWorldTransform().matrix();
 					
-					material->SetWorldViewProjection(projection_matrix * view_matrix * world_matrix);
+					world_view_matrix = view_matrix * world_matrix;
+
+					light_view_position =  view_matrix * light_position;
+
+					material->SetWorldViewProjection(projection_matrix * world_view_matrix);
+
+					material->SetWorldView(world_view_matrix);
 
 					material->SetWorld(world_matrix);
+
+					material->SetView(view_matrix);
 					
+					material->SetLightView(light_view_position);
+
 					// Bind the material
 
 					material->Commit(*immediate_context_);

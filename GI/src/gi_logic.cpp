@@ -39,7 +39,8 @@ GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11)),
 scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
 									 kDomainSize * Vector3f::Ones() },
-								kDomainSubdivisions * Vector3i::Ones()))
+								kDomainSubdivisions * Vector3i::Ones())),
+input_(nullptr)
 {}
 
 GILogic::~GILogic(){
@@ -103,20 +104,78 @@ void GILogic::Initialize(Window& window){
 	fbx_importer.ImportScene(to_string(app.GetDirectory()) + "Data\\oldsponza.fbx",
 							 *node);
 
+	// Input
+
+	input_ = &window.GetInput();
+
 }
 
 void GILogic::Update(const Time & time){
 
-	auto rotation = camera_transform->GetRotation();
+	// Strafing
 
-	rotation *= Quaternionf(Eigen::AngleAxisf(time.GetDeltaSeconds()* 0.2f,
-											  Vector3f(0.0f, 1.0f, 0.0f)));
+	auto& kb = input_->GetKeyboardStatus();
 
-	auto angle = std::sinf(time.GetTotalSeconds() * 0.15f);
+	Vector3f direction = Vector3f::Zero();
 
-	camera_transform->SetTranslation(Translation3f(angle * 1500.0f, 300.0f, 0.0f));
+	if (kb.IsDown(17)){
 
-	camera_transform->SetRotation(rotation);
+		// Up
+		direction += camera_transform->GetForward();
+
+	}
+	
+	if (kb.IsDown(31)){
+
+		// Down
+		direction -= camera_transform->GetForward();
+
+	}
+
+	if (kb.IsDown(32)){
+
+		// Right
+		direction += camera_transform->GetRight();
+
+	}
+
+	if (kb.IsDown(30)){
+
+		// Left
+		direction -= camera_transform->GetRight();
+
+
+	}
+
+	if (direction.squaredNorm() > 0){
+
+		direction.normalize();
+
+		Vector3f translation = camera_transform->GetTranslation().vector();
+		
+		translation += direction * time.GetDeltaSeconds() * 500.0f;
+		
+		camera_transform->SetTranslation(Translation3f(translation));
+
+	}
+
+	// Rotation
+
+	auto& mb = input_->GetMouseStatus();
+
+	if (mb.IsDown(0)){
+
+		auto movement = mb.GetMovement() * time.GetDeltaSeconds();
+
+		auto hrotation = Quaternionf(AngleAxisf(movement(0) * 6.28f, camera_transform->GetUp()));
+
+		auto vrotation = Quaternionf(AngleAxisf(movement(1) * -1.0f, camera_transform->GetRight()));
+
+		auto rotation = camera_transform->GetRotation();
+
+		camera_transform->SetRotation(rotation * hrotation * vrotation);
+
+	}
 
 	deferred_renderer_->Draw(*output_);
 

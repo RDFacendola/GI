@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\fnv1.h" />
+    <ClInclude Include="include\components\fly_camera_component.h" />
     <ClInclude Include="include\gilib.h" />
     <ClInclude Include="include\input.h" />
     <ClInclude Include="include\renderers\deferred_renderer.h" />
