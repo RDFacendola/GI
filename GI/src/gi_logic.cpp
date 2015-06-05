@@ -28,7 +28,7 @@ using namespace ::Eigen;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
 /// \brief Size of the domain (for each edge).
-const float kDomainSize = 2000.0f;
+const float kDomainSize = 4000.0f;
 
 /// \brief Number of times the domain is split along each axis.
 const unsigned int kDomainSubdivisions = 1;
@@ -80,10 +80,10 @@ void GILogic::Initialize(Window& window){
 	camera->SetMaximumDistance(10000.0f);
 	camera->SetFieldOfView(Math::DegToRad(90.0f));
 
-	scene_.SetMainCamera(camera);
-
 	camera_transform->SetRotation(Quaternionf(AngleAxisf(Math::DegToRad(90.0f),
 														 Vector3f(0.0f, 1.0f, 0.0f))));
+
+	scene_.SetMainCamera(camera);
 
 	// Scene import
 
@@ -167,14 +167,18 @@ void GILogic::Update(const Time & time){
 
 		auto movement = mb.GetMovement() * time.GetDeltaSeconds();
 
-		auto hrotation = Quaternionf(AngleAxisf(movement(0) * 6.28f, camera_transform->GetUp()));
+		auto up = Vector3f(0.0f, 1.0f, 0.0f); /* camera_transform->GetUp();*/
 
-		auto vrotation = Quaternionf(AngleAxisf(movement(1) * -1.0f, camera_transform->GetRight()));
+		auto hrotation = Quaternionf(AngleAxisf(movement(0) * 3.14159f, up));
+				
+		camera_transform->SetRotation(hrotation * camera_transform->GetRotation());
+		
+		auto right = camera_transform->GetRight();
 
-		auto rotation = camera_transform->GetRotation();
+		auto vrotation = Quaternionf(AngleAxisf(movement(1), right));
 
-		camera_transform->SetRotation(rotation * hrotation * vrotation);
-
+		camera_transform->SetRotation(vrotation * camera_transform->GetRotation());
+		
 	}
 
 	deferred_renderer_->Draw(*output_);
