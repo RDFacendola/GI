@@ -95,7 +95,7 @@ namespace{
 
 		vector<ID3D11ShaderResourceView*> resources;		/// \brief Resource binding.
 
-		unsigned int sampler_count;							/// \brief Number of sampler needed by the shader. The actual sampler is defined by the renderer.
+		vector<ID3D11SamplerState*> samplers;				/// \brief Sampler binding.
 
 		/// \brief Default constructor;
 		ShaderBundle();
@@ -167,14 +167,13 @@ namespace{
 
 	/////////////////////////// SHADER BUNDLE ///////////////////////////
 
-	ShaderBundle::ShaderBundle() :
-	sampler_count(0){}
+	ShaderBundle::ShaderBundle(){}
 
 	ShaderBundle::ShaderBundle(ShaderBundle&& other){
 
 		buffers = std::move(other.buffers);
 		resources = std::move(other.resources);
-		sampler_count = other.sampler_count;
+		samplers = std::move(other.samplers);
 
 	}
 
@@ -462,12 +461,10 @@ namespace{
 
 		// Samplers
 
-		static ID3D11SamplerState* samplers[] = { nullptr, nullptr, nullptr };
-
 		SetShaderSamplers<TShader>(context,
 								   0,
-								   bundle.sampler_count > 0 ? samplers : nullptr,
-								   bundle.sampler_count);
+								   bundle.samplers.size() > 0 ? &bundle.samplers[0] : nullptr,
+								   bundle.samplers.size());
 
 	}
 		
@@ -866,6 +863,8 @@ private:
 
 	vector<ObjectPtr<DX11ResourceView>> resources_;						///< \brief Status of bound resources.
 
+	ObjectPtr<DX11Sampler> sampler_;									///< \brief Sampler.
+
 	ShaderType resource_dirty_mask_;									///< \brief Dirty mask used to determine which bundle needs to be updated resource-wise.
 
 	const ShaderReflection& reflection_;
@@ -910,6 +909,12 @@ reflection_(reflection){
 
 	resources_.resize(reflection.resources.size());
 
+	// Sampler state (the same)
+
+	Resources& resources = DX11Graphics::GetInstance().GetResources();
+
+	sampler_ = resources.Load<DX11Sampler, DX11Sampler::FromDescription>({ TextureMapping::WRAP, 16 });
+	
 	// Shader bundles
 
 	AddShaderBundle(ShaderType::VERTEX_SHADER);
@@ -925,6 +930,7 @@ reflection_(reflection){
 DX11Material::InstanceImpl::InstanceImpl(const InstanceImpl& impl) :
 buffer_status_(impl.buffer_status_),				// Copy ctor will copy the buffer status
 resources_(impl.resources_),						// Same resources bound
+sampler_(impl.sampler_),
 resource_dirty_mask_(impl.reflection_.shaders),		// Used to lazily update the resources' shader views
 reflection_(impl.reflection_){
 
@@ -988,14 +994,17 @@ void DX11Material::InstanceImpl::AddShaderBundle(ShaderType shader_type){
 
 											  }));
 
-		// Sampler count, never changes
-		bundle.sampler_count = static_cast<unsigned int>(std::count_if(reflection_.samplers.begin(),
-																	   reflection_.samplers.end(),
-																	   [shader_type](const ShaderSamplerDesc& sampler_desc){
+		// Sampler never change (unless the game options change at runtime)
 
-																			return sampler_desc.shader_usage && shader_type;
+		for (auto&& sampler : reflection_.samplers){
 
-																	   }));
+			if (sampler.shader_usage && shader_type){
+
+				bundle.samplers.push_back(&(sampler_->GetSamplerState()));
+
+			}
+
+		}
 
 		// Move it to the vector.
 
