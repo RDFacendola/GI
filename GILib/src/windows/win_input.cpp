@@ -158,19 +158,19 @@ void Mouse::UpdateStatus(const RAWMOUSE& mouse_status){
 
 	if (!(mouse_status.usFlags & MOUSE_MOVE_ABSOLUTE)){
 
-		movement_ += Vector2f(static_cast<float>(mouse_status.lLastX),
-							  static_cast<float>(mouse_status.lLastY));
+		movement_ += Vector2i(mouse_status.lLastX,
+							  mouse_status.lLastY);
 
 	}
-
+	
 	// Cursor position
 
 	POINT position;
 
 	if (GetCursorPos(&position)){
 
-		position_ = Vector2f(static_cast<float>(position.x),
-							 static_cast<float>(position.y));
+		position_ = Vector2i(position.x,
+							 position.y);
 
 	}
 
@@ -186,7 +186,7 @@ void Mouse::Flush(){
 	// Zero-out every delta
 
 	wheel_delta_ = 0.0f;
-	movement_ = Vector2f::Zero();
+	movement_ = Vector2i::Zero();
 	
 }
 

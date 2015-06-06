@@ -18,6 +18,8 @@
 
 #include "..\include\material_importer.h"
 
+#include <Windows.h>
+
 using namespace ::std;
 using namespace ::gi;
 using namespace ::gi_lib;
@@ -34,6 +36,8 @@ const float kDomainSize = 4000.0f;
 const unsigned int kDomainSubdivisions = 1;
 
 TransformComponent* camera_transform;
+
+Window* g_window;
 
 GILogic::GILogic() :
 graphics_(Graphics::GetAPI(API::DIRECTX_11)),
@@ -52,6 +56,7 @@ GILogic::~GILogic(){
 void GILogic::Initialize(Window& window){
 
 	// Graphics setup
+	g_window = &window;
 
 	window.SetTitle(kWindowTitle);
 
@@ -119,7 +124,7 @@ void GILogic::Update(const Time & time){
 
 		// Up
 		direction += camera_transform->GetForward();
-
+		
 	}
 	
 	if (kb.IsDown(31)){
@@ -133,15 +138,14 @@ void GILogic::Update(const Time & time){
 
 		// Right
 		direction += camera_transform->GetRight();
-
+		
 	}
 
 	if (kb.IsDown(30)){
 
 		// Left
 		direction -= camera_transform->GetRight();
-
-
+		
 	}
 
 	if (direction.squaredNorm() > 0){
@@ -162,20 +166,31 @@ void GILogic::Update(const Time & time){
 
 	if (mb.IsDown(0)){
 
-		auto movement = mb.GetMovement() * time.GetDeltaSeconds();
+		auto movement = mb.GetMovement();
 
-		auto up = Vector3f(0.0f, 1.0f, 0.0f); /* camera_transform->GetUp();*/
+		auto speed = Vector2f(movement(0) * time.GetDeltaSeconds(),
+							  movement(1) * time.GetDeltaSeconds());
 
-		auto hrotation = Quaternionf(AngleAxisf(movement(0) * 3.14159f, up));
+		auto up = Vector3f(0.0f, 1.0f, 0.0f);
+
+		auto hrotation = Quaternionf(AngleAxisf(speed(0) * 3.14159f, up));
 				
 		camera_transform->SetRotation(hrotation * camera_transform->GetRotation());
 		
 		auto right = camera_transform->GetRight();
 
-		auto vrotation = Quaternionf(AngleAxisf(movement(1), right));
+		auto vrotation = Quaternionf(AngleAxisf(speed(1), right));
 
 		camera_transform->SetRotation(vrotation * camera_transform->GetRotation());
 		
+		char buff[256];
+
+		auto mbv = mb.GetMovement();
+
+		sprintf_s(buff, "%d;%d", mbv(0), mbv(1));
+
+		g_window->SetTitle(to_wstring(buff));
+
 	}
 
 	deferred_renderer_->Draw(*output_);

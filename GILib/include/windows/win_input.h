@@ -34,9 +34,9 @@ namespace gi_lib{
 
 			virtual float GetWheelDelta() const override;
 
-			virtual Vector2f GetPosition() const override;
+			virtual Vector2i GetPosition() const override;
 
-			virtual Vector2f GetMovement() const override;
+			virtual Vector2i GetMovement() const override;
 			
 			/// \brief Flush the state of the mouse, discarding any temporary state.
 			/// The flush is necessary because there could be more than one update of the state per application frame.
@@ -55,9 +55,9 @@ namespace gi_lib{
 
 			float wheel_delta_;										///< \brief Wheel delta since last frame.
 
-			Vector2f position_;										///< \brief Absolute position of the mouse.
+			Vector2i position_;										///< \brief Absolute position of the mouse.
 
-			Vector2f movement_;										///< \brief Movement of the cursor relative to the last frame.
+			Vector2i movement_;										///< \brief Movement of the cursor relative to the last frame.
 
 		};
 
@@ -169,13 +169,13 @@ namespace gi_lib{
 
 		}
 
-		inline Vector2f Mouse::GetPosition() const{
+		inline Vector2i Mouse::GetPosition() const{
 
 			return position_;
 
 		}
 
-		inline Vector2f Mouse::GetMovement() const{
+		inline Vector2i Mouse::GetMovement() const{
 
 			return movement_;
 

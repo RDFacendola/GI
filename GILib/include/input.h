@@ -57,11 +57,11 @@ namespace gi_lib{
 
 		/// \brief Get the mouse coordinates.
 		/// \return Returns the mouse coordinates.
-		virtual Vector2f GetPosition() const = 0;
+		virtual Vector2i GetPosition() const = 0;
 
 		/// \brief Get the mouse movement during the last frame.
 		/// \return Returns the mouse movement during the last frame.
-		virtual Vector2f GetMovement() const = 0;
+		virtual Vector2i GetMovement() const = 0;
 		
 	};
 
