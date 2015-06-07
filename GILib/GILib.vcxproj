@@ -54,6 +54,7 @@
     <ClInclude Include="include\macros.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\components\fly_camera_component.cpp" />
     <ClCompile Include="src\dx11\dx11.cpp" />
     <ClCompile Include="src\dx11\dx11resources.cpp" />
     <ClCompile Include="src\dx11\renderers\dx11deferred_renderer.cpp" />

@@ -134,5 +134,6 @@
       <Filter>os</Filter>
     </ClCompile>
     <ClCompile Include="src\windows\win_core.cpp" />
+    <ClCompile Include="src\components\fly_camera_component.cpp" />
   </ItemGroup>
 </Project>

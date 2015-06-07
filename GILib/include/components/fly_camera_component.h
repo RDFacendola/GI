@@ -6,6 +6,9 @@
 
 #include "..\component.h"
 
+#include "..\timer.h"
+#include "..\input.h"
+
 namespace gi_lib{
 
 	class TransformComponent;
@@ -16,28 +19,17 @@ namespace gi_lib{
 
 	public:
 
+		FlyCameraComponent(const IInput& input);
+
 		/// \brief No copy constructor.
 		FlyCameraComponent(const FlyCameraComponent&) = delete;
 
 		/// \brief Destructor.
 		virtual ~FlyCameraComponent();
 
-		/// \brief Get the scene this node is associated to.
-		/// \return Returns the scene this node is associated to.
-		Scene& GetScene();
-
-		/// \brief Get the scene this node is associated to.
-		/// \return Returns the scene this node is associated to.
-		const Scene& GetScene() const;
-
-		/// \brief Get the node name.
-		/// The name may not be univocal.
-		/// \return Returns the node name.
-		const wstring& GetName() const;
-
-		/// \brief Get the node unique identifier.
-		/// \return Returns the node unique identifier.
-		const Unique<NodeComponent> GetUid() const;
+		/// \brief Update the component.
+		/// \param time Application time.
+		void Update(const Time& time);
 
 		virtual TypeSet GetTypes() const override;
 
@@ -49,7 +41,9 @@ namespace gi_lib{
 
 	private:
 
-		TransformComponent* transform_;
+		const IInput& input_;						///< \brief Input reader.
+
+		TransformComponent* camera_transform_;		///< \brief Transform component associated to the camera.
 
 	};
 

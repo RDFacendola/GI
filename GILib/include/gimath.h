@@ -36,6 +36,10 @@ using ::Eigen::Affine3f;
 using ::Eigen::Matrix4f;
 using ::Eigen::Matrix3f;
 
+using ::Eigen::AngleAxisf;
+using ::Eigen::Translation3f;
+using ::Eigen::AlignedScaling3f;
+
 using ::std::vector;
 
 namespace gi_lib{

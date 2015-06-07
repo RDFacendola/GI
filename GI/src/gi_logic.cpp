@@ -17,6 +17,7 @@
 #include <typeinfo>
 
 #include "..\include\material_importer.h"
+#include "..\include\components\fly_camera_component.h"
 
 #include <Windows.h>
 
@@ -35,7 +36,7 @@ const float kDomainSize = 4000.0f;
 /// \brief Number of times the domain is split along each axis.
 const unsigned int kDomainSubdivisions = 1;
 
-TransformComponent* camera_transform;
+FlyCameraComponent* fly_camera;
 
 Window* g_window;
 
@@ -73,10 +74,10 @@ void GILogic::Initialize(Window& window){
 
 	// Camera setup
 
-	camera_transform = scene_.CreateNode(L"MainCamera",
-										 Translation3f(Vector3f(0.0f, 300.0f, 0.0f)),
-										 Quaternionf::Identity(),
-										 AlignedScaling3f(Vector3f::Ones()));
+	auto camera_transform = scene_.CreateNode(L"MainCamera",
+											  Translation3f(Vector3f(0.0f, 300.0f, 0.0f)),
+											  Quaternionf::Identity(),
+											  AlignedScaling3f(Vector3f::Ones()));
 
 	auto camera = camera_transform->AddComponent<CameraComponent>();
 
@@ -86,6 +87,10 @@ void GILogic::Initialize(Window& window){
 	camera->SetFieldOfView(Math::DegToRad(90.0f));
 
 	scene_.SetMainCamera(camera);
+
+	input_ = &window.GetInput();
+
+	fly_camera = camera->AddComponent<FlyCameraComponent>(*input_);
 
 	// Scene import
 
@@ -106,93 +111,12 @@ void GILogic::Initialize(Window& window){
 	fbx_importer.ImportScene(to_string(app.GetDirectory()) + "Data\\oldsponza.fbx",
 							 *node);
 
-	// Input
-
-	input_ = &window.GetInput();
-
 }
 
 void GILogic::Update(const Time & time){
 
-	// Strafing
-
-	auto& kb = input_->GetKeyboardStatus();
-
-	Vector3f direction = Vector3f::Zero();
-
-	if (kb.IsDown(17)){
-
-		// Up
-		direction += camera_transform->GetForward();
-		
-	}
+	fly_camera->Update(time);
 	
-	if (kb.IsDown(31)){
-
-		// Down
-		direction -= camera_transform->GetForward();
-
-	}
-
-	if (kb.IsDown(32)){
-
-		// Right
-		direction += camera_transform->GetRight();
-		
-	}
-
-	if (kb.IsDown(30)){
-
-		// Left
-		direction -= camera_transform->GetRight();
-		
-	}
-
-	if (direction.squaredNorm() > 0){
-
-		direction.normalize();
-
-		Vector3f translation = camera_transform->GetTranslation().vector();
-		
-		translation += direction * time.GetDeltaSeconds() * 500.0f;
-		
-		camera_transform->SetTranslation(Translation3f(translation));
-
-	}
-
-	// Rotation
-
-	auto& mb = input_->GetMouseStatus();
-
-	if (mb.IsDown(0)){
-
-		auto movement = mb.GetMovement();
-
-		auto speed = Vector2f(movement(0) * time.GetDeltaSeconds(),
-							  movement(1) * time.GetDeltaSeconds());
-
-		auto up = Vector3f(0.0f, 1.0f, 0.0f);
-
-		auto hrotation = Quaternionf(AngleAxisf(speed(0) * 3.14159f, up));
-				
-		camera_transform->SetRotation(hrotation * camera_transform->GetRotation());
-		
-		auto right = camera_transform->GetRight();
-
-		auto vrotation = Quaternionf(AngleAxisf(speed(1), right));
-
-		camera_transform->SetRotation(vrotation * camera_transform->GetRotation());
-		
-		char buff[256];
-
-		auto mbv = mb.GetMovement();
-
-		sprintf_s(buff, "%d;%d", mbv(0), mbv(1));
-
-		g_window->SetTitle(to_wstring(buff));
-
-	}
-
 	deferred_renderer_->Draw(*output_);
 
 }
