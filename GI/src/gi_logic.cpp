@@ -34,7 +34,7 @@ const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 const float kDomainSize = 4000.0f;
 
 /// \brief Number of times the domain is split along each axis.
-const unsigned int kDomainSubdivisions = 1;
+const unsigned int kDomainSubdivisions = 0;
 
 FlyCameraComponent* fly_camera;
 

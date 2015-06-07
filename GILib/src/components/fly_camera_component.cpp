@@ -71,7 +71,7 @@ void FlyCameraComponent::Update(const Time& time){
 
 	}
 
-	// Rotation
+	// Camera rotation
 
 	auto& mb = input_.GetMouseStatus();
 
@@ -84,15 +84,13 @@ void FlyCameraComponent::Update(const Time& time){
 
 		auto up = Vector3f(0.0f, 1.0f, 0.0f);
 
-		auto hrotation = Quaternionf(AngleAxisf(speed(0) * 3.14159f, up));
-
-		camera_transform_->SetRotation(hrotation * camera_transform_->GetRotation());
-
 		auto right = camera_transform_->GetRight();
 
 		auto vrotation = Quaternionf(AngleAxisf(speed(1), right));
 
-		camera_transform_->SetRotation(vrotation * camera_transform_->GetRotation());
+		auto hrotation = Quaternionf(AngleAxisf(speed(0) * 3.14159f, up));
+
+		camera_transform_->SetRotation(hrotation * vrotation * camera_transform_->GetRotation());
 
 	}
 
