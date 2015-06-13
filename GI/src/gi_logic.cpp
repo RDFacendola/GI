@@ -18,6 +18,7 @@
 
 #include "..\include\material_importer.h"
 #include "..\include\components\fly_camera_component.h"
+#include "..\include\components\light_component.h"
 
 #include <Windows.h>
 
@@ -75,9 +76,9 @@ void GILogic::Initialize(Window& window){
 	// Camera setup
 
 	auto camera_transform = scene_.CreateNode(L"MainCamera",
-											  Translation3f(Vector3f(0.0f, 300.0f, 0.0f)),
+											  Translation3f(0.0f, 300.0f, 0.0f),
 											  Quaternionf::Identity(),
-											  AlignedScaling3f(Vector3f::Ones()));
+											  AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
 	auto camera = camera_transform->AddComponent<CameraComponent>();
 
@@ -94,7 +95,7 @@ void GILogic::Initialize(Window& window){
 
 	// Scene import
 
-	auto node = scene_.CreateNode(L"root", 
+	auto root = scene_.CreateNode(L"root", 
 								  Translation3f(Vector3f(0.0f, 0.0f, 0.0f)),
 								  Quaternionf::Identity(), 
 								  AlignedScaling3f(Vector3f::Ones() * 3.0f));
@@ -109,7 +110,19 @@ void GILogic::Initialize(Window& window){
 	auto& app = Application::GetInstance();
 
 	fbx_importer.ImportScene(to_string(app.GetDirectory()) + "Data\\oldsponza.fbx",
-							 *node);
+							 *root);
+
+	
+	// Lights setup
+
+	auto light_transform = scene_.CreateNode(L"Light",
+											 Translation3f(0.0f, 200.0f, 10.0f),
+											 Quaternionf::Identity(),
+											 AlignedScaling3f(1.0f, 1.0f, 1.0f));
+
+	auto point_light = light_transform->AddComponent<PointLightComponent>();
+
+	light_transform->SetParent(root);
 
 }
 

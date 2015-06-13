@@ -91,6 +91,7 @@
       <Filter>os</Filter>
     </ClInclude>
     <ClInclude Include="include\windows\win_core.h" />
+    <ClInclude Include="include\components\light_component.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\timer.cpp">
@@ -135,5 +136,6 @@
     </ClCompile>
     <ClCompile Include="src\windows\win_core.cpp" />
     <ClCompile Include="src\components\fly_camera_component.cpp" />
+    <ClCompile Include="src\components\light_component.cpp" />
   </ItemGroup>
 </Project>
