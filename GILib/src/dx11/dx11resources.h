@@ -1,5 +1,5 @@
 /// \file dx11resources.h
-/// \brief Classes and methods for DirectX11 texture management.
+/// \brief Classes and methods for DirectX11 resource management.
 ///
 /// \author Raffaele D. Facendola
 
@@ -108,9 +108,9 @@ namespace gi_lib{
 
 			void UpdateDescription();
 					
-			unique_ptr<ID3D11Texture2D, COMDeleter> texture_;
+			unique_ptr<ID3D11Texture2D, COMDeleter> texture_;					///< \brief Pointer to the actual texture.
 
-			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;
+			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;		///< \brief Pointer to the shader resource view of the texture.
 
 			unsigned int width_;
 
@@ -359,6 +359,93 @@ namespace gi_lib{
 
 		};
 
+		/// \brief Represents a strongly typed array of elements under DirectX11.
+		/// The buffer can be used either as a shader resource or an unordered access view.
+		/// \tparam TElement Type of the elements inside the buffer.
+		/// \remarks You may not instantiate this class directly and should use any of its derived implementations.
+		/// \author Raffaele D. Facendola.
+		template <typename TElement>
+		class DX11StructuredBufferBase{
+
+		public:
+
+			/// \brief Create a new structured buffer.
+			DX11StructuredBufferBase(unsigned int element_count, bool shader_resource, bool unordered_access, bool dynamic);
+
+			/// \brief Get the elements inside the buffer.
+			/// \return Returns the elements inside the buffer.
+			unsigned int GetElementCount() const;
+
+			/// \brief Get the shader resource view of the buffer.
+			/// \return Returns a pointer to the shader resource view if any, returns nullptr otherwise.
+			ID3D11ShaderResourceView* GetShaderView() const;
+
+			/// \brief Get the unordered access view of the buffer.
+			/// \return Returns a pointer to the unordered access view if any, returns nullptr otherwise.
+			ID3D11UnorderedAccessView* GetUnorderedView() const;
+
+		protected:
+
+			/// \brief Default destructor.
+			virtual ~DX11StructuredBufferBase();
+
+			unsigned int element_count_;													///< \brief Number of elements inside the buffer.
+
+			unique_ptr<ID3D11Buffer, COMDeleter> buffer_;							///< \brief Pointer to the structured buffer.
+
+			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;			///< \brief Pointer to the shader resource view of the buffer, if any.
+
+			unique_ptr<ID3D11UnorderedAccessView, COMDeleter> unordered_view_;		///< \brief Pointer to the unordered access view of the buffer, if any.
+
+		};
+
+		/// \brief Represents a strongly typed array of elements under DirectX11.
+		/// The buffer can be used either as a shader resource or an unordered access view.
+		/// The buffer can only be accessed via GPU, either for read and\or write.
+		/// \tparam TElement Type of the elements inside the buffer.
+		/// \author Raffaele D. Facendola.
+		template <typename TElement>
+		class DX11StructuredBuffer : public DX11StructuredBufferBase<TElement>{
+
+		public:
+
+			/// \brief Create a new structured buffer.
+			DX11StructuredBuffer(unsigned int elements, bool shader_resource, bool unordered_access);
+
+			/// \brief Default destructor.
+			virtual ~DX11StructuredBuffer();
+
+		};
+
+		/// \brief Represents a strongly typed array of elements under DirectX11.
+		/// The buffer can be used either as a shader resource or an unordered access view.
+		/// The buffer be accessed via CPU and GPU, either for read and\or write.
+		/// \tparam TElement Type of the elements inside the buffer.
+		/// \author Raffaele D. Facendola.
+		template <typename TElement>
+		class DX11DynamicStructuredBuffer : public DX11StructuredBufferBase<TElement>{
+
+		public:
+
+			/// \brief Create a new dynamic structured buffer.
+			DX11DynamicStructuredBuffer(unsigned int elements, bool shader_resource, bool unordered_access);
+
+			/// \brief Default destructor.
+			virtual ~DX11DynamicStructuredBuffer();
+
+			/// \brief Maps the buffer to the system memory, granting CPU access.
+			/// \param context Context used to map the buffer.
+			/// \return Returns a pointer to the first element of the array.
+			/// \remarks Be sure to unlock the buffer afterwards: the context will hang trying to access a locked resource.
+			TElement* Lock(ID3D11DeviceContext& context);
+
+			/// \brief Commit a mapped buffer back to the video memory, revoking CPU access.
+			/// \param context Context used to unmap the buffer.
+			/// \remarks Unlocking the buffer will invalidate the system-memory pointer returned by the Lock method.
+			void Unlock(ID3D11DeviceContext& context);
+
+		};
+
 		/// \brief DirectX11 resource mapping template.
 		template<typename TResource> struct ResourceMapping;
 
@@ -542,6 +629,97 @@ namespace gi_lib{
 
 		}
 		
+		////////////////////////////// DX11 STRUCTURED BUFFER BASE //////////////////////////////////
+		
+		template <typename TElement>
+		DX11StructuredBufferBase<TElement>::DX11StructuredBufferBase(unsigned int element_count, bool shader_resource, bool unordered_access, bool dynamic) :
+			element_count_(element_count){
+
+			auto&& device = DX11Graphics::GetInstance().GetDevice();
+
+			ID3D11Buffer* buffer;
+			ID3D11ShaderResourceView* shader_view = nullptr;
+			ID3D11UnorderedAccessView* unordered_view = nullptr;
+
+			THROW_ON_FAIL(MakeStructuredBuffer<TElement>(device,
+														 element_count,
+														 dynamic,
+														 &buffer,
+														 shader_resource ? &shader_view : nullptr,
+														 unordered_access ? &unordered_view : nullptr));
+
+
+			buffer_.reset(buffer);
+			shader_view_.reset(shader_view);
+			unordered_view_.reset(unordered_view);
+			
+		}
+
+		template <typename TElement>
+		DX11StructuredBufferBase<TElement>::~DX11StructuredBufferBase(){}
+
+		template <typename TElement>
+		inline unsigned int DX11StructuredBufferBase<TElement>::GetElementCount() const{
+
+			return element_count_;
+
+		}
+
+		template <typename TElement>
+		inline ID3D11ShaderResourceView* DX11StructuredBufferBase<TElement>::GetShaderView() const{
+
+			return shader_view_.get();
+
+		}
+
+		template <typename TElement>
+		inline ID3D11UnorderedAccessView* DX11StructuredBufferBase<TElement>::GetUnorderedView() const{
+
+			return unordered_view_.get();
+
+		}
+
+		////////////////////////////// DX11 STRUCTURED BUFFER ////////////////////////////////////////
+
+		template <typename TElement>
+		DX11StructuredBuffer<TElement>::DX11StructuredBuffer(unsigned int elements, bool shader_resource, bool unordered_access) :
+			DX11StructuredBufferBase(elements, shader_resource, unordered_access, false){}
+
+		template <typename TElement>
+		DX11StructuredBuffer<TElement>::~DX11StructuredBuffer(){}
+
+		////////////////////////////// DX11 STRUCTURED BUFFER - DEFAULT ////////////////////////////
+
+		template <typename TElement>
+		DX11DynamicStructuredBuffer<TElement>::DX11DynamicStructuredBuffer(unsigned int elements, bool shader_resource, bool unordered_access) :
+			DX11StructuredBufferBase(elements, shader_resource, unordered_access, true){}
+
+		template <typename TElement>
+		DX11DynamicStructuredBuffer<TElement>::~DX11DynamicStructuredBuffer(){}
+
+		template <typename TElement>
+		TElement* DX11DynamicStructuredBuffer<TElement>::Lock(ID3D11DeviceContext& context){
+
+			D3D11_MAPPED_SUBRESOURCE subresource;
+
+			context.Map(buffer_.get(),
+						0,								// Map everything
+						D3D11_MAP_WRITE_DISCARD,		// Discard the previous content.
+						0, 
+						&subresource);
+
+			return static_cast<TElement*>(subresource.pData);
+
+		}
+
+		template <typename TElement>
+		void DX11DynamicStructuredBuffer<TElement>::Unlock(ID3D11DeviceContext& context){
+
+			context.Unmap(buffer_.get(),
+						  0);							// Unmap everything.
+
+		}
+
 	}
 
 }
