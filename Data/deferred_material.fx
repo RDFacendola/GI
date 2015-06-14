@@ -14,7 +14,15 @@ cbuffer Lights{
 
 }
 
+struct Light{
+
+	float4 position;
+
+};
+
 Texture2D ps_map;
+
+StructuredBuffer<Light> gLights;
 
 SamplerState tex_sampler;
 
@@ -64,7 +72,7 @@ PSOutput PSMain(VSOutput input){
 
 	// Diffuse
 
-	float3 surface_position = input.view_position.xyz;
+	float3 surface_position = mul(gWorldView, gLights[0].position).xyz; //input.view_position.xyz;
 
 	float3 light_direction = normalize(surface_position - gLightView.xyz);	// From the light to the surface
 

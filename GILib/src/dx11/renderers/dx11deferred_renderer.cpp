@@ -1,6 +1,7 @@
 #include "dx11deferred_renderer.h"
 
 #include "..\dx11.h"
+#include "..\dx11resources.h"
 #include "..\..\..\include\gimath.h"
 #include "..\..\..\include\windows\win_os.h"
 
@@ -46,6 +47,8 @@ void DX11DeferredRendererMaterial::Setup(){
 	world_ = material_->GetVariable("gWorld");
 
 	light_view_ = material_->GetVariable("gLightView");
+
+	light_array_ = material_->GetResource("gLights");
 
 }
 
@@ -228,6 +231,28 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 														   camera.GetMinimumDistance(),
 														   camera.GetMaximumDistance());
 
+		struct Light{
+
+			float position[4];
+
+		};
+
+		ObjectPtr<DX11StructuredVector> light_buffer(new DX11StructuredVector(StructuredVector::FromDescription{ 64, sizeof(Light) }));
+
+		Light* light_ptr = light_buffer->Map<Light>(*immediate_context_);
+		
+		for (size_t light_index = 0; light_index < light_buffer->GetElementCount(); ++light_index){
+
+			light_ptr->position[0] = light_index * 25.0f;
+			light_ptr->position[1] = 30.0f;
+			light_ptr->position[2] = 0.0f;
+			light_ptr->position[3] = 1.0f;
+
+
+		}
+
+		light_buffer->Unmap(*immediate_context_);
+
 		Vector4f light_position(700.0f, 30.0f, 0.0f, 1.0f);
 
 		Vector4f light_view_position;
@@ -267,6 +292,8 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 					material->SetView(view_matrix);
 					
 					material->SetLightView(light_view_position);
+
+					material->SetLights(light_buffer->GetView());
 
 					// Bind the material
 

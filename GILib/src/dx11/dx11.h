@@ -266,8 +266,8 @@ namespace gi_lib{
 		/// \param buffer Pointer to the object that will hold the buffer.
 		/// \param shader_resource_view Pointer to the shader resource view. If nullptr is specified, the buffer won't have any shader resource view associated to it.
 		/// \param unordered_access_view Pointer to the unordered access view. If nullptr is specified, the buffer won't have any unordered access view associated to it.
-		template <typename TElement>
-		HRESULT MakeStructuredBuffer(ID3D11Device& device, unsigned int elements, bool dynamic, ID3D11Buffer** buffer, ID3D11ShaderResourceView** shader_resource_view, ID3D11UnorderedAccessView** unordered_access_view);
+		/// \remarks A dynamic buffer may not be written by the GPU, thus it must not define an unordered access view.
+		HRESULT MakeStructuredBuffer(ID3D11Device& device, unsigned int element_count, unsigned int element_size, bool dynamic, ID3D11Buffer** buffer, ID3D11ShaderResourceView** shader_resource_view, ID3D11UnorderedAccessView** unordered_access_view);
 
 		/// \brief Create a shader from HLSL code.
 		/// \param device Device used to create the shader.
@@ -328,78 +328,6 @@ namespace gi_lib{
 }
 
 ////////////////////////////// INLINE IMPLEMENTATION /////////////////////////////////
-
-template <typename TElement>
-HRESULT gi_lib::dx11::MakeStructuredBuffer(ID3D11Device& device, unsigned int elements, bool dynamic, ID3D11Buffer** buffer, ID3D11ShaderResourceView** shader_resource_view, ID3D11UnorderedAccessView** unordered_access_view){
-
-	D3D11_BUFFER_DESC buffer_desc;
-
-	buffer_desc.Usage = dynamic ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_DEFAULT;
-
-	buffer_desc.ByteWidth = static_cast<unsigned int>(sizeof(TElement)) * elements;
-
-	buffer_desc.BindFlags = (shader_resource_view ? D3D11_BIND_SHADER_RESOURCE : 0) |
-							(unordered_access_view ? D3D11_BIND_UNORDERED_ACCESS : 0);
-
-	buffer_desc.CPUAccessFlags = dynamic ? D3D11_CPU_ACCESS_WRITE : 0;
-
-	buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-
-	buffer_desc.StructureByteStride = sizeof(TElement);
-
-	// Transaction: either all the resources are created, or none.
-
-	ID3D11Buffer* structured = nullptr;
-	ID3D11ShaderResourceView* srv = nullptr;
-	ID3D11UnorderedAccessView* uav = nullptr;
-
-	auto guard = make_scope_guard([&structured, &srv, &uav]{
-
-		release_com({ structured, srv, uav });
-
-	});
-
-	RETURN_ON_FAIL(device.CreateBuffer(&buffer_desc,
-									   nullptr,
-									   &structured));
-
-	if (shader_resource_view){
-
-		RETURN_ON_FAIL(device.CreateShaderResourceView(structured,
-													   nullptr,
-													   &srv));
-
-	}
-
-	if (unordered_access_view){
-
-		RETURN_ON_FAIL(device.CreateUnorderedAccessView(structured,
-														nullptr, 
-														&uav));
-		
-	}
-
-	// Commit
-
-	*buffer = structured;
-
-	if (shader_resource_view){
-
-		*shader_resource_view = srv;
-
-	}
-
-	if (unordered_access_view){
-
-		*unordered_access_view = uav;
-
-	}
-
-	guard.Dismiss();
-
-	return S_OK;
-
-}
 
 template <typename TShader>
 HRESULT gi_lib::dx11::Compile(const string& HLSL, const string& source_file, ID3DBlob** bytecode, wstring* error_string){

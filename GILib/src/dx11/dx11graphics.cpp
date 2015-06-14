@@ -288,6 +288,9 @@ namespace{
 		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>();
 		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>();
 
+		// Buffers and vector
+		InstanceBuilder::Register<StructuredVector, DX11StructuredVector, StructuredVector::FromDescription>();
+
 		// Internal resources
 		InstanceBuilder::Register<DX11Sampler, DX11Sampler, DX11Sampler::FromDescription>();
 

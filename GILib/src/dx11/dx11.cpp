@@ -557,6 +557,77 @@ HRESULT gi_lib::dx11::MakeConstantBuffer(ID3D11Device& device, size_t size, ID3D
 
 }
 
+HRESULT gi_lib::dx11::MakeStructuredBuffer(ID3D11Device& device, unsigned int element_count, unsigned int element_size, bool dynamic, ID3D11Buffer** buffer, ID3D11ShaderResourceView** shader_resource_view, ID3D11UnorderedAccessView** unordered_access_view){
+
+	D3D11_BUFFER_DESC buffer_desc;
+
+	buffer_desc.Usage = dynamic ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_DEFAULT;
+
+	buffer_desc.ByteWidth = element_size * element_count;
+
+	buffer_desc.BindFlags = (shader_resource_view ? D3D11_BIND_SHADER_RESOURCE : 0) |
+							(unordered_access_view ? D3D11_BIND_UNORDERED_ACCESS : 0);
+
+	buffer_desc.CPUAccessFlags = dynamic ? D3D11_CPU_ACCESS_WRITE : 0;
+
+	buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+
+	buffer_desc.StructureByteStride = element_size;
+
+	// Transaction: either all the resources are created, or none.
+
+	ID3D11Buffer* structured = nullptr;
+	ID3D11ShaderResourceView* srv = nullptr;
+	ID3D11UnorderedAccessView* uav = nullptr;
+
+	auto guard = make_scope_guard([&structured, &srv, &uav]{
+
+		release_com({ structured, srv, uav });
+
+	});
+
+	RETURN_ON_FAIL(device.CreateBuffer(&buffer_desc,
+									   nullptr,
+									   &structured));
+
+	if (shader_resource_view){
+
+		RETURN_ON_FAIL(device.CreateShaderResourceView(structured,
+													   nullptr,
+													   &srv));
+
+	}
+
+	if (unordered_access_view){
+
+		RETURN_ON_FAIL(device.CreateUnorderedAccessView(structured,
+														nullptr, 
+														&uav));
+		
+	}
+
+	// Commit
+
+	*buffer = structured;
+
+	if (shader_resource_view){
+
+		*shader_resource_view = srv;
+
+	}
+
+	if (unordered_access_view){
+
+		*unordered_access_view = uav;
+
+	}
+
+	guard.Dismiss();
+
+	return S_OK;
+
+}
+
 HRESULT gi_lib::dx11::MakeSampler(ID3D11Device& device, TextureMapping texture_mapping, unsigned int anisotropy_level, ID3D11SamplerState** sampler){
 
 	auto address_mode = TextureMappingToAddressMode(texture_mapping); // Same for each coordinate.

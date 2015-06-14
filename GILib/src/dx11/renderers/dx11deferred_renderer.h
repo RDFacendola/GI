@@ -56,6 +56,8 @@ namespace gi_lib{
 			
 			void SetLightView(const Vector4f& view_position);
 
+			void SetLights(ObjectPtr<IResourceView> light_resource);
+
 			/// \brief Commit all the constant buffers and bind the material to the pipeline.
 			void Commit(ID3D11DeviceContext& context);
 
@@ -77,6 +79,8 @@ namespace gi_lib{
 			ObjectPtr<Material::MaterialVariable> view_;				///< \brief View matrix.
 
 			ObjectPtr<Material::MaterialVariable> light_view_;			///< \brief Light in view space.
+
+			ObjectPtr<Material::MaterialResource> light_array_;			///< \brief Light array.
 
 		};
 
@@ -173,6 +177,16 @@ namespace gi_lib{
 			if (light_view_){
 
 				light_view_->Set(light_view);
+
+			}
+
+		}
+
+		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetLights(ObjectPtr<IResourceView> light_resource){
+
+			if (light_array_){
+
+				light_array_->Set(light_resource);
 
 			}
 
