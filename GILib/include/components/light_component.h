@@ -91,6 +91,58 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Represents a single directional light.
+	/// A directional light is a light that has no position and irradiates light along one direction.
+	/// The direction of the light is defined by the forward direction of the object given by a transform component.
+	/// \author Raffaele D. Facendola.
+	class DirectionalLightComponent : public Component{
+
+	public:
+
+		static const Color kDefaultLightColor;				///< \brief Default light color: white.
+
+		static const float kDefaultIntensity;				///< \brief Default intensity of the light: 1.
+
+		/// \brief Initializes a directional light component using default values for the color.
+		DirectionalLightComponent();
+
+		virtual TypeSet GetTypes() const override;
+
+		/// \brief Get the light's color.
+		/// \return Returns the light's color.
+		Color GetColor() const;
+
+		/// \brief Set the light's color.
+		/// \param color The new light's color.
+		void SetColor(Color color);
+
+		/// \brief Get the light intensity.
+		/// \return Returns the light intensity.
+		float GetIntensity() const;
+
+		/// \brief Set the intensity of the light.
+		/// \param intensity Intensity of the light
+		void SetIntensity(float intensity);
+
+		/// \brief Get the light's direction.
+		/// \return Returns the light's direction.
+		Vector3f GetDirection() const;
+
+	protected:
+
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
+
+	private:
+
+		Color color_;										///< \brief Light color.
+
+		float intensity_;									///< \brief Intensity of the light, as multiplicative factor over the light color.
+
+		TransformComponent* transform_component_;			///< \brief Used to determine the position of the light.
+
+	};
 
 	/////////////////////////// POINT LIGHT COMPONENT ///////////////////////////////
 
@@ -153,5 +205,42 @@ namespace gi_lib{
 		return Math::ToVector3(transform_component_->GetWorldTransform().matrix().col(3));
 
 	}
+
+	/////////////////////////// DIRECTIONAL LIGHT COMPONENT ///////////////////////////////
+
+	inline DirectionalLightComponent::DirectionalLightComponent() :
+		color_(kDefaultLightColor),
+		intensity_(kDefaultIntensity){}
+
+	inline Color DirectionalLightComponent::GetColor() const{
+
+		return color_;
+
+	}
+
+	inline void DirectionalLightComponent::SetColor(Color color){
+
+		color_ = color;
+
+	}
+	
+	inline float DirectionalLightComponent::GetIntensity() const{
+
+		return intensity_;
+
+	}
+
+	inline void DirectionalLightComponent::SetIntensity(float intensity){
+
+		intensity_ = intensity;
+
+	}
+
+	inline Vector3f DirectionalLightComponent::GetDirection() const{
+
+		return Math::ToVector3(transform_component_->GetWorldTransform().matrix().col(2));
+
+	}
+
 
 }

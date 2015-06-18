@@ -113,10 +113,12 @@ void GILogic::Initialize(Window& window){
 							 *root);
 
 	
-	// Lights setup
+	// Lights setup 
 
-	auto light_transform = scene_.CreateNode(L"Light",
-											 Translation3f(0.0f, 200.0f, 10.0f),
+	// Point light
+
+	auto light_transform = scene_.CreateNode(L"PoiLight",
+											 Translation3f(0.0f, 50.0f, 10.0f),
 											 Quaternionf::Identity(),
 											 AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
@@ -124,6 +126,17 @@ void GILogic::Initialize(Window& window){
 
 	light_transform->SetParent(root);
 
+	// Directional light
+
+	light_transform = scene_.CreateNode(L"DirLight",
+										Translation3f(0.0f, 0.0f, 0.0f),
+										Quaternionf::Identity(),
+										AlignedScaling3f(1.0f, 1.0f, 1.0f));
+
+	auto directional_light = light_transform->AddComponent<DirectionalLightComponent>();
+
+	light_transform->SetParent(root);
+	
 }
 
 void GILogic::Update(const Time & time){
