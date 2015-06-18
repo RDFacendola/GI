@@ -54,7 +54,7 @@ namespace gi_lib{
 			void SetView(const Matrix4f& view);
 
 			
-			void SetLightView(const Vector4f& view_position);
+			void SetEyePosition(const Vector4f& eye_position);
 
 			void SetLights(ObjectPtr<IResourceView> light_resource);
 
@@ -78,9 +78,9 @@ namespace gi_lib{
 
 			ObjectPtr<Material::MaterialVariable> view_;				///< \brief View matrix.
 
-			ObjectPtr<Material::MaterialVariable> light_view_;			///< \brief Light in view space.
+			ObjectPtr<Material::MaterialVariable> eye_position_;		///< \brief Position of the eye.
 
-			ObjectPtr<Material::MaterialResource> light_array_;			///< \brief Light array.
+			ObjectPtr<Material::MaterialResource> light_array_;			///< \brief Light array (position in view space).
 
 		};
 
@@ -114,6 +114,10 @@ namespace gi_lib{
 			unique_ptr<ID3D11BlendState, COMDeleter> blend_state_;				///< \brief Output merger blending state.
 
 			unique_ptr<ID3D11RasterizerState, COMDeleter> rasterizer_state_;	///< \brief Rasterizer state.
+
+
+			ObjectPtr<DX11StructuredVector> light_array_;						///< \brief Array containing the lights.
+
 		};
 
 		/////////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////////
@@ -172,11 +176,11 @@ namespace gi_lib{
 
 		}
 	
-		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetLightView(const Vector4f& light_view){
+		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetEyePosition(const Vector4f& eye_position){
 
-			if (light_view_){
+			if (eye_position_){
 
-				light_view_->Set(light_view);
+				eye_position_->Set(eye_position);
 
 			}
 

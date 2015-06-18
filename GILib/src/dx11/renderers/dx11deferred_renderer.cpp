@@ -13,6 +13,12 @@ using namespace ::Eigen;
 
 namespace{
 
+	struct Light{
+
+		float position[4];
+
+	};
+
 	void DrawIndexedSubset(ID3D11DeviceContext& context, const MeshSubset& subset){
 
 		context.DrawIndexed(static_cast<unsigned int>(subset.count),
@@ -46,8 +52,7 @@ void DX11DeferredRendererMaterial::Setup(){
 	world_view_ = material_->GetVariable("gWorldView");
 	world_ = material_->GetVariable("gWorld");
 
-	light_view_ = material_->GetVariable("gLightView");
-
+	eye_position_ = material_->GetVariable("gEye");
 	light_array_ = material_->GetResource("gLights");
 
 }
@@ -140,6 +145,11 @@ TiledDeferredRenderer(arguments.scene){
 
 	rasterizer_state_.reset(rasterizer_state);
 	
+	// Light structures
+
+	light_array_ = new DX11StructuredVector(StructuredVector::FromDescription{ 32, sizeof(Light) });
+
+
 }
 
 DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){}
@@ -231,31 +241,22 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 														   camera.GetMinimumDistance(),
 														   camera.GetMaximumDistance());
 
-		struct Light{
+		// Light setup
 
-			float position[4];
+		Light* light_ptr = light_array_->Map<Light>(*immediate_context_);
 
-		};
+		for (size_t light_index = 0; light_index < light_array_->GetElementCount(); ++light_index){
 
-		ObjectPtr<DX11StructuredVector> light_buffer(new DX11StructuredVector(StructuredVector::FromDescription{ 64, sizeof(Light) }));
-
-		Light* light_ptr = light_buffer->Map<Light>(*immediate_context_);
-		
-		for (size_t light_index = 0; light_index < light_buffer->GetElementCount(); ++light_index){
-
-			light_ptr->position[0] = light_index * 25.0f;
-			light_ptr->position[1] = 30.0f;
+			light_ptr->position[0] = light_index * 250.0f - light_array_->GetElementCount() * 125.0f;
+			light_ptr->position[1] = std::cosf(light_index) * 50.0f + 75.0f;
 			light_ptr->position[2] = 0.0f;
 			light_ptr->position[3] = 1.0f;
 
+			++light_ptr;
 
 		}
 
-		light_buffer->Unmap(*immediate_context_);
-
-		Vector4f light_position(700.0f, 30.0f, 0.0f, 1.0f);
-
-		Vector4f light_view_position;
+		light_array_->Unmap(*immediate_context_);
 
 		// Draw GBuffer
 		for (auto&& node : nodes){
@@ -281,8 +282,6 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 					
 					world_view_matrix = view_matrix * world_matrix;
 
-					light_view_position =  view_matrix * light_position;
-
 					material->SetWorldViewProjection(projection_matrix * world_view_matrix);
 
 					material->SetWorldView(world_view_matrix);
@@ -291,9 +290,9 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 
 					material->SetView(view_matrix);
 					
-					material->SetLightView(light_view_position);
+					material->SetEyePosition(camera.GetComponent<TransformComponent>()->GetWorldTransform().matrix().col(3));
 
-					material->SetLights(light_buffer->GetView());
+					material->SetLights(light_array_->GetView());
 
 					// Bind the material
 

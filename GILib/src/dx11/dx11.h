@@ -46,7 +46,8 @@ namespace gi_lib{
 			TEXTURE_1D,			///< \brief 1D texture.
 			TEXTURE_2D,			///< \brief 2D texture.
 			TEXTURE_3D,			///< \brief 3D texture.
-			TEXTURE_CUBE		///< \brief Cube texture.
+			TEXTURE_CUBE,		///< \brief Cube texture.
+			STRUCTURED_ARRAY	///< \brief Strongly-typed array.
 
 		};
 

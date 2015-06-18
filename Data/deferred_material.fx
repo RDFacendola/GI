@@ -5,18 +5,13 @@ cbuffer PerObjectVS{
 	float4x4 gWorldView;
 	float4x4 gWorld;
 	float4x4 gView;
+	float4 gEye;
 
 };
 
-cbuffer Lights{
-
-	float4 gLightView;
-
-}
-
 struct Light{
 
-	float4 position;
+	float4 position_ws;
 
 };
 
@@ -36,9 +31,9 @@ struct VSInput{
 
 struct VSOutput{
 
-	float4 proj_position : SV_Position;
-	float3 view_position : ViewPosition;
-	float3 view_normal : NORMAL;
+	float4 position_ps : SV_Position;
+	float4 position_ws : WorldPosition;
+	float3 normal_ws : NORMAL;
 	float2 uv : TEXCOORD;
 
 };
@@ -53,11 +48,11 @@ VSOutput VSMain(VSInput input){
 
 	VSOutput o;
 
-	o.proj_position = mul(gWorldViewProj, input.position);
+	o.position_ps = mul(gWorldViewProj, input.position);								// Vertex position, in projection space
 	
-	o.view_position = mul(gWorldView, input.position);
+	o.position_ws = mul(gWorld, input.position);										// Vertex position, in world space
 
-	o.view_normal = normalize(mul((float3x3)gWorldView, (float3)input.normal));
+	o.normal_ws = normalize(mul((float3x3)gWorld, (float3)input.normal));				// Vertex normal, in world space
 
 	o.uv = float2(input.uv.x,
 				  1.0 - input.uv.y);	// V coordinate is flipped because we are using ogl convention.
@@ -66,43 +61,58 @@ VSOutput VSMain(VSInput input){
 
 }
 
+float4 AccumulateLight(VSOutput input, int light_index){
+
+	float4 light_vector = gLights[light_index].position_ws - input.position_ws;		// From the surface to the light
+
+	float attenuation = min(1, 1300000 / (4*3.14159*dot(light_vector.xyz, light_vector.xyz)));
+	
+	float4 light_direction = normalize(light_vector);
+
+	float3 surface_normal = normalize(input.normal_ws);		// Normalize to compensate for interpolation
+
+	// Diffuse contribution
+
+	float4 albedo = ps_map.Sample(tex_sampler, input.uv);
+
+	float diffuse_intensity = saturate(dot(light_direction.xyz, surface_normal));
+
+	// Specular contribution
+
+	float shininess = 60;
+
+	float4 specular_color = 1;
+
+	float3 eye_direction = normalize(gEye.xyz - input.position_ws.xyz);						// From the surface to the eye
+
+	float3 reflected = reflect(light_direction.xyz, surface_normal);						// 
+
+	float specular_intensity = pow(saturate(dot(reflected, -eye_direction)), shininess);
+
+	// Preserve the alpha channel of the texture
+
+	float4 final_color = (albedo * diffuse_intensity + specular_color * specular_intensity) * attenuation;
+
+	final_color.a = albedo.a;
+
+	return final_color;
+
+}
+
 PSOutput PSMain(VSOutput input){
 
 	PSOutput o;
 
-	// Diffuse
+	o.color = 0;
 
-	float3 surface_position = mul(gWorldView, gLights[0].position).xyz; //input.view_position.xyz;
+	[unroll]
+	for(int light_index = 0; light_index < 32; ++light_index){
 
-	float3 light_direction = normalize(surface_position - gLightView.xyz);	// From the light to the surface
+		o.color += AccumulateLight(input, light_index);
 
-	float3 view_direction = normalize(surface_position - float3(0, 0, 0));	// From the viewer to the surface
+	}
 
-	// Diffuse	
-
-	float diffuse_intensity = saturate(dot(-light_direction, input.view_normal));
-
-	// Specular
-
-	float3 reflection_direction = reflect(-light_direction, input.view_normal);
-
-	float specular_intensity = saturate(dot(reflection_direction, view_direction));
-
-	// Accumulation
-
-	float4 diffuse_color = ps_map.Sample(tex_sampler, input.uv);
-
-	float4 specular_color = float4(1,1,1,1);	// White
-
-	float4 light_color = float4(1,1,1,1);		// White
-
-	float shininess = 60;
-
-	o.color = diffuse_color * light_color * diffuse_intensity + specular_color * pow(specular_intensity, shininess);
-
-	//o.color = float4(abs(input.view_normal), 1);
-
-	o.color.a = 1;
+	o.color = saturate(o.color);
 
 	return o;
 

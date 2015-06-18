@@ -45,6 +45,10 @@ namespace{
 
 			return ShaderResourceType::TEXTURE_CUBE;
 
+		case D3D_SRV_DIMENSION_BUFFER:
+
+			return ShaderResourceType::STRUCTURED_ARRAY;
+
 		default:
 
 			return ShaderResourceType::UNKNOWN;
@@ -83,8 +87,8 @@ namespace{
 	TType& Reflect(const D3D11_SHADER_INPUT_BIND_DESC& input_desc, TReflector ResourceReflector, vector<TType>& resources){
 
 		auto it = std::find_if(resources.begin(),
-			resources.end(),
-			[&input_desc](const TType& desc){
+							   resources.end(),
+							   [&input_desc](const TType& desc){
 
 			return desc.name == input_desc.Name;
 
@@ -146,7 +150,7 @@ namespace{
 	/// \param reflector Reflector used to perform the reflection.
 	/// \param input_desc Description of the shader input.
 	/// \return Return the description of the reflected texture.
-	ShaderResourceDesc ReflectTexture(const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
+	ShaderResourceDesc ReflectResource(const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
 
 		return ShaderResourceDesc{ input_desc.Name,
 								   SRVDimensionToShaderResourceType(input_desc.Dimension),
@@ -206,13 +210,14 @@ namespace{
 
 				}
 				case D3D_SIT_TEXTURE:
+				case D3D_SIT_STRUCTURED:
 				{
 
-					// Textures 
+					// Shader resources
 
 					Reflect(resource_desc,
-						ReflectTexture,
-						reflection.resources).shader_usage |= ShaderTraits<TShader>::flag;
+							ReflectResource,
+							reflection.resources).shader_usage |= ShaderTraits<TShader>::flag;
 
 					break;
 
@@ -223,8 +228,8 @@ namespace{
 					// Samplers
 
 					Reflect(resource_desc,
-						ReflectSampler,
-						reflection.samplers).shader_usage |= ShaderTraits<TShader>::flag;
+							ReflectSampler,
+							reflection.samplers).shader_usage |= ShaderTraits<TShader>::flag;
 
 					break;
 
