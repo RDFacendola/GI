@@ -18,7 +18,7 @@
 
 #include "..\include\material_importer.h"
 #include "..\include\components\fly_camera_component.h"
-#include "..\include\components\light_component.h"
+#include "..\include\lights\light_component.h"
 
 #include <Windows.h>
 
