@@ -319,7 +319,7 @@ namespace gi_lib{
 		virtual ~VolumeComponent();
 
 		/// \brief Get the transformed bounding box.
-		/// \return Returns the transformed bouding box.
+		/// \return Returns the transformed bounding box.
 		const AABB& GetBoundingBox() const;
 
 		/// \brief Get the transformed bounding sphere.

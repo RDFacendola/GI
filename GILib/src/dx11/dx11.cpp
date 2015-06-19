@@ -495,6 +495,57 @@ HRESULT gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width,
 
 }
 
+HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11Texture2D** texture, ID3D11RenderTargetView** render_target_view, ID3D11ShaderResourceView** shader_resource_view, bool autogenerate_mips){
+
+	ID3D11RenderTargetView * rtv = nullptr;
+	ID3D11ShaderResourceView * srv = nullptr;
+
+	auto cleanup = make_scope_guard([&texture, &rtv, &srv](){
+
+		windows::release_com({*texture, rtv, srv});
+		
+	});
+
+	D3D11_TEXTURE2D_DESC desc;
+
+	ZeroMemory(&desc, sizeof(D3D11_TEXTURE2D_DESC));
+
+	desc.ArraySize = 1;
+	
+	desc.BindFlags = (render_target_view ? D3D11_BIND_RENDER_TARGET : 0 ) |
+					 (shader_resource_view ? D3D11_BIND_SHADER_RESOURCE : 0);
+
+	desc.CPUAccessFlags = 0;
+	desc.Format = format;
+	desc.Width = width;
+	desc.Height = height;
+	desc.MipLevels = autogenerate_mips ? 0 : 1;
+	desc.SampleDesc.Count = 1;
+	desc.SampleDesc.Quality = 0;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.MiscFlags = autogenerate_mips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
+
+	RETURN_ON_FAIL(device.CreateTexture2D(&desc,
+										  nullptr,
+										  texture));
+
+	RETURN_ON_FAIL(device.CreateRenderTargetView(reinterpret_cast<ID3D11Resource*>(*texture),
+												 nullptr,
+												 &rtv));
+
+	RETURN_ON_FAIL(device.CreateShaderResourceView(reinterpret_cast<ID3D11Resource*>(*texture),
+												   nullptr,
+												   &srv));
+
+	*render_target_view = rtv;
+	*shader_resource_view = srv;
+
+	cleanup.Dismiss();
+
+	return S_OK;
+
+}
+
 HRESULT gi_lib::dx11::MakeVertexBuffer(ID3D11Device& device, const void* vertices, size_t size, ID3D11Buffer** buffer){
 
 	// Fill in a buffer description.

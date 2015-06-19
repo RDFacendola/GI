@@ -500,7 +500,7 @@ DX11Texture2D::DX11Texture2D(const FromFile& bundle){
 	
 }
 
-DX11Texture2D::DX11Texture2D(ID3D11Texture2D & texture, DXGI_FORMAT format){
+DX11Texture2D::DX11Texture2D(ID3D11Texture2D& texture, DXGI_FORMAT format){
 
 	ID3D11Device * device;
 
@@ -532,6 +532,15 @@ DX11Texture2D::DX11Texture2D(ID3D11Texture2D & texture, DXGI_FORMAT format){
 
 }
 
+DX11Texture2D::DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView& shader_view){
+	
+	texture_.reset(&texture);
+	shader_view_.reset(&shader_view);
+
+	UpdateDescription();
+
+}
+
 size_t DX11Texture2D::GetSize() const{
 
 	auto level_size = width_ * height_ * bits_per_pixel_ * kBitOverByte;	//Size of the most detailed level.
@@ -552,7 +561,8 @@ void DX11Texture2D::UpdateDescription(){
 	height_ = description.Height;
 	mip_levels_ = description.MipLevels;
 	bits_per_pixel_ = static_cast<unsigned int>(BitsPerPixel(description.Format));
-
+	format_ = description.Format;
+	
 }
 
 ///////////////////////////// RENDER TARGET ///////////////////////////////////////
@@ -564,6 +574,17 @@ DX11RenderTarget::DX11RenderTarget(ID3D11Texture2D & target){
 	
 	SetBuffers({ &target });
 
+}
+
+DX11RenderTarget::DX11RenderTarget(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format){
+	
+	zstencil_ = nullptr;
+	zstencil_view_ = nullptr;
+
+	Initialize(width,
+			   height,
+			   target_format);
+	
 }
 
 DX11RenderTarget::~DX11RenderTarget(){
@@ -602,7 +623,7 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 		zstencil_view_ = nullptr;
 	
 	});
-
+	
 	target.GetDevice(&device);
 
 	COM_GUARD(device);
@@ -632,9 +653,34 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 
 	zstencil_ = new DX11Texture2D(*zstencil, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);					// This is the only format compatible with R24G8_TYPELESS used to create the depth buffer resource
 	
-
 	// Everything went as it should have...
 	rollback.Dismiss();
+
+}
+
+bool DX11RenderTarget::Resize(unsigned int width, unsigned int height){
+
+	if (width == GetWidth() && height == GetHeight()){
+
+		return false;
+
+	}
+
+	// Naive approach: discard the old targets and create the new ones
+
+	std::vector<DXGI_FORMAT> target_format;
+
+	for (auto&& texture : textures_){
+
+		target_format.push_back(texture->GetFormat());
+
+	}
+
+	Initialize(width, 
+			   height,
+			   target_format);
+
+	return true;
 
 }
 
@@ -702,6 +748,59 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
 							   &target_views_[0],
 							   zstencil_view_);
 	
+}
+
+void DX11RenderTarget::Initialize(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format){
+
+	ResetBuffers();
+
+	// If the method throws ensures that the resource is left in a clear state.
+	auto&& guard = make_scope_guard([this](){
+
+		ResetBuffers();
+
+	});
+
+	auto&& device = DX11Graphics::GetInstance().GetDevice();
+	   
+	ID3D11Texture2D* texture;
+	ID3D11RenderTargetView* rtv;
+	ID3D11ShaderResourceView* srv;
+		
+	// Create the render target surfaces.
+
+	for (auto&& format : target_format){
+
+		THROW_ON_FAIL(MakeRenderTarget(device,
+									   width,
+									   height,
+ 									   format,
+									   &texture,
+									   &rtv,
+									   &srv));
+		
+		textures_.push_back(new DX11Texture2D(*texture,
+											  *srv));
+
+		target_views_.push_back(rtv);
+
+	}
+
+	// Depth stencil
+
+	ID3D11Texture2D* zstencil;
+
+	THROW_ON_FAIL(MakeDepthStencil(device,
+								   width,
+								   height,
+								   &zstencil,
+								   &zstencil_view_));
+		
+	zstencil_ = new DX11Texture2D(*zstencil, 
+								  DXGI_FORMAT_R24_UNORM_X8_TYPELESS);	// This is the only format compatible with R24G8_TYPELESS used to create the depth buffer resource
+
+	guard.Dismiss();
+
 }
 
 ///////////////////////////// MESH ////////////////////////////////////////////////

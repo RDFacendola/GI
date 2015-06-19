@@ -87,7 +87,12 @@ namespace gi_lib{
 			/// \param bundle The bundle used to load the texture.
 			DX11Texture2D(const FromFile& args);
 
-			/// \brief Create a mew texture from an existing DirectX11 texture.
+			/// \brief Create a new texture.
+			/// \param texture The texture to bind.
+			/// \param shader_view The view used to bind the texture to the shader.
+			DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView& shader_view);
+			
+			/// \brief Create a new texture from an existing DirectX11 texture.
 			/// \param texture The DirectX11 texture.
 			/// \param format The format used when sampling from the texture.
 			DX11Texture2D(ID3D11Texture2D& texture, DXGI_FORMAT format);
@@ -104,6 +109,8 @@ namespace gi_lib{
 
 			virtual ObjectPtr<IResourceView> GetView() override;
 
+			DXGI_FORMAT GetFormat() const;
+
 		private:
 
 			void UpdateDescription();
@@ -112,13 +119,15 @@ namespace gi_lib{
 
 			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;		///< \brief Pointer to the shader resource view of the texture.
 
-			unsigned int width_;
+			unsigned int width_;												///< \brief Width of the texture, in pixels.
 
-			unsigned int height_;
+			unsigned int height_;												///< \brief Height of the texture, in pixels.
 
-			unsigned int bits_per_pixel_;
+			unsigned int bits_per_pixel_;										///< \brief Bits per pixel.
 
-			unsigned int mip_levels_;
+			unsigned int mip_levels_;											///< \brief Mip levels.
+
+			DXGI_FORMAT format_;												///< \brief Surface format.
 
 		};
 
@@ -129,10 +138,15 @@ namespace gi_lib{
 		public:
 
 			/// \brief Create a new render target from an existing buffer.
-
 			/// \param buffer Buffer reference.
 			/// \param device Device used to create the additional internal resources.
 			DX11RenderTarget(ID3D11Texture2D& target);
+
+			/// \brief Create a multiple render target array.
+			/// \param width Width of each target.
+			/// \param height Height of each target.
+			/// \param target_format Describe the format of each target.
+			DX11RenderTarget(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format);
 
 			virtual ~DX11RenderTarget();
 
@@ -151,6 +165,12 @@ namespace gi_lib{
 			virtual float GetAspectRatio() const override;
 
 			virtual AntialiasingMode GetAntialiasing() const override;
+
+			virtual bool Resize(unsigned int width, unsigned int height) override;
+
+			virtual unsigned int GetWidth() const override;
+
+			virtual unsigned int GetHeight() const override;
 
 			/// \brief Set new buffers for the render target.
 
@@ -177,13 +197,20 @@ namespace gi_lib{
 
 		private:
 
-			vector<ID3D11RenderTargetView*> target_views_;
-
-			ID3D11DepthStencilView* zstencil_view_;
+			/// \brief Initialize the GBuffer surfaces.
+			/// The method will allocate one texture for each specified format. The dimensions are the same for each surface.
+			/// \param width The width of each texture.
+			/// \param height The height of each texture.
+			/// \param target_format The format of each texture.
+			void Initialize(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format);
 
 			vector<ObjectPtr<DX11Texture2D>> textures_;
 
+			vector<ID3D11RenderTargetView*> target_views_;
+
 			ObjectPtr<DX11Texture2D> zstencil_;
+
+			ID3D11DepthStencilView* zstencil_view_;
 
 			AntialiasingMode antialiasing_;
 
@@ -525,6 +552,12 @@ namespace gi_lib{
 
 		}
 
+		inline DXGI_FORMAT DX11Texture2D::GetFormat() const{
+
+			return format_;
+
+		}
+
 		inline ObjectPtr<IResourceView> DX11Texture2D::GetView(){
 
 			return new DX11ResourceViewTemplate<DX11Texture2D>(this,
@@ -591,6 +624,18 @@ namespace gi_lib{
 
 		}
 
+		inline unsigned int DX11RenderTarget::GetWidth() const{
+
+			return textures_[0]->GetWidth();
+
+		}
+
+		inline unsigned int DX11RenderTarget::GetHeight() const{
+
+			return textures_[0]->GetHeight();
+
+		}
+		
 		/////////////////////////////// DX11 SAMPLER ///////////////////////////////
 
 		inline ID3D11SamplerState& DX11Sampler::GetSamplerState() const{

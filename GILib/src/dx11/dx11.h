@@ -238,6 +238,18 @@ namespace gi_lib{
 		/// \param depth_stencil_view Pointer to the depth stencil view. Set to nullptr if not needed.
 		HRESULT MakeDepthStencil(ID3D11Device& device, unsigned int width, unsigned int height, ID3D11Texture2D** depth_stencil, ID3D11DepthStencilView** depth_stencil_view);
 
+		/// \brief Create a render target.
+		/// \param device Device used to create the texture.
+		/// \param width Width of the texture in pixels.
+		/// \param height Height of the texture in pixels.
+		/// \param format Format of the surface.
+		/// \param texture Pointer to the created texture.
+		/// \param render_target_view Pointer to the render target view.
+		/// \param shader_resource_view Pointer to the shader resource view.
+		/// \param autogenerate_mips Whether to autogenerate mipmaps or not.
+		/// \remarks The method expects both the texture, the render target view and the shader resource view to be not null.
+		HRESULT MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11Texture2D** texture, ID3D11RenderTargetView** render_target_view, ID3D11ShaderResourceView** shader_resource_view, bool autogenerate_mips = false);
+
 		/// \brief Create a vertex buffer.
 		/// \tparam TVertexFormat Format of the vertex.
 		/// \param device Device used to create the vertex buffer.

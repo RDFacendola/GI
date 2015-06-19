@@ -107,16 +107,39 @@ namespace gi_lib{
 
 		private:
 
-			unique_ptr<ID3D11DeviceContext, COMDeleter> immediate_context_;		///< \brief Immediate rendering context.
+			void SetupLights();
 
-			unique_ptr<ID3D11DepthStencilState, COMDeleter> depth_state_;		///< \brief Depth-stencil buffer state.
+			void DrawGBuffer(unsigned int width, unsigned int height);
 
-			unique_ptr<ID3D11BlendState, COMDeleter> blend_state_;				///< \brief Output merger blending state.
+			void ComputeLighting(DX11Output& output);
 
-			unique_ptr<ID3D11RasterizerState, COMDeleter> rasterizer_state_;	///< \brief Rasterizer state.
+			void Finalize(DX11RenderTarget& render_target);
 
+			void InitializeTonemapping();
 
-			ObjectPtr<DX11StructuredVector> light_array_;						///< \brief Array containing the lights.
+			// Render context
+
+			unique_ptr<ID3D11DeviceContext, COMDeleter> immediate_context_;			///< \brief Immediate rendering context.
+
+			unique_ptr<ID3D11DepthStencilState, COMDeleter> depth_state_;			///< \brief Depth-stencil buffer state.
+
+			unique_ptr<ID3D11BlendState, COMDeleter> blend_state_;					///< \brief Output merger blending state.
+
+			unique_ptr<ID3D11RasterizerState, COMDeleter> rasterizer_state_;		///< \brief Rasterizer state.
+
+			// Lights
+
+			ObjectPtr<DX11StructuredVector> light_array_;							///< \brief Array containing the lights.
+
+			// Deferred resources
+
+			ObjectPtr<DX11RenderTarget> g_buffer_;									///< \brief GBuffer.
+
+			// Post process
+
+			ObjectPtr<DX11Material> tonemapping_material_;							///< \brief Material used to perform tonemapping.
+
+			unique_ptr<ID3D11DepthStencilState, COMDeleter> disable_depth_test_;	///< \brief Used to disable the depth testing.
 
 		};
 

@@ -65,7 +65,7 @@ float4 AccumulateLight(VSOutput input, int light_index){
 
 	float4 light_vector = gLights[light_index].position_ws - input.position_ws;		// From the surface to the light
 
-	float attenuation = min(1, 1300000 / (4*3.14159*dot(light_vector.xyz, light_vector.xyz)));
+	float attenuation = min(1, 1700000 / (4*3.14159*dot(light_vector.xyz, light_vector.xyz)));
 	
 	float4 light_direction = normalize(light_vector);
 
@@ -111,8 +111,6 @@ PSOutput PSMain(VSOutput input){
 		o.color += AccumulateLight(input, light_index);
 
 	}
-
-	o.color = saturate(o.color);
 
 	return o;
 
