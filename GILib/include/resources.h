@@ -311,8 +311,6 @@ namespace gi_lib{
 			template <typename TValue>
 			void Set(const TValue& value);
 
-		protected:
-
 			/// \brief Set the variable value.
 			/// \param buffer Pointer to the buffer holding the data to write.
 			/// \param size Size of the buffer.
