@@ -156,7 +156,7 @@ TiledDeferredRenderer(arguments.scene){
 
 	light_array_ = new DX11StructuredVector(StructuredVector::FromDescription{ 32, sizeof(Light) });
 
-
+	InitializeToneMap();
 
 }
 
@@ -178,7 +178,8 @@ void DX11TiledDeferredRenderer::Draw(IOutput& output){
 		DrawGBuffer(render_target->GetWidth(),
 					render_target->GetHeight());
 		
-		Finalize(*render_target);
+		ToneMap(*resource_cast(g_buffer_->GetTexture(1)),
+				*render_target);
 
 	}
 
@@ -215,11 +216,13 @@ void DX11TiledDeferredRenderer::SetupLights(){
 void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int height){
 
 	// Lazy initialization of the GBuffer
+
 	if (!g_buffer_){
 
 		g_buffer_ = new DX11RenderTarget(width,
 										 height,
-										 { DXGI_FORMAT_R16G16B16A16_FLOAT });
+										 { DXGI_FORMAT_R16G16B16A16_FLOAT,
+										   DXGI_FORMAT_R16G16B16A16_FLOAT });
 
 	}
 	else{
@@ -264,9 +267,9 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 	Color color;
 
 	color.color.alpha = 0.0f;
-	color.color.red = 1.0f;
-	color.color.green = 0.0f;
-	color.color.blue = 0.0f;
+	color.color.red = 0.1f;
+	color.color.green = 0.1f;
+	color.color.blue = 0.1f;
 
 	g_buffer_->ClearTargets(*immediate_context_,
 							color);
@@ -362,19 +365,40 @@ void DX11TiledDeferredRenderer::ComputeLighting(DX11Output& output){
 
 }
 
-void DX11TiledDeferredRenderer::Finalize(DX11RenderTarget& render_target){
+void DX11TiledDeferredRenderer::InitializeToneMap(){
+		
+	tonemapper_ = new DX11Material(Material::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\tonemapping.fx" });
 
-	InitializeTonemapping();
+	tonemap_source_ = tonemapper_->GetResource("gHDR");
+	tonemap_vignette_ = tonemapper_->GetVariable("gVignette");
+	tonemap_exposure_ = tonemapper_->GetVariable("gExposure");
+	
+}
+
+void DX11TiledDeferredRenderer::ToneMap(const DX11Texture2D& source, DX11RenderTarget& destination){
 
 	// Viewport
 	D3D11_VIEWPORT viewport;
-	
-	viewport.Width = static_cast<float>(render_target.GetWidth());
-	viewport.Height = static_cast<float>(render_target.GetHeight());
+
+	viewport.Width = static_cast<float>(destination.GetWidth());
+	viewport.Height = static_cast<float>(destination.GetHeight());
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 	viewport.TopLeftX = 0.0f;
 	viewport.TopLeftY = 0.0f;
+
+	// Update the tonemap resources
+	tonemap_source_->Set(source.GetView());
+	tonemap_vignette_->Set(5.0f);
+	tonemap_exposure_->Set(2.0f);
+
+	// Bind the surfaces and the tonemapper to the context.
+
+	destination.Bind(*immediate_context_);
+
+	tonemapper_->Commit(*immediate_context_);
+
+	// Draw a fullscreen quad
 
 	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -382,8 +406,6 @@ void DX11TiledDeferredRenderer::Finalize(DX11RenderTarget& render_target){
 									   &viewport);
 
 	immediate_context_->RSSetState(rasterizer_state_.get());
-
-	// Disable both the depth test and the alpha blending.
 
 	immediate_context_->OMSetDepthStencilState(disable_depth_test_.get(),
 											   0);
@@ -398,106 +420,12 @@ void DX11TiledDeferredRenderer::Finalize(DX11RenderTarget& render_target){
 										   0,
 										   0);
 
-	immediate_context_->IASetIndexBuffer(nullptr, 
-										 DXGI_FORMAT_R32_UINT, 
+	immediate_context_->IASetIndexBuffer(nullptr,
+										 DXGI_FORMAT_R32_UINT,
 										 0);
 
 	immediate_context_->IASetInputLayout(nullptr);
-
-	// Bind the render target and the material
-
-	render_target.Bind(*immediate_context_);
-
-	tonemapping_material_->Commit(*immediate_context_);
-
-	// Draw quad
-
-	immediate_context_->Draw(6, 0);
-
-}
-
-void DX11TiledDeferredRenderer::InitializeTonemapping(){
-
-	if (!tonemapping_material_){
-
-		tonemapping_material_ = new DX11Material(Material::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\tonemapping.fx" });
-		
-	}
 	
-	auto HDR_texture = tonemapping_material_->GetResource("gHDR");
-	auto exposure = tonemapping_material_->GetVariable("gExposure");
-
-	if (HDR_texture){
-
-		// This is done only once.
-		HDR_texture->Set(g_buffer_->GetTexture(0)->GetView());
-
-	}
-
-	if (exposure){
-
-		// This should change for auto-adaptation.
-		exposure->Set(2.0f);
-
-	}	
-
-	// Blur
-	if (!hblur_material_){
-
-		hblur_material_ = new DX11Material(Material::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\hblur.fx" });
-
-		auto kernel = hblur_material_->GetVariable("gBlurKernel");
-
-		float blur_kernel[9];
-
-		float value;
-		float sigma = 32.0;
-		float sum = 0.0f;
-
-		for (int x = -4; x < 5; ++x){
-
-			value = std::expf(-(x*x) / (2.0f * sigma));
-
-			blur_kernel[x + 4] = value;
-
-			sum += value;
-
-		}
-
-		for (int x = 0; x < 9; ++x){
-
-			blur_kernel[x] /= sum;
-
-		}
-
-		if (kernel){
-
-			kernel->Set(&blur_kernel[0], sizeof(float) * 9);
-
-		}
-		
-	}
-
-	auto source = hblur_material_->GetResource("gSource");
-	auto width = hblur_material_->GetVariable("gWidth");
-	auto height = hblur_material_->GetVariable("gHeight");
-
-	if (source){
-
-		source->Set(g_buffer_->GetTexture(0)->GetView());
-
-	}
-
-	if (width){
-
-		width->Set(g_buffer_->GetWidth());
-
-	}
-
-	if (height){
-
-		height->Set(g_buffer_->GetHeight());
-
-	}
+	immediate_context_->Draw(6, 0);
 
 }

@@ -153,7 +153,7 @@ namespace gi_lib{
 		/// \brief Get the view to this resource.
 		/// Use this view to bind the texture to the graphic pipeline.
 		/// \return Returns a pointer to the resource view.
-		virtual ObjectPtr<IResourceView> GetView() = 0;
+		virtual ObjectPtr<IResourceView> GetView() const = 0;
 
 	};
 

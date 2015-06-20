@@ -113,9 +113,13 @@ namespace gi_lib{
 
 			void ComputeLighting(DX11Output& output);
 
-			void Finalize(DX11RenderTarget& render_target);
+			/// \brief Initialize tonemap-related objects.
+			void InitializeToneMap();
 
-			void InitializeTonemapping();
+			/// \brief Perform a tonemap to the specified source surface and output the result to the destination surface.
+			/// \param source HDR surface.
+			/// \param destination Destination render target.
+			void ToneMap(const DX11Texture2D& source, DX11RenderTarget& destination);
 
 			// Render context
 
@@ -137,11 +141,13 @@ namespace gi_lib{
 
 			// Post process
 
-			ObjectPtr<DX11Material> tonemapping_material_;							///< \brief Material used to perform tonemapping.
+			ObjectPtr<DX11Material> tonemapper_;									///< \brief Material used to perform tonemapping.
 
-			ObjectPtr<DX11Material> hblur_material_;								///< \brief Material used to perform the horizontal blur.
+			ObjectPtr<DX11Material::MaterialVariable> tonemap_exposure_;
 
-			ObjectPtr<DX11Material> vblur_material_;								///< \brief Material used to perform the vertical blur.
+			ObjectPtr<DX11Material::MaterialVariable> tonemap_vignette_;
+
+			ObjectPtr<DX11Material::MaterialResource> tonemap_source_;
 
 			unique_ptr<ID3D11DepthStencilState, COMDeleter> disable_depth_test_;	///< \brief Used to disable the depth testing.
 

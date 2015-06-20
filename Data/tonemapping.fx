@@ -1,28 +1,15 @@
-cbuffer PerFrame{
-
-	float gExposure;
-
-}
-
-struct VSOutput{
-
-	float4 position_ps : SV_Position;
-	float2 uv: TexCoord;
-
-};
-
-struct PSOutput{
-
-	float4 color : SV_Target;
-
-};
-
 //////////////////////////////////// VERTEX SHADER ////////////////////////////////////////
 
-VSOutput VSMain(uint vertex_id: SV_VertexID){
-	
-	VSOutput output;
+struct VSOut
+{
 
+	float4 position_ps : SV_Position;		// Position in projection space.
+	float2 uv : TexCoord;					// Texture coordinates.
+
+};
+
+void VSMain(uint vertex_id: SV_VertexID, out VSOut output){
+	
 	output.uv = float2((vertex_id << 1) & 2, 
 					   vertex_id & 2 );
 
@@ -30,15 +17,26 @@ VSOutput VSMain(uint vertex_id: SV_VertexID){
 								 0.0f, 
 								 1.0f );
 	
-	return output;
-
 }
 
 ////////////////////////////////// PIXEL SHADER /////////////////////////////////////////
 
+cbuffer PerFrame{
+
+	float gExposure;
+	float gVignette;
+
+}
+
+struct PSOut{
+
+	float4 color : SV_Target;
+
+};
+
 Texture2D gHDR;
 
-SamplerState hdr_sampler;
+SamplerState gHDRSampler;
 
 float Expose(float unexposed){
 
@@ -46,21 +44,17 @@ float Expose(float unexposed){
 
 }
 
-PSOutput PSMain(VSOutput input){
-
-	PSOutput output;
+void PSMain(VSOut input, out PSOut output){
 
 	float2 texcoord = float2(input.uv - 0.5);
 
-	float vignette = pow( 1.0 - dot(texcoord, texcoord), 2.0 );
+	float vignette = pow( 1.0 - dot(texcoord, texcoord), gVignette );
 
-	float4 unexposed = gHDR.Sample(hdr_sampler, input.uv) * vignette;
+	float4 unexposed = gHDR.Sample(gHDRSampler, input.uv) * vignette;
 
 	output.color.r = Expose(unexposed.r);
 	output.color.g = Expose(unexposed.g);
 	output.color.b = Expose(unexposed.b);
 	output.color.a = 1.0;
-
-	return output;
 
 }

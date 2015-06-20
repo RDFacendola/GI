@@ -46,7 +46,7 @@ namespace{
 		//Use this when importing model from 3ds max: fbx_material["3dsMax|Parameters|diff_color_map"]
 		BindTexture2D(resources,
 					  fbx_material["DiffuseColor"],
-					  material_instance->GetResource("ps_map"),
+					  material_instance->GetResource("gDiffuseMap"),
 					  base_directory);
 
 		// Okay
@@ -61,7 +61,7 @@ resources_(resources){
 
 	auto& app = Application::GetInstance();
 
-	base_material_ = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ app.GetDirectory() + L"Data\\deferred_material.fx" });
+	base_material_ = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ app.GetDirectory() + L"Data\\gbuffer.hlsl" });
 
 }
 

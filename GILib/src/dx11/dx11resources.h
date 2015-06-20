@@ -107,7 +107,7 @@ namespace gi_lib{
 
 			virtual unsigned int GetMipMapCount() const override;
 
-			virtual ObjectPtr<IResourceView> GetView() override;
+			virtual ObjectPtr<IResourceView> GetView() const override;
 
 			DXGI_FORMAT GetFormat() const;
 
@@ -556,10 +556,10 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<IResourceView> DX11Texture2D::GetView(){
+		inline ObjectPtr<IResourceView> DX11Texture2D::GetView() const{
 
-			return new DX11ResourceViewTemplate<DX11Texture2D>(this,
-				*shader_view_);
+			return new DX11ResourceViewTemplate<const DX11Texture2D>(this,
+																	 *shader_view_);
 
 		}
 
