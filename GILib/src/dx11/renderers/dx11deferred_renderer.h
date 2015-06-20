@@ -139,6 +139,10 @@ namespace gi_lib{
 
 			ObjectPtr<DX11Material> tonemapping_material_;							///< \brief Material used to perform tonemapping.
 
+			ObjectPtr<DX11Material> hblur_material_;								///< \brief Material used to perform the horizontal blur.
+
+			ObjectPtr<DX11Material> vblur_material_;								///< \brief Material used to perform the vertical blur.
+
 			unique_ptr<ID3D11DepthStencilState, COMDeleter> disable_depth_test_;	///< \brief Used to disable the depth testing.
 
 		};

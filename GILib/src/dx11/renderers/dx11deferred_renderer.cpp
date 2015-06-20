@@ -441,4 +441,63 @@ void DX11TiledDeferredRenderer::InitializeTonemapping(){
 
 	}	
 
+	// Blur
+	if (!hblur_material_){
+
+		hblur_material_ = new DX11Material(Material::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\hblur.fx" });
+
+		auto kernel = hblur_material_->GetVariable("gBlurKernel");
+
+		float blur_kernel[9];
+
+		float value;
+		float sigma = 32.0;
+		float sum = 0.0f;
+
+		for (int x = -4; x < 5; ++x){
+
+			value = std::expf(-(x*x) / (2.0f * sigma));
+
+			blur_kernel[x + 4] = value;
+
+			sum += value;
+
+		}
+
+		for (int x = 0; x < 9; ++x){
+
+			blur_kernel[x] /= sum;
+
+		}
+
+		if (kernel){
+
+			kernel->Set(&blur_kernel[0], sizeof(float) * 9);
+
+		}
+		
+	}
+
+	auto source = hblur_material_->GetResource("gSource");
+	auto width = hblur_material_->GetVariable("gWidth");
+	auto height = hblur_material_->GetVariable("gHeight");
+
+	if (source){
+
+		source->Set(g_buffer_->GetTexture(0)->GetView());
+
+	}
+
+	if (width){
+
+		width->Set(g_buffer_->GetWidth());
+
+	}
+
+	if (height){
+
+		height->Set(g_buffer_->GetHeight());
+
+	}
+
 }

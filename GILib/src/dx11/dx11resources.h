@@ -309,8 +309,6 @@ namespace gi_lib{
 
 				DX11MaterialVariable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset);
 
-			protected:
-
 				virtual void Set(const void * buffer, size_t size) override;
 
 			private:
