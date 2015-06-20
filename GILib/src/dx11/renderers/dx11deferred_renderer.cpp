@@ -162,55 +162,30 @@ TiledDeferredRenderer(arguments.scene){
 
 DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){}
 
-void DX11TiledDeferredRenderer::Draw(IOutput& output){
+void DX11TiledDeferredRenderer::Draw(ObjectPtr<RenderTarget> render_target){
 	
-	// The cast is safe as long as the client is not mixing different APIs.
-	auto& dx11output = static_cast<DX11Output&>(output);
-
 	// Draws only if there's a camera
 
 	if (GetScene().GetMainCamera()){
 		
-		auto render_target = resource_cast(dx11output.GetRenderTarget());
+		auto dx11_render_target = resource_cast(render_target);
 	
-		SetupLights();
+		auto width = dx11_render_target->GetWidth();
+		auto height = dx11_render_target->GetHeight();
 
-		DrawGBuffer(render_target->GetWidth(),
-					render_target->GetHeight());
+		DrawGBuffer(width, height);									// Scene -> GBuffer
 		
-		ToneMap(*resource_cast(g_buffer_->GetTexture(1)),
-				*render_target);
+		ComputeLighting(width, height);								// Scene, GBuffer, DepthBuffer -> LightBuffer
+
+		ToneMap(g_buffer_->GetTexture(0)->GetView(),				// LightBuffer -> Output
+				*dx11_render_target);
 
 	}
-
-	// Present the image
-	dx11output.Present();
 
 	// Restore the rendering context
 
 	immediate_context_->ClearState();
 	
-}
-
-void DX11TiledDeferredRenderer::SetupLights(){
-	
-	// TODO: Perform an actual light setup and remove the fake lights.
-
-	Light* light_ptr = light_array_->Map<Light>(*immediate_context_);
-
-	for (size_t light_index = 0; light_index < light_array_->GetElementCount(); ++light_index){
-
-		light_ptr->position[0] = light_index * 250.0f - light_array_->GetElementCount() * 125.0f;
-		light_ptr->position[1] = std::cosf(static_cast<float>(light_index)) * 50.0f + 75.0f;
-		light_ptr->position[2] = 0.0f;
-		light_ptr->position[3] = 1.0f;
-
-		++light_ptr;
-
-	}
-
-	light_array_->Unmap(*immediate_context_);
-
 }
 
 void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int height){
@@ -360,7 +335,63 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 
 }
 
-void DX11TiledDeferredRenderer::ComputeLighting(DX11Output& output){
+void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int height){
+
+	// Lazy initialization of the LightBuffer
+
+	if (!light_buffer_){
+
+		light_buffer_ = new DX11RenderTarget(width,
+											 height,
+											 { DXGI_FORMAT_R16G16B16A16_FLOAT });
+
+	}
+	else{
+
+		light_buffer_->Resize(width,
+							  height);
+
+	}
+	
+	immediate_context_->RSSetState(rasterizer_state_.get());
+
+	immediate_context_->OMSetDepthStencilState(disable_depth_test_.get(),
+											   0);
+
+	immediate_context_->OMSetBlendState(nullptr,
+										0,
+										0xFFFFFFFF);
+
+	// Set up LightBuffer render targets
+	
+	Color color;
+
+	ZeroMemory(&color, sizeof(color));
+
+	light_buffer_->ClearTargets(*immediate_context_,
+							color);
+
+	light_buffer_->Bind(*immediate_context_);
+
+	// 
+
+	// TODO: Perform an actual light setup and remove the fake lights.
+
+	Light* light_ptr = light_array_->Map<Light>(*immediate_context_);
+
+	for (size_t light_index = 0; light_index < light_array_->GetElementCount(); ++light_index){
+
+		light_ptr->position[0] = light_index * 250.0f - light_array_->GetElementCount() * 125.0f;
+		light_ptr->position[1] = std::cosf(static_cast<float>(light_index)) * 50.0f + 75.0f;
+		light_ptr->position[2] = 0.0f;
+		light_ptr->position[3] = 1.0f;
+
+		++light_ptr;
+
+	}
+
+	light_array_->Unmap(*immediate_context_);
+
 
 
 }
@@ -375,7 +406,7 @@ void DX11TiledDeferredRenderer::InitializeToneMap(){
 	
 }
 
-void DX11TiledDeferredRenderer::ToneMap(const DX11Texture2D& source, DX11RenderTarget& destination){
+void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX11RenderTarget& destination){
 
 	// Viewport
 	D3D11_VIEWPORT viewport;
@@ -388,7 +419,7 @@ void DX11TiledDeferredRenderer::ToneMap(const DX11Texture2D& source, DX11RenderT
 	viewport.TopLeftY = 0.0f;
 
 	// Update the tonemap resources
-	tonemap_source_->Set(source.GetView());
+	tonemap_source_->Set(source_view);
 	tonemap_vignette_->Set(5.0f);
 	tonemap_exposure_->Set(2.0f);
 

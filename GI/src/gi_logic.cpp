@@ -143,6 +143,8 @@ void GILogic::Update(const Time & time){
 
 	fly_camera->Update(time);
 	
-	deferred_renderer_->Draw(*output_);
+	deferred_renderer_->Draw(output_->GetRenderTarget());
 
+	output_->Refresh();
+	
 }

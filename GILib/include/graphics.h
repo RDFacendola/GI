@@ -121,9 +121,9 @@ namespace gi_lib{
 		/// \return Returns the scene the renderer refers to.
 		virtual const Scene& GetScene() const = 0;
 
-		/// \brief Draw the scene from the current main camera to the specified output.
-		/// \param output Output where the scene will be rendered.
-		virtual void Draw(IOutput& output) = 0;
+		/// \brief Draw the scene from the current main camera to the specified render target.
+		/// \param render_target Render target where the scene will be rendered.
+		virtual void Draw(ObjectPtr<RenderTarget> render_target) = 0;
 
 	protected:
 
@@ -176,6 +176,9 @@ namespace gi_lib{
 		/// \brief Get the render target associated to this output.
 		/// \return Returns the render target associated to this output.
 		virtual ObjectPtr<RenderTarget> GetRenderTarget() = 0;
+
+		/// \brief Refresh the output.
+		virtual void Refresh() = 0;
 
 	};
 

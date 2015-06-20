@@ -103,7 +103,7 @@ namespace gi_lib{
 			/// \brief No assignment operator.
 			DX11TiledDeferredRenderer& operator=(DX11TiledDeferredRenderer&) = delete;
 
-			virtual void Draw(IOutput& output) override;
+			virtual void Draw(ObjectPtr<RenderTarget> render_target) override;
 
 		private:
 
@@ -111,15 +111,15 @@ namespace gi_lib{
 
 			void DrawGBuffer(unsigned int width, unsigned int height);
 
-			void ComputeLighting(DX11Output& output);
+			void ComputeLighting(unsigned int width, unsigned int height);
 
 			/// \brief Initialize tonemap-related objects.
 			void InitializeToneMap();
 
 			/// \brief Perform a tonemap to the specified source surface and output the result to the destination surface.
-			/// \param source HDR surface.
+			/// \param source_view Shader view of the HDR surface.
 			/// \param destination Destination render target.
-			void ToneMap(const DX11Texture2D& source, DX11RenderTarget& destination);
+			void ToneMap(ObjectPtr<IResourceView> source_view, DX11RenderTarget& destination);
 
 			// Render context
 
@@ -138,6 +138,8 @@ namespace gi_lib{
 			// Deferred resources
 
 			ObjectPtr<DX11RenderTarget> g_buffer_;									///< \brief GBuffer.
+
+			ObjectPtr<DX11RenderTarget> light_buffer_;								///< \brief Light buffer.
 
 			// Post process
 

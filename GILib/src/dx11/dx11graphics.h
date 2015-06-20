@@ -52,9 +52,6 @@ namespace gi_lib{
 			/// \brief Default destructor.
 			~DX11Output();
 
-			/// \brief Send the backbuffer to the screen and flip the buffers.
-			void Present();
-
 			virtual void SetVideoMode(const VideoMode & video_mode) override;
 
 			virtual const VideoMode & GetVideoMode() const override;
@@ -72,6 +69,9 @@ namespace gi_lib{
 			virtual AntialiasingMode GetAntialiasing() const override;
 
 			virtual ObjectPtr<RenderTarget> GetRenderTarget() override;
+
+			/// \brief Send the backbuffer to the screen and flip the buffers.
+			virtual void Refresh() override;
 
 		private:
 
@@ -201,6 +201,13 @@ namespace gi_lib{
 		inline ObjectPtr<RenderTarget> DX11Output::GetRenderTarget(){
 
 			return render_target_;
+
+		}
+
+		inline void DX11Output::Refresh(){
+
+			swap_chain_->Present(IsVSync() ? 1 : 0,
+								 0);
 
 		}
 

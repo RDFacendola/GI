@@ -350,13 +350,6 @@ DX11Output::~DX11Output(){
 
 }
 
-void DX11Output::Present(){
-
-	swap_chain_->Present(IsVSync() ? 1 : 0,
-						 0);
-
-}
-
 void DX11Output::SetVideoMode(const VideoMode & video_mode){
 
 	video_mode_ = video_mode;
