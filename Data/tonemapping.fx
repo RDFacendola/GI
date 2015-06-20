@@ -1,23 +1,6 @@
 //////////////////////////////////// VERTEX SHADER ////////////////////////////////////////
 
-struct VSOut
-{
-
-	float4 position_ps : SV_Position;		// Position in projection space.
-	float2 uv : TexCoord;					// Texture coordinates.
-
-};
-
-void VSMain(uint vertex_id: SV_VertexID, out VSOut output){
-	
-	output.uv = float2((vertex_id << 1) & 2, 
-					   vertex_id & 2 );
-
-	output.position_ps = float4( output.uv * float2( 2.0, -2.0 ) + float2( -1.0f, 1.0f), 
-								 0.0f, 
-								 1.0f );
-	
-}
+#include "quad.hlsl"
 
 ////////////////////////////////// PIXEL SHADER /////////////////////////////////////////
 
@@ -38,9 +21,9 @@ Texture2D gHDR;
 
 SamplerState gHDRSampler;
 
-float Expose(float unexposed){
+float3 Expose(float3 unexposed, float vignette){
 
-	return saturate(1.0 - pow(2.718, -unexposed * gExposure));
+	return saturate(1.0 - pow(2.718, -unexposed * gExposure * vignette));
 
 }
 
@@ -50,11 +33,9 @@ void PSMain(VSOut input, out PSOut output){
 
 	float vignette = pow( 1.0 - dot(texcoord, texcoord), gVignette );
 
-	float4 unexposed = gHDR.Sample(gHDRSampler, input.uv) * vignette;
+	float4 unexposed = gHDR.Sample(gHDRSampler, input.uv);
 
-	output.color.r = Expose(unexposed.r);
-	output.color.g = Expose(unexposed.g);
-	output.color.b = Expose(unexposed.b);
+	output.color.rgb = Expose(unexposed.rgb, vignette);
 	output.color.a = 1.0;
 
 }
