@@ -34,8 +34,9 @@ namespace gi_lib{
 			DOMAIN_SHADER = 4u,			///< \brief Domain shader.
 			GEOMETRY_SHADER = 8u,		///< \brief Geometry shader.
 			PIXEL_SHADER = 16u,			///< \brief Pixel shader.
+			COMPUTE_SHADER = 32u,		///< \brief Compute shader.
 
-			ALL = 31u,					///< \brief All shaders (bitwise-or of the above)
+			ALL = 63u,					///< \brief All shaders (bitwise-or of the above)
 
 		};
 
@@ -118,17 +119,6 @@ namespace gi_lib{
 
 		};
 
-		/// \brief Description of a compute shader.
-		struct ComputeShaderReflection{
-
-			vector<ShaderBufferDesc> buffers;			///< \brief Buffers.
-
-			vector<ShaderResourceDesc> resources;		///< \brief Resources.
-
-			vector<ShaderSamplerDesc> samplers;			///< \brief Samplers.
-
-		};
-
 		/// \brief Shader type traits.
 		template <typename TShader>
 		struct ShaderTraits;
@@ -136,8 +126,6 @@ namespace gi_lib{
 		/// \brief Vertex shader type traits.
 		template<> struct ShaderTraits < ID3D11VertexShader > {
 
-			using TReflection = ShaderReflection;
-
 			static const ShaderType flag;		///< \brief Flag used to identify the shader type.
 
 			static const char* entry_point;		///< \brief Entry point.
@@ -151,15 +139,13 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11VertexShader** shader, TReflection* reflection, wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11VertexShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
 
 		/// \brief Hull shader type traits.
 		template<> struct ShaderTraits < ID3D11HullShader > {
 
-			using TReflection = ShaderReflection;
-
 			static const ShaderType flag;		///< \brief Flag used to identify the shader type.
 
 			static const char* entry_point;		///< \brief Entry point.
@@ -173,15 +159,13 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11HullShader** shader, TReflection* reflection, wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11HullShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
 
 		/// \brief Domain shader type traits.
 		template<> struct ShaderTraits < ID3D11DomainShader > {
-
-			using TReflection = ShaderReflection;
-
+			
 			static const ShaderType flag;		///< \brief Flag used to identify the shader type.
 
 			static const char* entry_point;		///< \brief Entry point.
@@ -195,15 +179,13 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11DomainShader** shader, TReflection* reflection, wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11DomainShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
 
 		/// \brief Geometry shader type traits.
 		template<> struct ShaderTraits < ID3D11GeometryShader > {
 			
-			using TReflection = ShaderReflection;
-
 			static const ShaderType flag;		///< \brief Flag used to identify the shader type.
 
 			static const char* entry_point;		///< \brief Entry point.
@@ -217,14 +199,12 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11GeometryShader** shader, TReflection* reflection, wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11GeometryShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
 
 		/// \brief Pixel shader type traits.
 		template<> struct ShaderTraits < ID3D11PixelShader > {
-
-			using TReflection = ShaderReflection;
 
 			static const ShaderType flag;		///< \brief Flag used to identify the shader type.
 
@@ -238,14 +218,14 @@ namespace gi_lib{
 			/// \param source_file Used to resolve #include directives.
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
-			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11PixelShader** shader, TReflection* reflection, wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11PixelShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
 
 		/// \brief Compute shader type traits.
 		template<> struct ShaderTraits < ID3D11ComputeShader > {
 
-			using TReflection = ComputeShaderReflection;
+			static const ShaderType flag;		///< \brief Flag used to identify the shader type.
 
 			static const char* entry_point;		///< \brief Entry point.
 
@@ -257,7 +237,7 @@ namespace gi_lib{
 			/// \param source_file Used to resolve #include directives.
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a shader reflection. Set to null to ignore the reflection.
-			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11ComputeShader** shader, TReflection* reflection, wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11ComputeShader** shader, ShaderReflection* reflection, wstring* errors);
 
 		};
 
@@ -331,7 +311,7 @@ namespace gi_lib{
 		/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 		/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
 		template <typename TShader>
-		HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, TShader** shader, typename ShaderTraits<TShader>::TReflection* reflection = nullptr, wstring* errors = nullptr);
+		HRESULT MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, TShader** shader, ShaderReflection* reflection = nullptr, wstring* errors = nullptr);
 
 		/// \brief Create a sampler state.
 		/// \param device Device used to create the sampler.
@@ -437,7 +417,7 @@ HRESULT gi_lib::dx11::Compile(const string& HLSL, const string& source_file, ID3
 }
 
 template <typename TShader>
-inline HRESULT gi_lib::dx11::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, TShader** shader, typename ShaderTraits<TShader>::TReflection* reflection, wstring* errors){
+inline HRESULT gi_lib::dx11::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, TShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	return ShaderTraits<TShader>::MakeShader(device, HLSL, source_file, shader, reflection, errors);
 
