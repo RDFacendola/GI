@@ -47,7 +47,7 @@ namespace{
 
 		case D3D_SRV_DIMENSION_BUFFER:
 
-			return ShaderResourceType::STRUCTURED_ARRAY;
+			return ShaderResourceType::BUFFER;
 
 		default:
 
