@@ -189,7 +189,8 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<RenderTarget> render_target){
 		
 		ComputeLighting(width, height);								// Scene, GBuffer, DepthBuffer -> LightBuffer
 
-		
+		StartPostProcess();
+
 		ToneMap(gbuffer_->GetTexture(0)->GetView(),					// LightBuffer -> Output
 				*dx11_render_target);
 
@@ -336,7 +337,8 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 
 		light_buffer_ = new DX11RenderTarget(width,
 											 height,
-											 { DXGI_FORMAT_R16G16B16A16_FLOAT });
+											 { DXGI_FORMAT_R16G16B16A16_FLOAT },
+											 true);
 
 	}
 	else{

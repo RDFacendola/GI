@@ -118,7 +118,7 @@ namespace gi_lib{
 
 			ObjectPtr<DX11RenderTarget> light_buffer_;								///< \brief Light buffer.
 
-			// Post process
+			// Post process - Tonemapping
 
 			ObjectPtr<DX11Material> tonemapper_;									///< \brief Material used to perform tonemapping.
 

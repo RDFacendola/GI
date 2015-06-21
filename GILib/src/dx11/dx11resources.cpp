@@ -541,6 +541,16 @@ DX11Texture2D::DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView&
 
 }
 
+DX11Texture2D::DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView& shader_view, ID3D11UnorderedAccessView& unordered_view){
+
+	texture_.reset(&texture);
+	shader_view_.reset(&shader_view);
+	unordered_access_.reset(&unordered_view);
+
+	UpdateDescription();
+
+}
+
 size_t DX11Texture2D::GetSize() const{
 
 	auto level_size = width_ * height_ * bits_per_pixel_ * kBitOverByte;	//Size of the most detailed level.
@@ -576,14 +586,15 @@ DX11RenderTarget::DX11RenderTarget(ID3D11Texture2D & target){
 
 }
 
-DX11RenderTarget::DX11RenderTarget(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format){
+DX11RenderTarget::DX11RenderTarget(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format, bool unordered_access){
 	
 	zstencil_ = nullptr;
 	zstencil_view_ = nullptr;
 
 	Initialize(width,
 			   height,
-			   target_format);
+			   target_format,
+			   unordered_access);
 	
 }
 
@@ -666,7 +677,7 @@ bool DX11RenderTarget::Resize(unsigned int width, unsigned int height){
 
 	}
 
-	// Naive approach: discard the old targets and create the new ones
+	// Naive approach: discard the old targets and create the new ones preserving the old settings
 
 	std::vector<DXGI_FORMAT> target_format;
 
@@ -676,9 +687,12 @@ bool DX11RenderTarget::Resize(unsigned int width, unsigned int height){
 
 	}
 
+	bool unordered_access = textures_.front()->GetIOView() != nullptr;
+
 	Initialize(width, 
 			   height,
-			   target_format);
+			   target_format,
+			   unordered_access);
 
 	return true;
 
@@ -750,7 +764,7 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
 	
 }
 
-void DX11RenderTarget::Initialize(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format){
+void DX11RenderTarget::Initialize(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format, bool unordered_access){
 
 	ResetBuffers();
 
@@ -766,6 +780,7 @@ void DX11RenderTarget::Initialize(unsigned int width, unsigned int height, const
 	ID3D11Texture2D* texture;
 	ID3D11RenderTargetView* rtv;
 	ID3D11ShaderResourceView* srv;
+	ID3D11UnorderedAccessView* uav = nullptr;
 		
 	// Create the render target surfaces.
 
@@ -777,11 +792,23 @@ void DX11RenderTarget::Initialize(unsigned int width, unsigned int height, const
  									   format,
 									   &texture,
 									   &rtv,
-									   &srv));
+									   &srv,
+									   unordered_access ? &uav : nullptr));
 		
-		textures_.push_back(new DX11Texture2D(*texture,
-											  *srv));
+		if (uav){
 
+			textures_.push_back(new DX11Texture2D(*texture,
+												  *srv,
+												  *uav));
+
+		}
+		else{
+
+			textures_.push_back(new DX11Texture2D(*texture,
+												  *srv));
+
+		}
+		
 		target_views_.push_back(rtv);
 
 	}
@@ -1189,8 +1216,7 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 
 	string code = to_string(file_system.Read(bundle.file_name));
 
-	string file_name = string(bundle.file_name.begin(), 
-							  bundle.file_name.end());
+	string file_name = to_string(bundle.file_name);
 
 	auto rollback = make_scope_guard([&](){
 

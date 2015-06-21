@@ -48,6 +48,21 @@ namespace gi_lib{
 
 		};
 
+		/// \brief Base interface for DirectX11 resources that can be bound as shader resources.
+		/// \author Raffaele D. Facendola
+		class DX11ResourceIOView : public IResourceIOView {
+
+		public:
+
+			/// \brief Virtual destructor.
+			virtual ~DX11ResourceIOView(){};
+
+			/// \brief Get the shader resource view associated to this shader resource.
+			/// \return Returns the shader resource view associated to this shader resource.
+			virtual ID3D11UnorderedAccessView& GetUnorderedAccessView() = 0;
+
+		};
+
 		/// \brief Concrete templated resource view class.
 		/// This class will hold a strong reference to a resource (so it is is not released while the view is still being used somewhere)
 		/// and its shader resource view.
@@ -58,14 +73,12 @@ namespace gi_lib{
 
 			/// \brief Create a new resource view from a concrete resource type.
 			/// \param resource Resource associated to the view.
-			/// \param resource_view Shared resource view relative to the specified resource.
+			/// \param resource_view Shader resource view relative to the specified resource.
 			DX11ResourceViewTemplate(ObjectPtr<TResource> resource, ID3D11ShaderResourceView& resource_view);
 
 			/// \brief Virtual destructor.
 			virtual ~DX11ResourceViewTemplate();
 
-			/// \brief Get the resource's shader view.
-			/// \return Returns the resource's shader view.
 			virtual ID3D11ShaderResourceView& GetShaderView() override;
 
 		private:
@@ -73,6 +86,32 @@ namespace gi_lib{
 			ObjectPtr<TResource> resource_;				///< \brief Strong reference to the resource.
 
 			ID3D11ShaderResourceView& resource_view_;	///< \brief Shader resource view.
+
+		};
+
+		/// \brief Concrete templated resource IO view class.
+		/// This class will hold a strong reference to a resource (so it is is not released while the view is still being used somewhere)
+		/// and its unordered access view.
+		template <typename TResource>
+		class DX11ResourceIOViewTemplate : public DX11ResourceIOView{
+
+		public:
+
+			/// \brief Create a new resource view from a concrete resource type.
+			/// \param resource Resource associated to the view.
+			/// \param unordered_access_view Unordered access view relative to the specified resource.
+			DX11ResourceIOViewTemplate(ObjectPtr<TResource> resource, ID3D11UnorderedAccessView& unordered_access_view);
+
+			/// \brief Virtual destructor.
+			virtual ~DX11ResourceIOViewTemplate();
+
+			virtual ID3D11UnorderedAccessView& GetUnorderedAccessView() override;
+
+		private:
+
+			ObjectPtr<TResource> resource_;					///< \brief Strong reference to the resource.
+
+			ID3D11UnorderedAccessView& unordered_access_;	///< \brief Shader resource view.
 
 		};
 
@@ -91,6 +130,12 @@ namespace gi_lib{
 			/// \param texture The texture to bind.
 			/// \param shader_view The view used to bind the texture to the shader.
 			DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView& shader_view);
+
+			/// \brief Create a new texture with unordered access.
+			/// \param texture The texture to bind.
+			/// \param shader_view The view used to bind the texture to the shader.
+			/// \param unordered_view The view used to bind the texture as unordered access.
+			DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView& shader_view, ID3D11UnorderedAccessView& unordered_view);
 			
 			/// \brief Create a new texture from an existing DirectX11 texture.
 			/// \param texture The DirectX11 texture.
@@ -109,25 +154,29 @@ namespace gi_lib{
 
 			virtual ObjectPtr<IResourceView> GetView() const override;
 
+			virtual ObjectPtr<IResourceIOView> GetIOView() const override;
+
 			DXGI_FORMAT GetFormat() const;
 
 		private:
 
 			void UpdateDescription();
 
-			unique_ptr<ID3D11Texture2D, COMDeleter> texture_;					///< \brief Pointer to the actual texture.
+			unique_ptr<ID3D11Texture2D, COMDeleter> texture_;						///< \brief Pointer to the actual texture.
 
-			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;		///< \brief Pointer to the shader resource view of the texture.
+			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;			///< \brief Pointer to the shader resource view of the texture.
 
-			unsigned int width_;												///< \brief Width of the texture, in pixels.
+			unique_ptr<ID3D11UnorderedAccessView, COMDeleter> unordered_access_;	///< \brief Pointer to the unordered access view of the texture. May be null.
 
-			unsigned int height_;												///< \brief Height of the texture, in pixels.
+			unsigned int width_;													///< \brief Width of the texture, in pixels.
 
-			unsigned int bits_per_pixel_;										///< \brief Bits per pixel.
+			unsigned int height_;													///< \brief Height of the texture, in pixels.
 
-			unsigned int mip_levels_;											///< \brief Mip levels.
+			unsigned int bits_per_pixel_;											///< \brief Bits per pixel.
+				
+			unsigned int mip_levels_;												///< \brief Mip levels.
 
-			DXGI_FORMAT format_;												///< \brief Surface format.
+			DXGI_FORMAT format_;													///< \brief Surface format.
 
 		};
 
@@ -146,7 +195,8 @@ namespace gi_lib{
 			/// \param width Width of each target.
 			/// \param height Height of each target.
 			/// \param target_format Describe the format of each target.
-			DX11RenderTarget(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format);
+			/// \param unordered_access Whether the render target shall be bound as unordered access for a compute shader.
+			DX11RenderTarget(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format, bool unordered_access = false);
 
 			virtual ~DX11RenderTarget();
 
@@ -202,7 +252,7 @@ namespace gi_lib{
 			/// \param width The width of each texture.
 			/// \param height The height of each texture.
 			/// \param target_format The format of each texture.
-			void Initialize(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format);
+			void Initialize(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format, bool unordered_access);
 
 			vector<ObjectPtr<DX11Texture2D>> textures_;
 
@@ -530,6 +580,23 @@ namespace gi_lib{
 
 		}
 
+		/////////////////////////////// DX11 RESOURCE IO VIEW TEMPLATE ///////////////////////////////
+
+		template <typename TResource>
+		inline DX11ResourceIOViewTemplate<TResource>::DX11ResourceIOViewTemplate(ObjectPtr<TResource> resource, ID3D11UnorderedAccessView& unordered_access) :
+			resource_(resource),
+			unordered_access_(unordered_access){}
+
+		template <typename TResource>
+		inline DX11ResourceIOViewTemplate<TResource>::~DX11ResourceIOViewTemplate(){}
+
+		template <typename TResource>
+		inline ID3D11UnorderedAccessView& DX11ResourceIOViewTemplate<TResource>::GetUnorderedAccessView(){
+
+			return unordered_access_;
+
+		}
+		
 		/////////////////////////////// DX11 TEXTURE2D ///////////////////////////////
 
 		inline unsigned int DX11Texture2D::GetWidth() const{
@@ -560,6 +627,15 @@ namespace gi_lib{
 
 			return new DX11ResourceViewTemplate<const DX11Texture2D>(this,
 																	 *shader_view_);
+
+		}
+
+		inline ObjectPtr<IResourceIOView> DX11Texture2D::GetIOView() const{
+
+			return unordered_access_ ?
+				   new DX11ResourceIOViewTemplate<const DX11Texture2D>(this,
+																	   *unordered_access_) :
+				   nullptr;
 
 		}
 

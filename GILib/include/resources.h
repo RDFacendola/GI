@@ -31,6 +31,7 @@ namespace gi_lib{
 
 	class IResource;
 	class IResourceView;
+	class IResourceIOView;
 
 	class Texture2D;
 	class RenderTarget;
@@ -99,7 +100,7 @@ namespace gi_lib{
 
 	};
 
-	/// \brief A resource view, used to bind resources to the graphic pipeline.
+	/// \brief A resource view, used to bind resources to the graphic pipeline (read-only).
 	/// Resource views are reference counted.
 	/// \author Raffaele D. Facendola
 	class IResourceView : public Object{
@@ -116,6 +117,24 @@ namespace gi_lib{
 
 	};
 
+
+	/// \brief A resource view, used to bind resources to the graphic pipeline (read-write).
+	/// Resource views are reference counted.
+	/// \author Raffaele D. Facendola
+	class IResourceIOView : public Object{
+
+	public:
+
+		/// \brief Needed for virtual classes.
+		virtual ~IResourceIOView(){}
+
+	protected:
+
+		/// \brief Protected constructor. Prevent instantiation.
+		IResourceIOView(){}
+
+	};
+
 	/// \brief Base interface for plain textures.
 	/// \author Raffaele D. Facendola.
 	class Texture2D : public IResource{
@@ -123,6 +142,7 @@ namespace gi_lib{
 	public:
 
 		/// \brief Cached structure used to load a texture 2D from file.	
+		/// The texture is guaranteed to be read-only.
 		struct FromFile{
 
 			USE_CACHE;
@@ -151,9 +171,14 @@ namespace gi_lib{
 		virtual unsigned int GetMipMapCount() const = 0;
 
 		/// \brief Get the view to this resource.
-		/// Use this view to bind the texture to the graphic pipeline.
+		/// Use this view to bind the texture to the graphic pipeline (read-only).
 		/// \return Returns a pointer to the resource view.
 		virtual ObjectPtr<IResourceView> GetView() const = 0;
+
+		/// \brief Get the IO view to this resource.
+		/// Use this view to bind the texture to the graphic pipeline (read-write).
+		/// \return Returns a pointer to the resource view.
+		virtual ObjectPtr<IResourceIOView> GetIOView() const = 0;
 
 	};
 

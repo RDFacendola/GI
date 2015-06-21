@@ -495,14 +495,15 @@ HRESULT gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width,
 
 }
 
-HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11Texture2D** texture, ID3D11RenderTargetView** render_target_view, ID3D11ShaderResourceView** shader_resource_view, bool autogenerate_mips){
+HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11Texture2D** texture, ID3D11RenderTargetView** render_target_view, ID3D11ShaderResourceView** shader_resource_view, ID3D11UnorderedAccessView** unordered_access_view, bool autogenerate_mips){
 
-	ID3D11RenderTargetView * rtv = nullptr;
-	ID3D11ShaderResourceView * srv = nullptr;
+	ID3D11RenderTargetView* rtv = nullptr;
+	ID3D11ShaderResourceView* srv = nullptr;
+	ID3D11UnorderedAccessView* uav = nullptr;
 
-	auto cleanup = make_scope_guard([&texture, &rtv, &srv](){
+	auto cleanup = make_scope_guard([&texture, &rtv, &srv, &uav](){
 
-		windows::release_com({*texture, rtv, srv});
+		windows::release_com({*texture, rtv, srv, uav});
 		
 	});
 
@@ -513,7 +514,8 @@ HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width,
 	desc.ArraySize = 1;
 	
 	desc.BindFlags = (render_target_view ? D3D11_BIND_RENDER_TARGET : 0 ) |
-					 (shader_resource_view ? D3D11_BIND_SHADER_RESOURCE : 0);
+					 (shader_resource_view ? D3D11_BIND_SHADER_RESOURCE : 0) |
+					 (unordered_access_view ? D3D11_BIND_UNORDERED_ACCESS : 0);
 
 	desc.CPUAccessFlags = 0;
 	desc.Format = format;
@@ -529,16 +531,47 @@ HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width,
 										  nullptr,
 										  texture));
 
-	RETURN_ON_FAIL(device.CreateRenderTargetView(reinterpret_cast<ID3D11Resource*>(*texture),
-												 nullptr,
-												 &rtv));
+	if (render_target_view){
+		
+		RETURN_ON_FAIL(device.CreateRenderTargetView(reinterpret_cast<ID3D11Resource*>(*texture),
+													 nullptr,
+													 &rtv));
 
-	RETURN_ON_FAIL(device.CreateShaderResourceView(reinterpret_cast<ID3D11Resource*>(*texture),
-												   nullptr,
-												   &srv));
+	}
+	
+	if (shader_resource_view){
 
-	*render_target_view = rtv;
-	*shader_resource_view = srv;
+		RETURN_ON_FAIL(device.CreateShaderResourceView(reinterpret_cast<ID3D11Resource*>(*texture),
+													   nullptr,
+													   &srv));
+
+	}
+	
+	if (unordered_access_view){
+		
+		RETURN_ON_FAIL(device.CreateUnorderedAccessView(reinterpret_cast<ID3D11Resource*>(*texture),
+														nullptr,
+														&uav));
+
+	}
+	
+	if (render_target_view){
+
+		*render_target_view = rtv;
+
+	}
+	
+	if (shader_resource_view){
+
+		*shader_resource_view = srv;
+
+	}
+	
+	if (unordered_access_view){
+
+		*unordered_access_view = uav;
+
+	}
 
 	cleanup.Dismiss();
 
