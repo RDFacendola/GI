@@ -488,11 +488,21 @@ DX11Graphics::DX11Graphics(): Graphics(){
 	THROW_ON_FAIL(factory->EnumAdapters(kPrimaryOutputIndex,
 										&adapter));
 
+#ifdef _DEBUG
+
+	unsigned int device_flags = D3D11_CREATE_DEVICE_DEBUG;
+
+#else
+
+	unsigned int device_flags = 0;
+	
+#endif
+
 	//DXGI Device
 	THROW_ON_FAIL(D3D11CreateDevice(kDefaultAdapter,
 									D3D_DRIVER_TYPE_HARDWARE,
 									0,
-									0,
+									device_flags,
 									&kFeatureLevel,
 									1,
 									D3D11_SDK_VERSION,
