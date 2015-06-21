@@ -48,7 +48,7 @@ namespace gi_lib{
 			TEXTURE_2D,			///< \brief 2D texture.
 			TEXTURE_3D,			///< \brief 3D texture.
 			TEXTURE_CUBE,		///< \brief Cube texture.
-			STRUCTURED_ARRAY	///< \brief Strongly-typed array.
+			BUFFER				///< \brief Generic buffer.
 
 		};
 
@@ -84,7 +84,7 @@ namespace gi_lib{
 
 		};
 
-		/// \brief Description of a shader resource (textures, structured buffers, uavs, ...).
+		/// \brief Description of a shader resource (textures, structured buffers, ...).
 		struct ShaderResourceDesc{
 
 			string name;								///< \brief Name of the resource.
@@ -92,6 +92,17 @@ namespace gi_lib{
 			ShaderResourceType type;					///< \brief Type of the resource.
 
 			unsigned int elements;						///< \brief Elements in case of a resource array.
+
+			ShaderType shader_usage;					///< \brief Shader using this resource.
+
+		};
+
+		/// \brief Description of a shader unordered resource (UAVs)
+		struct ShaderUnorderedDesc{
+
+			string name;								///< \brief Name of the unordered resource.
+
+			ShaderResourceType type;					///< \brief Type of the resource.
 
 			ShaderType shader_usage;					///< \brief Shader using this resource.
 
@@ -116,6 +127,8 @@ namespace gi_lib{
 			vector<ShaderResourceDesc> resources;		///< \brief Resources.
 
 			vector<ShaderSamplerDesc> samplers;			///< \brief Samplers.
+
+			vector<ShaderUnorderedDesc> unordered;		///< \brief Unordered resources.
 
 		};
 

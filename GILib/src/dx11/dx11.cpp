@@ -90,9 +90,9 @@ namespace{
 							   resources.end(),
 							   [&input_desc](const TType& desc){
 
-			return desc.name == input_desc.Name;
+									return desc.name == input_desc.Name;
 
-		});
+							   });	
 
 		if (it == resources.end()){
 
@@ -146,10 +146,9 @@ namespace{
 
 	}
 
-	/// \brief Reflect a texture.
-	/// \param reflector Reflector used to perform the reflection.
+	/// \brief Reflect a resource.
 	/// \param input_desc Description of the shader input.
-	/// \return Return the description of the reflected texture.
+	/// \return Return the description of the reflected resource.
 	ShaderResourceDesc ReflectResource(const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
 
 		return ShaderResourceDesc{ input_desc.Name,
@@ -159,6 +158,17 @@ namespace{
 
 	}
 
+	/// \brief Reflect a unordered access resource.
+	/// \param input_desc Description of the shader input.
+	/// \return Return the description of the reflected unordered access.
+	ShaderUnorderedDesc ReflectUnordered(const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
+
+		return ShaderUnorderedDesc{ input_desc.Name,
+								    SRVDimensionToShaderResourceType(input_desc.Dimension),
+								    ShaderType::NONE };
+
+	}
+	
 	/// \brief Reflect a sampler.
 	/// \param reflector Reflector used to perform the reflection.
 	/// \param input_desc Description of the shader input.
@@ -211,6 +221,7 @@ namespace{
 				}
 				case D3D_SIT_TEXTURE:
 				case D3D_SIT_STRUCTURED:
+				case D3D_SIT_BYTEADDRESS:
 				{
 
 					// Shader resources
@@ -236,9 +247,19 @@ namespace{
 				}
 
 				case D3D_SIT_UAV_RWTYPED:
+				case D3D_SIT_UAV_RWSTRUCTURED:
+				case D3D_SIT_UAV_RWBYTEADDRESS:
+				case D3D_SIT_UAV_APPEND_STRUCTURED:
+				case D3D_SIT_UAV_CONSUME_STRUCTURED:
+				case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
 				{
 
+					// UAV
+					Reflect(resource_desc,
+							ReflectUnordered,
+							reflection.unordered).shader_usage |= ShaderTraits<TShader>::flag;
 
+					break;
 
 				}
 
