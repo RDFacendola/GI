@@ -591,10 +591,11 @@ DX11RenderTarget::DX11RenderTarget(unsigned int width, unsigned int height, cons
 	zstencil_ = nullptr;
 	zstencil_view_ = nullptr;
 
+	unordered_access_ = unordered_access;
+
 	Initialize(width,
 			   height,
-			   target_format,
-			   unordered_access);
+			   target_format);
 	
 }
 
@@ -687,12 +688,9 @@ bool DX11RenderTarget::Resize(unsigned int width, unsigned int height){
 
 	}
 
-	bool unordered_access = textures_.front()->GetIOView() != nullptr;
-
 	Initialize(width, 
 			   height,
-			   target_format,
-			   unordered_access);
+			   target_format);
 
 	return true;
 
@@ -764,7 +762,7 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
 	
 }
 
-void DX11RenderTarget::Initialize(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format, bool unordered_access){
+void DX11RenderTarget::Initialize(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format){
 
 	ResetBuffers();
 
@@ -793,7 +791,7 @@ void DX11RenderTarget::Initialize(unsigned int width, unsigned int height, const
 									   &texture,
 									   &rtv,
 									   &srv,
-									   unordered_access ? &uav : nullptr));
+									   unordered_access_ ? &uav : nullptr));
 		
 		if (uav){
 
@@ -1173,7 +1171,7 @@ void DX11Material::InstanceImpl::CommitResources(){
 					resource_view = resources_[resource_index];
 
 					resource_views[bind_point] = resource_view ?
-												 &resource_view->GetShaderView() :
+												 resource_view->GetShaderView() :
 												 nullptr;
 
 					++bind_point;

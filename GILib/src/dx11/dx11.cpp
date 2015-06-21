@@ -235,6 +235,13 @@ namespace{
 
 				}
 
+				case D3D_SIT_UAV_RWTYPED:
+				{
+
+
+
+				}
+
 			}
 
 		}
