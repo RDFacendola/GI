@@ -46,14 +46,26 @@ material_(new DX11Material(Material::Instantiate{ args.base->GetMaterial() })){
 
 }
 
+void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Affine3f& view, const Matrix4f& projection){
+
+	if (world_view_proj_){
+
+		world_view_proj_->Set((projection * view * world).matrix());
+
+	}
+
+	if (world_){
+
+		world_->Set(world.matrix());
+
+	}
+
+}
+
 void DX11DeferredRendererMaterial::Setup(){
 
 	world_view_proj_ = material_->GetVariable("gWorldViewProj");
-	world_view_ = material_->GetVariable("gWorldView");
 	world_ = material_->GetVariable("gWorld");
-
-	eye_position_ = material_->GetVariable("gEye");
-	light_array_ = material_->GetResource("gLights");
 
 }
 
@@ -196,15 +208,15 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 	if (!gbuffer_){
 
 		gbuffer_ = new DX11RenderTarget(width,
-										 height,
-										 { DXGI_FORMAT_R16G16B16A16_FLOAT,
-										   DXGI_FORMAT_R16G16B16A16_FLOAT });
+										height,
+										{ DXGI_FORMAT_R16G16B16A16_FLOAT,
+										  DXGI_FORMAT_R16G16B16A16_FLOAT });
 
 	}
 	else{
 
 		gbuffer_->Resize(width,
-						  height);
+						 height);
 		
 	}
 
@@ -246,8 +258,8 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 	
 	float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 
-	Matrix4f world_matrix;
-	Matrix4f view_matrix;
+	Affine3f world_matrix;
+	Affine3f view_matrix;
 	Matrix4f projection_matrix;
 
 	Matrix4f world_view_matrix;
@@ -259,7 +271,7 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 
 	auto& camera = *scene.GetMainCamera();
 
-	view_matrix = camera.GetViewTransform().matrix();
+	view_matrix = camera.GetViewTransform();
 
 	projection_matrix = ComputePerspectiveProjectionLH(camera.GetFieldOfView(),
 													   aspect_ratio,
@@ -294,22 +306,12 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 
 				// Fill the constant buffers
 
-				world_matrix = drawable.GetComponent<TransformComponent>()->GetWorldTransform().matrix();
+				world_matrix = drawable.GetComponent<TransformComponent>()->GetWorldTransform();
 
-				world_view_matrix = view_matrix * world_matrix;
-
-				material->SetWorldViewProjection(projection_matrix * world_view_matrix);
-
-				material->SetWorldView(world_view_matrix);
-
-				material->SetWorld(world_matrix);
-
-				material->SetView(view_matrix);
-
-				material->SetEyePosition(camera.GetComponent<TransformComponent>()->GetWorldTransform().matrix().col(3));
-
-				material->SetLights(light_array_->GetView());
-
+				material->SetMatrix(world_matrix,
+									view_matrix,
+									projection_matrix);
+				
 				// Bind the material
 
 				material->Commit(*immediate_context_);

@@ -37,27 +37,9 @@ namespace gi_lib{
 
 			virtual ObjectPtr<const Material> GetMaterial() const override;
 
-			/// \brief Set the world-view-projection matrix.
-			/// \param world_view_proj The value of the world-view-projection matrix.
-			void SetWorldViewProjection(const Matrix4f& world_view_proj);
-
-			/// \brief Set the world-view matrix.
-			/// \param world_view The value of the world-view matrix.
-			void SetWorldView(const Matrix4f& world_view);
-
-			/// \brief Set the world matrix.
-			/// \param world The value of the world matrix.
-			void SetWorld(const Matrix4f& world);
-
-			/// \brief Set the view matrix.
-			/// \param world The value of the view matrix.
-			void SetView(const Matrix4f& view);
-
+			/// \brief Set the matrices needed to transform the object.
+			void SetMatrix(const Affine3f& world, const Affine3f& view, const Matrix4f& projection);
 			
-			void SetEyePosition(const Vector4f& eye_position);
-
-			void SetLights(ObjectPtr<IResourceView> light_resource);
-
 			/// \brief Commit all the constant buffers and bind the material to the pipeline.
 			void Commit(ID3D11DeviceContext& context);
 
@@ -72,15 +54,7 @@ namespace gi_lib{
 
 			ObjectPtr<Material::MaterialVariable> world_view_proj_;		///< \brief Projection * View * World matrix product.
 
-			ObjectPtr<Material::MaterialVariable> world_view_;			///< \brief World * View matrix product.
-
 			ObjectPtr<Material::MaterialVariable> world_;				///< \brief World matrix.
-
-			ObjectPtr<Material::MaterialVariable> view_;				///< \brief View matrix.
-
-			ObjectPtr<Material::MaterialVariable> eye_position_;		///< \brief Position of the eye.
-
-			ObjectPtr<Material::MaterialResource> light_array_;			///< \brief Light array (position in view space).
 
 		};
 
@@ -174,79 +148,18 @@ namespace gi_lib{
 
 		}
 
-		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetWorldViewProjection(const Matrix4f& world_view_proj){
-
-			if (world_view_proj_){
-
-				world_view_proj_->Set(world_view_proj);
-
-			}
-
-		}
-
-		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetWorldView(const Matrix4f& world_view){
-
-			if (world_view_){
-
-				world_view_->Set(world_view);
-
-			}
-			
-		}
-		
-		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetWorld(const Matrix4f& world){
-
-			if (world_){
-
-				world_->Set(world);
-
-			}
-			
-		}
-
-		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetView(const Matrix4f& view){
-
-			if (view_){
-
-				view_->Set(view);
-
-			}
-
-		}
-	
-		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetEyePosition(const Vector4f& eye_position){
-
-			if (eye_position_){
-
-				eye_position_->Set(eye_position);
-
-			}
-
-		}
-
-		inline void gi_lib::dx11::DX11DeferredRendererMaterial::SetLights(ObjectPtr<IResourceView> light_resource){
-
-			if (light_array_){
-
-				light_array_->Set(light_resource);
-
-			}
-
-		}
-
 		inline void gi_lib::dx11::DX11DeferredRendererMaterial::Commit(ID3D11DeviceContext& context){
 
 			material_->Commit(context);
 
-		}
+		}	
 
-		inline size_t gi_lib::dx11::DX11DeferredRendererMaterial::GetSize() const
-		{
+		inline size_t gi_lib::dx11::DX11DeferredRendererMaterial::GetSize() const{
 
 			return material_->GetSize();
 
 		}
-		
+
 	}
 
 }
