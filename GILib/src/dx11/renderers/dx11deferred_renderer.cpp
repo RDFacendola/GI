@@ -177,7 +177,8 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<RenderTarget> render_target){
 		
 		ComputeLighting(width, height);								// Scene, GBuffer, DepthBuffer -> LightBuffer
 
-		ToneMap(g_buffer_->GetTexture(0)->GetView(),				// LightBuffer -> Output
+		
+		ToneMap(gbuffer_->GetTexture(0)->GetView(),					// LightBuffer -> Output
 				*dx11_render_target);
 
 	}
@@ -192,9 +193,9 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 
 	// Lazy initialization of the GBuffer
 
-	if (!g_buffer_){
+	if (!gbuffer_){
 
-		g_buffer_ = new DX11RenderTarget(width,
+		gbuffer_ = new DX11RenderTarget(width,
 										 height,
 										 { DXGI_FORMAT_R16G16B16A16_FLOAT,
 										   DXGI_FORMAT_R16G16B16A16_FLOAT });
@@ -202,24 +203,14 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 	}
 	else{
 
-		g_buffer_->Resize(width,
+		gbuffer_->Resize(width,
 						  height);
 		
 	}
 
-	// Viewport
-
-	D3D11_VIEWPORT viewport;
-
-	viewport.Width = static_cast<float>(width);
-	viewport.Height = static_cast<float>(height);
-	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
-	viewport.TopLeftX = 0.0f;
-	viewport.TopLeftY = 0.0f;
-
-	immediate_context_->RSSetViewports(1,
-									   &viewport);
+	SetViewport(*immediate_context_,
+				width,
+				height);
 
 	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -234,7 +225,7 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 
 	// Set up render GBuffer render targets
 
-	g_buffer_->ClearDepthStencil(*immediate_context_,
+	gbuffer_->ClearDepthStencil(*immediate_context_,
 								 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 								 1.0f,
 								 0);
@@ -246,10 +237,10 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 	color.color.green = 0.1f;
 	color.color.blue = 0.1f;
 
-	g_buffer_->ClearTargets(*immediate_context_,
+	gbuffer_->ClearTargets(*immediate_context_,
 							color);
 
-	g_buffer_->Bind(*immediate_context_);
+	gbuffer_->Bind(*immediate_context_);
 
 	// TODO: Clean this crap and minimize state changes
 	
@@ -396,6 +387,25 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 
 }
 
+void DX11TiledDeferredRenderer::StartPostProcess(){
+
+	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	immediate_context_->RSSetState(nullptr);
+
+	immediate_context_->OMSetDepthStencilState(disable_depth_test_.get(),
+											   0);
+
+	immediate_context_->OMSetBlendState(nullptr, 0, 0xFFFFFFFF);
+
+	immediate_context_->IASetVertexBuffers(0, 0, nullptr, 0, 0);
+
+	immediate_context_->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0);
+
+	immediate_context_->IASetInputLayout(nullptr);
+	
+}
+
 void DX11TiledDeferredRenderer::InitializeToneMap(){
 		
 	tonemapper_ = new DX11Material(Material::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\tonemapping.fx" });
@@ -408,16 +418,6 @@ void DX11TiledDeferredRenderer::InitializeToneMap(){
 
 void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX11RenderTarget& destination){
 
-	// Viewport
-	D3D11_VIEWPORT viewport;
-
-	viewport.Width = static_cast<float>(destination.GetWidth());
-	viewport.Height = static_cast<float>(destination.GetHeight());
-	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
-	viewport.TopLeftX = 0.0f;
-	viewport.TopLeftY = 0.0f;
-
 	// Update the tonemap resources
 	tonemap_source_->Set(source_view);
 	tonemap_vignette_->Set(5.0f);
@@ -429,33 +429,11 @@ void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX
 
 	tonemapper_->Commit(*immediate_context_);
 
-	// Draw a fullscreen quad
+	// Draw a full-screen quad
 
-	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	immediate_context_->RSSetViewports(1,
-									   &viewport);
-
-	immediate_context_->RSSetState(rasterizer_state_.get());
-
-	immediate_context_->OMSetDepthStencilState(disable_depth_test_.get(),
-											   0);
-
-	immediate_context_->OMSetBlendState(nullptr,
-										0,
-										0xFFFFFFFF);
-
-	immediate_context_->IASetVertexBuffers(0,
-										   0,
-										   nullptr,
-										   0,
-										   0);
-
-	immediate_context_->IASetIndexBuffer(nullptr,
-										 DXGI_FORMAT_R32_UINT,
-										 0);
-
-	immediate_context_->IASetInputLayout(nullptr);
+	SetViewport(*immediate_context_, 
+				destination.GetWidth(), 
+				destination.GetHeight());
 	
 	immediate_context_->Draw(6, 0);
 

@@ -311,7 +311,7 @@ namespace gi_lib{
 		/// \param buffers Array containing the constant buffers.
 		/// \param count Number of buffers.
 		template <typename TShader>
-		void SetConstantBuffers(ID3D11DeviceContext& context, size_t start_slot, ID3D11Buffer* const * buffers, size_t count);
+		void SetConstantBuffers(ID3D11DeviceContext& context, size_t start_slot, ID3D11Buffer* const* buffers, size_t count);
 
 		/// \brief Bind some shader resources to a render context.
 		/// \param start_slot Slot where the first resource will be bound to.
@@ -319,7 +319,7 @@ namespace gi_lib{
 		/// \param buffers Array containing the shader resource views.
 		/// \param count Number of resources.
 		template <typename TShader>
-		void SetShaderResources(ID3D11DeviceContext& context, size_t start_slot, ID3D11ShaderResourceView* const * resources, size_t count);
+		void SetShaderResources(ID3D11DeviceContext& context, size_t start_slot, ID3D11ShaderResourceView* const* resources, size_t count);
 
 		/// \brief Bind some samplers to a render context.
 		/// \param start_slot Slot where the first sampler will be bound to.
@@ -327,7 +327,7 @@ namespace gi_lib{
 		/// \param buffers Array containing the sampler states.
 		/// \param count Number of samplers.
 		template <typename TShader>
-		void SetShaderSamplers(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const * samplers, size_t count);
+		void SetShaderSamplers(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const* samplers, size_t count);
 
 		/// \brief Compute the left-handed perspective projection matrix.
 		/// \param field_of_view Field of view, in radians.
@@ -335,6 +335,13 @@ namespace gi_lib{
 		/// \param near_plane Distance of the near clipping plane.
 		/// \param far_plane Distance of the far clipping plane.
 		Matrix4f ComputePerspectiveProjectionLH(float field_of_view, float aspect_ratio, float near_plane, float far_plane);
+		
+		/// \brief Set a viewport for the specified context.
+		/// The viewport starts at (0;0).
+		/// The viewport depth range is [0;1].
+		/// \param width Width of the viewport, in pixels.
+		/// \param height Height of the viewport, in pixels.
+		void SetViewport(ID3D11DeviceContext& context, unsigned int width, unsigned int height);
 
 	}
 
@@ -572,5 +579,22 @@ inline void gi_lib::dx11::SetShaderSamplers<ID3D11PixelShader>(ID3D11DeviceConte
 		context.PSSetSamplers(static_cast<UINT>(start_slot),
 							  static_cast<UINT>(count),
 							  samplers);
+
+}
+
+inline void gi_lib::dx11::SetViewport(ID3D11DeviceContext& context, unsigned int width, unsigned int height){
+
+	// Viewport
+	D3D11_VIEWPORT viewport;
+
+	viewport.Width = static_cast<float>(width);
+	viewport.Height = static_cast<float>(height);
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+	viewport.TopLeftX = 0.0f;
+	viewport.TopLeftY = 0.0f;
+
+	context.RSSetViewports(1,
+						   &viewport);
 
 }

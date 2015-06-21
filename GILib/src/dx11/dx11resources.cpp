@@ -1216,7 +1216,7 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 
 	ID3D11InputLayout* input_layout;
 
-	// The bytecode is needed to validate the input layout. Genius idea...
+	// The bytecode is needed to validate the input layout. Genius idea... - TODO: Remove this from here
 
 	ID3DBlob * bytecode;
 
@@ -1417,7 +1417,7 @@ void DX11Material::Commit(ID3D11DeviceContext& context){
 
 	private_impl_->Commit(context);
 
-	// Set the vertex input layout
+	// Set the vertex input layout - TODO: Move this from here to the mesh...
 
 	context.IASetInputLayout(shared_impl_->input_layout.get());
 

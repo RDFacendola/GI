@@ -113,6 +113,9 @@ namespace gi_lib{
 
 			void ComputeLighting(unsigned int width, unsigned int height);
 
+			/// \brief Starts the post process stage.
+			void StartPostProcess();
+			
 			/// \brief Initialize tonemap-related objects.
 			void InitializeToneMap();
 
@@ -137,7 +140,7 @@ namespace gi_lib{
 
 			// Deferred resources
 
-			ObjectPtr<DX11RenderTarget> g_buffer_;									///< \brief GBuffer.
+			ObjectPtr<DX11RenderTarget> gbuffer_;									///< \brief GBuffer.
 
 			ObjectPtr<DX11RenderTarget> light_buffer_;								///< \brief Light buffer.
 
