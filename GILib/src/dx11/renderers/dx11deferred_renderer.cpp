@@ -170,6 +170,31 @@ TiledDeferredRenderer(arguments.scene){
 
 	InitializeToneMap();
 
+	// TODO: Remove this
+
+	auto& file_system = FileSystem::GetInstance();
+
+	auto file_name = Application::GetInstance().GetDirectory() + L"Data\\cstest.hlsl";
+
+	string code = to_string(file_system.Read(file_name));
+
+	ShaderReflection reflection;
+
+	reflection.shaders = ShaderType::NONE;
+
+	ID3D11ComputeShader* cs;
+
+	wstring errors;
+
+	THROW_ON_FAIL(MakeShader<ID3D11ComputeShader>(device, 
+												  code, 
+												  to_string(file_name), 
+												  &cs, 
+												  &reflection, 
+												  &errors));
+
+	light_cs_.reset(cs);
+
 }
 
 DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){}
@@ -191,12 +216,13 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<RenderTarget> render_target){
 
 		StartPostProcess();
 
-		ToneMap(gbuffer_->GetTexture(0)->GetView(),					// LightBuffer -> Output
+		ToneMap(light_buffer_->GetTexture(0)->GetView(),			// LightBuffer -> Output
 				*dx11_render_target);
 
 	}
 
-	// Restore the rendering context
+	// Cleanup
+	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
 
 	immediate_context_->ClearState();
 	
@@ -220,6 +246,8 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 						 height);
 		
 	}
+
+	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
 
 	SetViewport(*immediate_context_,
 				width,
@@ -348,14 +376,36 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 
 	}
 	
-	immediate_context_->RSSetState(rasterizer_state_.get());
+	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
 
-	immediate_context_->OMSetDepthStencilState(disable_depth_test_.get(),
-											   0);
+	auto lit_surface = resource_cast(light_buffer_->GetTexture(0)->GetView());
 
-	immediate_context_->OMSetBlendState(nullptr,
-										0,
-										0xFFFFFFFF);
+
+	ID3D11ShaderResourceView* srv[] = { resource_cast(gbuffer_->GetTexture(0)->GetView())->GetShaderView(),
+										resource_cast(gbuffer_->GetTexture(1)->GetView())->GetShaderView() };
+
+	ID3D11UnorderedAccessView* uav = lit_surface->GetUnorderedAccessView();
+
+	immediate_context_->CSSetShader(light_cs_.get(),
+									nullptr,
+									0);
+
+	immediate_context_->CSSetShaderResources(0, 2, &srv[0]);
+	immediate_context_->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);
+
+
+	unsigned int dispatchWidth = (width + 15) / 16;
+	unsigned int dispatchHeight = (height + 15) / 16;
+
+	immediate_context_->Dispatch(dispatchWidth, 
+								 dispatchHeight, 
+								 1);
+
+	uav = nullptr;
+
+	immediate_context_->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);
+
+	return;
 
 	// Set up LightBuffer render targets
 	
@@ -386,8 +436,6 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 	}
 
 	light_array_->Unmap(*immediate_context_);
-
-
 
 }
 
@@ -422,10 +470,12 @@ void DX11TiledDeferredRenderer::InitializeToneMap(){
 
 void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX11RenderTarget& destination){
 
+	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
+
 	// Update the tonemap resources
 	tonemap_source_->Set(source_view);
 	tonemap_vignette_->Set(5.0f);
-	tonemap_exposure_->Set(2.0f);
+	tonemap_exposure_->Set(0.75f);
 
 	// Bind the surfaces and the tonemapper to the context.
 
@@ -440,5 +490,5 @@ void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX
 				destination.GetHeight());
 	
 	immediate_context_->Draw(6, 0);
-
+	
 }
