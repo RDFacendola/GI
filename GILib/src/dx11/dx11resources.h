@@ -170,9 +170,9 @@ namespace gi_lib{
 
 			virtual unsigned int GetCount() const override;
 
-			virtual ObjectPtr<Texture2D> GetTexture(int index) override;
+			virtual ObjectPtr<Texture2D> GetTexture(size_t index) override;
 
-			virtual ObjectPtr<const Texture2D> GetTexture(int index) const override;
+			virtual ObjectPtr<const Texture2D> GetTexture(size_t index) const override;
 
 			virtual ObjectPtr<Texture2D> GetZStencil() override;
 
@@ -220,17 +220,21 @@ namespace gi_lib{
 			/// \param target_format The format of each texture.
 			void Initialize(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format);
 
-			vector<ObjectPtr<DX11Texture2D>> textures_;
+			vector<ObjectPtr<DX11Texture2D>> textures_;				///< \brief Render target surfaces.
 
-			vector<ID3D11RenderTargetView*> target_views_;
+			vector<ID3D11RenderTargetView*> target_views_;			///< \brief Render target view of each target surface.
 
-			ObjectPtr<DX11Texture2D> zstencil_;
+			ObjectPtr<DX11Texture2D> zstencil_;						///< \brief ZStencil surface.
 
-			ID3D11DepthStencilView* zstencil_view_;
+			ID3D11DepthStencilView* zstencil_view_;					///< \brief Depth stencil view of the ZStencil surface.
 
-			AntialiasingMode antialiasing_;								
+			D3D11_VIEWPORT viewport_;								///< \brief Render target viewport.
 
 			bool unordered_access_;									///< \brief Whether the render targets can be bound also as UAV.
+
+
+
+			AntialiasingMode antialiasing_;							///< \brief Antialiasing description. TODO: remove?
 
 		};
 
@@ -531,6 +535,26 @@ namespace gi_lib{
 
 		}
 
+		/// \brief Performs a resource cast and extract a shader resource view.
+		/// The concrete resource should expose a method GetView() : DX11ResourceView&.
+		/// \return Returns a pointer to the shader resource view associated to the specified resource.
+		template <typename TResource>
+		typename ID3D11ShaderResourceView* resource_srv(const ObjectPtr<TResource>& resource){
+
+			return resource_cast(resource->GetView())->GetShaderView();
+
+		}
+
+		/// \brief Performs a resource cast and extract an unordered access view.
+		/// The concrete resource should expose a method GetView() : DX11ResourceView&.
+		/// \return Returns a pointer to the unordered access view associated to the specified resource.
+		template <typename TResource>
+		typename ID3D11UnorderedAccessView* resource_uav(const ObjectPtr<TResource>& resource){
+
+			return resource_cast(resource->GetView())->GetUnorderedAccessView();
+
+		}
+		
 		/////////////////////////////// DX11 RESOURCE VIEW TEMPLATE ///////////////////////////////
 
 		template <typename TResource>
@@ -625,13 +649,13 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<Texture2D> DX11RenderTarget::GetTexture(int index){
+		inline ObjectPtr<Texture2D> DX11RenderTarget::GetTexture(size_t index){
 
 			return textures_[index];
 
 		}
 
-		inline ObjectPtr<const Texture2D> DX11RenderTarget::GetTexture(int index) const{
+		inline ObjectPtr<const Texture2D> DX11RenderTarget::GetTexture(size_t index) const{
 
 			return textures_[index];
 

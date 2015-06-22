@@ -173,15 +173,25 @@ namespace gi_lib{
 		/// \return Returns the number of surfaces in this render target.
 		virtual unsigned int GetCount() const = 0;
 
-		/// \brief Get the texture associated to this render target.
+		/// \brief Get a texture associated to this render target.
 		/// \param index The index of the render target texture.
 		/// \return Returns the texture associated to the index-th render target.
-		virtual ObjectPtr<Texture2D> GetTexture(int index) = 0;
+		ObjectPtr<Texture2D> operator[](size_t index);
+
+		/// \brief Get a texture associated to this render target.
+		/// \param index The index of the render target texture.
+		/// \return Returns the texture associated to the index-th render target.
+		ObjectPtr<const Texture2D> operator[](size_t index) const;
+
+		/// \brief Get a texture associated to this render target.
+		/// \param index The index of the render target texture.
+		/// \return Returns the texture associated to the index-th render target.
+		virtual ObjectPtr<Texture2D> GetTexture(size_t index) = 0;
 
 		/// \brief Get the texture associated to this render target.
 		/// \param index The index of the render target texture.
 		/// \return Returns the texture associated to the index-th render target.
-		virtual ObjectPtr<const Texture2D> GetTexture(int index) const = 0;
+		virtual ObjectPtr<const Texture2D> GetTexture(size_t index) const = 0;
 
 		/// \brief Get the texture associated to the depth stencil buffer.
 		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.
@@ -403,6 +413,20 @@ namespace gi_lib{
 		virtual void* LockDiscard() = 0;
 
 	};
+
+	///////////////////////////////////////// RENDER TARGET /////////////////////////////////////////
+
+	inline ObjectPtr<Texture2D> RenderTarget::operator[](size_t index){
+
+		return GetTexture(index);
+
+	}
+
+	inline ObjectPtr<const Texture2D> RenderTarget::operator[](size_t index) const{
+
+		return GetTexture(index);
+
+	}
 
 	///////////////////////////////////////// MATERIAL /////////////////////////////////////////
 

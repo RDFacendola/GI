@@ -216,7 +216,7 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<RenderTarget> render_target){
 
 		StartPostProcess();
 
-		ToneMap(light_buffer_->GetTexture(0)->GetView(),			// LightBuffer -> Output
+		ToneMap((*light_buffer_)[0]->GetView(),			// LightBuffer -> Output
 				*dx11_render_target);
 
 	}
@@ -248,10 +248,6 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 	}
 
 	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
-
-	SetViewport(*immediate_context_,
-				width,
-				height);
 
 	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -378,20 +374,17 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 	
 	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
 
-	auto lit_surface = resource_cast(light_buffer_->GetTexture(0)->GetView());
+	ID3D11ShaderResourceView* srv[] = { resource_srv((*gbuffer_)[0]),
+										resource_srv((*gbuffer_)[1]) };
 
-
-	ID3D11ShaderResourceView* srv[] = { resource_cast(gbuffer_->GetTexture(0)->GetView())->GetShaderView(),
-										resource_cast(gbuffer_->GetTexture(1)->GetView())->GetShaderView() };
-
-	ID3D11UnorderedAccessView* uav = lit_surface->GetUnorderedAccessView();
+	ID3D11UnorderedAccessView* uav[] = { resource_uav((*light_buffer_)[0]) };
 
 	immediate_context_->CSSetShader(light_cs_.get(),
 									nullptr,
 									0);
 
 	immediate_context_->CSSetShaderResources(0, 2, &srv[0]);
-	immediate_context_->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);
+	immediate_context_->CSSetUnorderedAccessViews(0, 1, &uav[0], nullptr);
 
 
 	unsigned int dispatchWidth = (width + 15) / 16;
@@ -401,9 +394,9 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 								 dispatchHeight, 
 								 1);
 
-	uav = nullptr;
+	uav[0] = nullptr;
 
-	immediate_context_->CSSetUnorderedAccessViews(0, 1, &uav, nullptr);
+	immediate_context_->CSSetUnorderedAccessViews(0, 1, &uav[0], nullptr);
 
 	return;
 
@@ -414,7 +407,7 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 	ZeroMemory(&color, sizeof(color));
 
 	light_buffer_->ClearTargets(*immediate_context_,
-							color);
+								color);
 
 	light_buffer_->Bind(*immediate_context_);
 
@@ -520,7 +513,7 @@ void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX
 	// Update the tonemap resources
 	tonemap_source_->Set(source_view);
 	tonemap_vignette_->Set(5.0f);
-	tonemap_exposure_->Set(0.75f);
+	tonemap_exposure_->Set(0.45f);
 
 	// Bind the surfaces and the tonemapper to the context.
 
@@ -530,10 +523,6 @@ void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX
 
 	// Draw a full-screen quad
 
-	SetViewport(*immediate_context_, 
-				destination.GetWidth(), 
-				destination.GetHeight());
-	
 	immediate_context_->Draw(6, 0);
 	
 }
