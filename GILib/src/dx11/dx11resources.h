@@ -345,7 +345,7 @@ namespace gi_lib{
 
 			};
 
-			/// \brief Material resource.
+			/// \brief Material resource, used to bind shader resource views.
 			class DX11MaterialResource : public MaterialResource{
 
 			public:
@@ -362,6 +362,23 @@ namespace gi_lib{
 
 			};
 
+			/// \brief Material resource, used to bind unordered access views.
+			class DX11MaterialUAV : public MaterialResource{
+
+			public:
+
+				DX11MaterialUAV(InstanceImpl& instance_impl, size_t uav_index);
+
+				virtual void Set(ObjectPtr<IResourceView> resource) override;
+
+			private:
+
+				InstanceImpl* instance_impl_;
+
+				size_t uav_index_;
+
+			};
+			
 			shared_ptr<MaterialImpl> shared_impl_;		///< \brief Properties shared among material instances.
 
 			unique_ptr<InstanceImpl> private_impl_;		///< \brief Private properties of this material instance.

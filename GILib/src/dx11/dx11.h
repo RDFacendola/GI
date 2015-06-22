@@ -365,6 +365,14 @@ namespace gi_lib{
 		template <typename TShader>
 		void SetShaderSamplers(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const* samplers, size_t count);
 
+		/// \brief Bind some unordered access views to a render context.
+		/// \param start_slot Slot where the first UAV will be bound to.
+		/// \param context Context the UAVs will be bound to.
+		/// \param UAVs Array containing the unordered access views.
+		/// \param count Number of resources.
+		template <typename TShader>
+		void SetShaderUAV(ID3D11DeviceContext& context, size_t start_slot, ID3D11UnorderedAccessView* const* UAVs, size_t count);
+
 		/// \brief Compute the left-handed perspective projection matrix.
 		/// \param field_of_view Field of view, in radians.
 		/// \param aspect_ratio Width-to-height aspect ratio.
@@ -476,6 +484,15 @@ inline void gi_lib::dx11::SetShader<ID3D11PixelShader>(ID3D11DeviceContext& cont
 
 }
 
+template<>
+inline void gi_lib::dx11::SetShader<ID3D11ComputeShader>(ID3D11DeviceContext& context, ID3D11ComputeShader* shader){
+
+	context.CSSetShader(shader,
+						nullptr,
+						0);
+
+}
+
 template <>
 inline void gi_lib::dx11::SetConstantBuffers<ID3D11VertexShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11Buffer* const * buffers, size_t count){
 
@@ -516,6 +533,15 @@ template <>
 inline void gi_lib::dx11::SetConstantBuffers<ID3D11PixelShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11Buffer* const * buffers, size_t count){
 
 	context.PSSetConstantBuffers(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 buffers);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetConstantBuffers<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11Buffer* const * buffers, size_t count){
+
+	context.CSSetConstantBuffers(static_cast<UINT>(start_slot),
 								 static_cast<UINT>(count),
 								 buffers);
 
@@ -567,6 +593,15 @@ inline void gi_lib::dx11::SetShaderResources<ID3D11PixelShader>(ID3D11DeviceCont
 }
 
 template <>
+inline void gi_lib::dx11::SetShaderResources<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11ShaderResourceView* const * resources, size_t count){
+
+	context.CSSetShaderResources(static_cast<UINT>(start_slot),
+								 static_cast<UINT>(count),
+								 resources);
+
+}
+
+template <>
 inline void gi_lib::dx11::SetShaderSamplers<ID3D11VertexShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const * samplers, size_t count){
 
 		context.VSSetSamplers(static_cast<UINT>(start_slot),
@@ -608,5 +643,31 @@ inline void gi_lib::dx11::SetShaderSamplers<ID3D11PixelShader>(ID3D11DeviceConte
 		context.PSSetSamplers(static_cast<UINT>(start_slot),
 							  static_cast<UINT>(count),
 							  samplers);
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderSamplers<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11SamplerState* const * samplers, size_t count){
+
+	context.CSSetSamplers(static_cast<UINT>(start_slot),
+						  static_cast<UINT>(count),
+						  samplers);
+
+}
+
+template <typename TShader>
+inline void gi_lib::dx11::SetShaderUAV<TShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11UnorderedAccessView* const* UAVs, size_t count){
+
+	// 
+
+}
+
+template <>
+inline void gi_lib::dx11::SetShaderUAV<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11UnorderedAccessView* const* UAVs, size_t count){
+
+	context.CSSetUnorderedAccessViews(static_cast<UINT>(start_slot),
+									  static_cast<UINT>(count),
+									  UAVs,
+									  nullptr);
 
 }

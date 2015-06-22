@@ -97,6 +97,8 @@ namespace{
 
 		vector<ID3D11SamplerState*> samplers;				/// \brief Sampler binding.
 
+		vector<ID3D11UnorderedAccessView*> unordered;		/// \brief UAV binding.
+
 		/// \brief Default constructor;
 		ShaderBundle();
 
@@ -174,6 +176,7 @@ namespace{
 		buffers = std::move(other.buffers);
 		resources = std::move(other.resources);
 		samplers = std::move(other.samplers);
+		unordered = std::move(other.unordered);
 
 	}
 
@@ -449,9 +452,6 @@ namespace{
 									bundle.buffers.size() > 0 ? &bundle.buffers[0] : nullptr,
 									bundle.buffers.size());
 
-		
-
-
 		// Resources
 
 		SetShaderResources<TShader>(context,
@@ -465,6 +465,12 @@ namespace{
 								   0,
 								   bundle.samplers.size() > 0 ? &bundle.samplers[0] : nullptr,
 								   bundle.samplers.size());
+
+		// Unordered access views
+		SetShaderUAV<TShader>(context,
+							  0,
+							  bundle.unordered.size() > 0 ? &bundle.unordered[0] : nullptr,
+							  bundle.unordered.size());
 
 	}
 		
@@ -993,6 +999,8 @@ struct DX11Material::InstanceImpl{
 
 	void SetResource(size_t index, ObjectPtr<DX11ResourceView> resource);
 	
+	void SetUAV(size_t index, ObjectPtr<DX11ResourceView> resource);
+
 	/// \brief Write any uncommitted change to the constant buffers.
 	void Commit(ID3D11DeviceContext& context);
 
@@ -1004,13 +1012,19 @@ private:
 
 	void CommitResources();
 
+	void CommitUAVs();
+
 	vector<BufferStatus> buffer_status_;								///< \brief Status of constant buffers.
 
 	vector<ObjectPtr<DX11ResourceView>> resources_;						///< \brief Status of bound resources.
 
 	ObjectPtr<DX11Sampler> sampler_;									///< \brief Sampler.
 
-	ShaderType resource_dirty_mask_;									///< \brief Dirty mask used to determine which bundle needs to be updated resource-wise.
+	vector<ObjectPtr<DX11ResourceView>> UAVs_;							///< \brief Status of bound UAVs.
+
+	ShaderType resource_dirty_mask_;									///< \brief Dirty mask used to determine which bundle needs to be updated (shader resource view).
+
+	ShaderType UAV_dirty_mask_;											///< \brief Dirty mask used to determine which bundle needs to be updated (unordered access view).
 
 	const ShaderReflection& reflection_;
 		
@@ -1069,6 +1083,7 @@ reflection_(reflection){
 	AddShaderBundle(ShaderType::PIXEL_SHADER);
 
 	resource_dirty_mask_ = ShaderType::NONE;
+	UAV_dirty_mask_ = ShaderType::NONE;
 
 }
 
@@ -1077,6 +1092,7 @@ buffer_status_(impl.buffer_status_),				// Copy ctor will copy the buffer status
 resources_(impl.resources_),						// Same resources bound
 sampler_(impl.sampler_),
 resource_dirty_mask_(impl.reflection_.shaders),		// Used to lazily update the resources' shader views
+UAV_dirty_mask_(impl.reflection_.shaders),			// Used to lazily update the resources' unordered access views.
 reflection_(impl.reflection_){
 
 	// Shader bundles
@@ -1110,6 +1126,14 @@ void DX11Material::InstanceImpl::SetResource(size_t index, ObjectPtr<DX11Resourc
 	resources_[index] = resource;
 
 	resource_dirty_mask_ |= reflection_.resources[index].shader_usage;	// Let the bundle know that the resource status changed.
+
+}
+
+void DX11Material::InstanceImpl::SetUAV(size_t index, ObjectPtr<DX11ResourceView> resource){
+
+	UAVs_[index] = resource;
+
+	UAV_dirty_mask_ |= reflection_.unordered[index].shader_usage;	// Let the bundle know that the resource status changed.
 
 }
 
@@ -1150,6 +1174,15 @@ void DX11Material::InstanceImpl::AddShaderBundle(ShaderType shader_type){
 			}
 
 		}
+
+		// UAV, build once, update by need (when the material is bound to the pipeline).
+		bundle.unordered.resize(std::count_if(reflection_.unordered.begin(),
+											  reflection_.unordered.end(),
+											  [shader_type](const ShaderUnorderedDesc& UAV_desc){
+
+													return UAV_desc.shader_usage && shader_type;
+
+											  }));
 
 		// Move it to the vector.
 
@@ -1211,6 +1244,58 @@ void DX11Material::InstanceImpl::CommitResources(){
 
 }
 
+void DX11Material::InstanceImpl::CommitUAVs(){
+
+	if (UAV_dirty_mask_ == ShaderType::NONE){
+
+		// Most common case: no UAV was touched.
+
+		return;
+
+	}
+
+	size_t UAV_index;									// Index of an UAV within the global UAV array.
+	size_t bind_point;									// UAV bind point relative to a particular shader.
+	size_t index = 0;									// Shader index
+
+	ObjectPtr<DX11ResourceView> resource_view;			// Current resource view
+
+	for (auto&& bundle_entry : shader_bundles){
+
+		// Cycle through dirty bundles
+
+		if (UAV_dirty_mask_ && bundle_entry.first){
+
+			auto& UAVs = bundle_entry.second.unordered;
+
+			// Cycle trough every unordered access view. If any given UAV is used by the current shader type, update the UAV vector's corresponding location.
+
+			for (UAV_index = 0, bind_point = 0; UAV_index < reflection_.unordered.size(); ++UAV_index){
+
+				if (reflection_.unordered[UAV_index].shader_usage && bundle_entry.first){
+
+					resource_view = UAVs_[UAV_index];
+
+					UAVs[bind_point] = resource_view ?
+									   resource_view->GetUnorderedAccessView() :
+									   nullptr;
+
+					++bind_point;
+
+				}
+
+			}
+
+		}
+
+		++index;
+
+	}
+
+	UAV_dirty_mask_ = ShaderType::NONE;
+
+}
+
 void DX11Material::InstanceImpl::Commit(ID3D11DeviceContext& context){
 
 	// Commit dirty constant buffers
@@ -1224,6 +1309,10 @@ void DX11Material::InstanceImpl::Commit(ID3D11DeviceContext& context){
 	// Commit resource views
 
 	CommitResources();
+
+	// Commit unordered access views
+
+	CommitUAVs();
 
 }
 
@@ -1347,6 +1436,19 @@ void DX11Material::DX11MaterialResource::Set(ObjectPtr<IResourceView> resource){
 
 }
 
+////////////////////////////// MATERIAL :: UAV /////////////////////////////////////
+
+DX11Material::DX11MaterialUAV::DX11MaterialUAV(InstanceImpl& instance_impl, size_t uav_index) :
+instance_impl_(&instance_impl),
+uav_index_(uav_index){}
+
+void DX11Material::DX11MaterialUAV::Set(ObjectPtr<IResourceView> resource){
+
+	instance_impl_->SetUAV(uav_index_,
+						   resource_cast(resource));
+
+}
+
 //////////////////////////////  MATERIAL //////////////////////////////
 
 DX11Material::DX11Material(const CompileFromFile& args){
@@ -1413,6 +1515,8 @@ ObjectPtr<Material::MaterialVariable> DX11Material::GetVariable(const string& na
 
 ObjectPtr<Material::MaterialResource> DX11Material::GetResource(const string& name){
 
+	// Check among the resources
+
 	auto& resources = shared_impl_->reflection.resources;
 
 	if (resources.size() > 0){
@@ -1436,6 +1540,34 @@ ObjectPtr<Material::MaterialResource> DX11Material::GetResource(const string& na
 		}
 
 	}
+
+	// Check amount the unordered access views
+
+	auto& UAVs = shared_impl_->reflection.unordered;
+
+	if (UAVs.size() > 0){
+
+		// O(#total UAVs)
+
+		auto it = std::find_if(UAVs.begin(),
+							   UAVs.end(),
+							   [&name](const ShaderUnorderedDesc& desc){
+
+									return desc.name == name;
+
+							   });
+
+		if (it != UAVs.end()){
+
+			return new DX11MaterialUAV(*private_impl_,
+									   std::distance(UAVs.begin(),
+													 it));
+
+		}
+
+	}
+
+	// Not found
 
 	return nullptr;
 
