@@ -468,7 +468,7 @@ void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX
 	// Update the tonemap resources
 	tonemap_source_->Set(source_view);
 	tonemap_vignette_->Set(5.0f);
-	tonemap_exposure_->Set(0.75f);
+	tonemap_exposure_->Set(0.45f);
 
 	// Bind the surfaces and the tonemapper to the context.
 
