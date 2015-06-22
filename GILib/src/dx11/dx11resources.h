@@ -531,6 +531,26 @@ namespace gi_lib{
 
 		}
 
+		/// \brief Performs a resource cast and extract a shader resource view.
+		/// The concrete resource should expose a method GetView() : DX11ResourceView&.
+		/// \return Returns a pointer to the shader resource view associated to the specified resource.
+		template <typename TResource>
+		typename ID3D11ShaderResourceView* resource_srv(const ObjectPtr<TResource>& resource){
+
+			return resource_cast(resource->GetView())->GetShaderView();
+
+		}
+
+		/// \brief Performs a resource cast and extract an unordered access view.
+		/// The concrete resource should expose a method GetView() : DX11ResourceView&.
+		/// \return Returns a pointer to the unordered access view associated to the specified resource.
+		template <typename TResource>
+		typename ID3D11UnorderedAccessView* resource_uav(const ObjectPtr<TResource>& resource){
+
+			return resource_cast(resource->GetView())->GetUnorderedAccessView();
+
+		}
+		
 		/////////////////////////////// DX11 RESOURCE VIEW TEMPLATE ///////////////////////////////
 
 		template <typename TResource>
