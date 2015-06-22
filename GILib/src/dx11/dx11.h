@@ -130,6 +130,8 @@ namespace gi_lib{
 
 			vector<ShaderUnorderedDesc> unordered;		///< \brief Unordered resources.
 
+			Vector3i thread_group_size;					///< \brief Size of each thread group. This value refers only to a compute shader, if present.
+
 		};
 
 		/// \brief Shader type traits.
