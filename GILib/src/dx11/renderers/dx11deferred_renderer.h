@@ -125,21 +125,6 @@ namespace gi_lib{
 			unique_ptr<ID3D11ComputeShader, COMDeleter> light_cs_;					///< \brief DELETE ME
 
 			unique_ptr<ID3D11DepthStencilState, COMDeleter> disable_depth_test_;	///< \brief Used to disable the depth testing.
-
-
-			// Post process - Bloom
-
-			ObjectPtr<DX11RenderTarget> glow_;
-
-			ObjectPtr<DX11RenderTarget> downsampled_;
-
-			ObjectPtr<DX11Material> downsampler_;
-
-			ObjectPtr<DX11Material::MaterialResource> downsample_source_;
-
-			unique_ptr<ID3D11ComputeShader, COMDeleter> hblur_cs_;					///< \brief DELETE ME
-
-			unique_ptr<ID3D11ComputeShader, COMDeleter> vblur_cs_;					///< \brief DELETE ME
 			
 			// Post process - Tonemapping
 

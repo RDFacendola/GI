@@ -179,11 +179,25 @@ namespace{
 
 	}
 
+	template <typename TShader>
+	void ReflectMore(ID3D11ShaderReflection&, const D3D11_SHADER_DESC&, ShaderReflection&){}
+
+	template<>
+	void ReflectMore<ID3D11ComputeShader>(ID3D11ShaderReflection& reflector, const D3D11_SHADER_DESC&, ShaderReflection& reflection){
+
+		unsigned int x, y, z;
+
+		reflector.GetThreadGroupSize(&x, &y, &z);
+
+		reflection.thread_group_size = Vector3i(x, y, z);
+
+	}
+
 	/// \brief Reflect a shader via reflector.
 	/// \param reflector Reflector used to access the description of the shader.
 	/// \param reflection Actual shader reflection to fill. Out.
 	template <typename TShader>
-	void Reflect(ID3D11ShaderReflection& reflector, ShaderReflection& reflection){
+	void Reflect(ID3D11ShaderReflection& reflector, const D3D11_SHADER_DESC& shader_desc, ShaderReflection& reflection){
 
 		auto ReflectBuffer = [&reflector](const D3D11_SHADER_INPUT_BIND_DESC& input_desc){ 
 			
@@ -191,79 +205,76 @@ namespace{
 		
 		};
 
-		D3D11_SHADER_DESC shader_desc;
-
 		D3D11_SHADER_INPUT_BIND_DESC resource_desc;
-
-		reflector.GetDesc(&shader_desc);
-
+		
 		for (unsigned int resource_index = 0; resource_index < shader_desc.BoundResources; ++resource_index){
 
 			reflector.GetResourceBindingDesc(resource_index, &resource_desc);
 
 			switch (resource_desc.Type){
 
-			case D3D_SIT_CBUFFER:
-			case D3D_SIT_TBUFFER:
-			{
+				case D3D_SIT_CBUFFER:
+				case D3D_SIT_TBUFFER:
+				{
 
-				// Constant or Texture buffer
+					// Constant or Texture buffer
 
-				Reflect(resource_desc,
-						ReflectBuffer,
-						reflection.buffers).shader_usage |= ShaderTraits<TShader>::flag;
+					Reflect(resource_desc,
+							ReflectBuffer,
+							reflection.buffers).shader_usage |= ShaderTraits<TShader>::flag;
 
-				break;
+					break;
 
-			}
-			case D3D_SIT_TEXTURE:
-			case D3D_SIT_STRUCTURED:
-			case D3D_SIT_BYTEADDRESS:
-			{
+				}
+				case D3D_SIT_TEXTURE:
+				case D3D_SIT_STRUCTURED:
+				case D3D_SIT_BYTEADDRESS:
+				{
 
-				// Shader resources
+					// Shader resources
 
-				Reflect(resource_desc,
-						ReflectResource,
-						reflection.resources).shader_usage |= ShaderTraits<TShader>::flag;
+					Reflect(resource_desc,
+							ReflectResource,
+							reflection.resources).shader_usage |= ShaderTraits<TShader>::flag;
 
-				break;
+					break;
 
-			}
-			case D3D_SIT_SAMPLER:
-			{
+				}
+				case D3D_SIT_SAMPLER:
+				{
 
-				// Samplers
+					// Samplers
 
-				Reflect(resource_desc,
-						ReflectSampler,
-						reflection.samplers).shader_usage |= ShaderTraits<TShader>::flag;
+					Reflect(resource_desc,
+							ReflectSampler,
+							reflection.samplers).shader_usage |= ShaderTraits<TShader>::flag;
 
-				break;
+					break;
 
-			}
+				}
 
-			case D3D_SIT_UAV_RWTYPED:
-			case D3D_SIT_UAV_RWSTRUCTURED:
-			case D3D_SIT_UAV_RWBYTEADDRESS:
-			case D3D_SIT_UAV_APPEND_STRUCTURED:
-			case D3D_SIT_UAV_CONSUME_STRUCTURED:
-			case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
-			{
+				case D3D_SIT_UAV_RWTYPED:
+				case D3D_SIT_UAV_RWSTRUCTURED:
+				case D3D_SIT_UAV_RWBYTEADDRESS:
+				case D3D_SIT_UAV_APPEND_STRUCTURED:
+				case D3D_SIT_UAV_CONSUME_STRUCTURED:
+				case D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER:
+				{
 
-				// UAV
-				Reflect(resource_desc,
-						ReflectUnordered,
-						reflection.unordered).shader_usage |= ShaderTraits<TShader>::flag;
+					// Unordered access view
 
-				break;
+					Reflect(resource_desc,
+							ReflectUnordered,
+							reflection.unordered).shader_usage |= ShaderTraits<TShader>::flag;
 
-			}
+					break;
+
+				}
 
 			}
 
 		}
-
+				
 		reflection.shaders |= ShaderTraits<TShader>::flag;
 
 	}
@@ -283,18 +294,17 @@ namespace{
 
 		COM_GUARD(reflector);
 
-		if (std::is_same<TShader, ID3D11ComputeShader>::value){
+		D3D11_SHADER_DESC shader_desc;
 
-			unsigned int x, y, z;
-
-			reflector->GetThreadGroupSize(&x, &y, &z);
-
-			reflection.thread_group_size = Vector3i(x, y, z);
-
-		}
+		reflector->GetDesc(&shader_desc);
 
 		Reflect<TShader>(*reflector,
+						 shader_desc,
 						 reflection);
+
+		ReflectMore<TShader>(*reflector,
+							 shader_desc,
+							 reflection);
 
 		return S_OK;
 
@@ -303,7 +313,7 @@ namespace{
 	template <typename TShader, typename TCreateShader>
 	HRESULT MakeShader(const string& HLSL, const string& source_file, TCreateShader CreateShader, TShader** shader, ShaderReflection* reflection, wstring* error_string){
 
-		ID3DBlob * bytecode = nullptr;
+		ID3DBlob* bytecode = nullptr;
 
 		RETURN_ON_FAIL(::Compile<TShader>(HLSL, 
 										  source_file, 

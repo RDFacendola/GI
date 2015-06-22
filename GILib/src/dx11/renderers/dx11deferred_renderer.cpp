@@ -167,8 +167,6 @@ TiledDeferredRenderer(arguments.scene){
 	// TODO: Remove this
 
 	light_array_ = new DX11StructuredVector(StructuredVector::FromDescription{ 32, sizeof(Light) });
-	
-	//InitializeBloom();
 
 	InitializeToneMap();
 
@@ -459,51 +457,6 @@ void DX11TiledDeferredRenderer::InitializeToneMap(){
 	tonemap_vignette_ = tonemapper_->GetVariable("gVignette");
 	tonemap_exposure_ = tonemapper_->GetVariable("gExposure");
 	
-}
-
-void DX11TiledDeferredRenderer::Bloom(ObjectPtr<IResourceView> source_view, DX11RenderTarget& destination){
-
-	// Downsampling
-
-	// Lazy initialization of the downsampled
-
-	auto width = destination.GetWidth();
-	auto height = destination.GetHeight();
-
-	if (!downsampled_){
-
-		
-		downsampled_ = new DX11RenderTarget(width / 2,
-											height / 2,
-											{ DXGI_FORMAT_R16G16B16A16_FLOAT },
-											true);
-
-	}
-	else{
-
-		light_buffer_->Resize(width / 2,
-							  height / 2);
-
-	}
-
-	downsample_source_->Set(source_view);
-
-	downsampled_->Bind(*immediate_context_);
-
-	downsampler_->Commit(*immediate_context_);
-
-	// Draw a full-screen quad
-
-	SetViewport(*immediate_context_,
-				width / 2,
-				height / 2);
-
-	immediate_context_->Draw(6, 0);
-	
-	// Blur
-
-
-
 }
 
 void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX11RenderTarget& destination){
