@@ -170,9 +170,9 @@ namespace gi_lib{
 
 			virtual unsigned int GetCount() const override;
 
-			virtual ObjectPtr<Texture2D> GetTexture(int index) override;
+			virtual ObjectPtr<Texture2D> GetTexture(size_t index) override;
 
-			virtual ObjectPtr<const Texture2D> GetTexture(int index) const override;
+			virtual ObjectPtr<const Texture2D> GetTexture(size_t index) const override;
 
 			virtual ObjectPtr<Texture2D> GetZStencil() override;
 
@@ -625,13 +625,13 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<Texture2D> DX11RenderTarget::GetTexture(int index){
+		inline ObjectPtr<Texture2D> DX11RenderTarget::GetTexture(size_t index){
 
 			return textures_[index];
 
 		}
 
-		inline ObjectPtr<const Texture2D> DX11RenderTarget::GetTexture(int index) const{
+		inline ObjectPtr<const Texture2D> DX11RenderTarget::GetTexture(size_t index) const{
 
 			return textures_[index];
 
