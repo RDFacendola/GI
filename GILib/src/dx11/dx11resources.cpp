@@ -665,6 +665,15 @@ void DX11RenderTarget::SetBuffers(std::initializer_list<ID3D11Texture2D*> target
 
 	zstencil_ = new DX11Texture2D(*zstencil, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);					// This is the only format compatible with R24G8_TYPELESS used to create the depth buffer resource
 	
+	// Update the viewport
+
+	viewport_.TopLeftX = 0.0f;
+	viewport_.TopLeftY = 0.0f;
+	viewport_.MinDepth = 0.0f;
+	viewport_.MaxDepth = 1.0f;
+	viewport_.Width = static_cast<float>(desc.Width);
+	viewport_.Height = static_cast<float>(desc.Height);
+
 	// Everything went as it should have...
 	rollback.Dismiss();
 
@@ -759,6 +768,9 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
 	context.OMSetRenderTargets(static_cast<unsigned int>(target_views_.size()),
 							   &target_views_[0],
 							   zstencil_view_);
+
+	context.RSSetViewports(1,
+						   &viewport_);
 	
 }
 
@@ -824,6 +836,15 @@ void DX11RenderTarget::Initialize(unsigned int width, unsigned int height, const
 	zstencil_ = new DX11Texture2D(*zstencil, 
 								  DXGI_FORMAT_R24_UNORM_X8_TYPELESS);	// This is the only format compatible with R24G8_TYPELESS used to create the depth buffer resource
 
+	// Update the viewport
+
+	viewport_.TopLeftX = 0.0f;
+	viewport_.TopLeftY = 0.0f;
+	viewport_.MinDepth = 0.0f;
+	viewport_.MaxDepth = 1.0f;
+	viewport_.Width = static_cast<float>(width);
+	viewport_.Height = static_cast<float>(height);
+	
 	guard.Dismiss();
 
 }

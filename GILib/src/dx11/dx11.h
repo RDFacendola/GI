@@ -370,13 +370,6 @@ namespace gi_lib{
 		/// \param far_plane Distance of the far clipping plane.
 		Matrix4f ComputePerspectiveProjectionLH(float field_of_view, float aspect_ratio, float near_plane, float far_plane);
 		
-		/// \brief Set a viewport for the specified context.
-		/// The viewport starts at (0;0).
-		/// The viewport depth range is [0;1].
-		/// \param width Width of the viewport, in pixels.
-		/// \param height Height of the viewport, in pixels.
-		void SetViewport(ID3D11DeviceContext& context, unsigned int width, unsigned int height);
-
 	}
 
 }
@@ -613,22 +606,5 @@ inline void gi_lib::dx11::SetShaderSamplers<ID3D11PixelShader>(ID3D11DeviceConte
 		context.PSSetSamplers(static_cast<UINT>(start_slot),
 							  static_cast<UINT>(count),
 							  samplers);
-
-}
-
-inline void gi_lib::dx11::SetViewport(ID3D11DeviceContext& context, unsigned int width, unsigned int height){
-
-	// Viewport
-	D3D11_VIEWPORT viewport;
-
-	viewport.Width = static_cast<float>(width);
-	viewport.Height = static_cast<float>(height);
-	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
-	viewport.TopLeftX = 0.0f;
-	viewport.TopLeftY = 0.0f;
-
-	context.RSSetViewports(1,
-						   &viewport);
 
 }

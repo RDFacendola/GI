@@ -220,17 +220,21 @@ namespace gi_lib{
 			/// \param target_format The format of each texture.
 			void Initialize(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format);
 
-			vector<ObjectPtr<DX11Texture2D>> textures_;
+			vector<ObjectPtr<DX11Texture2D>> textures_;				///< \brief Render target surfaces.
 
-			vector<ID3D11RenderTargetView*> target_views_;
+			vector<ID3D11RenderTargetView*> target_views_;			///< \brief Render target view of each target surface.
 
-			ObjectPtr<DX11Texture2D> zstencil_;
+			ObjectPtr<DX11Texture2D> zstencil_;						///< \brief ZStencil surface.
 
-			ID3D11DepthStencilView* zstencil_view_;
+			ID3D11DepthStencilView* zstencil_view_;					///< \brief Depth stencil view of the ZStencil surface.
 
-			AntialiasingMode antialiasing_;								
+			D3D11_VIEWPORT viewport_;								///< \brief Render target viewport.
 
 			bool unordered_access_;									///< \brief Whether the render targets can be bound also as UAV.
+
+
+
+			AntialiasingMode antialiasing_;							///< \brief Antialiasing description. TODO: remove?
 
 		};
 

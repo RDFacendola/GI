@@ -249,10 +249,6 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 
 	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
 
-	SetViewport(*immediate_context_,
-				width,
-				height);
-
 	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	immediate_context_->RSSetState(rasterizer_state_.get());
@@ -482,10 +478,6 @@ void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX
 
 	// Draw a full-screen quad
 
-	SetViewport(*immediate_context_, 
-				destination.GetWidth(), 
-				destination.GetHeight());
-	
 	immediate_context_->Draw(6, 0);
 	
 }
