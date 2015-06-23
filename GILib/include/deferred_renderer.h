@@ -73,11 +73,11 @@ namespace gi_lib{
 
 		/// \brief Get the mesh component.
 		/// \return Returns the mesh component.
-		ObjectPtr<Mesh> GetMesh();
+		ObjectPtr<IStaticMesh> GetMesh();
 
 		/// \brief Get the mesh component.
 		/// \return Returns the mesh component.
-		ObjectPtr<const Mesh> GetMesh() const;
+		ObjectPtr<const IStaticMesh> GetMesh() const;
 
 		/// \brief Get the material count.
 		/// \return Returns the material count.

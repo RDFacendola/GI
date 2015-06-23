@@ -34,7 +34,7 @@ namespace gi_lib{
 	class TransformComponent;
 	class CameraComponent;
 	
-	class Mesh;
+	class IStaticMesh;
 
 	/// \brief Represents a scene and all its content.
 	/// \author Raffaele D. Facendola
@@ -372,19 +372,19 @@ namespace gi_lib{
 
 		/// \brief Create a new mesh component.
 		/// \param Static mesh associated to this component
-		MeshComponent(ObjectPtr<Mesh> mesh);
+		MeshComponent(ObjectPtr<IStaticMesh> mesh);
 		
 		/// \brief Get the mesh associated to this component.
 		/// \return Return the mesh associated to this component.
-		ObjectPtr<Mesh> GetMesh();
+		ObjectPtr<IStaticMesh> GetMesh();
 
 		/// \brief Get the mesh associated to this component.
 		/// \return Return the mesh associated to this component.
-		ObjectPtr<const Mesh> GetMesh() const;
+		ObjectPtr<const IStaticMesh> GetMesh() const;
 
 		/// \brief Set the mesh associated to this component.
 		/// \param mesh The new mesh to associate.
-		void SetMesh(ObjectPtr<Mesh> mesh);
+		void SetMesh(ObjectPtr<IStaticMesh> mesh);
 
 		virtual TypeSet GetTypes() const override;
 
@@ -396,7 +396,7 @@ namespace gi_lib{
 
 	private:
 
-		ObjectPtr<Mesh> mesh_;							///< \brief 3D model.
+		ObjectPtr<IStaticMesh> mesh_;							///< \brief 3D model.
 
 	};
 

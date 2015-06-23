@@ -247,7 +247,7 @@ namespace gi_lib{
 
 		/// \brief DirectX11 static mesh.
 		/// \author Raffaele D. Facendola.
-		class DX11Mesh : public Mesh{
+		class DX11Mesh : public IStaticMesh{
 
 		public:
 
@@ -514,7 +514,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Mesh mapping.
-		template<> struct ResourceMapping < Mesh > {
+		template<> struct ResourceMapping < IStaticMesh > {
 
 			/// \brief Concrete type associated to a Mesh.
 			using TMapped = DX11Mesh;

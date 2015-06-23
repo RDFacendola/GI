@@ -28,13 +28,13 @@ mesh_component_(mesh_component){
 
 DeferredRendererComponent::~DeferredRendererComponent(){}
 
-ObjectPtr<Mesh> DeferredRendererComponent::GetMesh(){
+ObjectPtr<IStaticMesh> DeferredRendererComponent::GetMesh(){
 
 	return mesh_component_.GetMesh();
 
 }
 
-ObjectPtr<const Mesh> DeferredRendererComponent::GetMesh() const{
+ObjectPtr<const IStaticMesh> DeferredRendererComponent::GetMesh() const{
 
 	return mesh_component_.GetMesh();
 

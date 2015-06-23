@@ -456,12 +456,12 @@ namespace{
 	/// \param mesh Mesh whose vertices needs to be imported.
 	/// \return Returns a vector with the imported vertices.
 	template <typename TVertexFormat>
-	void ImportMeshVertices(FbxMesh& mesh, Mesh::FromVertices<TVertexFormat>& bundle);
+	void ImportMeshVertices(FbxMesh& mesh, IStaticMesh::FromVertices<TVertexFormat>& bundle);
 
 	/// \brief Import the vertices of a mesh.
 	/// \param mesh Mesh whose vertices needs to be imported.
 	/// \return Returns a vector with the imported vertices.
-	template <> void ImportMeshVertices<VertexFormatNormalTextured>(FbxMesh& mesh, Mesh::FromVertices<VertexFormatNormalTextured>& bundle){
+	template <> void ImportMeshVertices<VertexFormatNormalTextured>(FbxMesh& mesh, IStaticMesh::FromVertices<VertexFormatNormalTextured>& bundle){
 
 		bundle.vertices.resize(mesh.GetControlPointsCount());
 
@@ -477,7 +477,7 @@ namespace{
 	/// \param mesh Source mesh.
 	/// \param bundle Store the imported index buffer and subset.
 	template <typename TVertexFormat>
-	void ImportMeshIndices(FbxMesh& mesh, Mesh::FromVertices<TVertexFormat>& bundle){
+	void ImportMeshIndices(FbxMesh& mesh, IStaticMesh::FromVertices<TVertexFormat>& bundle){
 
 		int polygon_size = 3;											// Triangle
 
@@ -580,14 +580,14 @@ namespace{
 
 		// Create the bundle used to build the mesh
 
-		Mesh::FromVertices<TVertexFormat> bundle;	
+		IStaticMesh::FromVertices<TVertexFormat> bundle;	
 
 		ImportMeshIndices(fbx_mesh, bundle);
 		ImportMeshVertices(fbx_mesh, bundle);
 
 		// Create the mesh component
 
-		auto mesh = context.resources->Load<Mesh, Mesh::FromVertices<TVertexFormat>>(bundle);
+		auto mesh = context.resources->Load<IStaticMesh, IStaticMesh::FromVertices<TVertexFormat>>(bundle);
 
 		if (mesh){
 

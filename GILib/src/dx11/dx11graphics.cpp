@@ -275,7 +275,7 @@ namespace{
 		InstanceBuilder::Register<ITexture2D, DX11Texture2D, ITexture2D::FromFile>();
 
 		// Mesh
-		InstanceBuilder::Register<Mesh, DX11Mesh, Mesh::FromVertices<VertexFormatNormalTextured>>();
+		InstanceBuilder::Register<IStaticMesh, DX11Mesh, IStaticMesh::FromVertices<VertexFormatNormalTextured>>();
 
 		// Materials
 		InstanceBuilder::Register<Material, DX11Material, Material::CompileFromFile>();

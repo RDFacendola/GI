@@ -34,7 +34,7 @@ namespace gi_lib{
 
 	/// \brief Base interface for static meshes.
 	/// \author Raffaele D. Facendola.
-	class Mesh : public IResource{
+	class IStaticMesh : public IResource{
 
 	public:
 
@@ -54,7 +54,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Virtual destructor.
-		virtual ~Mesh(){}
+		virtual ~IStaticMesh(){}
 
 		/// \brief Get the vertices count.
 		/// \return Returns the vertices count.
