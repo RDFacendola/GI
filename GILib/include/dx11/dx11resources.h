@@ -13,10 +13,11 @@
 
 #include "dx11.h"
 
-#include "..\..\include\graphics.h"
-#include "..\..\include\resources.h"
-#include "..\..\include\gilib.h"
-#include "..\..\include\windows\win_os.h"
+#include "graphics.h"
+#include "resources.h"
+#include "gilib.h"
+
+#include "windows/win_os.h"
 
 using ::std::string;
 using ::std::wstring;
@@ -309,9 +310,9 @@ namespace gi_lib{
 
 			virtual size_t GetSize() const override;
 
-			virtual ObjectPtr<MaterialVariable> GetVariable(const string& name) override;
+			virtual ObjectPtr<IVariable> GetVariable(const string& name) override;
 
-			virtual ObjectPtr<MaterialResource> GetResource(const string& name) override;
+			virtual ObjectPtr<IResourceBLAH> GetResource(const string& name) override;
 
 			/// \brief Commit all the constant buffers and bind the material to the pipeline.
 			void Commit(ID3D11DeviceContext& context);
@@ -325,7 +326,7 @@ namespace gi_lib{
 			struct InstanceImpl;
 
 			/// \brief Material variable.
-			class DX11MaterialVariable : public MaterialVariable{
+			class DX11MaterialVariable : public IVariable{
 
 			public:
 
@@ -346,7 +347,7 @@ namespace gi_lib{
 			};
 
 			/// \brief Material resource, used to bind shader resource views.
-			class DX11MaterialResource : public MaterialResource{
+			class DX11MaterialResource : public IResourceBLAH{
 
 			public:
 
@@ -363,7 +364,7 @@ namespace gi_lib{
 			};
 
 			/// \brief Material resource, used to bind unordered access views.
-			class DX11MaterialUAV : public MaterialResource{
+			class DX11MaterialUAV : public IResourceBLAH{
 
 			public:
 

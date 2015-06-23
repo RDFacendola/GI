@@ -1,4 +1,4 @@
-#include "..\include\exceptions.h"
+#include "exceptions.h"
 
 #ifdef _WIN32
 

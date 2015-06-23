@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "..\component.h"
+#include "component.h"
 
 using std::vector;
 
@@ -35,7 +35,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Virtual destructor.
-		virtual ~IVolumeHierarchy();
+		virtual ~IVolumeHierarchy(){};
 
 		/// \brief Add a new volume to the hierarchy.
 		/// \param volume The volume to add to the hierarchy.

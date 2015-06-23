@@ -1,4 +1,4 @@
-#include "..\..\include\renderers\deferred_renderer.h"
+#include "deferred_renderer.h"
 
 using namespace std;
 using namespace gi_lib;

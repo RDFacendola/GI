@@ -1,9 +1,9 @@
-#include "..\include\core.h"
+#include "core.h"
 
-#include "..\include\exceptions.h"
-#include "..\include\timer.h"
+#include "exceptions.h"
+#include "timer.h"
 
-#include "..\include\windows\win_core.h"
+#include "windows/win_core.h"
 
 using namespace gi_lib;
 using namespace std;

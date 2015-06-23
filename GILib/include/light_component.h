@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "..\component.h"
+#include "component.h"
 
-#include "..\scene.h"
-#include "..\graphics.h"
-#include "..\gimath.h"
+#include "scene.h"
+#include "graphics.h"
+#include "gimath.h"
 
 namespace gi_lib{
 

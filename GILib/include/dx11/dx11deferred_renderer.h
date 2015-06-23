@@ -5,11 +5,10 @@
 
 #pragma once
 
+#include "deferred_renderer.h"
+
 #include "dx11renderer.h"
-
-#include "..\dx11graphics.h"
-
-#include "..\..\..\include\renderers\deferred_renderer.h"
+#include "dx11graphics.h"
 
 namespace gi_lib{
 
@@ -52,9 +51,9 @@ namespace gi_lib{
 
 			ObjectPtr<DX11Material> material_;							///< \brief DirectX11 material.
 
-			ObjectPtr<Material::MaterialVariable> world_view_proj_;		///< \brief Projection * View * World matrix product.
+			ObjectPtr<IVariable> world_view_proj_;						///< \brief Projection * View * World matrix product.
 
-			ObjectPtr<Material::MaterialVariable> world_;				///< \brief World matrix.
+			ObjectPtr<IVariable> world_;								///< \brief World matrix.
 
 		};
 
@@ -130,11 +129,11 @@ namespace gi_lib{
 
 			ObjectPtr<DX11Material> tonemapper_;									///< \brief Material used to perform tonemapping.
 
-			ObjectPtr<DX11Material::MaterialVariable> tonemap_exposure_;
+			ObjectPtr<IVariable> tonemap_exposure_;
 
-			ObjectPtr<DX11Material::MaterialVariable> tonemap_vignette_;
+			ObjectPtr<IVariable> tonemap_vignette_;
 
-			ObjectPtr<DX11Material::MaterialResource> tonemap_source_;
+			ObjectPtr<IResourceBLAH> tonemap_source_;
 
 			
 		};

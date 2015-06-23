@@ -11,10 +11,10 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 
-#include "..\..\include\enums.h"
-#include "..\..\include\gimath.h"
-#include "..\..\include\windows\win_os.h"
-#include "..\..\Include\scope_guard.h"
+#include "enums.h"
+#include "gimath.h"
+#include "scope_guard.h"
+#include "windows/win_os.h"
 
 using ::std::vector;
 using ::std::string;

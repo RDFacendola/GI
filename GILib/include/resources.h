@@ -281,6 +281,42 @@ namespace gi_lib{
 		
 	};
 
+	/// \brief Interface for variables.
+	/// \author Raffaele D. Facendola.
+	class IVariable : public Object{
+
+	public:
+
+		/// \brief Default destructor.
+		virtual ~IVariable(){}
+
+		/// \brief Set the variable value.
+		/// \param value The value to set.
+		template <typename TValue>
+		void Set(const TValue& value);
+
+		/// \brief Set the variable value.
+		/// \param buffer Pointer to the buffer holding the data to write.
+		/// \param size Size of the buffer.
+		virtual void Set(const void* buffer, size_t size) = 0;
+
+	};
+
+	/// \brief Interface for resources.
+	/// \author Raffaele D. Facendola.
+	class IResourceBLAH : public Object{
+
+	public:
+
+		/// \brief Default destructor.
+		virtual ~IResourceBLAH(){}
+
+		/// \brief Set the resource value.
+		/// \param resource The resource to bind to the material.
+		virtual void Set(ObjectPtr<IResourceView> resource) = 0;
+
+	};
+
 	/// \brief Base interface for materials.
 	/// \author Raffaele D. Facendola
 	class Material : public IResource{
@@ -308,53 +344,56 @@ namespace gi_lib{
 			ObjectPtr<Material> base;	///< \brief Material to instantiate.
 
 		};
-		
-		/// \brief Interface for material variables.
-		class MaterialVariable : public Object{
 
-		public:
-
-			/// \brief Default destructor.
-			virtual ~MaterialVariable(){}
-
-			/// \brief Set the variable value.
-			/// \param value The value to set.
-			template <typename TValue>
-			void Set(const TValue& value);
-
-			/// \brief Set the variable value.
-			/// \param buffer Pointer to the buffer holding the data to write.
-			/// \param size Size of the buffer.
-			virtual void Set(const void* buffer, size_t size) = 0;
-
-		};
-
-		/// \brief Interface for material resources.
-		class MaterialResource : public Object{
-
-		public:
-
-			/// \brief Default destructor.
-			virtual ~MaterialResource(){}
-
-			/// \brief Set the resource value.
-			/// \param resource The resource to bind to the material.
-			virtual void Set(ObjectPtr<IResourceView> resource) = 0;
-
-		};
-
-		/// \brief Default destructor.
+		/// \brief Virtual destructor.
 		virtual ~Material(){}
 
 		/// \brief Get a material variable by name.
 		/// \param name The name of the variable.
 		/// \return Returns a pointer to the variable matching the specified name if found, returns nullptr otherwise.
-		virtual ObjectPtr<MaterialVariable> GetVariable(const string& name) = 0;
+		virtual ObjectPtr<IVariable> GetVariable(const string& name) = 0;
 
 		/// \brief Get a material resource by name.
 		/// \param name The name of the resource.
 		/// \return Returns a pointer to the resource matching the specified name if found, returns nullptr otherwise.
-		virtual ObjectPtr<MaterialResource> GetResource(const string& name) = 0;
+		virtual ObjectPtr<IResourceBLAH> GetResource(const string& name) = 0;
+
+	};
+
+	/// \brief Base interface for computation that can be executed on the GPU.
+	/// \author Raffaele D. Facendola
+	class GPUComputation : public IResource{
+
+		/// \brief Structure used to compile a compute shader from a file.
+		struct CompileFromFile{
+
+			USE_CACHE;
+
+			wstring file_name;			///< \brief Name of the file containing the compute shader code.
+
+			/// \brief Get the cache key associated to the structure.
+			/// \return Returns the cache key associated to the structure.
+			size_t GetCacheKey() const;
+
+		};
+
+		/// \brief Virtual destructor.
+		virtual ~GPUComputation(){}
+
+		/// \brief Execute the GPU program dispatching a grid of threads.
+		/// The execution of the threads is guaranteed to be synchronous.
+		/// \param x Threads to dispatch along the X-axis.
+		/// \param y Threads to dispatch along the Y-axis.
+		/// \param z Threads to dispatch along the Z-axis.
+		/// \remarks The total amount of dispatched threads is x*y*z.
+		/// \remarks The method will take care of dispatching the correct amount of thread group, based on the specified number of threads.
+		virtual void Dispatch(unsigned int x, unsigned int y, unsigned int z) = 0;
+
+		virtual ObjectPtr<IVariable> GetVariable(const string& name) = 0;
+
+		virtual ObjectPtr<IVariable> GetResource(const string& name) = 0;		// Input, Read
+
+		virtual ObjectPtr<IVariable> GetRWResource(const string& name) = 0;		// Input/Output, Read/Write
 
 	};
 
@@ -431,7 +470,7 @@ namespace gi_lib{
 	///////////////////////////////////////// MATERIAL /////////////////////////////////////////
 
 	template <typename TValue>
-	inline void Material::MaterialVariable::Set(const TValue& value){
+	inline void IVariable::Set(const TValue& value){
 
 		Set(static_cast<const void*>(&value),
 			sizeof(TValue));

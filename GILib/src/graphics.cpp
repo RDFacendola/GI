@@ -1,14 +1,14 @@
-#include "..\include\graphics.h"
+#include "graphics.h"
 
 #include <numeric>
 #include <map>
 
-#include "..\include\exceptions.h"
-#include "..\include\core.h"
-#include "..\include\resources.h"
-#include "..\include\range.h"
+#include "exceptions.h"
+#include "core.h"
+#include "resources.h"
+#include "range.h"
 
-#include "dx11\dx11graphics.h"
+#include "dx11/dx11graphics.h"
 
 using namespace std;
 using namespace gi_lib;

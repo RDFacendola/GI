@@ -1,14 +1,14 @@
 #pragma comment(lib, "d3dcompiler.lib")
 
-#include "dx11.h"
+#include "dx11/dx11.h"
 
 #include <sstream>
 #include <algorithm>
 
-#include "..\..\include\exceptions.h"
-#include "..\..\include\enums.h"
-#include "..\..\include\scope_guard.h"
-#include "..\..\include\windows\win_os.h"
+#include "exceptions.h"
+#include "enums.h"
+#include "scope_guard.h"
+#include "windows\win_os.h"
 
 using namespace std;
 using namespace gi_lib;

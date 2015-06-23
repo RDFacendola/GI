@@ -1,9 +1,11 @@
-#include "dx11deferred_renderer.h"
+#include "dx11/dx11deferred_renderer.h"
 
-#include "..\dx11.h"
-#include "..\dx11resources.h"
-#include "..\..\..\include\gimath.h"
-#include "..\..\..\include\windows\win_os.h"
+#include "dx11/dx11.h"
+#include "dx11/dx11resources.h"
+
+#include "windows/win_os.h"
+
+#include "gimath.h"
 
 using namespace ::std;
 using namespace ::gi_lib;

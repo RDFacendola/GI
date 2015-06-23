@@ -1,8 +1,7 @@
-#include "..\include\resources.h"
+#include "resources.h"
 
-#include "..\external\fnv1.h"
-
-#include "..\include\gilib.h"
+#include "fnv1.h"
+#include "gilib.h"
 
 using namespace gi_lib;
 using namespace std;

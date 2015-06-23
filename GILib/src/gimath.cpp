@@ -1,8 +1,8 @@
-#include "..\include\gimath.h"
+#include "gimath.h"
 
 #include <math.h>
 
-#include "..\include\exceptions.h"
+#include "exceptions.h"
 
 using namespace ::gi_lib;
 using namespace ::Eigen;

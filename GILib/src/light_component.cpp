@@ -1,4 +1,4 @@
-#include "..\..\include\lights\light_component.h"
+#include "light_component.h"
 
 using namespace gi_lib;
 

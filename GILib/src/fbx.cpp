@@ -1,3 +1,5 @@
+#include "fbx/fbx.h"
+
 #pragma comment(lib,"libfbxsdk-md.lib")
 
 #ifdef _DEBUG
@@ -12,16 +14,15 @@
 #include <type_traits>
 #include <sstream>
 
-#include "..\..\include\gilib.h"
-#include "..\..\include\gimath.h"
-#include "..\..\include\range.h"
-#include "..\..\include\fbx\fbx.h"
-#include "..\..\include\core.h"
-#include "..\..\include\exceptions.h"
-#include "..\..\include\graphics.h"
-#include "..\..\include\resources.h"
-#include "..\..\include\scene.h"
-#include "..\..\include\scope_guard.h"
+#include "gilib.h"
+#include "gimath.h"
+#include "range.h"
+#include "core.h"
+#include "exceptions.h"
+#include "graphics.h"
+#include "resources.h"
+#include "scene.h"
+#include "scope_guard.h"
 
 using namespace std;
 using namespace Eigen;

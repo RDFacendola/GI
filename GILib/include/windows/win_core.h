@@ -9,8 +9,9 @@
 
 #include <Windows.h>
 
-#include "..\core.h"
 #include "win_input.h"
+
+#include "core.h"
 
 namespace gi_lib{
 

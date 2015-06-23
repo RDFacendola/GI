@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "..\gimath.h"
+#include "gimath.h"
 #include "volume_hierarchy.h"
 
 namespace gi_lib{

@@ -4,10 +4,9 @@
 
 #pragma once
 
-#include "..\component.h"
-
-#include "..\timer.h"
-#include "..\input.h"
+#include "component.h"
+#include "timer.h"
+#include "input.h"
 
 namespace gi_lib{
 

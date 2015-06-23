@@ -10,9 +10,9 @@
 #include <scene.h>
 #include <resources.h>
 
-#include <renderers/deferred_renderer.h>
+#include "fbx/fbx.h"
 
-#include <fbx/fbx.h>
+#include "deferred_renderer.h"
 
 using gi_lib::ObjectPtr;
 

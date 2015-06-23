@@ -1,13 +1,13 @@
 #ifdef _WIN32
 
-#include "..\..\Include\windows\win_core.h"
+#include "windows/win_core.h"
 
 #include <string>
 #include <algorithm>
 #include <fstream>
 
-#include "..\..\Include\exceptions.h"
-#include "..\..\Include\timer.h"
+#include "exceptions.h"
+#include "timer.h"
 
 using namespace std;
 

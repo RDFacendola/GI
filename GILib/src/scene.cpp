@@ -1,10 +1,10 @@
-#include "..\include\scene.h"
+#include "scene.h"
 
 #include <algorithm>
 #include <assert.h>
 
-#include "..\include\gilib.h"
-#include "..\include\exceptions.h"
+#include "gilib.h"
+#include "exceptions.h"
 
 using namespace ::gi_lib;
 using namespace ::std;

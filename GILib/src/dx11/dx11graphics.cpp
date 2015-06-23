@@ -1,4 +1,4 @@
-#include "dx11graphics.h"
+#include "dx11/dx11graphics.h"
 
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d11.lib")
@@ -7,20 +7,16 @@
 #include <dxgi.h>
 #include <map>
 
-#include "dx11resources.h"
+#include "core.h"
+#include "scene.h"
+#include "exceptions.h"
+#include "resources.h"
+#include "instance_builder.h"
+#include "deferred_renderer.h"
 
-#include "renderers\dx11renderer.h"
-#include "renderers\dx11deferred_renderer.h"
-
-#include "..\instance_builder.h"
-
-#include "..\..\include\core.h"
-#include "..\..\include\scene.h"
-#include "..\..\include\exceptions.h"
-#include "..\..\include\resources.h"
-
-#include "..\..\include\renderers\deferred_renderer.h"
-
+#include "dx11/dx11resources.h"
+#include "dx11/dx11renderer.h"
+#include "dx11/dx11deferred_renderer.h"
 
 using namespace std;
 using namespace gi_lib;

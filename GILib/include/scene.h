@@ -21,7 +21,7 @@
 #include "observable.h"
 #include "resources.h"
 #include "graphics.h"
-#include "spatial hierarchy\volume_hierarchy.h"
+#include "volume_hierarchy.h"
 
 using ::std::vector;
 using ::std::wstring;

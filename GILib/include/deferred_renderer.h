@@ -8,11 +8,11 @@
 #include <vector>
 #include <memory>
 
-#include "..\graphics.h"
-#include "..\resources.h"
-#include "..\component.h"
-#include "..\scene.h"
-#include "..\observable.h"
+#include "graphics.h"
+#include "resources.h"
+#include "component.h"
+#include "scene.h"
+#include "observable.h"
 
 using ::std::vector;
 using ::std::shared_ptr;

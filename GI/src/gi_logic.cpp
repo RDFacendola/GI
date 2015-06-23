@@ -1,24 +1,22 @@
 #include "..\include\gi_logic.h"
 
 #include <string>
-
-#include <resources.h>
-#include <renderers\deferred_renderer.h>
-#include <spatial hierarchy\uniform_tree.h>
-
-#include <component.h>
-#include <range.h>
-
-#include <scene.h>
-#include <fbx\fbx.h>
-#include <Eigen/Geometry>
-
 #include <typeindex>
 #include <typeinfo>
 
-#include "..\include\material_importer.h"
-#include "..\include\components\fly_camera_component.h"
-#include "..\include\lights\light_component.h"
+#include "fbx/fbx.h"
+
+#include "Eigen/Geometry"
+
+#include "resources.h"
+#include "deferred_renderer.h"
+#include "uniform_tree.h"
+#include "component.h"
+#include "range.h"
+#include "scene.h"
+#include "material_importer.h"
+#include "fly_camera_component.h"
+#include "light_component.h"
 
 #include <Windows.h>
 

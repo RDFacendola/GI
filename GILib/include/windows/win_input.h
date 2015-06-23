@@ -10,7 +10,7 @@
 #include <Windows.h>
 #include <set>
 
-#include "..\input.h"
+#include "input.h"
 
 using std::set;
 

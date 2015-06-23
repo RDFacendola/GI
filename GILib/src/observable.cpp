@@ -1,4 +1,4 @@
-#include "..\include\observable.h"
+#include "observable.h"
 
 using namespace std;
 using namespace gi_lib;

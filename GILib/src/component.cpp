@@ -1,8 +1,8 @@
-#include "..\include\component.h"
+#include "component.h"
 
 #include <algorithm>
 
-#include "..\include\exceptions.h"
+#include "exceptions.h"
 
 using namespace ::gi_lib;
 using namespace ::std;

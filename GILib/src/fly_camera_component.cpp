@@ -1,8 +1,7 @@
-#include "..\..\include\components\fly_camera_component.h"
+#include "fly_camera_component.h"
 
-#include "..\..\include\scene.h"
-
-#include "..\..\include\gimath.h"
+#include "scene.h"
+#include "gimath.h"
 
 using namespace std;
 using namespace gi_lib;

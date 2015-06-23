@@ -11,9 +11,9 @@
 
 #include "dx11resources.h"
 
-#include "..\..\include\observable.h"
-#include "..\..\include\graphics.h"
-#include "..\..\include\windows\win_core.h"
+#include "observable.h"
+#include "graphics.h"
+#include "windows/win_core.h"
 
 using ::std::unique_ptr;
 

@@ -2,7 +2,7 @@
 #pragma comment(lib,"DirectXTex")
 #pragma comment(lib,"dxguid.lib")
 
-#include "dx11resources.h"
+#include "dx11/dx11resources.h"
 
 #include <set>
 #include <map>
@@ -14,16 +14,16 @@
 #include <DirectXMath.h>
 #include <Eigen/Core>
 
-#include "..\..\include\gimath.h"
-#include "..\..\include\core.h"
-#include "..\..\include\enums.h"
-#include "..\..\include\exceptions.h"
-#include "..\..\include\scope_guard.h"
-#include "..\..\include\observable.h"
-#include "..\..\include\debug.h"
+#include "gimath.h"
+#include "core.h"
+#include "enums.h"
+#include "exceptions.h"
+#include "scope_guard.h"
+#include "observable.h"
+#include "debug.h"
 
-#include "dx11.h"
-#include "dx11graphics.h"
+#include "dx11/dx11.h"
+#include "dx11/dx11graphics.h"
 
 using namespace std;
 using namespace gi_lib;
@@ -1478,7 +1478,7 @@ DX11Material::~DX11Material(){
 
 }
 
-ObjectPtr<Material::MaterialVariable> DX11Material::GetVariable(const string& name){
+ObjectPtr<IVariable> DX11Material::GetVariable(const string& name){
 
 	auto& buffers = shared_impl_->reflection.buffers;
 
@@ -1513,7 +1513,7 @@ ObjectPtr<Material::MaterialVariable> DX11Material::GetVariable(const string& na
 
 }
 
-ObjectPtr<Material::MaterialResource> DX11Material::GetResource(const string& name){
+ObjectPtr<IResourceBLAH> DX11Material::GetResource(const string& name){
 
 	// Check among the resources
 

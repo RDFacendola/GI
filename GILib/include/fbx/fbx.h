@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 
-#include "..\gimath.h"
+#include "gimath.h"
 
 using ::std::wstring;
 using ::std::string;
