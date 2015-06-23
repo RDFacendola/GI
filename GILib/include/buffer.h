@@ -13,7 +13,7 @@ namespace gi_lib{
 	/// The vector can be written by the CPU and read by the GPU.
 	/// The size of the vector does not change.
 	/// \author Raffaele D. Facendola
-	class StructuredVector : public IResource{
+	class StructuredBuffer : public IResource{
 
 	public:
 
@@ -29,7 +29,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Virtual destructor.
-		virtual ~StructuredVector(){}
+		virtual ~StructuredBuffer(){}
 
 		/// \brief Get the element count of this vector.
 		/// \return Returns the element count of this vector.
@@ -68,7 +68,7 @@ namespace gi_lib{
 	///////////////////////////////////////// STRUCTURED BUFFER /////////////////////////////////////////
 
 	template <typename TElement>
-	inline TElement* StructuredVector::Lock(){
+	inline TElement* StructuredBuffer::Lock(){
 
 		return static_cast<TElement*>(LockDiscard());
 

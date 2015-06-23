@@ -432,7 +432,7 @@ namespace gi_lib{
 
 		/// \brief DirectX11 structured vector.
 		/// \author Raffaele D. Facendola
-		class DX11StructuredVector : public StructuredVector{
+		class DX11StructuredVector : public StructuredBuffer{
 
 		public:
 
@@ -530,7 +530,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Structured vector mapping.
-		template<> struct ResourceMapping < StructuredVector > {
+		template<> struct ResourceMapping < StructuredBuffer > {
 
 			/// \brief Concrete type associated to a structured vector.
 			using TMapped = DX11StructuredVector;

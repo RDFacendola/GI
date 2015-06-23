@@ -168,7 +168,7 @@ TiledDeferredRenderer(arguments.scene){
 	
 	// TODO: Remove this
 
-	light_array_ = new DX11StructuredVector(StructuredVector::FromDescription{ 32, sizeof(Light) });
+	light_array_ = new DX11StructuredVector(StructuredBuffer::FromDescription{ 32, sizeof(Light) });
 
 	InitializeToneMap();
 
