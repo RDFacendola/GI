@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\buffer.h" />
     <ClInclude Include="include\eigen.h" />
     <ClInclude Include="include\fnv1.h" />
     <ClInclude Include="include\fly_camera_component.h" />
