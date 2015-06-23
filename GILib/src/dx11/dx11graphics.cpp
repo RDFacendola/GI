@@ -272,7 +272,7 @@ namespace{
 	void RegisterDirectX11Resources(){
 
 		// Texture 2D
-		InstanceBuilder::Register<Texture2D, DX11Texture2D, Texture2D::FromFile>();
+		InstanceBuilder::Register<ITexture2D, DX11Texture2D, ITexture2D::FromFile>();
 
 		// Mesh
 		InstanceBuilder::Register<Mesh, DX11Mesh, Mesh::FromVertices<VertexFormatNormalTextured>>();

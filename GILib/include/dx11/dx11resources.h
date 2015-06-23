@@ -92,7 +92,7 @@ namespace gi_lib{
 		
 		/// \brief DirectX11 plain texture.
 		/// \author Raffaele D. Facendola.
-		class DX11Texture2D : public Texture2D{
+		class DX11Texture2D : public ITexture2D{
 
 		public:
 
@@ -177,13 +177,13 @@ namespace gi_lib{
 
 			virtual unsigned int GetCount() const override;
 
-			virtual ObjectPtr<Texture2D> operator[](size_t index) override;
+			virtual ObjectPtr<ITexture2D> operator[](size_t index) override;
 
-			virtual ObjectPtr<const Texture2D> operator[](size_t index) const override;
+			virtual ObjectPtr<const ITexture2D> operator[](size_t index) const override;
 
-			virtual ObjectPtr<Texture2D> GetZStencil() override;
+			virtual ObjectPtr<ITexture2D> GetZStencil() override;
 
-			virtual ObjectPtr<const Texture2D> GetZStencil() const override;
+			virtual ObjectPtr<const ITexture2D> GetZStencil() const override;
 
 			virtual float GetAspectRatio() const override;
 
@@ -498,7 +498,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Texture 2D mapping
-		template<> struct ResourceMapping < Texture2D > {
+		template<> struct ResourceMapping < ITexture2D > {
 
 			/// \brief Concrete type associated to a Texture2D.
 			using TMapped = DX11Texture2D;
@@ -673,25 +673,25 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<Texture2D> DX11RenderTarget::operator[](size_t index){
+		inline ObjectPtr<ITexture2D> DX11RenderTarget::operator[](size_t index){
 
 			return textures_[index];
 
 		}
 
-		inline ObjectPtr<const Texture2D> DX11RenderTarget::operator[](size_t index) const{
+		inline ObjectPtr<const ITexture2D> DX11RenderTarget::operator[](size_t index) const{
 
 			return textures_[index];
 
 		}
 
-		inline ObjectPtr<Texture2D> DX11RenderTarget::GetZStencil(){
+		inline ObjectPtr<ITexture2D> DX11RenderTarget::GetZStencil(){
 
 			return zstencil_;
 
 		}
 
-		inline ObjectPtr<const Texture2D> DX11RenderTarget::GetZStencil() const{
+		inline ObjectPtr<const ITexture2D> DX11RenderTarget::GetZStencil() const{
 
 			return zstencil_;
 

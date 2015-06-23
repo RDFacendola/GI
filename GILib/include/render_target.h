@@ -9,7 +9,7 @@
 
 namespace gi_lib{
 
-	class Texture2D;
+	class ITexture2D;
 
 	template <typename TObject>
 	class ObjectPtr;
@@ -32,22 +32,22 @@ namespace gi_lib{
 		/// \brief Get a texture associated to this render target.
 		/// \param index The index of the render target texture.
 		/// \return Returns the texture associated to the index-th render target.
-		virtual ObjectPtr<Texture2D> operator[](size_t index) = 0;
+		virtual ObjectPtr<ITexture2D> operator[](size_t index) = 0;
 
 		/// \brief Get a texture associated to this render target.
 		/// \param index The index of the render target texture.
 		/// \return Returns the texture associated to the index-th render target.
-		virtual ObjectPtr<const Texture2D> operator[](size_t index) const = 0;
+		virtual ObjectPtr<const ITexture2D> operator[](size_t index) const = 0;
 
 		/// \brief Get the texture associated to the depth stencil buffer.
 		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.
 		/// \return Returns the texture associated to the depth stencil buffer used by this render target.
-		virtual ObjectPtr<Texture2D> GetZStencil() = 0;
+		virtual ObjectPtr<ITexture2D> GetZStencil() = 0;
 
 		/// \brief Get the texture associated to the depth stencil buffer.
 		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.
 		/// \return Returns the texture associated to the depth stencil buffer used by this render target.
-		virtual ObjectPtr<const Texture2D> GetZStencil() const = 0;
+		virtual ObjectPtr<const ITexture2D> GetZStencil() const = 0;
 
 		/// \brief Get the aspect ratio of the render target.
 		/// The aspect ratio is Width/Height.

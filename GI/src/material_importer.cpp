@@ -15,11 +15,11 @@ namespace{
 
 		if (resource && fbx_property){
 
-			ObjectPtr<Texture2D> texture;
+			ObjectPtr<ITexture2D> texture;
 
 			for (auto&& texture_name : fbx_property->EnumerateTextures()){
 
-				texture = resources.Load<Texture2D, Texture2D::FromFile>({ base_directory + to_wstring(texture_name) });
+				texture = resources.Load<ITexture2D, ITexture2D::FromFile>({ base_directory + to_wstring(texture_name) });
 
 				if (texture){
 

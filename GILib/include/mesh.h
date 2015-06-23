@@ -53,6 +53,7 @@ namespace gi_lib{
 
 		};
 
+		/// \brief Virtual destructor.
 		virtual ~Mesh(){}
 
 		/// \brief Get the vertices count.
@@ -60,7 +61,6 @@ namespace gi_lib{
 		virtual size_t GetVertexCount() const = 0;
 
 		/// \brief Get the polygons count.
-
 		/// A polygon is a triangle.
 		/// \return Returns the polygons count.
 		virtual size_t GetPolygonCount() const = 0;

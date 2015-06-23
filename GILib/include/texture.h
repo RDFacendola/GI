@@ -20,7 +20,7 @@ namespace gi_lib{
 
 	/// \brief Base interface for plain textures.
 	/// \author Raffaele D. Facendola.
-	class Texture2D : public IResource{
+	class ITexture2D : public IResource{
 
 	public:
 
@@ -39,8 +39,8 @@ namespace gi_lib{
 		};
 
 		/// \brief Interface destructor.
-		virtual ~Texture2D(){}
-
+		virtual ~ITexture2D(){}
+		
 		/// \brief Get the width of the texture.
 		/// \return Returns the width of the texture, in pixel.
 		virtual unsigned int GetWidth() const = 0;
@@ -62,7 +62,7 @@ namespace gi_lib{
 
 	////////////////////////////// TEXTURE 2D :: FROM FILE ///////////////////////////////
 
-	inline size_t Texture2D::FromFile::GetCacheKey() const{
+	inline size_t ITexture2D::FromFile::GetCacheKey() const{
 
 		return ::hash::fnv_1{}(to_string(file_name));
 

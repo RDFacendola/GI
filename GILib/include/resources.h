@@ -12,6 +12,28 @@
 
 namespace gi_lib{
 
+	/// \brief Base interface for graphical resources.
+	/// Resources are reference counted.
+	/// You may improve this class to provide shared functionalities to every resource.
+	/// \author Raffaele D. Facendola.
+	class IResource : public Object{
+
+	public:
+
+		/// \brief Virtual destructor.
+		virtual ~IResource(){}
+
+		/// \brief Get the memory footprint of this resource.
+		/// \return Returns the size of the resource, in bytes.
+		virtual size_t GetSize() const = 0;
+
+	protected:
+
+		/// \brief Protected constructor. Prevent instantiation.
+		IResource(){}
+
+	};
+
 	using ::std::wstring;
 	using ::std::string;
 	using ::std::vector;
@@ -37,26 +59,6 @@ namespace gi_lib{
 	struct no_cache{
 
 		using type = void;
-
-	};
-
-	/// \brief Base interface for graphical resources.
-	/// Resources are reference counted.
-	/// \author Raffaele D. Facendola.
-	class IResource : public Object{
-
-	public:
-
-		virtual ~IResource(){}
-
-		/// \brief Get the memory footprint of this resource.
-		/// \return Returns the size of the resource, in bytes.
-		virtual size_t GetSize() const = 0;
-
-	protected:
-
-		/// \brief Protected constructor. Prevent instantiation.
-		IResource(){}
 
 	};
 
