@@ -20,7 +20,6 @@
 #include "exceptions.h"
 #include "scope_guard.h"
 #include "observable.h"
-#include "debug.h"
 
 #include "dx11/dx11.h"
 #include "dx11/dx11graphics.h"

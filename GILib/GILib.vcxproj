@@ -27,7 +27,6 @@
     <ClInclude Include="include\deferred_renderer.h" />
     <ClInclude Include="include\uniform_tree.h" />
     <ClInclude Include="include\volume_hierarchy.h" />
-    <ClInclude Include="include\debug.h" />
     <ClInclude Include="include\enums.h" />
     <ClInclude Include="include\gimath.h" />
     <ClInclude Include="include\component.h" />
