@@ -15,6 +15,12 @@
 
 #include "graphics.h"
 #include "resources.h"
+
+#include "mesh.h"
+#include "texture.h"
+#include "render_target.h"
+
+
 #include "gilib.h"
 
 #include "windows/win_os.h"
@@ -171,9 +177,9 @@ namespace gi_lib{
 
 			virtual unsigned int GetCount() const override;
 
-			virtual ObjectPtr<Texture2D> GetTexture(size_t index) override;
+			virtual ObjectPtr<Texture2D> operator[](size_t index) override;
 
-			virtual ObjectPtr<const Texture2D> GetTexture(size_t index) const override;
+			virtual ObjectPtr<const Texture2D> operator[](size_t index) const override;
 
 			virtual ObjectPtr<Texture2D> GetZStencil() override;
 
@@ -667,13 +673,13 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<Texture2D> DX11RenderTarget::GetTexture(size_t index){
+		inline ObjectPtr<Texture2D> DX11RenderTarget::operator[](size_t index){
 
 			return textures_[index];
 
 		}
 
-		inline ObjectPtr<const Texture2D> DX11RenderTarget::GetTexture(size_t index) const{
+		inline ObjectPtr<const Texture2D> DX11RenderTarget::operator[](size_t index) const{
 
 			return textures_[index];
 

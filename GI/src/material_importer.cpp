@@ -1,5 +1,8 @@
 #include "..\include\material_importer.h"
 
+#include "texture.h"
+#include "object.h"
+
 using namespace gi;
 using namespace gi_lib;
 using namespace gi_lib::fbx;

@@ -19,12 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\eigen.h" />
     <ClInclude Include="include\fnv1.h" />
     <ClInclude Include="include\fly_camera_component.h" />
     <ClInclude Include="include\light_component.h" />
     <ClInclude Include="include\gilib.h" />
     <ClInclude Include="include\input.h" />
     <ClInclude Include="include\deferred_renderer.h" />
+    <ClInclude Include="include\mesh.h" />
+    <ClInclude Include="include\object.h" />
+    <ClInclude Include="include\render_target.h" />
+    <ClInclude Include="include\texture.h" />
     <ClInclude Include="include\uniform_tree.h" />
     <ClInclude Include="include\volume_hierarchy.h" />
     <ClInclude Include="include\enums.h" />

@@ -6,6 +6,8 @@
 #include "gilib.h"
 #include "exceptions.h"
 
+#include "mesh.h"
+
 using namespace ::gi_lib;
 using namespace ::std;
 

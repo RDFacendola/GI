@@ -9,6 +9,7 @@
 #include "Eigen/Geometry"
 
 #include "resources.h"
+#include "render_target.h"
 #include "deferred_renderer.h"
 #include "uniform_tree.h"
 #include "component.h"

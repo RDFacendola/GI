@@ -5,37 +5,16 @@
 
 #pragma once
 
-#include <vector>
-#include <memory>
 #include <string>
-#include <typeinfo>
-#include <typeindex>
+#include <vector>
 
-#include "gilib.h"
-#include "gimath.h"
-
-using ::std::vector;
-using ::std::shared_ptr;
-using ::std::wstring;
-using ::std::string;
-
-using ::Eigen::Vector2f;
-using ::Eigen::Vector3f;
-using ::Eigen::Affine3f;
-using ::Eigen::Projective3f;
-using ::Eigen::Matrix;
+#include "object.h"
 
 namespace gi_lib{
 
-	enum class AntialiasingMode;
-
-	class IResource;
-	class IResourceView;
-
-	class Texture2D;
-	class RenderTarget;
-	class Mesh;
-	class Material;
+	using ::std::wstring;
+	using ::std::string;
+	using ::std::vector;
 
 	/// \brief Macro used to declare that the bundle will use the caching mechanism.
 	#define USE_CACHE \
@@ -61,24 +40,6 @@ namespace gi_lib{
 
 	};
 
-	/// \brief The vertex declares position, texture coordinates and normals.
-	struct VertexFormatNormalTextured{
-
-		Vector3f position;			///< Position of the vertex.
-		Vector3f normal;			///< Vertex normal.
-		Vector2f tex_coord;			///< Texture coordinates.
-
-	};
-	
-	/// \brief Subset of a mesh.
-	struct MeshSubset{
-
-		size_t start_index;			///< \brief Start index.
-
-		size_t count;				///< \brief Index count.
-
-	};
-	
 	/// \brief Base interface for graphical resources.
 	/// Resources are reference counted.
 	/// \author Raffaele D. Facendola.
@@ -114,171 +75,6 @@ namespace gi_lib{
 		/// \brief Protected constructor. Prevent instantiation.
 		IResourceView(){}
 
-	};
-
-	/// \brief Base interface for plain textures.
-	/// \author Raffaele D. Facendola.
-	class Texture2D : public IResource{
-
-	public:
-
-		/// \brief Cached structure used to load a texture 2D from file.	
-		/// The texture is guaranteed to be read-only.
-		struct FromFile{
-
-			USE_CACHE;
-
-			wstring file_name;		///< \brief Name of the file to load.
-
-			/// \brief Get the cache key associated to the structure.
-			/// \return Returns the cache key associated to the structure.
-			size_t GetCacheKey() const;
-
-		};
-
-		/// \brief Interface destructor.
-		virtual ~Texture2D(){}
-
-		/// \brief Get the width of the texture.
-		/// \return Returns the width of the texture, in pixel.
-		virtual unsigned int GetWidth() const = 0;
-
-		/// \brief Get the height of the texture.
-		/// \return Returns the height of the texture, in pixel.
-		virtual unsigned int GetHeight() const = 0;
-
-		/// \brief Get the MIP map level count.
-		/// \return Returns the MIP map level count.
-		virtual unsigned int GetMipMapCount() const = 0;
-
-		/// \brief Get the view to this resource.
-		/// Use this view to bind the texture to the graphic pipeline (read-only).
-		/// \return Returns a pointer to the resource view.
-		virtual ObjectPtr<IResourceView> GetView() const = 0;
-
-	};
-
-	/// \brief Base interface for render targets.
-	/// A render target is a texture that can be used to draw an image onto.
-	/// It may also have its how depth and stencil buffer.
-	/// This class handles Multi Render Targets (MRT) as well.
-	/// \author Raffaele D. Facendola.
-	class RenderTarget : public IResource{
-
-	public:
-
-		virtual ~RenderTarget(){};
-
-		/// \brief Get the number of surfaces in this render target.
-		/// \return Returns the number of surfaces in this render target.
-		virtual unsigned int GetCount() const = 0;
-
-		/// \brief Get a texture associated to this render target.
-		/// \param index The index of the render target texture.
-		/// \return Returns the texture associated to the index-th render target.
-		ObjectPtr<Texture2D> operator[](size_t index);
-
-		/// \brief Get a texture associated to this render target.
-		/// \param index The index of the render target texture.
-		/// \return Returns the texture associated to the index-th render target.
-		ObjectPtr<const Texture2D> operator[](size_t index) const;
-
-		/// \brief Get a texture associated to this render target.
-		/// \param index The index of the render target texture.
-		/// \return Returns the texture associated to the index-th render target.
-		virtual ObjectPtr<Texture2D> GetTexture(size_t index) = 0;
-
-		/// \brief Get the texture associated to this render target.
-		/// \param index The index of the render target texture.
-		/// \return Returns the texture associated to the index-th render target.
-		virtual ObjectPtr<const Texture2D> GetTexture(size_t index) const = 0;
-
-		/// \brief Get the texture associated to the depth stencil buffer.
-		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.
-		/// \return Returns the texture associated to the depth stencil buffer used by this render target.
-		virtual ObjectPtr<Texture2D> GetZStencil() = 0;
-
-		/// \brief Get the texture associated to the depth stencil buffer.
-		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.
-		/// \return Returns the texture associated to the depth stencil buffer used by this render target.
-		virtual ObjectPtr<const Texture2D> GetZStencil() const = 0;
-
-		/// \brief Get the aspect ratio of the render target.
-		/// The aspect ratio is Width/Height.
-		/// \return Returns the aspect ratio of the render target.
-		virtual float GetAspectRatio() const = 0;
-
-		/// \brief Get the anti-aliasing mode of the render target.
-		/// The anti-aliasing mode influences the number of samples per pixel for techniques like MSAA.
-		/// \return Return the anti-aliasing mode of the render target.
-		virtual AntialiasingMode GetAntialiasing() const = 0;
-		
-		/// \brief Resize the render target surfaces.
-		/// \param width The new width of the buffer.
-		/// \param height The new height of the buffer.
-		/// \return Returns true if the texture was resized, returns false otherwise.
-		virtual bool Resize(unsigned int width, unsigned int height) = 0;
-
-		/// \brief Get the width of the render target in pixels.
-		/// \return Returns the width of the render target.
-		virtual unsigned int GetWidth() const = 0;
-
-		/// \brief Get the height of the render target in pixels.
-		/// \return Returns the height of the render target.
-		virtual unsigned int GetHeight() const = 0;
-
-	};
-
-	/// \brief Base interface for static meshes.
-	/// \author Raffaele D. Facendola.
-	class Mesh : public IResource{
-
-	public:
-
-		/// \brief Structure used to build a mesh from an array of vertices.
-		/// \tparam TVertexFormat Format of each vertex.
-		template <typename TVertexFormat>
-		struct FromVertices{
-
-			NO_CACHE;
-
-			vector<unsigned int> indices;			///< \brief Indices definition.
-
-			vector<TVertexFormat> vertices;			///< \brief Vertices definition. 
-
-			vector<MeshSubset> subsets;				///< \brief Mesh subset definition.
-
-		};
-
-		virtual ~Mesh(){}
-
-		/// \brief Get the vertices count.
-		/// \return Returns the vertices count.
-		virtual size_t GetVertexCount() const = 0;
-
-		/// \brief Get the polygons count.
-
-		/// A polygon is a triangle.
-		/// \return Returns the polygons count.
-		virtual size_t GetPolygonCount() const = 0;
-
-		/// \brief Get the level of detail count.
-		/// \return Returns the level of detail count.
-		virtual size_t GetLODCount() const = 0;
-
-		/// \brief Get the bounds of the mesh.
-		/// \return Returns the bounding box of the mesh in object space.
-		virtual const AABB& GetBoundingBox() const = 0;
-
-		/// \brief Total number of subsets used by this mesh.
-		/// \return Returns the total number of subsets used by this mesh.
-		virtual size_t GetSubsetCount() const = 0;
-
-		/// \brief Get a mesh subset.
-		/// \param subset_index Index of the subset to get.
-		/// \return Returns the specified mesh subset.
-		virtual const MeshSubset& GetSubset(unsigned int subset_index) const = 0;
-		
 	};
 
 	/// \brief Interface for variables.
@@ -452,20 +248,6 @@ namespace gi_lib{
 		virtual void* LockDiscard() = 0;
 
 	};
-
-	///////////////////////////////////////// RENDER TARGET /////////////////////////////////////////
-
-	inline ObjectPtr<Texture2D> RenderTarget::operator[](size_t index){
-
-		return GetTexture(index);
-
-	}
-
-	inline ObjectPtr<const Texture2D> RenderTarget::operator[](size_t index) const{
-
-		return GetTexture(index);
-
-	}
 
 	///////////////////////////////////////// MATERIAL /////////////////////////////////////////
 

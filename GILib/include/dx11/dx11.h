@@ -656,7 +656,7 @@ inline void gi_lib::dx11::SetShaderSamplers<ID3D11ComputeShader>(ID3D11DeviceCon
 }
 
 template <typename TShader>
-inline void gi_lib::dx11::SetShaderUAV<TShader>(ID3D11DeviceContext& context, size_t start_slot, ID3D11UnorderedAccessView* const* UAVs, size_t count){
+inline void gi_lib::dx11::SetShaderUAV<TShader>(ID3D11DeviceContext&, size_t, ID3D11UnorderedAccessView* const*, size_t){
 
 	// 
 

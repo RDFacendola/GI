@@ -1,5 +1,7 @@
 #include "deferred_renderer.h"
 
+#include "mesh.h"
+
 using namespace std;
 using namespace gi_lib;
 	

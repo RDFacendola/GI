@@ -100,6 +100,21 @@
     <ClInclude Include="include\instance_builder.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="include\texture.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\mesh.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\render_target.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\object.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\eigen.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11.cpp">

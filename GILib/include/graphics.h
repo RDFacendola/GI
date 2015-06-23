@@ -12,6 +12,8 @@
 #include <typeinfo>
 #include <tuple>
 
+#include <Eigen/Geometry>
+
 #include "resources.h"
 #include "observable.h"
 
@@ -22,6 +24,8 @@ using ::std::unique_ptr;
 using ::std::weak_ptr;
 using ::std::type_index;
 
+using ::Eigen::Vector2f;
+
 namespace gi_lib{
 
 	class Window;
@@ -30,6 +34,8 @@ namespace gi_lib{
 	class IResource;
 	class IRenderer;
 	class IOutput;
+
+	class RenderTarget;
 
 	/// \brief Enumeration of all the supported API.
 	enum class API{

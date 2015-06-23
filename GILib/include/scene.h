@@ -27,17 +27,14 @@ using ::std::vector;
 using ::std::wstring;
 using ::std::unique_ptr;
 
-using ::Eigen::Affine3f;
-using ::Eigen::Translation3f;
-using ::Eigen::AlignedScaling3f;
-using ::Eigen::Quaternionf;
-
 namespace gi_lib{
 
 	class Scene;
 	class NodeComponent;
 	class TransformComponent;
 	class CameraComponent;
+	
+	class Mesh;
 
 	/// \brief Represents a scene and all its content.
 	/// \author Raffaele D. Facendola

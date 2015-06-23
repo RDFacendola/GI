@@ -24,6 +24,8 @@
 #include "scene.h"
 #include "scope_guard.h"
 
+#include "mesh.h"
+
 using namespace std;
 using namespace Eigen;
 using namespace gi_lib;
