@@ -35,7 +35,7 @@ namespace gi_lib{
 	class IRenderer;
 	class IOutput;
 
-	class RenderTarget;
+	class IRenderTarget;
 
 	/// \brief Enumeration of all the supported API.
 	enum class API{
@@ -129,7 +129,7 @@ namespace gi_lib{
 
 		/// \brief Draw the scene from the current main camera to the specified render target.
 		/// \param render_target Render target where the scene will be rendered.
-		virtual void Draw(ObjectPtr<RenderTarget> render_target) = 0;
+		virtual void Draw(ObjectPtr<IRenderTarget> render_target) = 0;
 
 	protected:
 
@@ -181,7 +181,7 @@ namespace gi_lib{
 
 		/// \brief Get the render target associated to this output.
 		/// \return Returns the render target associated to this output.
-		virtual ObjectPtr<RenderTarget> GetRenderTarget() = 0;
+		virtual ObjectPtr<IRenderTarget> GetRenderTarget() = 0;
 
 		/// \brief Refresh the output.
 		virtual void Refresh() = 0;

@@ -76,7 +76,7 @@ namespace gi_lib{
 			/// \brief No assignment operator.
 			DX11TiledDeferredRenderer& operator=(DX11TiledDeferredRenderer&) = delete;
 
-			virtual void Draw(ObjectPtr<RenderTarget> render_target) override;
+			virtual void Draw(ObjectPtr<IRenderTarget> render_target) override;
 
 		private:
 

@@ -199,7 +199,7 @@ TiledDeferredRenderer(arguments.scene){
 
 DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){}
 
-void DX11TiledDeferredRenderer::Draw(ObjectPtr<RenderTarget> render_target){
+void DX11TiledDeferredRenderer::Draw(ObjectPtr<IRenderTarget> render_target){
 	
 	// Draws only if there's a camera
 

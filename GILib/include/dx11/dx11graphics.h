@@ -68,7 +68,7 @@ namespace gi_lib{
 
 			virtual AntialiasingMode GetAntialiasing() const override;
 
-			virtual ObjectPtr<RenderTarget> GetRenderTarget() override;
+			virtual ObjectPtr<IRenderTarget> GetRenderTarget() override;
 
 			/// \brief Send the backbuffer to the screen and flip the buffers.
 			virtual void Refresh() override;
@@ -198,7 +198,7 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<RenderTarget> DX11Output::GetRenderTarget(){
+		inline ObjectPtr<IRenderTarget> DX11Output::GetRenderTarget(){
 
 			return render_target_;
 

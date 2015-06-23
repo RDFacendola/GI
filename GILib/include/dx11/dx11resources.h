@@ -155,7 +155,7 @@ namespace gi_lib{
 
 		/// \brief DirectX11 render target.
 		/// \author Raffaele D. Facendola
-		class DX11RenderTarget : public RenderTarget{
+		class DX11RenderTarget : public IRenderTarget{
 
 		public:
 
@@ -506,7 +506,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Render target mapping.
-		template<> struct ResourceMapping < RenderTarget > {
+		template<> struct ResourceMapping < IRenderTarget > {
 
 			/// \brief Concrete type associated to a Render Target
 			using TMapped = DX11RenderTarget;

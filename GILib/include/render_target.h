@@ -15,15 +15,13 @@ namespace gi_lib{
 	class ObjectPtr;
 
 	/// \brief Base interface for render targets.
-	/// A render target is a texture that can be used to draw an image onto.
-	/// It may also have its how depth and stencil buffer.
-	/// This class handles Multi Render Targets (MRT) as well.
+	/// A render target may contain multiple render surfaces as well as a depth-stencil buffer.
 	/// \author Raffaele D. Facendola.
-	class RenderTarget : public IResource{
+	class IRenderTarget : public IResource{
 
 	public:
 
-		virtual ~RenderTarget(){};
+		virtual ~IRenderTarget(){};
 
 		/// \brief Get the number of surfaces in this render target.
 		/// \return Returns the number of surfaces in this render target.
