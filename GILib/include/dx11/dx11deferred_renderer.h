@@ -32,9 +32,9 @@ namespace gi_lib{
 			/// \param bundle Bundle used to instantiate the material.
 			DX11DeferredRendererMaterial(const Instantiate& args);
 
-			virtual ObjectPtr<Material> GetMaterial() override;
+			virtual ObjectPtr<IMaterial> GetMaterial() override;
 
-			virtual ObjectPtr<const Material> GetMaterial() const override;
+			virtual ObjectPtr<const IMaterial> GetMaterial() const override;
 
 			/// \brief Set the matrices needed to transform the object.
 			void SetMatrix(const Affine3f& world, const Affine3f& view, const Matrix4f& projection);
@@ -140,14 +140,14 @@ namespace gi_lib{
 
 		/////////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////////
 
-		inline ObjectPtr<Material> DX11DeferredRendererMaterial::GetMaterial()
+		inline ObjectPtr<IMaterial> DX11DeferredRendererMaterial::GetMaterial()
 		{
 
 			return material_;
 
 		}
 		
-		inline ObjectPtr<const Material> gi_lib::dx11::DX11DeferredRendererMaterial::GetMaterial() const
+		inline ObjectPtr<const IMaterial> gi_lib::dx11::DX11DeferredRendererMaterial::GetMaterial() const
 		{
 
 			return material_;

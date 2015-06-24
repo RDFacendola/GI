@@ -9,7 +9,7 @@
 #include <memory>
 
 #include "graphics.h"
-#include "resources.h"
+#include "material.h"
 #include "component.h"
 #include "scene.h"
 #include "observable.h"
@@ -28,7 +28,7 @@ namespace gi_lib{
 
 		/// \brief Structure used to compile a deferred material from a file.
 		/// This structure is identical to the one used by the base material.
-		using CompileFromFile = Material::CompileFromFile;
+		using CompileFromFile = IMaterial::CompileFromFile;
 
 		/// \brief Structure used to instantiate an existing material.
 		struct Instantiate{
@@ -44,11 +44,11 @@ namespace gi_lib{
 
 		/// \brief Get the base material.
 		/// \return Returns the base material.
-		virtual ObjectPtr<Material> GetMaterial() = 0;
+		virtual ObjectPtr<IMaterial> GetMaterial() = 0;
 
 		/// \brief Get the base material.
 		/// \return Returns the base material.
-		virtual ObjectPtr<const Material> GetMaterial() const = 0;
+		virtual ObjectPtr<const IMaterial> GetMaterial() const = 0;
 
 	};
 

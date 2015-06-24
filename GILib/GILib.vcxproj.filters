@@ -121,6 +121,9 @@
     <ClInclude Include="include\gpgpu.h">
       <Filter>Resources</Filter>
     </ClInclude>
+    <ClInclude Include="include\material.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11.cpp">
@@ -137,9 +140,6 @@
     </ClCompile>
     <ClCompile Include="src\fbx.cpp">
       <Filter>Autodesk FBX</Filter>
-    </ClCompile>
-    <ClCompile Include="src\resources.cpp">
-      <Filter>Resources</Filter>
     </ClCompile>
     <ClCompile Include="src\windows\win_core.cpp">
       <Filter>Windows</Filter>

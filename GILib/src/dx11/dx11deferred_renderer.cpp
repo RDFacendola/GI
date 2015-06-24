@@ -42,7 +42,7 @@ material_(new DX11Material(args))
 }
 
 DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const Instantiate& args) :
-material_(new DX11Material(Material::Instantiate{ args.base->GetMaterial() })){
+material_(new DX11Material(IMaterial::Instantiate{ args.base->GetMaterial() })){
 
 	Setup();
 
@@ -453,7 +453,7 @@ void DX11TiledDeferredRenderer::StartPostProcess(){
 
 void DX11TiledDeferredRenderer::InitializeToneMap(){
 		
-	tonemapper_ = new DX11Material(Material::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\tonemapping.fx" });
+	tonemapper_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\tonemapping.fx" });
 
 	tonemap_source_ = tonemapper_->GetResource("gHDR");
 	tonemap_vignette_ = tonemapper_->GetVariable("gVignette");

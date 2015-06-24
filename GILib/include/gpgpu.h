@@ -38,11 +38,11 @@ namespace gi_lib{
 		/// \remarks The method will take care of dispatching the correct amount of thread group, based on the specified number of threads.
 		virtual void Dispatch(unsigned int x, unsigned int y, unsigned int z) = 0;
 
-		//virtual ObjectPtr<IVariable> GetVariable(const string& name) = 0;
+		virtual ObjectPtr<IVariable> GetVariable(const string& name) = 0;
 
-		//virtual ObjectPtr<IVariable> GetResource(const string& name) = 0;		// Input, Read
+		virtual ObjectPtr<IResourceBLAH> GetResource(const string& name) = 0;					// Input, Read
 
-		//virtual ObjectPtr<IVariable> GetRWResource(const string& name) = 0;		// Input/Output, Read/Write
+		virtual ObjectPtr<IResourceRandomAccessView> GetUnordered(const string& name) = 0;		// Input/Output, Read/Write
 
 	};
 

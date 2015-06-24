@@ -14,7 +14,7 @@ namespace gi_lib{
 
 	/// \brief Base interface for graphical resources.
 	/// Resources are reference counted.
-	/// You may improve this class to provide shared functionalities to every resource.
+	/// You may improve this class to provide shared functionalities.
 	/// \author Raffaele D. Facendola.
 	class IResource : public Object{
 
@@ -33,6 +33,45 @@ namespace gi_lib{
 		IResource(){}
 
 	};
+
+	/// GPU Read		- SRV - IReadAccessView
+	/// GPU Read/Write	- UAV - IRandomAccessView
+	/// CPU Read/Write	- Map -	
+
+	/// \brief Resource view used to bind resources to the graphic pipeline as read-only resources.
+	/// Resource views should keep a reference to their relative resource.
+	/// \author Raffaele D. Facendola
+	class IResourceView : public Object{
+
+	public:
+
+		/// \brief Virtual destructor.
+		virtual ~IResourceView(){}
+
+	protected:
+
+		/// \brief protected constructor, prevent instantiation.
+		IResourceView(){}
+
+	};
+
+	/// \brief Resource view used to bind resources to the graphic pipeline as read/write resources.
+	/// Resource views should keep a reference to their relative resource.
+	/// \author Raffaele D. Facendola
+	class IResourceRandomAccessView : public Object{
+
+	public:
+
+		/// \brief Virtual destructor.
+		virtual ~IResourceRandomAccessView(){}
+
+	protected:
+
+		/// \brief protected constructor, prevent instantiation.
+		IResourceRandomAccessView(){}
+
+	};
+
 
 	using ::std::wstring;
 	using ::std::string;
@@ -61,24 +100,7 @@ namespace gi_lib{
 		using type = void;
 
 	};
-
-	/// \brief A resource view, used to bind resources to the graphic pipeline (read-only).
-	/// Resource views are reference counted.
-	/// \author Raffaele D. Facendola
-	class IResourceView : public Object{
-
-	public:
-
-		/// \brief Needed for virtual classes.
-		virtual ~IResourceView(){}
-
-	protected:
-
-		/// \brief Protected constructor. Prevent instantiation.
-		IResourceView(){}
-
-	};
-
+	
 	/// \brief Interface for variables.
 	/// \author Raffaele D. Facendola.
 	class IVariable : public Object{
@@ -115,46 +137,13 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Base interface for materials.
-	/// \author Raffaele D. Facendola
-	class Material : public IResource{
+	class IUnorderedAccess : public Object{
 
 	public:
 
-		/// \brief Structure used to compile a material from a file.
-		struct CompileFromFile{
+		virtual ~IUnorderedAccess(){}
 
-			USE_CACHE;
-
-			wstring file_name;			///< \brief Name of the file containing the material code.
-
-			/// \brief Get the cache key associated to the structure.
-			/// \return Returns the cache key associated to the structure.
-			size_t GetCacheKey() const;
-
-		};
-
-		/// \brief Structure used to instantiate an existing material.
-		struct Instantiate{
-
-			NO_CACHE;
-
-			ObjectPtr<Material> base;	///< \brief Material to instantiate.
-
-		};
-
-		/// \brief Virtual destructor.
-		virtual ~Material(){}
-
-		/// \brief Get a material variable by name.
-		/// \param name The name of the variable.
-		/// \return Returns a pointer to the variable matching the specified name if found, returns nullptr otherwise.
-		virtual ObjectPtr<IVariable> GetVariable(const string& name) = 0;
-
-		/// \brief Get a material resource by name.
-		/// \param name The name of the resource.
-		/// \return Returns a pointer to the resource matching the specified name if found, returns nullptr otherwise.
-		virtual ObjectPtr<IResourceBLAH> GetResource(const string& name) = 0;
+		virtual void Set(ObjectPtr<IResourceRandomAccessView> unordered) = 0;
 
 	};
 

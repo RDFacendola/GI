@@ -58,6 +58,7 @@ namespace gi_lib{
 		/// \return Returns a pointer to the resource view.
 		virtual ObjectPtr<IResourceView> GetView() const = 0;
 
+		
 	};
 
 	////////////////////////////// TEXTURE 2D :: FROM FILE ///////////////////////////////

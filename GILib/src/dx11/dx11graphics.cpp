@@ -278,8 +278,8 @@ namespace{
 		InstanceBuilder::Register<IStaticMesh, DX11Mesh, IStaticMesh::FromVertices<VertexFormatNormalTextured>>();
 
 		// Materials
-		InstanceBuilder::Register<Material, DX11Material, Material::CompileFromFile>();
-		InstanceBuilder::Register<Material, DX11Material, Material::Instantiate>();
+		InstanceBuilder::Register<IMaterial, DX11Material, IMaterial::CompileFromFile>();
+		InstanceBuilder::Register<IMaterial, DX11Material, IMaterial::Instantiate>();
 
 		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>();
 		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>();

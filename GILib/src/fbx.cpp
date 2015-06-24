@@ -208,11 +208,11 @@ namespace{
 	};
 
 	/// \brief Wrapper around the FbxSurfaceMaterial.
-	class Material : public IFbxMaterial{
+	class IMaterial : public IFbxMaterial{
 
 	public:
 
-		Material(FbxSurfaceMaterial* material);
+		IMaterial(FbxSurfaceMaterial* material);
 
 		virtual string GetName() const override;
 
@@ -278,16 +278,16 @@ namespace{
 
 	///////////////////////////////////// MATERIAL ///////////////////////////////////////////
 
-	Material::Material(FbxSurfaceMaterial* material) :
+	IMaterial::IMaterial(FbxSurfaceMaterial* material) :
 		material_(material){}
 
-	string Material::GetName() const{
+	string IMaterial::GetName() const{
 
 		return material_->GetName();
 
 	}
 
-	unique_ptr<IFbxProperty> Material::operator[](const string& property_name) const{
+	unique_ptr<IFbxProperty> IMaterial::operator[](const string& property_name) const{
 
 		auto base_separator = property_name.find_first_of("|");
 
@@ -613,7 +613,7 @@ namespace{
 
 		for (int material_index = 0; material_index < fbx_node.GetSrcObjectCount<FbxSurfaceMaterial>(); ++material_index){
 
-			materials.push_back(make_unique<Material>(fbx_node.GetSrcObject<FbxSurfaceMaterial>(material_index)));
+			materials.push_back(make_unique<IMaterial>(fbx_node.GetSrcObject<FbxSurfaceMaterial>(material_index)));
 				
 		}
 

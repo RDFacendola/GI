@@ -59,6 +59,7 @@
     <ClInclude Include="include\unique.h" />
     <ClInclude Include="include\resources.h" />
     <ClInclude Include="include\macros.h" />
+    <ClInclude Include="include\material.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\fly_camera_component.cpp" />
@@ -74,7 +75,6 @@
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
     <ClCompile Include="src\deferred_renderer.cpp" />
     <ClCompile Include="src\uniform_tree.cpp" />
-    <ClCompile Include="src\resources.cpp" />
     <ClCompile Include="src\component.cpp" />
     <ClCompile Include="src\observable.cpp" />
     <ClCompile Include="src\scene.cpp" />

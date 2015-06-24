@@ -15,7 +15,7 @@
 
 #include "graphics.h"
 #include "resources.h"
-
+#include "material.h"
 #include "mesh.h"
 #include "texture.h"
 #include "render_target.h"
@@ -297,7 +297,7 @@ namespace gi_lib{
 
 		/// \brief DirectX11 material.
 		/// \author Raffaele D. Facendola
-		class DX11Material : public Material{
+		class DX11Material : public IMaterial{
 
 		public:
 
@@ -522,7 +522,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Material mapping.
-		template<> struct ResourceMapping < Material > {
+		template<> struct ResourceMapping < IMaterial > {
 
 			/// \brief Concrete type associated to a Material.
 			using TMapped = DX11Material;
