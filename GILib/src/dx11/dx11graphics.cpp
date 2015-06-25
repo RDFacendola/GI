@@ -18,6 +18,7 @@
 #include "dx11/dx11render_target.h"
 #include "dx11/dx11renderer.h"
 #include "dx11/dx11deferred_renderer.h"
+#include "dx11/dx11mesh.h"
 
 using namespace std;
 using namespace gi_lib;

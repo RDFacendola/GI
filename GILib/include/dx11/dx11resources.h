@@ -16,7 +16,6 @@
 #include "graphics.h"
 #include "resources.h"
 #include "material.h"
-#include "mesh.h"
 #include "buffer.h"
 
 #include "gilib.h"
@@ -87,58 +86,6 @@ namespace gi_lib{
 			
 		};
 		
-
-
-		/// \brief DirectX11 static mesh.
-		/// \author Raffaele D. Facendola.
-		class DX11Mesh : public IStaticMesh{
-
-		public:
-
-			/// \brief Create a new DirectX11 mesh.
-			/// \param device The device used to load the graphical resources.
-			/// \param bundle Bundle used to create the mesh.
-			DX11Mesh(const FromVertices<VertexFormatNormalTextured>& args);
-
-			virtual size_t GetSize() const override;
-
-			virtual size_t GetVertexCount() const override;
-
-			virtual size_t GetPolygonCount() const override;
-
-			virtual size_t GetLODCount() const override;
-
-			virtual const AABB& GetBoundingBox() const override;
-
-			virtual size_t GetSubsetCount() const override;
-
-			virtual const MeshSubset& GetSubset(unsigned int subset_index) const override;
-
-			/// \brief Bind the mesh to the given context.
-			void Bind(ID3D11DeviceContext& context);
-
-		private:
-
-			unique_ptr<ID3D11Buffer, COMDeleter> vertex_buffer_;
-
-			unique_ptr<ID3D11Buffer, COMDeleter> index_buffer_;
-
-			vector<MeshSubset> subsets_;
-
-			size_t vertex_count_;
-
-			size_t polygon_count_;
-
-			size_t LOD_count_;
-
-			size_t size_;
-
-			size_t vertex_stride_;											///< \brief Size of each vertex in bytes
-
-			AABB bounding_box_;
-
-		};
-
 		class DX11MaterialVariable;
 		class DX11MaterialResource;
 
@@ -331,14 +278,6 @@ namespace gi_lib{
 
 			/// \brief Concrete type associated to a shader resource.
 			using TMapped = DX11ResourceView;
-
-		};
-
-		/// \brief Mesh mapping.
-		template<> struct ResourceMapping < IStaticMesh > {
-
-			/// \brief Concrete type associated to a Mesh.
-			using TMapped = DX11Mesh;
 
 		};
 

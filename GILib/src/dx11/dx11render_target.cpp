@@ -1,6 +1,5 @@
 #include "dx11/dx11render_target.h"
 
-#include "dx11/dx11.h"
 #include "dx11/dx11graphics.h"
 
 using namespace ::std;

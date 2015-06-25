@@ -1,12 +1,14 @@
 #include "dx11/dx11deferred_renderer.h"
 
+#include "gimath.h"
+#include "mesh.h"
+
 #include "dx11/dx11.h"
 #include "dx11/dx11resources.h"
 #include "dx11/dx11render_target.h"
+#include "dx11/dx11mesh.h"
 
 #include "windows/win_os.h"
-
-#include "gimath.h"
 
 using namespace ::std;
 using namespace ::gi_lib;
@@ -321,7 +323,7 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 
 			// Bind the mesh
 
-			mesh = resource_cast(drawable.GetMesh());
+			mesh = drawable.GetMesh();
 
 			mesh->Bind(*immediate_context_);
 
