@@ -1,5 +1,5 @@
 /// \file buffer.h
-/// \brief This file contains the interfaces of every buffer resource.
+/// \brief This file contains the interfaces of buffer resources.
 ///
 /// \author Raffaele D. Facendola
 
@@ -9,9 +9,9 @@
 
 namespace gi_lib{
 
-	/// \brief Represents a strongly typed hardware vector.
-	/// The vector can be written by the CPU and read by the GPU.
-	/// The size of the vector does not change.
+	/// \brief Represents a strongly typed hardware array.
+	/// The array can be written by the CPU and read by the GPU.
+	/// The size of the array does not change.
 	/// \author Raffaele D. Facendola
 	class IDynamicBuffer : public IResource{
 
@@ -42,7 +42,7 @@ namespace gi_lib{
 		/// \brief Get the view to this resource.
 		/// Use this view to bind the vector to the graphic pipeline.
 		/// \return Returns a pointer to the resource view.
-		virtual ObjectPtr<IResourceView> GetRView() = 0;
+		virtual ObjectPtr<IResourceView> GetView() = 0;
 
 		/// \brief Maps the buffer to the system memory, granting CPU access.
 		/// \tparam TElement Type of the elements to map. Make sure to match the type this buffer was created with!.

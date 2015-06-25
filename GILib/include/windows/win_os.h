@@ -71,43 +71,68 @@ namespace gi_lib{
 			
 		};
 
+		/// \brief Unique pointer to a COM interface.
 		template <typename TCOM>
-		inline unique_ptr<TCOM, COMDeleter> unique_com(TCOM* com_object){
+		using unique_com = unique_ptr < TCOM, COMDeleter > ;
 
-			return unique_ptr<TCOM, COMDeleter>(com_object, COMDeleter{});
+		/// \brief Create an unique pointer to a COM interface.
+		/// The pointer is created with a COM deleter that handles the COM release during pointer's destruction.
+		/// \tparam TCOM Concrete type of the COM interface to handle. Must derive from IUnknown.
+		/// \return Returns a pointer to the managed COM interface.
+		template <typename TCOM>
+		unique_com<TCOM> make_unique_com(TCOM* com_object);
 
-		}
+		/// \brief Release a COM interface.
+		/// \param com Pointer to the COM interface to release.
+		/// \remarks This method may cause the destruction of the COM interface, do not use the pointer afterwards.
+		void release_com(IUnknown* com);
 
-		inline void release_com(IUnknown * com){
-
-			if (com){
-
-				com->Release();
-
-			}
-
-		}
-
-		inline void release_com(std::initializer_list<IUnknown*> com_list){
-
-			for (auto com : com_list){
-
-				release_com(com);
-
-			}
-
-		}
-
-		// COMDeleter
-
-		inline void COMDeleter::operator()(IUnknown * com){
-
-			release_com(com);
-			
-		}
+		/// \brief Release many COM interfaces at once.
+		/// \param com_list List of COM interface to release.
+		/// \remarks If the same interface is contained multiple times, each instance will be released separately.
+		/// \see See release com for more info.
+		void release_com(std::initializer_list<IUnknown*> com_list);
 
 	}
 	
 }
+
+///////////////////////////// COM DELETER //////////////////////////////////
+
+inline void gi_lib::windows::COMDeleter::operator()(IUnknown * com){
+
+	release_com(com);
+
+}
+
+//////////////////////////// MISC ///////////////////////////////////
+
+template <typename TCOM>
+inline gi_lib::windows::unique_com<TCOM> gi_lib::windows::make_unique_com(TCOM* com_object){
+
+	return unique_ptr<TCOM, COMDeleter>(com_object, COMDeleter{});
+
+}
+
+inline void gi_lib::windows::release_com(IUnknown * com){
+
+	if (com){
+
+		com->Release();
+
+	}
+
+}
+
+inline void gi_lib::windows::release_com(std::initializer_list<IUnknown*> com_list){
+
+	for (auto com : com_list){
+
+		release_com(com);
+
+	}
+
+}
+
 
 #endif

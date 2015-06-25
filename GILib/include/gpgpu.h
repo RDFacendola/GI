@@ -70,7 +70,7 @@ namespace gi_lib{
 	public:
 
 		/// \brief Virtual destructor.
-		virtual ~IComputationParameter() = 0;
+		virtual ~IComputationParameter(){};
 
 		/// \brief Set a new value for the computation parameter.
 		/// \tparam TParameter Type of the parameter to write.
@@ -95,11 +95,11 @@ namespace gi_lib{
 	public:
 
 		/// \brief Virtual destructor.
-		virtual ~IComputationResource() = 0;
+		virtual ~IComputationResource(){};
 
 		/// \brief Bind a new resource to the computation.
 		/// \param resource Read-only view of the resource to bind to the computation.
-		virtual void Set(ObjectPtr<IResourceView> resource);
+		virtual void Set(ObjectPtr<IResourceView> resource) = 0;
 
 	};
 
@@ -111,11 +111,11 @@ namespace gi_lib{
 	public:
 
 		/// \brief Virtual destructor.
-		virtual ~IComputationOutput() = 0;
+		virtual ~IComputationOutput(){};
 
 		/// \brief Bind a new resource to the computation.
 		/// \param resource Read/write view of the resource to bind to the computation.
-		virtual void Set(ObjectPtr<IResourceRWView> resource);
+		virtual void Set(ObjectPtr<IResourceRWView> resource) = 0;
 
 	};
 

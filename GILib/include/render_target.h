@@ -3,6 +3,8 @@
 ///
 /// \author Raffaele D. Facendola
 
+#ifdef _WIN32
+
 #pragma once
 
 #include "resources.h"
@@ -55,7 +57,7 @@ namespace gi_lib{
 		/// \brief Get the anti-aliasing mode of the render target.
 		/// The anti-aliasing mode influences the number of samples per pixel for techniques like MSAA.
 		/// \return Return the anti-aliasing mode of the render target.
-		virtual AntialiasingMode GetAntialiasing() const = 0;
+		//virtual AntialiasingMode GetAntialiasing() const = 0;
 
 		/// \brief Resize the render target surfaces.
 		/// \param width The new width of the buffer.
@@ -74,3 +76,5 @@ namespace gi_lib{
 	};
 
 }
+
+#endif

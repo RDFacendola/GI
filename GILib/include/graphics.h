@@ -15,6 +15,9 @@
 #include <Eigen/Geometry>
 
 #include "resources.h"
+
+#include "render_target.h"
+
 #include "observable.h"
 
 using ::std::wstring;
@@ -34,8 +37,6 @@ namespace gi_lib{
 	class IResource;
 	class IRenderer;
 	class IOutput;
-
-	class IRenderTarget;
 
 	/// \brief Enumeration of all the supported API.
 	enum class API{

@@ -45,7 +45,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Virtual destructor.
-		virtual ~IMaterial() = 0 {};
+		virtual ~IMaterial(){};
 
 		/// \brief Get a pointer to a material parameter.
 		/// \param name Name of the parameter to get.
@@ -68,7 +68,7 @@ namespace gi_lib{
 	public:
 
 		/// \brief Virtual destructor.
-		virtual ~IMaterialParameter() = 0 {};
+		virtual ~IMaterialParameter(){};
 
 		/// \brief Set a new value for the material parameter.
 		/// \tparam TParameter Type of the parameter to write.
@@ -91,7 +91,7 @@ namespace gi_lib{
 	public:
 
 		/// \brief Virtual destructor.
-		virtual ~IMaterialResource() = 0 {};
+		virtual ~IMaterialResource(){};
 
 		/// \brief Bind a new resource to the material.
 		/// \param resource Read-only view of the resource to bind to the material.

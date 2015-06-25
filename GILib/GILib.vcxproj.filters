@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="include\dx11\dx11resources.h">
-      <Filter>DirectX 11</Filter>
-    </ClInclude>
     <ClInclude Include="include\dx11\dx11.h">
       <Filter>DirectX 11</Filter>
     </ClInclude>
@@ -124,6 +121,27 @@
     <ClInclude Include="include\material.h">
       <Filter>Resources</Filter>
     </ClInclude>
+    <ClInclude Include="include\dx11\dx11buffer.h">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11gpgpu.h">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11material.h">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11mesh.h">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11render_target.h">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11texture.h">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11resources.h">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11.cpp">
@@ -133,9 +151,6 @@
       <Filter>DirectX 11</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\dx11graphics.cpp">
-      <Filter>DirectX 11</Filter>
-    </ClCompile>
-    <ClCompile Include="src\dx11\dx11resources.cpp">
       <Filter>DirectX 11</Filter>
     </ClCompile>
     <ClCompile Include="src\fbx.cpp">
@@ -183,6 +198,27 @@
     <ClCompile Include="src\uniform_tree.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
+    <ClCompile Include="src\dx11\dx11resources.cpp">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11buffer.cpp">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11gpgpu.cpp">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11material.cpp">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11mesh.cpp">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11render_target.cpp">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11texture.cpp">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectX 11">
@@ -214,6 +250,9 @@
     </Filter>
     <Filter Include="HID">
       <UniqueIdentifier>{dfc5a4ce-51cc-4618-9490-39e0609be404}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectX 11\Resources">
+      <UniqueIdentifier>{e9c66e83-2abf-4358-be2f-462af5cd24cd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

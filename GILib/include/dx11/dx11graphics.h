@@ -10,6 +10,7 @@
 #include <memory>
 
 #include "dx11resources.h"
+#include "dx11render_target.h"
 
 #include "observable.h"
 #include "graphics.h"

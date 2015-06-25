@@ -20,6 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\buffer.h" />
+    <ClInclude Include="include\dx11\dx11buffer.h" />
+    <ClInclude Include="include\dx11\dx11gpgpu.h" />
+    <ClInclude Include="include\dx11\dx11material.h" />
+    <ClInclude Include="include\dx11\dx11mesh.h" />
+    <ClInclude Include="include\dx11\dx11render_target.h" />
+    <ClInclude Include="include\dx11\dx11texture.h" />
     <ClInclude Include="include\eigen.h" />
     <ClInclude Include="include\fnv1.h" />
     <ClInclude Include="include\fly_camera_component.h" />
@@ -62,6 +68,12 @@
     <ClInclude Include="include\material.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\dx11\dx11buffer.cpp" />
+    <ClCompile Include="src\dx11\dx11gpgpu.cpp" />
+    <ClCompile Include="src\dx11\dx11material.cpp" />
+    <ClCompile Include="src\dx11\dx11mesh.cpp" />
+    <ClCompile Include="src\dx11\dx11render_target.cpp" />
+    <ClCompile Include="src\dx11\dx11texture.cpp" />
     <ClCompile Include="src\fly_camera_component.cpp" />
     <ClCompile Include="src\light_component.cpp" />
     <ClCompile Include="src\dx11\dx11.cpp" />

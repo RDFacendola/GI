@@ -15,6 +15,7 @@
 #include "deferred_renderer.h"
 
 #include "dx11/dx11resources.h"
+#include "dx11/dx11render_target.h"
 #include "dx11/dx11renderer.h"
 #include "dx11/dx11deferred_renderer.h"
 
@@ -406,7 +407,7 @@ void DX11Output::UpdateSwapChain(){
 										  &dxgi_desc,
 										  &swap_chain));
 
-	swap_chain_ = std::move(unique_com(swap_chain));
+	swap_chain_ = std::move(make_unique_com(swap_chain));
 
 	UpdateBackbuffer();
 	
@@ -508,9 +509,9 @@ DX11Graphics::DX11Graphics(): Graphics(){
 
 	// Binds the objects to their smart pointers
 	
-	factory_ = std::move(unique_com(factory));
-	adapter_ = std::move(unique_com(adapter));
-	device_ = std::move(unique_com(device));
+	factory_ = std::move(make_unique_com(factory));
+	adapter_ = std::move(make_unique_com(adapter));
+	device_ = std::move(make_unique_com(device));
 	
 	// Register the renderers
 

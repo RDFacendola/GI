@@ -17,8 +17,6 @@
 #include "resources.h"
 #include "material.h"
 #include "mesh.h"
-#include "texture.h"
-#include "render_target.h"
 #include "buffer.h"
 
 #include "gilib.h"
@@ -37,7 +35,6 @@ namespace gi_lib{
 
 	namespace dx11{
 
-		class DX11Texture2D;
 		class DX11Mesh;
 
 		/// \brief Base interface for DirectX11 resources that can be bound as shader resources.
@@ -90,160 +87,7 @@ namespace gi_lib{
 			
 		};
 		
-		/// \brief DirectX11 plain texture.
-		/// \author Raffaele D. Facendola.
-		class DX11Texture2D : public ITexture2D{
 
-		public:
-
-			/// \brief Create a new texture from DDS file.
-			/// \param device The device used to create the texture.
-			/// \param bundle The bundle used to load the texture.
-			DX11Texture2D(const FromFile& args);
-
-			/// \brief Create a new texture.
-			/// \param texture The texture to bind.
-			/// \param shader_view The view used to bind the texture to the shader.
-			DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView& shader_view);
-
-			/// \brief Create a new texture with unordered access.
-			/// \param texture The texture to bind.
-			/// \param shader_view The view used to bind the texture to the shader.
-			/// \param unordered_view The view used to bind the texture as unordered access.
-			DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView& shader_view, ID3D11UnorderedAccessView& unordered_view);
-			
-			/// \brief Create a new texture from an existing DirectX11 texture.
-			/// \param texture The DirectX11 texture.
-			/// \param format The format used when sampling from the texture.
-			DX11Texture2D(ID3D11Texture2D& texture, DXGI_FORMAT format);
-
-			virtual ~DX11Texture2D(){}
-
-			virtual size_t GetSize() const override;
-
-			virtual unsigned int GetWidth() const override;
-
-			virtual unsigned int GetHeight() const override;
-
-			virtual unsigned int GetMipCount() const override;
-
-			virtual ObjectPtr<IResourceView> GetView() const override;
-
-			DXGI_FORMAT GetFormat() const;
-
-		private:
-
-			void UpdateDescription();
-
-			unique_ptr<ID3D11Texture2D, COMDeleter> texture_;						///< \brief Pointer to the actual texture.
-
-			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;			///< \brief Pointer to the shader resource view of the texture.
-
-			unique_ptr<ID3D11UnorderedAccessView, COMDeleter> unordered_access_;	///< \brief Pointer to the unordered access view of the texture. May be null.
-
-			unsigned int width_;													///< \brief Width of the texture, in pixels.
-
-			unsigned int height_;													///< \brief Height of the texture, in pixels.
-
-			unsigned int bits_per_pixel_;											///< \brief Bits per pixel.
-				
-			unsigned int mip_levels_;												///< \brief Mip levels.
-
-			DXGI_FORMAT format_;													///< \brief Surface format.
-
-		};
-
-		/// \brief DirectX11 render target.
-		/// \author Raffaele D. Facendola
-		class DX11RenderTarget : public IRenderTarget{
-
-		public:
-
-			/// \brief Create a new render target from an existing buffer.
-			/// \param buffer Buffer reference.
-			/// \param device Device used to create the additional internal resources.
-			DX11RenderTarget(ID3D11Texture2D& target);
-
-			/// \brief Create a multiple render target array.
-			/// \param width Width of each target.
-			/// \param height Height of each target.
-			/// \param target_format Describe the format of each target.
-			/// \param unordered_access Whether the render target shall be bound as unordered access for a compute shader.
-			DX11RenderTarget(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format, bool unordered_access = false);
-
-			virtual ~DX11RenderTarget();
-
-			virtual size_t GetSize() const override;
-
-			virtual unsigned int GetCount() const override;
-
-			virtual ObjectPtr<ITexture2D> operator[](size_t index) override;
-
-			virtual ObjectPtr<const ITexture2D> operator[](size_t index) const override;
-
-			virtual ObjectPtr<ITexture2D> GetZStencil() override;
-
-			virtual ObjectPtr<const ITexture2D> GetZStencil() const override;
-
-			virtual float GetAspectRatio() const override;
-
-			virtual AntialiasingMode GetAntialiasing() const override;
-
-			virtual bool Resize(unsigned int width, unsigned int height) override;
-
-			virtual unsigned int GetWidth() const override;
-
-			virtual unsigned int GetHeight() const override;
-
-			/// \brief Set new buffers for the render target.
-
-			/// \param buffers The list of buffers to bound
-			void SetBuffers(std::initializer_list<ID3D11Texture2D*> targets);
-
-			/// \brief Releases all the buffers referenced by the render target.
-			void ResetBuffers();
-
-			/// \brief Clear the depth stencil view.
-			/// \param context The context used to clear the view.
-			/// \param clear_flags Determines whether to clear the depth and\or the stencil buffer. (see: D3D11_CLEAR_FLAGS)
-			/// \param depth Depth value to store inside the depth buffer.
-			/// \param stencil Stencil value to store inside the stencil buffer.
-			void ClearDepthStencil(ID3D11DeviceContext& context, unsigned int clear_flags, float depth, unsigned char stencil);
-
-			/// \brief Clear every target view.
-			/// \param context The context used to clear the view.
-			/// \param color The color used to clear the targets.
-			void ClearTargets(ID3D11DeviceContext& context, Color color);
-
-			/// \brief Bind the render target to the given render context.
-			void Bind(ID3D11DeviceContext& context);
-
-		private:
-
-			/// \brief Initialize the GBuffer surfaces.
-			/// The method will allocate one texture for each specified format. The dimensions are the same for each surface.
-			/// \param width The width of each texture.
-			/// \param height The height of each texture.
-			/// \param target_format The format of each texture.
-			void Initialize(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format);
-
-			vector<ObjectPtr<DX11Texture2D>> textures_;				///< \brief Render target surfaces.
-
-			vector<ID3D11RenderTargetView*> target_views_;			///< \brief Render target view of each target surface.
-
-			ObjectPtr<DX11Texture2D> zstencil_;						///< \brief ZStencil surface.
-
-			ID3D11DepthStencilView* zstencil_view_;					///< \brief Depth stencil view of the ZStencil surface.
-
-			D3D11_VIEWPORT viewport_;								///< \brief Render target viewport.
-
-			bool unordered_access_;									///< \brief Whether the render targets can be bound also as UAV.
-
-
-
-			AntialiasingMode antialiasing_;							///< \brief Antialiasing description. TODO: remove?
-
-		};
 
 		/// \brief DirectX11 static mesh.
 		/// \author Raffaele D. Facendola.
@@ -443,7 +287,7 @@ namespace gi_lib{
 
 			virtual size_t GetElementSize() const override;
 
-			virtual ObjectPtr<IResourceView> GetRView() override;
+			virtual ObjectPtr<IResourceView> GetView() override;
 
 			virtual void Unlock() override;
 
@@ -487,22 +331,6 @@ namespace gi_lib{
 
 			/// \brief Concrete type associated to a shader resource.
 			using TMapped = DX11ResourceView;
-
-		};
-
-		/// \brief Texture 2D mapping
-		template<> struct ResourceMapping < ITexture2D > {
-
-			/// \brief Concrete type associated to a Texture2D.
-			using TMapped = DX11Texture2D;
-
-		};
-
-		/// \brief Render target mapping.
-		template<> struct ResourceMapping < IRenderTarget > {
-
-			/// \brief Concrete type associated to a Render Target
-			using TMapped = DX11RenderTarget;
 
 		};
 
@@ -596,112 +424,7 @@ namespace gi_lib{
 			return unordered_access_;
 
 		}
-		
-		/////////////////////////////// DX11 TEXTURE2D ///////////////////////////////
-
-		inline unsigned int DX11Texture2D::GetWidth() const{
-
-			return width_;
-
-		}
-
-		inline unsigned int DX11Texture2D::GetHeight()const {
-
-			return height_;
-
-		}
-
-		inline unsigned int DX11Texture2D::GetMipCount() const{
-
-			return mip_levels_;
-
-		}
-
-		inline DXGI_FORMAT DX11Texture2D::GetFormat() const{
-
-			return format_;
-
-		}
-
-		inline ObjectPtr<IResourceView> DX11Texture2D::GetView() const{
-
-			return new DX11ResourceViewTemplate<const DX11Texture2D>(this,
-																	 shader_view_.get(),
-																	 unordered_access_.get());
-
-		}
-
-		/////////////////////////////// DX11 RENDER TARGET ///////////////////////////////
-
-		inline size_t DX11RenderTarget::GetSize() const{
-
-			return std::accumulate(textures_.begin(),
-				textures_.end(),
-				static_cast<size_t>(0),
-				[](size_t size, const ObjectPtr<DX11Texture2D>& texture){
-
-				return size + texture->GetSize();
-
-			});
-
-		}
-
-		inline float DX11RenderTarget::GetAspectRatio() const{
-
-			// The aspect ratio is guaranteed to be the same for all the targets.
-			return static_cast<float>(textures_[0]->GetWidth()) /
-				static_cast<float>(textures_[0]->GetHeight());
-
-		}
-
-		inline AntialiasingMode DX11RenderTarget::GetAntialiasing() const{
-
-			return antialiasing_;
-
-		}
-
-		inline unsigned int DX11RenderTarget::GetCount() const{
-
-			return static_cast<unsigned int>(textures_.size());
-
-		}
-
-		inline ObjectPtr<ITexture2D> DX11RenderTarget::operator[](size_t index){
-
-			return textures_[index];
-
-		}
-
-		inline ObjectPtr<const ITexture2D> DX11RenderTarget::operator[](size_t index) const{
-
-			return textures_[index];
-
-		}
-
-		inline ObjectPtr<ITexture2D> DX11RenderTarget::GetZStencil(){
-
-			return zstencil_;
-
-		}
-
-		inline ObjectPtr<const ITexture2D> DX11RenderTarget::GetZStencil() const{
-
-			return zstencil_;
-
-		}
-
-		inline unsigned int DX11RenderTarget::GetWidth() const{
-
-			return textures_[0]->GetWidth();
-
-		}
-
-		inline unsigned int DX11RenderTarget::GetHeight() const{
-
-			return textures_[0]->GetHeight();
-
-		}
-		
+				
 		/////////////////////////////// DX11 SAMPLER ///////////////////////////////
 
 		inline ID3D11SamplerState& DX11Sampler::GetSamplerState() const{
@@ -737,7 +460,7 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<IResourceView> DX11StructuredVector::GetRView(){
+		inline ObjectPtr<IResourceView> DX11StructuredVector::GetView(){
 
 			return new DX11ResourceViewTemplate<DX11StructuredVector>(this,
 																	  shader_view_.get(),

@@ -9,6 +9,7 @@
 
 #include "gilib.h"
 #include "fnv1.h"
+
 #include "resources.h"
 
 namespace gi_lib{

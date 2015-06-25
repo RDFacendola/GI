@@ -2,6 +2,7 @@
 
 #include "dx11/dx11.h"
 #include "dx11/dx11resources.h"
+#include "dx11/dx11render_target.h"
 
 #include "windows/win_os.h"
 
@@ -84,7 +85,7 @@ TiledDeferredRenderer(arguments.scene){
 
 	device.GetImmediateContext(&context);
 
-	immediate_context_ = std::move(unique_com(context));
+	immediate_context_ = std::move(make_unique_com(context));
 
 	// Create the depth stencil state
 
@@ -205,7 +206,7 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<IRenderTarget> render_target){
 
 	if (GetScene().GetMainCamera()){
 		
-		auto dx11_render_target = resource_cast(render_target);
+		ObjectPtr<DX11RenderTarget> dx11_render_target = render_target;
 	
 		auto width = dx11_render_target->GetWidth();
 		auto height = dx11_render_target->GetHeight();
