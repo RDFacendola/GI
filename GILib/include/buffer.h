@@ -13,7 +13,7 @@ namespace gi_lib{
 	/// The vector can be written by the CPU and read by the GPU.
 	/// The size of the vector does not change.
 	/// \author Raffaele D. Facendola
-	class StructuredBuffer : public IResource{
+	class IDynamicBuffer : public IResource{
 
 	public:
 
@@ -29,7 +29,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Virtual destructor.
-		virtual ~StructuredBuffer(){}
+		virtual ~IDynamicBuffer(){}
 
 		/// \brief Get the element count of this vector.
 		/// \return Returns the element count of this vector.
@@ -42,7 +42,7 @@ namespace gi_lib{
 		/// \brief Get the view to this resource.
 		/// Use this view to bind the vector to the graphic pipeline.
 		/// \return Returns a pointer to the resource view.
-		virtual ObjectPtr<IResourceView> GetView() = 0;
+		virtual ObjectPtr<IResourceView> GetRView() = 0;
 
 		/// \brief Maps the buffer to the system memory, granting CPU access.
 		/// \tparam TElement Type of the elements to map. Make sure to match the type this buffer was created with!.
@@ -68,7 +68,7 @@ namespace gi_lib{
 	///////////////////////////////////////// STRUCTURED BUFFER /////////////////////////////////////////
 
 	template <typename TElement>
-	inline TElement* StructuredBuffer::Lock(){
+	inline TElement* IDynamicBuffer::Lock(){
 
 		return static_cast<TElement*>(LockDiscard());
 

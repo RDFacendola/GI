@@ -1401,13 +1401,13 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 
 //////////////////////////////  MATERIAL :: VARIABLE //////////////////////////////
 
-DX11Material::DX11MaterialVariable::DX11MaterialVariable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset) :
+DX11MaterialVariable::DX11MaterialVariable(DX11Material::InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset) :
 instance_impl_(&instance_impl),
 buffer_index_(buffer_index),
 variable_size_(variable_size),
 variable_offset_(variable_offset){}
 
-void DX11Material::DX11MaterialVariable::Set(const void * buffer, size_t size){
+void DX11MaterialVariable::Set(const void * buffer, size_t size){
 
 	if (size > variable_size_){
 
@@ -1424,27 +1424,14 @@ void DX11Material::DX11MaterialVariable::Set(const void * buffer, size_t size){
 
 //////////////////////////////  MATERIAL :: RESOURCE //////////////////////////////
 
-DX11Material::DX11MaterialResource::DX11MaterialResource(InstanceImpl& instance_impl, size_t resource_index) :
+DX11MaterialResource::DX11MaterialResource(DX11Material::InstanceImpl& instance_impl, size_t resource_index) :
 instance_impl_(&instance_impl),
 resource_index_(resource_index){}
 
-void DX11Material::DX11MaterialResource::Set(ObjectPtr<IResourceView> resource){
+void DX11MaterialResource::Set(ObjectPtr<IResourceView> resource){
 
 	instance_impl_->SetResource(resource_index_, 
 								resource_cast(resource));
-
-}
-
-////////////////////////////// MATERIAL :: UAV /////////////////////////////////////
-
-DX11Material::DX11MaterialUAV::DX11MaterialUAV(InstanceImpl& instance_impl, size_t uav_index) :
-instance_impl_(&instance_impl),
-uav_index_(uav_index){}
-
-void DX11Material::DX11MaterialUAV::Set(ObjectPtr<IResourceView> resource){
-
-	instance_impl_->SetUAV(uav_index_,
-						   resource_cast(resource));
 
 }
 
@@ -1477,7 +1464,7 @@ DX11Material::~DX11Material(){
 
 }
 
-ObjectPtr<IVariable> DX11Material::GetVariable(const string& name){
+ObjectPtr<IMaterialParameter> DX11Material::GetParameter(const string& name){
 
 	auto& buffers = shared_impl_->reflection.buffers;
 
@@ -1512,7 +1499,7 @@ ObjectPtr<IVariable> DX11Material::GetVariable(const string& name){
 
 }
 
-ObjectPtr<IResourceBLAH> DX11Material::GetResource(const string& name){
+ObjectPtr<IMaterialResource> DX11Material::GetResource(const string& name){
 
 	// Check among the resources
 
@@ -1540,34 +1527,7 @@ ObjectPtr<IResourceBLAH> DX11Material::GetResource(const string& name){
 
 	}
 
-	// Check amount the unordered access views
-
-	auto& UAVs = shared_impl_->reflection.unordered;
-
-	if (UAVs.size() > 0){
-
-		// O(#total UAVs)
-
-		auto it = std::find_if(UAVs.begin(),
-							   UAVs.end(),
-							   [&name](const ShaderUnorderedDesc& desc){
-
-									return desc.name == name;
-
-							   });
-
-		if (it != UAVs.end()){
-
-			return new DX11MaterialUAV(*private_impl_,
-									   std::distance(UAVs.begin(),
-													 it));
-
-		}
-
-	}
-
 	// Not found
-
 	return nullptr;
 
 }

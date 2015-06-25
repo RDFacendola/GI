@@ -51,13 +51,11 @@ namespace gi_lib{
 
 		/// \brief Get the MIP map level count.
 		/// \return Returns the MIP map level count.
-		virtual unsigned int GetMipMapCount() const = 0;
+		virtual unsigned int GetMipCount() const = 0;
 
-		/// \brief Get the view to this resource.
-		/// Use this view to bind the texture to the graphic pipeline (read-only).
-		/// \return Returns a pointer to the resource view.
+		/// \brief Get a read-only view to this resource.
+		/// \return Returns a pointer to the read-only resource view.
 		virtual ObjectPtr<IResourceView> GetView() const = 0;
-
 		
 	};
 

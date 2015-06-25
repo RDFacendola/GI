@@ -11,7 +11,7 @@ namespace{
 
 	/// \brief Bind a fbx property to a shader texture 2d.
 	/// \param resources Object used to load the proper 
-	bool BindTexture2D(Resources& resources, unique_ptr<IFbxProperty> fbx_property, ObjectPtr<IResourceBLAH> resource, const wstring& base_directory){
+	bool BindTexture2D(Resources& resources, unique_ptr<IFbxProperty> fbx_property, ObjectPtr<IMaterialResource> resource, const wstring& base_directory){
 
 		if (resource && fbx_property){
 

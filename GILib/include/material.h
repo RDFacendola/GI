@@ -5,11 +5,16 @@
 
 #pragma once
 
+#include "resources.h"
+#include "object.h"
+
 #include "gilib.h"
 #include "fnv1.h"
-#include "resources.h"
 
 namespace gi_lib{
+
+	class IMaterialParameter;
+	class IMaterialResource;
 
 	/// \brief Base interface for materials.
 	/// \author Raffaele D. Facendola
@@ -40,19 +45,70 @@ namespace gi_lib{
 		};
 
 		/// \brief Virtual destructor.
-		virtual ~IMaterial(){}
+		virtual ~IMaterial() = 0 {};
 
-		/// \brief Get a material variable by name.
-		/// \param name The name of the variable.
-		/// \return Returns a pointer to the variable matching the specified name if found, returns nullptr otherwise.
-		virtual ObjectPtr<IVariable> GetVariable(const string& name) = 0;
+		/// \brief Get a pointer to a material parameter.
+		/// \param name Name of the parameter to get.
+		/// \return Returns a pointer to the material parameter if any, returns nullptr otherwise.
+		virtual ObjectPtr<IMaterialParameter> GetParameter(const string& name) = 0;
 
-		/// \brief Get a material resource by name.
-		/// \param name The name of the resource.
-		/// \return Returns a pointer to the resource matching the specified name if found, returns nullptr otherwise.
-		virtual ObjectPtr<IResourceBLAH> GetResource(const string& name) = 0;
+		/// \brief Get a pointer to a material resource.
+		/// \param name Name of the resource to get.
+		/// \return Returns a pointer to the material resource if any, returns nullptr otherwise.
+		/// \remarks The resource is accessed in read-only mode.
+		virtual ObjectPtr<IMaterialResource> GetResource(const string& name) = 0;
+		
+	};
+
+	/// \brief Base interface for material parameters.
+	/// The class is used to change the value of a material parameter.
+	/// \author Raffaele D. Facendola
+	class IMaterialParameter : public Object{
+
+	public:
+
+		/// \brief Virtual destructor.
+		virtual ~IMaterialParameter() = 0 {};
+
+		/// \brief Set a new value for the material parameter.
+		/// \tparam TParameter Type of the parameter to write.
+		/// \param value Value to write.
+		template <typename TParameter>
+		void Set(const TParameter& value);
+
+		/// \brief Set a new value for the material parameter.
+		/// \param value_ptr Pointer to the value to write.
+		/// \param size Size of the buffer containing the value to write.
+		virtual void Set(const void* value_ptr, size_t size) = 0;
+		
+	};
+
+	/// \brief Base interface for material resources.
+	/// The class is used to bind a material resource.
+	/// \author Raffaele D. Facendola
+	class IMaterialResource : public Object{
+
+	public:
+
+		/// \brief Virtual destructor.
+		virtual ~IMaterialResource() = 0 {};
+
+		/// \brief Bind a new resource to the material.
+		/// \param resource Read-only view of the resource to bind to the material.
+		virtual void Set(ObjectPtr<IResourceView> resource) = 0;
 
 	};
+
+	/////////////////////////////////// IMATERIAL PARAMETER ///////////////////////////////////
+
+	template <typename TParameter>
+	inline void IMaterialParameter::Set(const TParameter& value){
+
+		Set(std::addressof(value),
+			sizeof(TParameter));
+
+	}
+
 	////////////////////////////// MATERIAL :: COMPILE FROM FILE ///////////////////////////////
 
 	inline size_t IMaterial::CompileFromFile::GetCacheKey() const{
@@ -60,5 +116,7 @@ namespace gi_lib{
 		return ::hash::fnv_1{}(to_string(file_name));
 
 	}
+
+
 
 }

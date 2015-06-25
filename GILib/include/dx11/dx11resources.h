@@ -125,7 +125,7 @@ namespace gi_lib{
 
 			virtual unsigned int GetHeight() const override;
 
-			virtual unsigned int GetMipMapCount() const override;
+			virtual unsigned int GetMipCount() const override;
 
 			virtual ObjectPtr<IResourceView> GetView() const override;
 
@@ -295,9 +295,15 @@ namespace gi_lib{
 
 		};
 
+		class DX11MaterialVariable;
+		class DX11MaterialResource;
+
 		/// \brief DirectX11 material.
 		/// \author Raffaele D. Facendola
 		class DX11Material : public IMaterial{
+
+			friend class DX11MaterialVariable;
+			friend class DX11MaterialResource;
 
 		public:
 
@@ -312,13 +318,13 @@ namespace gi_lib{
 			DX11Material(const Instantiate& args);
 
 			/// \brief Default destructor.
-			~DX11Material();
+			virtual ~DX11Material();
 
 			virtual size_t GetSize() const override;
 
-			virtual ObjectPtr<IVariable> GetVariable(const string& name) override;
+			virtual ObjectPtr<IMaterialParameter> GetParameter(const string& name) override;
 
-			virtual ObjectPtr<IResourceBLAH> GetResource(const string& name) override;
+			virtual ObjectPtr<IMaterialResource> GetResource(const string& name) override;
 
 			/// \brief Commit all the constant buffers and bind the material to the pipeline.
 			void Commit(ID3D11DeviceContext& context);
@@ -330,65 +336,52 @@ namespace gi_lib{
 
 			/// \brief Holds the private properties of this material instance.
 			struct InstanceImpl;
-
-			/// \brief Material variable.
-			class DX11MaterialVariable : public IVariable{
-
-			public:
-
-				DX11MaterialVariable(InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset);
-
-				virtual void Set(const void * buffer, size_t size) override;
-
-			private:
-
-				InstanceImpl* instance_impl_;
-
-				size_t buffer_index_;
-
-				size_t variable_offset_;		///< \brief Offset of the variable from the beginning of the buffer in bytes.
-
-				size_t variable_size_;			///< \brief Size of the variable in bytes.
-
-			};
-
-			/// \brief Material resource, used to bind shader resource views.
-			class DX11MaterialResource : public IResourceBLAH{
-
-			public:
-
-				DX11MaterialResource(InstanceImpl& instance_impl, size_t resource_index);
-
-				virtual void Set(ObjectPtr<IResourceView> resource) override;
-
-			private:
-
-				InstanceImpl* instance_impl_;
-
-				size_t resource_index_;
-
-			};
-
-			/// \brief Material resource, used to bind unordered access views.
-			class DX11MaterialUAV : public IResourceBLAH{
-
-			public:
-
-				DX11MaterialUAV(InstanceImpl& instance_impl, size_t uav_index);
-
-				virtual void Set(ObjectPtr<IResourceView> resource) override;
-
-			private:
-
-				InstanceImpl* instance_impl_;
-
-				size_t uav_index_;
-
-			};
 			
 			shared_ptr<MaterialImpl> shared_impl_;		///< \brief Properties shared among material instances.
 
 			unique_ptr<InstanceImpl> private_impl_;		///< \brief Private properties of this material instance.
+
+		};
+
+		/// \brief Material variable.
+		class DX11MaterialVariable : public IMaterialParameter{
+
+		public:
+
+			DX11MaterialVariable(DX11Material::InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset);
+
+			virtual ~DX11MaterialVariable(){};
+
+			virtual void Set(const void* value_ptr, size_t size) override;
+
+		private:
+
+			DX11Material::InstanceImpl* instance_impl_;
+
+			size_t buffer_index_;
+
+			size_t variable_offset_;		///< \brief Offset of the variable from the beginning of the buffer in bytes.
+
+			size_t variable_size_;			///< \brief Size of the variable in bytes.
+
+		};
+		
+		/// \brief Material resource, used to bind shader resource views.
+		class DX11MaterialResource : public IMaterialResource{
+
+		public:
+
+			DX11MaterialResource(DX11Material::InstanceImpl& instance_impl, size_t resource_index);
+
+			virtual ~DX11MaterialResource(){}
+
+			virtual void Set(ObjectPtr<IResourceView> resource) override;
+
+		private:
+
+			DX11Material::InstanceImpl* instance_impl_;
+
+			size_t resource_index_;
 
 		};
 
@@ -432,7 +425,7 @@ namespace gi_lib{
 
 		/// \brief DirectX11 structured vector.
 		/// \author Raffaele D. Facendola
-		class DX11StructuredVector : public StructuredBuffer{
+		class DX11StructuredVector : public IDynamicBuffer{
 
 		public:
 
@@ -450,7 +443,7 @@ namespace gi_lib{
 
 			virtual size_t GetElementSize() const override;
 
-			virtual ObjectPtr<IResourceView> GetView() override;
+			virtual ObjectPtr<IResourceView> GetRView() override;
 
 			virtual void Unlock() override;
 
@@ -530,7 +523,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Structured vector mapping.
-		template<> struct ResourceMapping < StructuredBuffer > {
+		template<> struct ResourceMapping < IDynamicBuffer > {
 
 			/// \brief Concrete type associated to a structured vector.
 			using TMapped = DX11StructuredVector;
@@ -618,7 +611,7 @@ namespace gi_lib{
 
 		}
 
-		inline unsigned int DX11Texture2D::GetMipMapCount() const{
+		inline unsigned int DX11Texture2D::GetMipCount() const{
 
 			return mip_levels_;
 
@@ -744,7 +737,7 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<IResourceView> DX11StructuredVector::GetView(){
+		inline ObjectPtr<IResourceView> DX11StructuredVector::GetRView(){
 
 			return new DX11ResourceViewTemplate<DX11StructuredVector>(this,
 																	  shader_view_.get(),

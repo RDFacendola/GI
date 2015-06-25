@@ -51,9 +51,9 @@ namespace gi_lib{
 
 			ObjectPtr<DX11Material> material_;							///< \brief DirectX11 material.
 
-			ObjectPtr<IVariable> world_view_proj_;						///< \brief Projection * View * World matrix product.
+			ObjectPtr<IMaterialParameter> world_view_proj_;				///< \brief Projection * View * World matrix product.
 
-			ObjectPtr<IVariable> world_;								///< \brief World matrix.
+			ObjectPtr<IMaterialParameter> world_;						///< \brief World matrix.
 
 		};
 
@@ -129,11 +129,11 @@ namespace gi_lib{
 
 			ObjectPtr<DX11Material> tonemapper_;									///< \brief Material used to perform tonemapping.
 
-			ObjectPtr<IVariable> tonemap_exposure_;
+			ObjectPtr<IMaterialParameter> tonemap_exposure_;
 
-			ObjectPtr<IVariable> tonemap_vignette_;
+			ObjectPtr<IMaterialParameter> tonemap_vignette_;
 
-			ObjectPtr<IResourceBLAH> tonemap_source_;
+			ObjectPtr<IMaterialResource> tonemap_source_;
 
 			
 		};

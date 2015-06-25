@@ -57,7 +57,7 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Affine
 	}
 
 	if (world_){
-
+		
 		world_->Set(world.matrix());
 
 	}
@@ -66,8 +66,8 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Affine
 
 void DX11DeferredRendererMaterial::Setup(){
 
-	world_view_proj_ = material_->GetVariable("gWorldViewProj");
-	world_ = material_->GetVariable("gWorld");
+	world_view_proj_ = material_->GetParameter("gWorldViewProj");
+	world_ = material_->GetParameter("gWorld");
 
 }
 
@@ -168,7 +168,7 @@ TiledDeferredRenderer(arguments.scene){
 	
 	// TODO: Remove this
 
-	light_array_ = new DX11StructuredVector(StructuredBuffer::FromDescription{ 32, sizeof(Light) });
+	light_array_ = new DX11StructuredVector(IDynamicBuffer::FromDescription{ 32, sizeof(Light) });
 
 	InitializeToneMap();
 
@@ -453,11 +453,11 @@ void DX11TiledDeferredRenderer::StartPostProcess(){
 
 void DX11TiledDeferredRenderer::InitializeToneMap(){
 		
-	tonemapper_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\tonemapping.fx" });
+	tonemapper_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\tonemapping.hlsl" });
 
 	tonemap_source_ = tonemapper_->GetResource("gHDR");
-	tonemap_vignette_ = tonemapper_->GetVariable("gVignette");
-	tonemap_exposure_ = tonemapper_->GetVariable("gExposure");
+	tonemap_vignette_ = tonemapper_->GetParameter("gVignette");
+	tonemap_exposure_ = tonemapper_->GetParameter("gExposure");
 	
 }
 
@@ -468,7 +468,7 @@ void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX
 	// Update the tonemap resources
 	tonemap_source_->Set(source_view);
 	tonemap_vignette_->Set(5.0f);
-	tonemap_exposure_->Set(0.45f);
+	tonemap_exposure_->Set(1.00f);
 
 	// Bind the surfaces and the tonemapper to the context.
 

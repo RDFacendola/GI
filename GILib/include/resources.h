@@ -21,56 +21,43 @@ namespace gi_lib{
 	public:
 
 		/// \brief Virtual destructor.
-		virtual ~IResource(){}
+		virtual ~IResource() = 0 {};
 
 		/// \brief Get the memory footprint of this resource.
 		/// \return Returns the size of the resource, in bytes.
 		virtual size_t GetSize() const = 0;
-
-	protected:
-
-		/// \brief Protected constructor. Prevent instantiation.
-		IResource(){}
-
+		
 	};
 
-	/// GPU Read		- SRV - IReadAccessView
-	/// GPU Read/Write	- UAV - IRandomAccessView
-	/// CPU Read/Write	- Map -	
-
-	/// \brief Resource view used to bind resources to the graphic pipeline as read-only resources.
-	/// Resource views should keep a reference to their relative resource.
-	/// \author Raffaele D. Facendola
+	/// \brief Base interface for resource views.
+	/// A resource view is used to bind resources to the graphic pipeline, granting read-only access to the GPU.
+	/// \author Raffaele D. Facendola.
 	class IResourceView : public Object{
 
 	public:
 
 		/// \brief Virtual destructor.
-		virtual ~IResourceView(){}
-
-	protected:
-
-		/// \brief protected constructor, prevent instantiation.
-		IResourceView(){}
-
+		virtual ~IResourceView() = 0 {};
+		
 	};
 
-	/// \brief Resource view used to bind resources to the graphic pipeline as read/write resources.
-	/// Resource views should keep a reference to their relative resource.
-	/// \author Raffaele D. Facendola
-	class IResourceRandomAccessView : public Object{
+
+
+
+
+
+	/// \brief Base interface for resource read/write views.
+	/// This kind of resource view is used to bind the resource to the graphic pipeline, granting both read and write access.
+	/// \author Raffaele D. Facendola.
+	class IResourceRWView{
 
 	public:
 
 		/// \brief Virtual destructor.
-		virtual ~IResourceRandomAccessView(){}
-
-	protected:
-
-		/// \brief protected constructor, prevent instantiation.
-		IResourceRandomAccessView(){}
-
+		virtual ~IResourceRWView() = 0 {};
+		
 	};
+	
 
 
 	using ::std::wstring;
@@ -100,61 +87,6 @@ namespace gi_lib{
 		using type = void;
 
 	};
-	
-	/// \brief Interface for variables.
-	/// \author Raffaele D. Facendola.
-	class IVariable : public Object{
 
-	public:
-
-		/// \brief Default destructor.
-		virtual ~IVariable(){}
-
-		/// \brief Set the variable value.
-		/// \param value The value to set.
-		template <typename TValue>
-		void Set(const TValue& value);
-
-		/// \brief Set the variable value.
-		/// \param buffer Pointer to the buffer holding the data to write.
-		/// \param size Size of the buffer.
-		virtual void Set(const void* buffer, size_t size) = 0;
-
-	};
-
-	/// \brief Interface for resources.
-	/// \author Raffaele D. Facendola.
-	class IResourceBLAH : public Object{
-
-	public:
-
-		/// \brief Default destructor.
-		virtual ~IResourceBLAH(){}
-
-		/// \brief Set the resource value.
-		/// \param resource The resource to bind to the material.
-		virtual void Set(ObjectPtr<IResourceView> resource) = 0;
-
-	};
-
-	class IUnorderedAccess : public Object{
-
-	public:
-
-		virtual ~IUnorderedAccess(){}
-
-		virtual void Set(ObjectPtr<IResourceRandomAccessView> unordered) = 0;
-
-	};
-
-	///////////////////////////////////////// MATERIAL /////////////////////////////////////////
-
-	template <typename TValue>
-	inline void IVariable::Set(const TValue& value){
-
-		Set(static_cast<const void*>(&value),
-			sizeof(TValue));
-
-	}
 	
 }
