@@ -25,6 +25,7 @@
     <ClInclude Include="include\dx11\dx11material.h" />
     <ClInclude Include="include\dx11\dx11mesh.h" />
     <ClInclude Include="include\dx11\dx11render_target.h" />
+    <ClInclude Include="include\dx11\dx11sampler.h" />
     <ClInclude Include="include\dx11\dx11texture.h" />
     <ClInclude Include="include\eigen.h" />
     <ClInclude Include="include\fnv1.h" />
@@ -73,6 +74,7 @@
     <ClCompile Include="src\dx11\dx11material.cpp" />
     <ClCompile Include="src\dx11\dx11mesh.cpp" />
     <ClCompile Include="src\dx11\dx11render_target.cpp" />
+    <ClCompile Include="src\dx11\dx11sampler.cpp" />
     <ClCompile Include="src\dx11\dx11texture.cpp" />
     <ClCompile Include="src\fly_camera_component.cpp" />
     <ClCompile Include="src\light_component.cpp" />

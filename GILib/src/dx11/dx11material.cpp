@@ -4,7 +4,7 @@
 
 #include "dx11/dx11resources.h"
 #include "dx11/dx11graphics.h"
-
+#include "dx11/dx11sampler.h"
 using namespace ::std;
 using namespace ::gi_lib;
 using namespace ::dx11;

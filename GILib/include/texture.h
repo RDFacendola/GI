@@ -60,12 +60,12 @@ namespace gi_lib{
 		
 	};
 
-	////////////////////////////// TEXTURE 2D :: FROM FILE ///////////////////////////////
+}
 
-	inline size_t ITexture2D::FromFile::GetCacheKey() const{
+////////////////////////////// TEXTURE 2D :: FROM FILE ///////////////////////////////
 
-		return ::hash::fnv_1{}(to_string(file_name));
+inline size_t gi_lib::ITexture2D::FromFile::GetCacheKey() const{
 
-	}
+	return ::hash::fnv_1{}(to_string(file_name));
 
 }
