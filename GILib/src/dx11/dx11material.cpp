@@ -5,6 +5,7 @@
 #include "dx11/dx11resources.h"
 #include "dx11/dx11graphics.h"
 #include "dx11/dx11sampler.h"
+
 using namespace ::std;
 using namespace ::gi_lib;
 using namespace ::dx11;
@@ -854,7 +855,7 @@ resource_index_(resource_index){}
 void DX11MaterialResource::Set(ObjectPtr<IResourceView> resource){
 
 	instance_impl_->SetResource(resource_index_, 
-								resource_cast(resource));
+								ObjectPtr<DX11ResourceView>(resource));
 
 }
 

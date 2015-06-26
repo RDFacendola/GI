@@ -3,6 +3,8 @@
 #include "gimath.h"
 #include "mesh.h"
 
+#include "object.h"
+
 #include "dx11/dx11.h"
 #include "dx11/dx11resources.h"
 #include "dx11/dx11render_target.h"
@@ -376,10 +378,10 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 	
 	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
 
-	ID3D11ShaderResourceView* srv[] = { resource_srv((*gbuffer_)[0]),
-										resource_srv((*gbuffer_)[1]) };
+	ID3D11ShaderResourceView* srv[] = { ObjectPtr<DX11ResourceView>((*gbuffer_)[0]->GetView())->GetShaderView(),
+										ObjectPtr<DX11ResourceView>((*gbuffer_)[1]->GetView())->GetShaderView() };
 
-	ID3D11UnorderedAccessView* uav[] = { resource_uav((*light_buffer_)[0]) };
+	ID3D11UnorderedAccessView* uav[] = { ObjectPtr<DX11ResourceView>((*light_buffer_)[0]->GetView())->GetUnorderedAccessView() };
 
 	immediate_context_->CSSetShader(light_cs_.get(),
 									nullptr,

@@ -84,62 +84,6 @@ namespace gi_lib{
 			
 		};
 		
-
-
-
-		/// \brief DirectX11 resource mapping template.
-		template<typename TResource> struct ResourceMapping;
-
-		/// \brief Shader resource mapping.
-		template<> struct ResourceMapping < IResourceView > {
-
-			/// \brief Concrete type associated to a shader resource.
-			using TMapped = DX11ResourceView;
-
-		};
-
-		/// \brief Performs a resource cast from an abstract type to a concrete type.
-		/// \tparam TResource Type of the resource to cast.
-		/// \param resource The shared pointer to the resource to cast.
-		/// \return Returns a shared pointer to the casted resource.
-		template <typename TResource>
-		typename ObjectPtr<typename ResourceMapping<TResource>::TMapped> resource_cast(const ObjectPtr<TResource>& resource){
-
-			return resource;
-
-		}
-
-		/// \brief Performs a resource cast from an abstract type to a concrete type.
-		/// \tparam TResource Type of the resource to cast.
-		/// \param resource The shared pointer to the resource to cast.
-		/// \return Returns a shared pointer to the casted resource.
-		template <typename TResource>
-		typename ObjectPtr<typename const ResourceMapping<TResource>::TMapped> resource_cast(const ObjectPtr<const TResource>& resource){
-
-			return resource;
-
-		}
-
-		/// \brief Performs a resource cast and extract a shader resource view.
-		/// The concrete resource should expose a method GetView() : DX11ResourceView&.
-		/// \return Returns a pointer to the shader resource view associated to the specified resource.
-		template <typename TResource>
-		typename ID3D11ShaderResourceView* resource_srv(const ObjectPtr<TResource>& resource){
-
-			return resource_cast(resource->GetView())->GetShaderView();
-
-		}
-
-		/// \brief Performs a resource cast and extract an unordered access view.
-		/// The concrete resource should expose a method GetView() : DX11ResourceView&.
-		/// \return Returns a pointer to the unordered access view associated to the specified resource.
-		template <typename TResource>
-		typename ID3D11UnorderedAccessView* resource_uav(const ObjectPtr<TResource>& resource){
-
-			return resource_cast(resource->GetView())->GetUnorderedAccessView();
-
-		}
-		
 		/////////////////////////////// DX11 RESOURCE VIEW TEMPLATE ///////////////////////////////
 
 		template <typename TResource>
