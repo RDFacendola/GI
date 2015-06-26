@@ -10,6 +10,7 @@
 #include "dx11renderer.h"
 #include "dx11graphics.h"
 #include "dx11material.h"
+#include "dx11buffer.h"
 
 namespace gi_lib{
 
@@ -114,7 +115,7 @@ namespace gi_lib{
 
 			// Lights
 
-			ObjectPtr<DX11StructuredVector> light_array_;							///< \brief Array containing the lights.
+			ObjectPtr<DX11DynamicBuffer> light_array_;							///< \brief Array containing the lights.
 
 			// Deferred resources
 

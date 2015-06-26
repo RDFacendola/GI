@@ -14,7 +14,6 @@ using namespace ::std;
 using namespace ::gi_lib;
 using namespace ::gi_lib::dx11;
 using namespace ::gi_lib::windows;
-using namespace ::Eigen;
 
 namespace{
 
@@ -171,7 +170,7 @@ TiledDeferredRenderer(arguments.scene){
 	
 	// TODO: Remove this
 
-	light_array_ = new DX11StructuredVector(IDynamicBuffer::FromDescription{ 32, sizeof(Light) });
+	light_array_ = new DX11DynamicBuffer(IDynamicBuffer::FromDescription{ 32, sizeof(Light) });
 
 	InitializeToneMap();
 

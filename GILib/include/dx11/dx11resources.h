@@ -84,10 +84,6 @@ namespace gi_lib{
 			
 		};
 		
-		class DX11MaterialVariable;
-		class DX11MaterialResource;
-
-
 
 		/// \brief Represents a DirectX11 sampler state.
 		/// \author Raffaele D. Facendola.
@@ -127,62 +123,6 @@ namespace gi_lib{
 
 		};
 
-		/// \brief DirectX11 structured vector.
-		/// \author Raffaele D. Facendola
-		class DX11StructuredVector : public IDynamicBuffer{
-
-		public:
-
-			/// \brief Create a new DirectX11 material from shader code.
-			/// \param device The device used to load the graphical resources.
-			/// \param bundle Bundle used to load the material.
-			DX11StructuredVector(const FromDescription& args);
-
-			/// \brief Default destructor.
-			~DX11StructuredVector();
-
-			virtual size_t GetSize() const override;
-
-			virtual size_t GetElementCount() const override;
-
-			virtual size_t GetElementSize() const override;
-
-			virtual ObjectPtr<IResourceView> GetView() override;
-
-			virtual void Unlock() override;
-
-			/// \brief Map the vector to the system memory.
-			/// \param context Context used to map the buffer.
-			/// \return Returns a pointer to the first element of the vector.
-			template <typename TElement>
-			TElement* Map(ID3D11DeviceContext& context);
-
-			/// \brief Unmap the vector from the system memory and commits it back to the video memory.
-			/// \param context Context used to unmap the buffer.
-			void Unmap(ID3D11DeviceContext& context);
-			
-			/// \brief Write the uncommitted state to the structured buffer.
-			/// \param context Context used to commit the buffer.
-			void Commit(ID3D11DeviceContext& context);
-
-		private:
-
-			virtual void* LockDiscard() override;
-
-			size_t element_count_;												///< \brief Number of elements inside the vector.
-
-			size_t element_size_;												///< \brief Size of each element.
-
-			void* data_;														///< \brief Pointer to the raw buffer in system memory.
-
-			mutable bool dirty_;												///< \brief Whether the buffer contains dirty data that needs to be committed.
-
-			unique_ptr<ID3D11Buffer, COMDeleter> buffer_;						///< \brief Pointer to the structured buffer.
-
-			unique_ptr<ID3D11ShaderResourceView, COMDeleter> shader_view_;		///< \brief Pointer to the shader resource view of the vector.
-
-		};
-
 		/// \brief DirectX11 resource mapping template.
 		template<typename TResource> struct ResourceMapping;
 
@@ -191,14 +131,6 @@ namespace gi_lib{
 
 			/// \brief Concrete type associated to a shader resource.
 			using TMapped = DX11ResourceView;
-
-		};
-
-		/// \brief Structured vector mapping.
-		template<> struct ResourceMapping < IDynamicBuffer > {
-
-			/// \brief Concrete type associated to a structured vector.
-			using TMapped = DX11StructuredVector;
 
 		};
 
@@ -284,51 +216,6 @@ namespace gi_lib{
 
 		}
 
-		////////////////////////////// DX11 STRUCTURED VECTOR //////////////////////////////////
-
-		inline size_t DX11StructuredVector::GetSize() const{
-
-			return element_count_ * element_size_;
-
-		}
-
-		inline size_t DX11StructuredVector::GetElementCount() const{
-
-			return element_count_;
-
-		}
-		
-		inline size_t DX11StructuredVector::GetElementSize() const{
-
-			return element_size_;
-
-		}
-
-		inline ObjectPtr<IResourceView> DX11StructuredVector::GetView(){
-
-			return new DX11ResourceViewTemplate<DX11StructuredVector>(this,
-																	  shader_view_.get(),
-																	  nullptr);
-
-		}
-
-		template <typename TElement>
-		inline TElement* DX11StructuredVector::Map(ID3D11DeviceContext& context){
-
-			dirty_ = true;
-
-			D3D11_MAPPED_SUBRESOURCE subresource;
-
-			context.Map(buffer_.get(),
-						0,								// Map everything
-						D3D11_MAP_WRITE_DISCARD,		// Discard the previous content.
-						0,
-						&subresource);
-
-			return static_cast<TElement*>(subresource.pData);
-
-		}
-		
 	}
 
 }

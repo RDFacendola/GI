@@ -1,7 +1,6 @@
 #include "uniform_tree.h"
 
 #include <algorithm>
-#include <Eigen\Core>
 
 #include "gilib.h"
 #include "gimath.h"

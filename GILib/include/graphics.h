@@ -12,11 +12,9 @@
 #include <typeinfo>
 #include <tuple>
 
-#include <Eigen/Geometry>
-
 #include "resources.h"
-
 #include "render_target.h"
+#include "eigen.h"
 
 #include "observable.h"
 
