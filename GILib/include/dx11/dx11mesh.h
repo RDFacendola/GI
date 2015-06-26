@@ -70,8 +70,7 @@ namespace gi_lib{
 			AABB bounding_box_;
 
 		};
-
-
+		
 	}
 
 }

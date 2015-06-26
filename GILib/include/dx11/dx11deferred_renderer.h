@@ -9,6 +9,7 @@
 
 #include "dx11renderer.h"
 #include "dx11graphics.h"
+#include "dx11material.h"
 
 namespace gi_lib{
 
