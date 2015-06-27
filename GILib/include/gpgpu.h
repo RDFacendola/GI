@@ -78,11 +78,16 @@ namespace gi_lib{
 
 	};
 
-	template <typename TArgument, GPUAccess access, class enable>
+	/// \brief Base interface for computation arguments.
+	/// This class is used to set the value of a specific computation.
+	/// \tparam TArgument Type of the argument.
+	/// \tparam access Type of access required by the GPU.
+	template <typename TArgument, GPUAccess access, typename>
 	class IComputationArgument;
 
+	/// \brief Computation argument specialization for resources (textures, buffers, ...).
 	template <typename TArgument, GPUAccess access>
-	class IComputationArgument < TArgument, access, typename std::enable_if<std::is_base_of<Object, TArgument>::value>::type > : public Object{
+	class IComputationArgument < TArgument, access, typename std::enable_if<std::is_base_of<IResource, TArgument>::value>::type > : public Object{
 
 	public:
 
@@ -91,10 +96,13 @@ namespace gi_lib{
 		/// \brief Virtual destructor.
 		virtual ~IComputationArgument(){}
 
+		/// \brief Bind a new resource as a computation argument.
+		/// \param resource_view Resource to bind.
 		virtual void Set(ObjectPtr<ResourceView> resource_view) = 0;
 
 	};
 
+	/// \brief Computation argument specialization for scalars (integers, floats, ...).
 	template <typename TArgument, GPUAccess access>
 	class IComputationArgument < TArgument, access, typename std::enable_if<std::is_arithmetic<TArgument>::value>::type > : public Object{
 
@@ -103,19 +111,24 @@ namespace gi_lib{
 		/// \brief Virtual destructor.
 		virtual ~IComputationArgument(){}
 
+		/// \brief Set a new value for a computation argument.
+		/// \param value Value to set.
 		virtual void Set(TArgument value) = 0;
 
 	};
 
+	/// \brief Computation argument specialization for structures (vectors, matrixes, ...).
 	template <typename TArgument, GPUAccess access>
-	class IComputationArgument < TArgument, access, typename std::enable_if<!std::is_arithmetic<TArgument>::value &&
-																			!std::is_base_of<Object, TArgument>::value>::type > : public Object{
+	class IComputationArgument < TArgument, access, typename std::enable_if<!std::is_base_of<IResource, TArgument>::value &&
+																			!std::is_arithmetic<TArgument>::value>::type > : public Object{
 
 	public:
 
 		/// \brief Virtual destructor.
 		virtual ~IComputationArgument(){}
 
+		/// \brief Set a new value for a computation argument.
+		
 		virtual void Set(const TArgument& value) = 0;
 
 	};
