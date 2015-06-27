@@ -20,6 +20,7 @@
 #include "dx11/dx11deferred_renderer.h"
 #include "dx11/dx11mesh.h"
 #include "dx11/dx11sampler.h"
+#include "dx11/dx11gpgpu.h"
 
 using namespace std;
 using namespace gi_lib;
@@ -286,6 +287,9 @@ namespace{
 
 		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>();
 		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>();
+
+		// Compute shader
+		InstanceBuilder::Register<IComputation, DX11Computation, IComputation::CompileFromFile>();
 
 		// Buffers and vector
 		InstanceBuilder::Register<IDynamicBuffer, DX11DynamicBuffer, IDynamicBuffer::FromDescription>();

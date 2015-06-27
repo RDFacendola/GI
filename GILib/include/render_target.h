@@ -17,7 +17,8 @@ namespace gi_lib{
 	class ObjectPtr;
 
 	/// \brief Base interface for render targets.
-	/// A render target may contain multiple render surfaces as well as a depth-stencil buffer.
+	/// A render target may contain multiple render surfaces as well as a depth-stencil buffer (optional).
+	/// \remarks The render target should contain at least one render surface.
 	/// \author Raffaele D. Facendola.
 	class IRenderTarget : public IResource{
 
@@ -53,11 +54,6 @@ namespace gi_lib{
 		/// The aspect ratio is Width/Height.
 		/// \return Returns the aspect ratio of the render target.
 		virtual float GetAspectRatio() const = 0;
-
-		/// \brief Get the anti-aliasing mode of the render target.
-		/// The anti-aliasing mode influences the number of samples per pixel for techniques like MSAA.
-		/// \return Return the anti-aliasing mode of the render target.
-		//virtual AntialiasingMode GetAntialiasing() const = 0;
 
 		/// \brief Resize the render target surfaces.
 		/// \param width The new width of the buffer.

@@ -5,21 +5,35 @@
 
 #pragma once
 
+#include <typeindex>
+#include <type_traits>
+
 #include "object.h"
 #include "resources.h"
+#include "enums.h"
 
 #include "gilib.h"
 #include "fnv1.h"
 
 namespace gi_lib{
 
-	class IComputationParameter;
-	class IComputationResource;
-	class IComputationOutput;
+	ENUM_FLAGS(GPUAccess, char){
+
+		Read = (1 << 0),				///< \brief Grants read-only permission.
+		Write = (1 << 1),				///< \brief Grants write permissions.
+
+		Random = Read | Write,			///< \brief Grants read-and-write permissions.
+
+	};
+
+	template <typename TResource, GPUAccess access, typename>
+	class IComputationArgument;
 
 	/// \brief Base interface for GPU computations.
 	/// \author Raffaele D. Facendola
 	class IComputation : public IResource{
+
+	public:
 
 		/// \brief Structure used to compile a compute shader from a file.
 		struct CompileFromFile{
@@ -35,24 +49,17 @@ namespace gi_lib{
 		};
 
 		/// \brief Virtual destructor.
-		virtual ~IComputation() = 0;
-
-		/// \brief Get a pointer to a computation parameter.
-		/// \param name Name of the parameter to get.
-		/// \return Returns a pointer to the computation parameter if any, returns nullptr otherwise.
-		virtual ObjectPtr<IComputationParameter> GetParameter(const string& name) = 0;
-
-		/// \brief Get a pointer to a computation resource.
-		/// \param name Name of the resource to get.
-		/// \return Returns a pointer to the computation resource if any, returns nullptr otherwise.
-		/// \remarks The resource is accessed in read-only mode.
-		virtual ObjectPtr<IComputationResource> GetResource(const string& name) = 0;
-
-		/// \brief Get a pointer to a computation output.
-		/// \param name Name of the computation output to get.
-		/// \return Returns a pointer to the computation output if any, returns nullptr otherwise.
-		virtual ObjectPtr<IComputationOutput> GetOutput(const string& name) = 0;
-
+		virtual ~IComputation(){};
+		
+		/// \brief Get a computation argument by type and access permissions.
+		/// \tparam TArgument Type of the argument to get.
+		/// \tparam access Type of access required by the GPU.
+		/// \param name Name of the argument to get.
+		/// \return Returns a pointer to the argument setter if such argument exists, returns nullptr otherwise.
+		/// \remarks The method fails if the specified type and/or access permissions are wrong, even if the argument exists.
+		template <typename TArgument, GPUAccess access = GPUAccess::Read>
+		ObjectPtr<IComputationArgument<TArgument, access, void>> GetArgument(const string& name);
+				
 		/// \brief Execute the computation on the GPU.
 		/// \param x Threads to dispatch along the X-axis.
 		/// \param y Threads to dispatch along the Y-axis.
@@ -60,72 +67,67 @@ namespace gi_lib{
 		/// \remarks The total amount of dispatched threads is x*y*z.
 		virtual void Dispatch(unsigned int x, unsigned int y, unsigned int z) = 0;
 
-	};
-
-	/// \brief Base interface for computation parameters.
-	/// The class is used to change the value of a computation parameter.
-	/// \author Raffaele D. Facendola
-	class IComputationParameter : public Object{
-
-	public:
-
-		/// \brief Virtual destructor.
-		virtual ~IComputationParameter(){};
-
-		/// \brief Set a new value for the computation parameter.
-		/// \tparam TParameter Type of the parameter to write.
-		/// \param value Value to write.
-		template <typename TParameter>
-		void Set(const TParameter& value);
-
 	private:
 
-		/// \brief Set a new value for the computation parameter.
-		/// \param value_ptr Pointer to the value to write.
-		/// \param size Size of the buffer containing the value to write.
-		virtual void Set(const void* value_ptr, size_t size) = 0;
+		/// \brief Get a pointer to a computation resource.
+		/// \param name Name of the resource to get.
+		/// \param resource_type Type of the resource to get.
+		/// \param access Type of access required by the computation.
+		/// \remarks The returned object's type must be compatible with IComputationResource<resource_type, access>.
+		virtual ObjectPtr<Object> GetArgument(const string& name, const std::type_index& argument_type, GPUAccess access) = 0;
 
 	};
 
-	/// \brief Base interface for computation resources.
-	/// The class is used to bind a computation resource.
-	/// \author Raffaele D. Facendola
-	class IComputationResource : public Object{
+	template <typename TArgument, GPUAccess access, class enable>
+	class IComputationArgument;
+
+	template <typename TArgument, GPUAccess access>
+	class IComputationArgument < TArgument, access, typename std::enable_if<std::is_base_of<Object, TArgument>::value>::type > : public Object{
+
+	public:
+
+		using ResourceView = IResourceView;
+
+		/// \brief Virtual destructor.
+		virtual ~IComputationArgument(){}
+
+		virtual void Set(ObjectPtr<ResourceView> resource_view) = 0;
+
+	};
+
+	template <typename TArgument, GPUAccess access>
+	class IComputationArgument < TArgument, access, typename std::enable_if<std::is_arithmetic<TArgument>::value>::type > : public Object{
 
 	public:
 
 		/// \brief Virtual destructor.
-		virtual ~IComputationResource(){};
+		virtual ~IComputationArgument(){}
 
-		/// \brief Bind a new resource to the computation.
-		/// \param resource Read-only view of the resource to bind to the computation.
-		virtual void Set(ObjectPtr<IResourceView> resource) = 0;
+		virtual void Set(TArgument value) = 0;
 
 	};
 
-	/// \brief Base interface for computation outputs.
-	/// The class is used to bind a computation output.
-	/// \author Raffaele D. Facendola
-	class IComputationOutput : public Object{
+	template <typename TArgument, GPUAccess access>
+	class IComputationArgument < TArgument, access, typename std::enable_if<!std::is_arithmetic<TArgument>::value &&
+																			!std::is_base_of<Object, TArgument>::value>::type > : public Object{
 
 	public:
 
 		/// \brief Virtual destructor.
-		virtual ~IComputationOutput(){};
+		virtual ~IComputationArgument(){}
 
-		/// \brief Bind a new resource to the computation.
-		/// \param resource Read/write view of the resource to bind to the computation.
-		virtual void Set(ObjectPtr<IResourceRWView> resource) = 0;
+		virtual void Set(const TArgument& value) = 0;
 
 	};
+	
+	/////////////////////////////////// ICOMPUTATION ///////////////////////////////////
 
-	/////////////////////////////////// ICOMPUTATION PARAMETER ///////////////////////////////////
+	template <typename TArgument, GPUAccess access>
+	inline ObjectPtr<IComputationArgument<TArgument, access, void>> IComputation::GetArgument(const string& name){
 
-	template <typename TParameter>
-	inline void IComputationParameter::Set(const TParameter& value){
-
-		Set(std::addressof(value),
-			sizeof(TParameter));
+		return GetArgument(name,
+						   type_index(typeid(TArgument)),
+						   access);
 
 	}
 
