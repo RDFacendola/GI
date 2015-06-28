@@ -15,6 +15,8 @@
 #include "gilib.h"
 #include "fnv1.h"
 
+#include "dx11/dx11shader.h"
+
 namespace gi_lib{
 
 	ENUM_FLAGS(GPUAccess, char){
@@ -83,7 +85,18 @@ namespace gi_lib{
 	/// \tparam TArgument Type of the argument.
 	/// \tparam access Type of access required by the GPU.
 	template <typename TArgument, GPUAccess access, typename>
-	class IComputationArgument;
+	class IComputationArgument : public Object{
+
+	public:
+
+		/// \brief Virtual destructor.
+		virtual ~IComputationArgument(){}
+
+		/// \brief Set a new value for a computation argument.
+		/// \param value Value to set.
+		virtual void Set(const TArgument& value) = 0;
+
+	};
 
 	/// \brief Computation argument specialization for resources (textures, buffers, ...).
 	template <typename TArgument, GPUAccess access>
@@ -117,22 +130,6 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Computation argument specialization for structures (vectors, matrixes, ...).
-	template <typename TArgument, GPUAccess access>
-	class IComputationArgument < TArgument, access, typename std::enable_if<!std::is_base_of<IResource, TArgument>::value &&
-																			!std::is_arithmetic<TArgument>::value>::type > : public Object{
-
-	public:
-
-		/// \brief Virtual destructor.
-		virtual ~IComputationArgument(){}
-
-		/// \brief Set a new value for a computation argument.
-		
-		virtual void Set(const TArgument& value) = 0;
-
-	};
-	
 	/////////////////////////////////// ICOMPUTATION ///////////////////////////////////
 
 	template <typename TArgument, GPUAccess access>

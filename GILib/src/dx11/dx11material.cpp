@@ -5,6 +5,8 @@
 #include "dx11/dx11resources.h"
 #include "dx11/dx11graphics.h"
 #include "dx11/dx11sampler.h"
+#include "dx11/dx11shader.h"
+#include "dx11/dx11shader_state.h"
 
 using namespace ::std;
 using namespace ::gi_lib;
@@ -489,7 +491,7 @@ reflection_(reflection){
 
 	// Resource status (empty)
 
-	resources_.resize(reflection.resources.size());
+	resources_.resize(reflection.shader_resource_views.size());
 
 	// Sampler state (the same)
 
@@ -548,7 +550,7 @@ void DX11Material::InstanceImpl::SetResource(size_t index, ObjectPtr<DX11Resourc
 
 	resources_[index] = resource;
 
-	resource_dirty_mask_ |= reflection_.resources[index].shader_usage;	// Let the bundle know that the resource status changed.
+	resource_dirty_mask_ |= reflection_.shader_resource_views[index].shader_usage;	// Let the bundle know that the resource status changed.
 
 }
 
@@ -556,7 +558,7 @@ void DX11Material::InstanceImpl::SetUAV(size_t index, ObjectPtr<DX11ResourceView
 
 	UAVs_[index] = resource;
 
-	UAV_dirty_mask_ |= reflection_.unordered[index].shader_usage;	// Let the bundle know that the resource status changed.
+	UAV_dirty_mask_ |= reflection_.unordered_access_views[index].shader_usage;	// Let the bundle know that the resource status changed.
 
 }
 
@@ -578,9 +580,9 @@ void DX11Material::InstanceImpl::AddShaderBundle(ShaderType shader_type){
 		}
 
 		// Resources, built once, update by need (when the material is bound to the pipeline).
-		bundle.resources.resize(std::count_if(reflection_.resources.begin(),
-											  reflection_.resources.end(),
-											  [shader_type](const ShaderResourceDesc& resource_desc){
+		bundle.resources.resize(std::count_if(reflection_.shader_resource_views.begin(),
+											  reflection_.shader_resource_views.end(),
+											  [shader_type](const ShaderSRVDesc& resource_desc){
 
 													return resource_desc.shader_usage && shader_type;
 
@@ -599,9 +601,9 @@ void DX11Material::InstanceImpl::AddShaderBundle(ShaderType shader_type){
 		}
 
 		// UAV, build once, update by need (when the material is bound to the pipeline).
-		bundle.unordered.resize(std::count_if(reflection_.unordered.begin(),
-											  reflection_.unordered.end(),
-											  [shader_type](const ShaderUnorderedDesc& UAV_desc){
+		bundle.unordered.resize(std::count_if(reflection_.unordered_access_views.begin(),
+											  reflection_.unordered_access_views.end(),
+											  [shader_type](const ShaderUAVDesc& UAV_desc){
 
 													return UAV_desc.shader_usage && shader_type;
 
@@ -641,9 +643,9 @@ void DX11Material::InstanceImpl::CommitResources(){
 
 			// Cycle trough every resource. If any given resource is used by the current shader type, update the shader resource view vector's corresponding location.
 
-			for (resource_index = 0, bind_point = 0; resource_index < reflection_.resources.size(); ++resource_index){
+			for (resource_index = 0, bind_point = 0; resource_index < reflection_.shader_resource_views.size(); ++resource_index){
 
-				if (reflection_.resources[resource_index].shader_usage && bundle_entry.first){
+				if (reflection_.shader_resource_views[resource_index].shader_usage && bundle_entry.first){
 
 					resource_view = resources_[resource_index];
 
@@ -693,9 +695,9 @@ void DX11Material::InstanceImpl::CommitUAVs(){
 
 			// Cycle trough every unordered access view. If any given UAV is used by the current shader type, update the UAV vector's corresponding location.
 
-			for (UAV_index = 0, bind_point = 0; UAV_index < reflection_.unordered.size(); ++UAV_index){
+			for (UAV_index = 0, bind_point = 0; UAV_index < reflection_.unordered_access_views.size(); ++UAV_index){
 
-				if (reflection_.unordered[UAV_index].shader_usage && bundle_entry.first){
+				if (reflection_.unordered_access_views[UAV_index].shader_usage && bundle_entry.first){
 
 					resource_view = UAVs_[UAV_index];
 
@@ -777,10 +779,9 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 
 	ID3DBlob * bytecode;
 
-	THROW_ON_FAIL(Compile<ID3D11VertexShader>(code,
-											  file_name,
-											  &bytecode,
-											  nullptr));
+	THROW_ON_FAIL(CompileHLSL<ID3D11VertexShader>(code,
+												  file_name,
+												  &bytecode));
 
 	COM_GUARD(bytecode);
 
@@ -927,7 +928,7 @@ ObjectPtr<IMaterialResource> DX11Material::GetResource(const string& name){
 
 	// Check among the resources
 
-	auto& resources = shared_impl_->reflection.resources;
+	auto& resources = shared_impl_->reflection.shader_resource_views;
 
 	if (resources.size() > 0){
 	
@@ -935,7 +936,7 @@ ObjectPtr<IMaterialResource> DX11Material::GetResource(const string& name){
 
 		auto it = std::find_if(resources.begin(),
 							   resources.end(),
-							   [&name](const ShaderResourceDesc& desc){
+							   [&name](const ShaderSRVDesc& desc){
 
 									return desc.name == name;
 

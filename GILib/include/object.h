@@ -695,7 +695,7 @@ namespace gi_lib{
 	inline bool ObjectWeakPtr<TObject>::IsValid() const{
 
 		return ref_count_object_ != nullptr &&
-			ref_count_object_->Get() != nullptr;
+			   ref_count_object_->Get() != nullptr;
 
 	}
 
@@ -703,8 +703,8 @@ namespace gi_lib{
 	inline ObjectPtr<TObject> ObjectWeakPtr<TObject>::Lock() const{
 
 		return IsValid() ?
-			static_cast<TObject*>(ref_count_object_->Get()) :
-			nullptr;
+			   static_cast<TObject*>(ref_count_object_->Get()) :
+			   nullptr;
 
 	}
 

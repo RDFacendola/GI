@@ -15,9 +15,14 @@
 #include "component.h"
 #include "range.h"
 #include "scene.h"
+#include "texture.h"
 #include "material_importer.h"
 #include "fly_camera_component.h"
 #include "light_component.h"
+
+#include "texture.h"
+
+#include "gpgpu.h"
 
 #include <Windows.h>
 
@@ -136,6 +141,13 @@ void GILogic::Initialize(Window& window){
 
 	light_transform->SetParent(root);
 	
+	// Compute stuffs
+	auto tonecs = resources.Load<IComputation, IComputation::CompileFromFile>({ Application::GetInstance().GetDirectory() + L"Data\\cstest.hlsl" });
+
+	//tonecs->GetArgument<ITexture2D>("gAlbedo");
+
+	//tonecs->GetArgument<ITexture2D>("uav");
+
 }
 
 void GILogic::Update(const Time & time){

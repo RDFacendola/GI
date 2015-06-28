@@ -9,6 +9,7 @@
 #include "dx11/dx11resources.h"
 #include "dx11/dx11render_target.h"
 #include "dx11/dx11mesh.h"
+#include "dx11/dx11shader.h"
 
 #include "windows/win_os.h"
 
