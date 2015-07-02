@@ -40,6 +40,7 @@
     <ClInclude Include="include\mesh.h" />
     <ClInclude Include="include\object.h" />
     <ClInclude Include="include\render_target.h" />
+    <ClInclude Include="include\tag.h" />
     <ClInclude Include="include\texture.h" />
     <ClInclude Include="include\uniform_tree.h" />
     <ClInclude Include="include\volume_hierarchy.h" />
@@ -91,6 +92,7 @@
     <ClCompile Include="src\core.cpp" />
     <ClCompile Include="src\dx11\dx11graphics.cpp" />
     <ClCompile Include="src\deferred_renderer.cpp" />
+    <ClCompile Include="src\tag.cpp" />
     <ClCompile Include="src\uniform_tree.cpp" />
     <ClCompile Include="src\component.cpp" />
     <ClCompile Include="src\observable.cpp" />

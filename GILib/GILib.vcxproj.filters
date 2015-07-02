@@ -151,6 +151,9 @@
     <ClInclude Include="include\dx11\dx11shader.h">
       <Filter>DirectX 11</Filter>
     </ClInclude>
+    <ClInclude Include="include\tag.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11.cpp">
@@ -233,6 +236,9 @@
     </ClCompile>
     <ClCompile Include="src\dx11\dx11shader.cpp">
       <Filter>DirectX 11</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tag.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
