@@ -11,9 +11,8 @@ Tag::Tag(const std::string& string){
 }
 
 
-Tag::Tag(const char* string, size_t size){
+Tag::Tag(const char* string){
 
-	tag_ = hash::fnv_1{}(std::string(&string[0],
-									 &string[size]));
+	tag_ = hash::fnv_1{}(string);
 
 }

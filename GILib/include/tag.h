@@ -20,8 +20,8 @@ namespace gi_lib{
 		Tag(const std::string& string);
 
 		/// \brief Create a new tag from a null-terminated string.
-		/// \param string The string used to create the tag.
-		Tag(const char* string, size_t size);
+		/// \param string Pointer to a null-terminated string used to create the tag.
+		Tag(const char* string);
 
 		/// \brief Equality operator.
 		/// \return Returns true if the two tags are identical, returns false otherwise.
