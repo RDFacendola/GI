@@ -60,6 +60,18 @@ namespace gi_lib{
 		
 	};
 
+	/// \brief Base interface for general-purpose textures.
+	/// A general-purpose resource can be accessed by the GPU for both reading and writing purposes.
+	/// \author Raffaele D. Facendola.
+	class IGPTexture2D : ITexture2D{
+
+	public:
+
+		/// \brief Abstract destructor.
+		virtual ~IGPTexture2D() = 0 {}
+
+	};
+
 }
 
 ////////////////////////////// TEXTURE 2D :: FROM FILE ///////////////////////////////
