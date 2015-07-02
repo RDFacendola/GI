@@ -19,9 +19,20 @@ namespace gi_lib{
 		/// \param string The string used to create the tag.
 		Tag(const std::string& string);
 
+		/// \brief Create a new tag from a wide string.
+		/// \param string The string used to create the tag.
+		Tag(const std::wstring& string);
+
 		/// \brief Create a new tag from a null-terminated string.
 		/// \param string Pointer to a null-terminated string used to create the tag.
 		Tag(const char* string);
+
+		/// \brief Create a new tag from a null-terminated wide string.
+		/// \param string Pointer to a null-terminated string used to create the tag.
+		Tag(const wchar_t* string);
+
+		/// \brief Implicit cast to size_t type.
+		operator size_t() const;
 
 		/// \brief Equality operator.
 		/// \return Returns true if the two tags are identical, returns false otherwise.
@@ -56,6 +67,12 @@ namespace gi_lib{
 }
 
 /////////////////////////////////// TAG ///////////////////////////////////////
+
+gi_lib::Tag::operator size_t() const{
+
+	return tag_;
+
+}
 
 bool gi_lib::Tag::operator==(const Tag& other) const{
 
