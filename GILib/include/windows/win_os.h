@@ -61,7 +61,7 @@ unique_ptr<IUnknown, COMDeleter> ANONYMOUS(com, COMDeleter{})
 namespace gi_lib{
 
 	namespace windows{
-
+		
 		/// \brief Functor used to delete COM interfaces.
 		struct COMDeleter{
 

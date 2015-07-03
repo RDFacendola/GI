@@ -824,42 +824,6 @@ DX11Material::MaterialImpl::MaterialImpl(ID3D11Device& device, const CompileFrom
 
 }
 
-//////////////////////////////  MATERIAL :: VARIABLE //////////////////////////////
-
-DX11MaterialVariable::DX11MaterialVariable(DX11Material::InstanceImpl& instance_impl, size_t buffer_index, size_t variable_size, size_t variable_offset) :
-instance_impl_(&instance_impl),
-buffer_index_(buffer_index),
-variable_size_(variable_size),
-variable_offset_(variable_offset){}
-
-void DX11MaterialVariable::Set(const void * buffer, size_t size){
-
-	if (size > variable_size_){
-
-		THROW(L"Wrong variable size.");
-
-	}
-
-	instance_impl_->SetVariable(buffer_index_, 
-								buffer, 
-								size, 
-								variable_offset_);
-
-}
-
-//////////////////////////////  MATERIAL :: RESOURCE //////////////////////////////
-
-DX11MaterialResource::DX11MaterialResource(DX11Material::InstanceImpl& instance_impl, size_t resource_index) :
-instance_impl_(&instance_impl),
-resource_index_(resource_index){}
-
-void DX11MaterialResource::Set(ObjectPtr<IResourceView> resource){
-
-	instance_impl_->SetResource(resource_index_, 
-								ObjectPtr<DX11ResourceView>(resource));
-
-}
-
 //////////////////////////////  MATERIAL //////////////////////////////
 
 DX11Material::DX11Material(const CompileFromFile& args){
@@ -886,74 +850,6 @@ DX11Material::~DX11Material(){
 
 	private_impl_ = nullptr;	// Must be destroyed before the shared implementation!
 	shared_impl_ = nullptr;
-
-}
-
-ObjectPtr<IMaterialParameter> DX11Material::GetParameter(const string& name){
-
-	auto& buffers = shared_impl_->reflection.buffers;
-
-	size_t buffer_index = 0;
-
-	// O(#total variables)
-
-	for (auto& buffer : buffers){
-
-		auto it = std::find_if(buffer.variables.begin(),
-							   buffer.variables.end(),
-							   [&name](const ShaderVariableDesc& desc){
-
-									return desc.name == name;
-
-							   });
-
-		if (it != buffer.variables.end()){
-
-			return new DX11MaterialVariable(*private_impl_,
-											buffer_index,
-											it->size,
-											it->offset);
-
-		}
-
-		++buffer_index;
-
-	}
-		
-	return nullptr;
-
-}
-
-ObjectPtr<IMaterialResource> DX11Material::GetResource(const string& name){
-
-	// Check among the resources
-
-	auto& resources = shared_impl_->reflection.shader_resource_views;
-
-	if (resources.size() > 0){
-	
-		// O(#total resources)
-
-		auto it = std::find_if(resources.begin(),
-							   resources.end(),
-							   [&name](const ShaderSRVDesc& desc){
-
-									return desc.name == name;
-
-							   });
-
-		if (it != resources.end()){
-
-			return new DX11MaterialResource(*private_impl_,
-											std::distance(resources.begin(),
-														  it));
-			
-		}
-
-	}
-
-	// Not found
-	return nullptr;
 
 }
 
@@ -1006,4 +902,19 @@ void DX11Material::Commit(ID3D11DeviceContext& context){
 			   shared_impl_->pixel_shader,
 			   bundles[ShaderType::PIXEL_SHADER]);
 
+}
+
+bool gi_lib::dx11::DX11Material::SetInput(const Tag& tag, ObjectPtr<ITexture2D> texture_2D)
+{
+	throw std::logic_error("The method or operation is not implemented.");
+}
+
+bool gi_lib::dx11::DX11Material::SetInput(const Tag& tag, ObjectPtr<IStructuredArray> structured_array, std::type_index type)
+{
+	throw std::logic_error("The method or operation is not implemented.");
+}
+
+bool gi_lib::dx11::DX11Material::SetInput(const Tag& tag, ObjectPtr<IStructuredBuffer> structured_buffer, std::type_index type)
+{
+	throw std::logic_error("The method or operation is not implemented.");
 }

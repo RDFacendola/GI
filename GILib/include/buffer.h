@@ -53,7 +53,7 @@ namespace gi_lib{
 
 		/// \brief Create a new structured buffer.
 		/// \param array Raw array to decorate.
-		StructuredBuffer(ObjectPtr<IStructuredArray> raw_array);
+		StructuredBuffer(ObjectPtr<IStructuredBuffer> raw_array);
 
 		/// \brief Abstract destructor.
 		virtual ~StructuredBuffer() = 0 {}
@@ -72,7 +72,7 @@ namespace gi_lib{
 
 	private:
 
-		ObjectPtr<IStructuredArray> raw_array_;		///< \brief Raw array.
+		ObjectPtr<IStructuredBuffer> raw_buffer_;		///< \brief Raw buffer.
 
 	};
 
@@ -88,6 +88,9 @@ namespace gi_lib{
 
 		/// \brief Get the number of elements in the array.
 		virtual size_t GetCount() = 0;
+
+		/// \brief Get the size of each element in bytes.
+		virtual size_t GetElementSize() = 0;
 
 	};
 
@@ -116,6 +119,8 @@ namespace gi_lib{
 
 		virtual size_t GetCount() override;
 
+		virtual size_t GetElementSize() override;
+
 		virtual void* Lock() override;
 
 		virtual void Unlock() override;
@@ -133,73 +138,88 @@ namespace gi_lib{
 /////////////////////////// STRUCTURED BUFFER //////////////////////////
 
 template <typename TType>
-gi_lib::StructuredBuffer::StructuredBuffer(ObjectPtr<IStructuredArray> raw_array) :
-raw_array_(raw_array){}
+gi_lib::StructuredBuffer<TType>::StructuredBuffer(ObjectPtr<IStructuredBuffer> raw_array) :
+raw_buffer_(raw_array){}
 
 template <typename TType>
-inline TType& gi_lib::StructuredBuffer::operator*(){
+inline TType& gi_lib::StructuredBuffer<TType>::operator*(){
 	
 	return *static_cast<TType*>(Lock());
 
 }
 
 template <typename TType>
-inline void* gi_lib::StructuredBuffer::Lock(){
+inline void* gi_lib::StructuredBuffer<TType>::Lock(){
 
-	return raw_array_->Lock();
-
-}
-
-template <typename TType>
-inline void gi_lib::StructuredBuffer::Unlock(){
-
-	raw_array_->Unlock();
+	return raw_buffer_->Lock();
 
 }
 
 template <typename TType>
-inline size_t gi_lib::StructuredBuffer::GetSize() const{
+inline void gi_lib::StructuredBuffer<TType>::Unlock(){
 
-	return raw_array_->GetSize();
+	raw_buffer_->Unlock();
+
+}
+
+template <typename TType>
+inline size_t gi_lib::StructuredBuffer<TType>::GetSize() const{
+
+	return raw_buffer_->GetSize();
 
 }
 
 /////////////////////////// STRUCTURED ARRAY //////////////////////////
 
-template <typename TElement*>
-gi_lib::StructuredArray::StructuredArray(ObjectPtr<IStructuredArray> raw_array) :
-raw_array_(raw_array){}
+template <typename TElement>
+gi_lib::StructuredArray<TElement>::StructuredArray(ObjectPtr<IStructuredArray> raw_array) :
+raw_array_(raw_array){
 
-template <typename TElement*>
-inline TElement& gi_lib::StructuredArray::operator[](size_t index){
+	if (sizeof(TElement) != raw_array->GetElementSize()){
+
+		THROW(L"The size of the elements does not match!");
+
+	}
+
+}
+
+template <typename TElement>
+inline TElement& gi_lib::StructuredArray<TElement>::operator[](size_t index){
 
 	return static_cast<TElement*>(Lock())[index];
 
 }
 
-template <typename TElement*>
-inline size_t gi_lib::StructuredArray::GetCount(){
+template <typename TElement>
+inline size_t gi_lib::StructuredArray<TElement>::GetCount(){
 
 	return raw_array_->GetCount();
 
 }
 
-template <typename TElement*>
-inline void* gi_lib::StructuredArray::Lock(){
+template <typename TElement>
+inline size_t gi_lib::StructuredArray<TElement>::GetElementSize(){
+
+	return raw_array_->GetElementSize();
+
+}
+
+template <typename TElement>
+inline void* gi_lib::StructuredArray<TElement>::Lock(){
 
 	return raw_array_->Lock();
 
 }
 
-template <typename TElement*>
-inline void gi_lib::StructuredArray::Unlock(){
+template <typename TElement>
+inline void gi_lib::StructuredArray<TElement>::Unlock(){
 
 	raw_array_->Unlock();
 
 }
 
-template <typename TElement*>
-inline size_t gi_lib::StructuredArray::GetSize() const{
+template <typename TElement>
+inline size_t gi_lib::StructuredArray<TElement>::GetSize() const{
 
 	return raw_array_->GetSize();
 

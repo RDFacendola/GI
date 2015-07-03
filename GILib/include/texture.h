@@ -53,10 +53,6 @@ namespace gi_lib{
 		/// \brief Get the MIP map level count.
 		/// \return Returns the MIP map level count.
 		virtual unsigned int GetMipCount() const = 0;
-
-		/// \brief Get a read-only view to this resource.
-		/// \return Returns a pointer to the read-only resource view.
-		virtual ObjectPtr<IResourceView> GetView() const = 0;
 		
 	};
 

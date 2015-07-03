@@ -5,16 +5,16 @@
 
 #pragma once
 
+#include <typeindex>
+
 #include "resources.h"
+#include "tag.h"
 #include "object.h"
 
-#include "gilib.h"
-#include "fnv1.h"
+#include "texture.h"
+#include "buffer.h"
 
 namespace gi_lib{
-
-	class IMaterialParameter;
-	class IMaterialResource;
 
 	/// \brief Base interface for materials.
 	/// \author Raffaele D. Facendola
@@ -47,76 +47,77 @@ namespace gi_lib{
 		/// \brief Virtual destructor.
 		virtual ~IMaterial(){};
 
-		/// \brief Get a pointer to a material parameter.
-		/// \param name Name of the parameter to get.
-		/// \return Returns a pointer to the material parameter if any, returns nullptr otherwise.
-		virtual ObjectPtr<IMaterialParameter> GetParameter(const string& name) = 0;
+		/// \brief Set a texture resource as an input for the current computation.
+		/// The GPU may only read from the specified texture.
+		/// \param tag Tag of the input texture to set.
+		/// \param texture_2D Pointer to the 2D texture to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetInput(const Tag& tag, ObjectPtr<ITexture2D> texture_2D) = 0;
 
-		/// \brief Get a pointer to a material resource.
-		/// \param name Name of the resource to get.
-		/// \return Returns a pointer to the material resource if any, returns nullptr otherwise.
-		/// \remarks The resource is accessed in read-only mode.
-		virtual ObjectPtr<IMaterialResource> GetResource(const string& name) = 0;
+		/// \brief Set a structure resource as an input for the current computation.
+		/// The GPU may only read from the specified structure.
+		/// \tparam TType Concrete type of the structure.
+		/// \param tag Tag of the input structure to set.
+		/// \param structured_buffer Pointer to the structured buffer to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		template <typename TType>
+		bool SetInput(const Tag& tag, ObjectPtr<StructuredBuffer<TType>> structured_buffer);
+
+		/// \brief Set an array resource as an input for the current computation.
+		/// The GPU may only read from the specified array.
+		/// \tparam TElement Type of the array's elements.
+		/// \param tag Tag of the input array to set.
+		/// \param structured_array Pointer to the structured array to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		template <typename TElement>
+		bool SetInput(const Tag& tag, ObjectPtr<StructuredArray<TElement>> structured_array);
+
+	private:
+
+		/// \brief Set a structure resource as an input for the current computation.
+		/// The GPU may only read from the specified structure.
+		/// \param tag Tag of the input structure to set.
+		/// \param structured_buffer Pointer to the structured buffer to bind.
+		/// \param type Concrete type of the buffer.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetInput(const Tag& tag, ObjectPtr<IStructuredBuffer> structured_buffer, std::type_index type) = 0;
+
+		/// \brief Set an array resource as an input for the current computation.
+		/// The GPU may only read from the specified array.
+		/// \param tag Tag of the input array to set.
+		/// \param structured_array Pointer to the structured array to bind.
+		/// \param type Concrete type of the array elements.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetInput(const Tag& tag, ObjectPtr<IStructuredArray> structured_array, std::type_index type) = 0;
 		
 	};
 
-	/// \brief Base interface for material parameters.
-	/// The class is used to change the value of a material parameter.
-	/// \author Raffaele D. Facendola
-	class IMaterialParameter : public Object{
+}
 
-	public:
+////////////////////////////// MATERIAL :: COMPILE FROM FILE ///////////////////////////////
 
-		/// \brief Virtual destructor.
-		virtual ~IMaterialParameter(){};
+inline size_t gi_lib::IMaterial::CompileFromFile::GetCacheKey() const{
 
-		/// \brief Set a new value for the material parameter.
-		/// \tparam TParameter Type of the parameter to write.
-		/// \param value Value to write.
-		template <typename TParameter>
-		void Set(const TParameter& value);
+	return gi_lib::Tag(file_name);
 
-		/// \brief Set a new value for the material parameter.
-		/// \param value_ptr Pointer to the value to write.
-		/// \param size Size of the buffer containing the value to write.
-		virtual void Set(const void* value_ptr, size_t size) = 0;
-		
-	};
+}
 
-	/// \brief Base interface for material resources.
-	/// The class is used to bind a material resource.
-	/// \author Raffaele D. Facendola
-	class IMaterialResource : public Object{
+////////////////////////////// IMATERIAL ////////////////////////////////////////////////
 
-	public:
+template <typename TType>
+inline bool gi_lib::IMaterial::SetInput(const Tag& tag, ObjectPtr<StructuredBuffer<TType>> structured_buffer){
 
-		/// \brief Virtual destructor.
-		virtual ~IMaterialResource(){};
+	return SetInput(tag,
+					structured_buffer,
+					std::type_index(typeid(TType)));
 
-		/// \brief Bind a new resource to the material.
-		/// \param resource Read-only view of the resource to bind to the material.
-		virtual void Set(ObjectPtr<IResourceView> resource) = 0;
+}
 
-	};
+template <typename TElement>
+inline bool gi_lib::IMaterial::SetInput(const Tag& tag, ObjectPtr<StructuredArray<TElement>> structured_array){
 
-	/////////////////////////////////// IMATERIAL PARAMETER ///////////////////////////////////
-
-	template <typename TParameter>
-	inline void IMaterialParameter::Set(const TParameter& value){
-
-		Set(std::addressof(value),
-			sizeof(TParameter));
-
-	}
-
-	////////////////////////////// MATERIAL :: COMPILE FROM FILE ///////////////////////////////
-
-	inline size_t IMaterial::CompileFromFile::GetCacheKey() const{
-
-		return ::hash::fnv_1{}(to_string(file_name));
-
-	}
-
-
+	return SetInput(tag,
+					structured_array,
+					std::type_index(typeid(TElement)));
 
 }

@@ -58,15 +58,15 @@ void DX11Computation::Dispatch(unsigned int x, unsigned int y, unsigned int z)
 	
 }
 
-ObjectPtr<Object> DX11Computation::GetArgument(const string& name, const std::type_index& argument_type, GPUAccess access)
+ObjectPtr<Object> DX11Computation::GetArgument(const string& name, const std::type_index& argument_type, ComputationGPUAccess access)
 {
 
-	if (access == GPUAccess::Read){
+	if (access == ComputationGPUAccess::Read){
 
 		// Either a shader resource view or a trivial type
 
 	}
-	else if (access == GPUAccess::Random){
+	else if (access == ComputationGPUAccess::Random){
 
 		// Unordered access view.
 

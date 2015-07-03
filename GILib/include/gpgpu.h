@@ -12,10 +12,10 @@
 #include "object.h"
 
 #include "texture.h"
+#include "buffer.h"
 
 namespace gi_lib{
-
-
+	
 	/// \brief Base interface for GPU computations.
 	/// \author Raffaele D. Facendola
 	class IComputation : public IResource{
@@ -52,7 +52,7 @@ namespace gi_lib{
 		/// \param structured_buffer Pointer to the structured buffer to bind.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		template <typename TType>
-		bool SetInput(const Tag& tag, ObjectPtr<IStructuredBuffer<TType>> structured_buffer);
+		bool SetInput(const Tag& tag, ObjectPtr<StructuredBuffer<TType>> structured_buffer);
 
 		/// \brief Set an array resource as an input for the current computation.
 		/// The GPU may only read from the specified array.
@@ -61,7 +61,7 @@ namespace gi_lib{
 		/// \param structured_array Pointer to the structured array to bind.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		template <typename TElement>
-		bool SetInput(const Tag& tag, ObjectPtr<IStructuredArray<TElement>> structured_array);
+		bool SetInput(const Tag& tag, ObjectPtr<StructuredArray<TElement>> structured_array);
 
 		/// \brief Set a texture resource as an input/output for the current computation.
 		/// The GPU has both read and write permissions.
@@ -85,7 +85,7 @@ namespace gi_lib{
 		/// \param structured_buffer Pointer to the structured buffer to bind.
 		/// \param type Concrete type of the buffer.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		virtual bool SetInput(const Tag& tag, ObjectPtr<IStructuredBuffer> structured_buffer, type_index type) = 0;
+		virtual bool SetInput(const Tag& tag, ObjectPtr<IStructuredBuffer> structured_buffer, std::type_index type) = 0;
 
 		/// \brief Set an array resource as an input for the current computation.
 		/// The GPU may only read from the specified array.
@@ -93,7 +93,7 @@ namespace gi_lib{
 		/// \param structured_array Pointer to the structured array to bind.
 		/// \param type Concrete type of the array elements.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		virtual bool SetInput(const Tag& tag, ObjectPtr<IStructuredArray> structured_array, type_index type) = 0;
+		virtual bool SetInput(const Tag& tag, ObjectPtr<IStructuredArray> structured_array, std::type_index type) = 0;
 
 	};
 	
@@ -102,20 +102,20 @@ namespace gi_lib{
 ////////////////////////////// ICOMPUTATION ////////////////////////////////////////////////
 
 template <typename TType>
-inline bool SetInput(const Tag& tag, ObjectPtr<IStructuredBuffer<TType>> structured_buffer){
+inline bool gi_lib::IComputation::SetInput(const Tag& tag, ObjectPtr<StructuredBuffer<TType>> structured_buffer){
 
 	return SetInput(tag, 
 					structured_buffer,
-					type_index(typeid(TType)));
+					std::type_index(typeid(TType)));
 
 }
 
 template <typename TElement>
-inline bool SetInput(const Tag& tag, ObjectPtr<IStructuredArray<TElement>> structured_array){
+inline bool gi_lib::IComputation::SetInput(const Tag& tag, ObjectPtr<StructuredArray<TElement>> structured_array){
 
 	return SetInput(tag, 
 					structured_array,
-					type_index(typeid(TElement)));
+					std::type_index(typeid(TElement)));
 
 }
 

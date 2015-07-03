@@ -45,11 +45,11 @@ namespace gi_lib{
 
 			NO_CACHE;
 
-			vector<unsigned int> indices;			///< \brief Indices definition.
+			std::vector<unsigned int> indices;				///< \brief Indices definition.
 
-			vector<TVertexFormat> vertices;			///< \brief Vertices definition. 
+			std::vector<TVertexFormat> vertices;			///< \brief Vertices definition. 
 
-			vector<MeshSubset> subsets;				///< \brief Mesh subset definition.
+			std::vector<MeshSubset> subsets;				///< \brief Mesh subset definition.
 
 		};
 

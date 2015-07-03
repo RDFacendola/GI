@@ -36,12 +36,6 @@ namespace gi_lib{
 			/// \param shader_view The view used to bind the texture to the shader.
 			DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView& shader_view);
 
-			/// \brief Create a new texture with unordered access.
-			/// \param texture The texture to bind.
-			/// \param shader_view The view used to bind the texture to the shader.
-			/// \param unordered_view The view used to bind the texture as unordered access.
-			DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView& shader_view, ID3D11UnorderedAccessView& unordered_view);
-
 			/// \brief Create a new texture from an existing DirectX11 texture.
 			/// \param texture The DirectX11 texture.
 			/// \param format The format used when sampling from the texture.
@@ -57,9 +51,10 @@ namespace gi_lib{
 
 			virtual unsigned int GetMipCount() const override;
 
-			virtual ObjectPtr<IResourceView> GetView() const override;
-
 			DXGI_FORMAT GetFormat() const;
+
+			/// \brief Get the shader resource view used to bind this texture to the pipeline.
+			ID3D11ShaderResourceView* GetShaderResourceView() const;
 
 		private:
 
@@ -68,8 +63,6 @@ namespace gi_lib{
 			unique_com<ID3D11Texture2D> texture_;							///< \brief Pointer to the actual texture.
 
 			unique_com<ID3D11ShaderResourceView> shader_view_;				///< \brief Pointer to the shader resource view of the texture.
-
-			unique_com<ID3D11UnorderedAccessView> unordered_access_;		///< \brief Pointer to the unordered access view of the texture. May be null.
 
 			unsigned int width_;											///< \brief Width of the texture, in pixels.
 
@@ -110,14 +103,6 @@ inline unsigned int gi_lib::dx11::DX11Texture2D::GetMipCount() const{
 inline DXGI_FORMAT gi_lib::dx11::DX11Texture2D::GetFormat() const{
 
 	return format_;
-
-}
-
-inline gi_lib::ObjectPtr<gi_lib::IResourceView> gi_lib::dx11::DX11Texture2D::GetView() const{
-
-	return new DX11ResourceViewTemplate<const DX11Texture2D>(this,
-															 shader_view_.get(),
-															 unordered_access_.get());
 
 }
 

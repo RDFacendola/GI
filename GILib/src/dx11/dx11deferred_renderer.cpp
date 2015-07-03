@@ -473,7 +473,10 @@ void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX
 	// Update the tonemap resources
 	tonemap_source_->Set(source_view);
 	tonemap_vignette_->Set(5.0f);
-	tonemap_exposure_->Set(1.00f);
+
+	static Timer timer;
+
+	tonemap_exposure_->Set(std::cosf(timer.GetTime().GetTotalSeconds()) + 1.0f);
 
 	// Bind the surfaces and the tonemapper to the context.
 
