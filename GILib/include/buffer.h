@@ -51,6 +51,10 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Create a new structured buffer.
+		/// \param array Raw array to decorate.
+		StructuredBuffer(ObjectPtr<IStructuredArray> raw_array);
+
 		/// \brief Abstract destructor.
 		virtual ~StructuredBuffer() = 0 {}
 
@@ -59,7 +63,17 @@ namespace gi_lib{
 		/// \return Returns a reference to the actual structure.
 		/// \remarks Reading from the returned reference results in undefined behavior.
 		TType& operator*();
-		
+
+		virtual void* Lock() override;
+
+		virtual void Unlock() override;
+
+		virtual size_t GetSize() const override;
+
+	private:
+
+		ObjectPtr<IStructuredArray> raw_array_;		///< \brief Raw array.
+
 	};
 
 	/// \brief Represents a low-level buffer that behaves like a strongly-typed array of elements.
@@ -86,8 +100,12 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Abstract destructor.
-		virtual ~StructuredArray() = 0 {}
+		/// \brief Create a new structured array.
+		/// \param array Raw array to decorate.
+		StructuredArray(ObjectPtr<IStructuredArray> raw_array);
+
+		/// \brief Virtual destructor.
+		virtual ~StructuredArray(){}
 
 		/// \brief Access an element of the array, granting write permission.
 		/// This method will LOCK the buffer. Remember to unlock it afterwards!
@@ -96,6 +114,18 @@ namespace gi_lib{
 		/// \remarks Reading from the returned reference results in undefined behavior.
 		TElement& operator[](size_t index);
 
+		virtual size_t GetCount() override;
+
+		virtual void* Lock() override;
+
+		virtual void Unlock() override;
+
+		virtual size_t GetSize() const override;
+
+	private:
+
+		ObjectPtr<IStructuredArray> raw_array_;		///< \brief Raw array.
+
 	};
 
 }
@@ -103,17 +133,74 @@ namespace gi_lib{
 /////////////////////////// STRUCTURED BUFFER //////////////////////////
 
 template <typename TType>
-TType& gi_lib::StructuredBuffer::operator *(){
+gi_lib::StructuredBuffer::StructuredBuffer(ObjectPtr<IStructuredArray> raw_array) :
+raw_array_(raw_array){}
 
-	return *static_cast<TType*>(Lock());
+template <typename TType>
+inline TType& gi_lib::StructuredBuffer::operator*(){
 	
+	return *static_cast<TType*>(Lock());
+
+}
+
+template <typename TType>
+inline void* gi_lib::StructuredBuffer::Lock(){
+
+	return raw_array_->Lock();
+
+}
+
+template <typename TType>
+inline void gi_lib::StructuredBuffer::Unlock(){
+
+	raw_array_->Unlock();
+
+}
+
+template <typename TType>
+inline size_t gi_lib::StructuredBuffer::GetSize() const{
+
+	return raw_array_->GetSize();
+
 }
 
 /////////////////////////// STRUCTURED ARRAY //////////////////////////
 
 template <typename TElement*>
-TType& gi_lib::StructuredArray::operator[](size_t index){
+gi_lib::StructuredArray::StructuredArray(ObjectPtr<IStructuredArray> raw_array) :
+raw_array_(raw_array){}
+
+template <typename TElement*>
+inline TElement& gi_lib::StructuredArray::operator[](size_t index){
 
 	return static_cast<TElement*>(Lock())[index];
+
+}
+
+template <typename TElement*>
+inline size_t gi_lib::StructuredArray::GetCount(){
+
+	return raw_array_->GetCount();
+
+}
+
+template <typename TElement*>
+inline void* gi_lib::StructuredArray::Lock(){
+
+	return raw_array_->Lock();
+
+}
+
+template <typename TElement*>
+inline void gi_lib::StructuredArray::Unlock(){
+
+	raw_array_->Unlock();
+
+}
+
+template <typename TElement*>
+inline size_t gi_lib::StructuredArray::GetSize() const{
+
+	return raw_array_->GetSize();
 
 }
