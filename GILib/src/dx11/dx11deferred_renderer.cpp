@@ -6,7 +6,6 @@
 #include "object.h"
 
 #include "dx11/dx11.h"
-#include "dx11/dx11resources.h"
 #include "dx11/dx11render_target.h"
 #include "dx11/dx11mesh.h"
 #include "dx11/dx11shader.h"
@@ -26,6 +25,16 @@ namespace{
 
 	};
 
+	struct PerObjectVS{
+
+		float gWorldViewProj[16];
+		float gWorldView[16];
+		float gWorld[16];
+		float gView[16];
+		float gEye[4];
+
+	};
+	
 	void DrawIndexedSubset(ID3D11DeviceContext& context, const MeshSubset& subset){
 
 		context.DrawIndexed(static_cast<unsigned int>(subset.count),
@@ -55,7 +64,7 @@ material_(new DX11Material(IMaterial::Instantiate{ args.base->GetMaterial() })){
 
 void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Affine3f& view, const Matrix4f& projection){
 
-	if (world_view_proj_){
+	/*if (world_view_proj_){
 
 		world_view_proj_->Set((projection * view * world).matrix());
 
@@ -65,14 +74,14 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Affine
 		
 		world_->Set(world.matrix());
 
-	}
+	}*/
 
 }
 
 void DX11DeferredRendererMaterial::Setup(){
 
-	world_view_proj_ = material_->GetParameter("gWorldViewProj");
-	world_ = material_->GetParameter("gWorld");
+	world_view_proj_ = "gWorldViewProj";
+	world_ = "gWorld";
 
 }
 
@@ -81,7 +90,7 @@ void DX11DeferredRendererMaterial::Setup(){
 DX11TiledDeferredRenderer::DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments) :
 TiledDeferredRenderer(arguments.scene){
 
-	auto& device = DX11Graphics::GetInstance().GetDevice();
+	auto&& device = *DX11Graphics::GetInstance().GetDevice();
 
 	// Get the immediate rendering context.
 
@@ -89,7 +98,7 @@ TiledDeferredRenderer(arguments.scene){
 
 	device.GetImmediateContext(&context);
 
-	immediate_context_ = std::move(make_unique_com(context));
+	immediate_context_ << &context;
 
 	// Create the depth stencil state
 
@@ -117,14 +126,14 @@ TiledDeferredRenderer(arguments.scene){
 	device.CreateDepthStencilState(&depth_state_desc,
 								   &depth_state);
 
-	depth_state_.reset(depth_state);
+	depth_state_ << &depth_state;
 
 	ZeroMemory(&depth_state_desc, sizeof(D3D11_DEPTH_STENCIL_DESC));
 
 	device.CreateDepthStencilState(&depth_state_desc,
 								   &depth_state);
 
-	disable_depth_test_.reset(depth_state);
+	disable_depth_test_ << &depth_state;
 
 	// Create the blend state
 
@@ -147,7 +156,7 @@ TiledDeferredRenderer(arguments.scene){
 	device.CreateBlendState(&blend_state_desc,
 							&blend_state);
 
-	blend_state_.reset(blend_state);
+	blend_state_ << &blend_state;
 
 	// Create the raster state.
 
@@ -169,11 +178,11 @@ TiledDeferredRenderer(arguments.scene){
 	device.CreateRasterizerState(&rasterizer_state_desc,
 								 &rasterizer_state);
 
-	rasterizer_state_.reset(rasterizer_state);
+	rasterizer_state_ << &rasterizer_state;
 	
 	// TODO: Remove this
 
-	light_array_ = new DX11DynamicBuffer(IDynamicBuffer::FromDescription{ 32, sizeof(Light) });
+	light_array_ = new DX11StructuredArray(32, sizeof(Light));
 
 	InitializeToneMap();
 
@@ -198,7 +207,7 @@ TiledDeferredRenderer(arguments.scene){
 												  &reflection, 
 												  &errors));
 
-	light_cs_.reset(cs);
+	light_cs_ << &cs;
 
 }
 
@@ -221,8 +230,8 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<IRenderTarget> render_target){
 
 		StartPostProcess();
 
-		ToneMap((*light_buffer_)[0]->GetView(),			// LightBuffer -> Output
-				*dx11_render_target);
+		/*ToneMap((*light_buffer_)[0],			// LightBuffer -> Output
+				  *dx11_render_target); */
 
 	}
 
@@ -256,18 +265,18 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 
 	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	immediate_context_->RSSetState(rasterizer_state_.get());
+	immediate_context_->RSSetState(rasterizer_state_.Get());
 
-	immediate_context_->OMSetDepthStencilState(depth_state_.get(),
+	immediate_context_->OMSetDepthStencilState(depth_state_.Get(),
 											   0);
 
-	immediate_context_->OMSetBlendState(blend_state_.get(),
+	immediate_context_->OMSetBlendState(blend_state_.Get(),
 										0,
 										0xFFFFFFFF);
 
 	// Set up render GBuffer render targets
 
-	gbuffer_->ClearDepthStencil(*immediate_context_,
+	gbuffer_->ClearDepth(*immediate_context_,
 								 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 								 1.0f,
 								 0);
@@ -364,10 +373,11 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 
 	if (!light_buffer_){
 
+		THROW(L"MAKE THIS A GP TEXTURE, NOT A RENDER TARGET");
+
 		light_buffer_ = new DX11RenderTarget(width,
 											 height,
-											 { DXGI_FORMAT_R16G16B16A16_FLOAT },
-											 true);
+											 { DXGI_FORMAT_R16G16B16A16_FLOAT });
 
 	}
 	else{
@@ -376,11 +386,11 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 							  height);
 
 	}
-	
+	/*
 	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
 
-	ID3D11ShaderResourceView* srv[] = { ObjectPtr<DX11ResourceView>((*gbuffer_)[0]->GetView())->GetShaderView(),
-										ObjectPtr<DX11ResourceView>((*gbuffer_)[1]->GetView())->GetShaderView() };
+	ID3D11ShaderResourceView* srv[] = { (*gbuffer_)[0],
+										(*gbuffer_)[1] };
 
 	ID3D11UnorderedAccessView* uav[] = { ObjectPtr<DX11ResourceView>((*light_buffer_)[0]->GetView())->GetUnorderedAccessView() };
 
@@ -402,7 +412,7 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 	uav[0] = nullptr;
 
 	immediate_context_->CSSetUnorderedAccessViews(0, 1, &uav[0], nullptr);
-
+	*/
 	return;
 
 	// Set up LightBuffer render targets
@@ -419,7 +429,7 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 	// 
 
 	// TODO: Perform an actual light setup and remove the fake lights.
-
+	/*
 	Light* light_ptr = light_array_->Map<Light>(*immediate_context_);
 
 	for (size_t light_index = 0; light_index < light_array_->GetElementCount(); ++light_index){
@@ -434,7 +444,7 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 	}
 
 	light_array_->Unmap(*immediate_context_);
-
+	*/
 }
 
 void DX11TiledDeferredRenderer::StartPostProcess(){
@@ -443,7 +453,7 @@ void DX11TiledDeferredRenderer::StartPostProcess(){
 
 	immediate_context_->RSSetState(nullptr);
 
-	immediate_context_->OMSetDepthStencilState(disable_depth_test_.get(),
+	immediate_context_->OMSetDepthStencilState(disable_depth_test_.Get(),
 											   0);
 
 	immediate_context_->OMSetBlendState(nullptr, 0, 0xFFFFFFFF);
@@ -458,34 +468,34 @@ void DX11TiledDeferredRenderer::StartPostProcess(){
 
 void DX11TiledDeferredRenderer::InitializeToneMap(){
 		
-	tonemapper_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\tonemapping.hlsl" });
+	//tonemapper_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\tonemapping.hlsl" });
 
-	tonemap_source_ = tonemapper_->GetResource("gHDR");
-	tonemap_vignette_ = tonemapper_->GetParameter("gVignette");
-	tonemap_exposure_ = tonemapper_->GetParameter("gExposure");
+	//tonemap_source_ = tonemapper_->GetResource("gHDR");
+	//tonemap_vignette_ = tonemapper_->GetParameter("gVignette");
+	//tonemap_exposure_ = tonemapper_->GetParameter("gExposure");
 	
 }
 
-void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<IResourceView> source_view, DX11RenderTarget& destination){
+void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<ITexture2D>& source, ObjectPtr<IGPTexture2D>& destination){
 
-	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
+	//immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
 
 	// Update the tonemap resources
-	tonemap_source_->Set(source_view);
-	tonemap_vignette_->Set(5.0f);
+	//tonemap_source_->Set(source_view);
+	//tonemap_vignette_->Set(5.0f);
 
-	static Timer timer;
+	//static Timer timer;
 
-	tonemap_exposure_->Set(std::cosf(timer.GetTime().GetTotalSeconds()) + 1.0f);
+	//tonemap_exposure_->Set(std::cosf(timer.GetTime().GetTotalSeconds()) + 1.0f);
 
 	// Bind the surfaces and the tonemapper to the context.
 
-	destination.Bind(*immediate_context_);
+	//destination.Bind(*immediate_context_);
 
-	tonemapper_->Commit(*immediate_context_);
+	//tonemapper_->Commit(*immediate_context_);
 
 	// Draw a full-screen quad
 
-	immediate_context_->Draw(6, 0);
+	//immediate_context_->Draw(6, 0);
 	
 }

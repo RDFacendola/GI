@@ -310,7 +310,7 @@ namespace{
 
 		auto cleanup = make_scope_guard([&](){
 
-			release_com(shader_ptr);
+			if (shader_ptr)	shader_ptr->Release();
 
 		});
 

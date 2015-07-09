@@ -15,6 +15,9 @@ namespace gi_lib{
 
 	public:
 
+		/// \brief Create an empty tag.
+		Tag();
+
 		/// \brief Create a new tag from a string.
 		/// \param string The string used to create the tag.
 		Tag(const std::string& string);
@@ -64,48 +67,51 @@ namespace gi_lib{
 		
 	};
 
+	/////////////////////////////////// TAG ///////////////////////////////////////
+
+	inline Tag::Tag() : tag_(0){}
+
+	inline Tag::operator size_t() const{
+
+		return tag_;
+
+	}
+
+	inline bool Tag::operator==(const Tag& other) const{
+
+		return tag_ == other.tag_;
+
+	}
+
+	inline bool Tag::operator!=(const Tag& other) const {
+
+		return tag_ != other.tag_;
+
+	}
+
+	inline bool Tag::operator<=(const Tag& other) const{
+
+		return tag_ <= other.tag_;
+
+	}
+
+	inline bool Tag::operator>=(const Tag& other) const{
+
+		return tag_ >= other.tag_;
+
+	}
+
+	inline bool Tag::operator<(const Tag& other) const{
+
+		return tag_ < other.tag_;
+
+	}
+
+	inline bool Tag::operator>(const Tag& other) const{
+
+		return tag_ > other.tag_;
+
+	}
+
 }
 
-/////////////////////////////////// TAG ///////////////////////////////////////
-
-gi_lib::Tag::operator size_t() const{
-
-	return tag_;
-
-}
-
-bool gi_lib::Tag::operator==(const Tag& other) const{
-
-	return tag_ == other.tag_;
-
-}
-
-bool gi_lib::Tag::operator!=(const Tag& other) const {
-
-	return tag_ != other.tag_;
-
-}
-
-bool gi_lib::Tag::operator<=(const Tag& other) const{
-
-	return tag_ <= other.tag_;
-
-}
-
-bool gi_lib::Tag::operator>=(const Tag& other) const{
-
-	return tag_ >= other.tag_;
-
-}
-
-bool gi_lib::Tag::operator<(const Tag& other) const{
-
-	return tag_ < other.tag_;
-
-}
-
-bool gi_lib::Tag::operator>(const Tag& other) const{
-
-	return tag_ > other.tag_;
-
-}

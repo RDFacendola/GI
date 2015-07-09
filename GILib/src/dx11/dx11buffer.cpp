@@ -13,84 +13,59 @@ namespace{
 
 }
 
-////////////////////////////// DX11 STRUCTURED VECTOR //////////////////////////////////
+////////////////////////////// DX11 BUFFER /////////////////////////////////
 
-DX11DynamicBuffer::DX11DynamicBuffer(const FromDescription& args) :
-element_count_(args.element_count),
-element_size_(args.element_size),
-dirty_(false){
+DX11Buffer::DX11Buffer(size_t size, COMPtr<ID3D11Buffer> buffer, COMPtr<ID3D11ShaderResourceView> shader_resource_view) :
+size_(size),
+buffer_(buffer),
+srv_(shader_resource_view){
+
+	data_ = new char[size_];
+
+}
+
+DX11Buffer::~DX11Buffer(){
+
+	delete data_;
+
+}
+
+////////////////////////////// DX11 STRUCTURED BUFFER /////////////////////////////////
+
+DX11StructuredBuffer::DX11StructuredBuffer(size_t size){
 
 	ID3D11Buffer* buffer;
-	ID3D11ShaderResourceView* shader_view;
 
-	THROW_ON_FAIL(MakeStructuredBuffer(DX11Graphics::GetInstance().GetDevice(),
-									   static_cast<unsigned int>(element_count_),
-									   static_cast<unsigned int>(element_size_),
-									   true,
-									   &buffer,
-									   &shader_view,
-									   nullptr));
+	THROW_ON_FAIL(::MakeConstantBuffer(*DX11Graphics::GetInstance().GetDevice(),
+									   size,
+									   &buffer));
 
-	data_ = new char[element_size_ * element_count_];
+	buffer_ = new DX11Buffer(size, 
+							 COMMove(&buffer),
+							 nullptr);
 
-	buffer_.reset(buffer);
-	shader_view_.reset(shader_view);
+}
+
+////////////////////////////// DX11 STRUCTURED ARRAY /////////////////////////////////
+
+DX11StructuredArray::DX11StructuredArray(size_t element_count, size_t element_size) :
+element_count_(element_count),
+element_size_(element_size){
+
+	ID3D11Buffer* buffer;
+	ID3D11ShaderResourceView* srv;
+
+	THROW_ON_FAIL(::MakeStructuredBuffer(*DX11Graphics::GetInstance().GetDevice(),
+										 static_cast<unsigned int>(element_count),
+										 static_cast<unsigned int>(element_size),
+										 true,
+										 &buffer,
+										 &srv,
+										 nullptr));
+
+
+	buffer_ = new DX11Buffer(element_count * element_size,
+							 COMMove(&buffer),
+							 COMMove(&srv));
 	
-}
-
-DX11DynamicBuffer::~DX11DynamicBuffer(){
-
-	if (data_){
-
-		delete[] data_;
-
-	}
-	
-}
-
-void DX11DynamicBuffer::Unlock()
-{
-	
-	dirty_ = true;
-
-}
-
-void DX11DynamicBuffer::Unmap(ID3D11DeviceContext& context){
-	
-	context.Unmap(buffer_.get(),
-				  0);							// Unmap everything.
-
-	dirty_ = false;
-
-}
-
-void DX11DynamicBuffer::Commit(ID3D11DeviceContext& context){
-
-	if (dirty_){
-
-		auto size = static_cast<unsigned int>(element_count_ * element_size_);
-		
-		memcpy_s(Map<void>(context),
-				 size,
-				 data_,
-				 size);
-			
-		Unmap(context);
-
-
-	}
-
-}
-
-void* DX11DynamicBuffer::LockDiscard()
-{
-
-	if (dirty_){
-
-		THROW(L"The buffer is already locked. Be sure to unlock the buffer before locking it again.");
-
-	}
-
-	return data_;
-
 }

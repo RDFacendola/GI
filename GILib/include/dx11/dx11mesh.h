@@ -8,7 +8,6 @@
 #pragma once
 
 #include "mesh.h"
-
 #include "gimath.h"
 
 #include "dx11/dx11.h"
@@ -19,7 +18,7 @@ namespace gi_lib{
 
 	namespace dx11{
 
-		using windows::unique_com;
+		using windows::COMPtr;
 
 		/// \brief DirectX11 static mesh.
 		/// \author Raffaele D. Facendola.
@@ -51,9 +50,9 @@ namespace gi_lib{
 
 		private:
 
-			unique_com<ID3D11Buffer> vertex_buffer_;
+			COMPtr<ID3D11Buffer> vertex_buffer_;
 
-			unique_com<ID3D11Buffer> index_buffer_;
+			COMPtr<ID3D11Buffer> index_buffer_;
 
 			vector<MeshSubset> subsets_;
 

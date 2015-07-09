@@ -3,6 +3,8 @@
 #pragma comment(lib, "d3dcompiler.lib")
 
 #include "core.h"
+#include "gilib.h"
+#include "scope_guard.h"
 
 #include "dx11/dx11graphics.h"
 
@@ -19,68 +21,28 @@ namespace{
 
 DX11Computation::DX11Computation(const CompileFromFile& arguments){
 
-	auto& file_system = FileSystem::GetInstance();
+	std::string hlsl = to_string(FileSystem::GetInstance().Read(arguments.file_name));
 
-	string code = to_string(file_system.Read(arguments.file_name));
-
-	string file_name = to_string(arguments.file_name);
-
-	auto rollback = make_scope_guard([&](){
-
-		compute_shader_ = nullptr;
-
-	});
-
-	ID3D11ComputeShader* compute_shader;
-	wstring errors;
-
-	reflection_.shaders = ShaderType::NONE;
+	std::string file_name = to_string(arguments.file_name);
 	
-	THROW_ON_FAIL(MakeShader<ID3D11ComputeShader>(DX11Graphics::GetInstance().GetDevice(),
-												  code,
-												  file_name,
-												  &compute_shader,
-												  &reflection_,
-												  &errors),
-				  errors);
+	if(!shader_composite_->AddShader<ID3D11ComputeShader>(hlsl,
+														  file_name)){
 
-	compute_shader_.reset(compute_shader);
+		// The function returns false only if the entry point couldn't be found.
+		THROW(L"Invalid compute shader code.");
+
+	}
 
 }
 
-DX11Computation::~DX11Computation(){
-
-
-}
+DX11Computation::~DX11Computation(){}
 
 void DX11Computation::Dispatch(unsigned int x, unsigned int y, unsigned int z)
 {
 	
-}
-
-ObjectPtr<Object> DX11Computation::GetArgument(const string& name, const std::type_index& argument_type, ComputationGPUAccess access)
-{
-
-	if (access == ComputationGPUAccess::Read){
-
-		// Either a shader resource view or a trivial type
-
-	}
-	else if (access == ComputationGPUAccess::Random){
-
-		// Unordered access view.
-
-
-
-		
-
-	}
-	else{
-
-		return nullptr;
-
-	}
+	
 
 }
+
 
 

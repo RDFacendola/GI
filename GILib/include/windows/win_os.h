@@ -8,12 +8,10 @@
 #ifdef _WIN32
 
 #include <Windows.h>
-#include <memory>
 #include <string>
 
+#include "exceptions.h"
 #include "macros.h"
-
-using std::unique_ptr;
 
 /// \brief If the provided expression fails the caller returns the expression value, otherwise nothing happens.
 /// The expression fails if FAILED(.) is true.
@@ -54,84 +52,370 @@ do{ \
 #define THROW_ON_FAIL(...) \
 EXPAND( SELECT_3RD(__VA_ARGS__ , THROW_ON_FAIL_2, THROW_ON_FAIL_1)(__VA_ARGS__ ) )
 
-/// \brief Defines a raii guard for COM interfaces.
+/// \brief RAII guard for COM interfaces.
+/// The macro will create an anonymous COMPtr holding the interface.
+/// The Release method is called because COMPtr will increase the reference count of the interface.
 #define COM_GUARD(com) \
-unique_ptr<IUnknown, COMDeleter> ANONYMOUS(com, COMDeleter{})
+COMPtr<IUnknown> ANONYMOUS(com); \
+com->Release();
 
 namespace gi_lib{
 
 	namespace windows{
 		
-		/// \brief Functor used to delete COM interfaces.
-		struct COMDeleter{
+		/// \brief Smart pointer to a COM interface.
+		/// The pointer will add a reference during initialization and remove one during destruction.
+		/// This class is designed to be a light-weight wrapper around an IUnknown pointer.
+		/// Do not add any member variables to this class!!!
+		/// \author Raffaele D. Facendola
+		template <typename TCOM>
+		class COMPtr{
 
-			/// \brief Release the given COM interface.
-			/// \param ptr Pointer to the COM resource to delete.
-			void operator()(IUnknown * com);
+		public:
+
+			/// \brief Create an empty pointer.
+			COMPtr();
+
+			/// \brief Create an empty pointer.
+			COMPtr(nullptr_t);
+
+			/// \brief Defines a pointer to an object.
+			/// \param object Object that will be pointed by this pointer.
+			COMPtr(TCOM* object);
+
+			/// \brief Defines a pointer to an object.
+			/// \param object Object that will be pointed by this pointer.
+			template <typename TOther>
+			COMPtr(TOther* object);
 			
+			/// \brief Copy constructor.
+			/// \param other Other pointer to copy.
+			COMPtr(const COMPtr<TCOM>& other);
+
+			/// \brief Copy constructor.
+			/// \param other Other pointer to copy.
+			template <typename TOther>
+			COMPtr(const COMPtr<TOther>& other);
+
+			/// \brief Move constructor.
+			/// \param other Instance to move.
+			COMPtr(COMPtr<TCOM>&& other);
+
+			/// \brief Move constructor.
+			/// \param other Instance to move.
+			template <typename TOther>
+			COMPtr(COMPtr<TOther>&& other);
+
+			/// \brief Destructor.
+			/// Decreases by one the reference count of the pointed object, if any.
+			~COMPtr();
+
+			/// \brief Copy assignment.
+			COMPtr<TCOM>& operator=(const COMPtr<TCOM>& other);
+
+			/// \brief Copy assignment.
+			template <typename TOther>
+			COMPtr<TCOM>& operator=(const COMPtr<TOther>& other);
+
+			/// \brief Move assignment.
+			COMPtr<TCOM>& operator=(COMPtr<TCOM>&& other);
+
+			/// \brief Move assignment.
+			template <typename TOther>
+			COMPtr<TCOM>& operator=(COMPtr<TOther>&& other);
+
+			/// \brief Equality operator.
+			/// \return Returns true if both this instance and the specified one points to the same object, returns false otherwise.
+			bool operator==(const COMPtr<TCOM>& other) const;
+
+			/// \brief Inequality operator.
+			/// \return Returns true if this instance and the specified one points to different objects, returns false otherwise.
+			bool operator!=(const COMPtr<TCOM>& other) const;
+
+			/// \brief Transfer the ownership of an existing COM interface to this pointer.
+			/// The method won't add any reference to the passed object.
+			/// \param object Object to acquire.
+			template <typename TOther>
+			COMPtr<TCOM>& operator<<(TOther** object);
+
+			/// \brief Release the ownership of the COM interface managed by this pointer.
+			/// \param object Object to acquire.
+			template <typename TOther>
+			COMPtr<TCOM>& operator>>(TOther** object);
+
+			/// \brief Used to validate the pointed object.
+			/// \return Returns true if the pointed object is not null, returns false otherwise.
+			operator bool() const;
+
+			/// \brief Arrow operator.
+			/// Access the managed object.
+			TCOM* operator->() const;
+
+			/// \brief Dereferencing operator.
+			/// Access the managed object.
+			TCOM& operator*() const;
+
+			/// \brief Get a pointer to the managed object.
+			TCOM* Get() const;
+
+			/// \brief Return a pointer to the internal
+			TCOM** Setter();
+
+			/// \brief Release the pointed object.
+			void Release();
+
+		private:
+
+			/// \brief Add a reference to the pointed object.
+			void AddRef();
+
+			TCOM* object_ptr_;			/// \brief Pointer to the object.
+
 		};
 
-		/// \brief Unique pointer to a COM interface.
+		/// \brief Move the ownership of a COM interface to a new COM pointer.
+		/// \param object Object whose ownership will be moved.
 		template <typename TCOM>
-		using unique_com = unique_ptr < TCOM, COMDeleter > ;
+		COMPtr<TCOM> COMMove(TCOM** object);
 
-		/// \brief Create an unique pointer to a COM interface.
-		/// The pointer is created with a COM deleter that handles the COM release during pointer's destruction.
-		/// \tparam TCOM Concrete type of the COM interface to handle. Must derive from IUnknown.
-		/// \return Returns a pointer to the managed COM interface.
+		///////////////////////////// COM PTR //////////////////////////////////
+
 		template <typename TCOM>
-		unique_com<TCOM> make_unique_com(TCOM* com_object);
+		inline COMPtr<TCOM>::COMPtr() :
+			object_ptr_(nullptr){}
 
-		/// \brief Release a COM interface.
-		/// \param com Pointer to the COM interface to release.
-		/// \remarks This method may cause the destruction of the COM interface, do not use the pointer afterwards.
-		void release_com(IUnknown* com);
+		template <typename TCOM>
+		inline COMPtr<TCOM>::COMPtr(nullptr_t) :
+			COMPtr(){}
 
-		/// \brief Release many COM interfaces at once.
-		/// \param com_list List of COM interface to release.
-		/// \remarks If the same interface is contained multiple times, each instance will be released separately.
-		/// \see See release com for more info.
-		void release_com(std::initializer_list<IUnknown*> com_list);
+		template <typename TCOM>
+		inline COMPtr<TCOM>::COMPtr(TCOM* object) :
+			object_ptr_(object){
+
+			AddRef();
+
+		}
+
+		template <typename TCOM>
+		template <typename TOther>
+		inline COMPtr<TCOM>::COMPtr(TOther* object) :
+			object_ptr_(static_cast<TCOM*>(object)){
+
+			AddRef();
+
+		}
+
+		template <typename TCOM>
+		inline COMPtr<TCOM>::COMPtr(const COMPtr<TCOM>& other) :
+			COMPtr(other.Get()){}
+
+		template <typename TCOM>
+		template <typename TOther>
+		inline COMPtr<TCOM>::COMPtr(const COMPtr<TOther>& other) :
+			COMPtr(static_cast<TCOM*>(other.Get())){}
+
+		template <typename TCOM>
+		inline COMPtr<TCOM>::COMPtr(COMPtr<TCOM>&& other) :
+			object_ptr_(other.Get()){
+
+			other.object_ptr_ = nullptr;
+
+		}
+
+		template <typename TCOM>
+		template <typename TOther>
+		inline COMPtr<TCOM>::COMPtr(COMPtr<TOther>&& other) :
+			object_ptr_(static_cast<TCOM*>(other.Get())){
+
+			other.object_ptr_ = nullptr;
+
+		}
+
+		template <typename TCOM>
+		inline COMPtr<TCOM>::~COMPtr(){
+
+			Release();
+
+		}
+
+		template <typename TCOM>
+		COMPtr<TCOM>& COMPtr<TCOM>::operator=(const COMPtr<TCOM>& other){
+
+			Release();
+
+			object_ptr_ = static_cast<TCOM*>(other.object_ptr_);
+
+			AddRef();
+
+			return *this;
+
+		}
+
+		template <typename TCOM>
+		template <typename TOther>
+		COMPtr<TCOM>& COMPtr<TCOM>::operator=(const COMPtr<TOther>& other){
+
+			Release();
+
+			object_ptr_ = static_cast<TCOM*>(other.object_ptr_);
+
+			AddRef();
+
+			return *this;
+
+		}
+
+		template <typename TCOM>
+		COMPtr<TCOM>& COMPtr<TCOM>::operator=(COMPtr<TCOM>&& other){
+
+			Release();
+
+			object_ptr_ = other.object_ptr_;
+
+			other.object_ptr_ = nullptr;
+
+			return *this;
+
+		}
+
+		template <typename TCOM>
+		template <typename TOther>
+		COMPtr<TCOM>& COMPtr<TCOM>::operator=(COMPtr<TOther>&& other){
+
+			Release();
+
+			object_ptr_ = static_cast<TCOM*>(other.object_ptr_);
+
+			other.object_ptr_ = nullptr;
+
+			return *this;
+
+		}
+
+		template <typename TCOM>
+		inline bool COMPtr<TCOM>::operator==(const COMPtr<TCOM>& other) const{
+
+			return object_ptr_ == other.object_ptr_;
+
+		}
+
+		template <typename TCOM>
+		inline bool COMPtr<TCOM>::operator!=(const COMPtr<TCOM>& other) const{
+
+			return object_ptr_ != other.object_ptr_;
+
+		}
+
+		template <typename TCOM>
+		template <typename TOther>
+		COMPtr<TCOM>& COMPtr<TCOM>::operator<<(TOther** object){
+
+			Release();
+
+			if (object){
+
+				object_ptr_ = static_cast<TCOM*>(*object);	// Acquire without adding any reference.
+
+				*object = nullptr;							// Clear the source.
+
+			}
+			else{
+
+				object_ptr_ = nullptr;
+
+			}
+
+			return *this;
+
+		}
+
+		template <typename TCOM>
+		template <typename TOther>
+		COMPtr<TCOM>& COMPtr<TCOM>::operator>>(TOther** object){
+
+			if (object){
+
+				if (*object){
+
+					(*object)->Release();		// Release the destination object, if present.
+
+				}
+
+				*object = object_ptr_;			// Transfer ownership without removing any reference.
+
+				object_ptr_ = nullptr;			// Clear the source.
+
+			}
+
+		}
+
+		template <typename TCOM>
+		inline COMPtr<TCOM>::operator bool() const{
+
+			return object_ptr_ != nullptr;
+
+		}
+
+		template <typename TCOM>
+		inline TCOM* COMPtr<TCOM>::operator->() const{
+
+			return object_ptr_;
+
+		}
+
+		template <typename TCOM>
+		inline TCOM& COMPtr<TCOM>::operator*() const{
+
+			return *object_ptr_;
+
+		}
+
+		template <typename TCOM>
+		TCOM* COMPtr<TCOM>::Get() const{
+
+			return object_ptr_;
+
+		}
+
+		template <typename TCOM>
+		inline void COMPtr<TCOM>::Release(){
+
+			if (object_ptr_){
+
+				object_ptr_->Release();
+
+				object_ptr_ = nullptr;
+
+			}
+
+		}
+
+		template <typename TCOM>
+		inline void COMPtr<TCOM>::AddRef(){
+
+			if (object_ptr_){
+
+				object_ptr_->AddRef();
+
+			}
+
+		}
+
+		/////////////////////// COM MOVE //////////////////////////////
+
+		template <typename TCOM>
+		inline COMPtr<TCOM> COMMove(TCOM** object){
+
+			COMPtr<TCOM> pointer;
+
+			pointer << object;
+
+			return pointer;
+
+		}
 
 	}
 	
-}
-
-///////////////////////////// COM DELETER //////////////////////////////////
-
-inline void gi_lib::windows::COMDeleter::operator()(IUnknown * com){
-
-	release_com(com);
-
-}
-
-//////////////////////////// MISC ///////////////////////////////////
-
-template <typename TCOM>
-inline gi_lib::windows::unique_com<TCOM> gi_lib::windows::make_unique_com(TCOM* com_object){
-
-	return unique_ptr<TCOM, COMDeleter>(com_object, COMDeleter{});
-
-}
-
-inline void gi_lib::windows::release_com(IUnknown * com){
-
-	if (com){
-
-		com->Release();
-
-	}
-
-}
-
-inline void gi_lib::windows::release_com(std::initializer_list<IUnknown*> com_list){
-
-	for (auto com : com_list){
-
-		release_com(com);
-
-	}
-
 }
 
 

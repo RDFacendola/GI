@@ -2,6 +2,7 @@
 
 #pragma comment(lib,"DirectXTK")
 #pragma comment(lib,"DirectXTex")
+
 #include <DDSTextureLoader.h>
 #include <DirectXTex.h>
 
@@ -22,86 +23,57 @@ namespace{
 	/// \brief Size ration between two consecutive MIP levels of a texture 2D.
 	const float kMIPRatio2D = 0.25f;
 
+
+
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
 
 DX11Texture2D::DX11Texture2D(const FromFile& bundle){
 	
-	auto& device = DX11Graphics::GetInstance().GetDevice();
+	auto device = DX11Graphics::GetInstance().GetDevice();
 
 	DDS_ALPHA_MODE alpha_mode;
-	ID3D11Resource * resource;
-	ID3D11ShaderResourceView * shader_view;
+	ID3D11Resource* texture;
+	ID3D11ShaderResourceView* srv;
 
+	THROW_ON_FAIL(CreateDDSTextureFromFileEx(device.Get(),
+											 bundle.file_name.c_str(), 
+											 0,										// Load everything.
+											 D3D11_USAGE_IMMUTABLE, 
+											 D3D11_BIND_SHADER_RESOURCE, 
+											 0,										// No CPU access.
+											 0,
+											 false,									// No forced sRGB
+											 &texture,
+											 &srv,
+											 &alpha_mode) );							//Alpha infos
 
-	THROW_ON_FAIL( CreateDDSTextureFromFileEx(&device, 
-											  bundle.file_name.c_str(), 
-											  0,									// Load everything.
-											  D3D11_USAGE_IMMUTABLE, 
-											  D3D11_BIND_SHADER_RESOURCE, 
-											  0,									// No CPU access.
-											  0,
-											  false,								// No forced sRGB
-											  &resource,
-											  &shader_view, 
-											  &alpha_mode) );						//Alpha informations
+	// Transfer resource's ownership
+	shader_resource_view_ << &srv;
 
-	texture_.reset(static_cast<ID3D11Texture2D*>(resource));	
-	shader_view_.reset(shader_view);
+	D3D11_TEXTURE2D_DESC description;
 
-	UpdateDescription();
+	static_cast<ID3D11Texture2D*>(texture)->GetDesc(&description);
+
+	UpdateDescription(description);
 	
-}
-
-DX11Texture2D::DX11Texture2D(ID3D11Texture2D& texture, DXGI_FORMAT format){
-
-	ID3D11Device * device;
-
-	texture.GetDevice(&device);
-
-	COM_GUARD(device);
-
-	ID3D11ShaderResourceView * shader_view;
-
-	D3D11_TEXTURE2D_DESC texture_desc;
-
-	texture.GetDesc(&texture_desc);
-
-	D3D11_SHADER_RESOURCE_VIEW_DESC view_desc;
-
-	view_desc.Format = (format == DXGI_FORMAT_UNKNOWN) ? texture_desc.Format : format;
-	view_desc.ViewDimension = (texture_desc.SampleDesc.Count == 1) ? D3D11_SRV_DIMENSION_TEXTURE2D : D3D11_SRV_DIMENSION_TEXTURE2DMS;
-	view_desc.Texture2D.MostDetailedMip = 0;
-	view_desc.Texture2D.MipLevels = texture_desc.MipLevels;
-
-	THROW_ON_FAIL(device->CreateShaderResourceView(reinterpret_cast<ID3D11Resource *>(&texture),
-												   &view_desc,
-												   &shader_view));
-
-	texture_.reset(&texture);
-	shader_view_.reset(shader_view);
-
-	UpdateDescription();
+	texture->Release();		// No longer needed
 
 }
 
-DX11Texture2D::DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView& shader_view){
+DX11Texture2D::DX11Texture2D(COMPtr<ID3D11ShaderResourceView> shader_resource_view) :
+shader_resource_view_(std::move(shader_resource_view)){
 	
-	texture_.reset(&texture);
-	shader_view_.reset(&shader_view);
+	ID3D11Resource* texture;
 
-	UpdateDescription();
+	shader_resource_view_->GetResource(&texture);
 
-}
+	D3D11_TEXTURE2D_DESC description;
 
-DX11Texture2D::DX11Texture2D(ID3D11Texture2D& texture, ID3D11ShaderResourceView& shader_view, ID3D11UnorderedAccessView& unordered_view){
+	static_cast<ID3D11Texture2D*>(texture)->GetDesc(&description);
 
-	texture_.reset(&texture);
-	shader_view_.reset(&shader_view);
-	unordered_access_.reset(&unordered_view);
-
-	UpdateDescription();
+	UpdateDescription(description);
 
 }
 
@@ -115,12 +87,8 @@ size_t DX11Texture2D::GetSize() const{
 
 }
 
-void DX11Texture2D::UpdateDescription(){
+void DX11Texture2D::UpdateDescription(const D3D11_TEXTURE2D_DESC& description){
 	
-	D3D11_TEXTURE2D_DESC description;
-
-	texture_->GetDesc(&description);
-
 	width_ = description.Width;
 	height_ = description.Height;
 	mip_levels_ = description.MipLevels;

@@ -7,15 +7,12 @@
 
 #include <string>
 
-#include "gilib.h"
-#include "fnv1.h"
+#include "tag.h"
 
 #include "resources.h"
 
 namespace gi_lib{
 
-	using std::wstring;
-	
 	template <typename TObject>
 	class ObjectPtr;
 
@@ -31,7 +28,7 @@ namespace gi_lib{
 
 			USE_CACHE;
 
-			wstring file_name;		///< \brief Name of the file to load.
+			std::wstring file_name;		///< \brief Name of the file to load.
 
 			/// \brief Get the cache key associated to the structure.
 			/// \return Returns the cache key associated to the structure.
@@ -52,7 +49,7 @@ namespace gi_lib{
 
 		/// \brief Get the MIP map level count.
 		/// \return Returns the MIP map level count.
-		virtual unsigned int GetMipCount() const = 0;
+		virtual unsigned int GetMIPCount() const = 0;
 		
 	};
 
@@ -74,6 +71,6 @@ namespace gi_lib{
 
 inline size_t gi_lib::ITexture2D::FromFile::GetCacheKey() const{
 
-	return ::hash::fnv_1{}(to_string(file_name));
+	return gi_lib::Tag(file_name);
 
 }

@@ -7,7 +7,7 @@
 
 #include "resources.h"
 
-#include "dx11.h"
+#include "dx11/dx11.h"
 
 #include "windows/win_os.h"
 
@@ -15,7 +15,7 @@ namespace gi_lib{
 
 	namespace dx11{
 
-		using windows::unique_com;
+		using windows::COMPtr;
 
 		/// \brief Represents a DirectX11 sampler state.
 		/// \author Raffaele D. Facendola.
@@ -47,38 +47,41 @@ namespace gi_lib{
 
 			/// \brief Get the sampler state.
 			/// \return Returns the sampler state.
-			ID3D11SamplerState& GetSamplerState() const;
+			COMPtr<ID3D11SamplerState> GetSamplerState() const;
 
 		private:
 
-			unique_com<ID3D11SamplerState> sampler_state_;
+			COMPtr<ID3D11SamplerState> sampler_state_;
 
 		};
 
+		/////////////////////////////// DX11 SAMPLER ///////////////////////////////
+
+		inline COMPtr<ID3D11SamplerState> DX11Sampler::GetSamplerState() const{
+
+			return sampler_state_;
+
+		}
+
+		inline size_t DX11Sampler::GetSize() const
+		{
+
+			return 0;
+
+		}
+
+		/////////////////////////////// DX11 SAMPLER :: FROM DESCRIPTION ///////////////////////////////
+
+		inline size_t DX11Sampler::FromDescription::GetCacheKey() const{
+
+			// | ... | texture_mapping | anisotropy_level |
+			//      40                 8                  0
+
+			return (anisotropy_level & 0xFF) | (static_cast<unsigned int>(texture_mapping) << 8);
+
+		}
+	
 	}
 
 }
 
-/////////////////////////////// DX11 SAMPLER ///////////////////////////////
-
-inline ID3D11SamplerState& gi_lib::dx11::DX11Sampler::GetSamplerState() const{
-
-	return *sampler_state_;
-
-}
-
-inline size_t gi_lib::dx11::DX11Sampler::GetSize() const
-{
-
-	return 0;
-
-}
-
-inline size_t gi_lib::dx11::DX11Sampler::FromDescription::GetCacheKey() const{
-
-	// | ... | texture_mapping | anisotropy_level |
-	//      40                 8                  0
-
-	return (anisotropy_level & 0xFF) | (static_cast<unsigned int>(texture_mapping) << 8);
-
-}

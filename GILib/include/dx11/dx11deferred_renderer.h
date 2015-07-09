@@ -53,9 +53,9 @@ namespace gi_lib{
 
 			ObjectPtr<DX11Material> material_;							///< \brief DirectX11 material.
 
-			ObjectPtr<IMaterialParameter> world_view_proj_;				///< \brief Projection * View * World matrix product.
+			Tag world_view_proj_;										///< \brief Projection * View * World matrix product tag.
 
-			ObjectPtr<IMaterialParameter> world_;						///< \brief World matrix.
+			Tag world_;													///< \brief World matrix tag.
 
 		};
 
@@ -93,7 +93,7 @@ namespace gi_lib{
 			
 			//void InitializeBloom();
 
-			void Bloom(ObjectPtr<IResourceView> source_view, DX11RenderTarget& destination);
+			void Bloom(ObjectPtr<ITexture2D>& source, ObjectPtr<IGPTexture2D>& destination);
 
 			/// \brief Initialize tonemap-related objects.
 			void InitializeToneMap();
@@ -101,41 +101,41 @@ namespace gi_lib{
 			/// \brief Perform a tonemap to the specified source surface and output the result to the destination surface.
 			/// \param source_view Shader view of the HDR surface.
 			/// \param destination Destination render target.
-			void ToneMap(ObjectPtr<IResourceView> source_view, DX11RenderTarget& destination);
+			void ToneMap(ObjectPtr<ITexture2D>& source, ObjectPtr<IGPTexture2D>& destination);
 
 			// Render context
 
-			unique_ptr<ID3D11DeviceContext, COMDeleter> immediate_context_;			///< \brief Immediate rendering context.
+			COMPtr<ID3D11DeviceContext> immediate_context_;				///< \brief Immediate rendering context.
 
-			unique_ptr<ID3D11DepthStencilState, COMDeleter> depth_state_;			///< \brief Depth-stencil buffer state.
+			COMPtr<ID3D11DepthStencilState> depth_state_;				///< \brief Depth-stencil buffer state.
 
-			unique_ptr<ID3D11BlendState, COMDeleter> blend_state_;					///< \brief Output merger blending state.
+			COMPtr<ID3D11BlendState> blend_state_;						///< \brief Output merger blending state.
 
-			unique_ptr<ID3D11RasterizerState, COMDeleter> rasterizer_state_;		///< \brief Rasterizer state.
+			COMPtr<ID3D11RasterizerState> rasterizer_state_;			///< \brief Rasterizer state.
 
 			// Lights
 
-			ObjectPtr<DX11DynamicBuffer> light_array_;							///< \brief Array containing the lights.
+			ObjectPtr<DX11StructuredArray> light_array_;				///< \brief Array containing the lights.
 
 			// Deferred resources
 
-			ObjectPtr<DX11RenderTarget> gbuffer_;									///< \brief GBuffer.
+			ObjectPtr<DX11RenderTarget> gbuffer_;						///< \brief GBuffer.
 
-			ObjectPtr<DX11RenderTarget> light_buffer_;								///< \brief Light buffer.
+			ObjectPtr<DX11RenderTarget> light_buffer_;					///< \brief Light buffer.
 
-			unique_ptr<ID3D11ComputeShader, COMDeleter> light_cs_;					///< \brief DELETE ME
+			COMPtr<ID3D11ComputeShader> light_cs_;						///< \brief DELETE ME
 
-			unique_ptr<ID3D11DepthStencilState, COMDeleter> disable_depth_test_;	///< \brief Used to disable the depth testing.
+			COMPtr<ID3D11DepthStencilState> disable_depth_test_;		///< \brief Used to disable the depth testing.
 			
 			// Post process - Tonemapping
 
-			ObjectPtr<DX11Material> tonemapper_;									///< \brief Material used to perform tonemapping.
+			ObjectPtr<DX11Material> tonemapper_;						///< \brief Material used to perform tonemapping.
 
-			ObjectPtr<IMaterialParameter> tonemap_exposure_;
+			Tag tonemap_exposure_;
 
-			ObjectPtr<IMaterialParameter> tonemap_vignette_;
+			Tag tonemap_vignette_;
 
-			ObjectPtr<IMaterialResource> tonemap_source_;
+			Tag tonemap_source_;
 
 			
 		};
@@ -158,8 +158,8 @@ namespace gi_lib{
 
 		inline void gi_lib::dx11::DX11DeferredRendererMaterial::Commit(ID3D11DeviceContext& context){
 
-			material_->Commit(context);
-
+			material_->Bind(context);
+			
 		}	
 
 		inline size_t gi_lib::dx11::DX11DeferredRendererMaterial::GetSize() const{

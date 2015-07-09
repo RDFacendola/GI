@@ -56,7 +56,7 @@ namespace{
 
 DX11Mesh::DX11Mesh(const FromVertices<VertexFormatNormalTextured>& bundle){
 
-	auto& device = DX11Graphics::GetInstance().GetDevice();
+	auto& device = *DX11Graphics::GetInstance().GetDevice();
 
 	// Normal, textured mesh.
 
@@ -72,9 +72,7 @@ DX11Mesh::DX11Mesh(const FromVertices<VertexFormatNormalTextured>& bundle){
 								   vb_size,
 								   &buffer));
 
-	vertex_buffer_.reset(buffer);
-
-	buffer = nullptr;
+	vertex_buffer_ << &buffer;
 
 	// Indices
 
@@ -85,7 +83,7 @@ DX11Mesh::DX11Mesh(const FromVertices<VertexFormatNormalTextured>& bundle){
 									  ib_size,
 									  &buffer));
 	
-		index_buffer_.reset(buffer);
+		index_buffer_ << &buffer;
 
 		polygon_count_ = bundle.indices.size() / 3;
 
@@ -113,7 +111,7 @@ void DX11Mesh::Bind(ID3D11DeviceContext& context){
 
 	unsigned int num_streams = 1;
 
-	ID3D11Buffer* vertex_buffer = vertex_buffer_.get();
+	ID3D11Buffer* vertex_buffer = vertex_buffer_.Get();
 
 	unsigned int stride = static_cast<unsigned int>(vertex_stride_);
 
@@ -129,7 +127,7 @@ void DX11Mesh::Bind(ID3D11DeviceContext& context){
 
 	// Bind the index buffer
 
-	context.IASetIndexBuffer(index_buffer_.get(),
+	context.IASetIndexBuffer(index_buffer_.Get(),
 							 DXGI_FORMAT_R32_UINT,
 							 0);
 

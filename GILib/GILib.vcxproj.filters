@@ -139,20 +139,17 @@
     <ClInclude Include="include\dx11\dx11texture.h">
       <Filter>DirectX 11\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="include\dx11\dx11resources.h">
-      <Filter>DirectX 11\Resources</Filter>
-    </ClInclude>
     <ClInclude Include="include\dx11\dx11sampler.h">
       <Filter>DirectX 11\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="include\dx11\dx11shader_state.h">
-      <Filter>DirectX 11</Filter>
-    </ClInclude>
-    <ClInclude Include="include\dx11\dx11shader.h">
-      <Filter>DirectX 11</Filter>
-    </ClInclude>
     <ClInclude Include="include\tag.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11shader_state.h">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11shader.h">
+      <Filter>DirectX 11\Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -210,9 +207,6 @@
     <ClCompile Include="src\uniform_tree.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11\dx11resources.cpp">
-      <Filter>DirectX 11\Resources</Filter>
-    </ClCompile>
     <ClCompile Include="src\dx11\dx11buffer.cpp">
       <Filter>DirectX 11\Resources</Filter>
     </ClCompile>
@@ -234,11 +228,14 @@
     <ClCompile Include="src\dx11\dx11sampler.cpp">
       <Filter>DirectX 11\Resources</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11\dx11shader.cpp">
-      <Filter>DirectX 11</Filter>
-    </ClCompile>
     <ClCompile Include="src\tag.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11shader.cpp">
+      <Filter>DirectX 11\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11shader_state.cpp">
+      <Filter>DirectX 11\Resources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

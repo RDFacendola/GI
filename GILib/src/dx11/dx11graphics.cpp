@@ -13,8 +13,8 @@
 #include "resources.h"
 #include "instance_builder.h"
 #include "deferred_renderer.h"
+#include "scope_guard.h"
 
-#include "dx11/dx11resources.h"
 #include "dx11/dx11render_target.h"
 #include "dx11/dx11renderer.h"
 #include "dx11/dx11deferred_renderer.h"
@@ -292,7 +292,7 @@ namespace{
 		InstanceBuilder::Register<IComputation, DX11Computation, IComputation::CompileFromFile>();
 
 		// Buffers and vector
-		InstanceBuilder::Register<IDynamicBuffer, DX11DynamicBuffer, IDynamicBuffer::FromDescription>();
+		
 
 		// Internal resources
 		InstanceBuilder::Register<DX11Sampler, DX11Sampler, DX11Sampler::FromDescription>();
@@ -325,7 +325,9 @@ DX11Output::DX11Output(windows::Window & window, const VideoMode & video_mode) :
 	on_window_resized_listener_ = window_.OnResized().Subscribe([this](Listener&, Window::OnResizedEventArgs&){
 
 		// Release the old back buffer
-		render_target_->ResetBuffers();
+		THROW(L"RESET THE CURRENT BACKBUFFER");
+
+		//TODO: render_target_->ResetBuffers();
 
 		//Resize the swapchain buffer
 		swap_chain_->ResizeBuffers(kBuffersCount,
@@ -402,18 +404,18 @@ void DX11Output::UpdateSwapChain(){
 
 	// Create the actual swap chain
 
-	IDXGISwapChain * swap_chain;
+	IDXGISwapChain* swap_chain;
 		
 	auto& graphics = DX11Graphics::GetInstance();
 
-	auto& factory = graphics.GetFactory();
-	auto& device = graphics.GetDevice();
+	auto&& factory = *graphics.GetFactory();
+	auto&& device = *graphics.GetDevice();
 
 	THROW_ON_FAIL(factory.CreateSwapChain(&device,
 										  &dxgi_desc,
 										  &swap_chain));
 
-	swap_chain_ = std::move(make_unique_com(swap_chain));
+	swap_chain_ << &swap_chain;
 
 	UpdateBackbuffer();
 	
@@ -430,6 +432,9 @@ void DX11Output::UpdateBackbuffer(){
 						   __uuidof(back_buffer),
 						   reinterpret_cast<void**>(&back_buffer));
 	
+	THROW(L"SET A PROPER BACKBUFFER");
+
+	/*
 	if (!render_target_){
 
 		render_target_ = new DX11RenderTarget(*back_buffer);
@@ -440,7 +445,7 @@ void DX11Output::UpdateBackbuffer(){
 		render_target_->SetBuffers({ back_buffer });
 
 	}
-	
+	*/
 }
 
 /////////////////////////////////// RESOURCES ///////////////////////////////////////////
@@ -479,9 +484,17 @@ DX11Graphics & DX11Graphics::GetInstance(){
 
 DX11Graphics::DX11Graphics(): Graphics(){
 
-	IDXGIFactory * factory;
-	IDXGIAdapter * adapter;
-	ID3D11Device * device;
+	IDXGIFactory* factory = nullptr;
+	IDXGIAdapter* adapter = nullptr;
+	ID3D11Device* device = nullptr;
+
+	auto&& guard = make_scope_guard([&factory, &adapter, &device](){
+
+		if (factory)	factory->Release();
+		if (adapter)	adapter->Release();
+		if (device)		device->Release();
+
+	});
 
 	//DXGI Factory
 	THROW_ON_FAIL(CreateDXGIFactory(__uuidof(IDXGIFactory),
@@ -490,7 +503,7 @@ DX11Graphics::DX11Graphics(): Graphics(){
 	//DXGI Adapter
 	THROW_ON_FAIL(factory->EnumAdapters(kPrimaryOutputIndex,
 										&adapter));
-
+	
 #ifdef _DEBUG
 
 	unsigned int device_flags = D3D11_CREATE_DEVICE_DEBUG;
@@ -513,11 +526,11 @@ DX11Graphics::DX11Graphics(): Graphics(){
 									nullptr,
 									nullptr));
 
-	// Binds the objects to their smart pointers
+	// Move the ownership
 	
-	factory_ = std::move(make_unique_com(factory));
-	adapter_ = std::move(make_unique_com(adapter));
-	device_ = std::move(make_unique_com(device));
+	factory_ << &factory;
+	adapter_ << &adapter;
+	device_ << &device;
 	
 	// Register the renderers
 

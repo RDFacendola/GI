@@ -9,16 +9,13 @@
 #include <d3d11.h>
 #include <memory>
 
-#include "dx11resources.h"
 #include "dx11render_target.h"
 
 #include "observable.h"
 #include "graphics.h"
+
 #include "windows/win_core.h"
-
-using ::std::unique_ptr;
-
-using ::gi_lib::windows::COMDeleter;
+#include "windows/win_os.h"
 
 struct ID3D11Device;
 struct IDXGIFactory;
@@ -33,6 +30,8 @@ namespace gi_lib{
 
 	namespace dx11{
 
+		using windows::COMPtr;
+
 		/// \brief DirectX11 object used to display an image to an output.
 		/// \author Raffaele D. Facendola
 		class DX11Output : public IOutput{
@@ -40,10 +39,10 @@ namespace gi_lib{
 		public:
 
 			/// \brief No copy-constructor.
-			DX11Output(const DX11Output &) = delete;
+			DX11Output(const DX11Output&) = delete;
 
 			/// \brief No assignment operator.
-			DX11Output & operator=(const DX11Output &) = delete;
+			DX11Output & operator=(const DX11Output&) = delete;
 
 			/// \brief Create a new DirectX11 output window.
 			/// \param window The window where the final image will be displayed.
@@ -53,9 +52,9 @@ namespace gi_lib{
 			/// \brief Default destructor.
 			~DX11Output();
 
-			virtual void SetVideoMode(const VideoMode & video_mode) override;
+			virtual void SetVideoMode(const VideoMode& video_mode) override;
 
-			virtual const VideoMode & GetVideoMode() const override;
+			virtual const VideoMode& GetVideoMode() const override;
 
 			virtual void SetFullscreen(bool fullscreen) override;
 
@@ -96,7 +95,7 @@ namespace gi_lib{
 
 			windows::Window& window_;
 
-			unique_ptr<IDXGISwapChain, COMDeleter> swap_chain_;
+			COMPtr<IDXGISwapChain> swap_chain_;
 
 			ObjectPtr<DX11RenderTarget> render_target_;
 
@@ -113,10 +112,10 @@ namespace gi_lib{
 			static DX11Resources& GetInstance();
 
 			/// \brief No copy constructor.
-			DX11Resources(const DX11Resources &) = delete;
+			DX11Resources(const DX11Resources&) = delete;
 
 			/// \brief No assignment operator.
-			DX11Resources & operator=(const DX11Resources &) = delete;
+			DX11Resources & operator=(const DX11Resources&) = delete;
 
 		protected:
 
@@ -143,13 +142,13 @@ namespace gi_lib{
 
 			virtual unique_ptr<IOutput> CreateOutput(Window& window, const VideoMode& video_mode) override;
 
-			virtual DX11Resources & GetResources() override;
+			virtual DX11Resources& GetResources() override;
 
-			ID3D11Device& GetDevice();
+			COMPtr<ID3D11Device> GetDevice();
 
-			IDXGIFactory& GetFactory();
+			COMPtr<IDXGIFactory> GetFactory();
 
-			IDXGIAdapter& GetAdapter();
+			COMPtr<IDXGIAdapter> GetAdapter();
 
 		protected:
 
@@ -159,11 +158,11 @@ namespace gi_lib{
 
 			DX11Graphics();
 
-			unique_ptr<ID3D11Device, COMDeleter> device_;
+			COMPtr<ID3D11Device> device_;
 
-			unique_ptr<IDXGIFactory, COMDeleter> factory_;
+			COMPtr<IDXGIFactory> factory_;
 
-			unique_ptr<IDXGIAdapter, COMDeleter> adapter_;
+			COMPtr<IDXGIAdapter> adapter_;
 
 		};
 
@@ -214,21 +213,21 @@ namespace gi_lib{
 
 		/////////////////////// DX11GRAPHICS ///////////////////
 
-		inline ID3D11Device& DX11Graphics::GetDevice(){
+		inline COMPtr<ID3D11Device> DX11Graphics::GetDevice(){
 
-			return *device_;
+			return device_;
 
 		}
 		
-		inline IDXGIFactory& DX11Graphics::GetFactory(){
+		inline COMPtr<IDXGIFactory> DX11Graphics::GetFactory(){
 
-			return *factory_;
+			return factory_;
 
 		}
 
-		inline IDXGIAdapter& DX11Graphics::GetAdapter(){
+		inline COMPtr<IDXGIAdapter> DX11Graphics::GetAdapter(){
 
-			return *adapter_;
+			return adapter_;
 
 		}
 

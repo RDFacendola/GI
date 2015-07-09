@@ -28,7 +28,7 @@ namespace gi_lib{
 
 		/// \brief Get the number of surfaces in this render target.
 		/// \return Returns the number of surfaces in this render target.
-		virtual unsigned int GetCount() const = 0;
+		virtual size_t GetCount() const = 0;
 
 		/// \brief Get a texture associated to this render target.
 		/// \param index The index of the render target texture.
@@ -43,17 +43,12 @@ namespace gi_lib{
 		/// \brief Get the texture associated to the depth stencil buffer.
 		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.
 		/// \return Returns the texture associated to the depth stencil buffer used by this render target.
-		virtual ObjectPtr<ITexture2D> GetZStencil() = 0;
+		virtual ObjectPtr<ITexture2D> GetDepthBuffer() = 0;
 
 		/// \brief Get the texture associated to the depth stencil buffer.
 		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.
 		/// \return Returns the texture associated to the depth stencil buffer used by this render target.
-		virtual ObjectPtr<const ITexture2D> GetZStencil() const = 0;
-
-		/// \brief Get the aspect ratio of the render target.
-		/// The aspect ratio is Width/Height.
-		/// \return Returns the aspect ratio of the render target.
-		virtual float GetAspectRatio() const = 0;
+		virtual ObjectPtr<const ITexture2D> GetDepthBuffer() const = 0;
 
 		/// \brief Resize the render target surfaces.
 		/// \param width The new width of the buffer.

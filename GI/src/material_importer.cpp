@@ -11,9 +11,9 @@ namespace{
 
 	/// \brief Bind a fbx property to a shader texture 2d.
 	/// \param resources Object used to load the proper 
-	bool BindTexture2D(Resources& resources, unique_ptr<IFbxProperty> fbx_property, ObjectPtr<IMaterialResource> resource, const wstring& base_directory){
+	bool BindTexture2D(Resources& resources, unique_ptr<IFbxProperty> fbx_property, const Tag& texture_semantic, IMaterial& material, const wstring& base_directory){
 
-		if (resource && fbx_property){
+		if (fbx_property){
 
 			ObjectPtr<ITexture2D> texture;
 
@@ -23,8 +23,9 @@ namespace{
 
 				if (texture){
 
-					resource->Set(texture->GetView());
-					
+					material.SetInput(texture_semantic,
+									  texture);
+
 					return true;
 
 				}
@@ -49,7 +50,8 @@ namespace{
 		//Use this when importing model from 3ds max: fbx_material["3dsMax|Parameters|diff_color_map"]
 		BindTexture2D(resources,
 					  fbx_material["DiffuseColor"],
-					  material_instance->GetResource("gDiffuseMap"),
+					  "gDiffuseMap",
+					  *material_instance,
 					  base_directory);
 
 		// Okay

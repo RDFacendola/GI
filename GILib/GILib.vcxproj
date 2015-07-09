@@ -58,7 +58,6 @@
     <ClInclude Include="include\instance_builder.h" />
     <ClInclude Include="include\dx11\dx11.h" />
     <ClInclude Include="include\dx11\dx11graphics.h" />
-    <ClInclude Include="include\dx11\dx11resources.h" />
     <ClInclude Include="include\fbx\fbx.h" />
     <ClInclude Include="include\graphics.h" />
     <ClInclude Include="include\maybe.h" />
@@ -79,11 +78,11 @@
     <ClCompile Include="src\dx11\dx11render_target.cpp" />
     <ClCompile Include="src\dx11\dx11sampler.cpp" />
     <ClCompile Include="src\dx11\dx11shader.cpp" />
+    <ClCompile Include="src\dx11\dx11shader_state.cpp" />
     <ClCompile Include="src\dx11\dx11texture.cpp" />
     <ClCompile Include="src\fly_camera_component.cpp" />
     <ClCompile Include="src\light_component.cpp" />
     <ClCompile Include="src\dx11\dx11.cpp" />
-    <ClCompile Include="src\dx11\dx11resources.cpp" />
     <ClCompile Include="src\dx11\dx11deferred_renderer.cpp" />
     <ClCompile Include="src\exceptions.cpp" />
     <ClCompile Include="src\fbx.cpp" />

@@ -5,20 +5,9 @@
 
 #pragma once
 
-#include <vector>
-#include <string>
-
 #include <d3d11.h>
 
-
-#include "enums.h"
-#include "gimath.h"
-#include "scope_guard.h"
-#include "windows/win_os.h"
-
-using ::std::vector;
-using ::std::string;
-using ::std::wstring;
+#include "eigen.h"
 
 namespace gi_lib{
 
@@ -36,22 +25,20 @@ namespace gi_lib{
 		/// \param device Device used to create the texture.
 		/// \param width The width of the depth stencil texture in pixels.
 		/// \param height The height of the depth stencil texture in pixels.
-		/// \param depth_stencil Pointer to the created depth stencil. Set to nullptr if not needed.
+		/// \param shader_resource_view Pointer to the shader resource view. Set to nullptr if not needed.
 		/// \param depth_stencil_view Pointer to the depth stencil view. Set to nullptr if not needed.
-		HRESULT MakeDepthStencil(ID3D11Device& device, unsigned int width, unsigned int height, ID3D11Texture2D** depth_stencil, ID3D11DepthStencilView** depth_stencil_view);
+		HRESULT MakeDepthStencil(ID3D11Device& device, unsigned int width, unsigned int height, ID3D11ShaderResourceView** shader_resource_view, ID3D11DepthStencilView** depth_stencil_view);
 
 		/// \brief Create a render target.
 		/// \param device Device used to create the texture.
 		/// \param width Width of the texture in pixels.
 		/// \param height Height of the texture in pixels.
 		/// \param format Format of the surface.
-		/// \param texture Pointer to the created texture.
 		/// \param render_target_view Pointer to the render target view. Optional.
 		/// \param shader_resource_view Pointer to the shader resource view. Optional.
-		/// \param unordered_access_view Pointer to the unordered access view. Optional.
-		/// \param autogenerate_mips Whether to autogenerate mipmaps or not.
+		/// \param mip_chain Whether to generate a full MIP-map chain or not.
 		/// \remarks The method expects both the texture, the render target view and the shader resource view to be not null.
-		HRESULT MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11Texture2D** texture, ID3D11RenderTargetView** render_target_view, ID3D11ShaderResourceView** shader_resource_view, ID3D11UnorderedAccessView** unordered_access_view, bool autogenerate_mips = false);
+		HRESULT MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11RenderTargetView** render_target_view, ID3D11ShaderResourceView** shader_resource_view, bool mip_chain = false);
 
 		/// \brief Create a vertex buffer.
 		/// \tparam TVertexFormat Format of the vertex.
@@ -93,6 +80,13 @@ namespace gi_lib{
 		/// \param sampler Pointer to the object that will hold the sampler if the method succeeds..
 		HRESULT MakeSampler(ID3D11Device& device, TextureMapping texture_mapping, unsigned int anisotropy_level, ID3D11SamplerState** sampler);
 
+		/// \brief Create a new viewport from explicit dimensions.
+		/// \param width Width of the viewport in pixels.
+		/// \param height Height of the viewport in pixels.
+		/// \return Returns a viewport with the specified dimensions starting from [0;0] and with a depth range equal to [0;1].
+		template <typename TDimensions>
+		D3D11_VIEWPORT MakeViewport(TDimensions width, TDimensions height);
+
 		/// \brief Compute the left-handed perspective projection matrix.
 		/// \param field_of_view Field of view, in radians.
 		/// \param aspect_ratio Width-to-height aspect ratio.
@@ -100,8 +94,24 @@ namespace gi_lib{
 		/// \param far_plane Distance of the far clipping plane.
 		Matrix4f ComputePerspectiveProjectionLH(float field_of_view, float aspect_ratio, float near_plane, float far_plane);
 		
+		////////////////////////////// MAKE VIEWPORT ///////////////////////////////////////
+		
+		template <typename TDimensions>
+		inline D3D11_VIEWPORT MakeViewport<TDimensions>(TDimensions width, TDimensions height){
+
+			D3D11_VIEWPORT viewport;
+
+			viewport.TopLeftX = 0.0f;
+			viewport.TopLeftY = 0.0f;
+			viewport.MinDepth = 0.0f;
+			viewport.MaxDepth = 1.0f;
+			viewport.Width = static_cast<float>(width);
+			viewport.Height = static_cast<float>(height);
+
+			return viewport;
+
+		}
+
 	}
 
 }
-
-////////////////////////////// INLINE IMPLEMENTATION /////////////////////////////////

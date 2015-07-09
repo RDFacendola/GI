@@ -4,11 +4,13 @@
 /// \author Raffaele D. Facendola
 
 #pragma once
+
 #include <memory>
 
 #include "material.h"
 
 #include "dx11/dx11.h"
+#include "dx11/dx11shader_state.h"
 
 #include "windows/win_os.h"
 
@@ -40,22 +42,67 @@ namespace gi_lib{
 
 			virtual size_t GetSize() const override;
 
-			/// \brief Commit all the constant buffers and bind the material to the pipeline.
-			void Commit(ID3D11DeviceContext& context);
+			/// \brief Bind the material to the pipeline.
+			void Bind(ID3D11DeviceContext& context);
+
+			/// \brief Unbind the material from the pipeline.
+			void Unbind(ID3D11DeviceContext& context);
+
+			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D) override;
 
 		private:
-			
-			/// \brief Holds the properties shared among material instances.
-			struct MaterialImpl;
 
-			/// \brief Holds the private properties of this material instance.
-			struct InstanceImpl;
+			virtual bool SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) override;
 
-			shared_ptr<MaterialImpl> shared_impl_;		///< \brief Properties shared among material instances.
+			virtual bool SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) override;
 
-			unique_ptr<InstanceImpl> private_impl_;		///< \brief Private properties of this material instance.
+			unique_ptr<ShaderStateComposite> shader_composite_;		///< \brief Collection of shaders. Vertex and pixel shaders are compulsory.
+
+			COMPtr<ID3D11InputLayout> input_layout_;				///< \brief Vertex input layout, defined per material.
 
 		};
+		
+		///////////////////////////////// DX11 MATERIAL ///////////////////////////////////
+
+		inline size_t DX11Material::GetSize() const
+		{
+
+			return 0;
+
+		}
+
+		inline void DX11Material::Bind(ID3D11DeviceContext& context){
+
+			shader_composite_->Bind(context);
+
+		}
+
+		inline void DX11Material::Unbind(ID3D11DeviceContext& context){
+
+			shader_composite_->Unbind(context);
+
+		}
+
+		inline bool DX11Material::SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D){
+
+			return shader_composite_->SetShaderResource(tag,
+														texture_2D);
+
+		}
+
+		inline bool DX11Material::SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer){
+
+			return shader_composite_->SetConstantBuffer(tag,
+														structured_buffer);
+
+		}
+
+		inline bool DX11Material::SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array){
+
+			return shader_composite_->SetShaderResource(tag,
+														structured_array);
+
+		}
 
 	}
 

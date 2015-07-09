@@ -37,15 +37,18 @@ namespace{
 
 /////////////////// METHODS ///////////////////////////
 
-HRESULT gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width, unsigned int height, ID3D11Texture2D** depth_stencil, ID3D11DepthStencilView** depth_stencil_view){
+HRESULT gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width, unsigned int height, ID3D11ShaderResourceView** shader_resource_view, ID3D11DepthStencilView** depth_stencil_view){
 
-	ID3D11Texture2D * texture = nullptr;
-	ID3D11DepthStencilView * view = nullptr;
+	ID3D11Texture2D* texture = nullptr;
+	ID3D11DepthStencilView* dsv = nullptr;
+	ID3D11ShaderResourceView* srv = nullptr;
 
-	auto cleanup = make_scope_guard([&texture](){
+	auto cleanup = make_scope_guard([&dsv, &srv, &texture]{
 
-		if (texture) texture->Release();
-		
+		if (texture)	texture->Release();
+		if (dsv)		dsv->Release();
+		if (srv)		srv->Release();
+
 	});
 
 	D3D11_TEXTURE2D_DESC desc;
@@ -62,46 +65,82 @@ HRESULT gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width,
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
 	desc.Usage = D3D11_USAGE_DEFAULT;
-
+	
 	RETURN_ON_FAIL(device.CreateTexture2D(&desc, 
 										  nullptr, 
 										  &texture));
 
-	if (depth_stencil_view){
+	if (shader_resource_view){
 
-		D3D11_DEPTH_STENCIL_VIEW_DESC view_desc;
+		// Create the shader resource view.
 
-		ZeroMemory(&view_desc, sizeof(view_desc));
+		D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
 
-		view_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+		ZeroMemory(&srv_desc, sizeof(srv_desc));
 
-		RETURN_ON_FAIL(device.CreateDepthStencilView(reinterpret_cast<ID3D11Resource *>(texture),
-													 &view_desc,
-													 &view));
+		srv_desc.Format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;		// The stencil may not be accessed by the shader.
+		srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		srv_desc.Texture2D.MostDetailedMip = 0;
+		srv_desc.Texture2D.MipLevels = 1;
 
-		*depth_stencil_view = view;
+		THROW_ON_FAIL(device.CreateShaderResourceView(texture,
+													  &srv_desc,
+													  &srv));
 
 	}
 
-	*depth_stencil = texture;
+	if (depth_stencil_view){
+
+		// Create the depth stencil view.
+
+		D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc;
+
+		ZeroMemory(&dsv_desc, sizeof(dsv_desc));
+
+		dsv_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+
+		RETURN_ON_FAIL(device.CreateDepthStencilView(texture,
+													 &dsv_desc,
+													 &dsv));
+
+	}
+
+	// Output
+	if (shader_resource_view){
+
+		*shader_resource_view = srv;
+
+	}
+
+	if (depth_stencil_view){
+
+		*depth_stencil_view = dsv;
+
+	}
+
+	// Cleanup
 
 	cleanup.Dismiss();
+
+	texture->Release();		// No longer needed.
 
 	return S_OK;
 
 }
 
-HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11Texture2D** texture, ID3D11RenderTargetView** render_target_view, ID3D11ShaderResourceView** shader_resource_view, ID3D11UnorderedAccessView** unordered_access_view, bool autogenerate_mips){
+HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11RenderTargetView** render_target_view, ID3D11ShaderResourceView** shader_resource_view, bool mip_chain){
 
+	ID3D11Texture2D* texture = nullptr;
 	ID3D11RenderTargetView* rtv = nullptr;
 	ID3D11ShaderResourceView* srv = nullptr;
-	ID3D11UnorderedAccessView* uav = nullptr;
 
-	auto cleanup = make_scope_guard([&texture, &rtv, &srv, &uav](){
+	auto cleanup = make_scope_guard([&texture, &rtv, &srv](){
 
-		windows::release_com({*texture, rtv, srv, uav});
-		
+		if (texture)	texture->Release();
+		if (rtv)		rtv->Release();
+		if (srv)		srv->Release();
+
 	});
 
 	D3D11_TEXTURE2D_DESC desc;
@@ -111,26 +150,25 @@ HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width,
 	desc.ArraySize = 1;
 	
 	desc.BindFlags = (render_target_view ? D3D11_BIND_RENDER_TARGET : 0 ) |
-					 (shader_resource_view ? D3D11_BIND_SHADER_RESOURCE : 0) |
-					 (unordered_access_view ? D3D11_BIND_UNORDERED_ACCESS : 0);
+					 (shader_resource_view ? D3D11_BIND_SHADER_RESOURCE : 0);
 
 	desc.CPUAccessFlags = 0;
 	desc.Format = format;
 	desc.Width = width;
 	desc.Height = height;
-	desc.MipLevels = autogenerate_mips ? 0 : 1;
+	desc.MipLevels = mip_chain ? 0 : 1;
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
 	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.MiscFlags = autogenerate_mips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
+	desc.MiscFlags = mip_chain ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
 
 	RETURN_ON_FAIL(device.CreateTexture2D(&desc,
 										  nullptr,
-										  texture));
+										  &texture));
 
 	if (render_target_view){
 		
-		RETURN_ON_FAIL(device.CreateRenderTargetView(reinterpret_cast<ID3D11Resource*>(*texture),
+		RETURN_ON_FAIL(device.CreateRenderTargetView(texture,
 													 nullptr,
 													 &rtv));
 
@@ -138,20 +176,14 @@ HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width,
 	
 	if (shader_resource_view){
 
-		RETURN_ON_FAIL(device.CreateShaderResourceView(reinterpret_cast<ID3D11Resource*>(*texture),
+		RETURN_ON_FAIL(device.CreateShaderResourceView(texture,
 													   nullptr,
 													   &srv));
 
 	}
-	
-	if (unordered_access_view){
 		
-		RETURN_ON_FAIL(device.CreateUnorderedAccessView(reinterpret_cast<ID3D11Resource*>(*texture),
-														nullptr,
-														&uav));
+	// Output
 
-	}
-	
 	if (render_target_view){
 
 		*render_target_view = rtv;
@@ -163,12 +195,8 @@ HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width,
 		*shader_resource_view = srv;
 
 	}
-	
-	if (unordered_access_view){
 
-		*unordered_access_view = uav;
-
-	}
+	// Cleanup
 
 	cleanup.Dismiss();
 
@@ -268,7 +296,9 @@ HRESULT gi_lib::dx11::MakeStructuredBuffer(ID3D11Device& device, unsigned int el
 
 	auto guard = make_scope_guard([&structured, &srv, &uav]{
 
-		release_com({ structured, srv, uav });
+		if (structured)		structured->Release();
+		if (srv)			srv->Release();
+		if (uav)			uav->Release();
 
 	});
 
