@@ -13,6 +13,8 @@ namespace{
 	/// \param resources Object used to load the proper 
 	bool BindTexture2D(Resources& resources, unique_ptr<IFbxProperty> fbx_property, const Tag& texture_semantic, IMaterial& material, const wstring& base_directory){
 
+		return false;
+
 		if (fbx_property){
 
 			ObjectPtr<ITexture2D> texture;

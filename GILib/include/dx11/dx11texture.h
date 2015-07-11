@@ -47,9 +47,12 @@ namespace gi_lib{
 
 		protected:
 
-			/// \brief Create a new texture from an existing shader resource view.
-			/// \param shader_view The view used to bind the texture to the shader.
-			DX11Texture2D(COMPtr<ID3D11ShaderResourceView> shader_resource_view);
+			/// \brief Create an empty texture.
+			DX11Texture2D();
+
+			/// \brief Initialize the texture from a shader resource view.
+			/// You may initialize the same texture multiple times to recycle an unused object.
+			void Initialize(COMPtr<ID3D11ShaderResourceView> shader_resource_view);
 
 		private:
 

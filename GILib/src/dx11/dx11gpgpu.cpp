@@ -19,7 +19,8 @@ namespace{
 
 }
 
-DX11Computation::DX11Computation(const CompileFromFile& arguments){
+DX11Computation::DX11Computation(const CompileFromFile& arguments) :
+shader_composite_(std::make_unique<ShaderStateComposite>()){
 
 	std::string hlsl = to_string(FileSystem::GetInstance().Read(arguments.file_name));
 

@@ -22,6 +22,9 @@
 #include "dx11/dx11sampler.h"
 #include "dx11/dx11gpgpu.h"
 
+#undef max;
+#undef min;
+
 using namespace std;
 using namespace gi_lib;
 using namespace gi_lib::dx11;
@@ -46,6 +49,9 @@ namespace{
 	/// \brief Minimum resolution allowed, in pixels.
 	const unsigned int kMinimumResolution = 1024 * 768;
 
+	/// \brief This value replaces the backbuffer dimensions if those become too small after a window resize.
+	const unsigned int kMinimumBackbufferDimension = 8;
+	
 	/// \brief DirectX 11 API support.
 	const D3D_FEATURE_LEVEL kFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
@@ -111,7 +117,7 @@ namespace{
 	}
 
 	/// \brief Convert a video mode to a DXGI mode.
-	DXGI_MODE_DESC VideoModeToDXGIMode(const VideoMode & video_mode){
+	DXGI_MODE_DESC VideoModeToDXGIMode(const VideoMode& video_mode){
 
 		DXGI_MODE_DESC dxgi_mode;
 
@@ -310,7 +316,7 @@ namespace{
 
 //////////////////////////////////// OUTPUT //////////////////////////////////////////
 
-DX11Output::DX11Output(windows::Window & window, const VideoMode & video_mode) :
+DX11Output::DX11Output(windows::Window & window, const VideoMode& video_mode) :
 	window_(window){
 
 	fullscreen_ = false;							// Windowed
@@ -319,28 +325,27 @@ DX11Output::DX11Output(windows::Window & window, const VideoMode & video_mode) :
 
 	video_mode_ = video_mode;
 
-	UpdateSwapChain();
+	CreateSwapChain();
 
 	//Listeners
-	on_window_resized_listener_ = window_.OnResized().Subscribe([this](Listener&, Window::OnResizedEventArgs&){
+	on_window_resized_listener_ = window_.OnResized().Subscribe([this](Listener&, Window::OnResizedEventArgs& args){
 
-		// Release the old back buffer
-		THROW(L"RESET THE CURRENT BACKBUFFER");
+		// Store the new dimensions of the buffer
 
-		//TODO: render_target_->ResetBuffers();
+		video_mode_.horizontal_resolution = std::max(args.width, kMinimumBackbufferDimension);
+		video_mode_.vertical_resolution = std::max(args.height, kMinimumBackbufferDimension);
 
+		// Release the old backbuffer
+
+		back_buffer_ = nullptr;								
+		
 		//Resize the swapchain buffer
+
 		swap_chain_->ResizeBuffers(kBuffersCount,
-								   0,						//Will fit the client width
-								   0,						//Will fit the client height
+								   video_mode_.horizontal_resolution,
+								   video_mode_.vertical_resolution,
 								   kVideoFormat,
 								   0);
-
-		DXGI_SWAP_CHAIN_DESC desc;
-
-		swap_chain_->GetDesc(&desc);
-
-		video_mode_ = DXGIModeToVideoMode(desc.BufferDesc);
 
 		UpdateBackbuffer();
 		
@@ -380,13 +385,13 @@ void DX11Output::SetAntialiasing(AntialiasingMode antialiasing){
 
 		antialiasing_ = antialiasing;
 
-		UpdateSwapChain();
+		CreateSwapChain();
 
 	}
 
 }
 
-void DX11Output::UpdateSwapChain(){
+void DX11Output::CreateSwapChain(){
 
 	// Description from video mode and antialiasing mode
 	DXGI_SWAP_CHAIN_DESC dxgi_desc;
@@ -432,20 +437,38 @@ void DX11Output::UpdateBackbuffer(){
 						   __uuidof(back_buffer),
 						   reinterpret_cast<void**>(&back_buffer));
 	
-	THROW(L"SET A PROPER BACKBUFFER");
+	back_buffer_ << &back_buffer;
 
-	/*
-	if (!render_target_){
+	// Create the new render target.
 
-		render_target_ = new DX11RenderTarget(*back_buffer);
+	render_target_ = new DX11RenderTarget(video_mode_.horizontal_resolution,
+										  video_mode_.vertical_resolution,
+										  { kVideoFormat });
 
-	}
-	else{
+}
 
-		render_target_->SetBuffers({ back_buffer });
+void DX11Output::Refresh(){
 
-	}
-	*/
+	// Copy the content of the dummy render target to the actual backbuffer
+
+	auto&& context = *DX11Graphics::GetInstance().GetImmediateContext();
+
+	ObjectPtr<DX11Texture2D> rt_proxy = (*render_target_)[0];
+
+	ID3D11Resource* rt_resource;
+
+	rt_proxy->GetShaderResourceView()->GetResource(&rt_resource);	// Access the render target surface
+
+	context.CopyResource(back_buffer_.Get(),						// Paste the render target onto the backbuffer
+						 rt_resource);
+						 
+	rt_resource->Release();
+
+	// Flip the buffers
+
+	swap_chain_->Present(IsVSync() ? 1 : 0,
+						 0);
+
 }
 
 /////////////////////////////////// RESOURCES ///////////////////////////////////////////
@@ -487,9 +510,11 @@ DX11Graphics::DX11Graphics(): Graphics(){
 	IDXGIFactory* factory = nullptr;
 	IDXGIAdapter* adapter = nullptr;
 	ID3D11Device* device = nullptr;
+	ID3D11DeviceContext* context = nullptr;
 
-	auto&& guard = make_scope_guard([&factory, &adapter, &device](){
+	auto&& guard = make_scope_guard([&factory, &adapter, &device, &context](){
 
+		if (context)	context->Release();
 		if (factory)	factory->Release();
 		if (adapter)	adapter->Release();
 		if (device)		device->Release();
@@ -526,11 +551,15 @@ DX11Graphics::DX11Graphics(): Graphics(){
 									nullptr,
 									nullptr));
 
+	// Context
+	device->GetImmediateContext(&context);
+
 	// Move the ownership
 	
 	factory_ << &factory;
 	adapter_ << &adapter;
 	device_ << &device;
+	immediate_context_ << &context;
 	
 	// Register the renderers
 

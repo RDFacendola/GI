@@ -75,7 +75,7 @@ namespace gi_lib{
 
 		private:
 
-			void UpdateSwapChain();
+			void CreateSwapChain();
 
 			void UpdateBackbuffer();
 
@@ -97,7 +97,9 @@ namespace gi_lib{
 
 			COMPtr<IDXGISwapChain> swap_chain_;
 
-			ObjectPtr<DX11RenderTarget> render_target_;
+			COMPtr<ID3D11Texture2D> back_buffer_;				///< \brief Reference to the actual backbuffer. It is never referenced outside this class otherwise the resize wouldn't work.
+
+			ObjectPtr<DX11RenderTarget> render_target_;			///< \brief Render target used as a proxy of the backbuffer, referenced outside this class.
 
 		};
 
@@ -150,6 +152,8 @@ namespace gi_lib{
 
 			COMPtr<IDXGIAdapter> GetAdapter();
 
+			COMPtr<ID3D11DeviceContext> GetImmediateContext();
+
 		protected:
 
 			virtual IRenderer* CreateRenderer(const type_index& renderer_type, Scene& scene) const override;
@@ -163,6 +167,8 @@ namespace gi_lib{
 			COMPtr<IDXGIFactory> factory_;
 
 			COMPtr<IDXGIAdapter> adapter_;
+
+			COMPtr<ID3D11DeviceContext> immediate_context_;
 
 		};
 
@@ -204,13 +210,6 @@ namespace gi_lib{
 
 		}
 
-		inline void DX11Output::Refresh(){
-
-			swap_chain_->Present(IsVSync() ? 1 : 0,
-								 0);
-
-		}
-
 		/////////////////////// DX11GRAPHICS ///////////////////
 
 		inline COMPtr<ID3D11Device> DX11Graphics::GetDevice(){
@@ -228,6 +227,12 @@ namespace gi_lib{
 		inline COMPtr<IDXGIAdapter> DX11Graphics::GetAdapter(){
 
 			return adapter_;
+
+		}
+
+		inline COMPtr<ID3D11DeviceContext> DX11Graphics::GetImmediateContext(){
+
+			return immediate_context_;
 
 		}
 

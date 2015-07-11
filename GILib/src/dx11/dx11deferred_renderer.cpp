@@ -224,11 +224,11 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<IRenderTarget> render_target){
 		auto width = dx11_render_target->GetWidth();
 		auto height = dx11_render_target->GetHeight();
 
-		DrawGBuffer(width, height);									// Scene -> GBuffer
+		//DrawGBuffer(width, height);									// Scene -> GBuffer
 		
-		ComputeLighting(width, height);								// Scene, GBuffer, DepthBuffer -> LightBuffer
+		//ComputeLighting(width, height);								// Scene, GBuffer, DepthBuffer -> LightBuffer
 
-		StartPostProcess();
+		//StartPostProcess();
 
 		/*ToneMap((*light_buffer_)[0],			// LightBuffer -> Output
 				  *dx11_render_target); */

@@ -22,9 +22,7 @@ namespace{
 
 	/// \brief Size ration between two consecutive MIP levels of a texture 2D.
 	const float kMIPRatio2D = 0.25f;
-
-
-
+	
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
@@ -62,9 +60,18 @@ DX11Texture2D::DX11Texture2D(const FromFile& bundle){
 
 }
 
-DX11Texture2D::DX11Texture2D(COMPtr<ID3D11ShaderResourceView> shader_resource_view) :
-shader_resource_view_(std::move(shader_resource_view)){
+DX11Texture2D::DX11Texture2D() :
+shader_resource_view_(nullptr),
+width_(0),
+height_(0),
+bits_per_pixel_(0),
+mip_levels_(0),
+format_(DXGI_FORMAT_UNKNOWN){}
+
+void DX11Texture2D::Initialize(COMPtr<ID3D11ShaderResourceView> shader_resource_view){
 	
+	shader_resource_view_ = std::move(shader_resource_view);
+
 	ID3D11Resource* texture;
 
 	shader_resource_view_->GetResource(&texture);

@@ -15,7 +15,8 @@ using namespace ::windows;
 
 //////////////////////////////  MATERIAL //////////////////////////////
 
-DX11Material::DX11Material(const CompileFromFile& args){
+DX11Material::DX11Material(const CompileFromFile& args) :
+shader_composite_(make_unique<ShaderStateComposite>()){
 
 	string code = to_string(FileSystem::GetInstance().Read(args.file_name));
 
@@ -95,7 +96,8 @@ DX11Material::DX11Material(const CompileFromFile& args){
 
 }
 
-DX11Material::DX11Material(const Instantiate& args){
+DX11Material::DX11Material(const Instantiate& args) :
+shader_composite_(make_unique<ShaderStateComposite>()){
 
 	
 	
