@@ -72,7 +72,7 @@ namespace{
 
 		buffer_desc.name = dx_buffer_desc.Name;
 		buffer_desc.size = dx_buffer_desc.Size;
-		buffer_desc.shader_usage = ShaderType::NONE;
+		buffer_desc.slot = input_desc.BindPoint;
 
 		for (unsigned int i = 0; i < dx_buffer_desc.Variables; ++i){
 
@@ -100,7 +100,7 @@ namespace{
 		return ShaderSRVDesc{ input_desc.Name,
 							  SRVDimensionToShaderResourceType(input_desc.Dimension),
 							  input_desc.BindCount,
-							  ShaderType::NONE };
+							  input_desc.BindPoint };
 
 	}
 
@@ -111,7 +111,7 @@ namespace{
 
 		return ShaderUAVDesc{ input_desc.Name,
 							  SRVDimensionToShaderResourceType(input_desc.Dimension),
-							  ShaderType::NONE };
+							  input_desc.BindPoint };
 
 	}
 	
@@ -121,7 +121,8 @@ namespace{
 	/// \return Return the description of the reflected sampler.
 	ShaderSamplerDesc ReflectSampler(const D3D11_SHADER_INPUT_BIND_DESC& input_desc){
 
-		return ShaderSamplerDesc{ input_desc.Name, ShaderType::NONE };
+		return ShaderSamplerDesc{ input_desc.Name,
+								  input_desc.BindPoint };
 
 	}
 
@@ -133,48 +134,10 @@ namespace{
 	template<>
 	void ReflectShader<ID3D11ComputeShader>(ID3D11ShaderReflection& reflector, const D3D11_SHADER_DESC&, ShaderReflection& reflection){
 
-		unsigned int x, y, z;
-
-		reflector.GetThreadGroupSize(&x, &y, &z);
-
-		reflection.thread_group_size = Vector3i(x, y, z);
-
-	}
-
-	/// \brief Reflect a shader input inside the specified vector.
-	/// The method won't reflect resources already inside the resource vector.
-	/// \tparam TType Type of the reflected structure. The type must me expose a field "name" used to uniquely identify the reflected resource.
-	/// \tparam TReflector Type of the reflector used to build the reflected data.
-	/// \param reflector Used to reflect the shader.
-	/// \param input_desc Description of the shader input.
-	/// \param ResourceReflector Functor used to build the reflected data.
-	/// \param resource Vector that will contain the reflected data.
-	/// \param order Vector containing the binding order.
-	/// \return Returns the a reference to the reflected element
-	template <typename TType, typename TReflector>
-	TType& ReflectShaderResources(const D3D11_SHADER_INPUT_BIND_DESC& input_desc, TReflector ResourceReflector, vector<TType>& resources){
-
-		auto it = std::find_if(resources.begin(),
-							   resources.end(),
-							   [&input_desc](const TType& desc){
-
-									return desc.name == input_desc.Name;
-
-							   });
-
-		if (it == resources.end()){
-
-			resources.push_back(ResourceReflector(input_desc));
-
-			return resources.back();
-
-		}
-		else{
-
-			return *it;
-
-		}
-
+		reflector.GetThreadGroupSize(&reflection.compute_shader.thread_group_x,
+									 &reflection.compute_shader.thread_group_y,
+									 &reflection.compute_shader.thread_group_z);
+		
 	}
 
 	/// \brief Reflect a shader resources via reflector.
@@ -182,12 +145,6 @@ namespace{
 	/// \param reflection Actual shader reflection to fill. Out.
 	template <typename TShader>
 	void ReflectShaderResources(ID3D11ShaderReflection& reflector, const D3D11_SHADER_DESC& shader_desc, ShaderReflection& reflection){
-
-		auto ReflectBuffer = [&reflector](const D3D11_SHADER_INPUT_BIND_DESC& input_desc){ 
-			
-			return ReflectCBuffer(reflector, input_desc); 
-		
-		};
 
 		D3D11_SHADER_INPUT_BIND_DESC resource_desc;
 		
@@ -202,10 +159,8 @@ namespace{
 				{
 
 					// Constant or Texture buffer
-
-					ReflectShaderResources(resource_desc,
-										   ReflectBuffer,
-										   reflection.buffers).shader_usage |= ShaderTraits<TShader>::flag;
+					reflection.buffers.push_back(ReflectCBuffer(reflector,
+																resource_desc));
 
 					break;
 
@@ -217,9 +172,7 @@ namespace{
 
 					// Shader resource view
 
-					ReflectShaderResources(resource_desc,
-										   ReflectSRV,
-										   reflection.shader_resource_views).shader_usage |= ShaderTraits<TShader>::flag;
+					reflection.shader_resource_views.push_back(ReflectSRV(resource_desc));
 
 					break;
 
@@ -228,10 +181,7 @@ namespace{
 				{
 
 					// Samplers
-
-					ReflectShaderResources(resource_desc,
-										   ReflectSampler,
-										   reflection.samplers).shader_usage |= ShaderTraits<TShader>::flag;
+					reflection.samplers.push_back(ReflectSampler(resource_desc));
 
 					break;
 
@@ -246,10 +196,7 @@ namespace{
 				{
 
 					// Unordered access view
-
-					ReflectShaderResources(resource_desc,
-										   ReflectUAV,
-										   reflection.unordered_access_views).shader_usage |= ShaderTraits<TShader>::flag;
+					reflection.unordered_access_views.push_back(ReflectUAV(resource_desc));
 
 					break;
 
@@ -259,8 +206,6 @@ namespace{
 
 		}
 				
-		reflection.shaders |= ShaderTraits<TShader>::flag;
-
 	}
 
 	/// \brief Reflect a shader from bytecode.
@@ -281,6 +226,9 @@ namespace{
 		D3D11_SHADER_DESC shader_desc;
 
 		reflector->GetDesc(&shader_desc);
+
+
+		reflection.shader_type = ShaderTraits<TShader>::flag;
 
 		ReflectShader<TShader>(*reflector,
 							   shader_desc,

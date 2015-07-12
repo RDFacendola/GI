@@ -261,7 +261,7 @@ namespace gi_lib{
 
 		private:
 
-			void AddShaderBindings(const BaseShaderState& shader, const ShaderReflection& reflection);
+			void AddShaderBindings(BaseShaderState& shader, const ShaderReflection& reflection);
 			
 			std::vector<std::unique_ptr<BaseShaderState>> shaders_;							///< \brief Shader collection.
 
@@ -472,8 +472,8 @@ namespace gi_lib{
 		template <typename TSetter>
 		void CompositeSetter<TSetter>::AddSetter(BaseShaderState& shader_state, unsigned int slot){
 
-			setters_.emplace_back({ shader_state, 
-									slot });
+			setters_.emplace_back(TSetter{ shader_state, 
+										   slot });
 
 		}
 
@@ -499,8 +499,6 @@ namespace gi_lib{
 			TShader* shader;
 
 			wstring errors;
-
-			reflection.shaders = ShaderType::NONE;
 
 			if (FAILED(::MakeShader(*DX11Graphics::GetInstance().GetDevice(),
 									hlsl,

@@ -194,8 +194,6 @@ TiledDeferredRenderer(arguments.scene){
 
 	ShaderReflection reflection;
 
-	reflection.shaders = ShaderType::NONE;
-
 	ID3D11ComputeShader* cs;
 
 	wstring errors;

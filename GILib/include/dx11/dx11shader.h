@@ -18,24 +18,15 @@ namespace gi_lib{
 
 	namespace dx11{
 
-		/// \brief Shader type. Flags can be combined with the | operator.
-		ENUM_FLAGS(ShaderType, unsigned int){
+		/// \brief Shader type.
+		enum class ShaderType : unsigned int{
 
-			NONE = 0u,							///< \brief No shader.
-
-			VERTEX_SHADER = (1u << 1),			///< \brief Vertex shader.
-			HULL_SHADER = (1u << 2),			///< \brief Hull shader.
-			DOMAIN_SHADER = (1u << 3),			///< \brief Domain shader.
-			GEOMETRY_SHADER = (1u << 4),		///< \brief Geometry shader.
-			PIXEL_SHADER = (1u << 5),			///< \brief Pixel shader.
-			COMPUTE_SHADER = (1u << 6),			///< \brief Compute shader.
-
-			ALL = VERTEX_SHADER |
-				  HULL_SHADER |
-				  DOMAIN_SHADER |
-				  GEOMETRY_SHADER |
-				  PIXEL_SHADER |
-				  COMPUTE_SHADER,				///< \brief All shaders (bitwise-or of the above)
+			VERTEX_SHADER,		///< \brief Vertex shader.
+			HULL_SHADER,		///< \brief Hull shader.
+			DOMAIN_SHADER,		///< \brief Domain shader.
+			GEOMETRY_SHADER,	///< \brief Geometry shader.
+			PIXEL_SHADER,		///< \brief Pixel shader.
+			COMPUTE_SHADER,		///< \brief Compute shader.
 
 		};
 
@@ -69,9 +60,9 @@ namespace gi_lib{
 
 			size_t size;									///< \brief Size of the buffer.
 
-			ShaderType shader_usage;						///< \brief Shader using this constant buffer.
-
 			std::vector<ShaderVariableDesc> variables;		///< \brief Variables inside the buffer.
+
+			unsigned int slot;								///< \brief Binding slot.
 
 		};
 
@@ -84,7 +75,7 @@ namespace gi_lib{
 
 			unsigned int elements;						///< \brief Elements in case of a resource array.
 
-			ShaderType shader_usage;					///< \brief Shaders using this resource.
+			unsigned int slot;							///< \brief Initial binding slot.
 
 		};
 
@@ -95,7 +86,7 @@ namespace gi_lib{
 
 			ShaderResourceType type;					///< \brief Resource type.
 
-			ShaderType shader_usage;					///< \brief Shader using this resource.
+			unsigned int slot;							///< \brief Binding slot.
 
 		};
 
@@ -104,14 +95,23 @@ namespace gi_lib{
 
 			std::string name;							///< \brief Name of the sampler.
 
-			ShaderType shader_usage;					///< \brief Shader using this sampler.
+			unsigned int slot;							///< \brief Binding slot.
+
+		};
+
+		/// \b Additional description of a compute shader.
+		struct ComputeShaderReflection{
+
+			unsigned int thread_group_x;	///< \brief Number of threads along the X axis.
+			unsigned int thread_group_y;	///< \brief Number of threads along the Y axis.
+			unsigned int thread_group_z;	///< \brief Number of threads along the Z axis.
 
 		};
 
 		/// \brief Description of a shader.
 		struct ShaderReflection{
 
-			ShaderType shaders;										///< \brief Shaders this reflection refers to.
+			ShaderType shader_type;									///< \brief Shader type this reflection refers to.
 
 			std::vector<ShaderBufferDesc> buffers;					///< \brief List of buffer descriptions.
 
@@ -121,8 +121,12 @@ namespace gi_lib{
 
 			std::vector<ShaderUAVDesc> unordered_access_views;		///< \brief List of UAV descriptions.
 
-			Vector3i thread_group_size;								///< \brief Size of each thread group. Compute shader only.
+			union{
 
+				ComputeShaderReflection compute_shader;				///< \brief Compute-shader specific reflection. Valid only if shader_type is "COMPUTE_SHADER"
+				
+			};
+			
 		};
 
 		/// \brief Shader type traits.
@@ -252,7 +256,7 @@ namespace gi_lib{
 		/// \param HLSL HLSL code to compile.
 		/// \param source_file Used to resolve #include directives.
 		/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
-		/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
+		/// \param reflection Pointer to the object that will contain the reflection. Set to null to ignore the reflection.
 		/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
 		template <typename TShader>
 		HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, TShader** shader, ShaderReflection* reflection = nullptr, std::wstring* errors = nullptr);
@@ -270,7 +274,7 @@ namespace gi_lib{
 		/// \param source_file File containing the HLSL code, used to resolve the #include directives.
 		/// \param bytecode If the method succeeds, it will contain the compiled bytecode.
 		/// \param error_string If the method fails, it will contain the error string. Optional.
-		HRESULT CompileHLSL(const std::string& HLSL, const std::string& source_file, const std::string& entry_point, const std::string& profile, ID3DBlob** bytecode, std::wstring* error_string = nullptr);
+		HRESULT CompileHLSL(const std::string& HLSL, const std::string& source_file, const std::string& entry_point, const std::string& profile, ID3DBlob** bytecode, std::wstring* error_string = nullptr); 
 
 	}
 

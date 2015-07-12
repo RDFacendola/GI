@@ -70,7 +70,7 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<IG
 
 		// TODO: Check if the specified resource is an actual
 
-		
+		THROW(L"LOLWUT");
 
 		return true;
 
@@ -80,8 +80,36 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<IG
 
 }
 
-void ShaderStateComposite::AddShaderBindings(const BaseShaderState& shader, const ShaderReflection& reflection){
+void ShaderStateComposite::AddShaderBindings(BaseShaderState& shader, const ShaderReflection& reflection){
+
+	Tag tag;
+
+	CompositeSetter<CBufferSetter>* setter;
+
+	for (auto&& buffer : reflection.buffers){
+
+		tag = buffer.name;
+
+		auto it = cbuffer_table_.find(tag);
+
+		if (it != cbuffer_table_.end()){
+
+			// The tag already exists, add it to the existing setter.
+			setter = &(it->second);
+
+		}
+		else{
+
+			// The tag does not exists, add a new entry.
+			setter = &(cbuffer_table_.insert(std::make_pair(tag, 
+															CompositeSetter<CBufferSetter>())).first->second);
 
 
+		}
+
+		setter->AddSetter(shader,
+						  buffer.slot);
+
+	}
 
 }
