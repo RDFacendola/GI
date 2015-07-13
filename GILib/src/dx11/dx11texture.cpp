@@ -45,7 +45,7 @@ DX11Texture2D::DX11Texture2D(const FromFile& bundle){
 											 false,									// No forced sRGB
 											 &texture,
 											 &srv,
-											 &alpha_mode) );							//Alpha infos
+											 &alpha_mode) );						//Alpha infos
 
 	// Transfer resource's ownership
 	shader_resource_view_ << &srv;
@@ -60,17 +60,8 @@ DX11Texture2D::DX11Texture2D(const FromFile& bundle){
 
 }
 
-DX11Texture2D::DX11Texture2D() :
-shader_resource_view_(nullptr),
-width_(0),
-height_(0),
-bits_per_pixel_(0),
-mip_levels_(0),
-format_(DXGI_FORMAT_UNKNOWN){}
-
-void DX11Texture2D::Initialize(COMPtr<ID3D11ShaderResourceView> shader_resource_view){
-	
-	shader_resource_view_ = std::move(shader_resource_view);
+DX11Texture2D::DX11Texture2D(const COMPtr<ID3D11ShaderResourceView>& shader_resource_view) :
+shader_resource_view_(shader_resource_view){
 
 	ID3D11Resource* texture;
 
@@ -103,3 +94,27 @@ void DX11Texture2D::UpdateDescription(const D3D11_TEXTURE2D_DESC& description){
 	format_ = description.Format;
 	
 }
+
+////////////////////////////// GP TEXTURE 2D ////////////////////////////////////////
+
+DX11GPTexture2D::DX11GPTexture2D(const FromDescription& args){
+
+	ID3D11UnorderedAccessView* uav;
+	ID3D11ShaderResourceView* srv;
+
+	auto&& device = *DX11Graphics::GetInstance().GetDevice();
+
+	THROW_ON_FAIL(::MakeUnorderedTexture(device,		
+										 args.width,
+										 args.height,
+										 DXGI_FORMAT_UNKNOWN,
+										 &uav,
+										 &srv,
+										 false));
+
+	texture_ = new DX11Texture2D(COMMove(&srv));
+
+	unordered_access_view_ << &uav;
+	
+}
+

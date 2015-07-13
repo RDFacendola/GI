@@ -55,13 +55,46 @@ namespace gi_lib{
 
 	/// \brief Base interface for general-purpose textures.
 	/// A general-purpose resource can be accessed by the GPU for both reading and writing purposes.
+	/// A general purpose texture is a decorator over a standard Texture2D. It is NOT a derivation of a texture.
 	/// \author Raffaele D. Facendola.
-	class IGPTexture2D : ITexture2D{
+	class IGPTexture2D : public IResource{
 
 	public:
 
+		/// \brief Structure used to create an empty general-purpose texture 2D from an explicit description.
+		/// \author Raffaele D. Facendola.
+		struct FromDescription{
+
+			NO_CACHE;
+
+			unsigned int width;			///< \brief Width of the most detailed level of the texture.
+
+			unsigned int height;		///< \brief Height of the most detailed level of the texture.
+
+			unsigned int mips;			///< \brief Total number of MIP levels.
+
+			int format;					///< \brief Format of the texture.
+
+		};
+
 		/// \brief Abstract destructor.
 		virtual ~IGPTexture2D() = 0 {}
+
+		/// \brief Get the underlying texture.
+		/// \return Returns a pointer to the underlying texture.
+		virtual ObjectPtr<ITexture2D> GetTexture() = 0;
+		
+		/// \brief Get the width of the texture.
+		/// \return Returns the width of the texture, in pixel.
+		virtual unsigned int GetWidth() const = 0;
+
+		/// \brief Get the height of the texture.
+		/// \return Returns the height of the texture, in pixel.
+		virtual unsigned int GetHeight() const = 0;
+
+		/// \brief Get the MIP map level count.
+		/// \return Returns the MIP map level count.
+		virtual unsigned int GetMIPCount() const = 0;
 
 	};
 

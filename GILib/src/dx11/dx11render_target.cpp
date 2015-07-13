@@ -12,23 +12,64 @@ using namespace ::windows;
 
 namespace{
 
+	/// \brief Create a depth stencil texture.
+	/// \param width Width of the surface, in pixels.
+	/// \param height Height of the surface, in pixels.
+	/// \return Returns a pointer to the shader resource view of the surface.
+	COMPtr<ID3D11ShaderResourceView> MakeDepthStencil(unsigned int width, unsigned int height){
+
+		ID3D11ShaderResourceView* srv;
+
+		THROW_ON_FAIL(gi_lib::dx11::MakeDepthStencil(*DX11Graphics::GetInstance().GetDevice(),
+													 width,
+													 height,
+													 &srv,
+													 nullptr));
+
+		return COMMove(&srv);
+
+	}
+
+	/// \brief Create a render target texture.
+	/// \param width Width of the surface, in pixels.
+	/// \param height Height of the surface, in pixels.
+	/// \param format Format of the surface.
+	/// \param mip_chain Whether to create a full MIP chain or not.
+	/// \return Returns a pointer to the shader resource view of the surface.
+	COMPtr<ID3D11ShaderResourceView> MakeRenderTarget(unsigned int width, unsigned int height, DXGI_FORMAT format, bool mip_chain){
+
+		ID3D11ShaderResourceView* srv;
+
+		THROW_ON_FAIL(gi_lib::dx11::MakeRenderTarget(*DX11Graphics::GetInstance().GetDevice(),
+													 width,
+													 height,
+													 format,
+													 &srv,
+													 nullptr,
+													 mip_chain));
+		
+		return COMMove(&srv);
+
+	}
+
 }
 
 ///////////////////////////// DX11 DEPTH TEXTURE 2D ///////////////////////////////////////
 
 DX11DepthTexture2D::DX11DepthTexture2D(unsigned int width, unsigned int height) :
-DX11Texture2D(){
+DX11Texture2D(::MakeDepthStencil(width, 
+								 height)){
 
-	ID3D11ShaderResourceView* srv;
+	ID3D11Resource* resource;
 	ID3D11DepthStencilView* dsv;
 
-	THROW_ON_FAIL(MakeDepthStencil(*DX11Graphics::GetInstance().GetDevice(),
-								   width,
-								   height,
-								   &srv,
-								   &dsv));
+	GetShaderResourceView()->GetResource(&resource);
 
-	Initialize(COMMove(&srv));
+	COM_GUARD(resource);
+
+	THROW_ON_FAIL(::MakeDepthStencilView(*DX11Graphics::GetInstance().GetDevice(),
+										 *resource,
+										 &dsv));
 
 	depth_stencil_view_ << &dsv;
 
@@ -46,20 +87,21 @@ void DX11DepthTexture2D::Clear(ID3D11DeviceContext& context, unsigned int clear_
 ///////////////////////////// DX11 RENDER TEXTURE 2D ///////////////////////////////////////
 
 DX11RenderTexture2D::DX11RenderTexture2D(unsigned int width, unsigned int height, DXGI_FORMAT format, bool mip_chain) :
-DX11Texture2D(){
+DX11Texture2D(::MakeRenderTarget(width, 
+								 height, 
+								 format, 
+								 mip_chain)){
 
-	ID3D11ShaderResourceView* srv;
+	ID3D11Resource* resource;
 	ID3D11RenderTargetView* rtv;
 
-	THROW_ON_FAIL(MakeRenderTarget(*DX11Graphics::GetInstance().GetDevice(),
-								   width,
-								   height,
-								   format,
-								   &rtv,
-								   &srv,
-								   mip_chain));
+	GetShaderResourceView()->GetResource(&resource);
 
-	Initialize(COMMove(&srv));
+	COM_GUARD(resource);
+
+	THROW_ON_FAIL(::MakeRenderTargetView(*DX11Graphics::GetInstance().GetDevice(),
+										 *resource,
+										 &rtv));
 
 	render_target_view_ << &rtv;
 

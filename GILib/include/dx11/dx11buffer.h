@@ -6,6 +6,7 @@
 #pragma once
 
 #include "buffer.h"
+#include "debug.h"
 
 #include "dx11/dx11.h"
 
@@ -171,6 +172,12 @@ namespace gi_lib{
 
 		};
 		
+		/// \brief Downcasts an IStructuredBuffer to the proper concrete type.
+		ObjectPtr<DX11StructuredBuffer> resource_cast(const ObjectPtr<IStructuredBuffer>& resource);
+
+		/// \brief Downcasts an IStructuredArray to the proper concrete type.
+		ObjectPtr<DX11StructuredArray> resource_cast(const ObjectPtr<IStructuredArray>& resource);
+
 		//////////////////////////////// DIRECTX11 BUFFER //////////////////////////////// 
 
 		inline void* DX11Buffer::Lock(){
@@ -340,6 +347,20 @@ namespace gi_lib{
 		inline COMPtr<ID3D11ShaderResourceView> DX11StructuredArray::GetShaderResourceView() const{
 
 			return buffer_->GetShaderResourceView();
+
+		}
+
+		////////////////////////////////// RESOURCE CAST ///////////////////////////////////////
+
+		inline ObjectPtr<DX11StructuredBuffer> resource_cast(const ObjectPtr<IStructuredBuffer>& resource){
+
+			return checked_cast<DX11StructuredBuffer>(resource.Get());
+
+		}
+
+		inline ObjectPtr<DX11StructuredArray> resource_cast(const ObjectPtr<IStructuredArray>& resource){
+
+			return checked_cast<DX11StructuredArray>(resource.Get());
 
 		}
 

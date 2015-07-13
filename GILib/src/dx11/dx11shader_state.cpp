@@ -6,110 +6,100 @@
 using namespace gi_lib;
 using namespace gi_lib::dx11;
 
-//////////////////////////////// SHADER MASTER TABLE //////////////////////////////////////
+namespace{
 
-bool ShaderStateComposite::SetConstantBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& constant_buffer){
+	/// \brief Reflect a collection of shader members into an unordered multimap.
+	/// \param shader_state Shader state associated to the setters.
+	/// \param collection Collection of shader members to enumerate.
+	/// \param table Destination unordered map containing the setters.
+	template <typename TSetter, typename TCollection>
+	void AddShaderBindings(BaseShaderState& shader_state, const TCollection& collection, std::unordered_multimap<size_t, TSetter>& table){
 
-	auto it = cbuffer_table_.find(tag);
+		for (auto&& item : collection){
 
-	if (it != cbuffer_table_.end()){
-
-		// TODO: Check if the size of the structured buffer is legit.
-
-		it->second(static_cast<DX11StructuredBuffer&>(*constant_buffer).GetConstantBuffer());
-
-		return true;
+			table.insert(std::make_pair(Tag(item.name),
+										TSetter(shader_state,
+												item.slot)));
+			
+		}
 
 	}
 
-	return false;
+	/// \brief Calls the setter functions of all the shader members with a particular name.
+	/// \param tag Tag associated to the shader members to set.
+	/// \param value Actual value to pass to the setter.
+	/// \param table Map containing the definition of the shader setters.
+	template <typename TSetter, typename TValue>
+	bool SetShaderMember(const Tag& tag, TValue&& value, std::unordered_multimap < size_t, TSetter >& table){
+
+		auto&& range = table.equal_range(tag);
+
+		auto it = range.first;
+
+		while (it != range.second){
+
+			it->second(std::forward<TValue>(value));
+
+			++it;
+
+		}
+
+		return range.first != range.second;
+
+	}
+
+}
+
+//////////////////////////////// SHADER STATE COMPOSITE //////////////////////////////////////
+
+bool ShaderStateComposite::SetConstantBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& constant_buffer){
+
+	return SetShaderMember(tag,
+						   resource_cast(constant_buffer)->GetConstantBuffer(),
+						   cbuffer_table_);
 
 }
 
 bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D){
 
-	auto it = srv_table_.find(tag);
-
-	if (it != srv_table_.end()){
-
-		// TODO: Check if the specified resource is an actual Texture2D
-
-		it->second(static_cast<DX11Texture2D&>(*texture_2D).GetShaderResourceView());
-
-		return true;
-
-	}
-
-	return false;
+	return SetShaderMember(tag,
+						   resource_cast(texture_2D)->GetShaderResourceView(),
+						   srv_table_);
 
 }
 
 bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array){
 
-	auto it = srv_table_.find(tag);
-
-	if (it != srv_table_.end()){
-
-		// TODO: Check if the specified resource is an actual structured buffer
-
-		it->second(static_cast<DX11StructuredArray&>(*structured_array).GetShaderResourceView());
-
-		return true;
-
-	}
-
-	return false;
+	return SetShaderMember(tag,
+						   resource_cast(structured_array)->GetShaderResourceView(),
+						   srv_table_);
 
 }
 
 bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D){
 
-	auto it = uav_table_.find(tag);
-
-	if (it != uav_table_.end()){
-
-		// TODO: Check if the specified resource is an actual
-
-		THROW(L"LOLWUT");
-
-		return true;
-
-	}
-
-	return false;
+	return SetShaderMember(tag,
+						   resource_cast(gp_texture_2D)->GetUnorderedAccessView(),
+						   uav_table_);
 
 }
 
-void ShaderStateComposite::AddShaderBindings(BaseShaderState& shader, const ShaderReflection& reflection){
+void ShaderStateComposite::AddShaderBindings(BaseShaderState& shader_state, const ShaderReflection& reflection){
 
-	Tag tag;
+	::AddShaderBindings<CBufferSetter>(shader_state,
+									   reflection.buffers,
+									   cbuffer_table_);
 
-	CompositeSetter<CBufferSetter>* setter;
+	::AddShaderBindings<SRVSetter>(shader_state,
+								   reflection.shader_resource_views,
+								   srv_table_);
 
-	for (auto&& buffer : reflection.buffers){
+	::AddShaderBindings<UAVSetter>(shader_state,
+								   reflection.unordered_access_views,
+								   uav_table_);
 
-		tag = buffer.name;
-
-		auto it = cbuffer_table_.find(tag);
-
-		if (it != cbuffer_table_.end()){
-
-			// The tag already exists, add it to the existing setter.
-			setter = &(it->second);
-
-		}
-		else{
-
-			// The tag does not exists, add a new entry.
-			setter = &(cbuffer_table_.insert(std::make_pair(tag, 
-															CompositeSetter<CBufferSetter>())).first->second);
-
-
-		}
-
-		setter->AddSetter(shader,
-						  buffer.slot);
-
-	}
+	::AddShaderBindings<SamplerSetter>(shader_state,
+									   reflection.samplers,
+									   sampler_table_);
 
 }

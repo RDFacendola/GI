@@ -37,8 +37,17 @@ namespace gi_lib{
 		/// \param render_target_view Pointer to the render target view. Optional.
 		/// \param shader_resource_view Pointer to the shader resource view. Optional.
 		/// \param mip_chain Whether to generate a full MIP-map chain or not.
-		/// \remarks The method expects both the texture, the render target view and the shader resource view to be not null.
-		HRESULT MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11RenderTargetView** render_target_view, ID3D11ShaderResourceView** shader_resource_view, bool mip_chain = false);
+		HRESULT MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11ShaderResourceView** shader_resource_view, ID3D11RenderTargetView** render_target_view, bool mip_chain = false);
+
+		/// \brief Create a 2D texture that can be bound to a compute shader as unordered access.
+		/// \param device Device used to create the texture.
+		/// \param width Width of the texture in pixels.
+		/// \param height Height of the texture in pixels.
+		/// \param format Format of the surface.
+		/// \param unordered_access_view Pointer to the unordered access view. Optional.
+		/// \param shader_resource_view Pointer to the shader resource view. Optional.
+		/// \param mip_chain Whether to generate a full MIP-map chain or not.
+		HRESULT MakeUnorderedTexture(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, bool mip_chain = false);
 
 		/// \brief Create a vertex buffer.
 		/// \tparam TVertexFormat Format of the vertex.
@@ -72,13 +81,30 @@ namespace gi_lib{
 		/// \remarks A dynamic buffer may not be written by the GPU, thus it must not define an unordered access view.
 		HRESULT MakeStructuredBuffer(ID3D11Device& device, unsigned int element_count, unsigned int element_size, bool dynamic, ID3D11Buffer** buffer, ID3D11ShaderResourceView** shader_resource_view, ID3D11UnorderedAccessView** unordered_access_view);
 
-
 		/// \brief Create a sampler state.
 		/// \param device Device used to create the sampler.
 		/// \param texture_mapping Texture mapping mode while sampling.
 		/// \param anisotropy_level Maximum anisotropy level. Set to 0 to disable anisotropic filtering and enable trilinear filtering.
 		/// \param sampler Pointer to the object that will hold the sampler if the method succeeds..
 		HRESULT MakeSampler(ID3D11Device& device, TextureMapping texture_mapping, unsigned int anisotropy_level, ID3D11SamplerState** sampler);
+
+		/// \brief Create a depth stencil view for the specified resource.
+		/// \param device Device used to create the depth stencil view.
+		/// \param resource Resource the view will refer to.
+		/// \param Out. Pointer containing the created depth stencil view.
+		HRESULT MakeDepthStencilView(ID3D11Device& device, ID3D11Resource& resource, ID3D11DepthStencilView** depth_stencil_view);
+
+		/// \brief Create a render target view for the specified resource.
+		/// \param device Device used to create the render target view.
+		/// \param resource Resource the view will refer to.
+		/// \param Out. Pointer containing the created render target view.
+		HRESULT MakeRenderTargetView(ID3D11Device& device, ID3D11Resource& resource, ID3D11RenderTargetView** render_target_view);
+
+		/// \brief Create an unordered access view for the specified resource.
+		/// \param device Device used to create the unordered access view.
+		/// \param resource Resource the view will refer to.
+		/// \param Out. Pointer containing the created unordered access view.
+		HRESULT MakeUnorderedAccessView(ID3D11Device& device, ID3D11Resource& resource, ID3D11UnorderedAccessView** unordered_access_view);
 
 		/// \brief Create a new viewport from explicit dimensions.
 		/// \param width Width of the viewport in pixels.

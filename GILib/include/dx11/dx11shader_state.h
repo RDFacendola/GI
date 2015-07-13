@@ -208,35 +208,12 @@ namespace gi_lib{
 
 		};
 
-		/// \brief Composite collection of setters of the same type.
-		/// \author Raffaele D. Facendola.
-		template <typename TSetter>
-		class CompositeSetter{
-
-		public:
-
-			/// \brief Add a new setter to the collection.
-			/// \param shader_state Shader state bound to the setter.
-			/// \param slot Slot index where the setter will write.
-			void AddSetter(BaseShaderState& shader_state, unsigned int slot);
-
-			/// \brief Set the same value for each setter stored so far.
-			/// \param value Value to set.
-			void operator()(const typename TSetter::TValue& value);
-
-		private:
-
-			std::vector<TSetter> setters_;			///< \brief List of setters.
-
-		};
-
 		/// \brief Manages a collection of shaders and their state.
 		/// \author Raffaele D. Facendola.
 		class ShaderStateComposite{
 
 		public:
 
-			
 			template <typename TShader>
 			bool AddShader(const std::string hlsl, const std::string file_name);
 
@@ -263,15 +240,15 @@ namespace gi_lib{
 
 			void AddShaderBindings(BaseShaderState& shader, const ShaderReflection& reflection);
 			
-			std::vector<std::unique_ptr<BaseShaderState>> shaders_;							///< \brief Shader collection.
+			std::vector<std::unique_ptr<BaseShaderState>> shaders_;						///< \brief Shader collection.
 
-			std::unordered_map<size_t, CompositeSetter<CBufferSetter>> cbuffer_table_;		///< \brief Table of constant buffers.
+			std::unordered_multimap<size_t, CBufferSetter> cbuffer_table_;				///< \brief Table of constant buffers.
 
-			std::unordered_map<size_t, CompositeSetter<SRVSetter>> srv_table_;				///< \brief Table of shader resource views.
+			std::unordered_multimap<size_t, SRVSetter> srv_table_;						///< \brief Table of shader resource views.
 
-			std::unordered_map<size_t, CompositeSetter<UAVSetter>> uav_table_;				///< \brief Table of unordered access views.
+			std::unordered_multimap<size_t, UAVSetter> uav_table_;						///< \brief Table of unordered access views.
 
-			std::unordered_map<size_t, CompositeSetter<SamplerSetter>> sampler_table_;		///< \brief Table of samplers.
+			std::unordered_multimap<size_t, SamplerSetter> sampler_table_;				///< \brief Table of samplers.
 
 		};
 
@@ -465,26 +442,6 @@ namespace gi_lib{
 			shader_state_->SetSampler(slot_,
 									  sampler_state);
 
-		}
-
-		//////////////////////////////// COMPOSITE SETTER ///////////////////////////////////////
-
-		template <typename TSetter>
-		void CompositeSetter<TSetter>::AddSetter(BaseShaderState& shader_state, unsigned int slot){
-
-			setters_.emplace_back(TSetter{ shader_state, 
-										   slot });
-
-		}
-
-		template <typename TSetter>
-		inline void CompositeSetter<TSetter>::operator()(const typename TSetter::TValue& value){
-
-			for (auto&& setter : setters_){
-
-				setter(value);
-
-			}
 		}
 
 		//////////////////////////////// SHADER STATE COMPOSITE ////////////////////////////////////

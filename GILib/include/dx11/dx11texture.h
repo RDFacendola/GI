@@ -8,6 +8,7 @@
 #pragma once
 
 #include "texture.h"
+#include "debug.h"
 
 #include "dx11/dx11.h"
 
@@ -24,6 +25,9 @@ namespace gi_lib{
 		class DX11Texture2D : public ITexture2D{
 
 		public:
+
+			/// \brief Create a texture from a shader resource view.
+			DX11Texture2D(const COMPtr<ID3D11ShaderResourceView>& shader_resource_view);
 
 			/// \brief Create a new texture from DDS file.
 			/// \param device The device used to create the texture.
@@ -45,15 +49,6 @@ namespace gi_lib{
 			/// \brief Get the shader resource view used to bind this texture to the pipeline.
 			COMPtr<ID3D11ShaderResourceView> GetShaderResourceView() const;
 
-		protected:
-
-			/// \brief Create an empty texture.
-			DX11Texture2D();
-
-			/// \brief Initialize the texture from a shader resource view.
-			/// You may initialize the same texture multiple times to recycle an unused object.
-			void Initialize(COMPtr<ID3D11ShaderResourceView> shader_resource_view);
-
 		private:
 
 			void UpdateDescription(const D3D11_TEXTURE2D_DESC& description);
@@ -72,11 +67,45 @@ namespace gi_lib{
 
 		};
 
+		/// \brief DirectX11 general-purpose 2D texture.
+		/// This texture can be used as a regular texture but can also be bound as unordered access resource to a compute or pixel shader.
 		class DX11GPTexture2D : public IGPTexture2D{
 
+		public:
 
+			DX11GPTexture2D(const FromDescription& args);
+
+			virtual ObjectPtr<ITexture2D> GetTexture() override;
+
+			virtual unsigned int GetWidth() const override;
+
+			virtual unsigned int GetHeight() const override;
+
+			virtual unsigned int GetMIPCount() const override;
+
+			virtual size_t GetSize() const override;
+
+			DXGI_FORMAT GetFormat() const;
+
+			/// \brief Get the shader resource view used to bind this texture to the pipeline.
+			COMPtr<ID3D11ShaderResourceView> GetShaderResourceView() const;
+
+			/// \brief Get the unordered access view used to bind this texture to the pipeline.
+			COMPtr<ID3D11UnorderedAccessView> GetUnorderedAccessView() const;
+
+		private:
+
+			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;		///< \brief Pointer to the unordered access view of the texture.
+
+			ObjectPtr<DX11Texture2D> texture_;								///< \brief Underlying texture.
 
 		};
+
+		/// \brief Downcasts an ITexture2D to the proper concrete type.
+		ObjectPtr<DX11Texture2D> resource_cast(const ObjectPtr<ITexture2D>& resource);
+
+		/// \brief Downcasts an IGPTexture2D to the proper concrete type.
+		ObjectPtr<DX11GPTexture2D> resource_cast(const ObjectPtr<IGPTexture2D>& resource);
 
 		/////////////////////////////// DX11 TEXTURE2D ///////////////////////////////
 
@@ -107,6 +136,69 @@ namespace gi_lib{
 		inline COMPtr<ID3D11ShaderResourceView> DX11Texture2D::GetShaderResourceView() const{
 
 			return shader_resource_view_;
+
+		}
+
+		///////////////////////////// DX11 GP TEXTURE2D //////////////////////////////
+		
+		inline ObjectPtr<ITexture2D> DX11GPTexture2D::GetTexture()
+		{
+			
+			return texture_;
+
+		}
+
+		inline unsigned int DX11GPTexture2D::GetWidth() const
+		{
+			
+			return texture_->GetWidth();
+
+		}
+
+		inline unsigned int DX11GPTexture2D::GetHeight() const
+		{
+			
+			return texture_->GetHeight();
+
+		}
+
+		inline unsigned int DX11GPTexture2D::GetMIPCount() const
+		{
+			
+			return texture_->GetMIPCount();
+
+		}
+
+		inline size_t DX11GPTexture2D::GetSize() const
+		{
+			
+			return texture_->GetSize();
+
+		}
+
+		inline COMPtr<ID3D11ShaderResourceView> DX11GPTexture2D::GetShaderResourceView() const{
+
+			return texture_->GetShaderResourceView();
+
+		}
+
+		inline COMPtr<ID3D11UnorderedAccessView> DX11GPTexture2D::GetUnorderedAccessView() const{
+
+			return unordered_access_view_;
+
+		}
+		
+		///////////////////////////// RESOURCE CAST ////////////////////////////////
+
+		inline ObjectPtr<DX11Texture2D> resource_cast(const ObjectPtr<ITexture2D>& resource){
+
+			return checked_cast<DX11Texture2D>(resource.Get());
+
+		}
+
+		inline ObjectPtr<DX11GPTexture2D> resource_cast(const ObjectPtr<IGPTexture2D>& resource){
+
+			return checked_cast<DX11GPTexture2D>(resource.Get());
 
 		}
 

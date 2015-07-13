@@ -22,8 +22,8 @@
 #include "dx11/dx11sampler.h"
 #include "dx11/dx11gpgpu.h"
 
-#undef max;
-#undef min;
+#undef max
+#undef min
 
 using namespace std;
 using namespace gi_lib;
@@ -564,6 +564,10 @@ DX11Graphics::DX11Graphics(): Graphics(){
 	// Register the renderers
 
 	RegisterDirectX11Renderers();
+
+	// Cleanup
+
+	guard.Dismiss();
 
 }
 
