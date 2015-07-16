@@ -37,14 +37,22 @@ namespace gi_lib{
 		public:
 
 			/// \brief Create a new shader state.
-			/// \param srv_count Number of shader resource views required by the shader.
-			/// \param uav_count Number of unordered access views required by the shader.
-			/// \param buffer_count Number of constant buffers required by the shader.
-			/// \param sampler_count Number of samplers required by the shader.
-			BaseShaderState(size_t srv_count, size_t uav_count, size_t buffer_count, size_t sampler_count);
+			/// \brief Pointer to the shader reflection.
+			BaseShaderState(const std::shared_ptr<ShaderReflection>& reflection);
+
+			/// \brief Create a new shader state.
+			/// \brief Shader reflection.
+			BaseShaderState(const ShaderReflection& reflection);
+
+			/// \brief Copy constructor.
+			BaseShaderState(const BaseShaderState& other);
 
 			/// \brief Virtual destructor.
 			virtual ~BaseShaderState(){}
+
+			/// \brief Get the shader reflection.
+			/// \return Returns a reference to the shader reflection.
+			const ShaderReflection& GetReflection() const;
 
 			/// \brief Set a shader resource view for this shader.
 			/// \param slot Index of the slot where the view will be bound.
@@ -72,8 +80,11 @@ namespace gi_lib{
 			/// \brief Unbind the shader from the given device context.
 			virtual void Unbind(ID3D11DeviceContext& context) = 0;
 
-		protected:
+			/// \brief Instantiate a copy of the shader state.
+			virtual BaseShaderState* Instantiate() const = 0;
 
+		protected:
+			
 			std::vector<COMPtr<ID3D11ShaderResourceView>> shader_resource_views_;		///< \brief List of shader resource views.
 
 			std::vector<COMPtr<ID3D11UnorderedAccessView>> unordered_access_views_;		///< \brief List of unordered access views.
@@ -81,6 +92,10 @@ namespace gi_lib{
 			std::vector<COMPtr<ID3D11Buffer>> constant_buffers_;						///< \brief List of constant buffers.
 
 			std::vector<COMPtr<ID3D11SamplerState>> samplers_;							///< \brief List of sampler states.
+
+		private:
+
+			std::shared_ptr<ShaderReflection> reflection_;								///< \brief Shader reflection.
 
 		};
 
@@ -94,9 +109,15 @@ namespace gi_lib{
 
 			ShaderState(const COMPtr<TShader>& shader, const ShaderReflection& reflection);
 
+			/// \brief Copy constructor.
+			/// \param other Other instance to copy.
+			ShaderState(const ShaderState<TShader>& other);
+
 			virtual void Bind(ID3D11DeviceContext& context) override;
 
 			virtual void Unbind(ID3D11DeviceContext& context) override;
+
+			virtual BaseShaderState* Instantiate() const override;
 
 		private:
 
@@ -214,6 +235,12 @@ namespace gi_lib{
 
 		public:
 
+			/// \brief Default constructor.
+			ShaderStateComposite();
+
+			/// \brief Copy constructor.
+			ShaderStateComposite(const ShaderStateComposite& other);
+
 			template <typename TShader>
 			bool AddShader(const std::string hlsl, const std::string file_name);
 
@@ -238,7 +265,7 @@ namespace gi_lib{
 
 		private:
 
-			void AddShaderBindings(BaseShaderState& shader, const ShaderReflection& reflection);
+			void AddShaderBindings(BaseShaderState& shader);
 			
 			std::vector<std::unique_ptr<BaseShaderState>> shaders_;						///< \brief Shader collection.
 
@@ -292,12 +319,25 @@ namespace gi_lib{
 				
 		//////////////////////////////// BASE SHADER STATE ///////////////////////////////////////
 
-		inline BaseShaderState::BaseShaderState(size_t srv_count, size_t uav_count, size_t buffer_count, size_t sampler_count){
+		inline BaseShaderState::BaseShaderState(const std::shared_ptr<ShaderReflection>& reflection) :
+			reflection_(reflection){
 
-			shader_resource_views_.resize(srv_count);
-			unordered_access_views_.resize(uav_count);
-			constant_buffers_.resize(buffer_count);
-			samplers_.resize(sampler_count);
+			shader_resource_views_.resize(reflection->shader_resource_views.size());
+			unordered_access_views_.resize(reflection->unordered_access_views.size());
+			constant_buffers_.resize(reflection->buffers.size());
+			samplers_.resize(reflection->samplers.size());
+
+		}
+
+		inline BaseShaderState::BaseShaderState(const ShaderReflection& reflection) :
+			BaseShaderState(std::make_shared<ShaderReflection>(reflection)){}
+		
+		inline BaseShaderState::BaseShaderState(const BaseShaderState& other) :
+			BaseShaderState(other.reflection_){}
+
+		inline const ShaderReflection& BaseShaderState::GetReflection() const{
+
+			return *reflection_;
 
 		}
 
@@ -329,11 +369,13 @@ namespace gi_lib{
 
 		template <typename TShader>
 		inline ShaderState<TShader>::ShaderState(const COMPtr<TShader>& shader, const ShaderReflection& reflection) :
-		BaseShaderState(reflection.shader_resource_views.size(),
-						reflection.unordered_access_views.size(),
-						reflection.buffers.size(),
-						reflection.samplers.size()),
+		BaseShaderState(reflection),
 		shader_(shader){}
+
+		template <typename TShader>
+		inline ShaderState<TShader>::ShaderState(const ShaderState<TShader>& other) :
+		BaseShaderState(other),
+		shader_(other.shader_){}
 
 		template <typename TShader>
 		void ShaderState<TShader>::Bind(ID3D11DeviceContext& context){
@@ -389,6 +431,13 @@ namespace gi_lib{
 								 0,
 								 null_samplers,
 								 samplers_.size());
+
+		}
+
+		template <typename TShader>
+		inline BaseShaderState* ShaderState<TShader>::Instantiate() const{
+
+			return new ShaderState<TShader>(*this);
 
 		}
 
@@ -482,8 +531,7 @@ namespace gi_lib{
 			shaders_.push_back(std::make_unique<ShaderState<TShader>>(COMMove(&shader),
 																	  reflection));
 
-			AddShaderBindings(*shaders_.back(),
-							  reflection);
+			AddShaderBindings(*shaders_.back());
 
 			return true;
 

@@ -97,9 +97,9 @@ shader_composite_(make_unique<ShaderStateComposite>()){
 }
 
 DX11Material::DX11Material(const Instantiate& args) :
-shader_composite_(make_unique<ShaderStateComposite>()){
+shader_composite_(make_unique<ShaderStateComposite>(*resource_cast(args.base)->shader_composite_)){
 
-	
+	input_layout_ = resource_cast(args.base)->input_layout_;	// Will increase by 1 the refcount.
 	
 }
 

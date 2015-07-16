@@ -52,6 +52,22 @@ namespace{
 
 //////////////////////////////// SHADER STATE COMPOSITE //////////////////////////////////////
 
+ShaderStateComposite::ShaderStateComposite(){}
+
+ShaderStateComposite::ShaderStateComposite(const ShaderStateComposite& other){
+
+	shaders_.reserve(other.shaders_.size());
+
+	for (auto&& shader : other.shaders_){
+
+		shaders_.push_back(std::unique_ptr<BaseShaderState>(shader->Instantiate()));
+
+		AddShaderBindings(*shader);
+
+	}
+
+}
+
 bool ShaderStateComposite::SetConstantBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& constant_buffer){
 
 	return SetShaderMember(tag,
@@ -84,7 +100,9 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<IG
 
 }
 
-void ShaderStateComposite::AddShaderBindings(BaseShaderState& shader_state, const ShaderReflection& reflection){
+void ShaderStateComposite::AddShaderBindings(BaseShaderState& shader_state){
+
+	auto&& reflection = shader_state.GetReflection();
 
 	::AddShaderBindings<CBufferSetter>(shader_state,
 									   reflection.buffers,

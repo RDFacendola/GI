@@ -9,6 +9,8 @@
 
 #include "material.h"
 
+#include "debug.h"
+
 #include "dx11/dx11.h"
 #include "dx11/dx11shader_state.h"
 
@@ -62,6 +64,9 @@ namespace gi_lib{
 
 		};
 		
+		/// \brief Downcasts an IMaterial to the proper concrete type.
+		ObjectPtr<DX11Material> resource_cast(const ObjectPtr<IMaterial>& resource);
+
 		///////////////////////////////// DX11 MATERIAL ///////////////////////////////////
 
 		inline size_t DX11Material::GetSize() const
@@ -104,6 +109,14 @@ namespace gi_lib{
 
 		}
 
+		///////////////////////////// RESOURCE CAST ////////////////////////////////
+
+		inline ObjectPtr<DX11Material> resource_cast(const ObjectPtr<IMaterial>& resource){
+
+			return checked_cast<DX11Material>(resource.Get());
+
+		}
+		
 	}
 
 }
