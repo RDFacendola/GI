@@ -47,7 +47,10 @@ namespace gi_lib{
 			DXGI_FORMAT GetFormat() const;
 
 			/// \brief Get the shader resource view used to bind this texture to the pipeline.
-			COMPtr<ID3D11ShaderResourceView> GetShaderResourceView() const;
+			ShaderResourceView GetShaderResourceView();
+
+			/// \brief Get a pointer to the hardware texture
+			COMPtr<ID3D11Texture2D> GetTexture();
 
 		private:
 
@@ -88,10 +91,10 @@ namespace gi_lib{
 			DXGI_FORMAT GetFormat() const;
 
 			/// \brief Get the shader resource view used to bind this texture to the pipeline.
-			COMPtr<ID3D11ShaderResourceView> GetShaderResourceView() const;
+			ShaderResourceView GetShaderResourceView();
 
 			/// \brief Get the unordered access view used to bind this texture to the pipeline.
-			COMPtr<ID3D11UnorderedAccessView> GetUnorderedAccessView() const;
+			UnorderedAccessView GetUnorderedAccessView();
 
 		private:
 
@@ -133,9 +136,22 @@ namespace gi_lib{
 
 		}
 
-		inline COMPtr<ID3D11ShaderResourceView> DX11Texture2D::GetShaderResourceView() const{
+		inline ShaderResourceView DX11Texture2D::GetShaderResourceView(){
 
-			return shader_resource_view_;
+			return ShaderResourceView(this,
+									  shader_resource_view_);
+
+		}
+
+		inline COMPtr<ID3D11Texture2D> DX11Texture2D::GetTexture(){
+
+			ID3D11Resource* resource;
+
+			shader_resource_view_->GetResource(&resource);
+
+			ID3D11Texture2D* texture = static_cast<ID3D11Texture2D*>(resource);
+
+			return windows::COMMove(&texture);
 
 		}
 
@@ -176,15 +192,16 @@ namespace gi_lib{
 
 		}
 
-		inline COMPtr<ID3D11ShaderResourceView> DX11GPTexture2D::GetShaderResourceView() const{
+		inline ShaderResourceView DX11GPTexture2D::GetShaderResourceView(){
 
 			return texture_->GetShaderResourceView();
 
 		}
 
-		inline COMPtr<ID3D11UnorderedAccessView> DX11GPTexture2D::GetUnorderedAccessView() const{
+		inline UnorderedAccessView DX11GPTexture2D::GetUnorderedAccessView(){
 
-			return unordered_access_view_;
+			return UnorderedAccessView(this,
+									   unordered_access_view_);
 
 		}
 		

@@ -57,22 +57,22 @@ namespace gi_lib{
 			/// \brief Set a shader resource view for this shader.
 			/// \param slot Index of the slot where the view will be bound.
 			/// \param shader_resource_view The view to bind.
-			void SetShaderResourceView(unsigned int slot, const COMPtr<ID3D11ShaderResourceView>& shader_resource_view);
+			void SetShaderResourceView(unsigned int slot, const ShaderResourceView& shader_resource_view);
 
 			/// \brief Set an unordered access view for this shader.
 			/// \param slot Index of the slot where the view will be bound.
 			/// \param unordered_access_view The view to bind.
-			void SetUnorderedAccessView(unsigned int slot, const COMPtr<ID3D11UnorderedAccessView>& unordered_access_view);
+			void SetUnorderedAccessView(unsigned int slot, const UnorderedAccessView& unordered_access_view);
 
 			/// \brief Set a constant buffer for this shader.
 			/// \param slot Index of the slot where the buffer will be bound.
 			/// \param constant_buffer The buffer to bind.
-			void SetConstantBuffer(unsigned int slot, const COMPtr<ID3D11Buffer>& constant_buffer);
+			void SetConstantBuffer(unsigned int slot, const ConstantBufferView& constant_buffer);
 
 			/// \brief Set a sampler for this shader.
 			/// \param slot Index of the slot where the sampler will be bound.
 			/// \param sampler_state The sampler to bind.
-			void SetSampler(unsigned int slot, const COMPtr<ID3D11SamplerState>& sampler_state);
+			void SetSampler(unsigned int slot, const SamplerView& sampler_state);
 
 			/// \brief Bind the shader to the given device context.
 			virtual void Bind(ID3D11DeviceContext& context) = 0;
@@ -94,6 +94,14 @@ namespace gi_lib{
 			std::vector<COMPtr<ID3D11SamplerState>> samplers_;							///< \brief List of sampler states.
 
 		private:
+
+			std::vector<ShaderResourceView> srv_resources_;								///< \brief Needed to keep alive the resources while their shader resource view is bound to this instance.
+
+			std::vector<UnorderedAccessView> uav_resources_;							///< \brief Needed to keep alive the resources while their unordered access view is bound to this instance.
+
+			std::vector<ConstantBufferView> buffer_resources_;							///< \brief Needed to keep alive the resources while their buffer view is bound to this instance.
+
+			std::vector<SamplerView> sampler_resources_;								///< \brief Needed to keep alive the resources while their sampler view is bound to this instance.
 
 			std::shared_ptr<ShaderReflection> reflection_;								///< \brief Shader reflection.
 
@@ -132,7 +140,7 @@ namespace gi_lib{
 		public:
 
 			/// \brief Type of value set by this setter.
-			using TValue = COMPtr<ID3D11ShaderResourceView>;
+			using TValue = ShaderResourceView;
 
 			/// \brief Set a shader resource view for this shader.
 			/// \param shader_state Shader state where the view will be bound.
@@ -158,7 +166,7 @@ namespace gi_lib{
 		public:
 
 			/// \brief Type of value set by this setter.
-			using TValue = COMPtr<ID3D11UnorderedAccessView>;
+			using TValue = UnorderedAccessView;
 
 			/// \brief Create a new unordered access view setter.
 			/// \param shader_state Shader state where the view will be bound.
@@ -184,7 +192,7 @@ namespace gi_lib{
 		public:
 
 			/// \brief Type of value set by this setter.
-			using TValue = COMPtr<ID3D11Buffer>;
+			using TValue = ConstantBufferView;
 
 			/// \brief Create a new constant buffer setter.
 			/// \param shader_state Shader state where the buffer will be bound.
@@ -210,7 +218,7 @@ namespace gi_lib{
 		public:
 
 			/// \brief Type of value set by this setter.
-			using TValue = COMPtr<ID3D11SamplerState>;
+			using TValue = SamplerView;
 
 			/// \brief Create a new sampler setter.
 			/// \param shader_state Shader state where the sampler will be bound.
@@ -327,6 +335,11 @@ namespace gi_lib{
 			constant_buffers_.resize(reflection->buffers.size());
 			samplers_.resize(reflection->samplers.size());
 
+			srv_resources_.resize(shader_resource_views_.size());
+			uav_resources_.resize(unordered_access_views_.size());
+			buffer_resources_.resize(constant_buffers_.size());
+			sampler_resources_.resize(samplers_.size());
+
 		}
 
 		inline BaseShaderState::BaseShaderState(const ShaderReflection& reflection) :
@@ -341,27 +354,35 @@ namespace gi_lib{
 
 		}
 
-		inline void BaseShaderState::SetShaderResourceView(unsigned int slot, const COMPtr<ID3D11ShaderResourceView>& shader_resource_view){
+		inline void BaseShaderState::SetShaderResourceView(unsigned int slot, const ShaderResourceView& shader_resource_view){
 
-			shader_resource_views_[slot] = shader_resource_view;
+			shader_resource_views_[slot] = shader_resource_view.GetShaderResourceView();
 
-		}
-
-		inline void BaseShaderState::SetUnorderedAccessView(unsigned int slot, const COMPtr<ID3D11UnorderedAccessView>& unordered_access_view){
-
-			unordered_access_views_[slot] = unordered_access_view;
+			srv_resources_[slot] = shader_resource_view;
 
 		}
 
-		inline void BaseShaderState::SetConstantBuffer(unsigned int slot, const COMPtr<ID3D11Buffer>& constant_buffer){
+		inline void BaseShaderState::SetUnorderedAccessView(unsigned int slot, const UnorderedAccessView& unordered_access_view){
 
-			constant_buffers_[slot] = constant_buffer;
+			unordered_access_views_[slot] = unordered_access_view.GetUnorderedAccessView();
+
+			uav_resources_[slot] = unordered_access_view;
 
 		}
 
-		inline void BaseShaderState::SetSampler(unsigned int slot, const COMPtr<ID3D11SamplerState>& sampler_state){
+		inline void BaseShaderState::SetConstantBuffer(unsigned int slot, const ConstantBufferView& constant_buffer){
 
-			samplers_[slot] = sampler_state;
+			constant_buffers_[slot] = constant_buffer.GetConstantBuffer();
+
+			buffer_resources_[slot] = constant_buffer;
+
+		}
+
+		inline void BaseShaderState::SetSampler(unsigned int slot, const SamplerView& sampler_state){
+
+			samplers_[slot] = sampler_state.GetSamplerState();
+
+			sampler_resources_[slot] = sampler_state;
 
 		}
 

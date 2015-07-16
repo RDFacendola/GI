@@ -455,15 +455,9 @@ void DX11Output::Refresh(){
 
 	ObjectPtr<DX11Texture2D> rt_proxy = (*render_target_)[0];
 
-	ID3D11Resource* rt_resource;
-
-	rt_proxy->GetShaderResourceView()->GetResource(&rt_resource);	// Access the render target surface
-
-	context.CopyResource(back_buffer_.Get(),						// Paste the render target onto the backbuffer
-						 rt_resource);
-						 
-	rt_resource->Release();
-
+	context.CopyResource(back_buffer_.Get(),											// Paste the render target onto the backbuffer
+						 rt_proxy->GetTexture().Get());
+	
 	// Flip the buffers
 
 	swap_chain_->Present(IsVSync() ? 1 : 0,

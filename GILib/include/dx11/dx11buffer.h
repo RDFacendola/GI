@@ -62,10 +62,10 @@ namespace gi_lib{
 
 			/// \brief Get the underlying buffer.
 			/// \return Returns the underlying hardware buffer.
-			COMPtr<ID3D11Buffer> GetBuffer();
+			ConstantBufferView GetBuffer();
 
 			/// \brief Get the shader resource view used to bind this buffer to the pipeline.
-			COMPtr<ID3D11ShaderResourceView> GetShaderResourceView() const;
+			ShaderResourceView GetShaderResourceView();
 
 		private:
 
@@ -114,7 +114,7 @@ namespace gi_lib{
 			void Commit(ID3D11DeviceContext& context);
 
 			/// \brief Get the underlying constant buffer.
-			COMPtr<ID3D11Buffer> GetConstantBuffer() const;
+			ConstantBufferView GetConstantBuffer();
 
 		private:
 
@@ -160,7 +160,7 @@ namespace gi_lib{
 			void Commit(ID3D11DeviceContext& context);
 
 			/// \brief Get the shader resource view used to bind this buffer to the pipeline.
-			COMPtr<ID3D11ShaderResourceView> GetShaderResourceView() const;
+			ShaderResourceView GetShaderResourceView();
 
 		private:
 
@@ -238,15 +238,17 @@ namespace gi_lib{
 
 		}
 
-		inline COMPtr<ID3D11Buffer> DX11Buffer::GetBuffer(){
+		inline ConstantBufferView DX11Buffer::GetBuffer(){
 
-			return buffer_;
+			return ConstantBufferView(this,
+									  buffer_);
 
 		}
 
-		inline COMPtr<ID3D11ShaderResourceView> DX11Buffer::GetShaderResourceView() const{
+		inline ShaderResourceView DX11Buffer::GetShaderResourceView(){
 
-			return srv_;
+			return ShaderResourceView(this, 
+									  srv_);
 
 		}
 
@@ -288,7 +290,7 @@ namespace gi_lib{
 
 		}
 
-		inline COMPtr<ID3D11Buffer> DX11StructuredBuffer::GetConstantBuffer() const{
+		inline ConstantBufferView DX11StructuredBuffer::GetConstantBuffer(){
 
 			return buffer_->GetBuffer();
 
@@ -344,7 +346,7 @@ namespace gi_lib{
 
 		}
 	
-		inline COMPtr<ID3D11ShaderResourceView> DX11StructuredArray::GetShaderResourceView() const{
+		inline ShaderResourceView DX11StructuredArray::GetShaderResourceView(){
 
 			return buffer_->GetShaderResourceView();
 

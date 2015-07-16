@@ -47,7 +47,7 @@ namespace gi_lib{
 
 			/// \brief Get the sampler state.
 			/// \return Returns the sampler state.
-			COMPtr<ID3D11SamplerState> GetSamplerState() const;
+			SamplerView GetSamplerState();
 
 		private:
 
@@ -57,9 +57,10 @@ namespace gi_lib{
 
 		/////////////////////////////// DX11 SAMPLER ///////////////////////////////
 
-		inline COMPtr<ID3D11SamplerState> DX11Sampler::GetSamplerState() const{
+		inline SamplerView DX11Sampler::GetSamplerState(){
 
-			return sampler_state_;
+			return SamplerView(this,
+							   sampler_state_);
 
 		}
 

@@ -8,10 +8,16 @@
 #include <d3d11.h>
 
 #include "eigen.h"
+#include "object.h"
+#include "resources.h"
+
+#include "windows/win_os.h"
 
 namespace gi_lib{
 
 	namespace dx11{
+
+		using windows::COMPtr;
 
 		/// \brief Texture mapping technique.
 		enum class TextureMapping : unsigned int{
@@ -19,6 +25,78 @@ namespace gi_lib{
 			WRAP,				///< \brief Repeat the texture for texture coordinates outside the boundary [0;1] every integer.
 			CLAMP				///< \brief Texture coordinates below 0 or above 1 are set to 0 and 1 respectively instead.
 
+		};
+
+		class ConstantBufferView{
+
+		public:
+
+			ConstantBufferView();
+
+			ConstantBufferView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11Buffer>& constant_buffer);
+
+			const COMPtr<ID3D11Buffer>& GetConstantBuffer() const;
+
+		private:
+
+			COMPtr<ID3D11Buffer> constant_buffer_;
+
+			ObjectPtr<IResource> resource_;
+			
+		};
+
+		class ShaderResourceView{
+
+		public:
+
+			ShaderResourceView();
+
+			ShaderResourceView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11ShaderResourceView>& shader_resource_view);
+
+			const COMPtr<ID3D11ShaderResourceView>& GetShaderResourceView() const;
+
+		private:
+
+			COMPtr<ID3D11ShaderResourceView> shader_resource_view_;
+
+			ObjectPtr<IResource> resource_;
+			
+		};
+
+		class UnorderedAccessView{
+
+		public:
+
+			UnorderedAccessView();
+
+			UnorderedAccessView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11UnorderedAccessView>& unordered_access_view);
+
+			const COMPtr<ID3D11UnorderedAccessView>& GetUnorderedAccessView() const;
+
+		private:
+
+			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;
+
+			ObjectPtr<IResource> resource_;
+			
+		};
+
+		class SamplerView{
+
+		public:
+
+			SamplerView();
+
+			SamplerView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11SamplerState>& sampler_state);
+
+			const COMPtr<ID3D11SamplerState>& GetSamplerState() const;
+
+		private:
+
+			COMPtr<ID3D11SamplerState> sampler_state_;
+
+			ObjectPtr<IResource> resource_;
+			
 		};
 
 		/// \brief Create a depth stencil suitable for the provided target.
@@ -120,6 +198,62 @@ namespace gi_lib{
 		/// \param far_plane Distance of the far clipping plane.
 		Matrix4f ComputePerspectiveProjectionLH(float field_of_view, float aspect_ratio, float near_plane, float far_plane);
 		
+		////////////////////////////// CONSTANT BUFFER VIEW ///////////////////////////////////////
+
+		inline ConstantBufferView::ConstantBufferView(){}
+
+		inline ConstantBufferView::ConstantBufferView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11Buffer>& constant_buffer) :
+		resource_(resource),
+		constant_buffer_(constant_buffer){}
+
+		inline const COMPtr<ID3D11Buffer>& ConstantBufferView::GetConstantBuffer() const{
+
+			return constant_buffer_;
+
+		}
+		
+		////////////////////////////// SHADER RESOURCE VIEW ///////////////////////////////////////
+
+		inline ShaderResourceView::ShaderResourceView(){}
+
+		inline ShaderResourceView::ShaderResourceView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11ShaderResourceView>& shader_resource_view) :
+		resource_(resource),
+		shader_resource_view_(shader_resource_view){}
+
+		inline const COMPtr<ID3D11ShaderResourceView>& ShaderResourceView::GetShaderResourceView() const{
+
+			return shader_resource_view_;
+
+		}
+
+		////////////////////////////// UNORDERED ACCESS VIEW ///////////////////////////////////////
+
+		inline UnorderedAccessView::UnorderedAccessView(){}
+
+		inline UnorderedAccessView::UnorderedAccessView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11UnorderedAccessView>& unordered_access_view) :
+		resource_(resource),
+		unordered_access_view_(unordered_access_view){}
+
+		inline const COMPtr<ID3D11UnorderedAccessView>& UnorderedAccessView::GetUnorderedAccessView() const{
+
+			return unordered_access_view_;
+
+		}
+
+		////////////////////////////// SAMPLER VIEW ///////////////////////////////////////
+
+		inline SamplerView::SamplerView(){}
+
+		inline SamplerView::SamplerView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11SamplerState>& sampler_state) :
+		resource_(resource),
+		sampler_state_(sampler_state){}
+
+		inline const COMPtr<ID3D11SamplerState>& SamplerView::GetSamplerState() const{
+
+			return sampler_state_;
+
+		}
+
 		////////////////////////////// MAKE VIEWPORT ///////////////////////////////////////
 		
 		template <typename TDimensions>
