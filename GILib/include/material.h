@@ -14,6 +14,7 @@
 
 #include "texture.h"
 #include "buffer.h"
+#include "sampler.h"
 
 namespace gi_lib{
 
@@ -48,14 +49,21 @@ namespace gi_lib{
 		/// \brief Virtual destructor.
 		virtual ~IMaterial(){};
 
-		/// \brief Set a texture resource as an input for the current computation.
+		/// \brief Set a texture resource as an input for the material.
 		/// The GPU may only read from the specified texture.
 		/// \param tag Tag of the input texture to set.
 		/// \param texture_2D Pointer to the 2D texture to bind.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D) = 0;
 
-		/// \brief Set a structure resource as an input for the current computation.
+		/// \brief Set a sampler state as an input for the material.
+		/// The GPU may only read from the specified sampler state.
+		/// \param tag Tag of the input sampler to set.
+		/// \param sampler Pointer to the sampler state to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler) = 0;
+
+		/// \brief Set a structure resource as an input for the material.
 		/// The GPU may only read from the specified structure.
 		/// \tparam TType Concrete type of the structure.
 		/// \param tag Tag of the input structure to set.
@@ -64,7 +72,7 @@ namespace gi_lib{
 		template <typename TType>
 		bool SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer);
 
-		/// \brief Set an array resource as an input for the current computation.
+		/// \brief Set an array resource as an input for the material.
 		/// The GPU may only read from the specified array.
 		/// \tparam TElement Type of the array's elements.
 		/// \param tag Tag of the input array to set.
@@ -75,7 +83,7 @@ namespace gi_lib{
 
 	private:
 
-		/// \brief Set a structure resource as an input for the current computation.
+		/// \brief Set a structure resource as an input for the material.
 		/// The GPU may only read from the specified structure.
 		/// \param tag Tag of the input structure to set.
 		/// \param structured_buffer Pointer to the structured buffer to bind.
@@ -83,7 +91,7 @@ namespace gi_lib{
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) = 0;
 
-		/// \brief Set an array resource as an input for the current computation.
+		/// \brief Set an array resource as an input for the material.
 		/// The GPU may only read from the specified array.
 		/// \param tag Tag of the input array to set.
 		/// \param structured_array Pointer to the structured array to bind.

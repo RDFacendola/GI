@@ -19,83 +19,107 @@ namespace gi_lib{
 
 		using windows::COMPtr;
 
-		/// \brief Texture mapping technique.
-		enum class TextureMapping : unsigned int{
-
-			WRAP,				///< \brief Repeat the texture for texture coordinates outside the boundary [0;1] every integer.
-			CLAMP				///< \brief Texture coordinates below 0 or above 1 are set to 0 and 1 respectively instead.
-
-		};
-
+		/// \brief Wraps a constant buffer with a resource.
+		/// \author Raffaele D. Facendola
 		class ConstantBufferView{
 
 		public:
 
+			/// \brief Create an empty constant buffer view.
 			ConstantBufferView();
 
+			/// \brief Create a constant buffer view.
+			/// \param resource Resource owning the constant buffer.
+			/// \param constant_buffer Constant buffer.
 			ConstantBufferView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11Buffer>& constant_buffer);
 
+			/// \brief Get the wrapped constant buffer.
+			/// \return Returns the resource's constant buffer.
 			const COMPtr<ID3D11Buffer>& GetConstantBuffer() const;
 
 		private:
 
-			COMPtr<ID3D11Buffer> constant_buffer_;
+			COMPtr<ID3D11Buffer> constant_buffer_;		///< \brief Constant buffer.
 
-			ObjectPtr<IResource> resource_;
+			ObjectPtr<IResource> resource_;				///< \brief Resource owning the constant buffer.
 			
 		};
 
+		/// \brief Wraps a shader resource view with a resource.
+		/// \author Raffaele D. Facendola.
 		class ShaderResourceView{
 
 		public:
 
+			/// \brief Create an empty shader resource view.
 			ShaderResourceView();
 
+			/// \brief Create a shader resource view.
+			/// \param resource Resource owning the shade resource view.
+			/// \param shader_resource_view Shader resource view.
 			ShaderResourceView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11ShaderResourceView>& shader_resource_view);
 
+			/// \brief Get the wrapped shader resource view.
+			/// \return Returns the resource's shader resource view.
 			const COMPtr<ID3D11ShaderResourceView>& GetShaderResourceView() const;
 
 		private:
 
-			COMPtr<ID3D11ShaderResourceView> shader_resource_view_;
+			COMPtr<ID3D11ShaderResourceView> shader_resource_view_;		///< \brief Shader resource view.
 
-			ObjectPtr<IResource> resource_;
+			ObjectPtr<IResource> resource_;								///< \brief Resource owning the shader resource view.
 			
 		};
 
+		/// \brief Wraps an unordered access view with a resource.
+		/// \author Raffaele D. Facendola.
 		class UnorderedAccessView{
 
 		public:
 
+			/// \brief Create an empty unordered access view.
 			UnorderedAccessView();
 
+			/// \brief Create an unordered access view.
+			/// \param resource Resource owning the unordered access view.
+			/// \param unordered_access_view Unordered access view.
 			UnorderedAccessView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11UnorderedAccessView>& unordered_access_view);
 
+			/// \brief Get the wrapped unordered access view.
+			/// \return Returns the resource's unordered access view.
 			const COMPtr<ID3D11UnorderedAccessView>& GetUnorderedAccessView() const;
 
 		private:
 
-			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;
+			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;	///< \brief Unordered access view.
 
-			ObjectPtr<IResource> resource_;
+			ObjectPtr<IResource> resource_;								///< \brief Resource owning the unordered access view.
 			
 		};
 
-		class SamplerView{
+		/// \brief Wraps an samplers state with a resource.
+		/// \author Raffaele D. Facendola.
+		class SamplerStateView{
 
 		public:
 
-			SamplerView();
+			/// \brief Create an empty sampler view.
+			SamplerStateView();
 
-			SamplerView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11SamplerState>& sampler_state);
+			/// \brief Create a sampler view.
+			/// \param resource Resource owning the sampler state.
+			/// \param sampler_state Sample state.
+			SamplerStateView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11SamplerState>& sampler_state);
 
+			/// \brief Get the wrapped sampler state.
+			/// \return Returns the sampler state.
 			const COMPtr<ID3D11SamplerState>& GetSamplerState() const;
 
 		private:
 
-			COMPtr<ID3D11SamplerState> sampler_state_;
+			COMPtr<ID3D11SamplerState> sampler_state_;			///< \brief Sampler state.
 
-			ObjectPtr<IResource> resource_;
+			ObjectPtr<IResource> resource_;						///< \brief Resource owning the sampler state.
 			
 		};
 
@@ -161,10 +185,11 @@ namespace gi_lib{
 
 		/// \brief Create a sampler state.
 		/// \param device Device used to create the sampler.
-		/// \param texture_mapping Texture mapping mode while sampling.
+		/// \param address_mode Texture mapping mode while sampling.
 		/// \param anisotropy_level Maximum anisotropy level. Set to 0 to disable anisotropic filtering and enable trilinear filtering.
+		/// \param border_color Border color to use when the address mode specified is D3D11_TEXTURE_ADDRESS_BORDER.
 		/// \param sampler Pointer to the object that will hold the sampler if the method succeeds..
-		HRESULT MakeSampler(ID3D11Device& device, TextureMapping texture_mapping, unsigned int anisotropy_level, ID3D11SamplerState** sampler);
+		HRESULT MakeSampler(ID3D11Device& device, D3D11_TEXTURE_ADDRESS_MODE address_mode, unsigned int anisotropy_level, Vector4f border_color, ID3D11SamplerState** sampler);
 
 		/// \brief Create a depth stencil view for the specified resource.
 		/// \param device Device used to create the depth stencil view.
@@ -242,13 +267,13 @@ namespace gi_lib{
 
 		////////////////////////////// SAMPLER VIEW ///////////////////////////////////////
 
-		inline SamplerView::SamplerView(){}
+		inline SamplerStateView::SamplerStateView(){}
 
-		inline SamplerView::SamplerView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11SamplerState>& sampler_state) :
+		inline SamplerStateView::SamplerStateView(const ObjectPtr<IResource>& resource, const COMPtr<ID3D11SamplerState>& sampler_state) :
 		resource_(resource),
 		sampler_state_(sampler_state){}
 
-		inline const COMPtr<ID3D11SamplerState>& SamplerView::GetSamplerState() const{
+		inline const COMPtr<ID3D11SamplerState>& SamplerStateView::GetSamplerState() const{
 
 			return sampler_state_;
 

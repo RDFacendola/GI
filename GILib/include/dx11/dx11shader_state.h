@@ -25,6 +25,7 @@ namespace gi_lib{
 	class IStructuredArray;
 	class ITexture2D;
 	class IGPTexture2D;
+	class ISampler;
 
 	namespace dx11{
 
@@ -67,12 +68,12 @@ namespace gi_lib{
 			/// \brief Set a constant buffer for this shader.
 			/// \param slot Index of the slot where the buffer will be bound.
 			/// \param constant_buffer The buffer to bind.
-			void SetConstantBuffer(unsigned int slot, const ConstantBufferView& constant_buffer);
+			void SetConstantBufferView(unsigned int slot, const ConstantBufferView& constant_buffer);
 
 			/// \brief Set a sampler for this shader.
 			/// \param slot Index of the slot where the sampler will be bound.
 			/// \param sampler_state The sampler to bind.
-			void SetSampler(unsigned int slot, const SamplerView& sampler_state);
+			void SetSamplerStateView(unsigned int slot, const SamplerStateView& sampler_state);
 
 			/// \brief Bind the shader to the given device context.
 			virtual void Bind(ID3D11DeviceContext& context) = 0;
@@ -101,7 +102,7 @@ namespace gi_lib{
 
 			std::vector<ConstantBufferView> buffer_resources_;							///< \brief Needed to keep alive the resources while their buffer view is bound to this instance.
 
-			std::vector<SamplerView> sampler_resources_;								///< \brief Needed to keep alive the resources while their sampler view is bound to this instance.
+			std::vector<SamplerStateView> sampler_resources_;							///< \brief Needed to keep alive the resources while their sampler view is bound to this instance.
 
 			std::shared_ptr<ShaderReflection> reflection_;								///< \brief Shader reflection.
 
@@ -218,7 +219,7 @@ namespace gi_lib{
 		public:
 
 			/// \brief Type of value set by this setter.
-			using TValue = SamplerView;
+			using TValue = SamplerStateView;
 
 			/// \brief Create a new sampler setter.
 			/// \param shader_state Shader state where the sampler will be bound.
@@ -261,15 +262,25 @@ namespace gi_lib{
 			/// \brief Unbind the shaders from the given device context.
 			virtual void Unbind(ID3D11DeviceContext& context);
 
+			/// \brief Set the value of a named constant buffer.
+			/// \return Returns true if a constant buffer matching the specified tag was found, returns false otherwise.
 			bool SetConstantBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& constant_buffer);
 
+			/// \brief Set the value of a named shader resource view.
+			/// \return Returns true if a shader resource view matching the specified tag was found, returns false otherwise.
 			bool SetShaderResource(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D);
 
+			/// \brief Set the value of a named shader resource view.
+			/// \return Returns true if a shader resource view matching the specified tag was found, returns false otherwise.
 			bool SetShaderResource(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array);
 
+			/// \brief Set the value of a named unordered access view.
+			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
 			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D);
 
-			//bool SetSampler(const Tag& tag, const ObjectPtr<ISampler>& sampler);
+			/// \brief Set the value of a named sampler state.
+			/// \return Returns true if a sampler state matching the specified tag was found, returns false otherwise.
+			bool SetSampler(const Tag& tag, const ObjectPtr<ISampler>& sampler);
 
 		private:
 
@@ -370,7 +381,7 @@ namespace gi_lib{
 
 		}
 
-		inline void BaseShaderState::SetConstantBuffer(unsigned int slot, const ConstantBufferView& constant_buffer){
+		inline void BaseShaderState::SetConstantBufferView(unsigned int slot, const ConstantBufferView& constant_buffer){
 
 			constant_buffers_[slot] = constant_buffer.GetConstantBuffer();
 
@@ -378,7 +389,7 @@ namespace gi_lib{
 
 		}
 
-		inline void BaseShaderState::SetSampler(unsigned int slot, const SamplerView& sampler_state){
+		inline void BaseShaderState::SetSamplerStateView(unsigned int slot, const SamplerStateView& sampler_state){
 
 			samplers_[slot] = sampler_state.GetSamplerState();
 
@@ -496,7 +507,7 @@ namespace gi_lib{
 
 		inline void CBufferSetter::operator()(const TValue& constant_buffer){
 
-			shader_state_->SetConstantBuffer(slot_,
+			shader_state_->SetConstantBufferView(slot_,
 											 constant_buffer);
 
 		}
@@ -509,7 +520,7 @@ namespace gi_lib{
 
 		inline void SamplerSetter::operator()(const TValue& sampler_state){
 
-			shader_state_->SetSampler(slot_,
+			shader_state_->SetSamplerStateView(slot_,
 									  sampler_state);
 
 		}

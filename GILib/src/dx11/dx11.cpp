@@ -16,23 +16,6 @@ using namespace gi_lib::dx11;
 using namespace gi_lib::windows;
 
 namespace{
-
-	D3D11_FILTER AnisotropyLevelToFilter(unsigned int anisotropy_level){
-
-		return anisotropy_level > 0 ?
-			   D3D11_FILTER_ANISOTROPIC :		// Anisotropic filtering
-			   D3D11_FILTER_MIN_MAG_MIP_LINEAR;	// Trilinear filtering
-
-	}
-
-	D3D11_TEXTURE_ADDRESS_MODE TextureMappingToAddressMode(TextureMapping mapping){
-
-		return mapping == TextureMapping::WRAP ?
-			   D3D11_TEXTURE_ADDRESS_WRAP :
-			   D3D11_TEXTURE_ADDRESS_CLAMP;
-
-	}
-	
 }
 
 /////////////////// METHODS ///////////////////////////
@@ -407,25 +390,27 @@ HRESULT gi_lib::dx11::MakeStructuredBuffer(ID3D11Device& device, unsigned int el
 
 }
 
-HRESULT gi_lib::dx11::MakeSampler(ID3D11Device& device, TextureMapping texture_mapping, unsigned int anisotropy_level, ID3D11SamplerState** sampler){
-
-	auto address_mode = TextureMappingToAddressMode(texture_mapping); // Same for each coordinate.
-
-	auto filter = AnisotropyLevelToFilter(anisotropy_level);
+HRESULT gi_lib::dx11::MakeSampler(ID3D11Device& device, D3D11_TEXTURE_ADDRESS_MODE address_mode, unsigned int anisotropy_level, Vector4f border_color, ID3D11SamplerState** sampler){
 
 	D3D11_SAMPLER_DESC desc;
 	
-	desc.Filter = filter;
+	desc.Filter = anisotropy_level > 0 ? 
+				  D3D11_FILTER_ANISOTROPIC : 
+				  D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+
+
 	desc.AddressU = address_mode;
 	desc.AddressV = address_mode;
 	desc.AddressW = address_mode;
-	desc.MipLODBias = 0.0f;								// This could be used to reduce the texture quality, however it will waste VRAM. 
+	desc.MipLODBias = 0.0f;
 	desc.MaxAnisotropy = anisotropy_level;
 	desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-	//desc.BorderColor[0] = 1.0f;						// Whatever, not used.
-	//desc.BorderColor[1] = 1.0f;
-	//desc.BorderColor[2] = 1.0f;
-	//desc.BorderColor[3] = 1.0f;
+
+	desc.BorderColor[0] = border_color(0);	
+	desc.BorderColor[1] = border_color(1);
+	desc.BorderColor[2] = border_color(2);
+	desc.BorderColor[3] = border_color(3);
+
 	desc.MinLOD = -FLT_MAX;
 	desc.MaxLOD = FLT_MAX;
 	

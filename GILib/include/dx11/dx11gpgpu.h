@@ -46,6 +46,8 @@ namespace gi_lib{
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D) override;
 
+			virtual bool SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state) override;
+
 			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D) override;
 
 		private:
@@ -71,6 +73,13 @@ namespace gi_lib{
 
 			return shader_composite_->SetShaderResource(tag,
 														texture_2D);
+
+		}
+
+		inline bool DX11Computation::SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state){
+
+			return shader_composite_->SetSampler(tag,
+												 sampler_state);
 
 		}
 

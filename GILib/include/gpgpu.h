@@ -13,6 +13,7 @@
 
 #include "texture.h"
 #include "buffer.h"
+#include "sampler.h"
 
 namespace gi_lib{
 	
@@ -45,6 +46,13 @@ namespace gi_lib{
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D) = 0;
 
+		/// \brief Set a sampler state as an input for the current computation.
+		/// The GPU may only read from the specified sampler state.
+		/// \param tag Tag of the input texture to set.
+		/// \param sampler Pointer to the sampler state to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state) = 0;
+		
 		/// \brief Set a structure resource as an input for the current computation.
 		/// The GPU may only read from the specified structure.
 		/// \tparam TType Concrete type of the structure.

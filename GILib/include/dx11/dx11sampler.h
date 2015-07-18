@@ -5,7 +5,8 @@
 
 #pragma once
 
-#include "resources.h"
+#include "sampler.h"
+#include "debug.h"
 
 #include "dx11/dx11.h"
 
@@ -19,47 +20,41 @@ namespace gi_lib{
 
 		/// \brief Represents a DirectX11 sampler state.
 		/// \author Raffaele D. Facendola.
-		class DX11Sampler : public IResource{
+		class DX11Sampler : public ISampler{
 
 		public:
-
-			/// \brief Structure used to create a sampler state from a plain description.
-			struct FromDescription{
-
-				USE_CACHE;
-
-				/// \brief Texture mapping.
-				TextureMapping texture_mapping;
-
-				/// \brief Anisotropy level.
-				unsigned int anisotropy_level;
-
-				/// \brief Get the cache key associated to the structure.
-				/// \return Returns the cache key associated to the structure.
-				size_t GetCacheKey() const;
-
-			};
 
 			/// \brief Create a sampler state from a plain description.
 			DX11Sampler(const FromDescription& description);
 
 			virtual size_t GetSize() const override;
 
-			/// \brief Get the sampler state.
-			/// \return Returns the sampler state.
-			SamplerView GetSamplerState();
+			virtual unsigned int GetMaxAnisotropy() const override;
+
+			virtual TextureMapping GetTextureMapping() const override;
+
+			/// \brief Get the sampler state view.
+			/// \return Returns the sampler state view.
+			SamplerStateView GetSamplerStateView();
 
 		private:
 
 			COMPtr<ID3D11SamplerState> sampler_state_;
 
+			unsigned int max_anisotropy_;					///< \brief Maximum anisotropy.
+
+			TextureMapping texture_mapping_;				///< \brief Texture mapping along each dimension.
+
 		};
+
+		/// \brief Downcasts an ITexture2D to the proper concrete type.
+		ObjectPtr<DX11Sampler> resource_cast(const ObjectPtr<ISampler>& resource);
 
 		/////////////////////////////// DX11 SAMPLER ///////////////////////////////
 
-		inline SamplerView DX11Sampler::GetSamplerState(){
+		inline SamplerStateView DX11Sampler::GetSamplerStateView(){
 
-			return SamplerView(this,
+			return SamplerStateView(this,
 							   sampler_state_);
 
 		}
@@ -71,17 +66,27 @@ namespace gi_lib{
 
 		}
 
-		/////////////////////////////// DX11 SAMPLER :: FROM DESCRIPTION ///////////////////////////////
+		inline unsigned int DX11Sampler::GetMaxAnisotropy() const{
 
-		inline size_t DX11Sampler::FromDescription::GetCacheKey() const{
+			return max_anisotropy_;
 
-			// | ... | texture_mapping | anisotropy_level |
-			//      40                 8                  0
+		}
 
-			return (anisotropy_level & 0xFF) | (static_cast<unsigned int>(texture_mapping) << 8);
+		inline TextureMapping DX11Sampler::GetTextureMapping() const{
+
+			return texture_mapping_;
 
 		}
 	
+		/////////////////////////////// RESOURCE CAST /////////////////////////////////
+
+		inline ObjectPtr<DX11Sampler> resource_cast(const ObjectPtr<ISampler>& resource){
+
+			return checked_cast<DX11Sampler>(resource.Get());
+
+		}
+
+
 	}
 
 }

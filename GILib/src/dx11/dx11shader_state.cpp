@@ -2,6 +2,7 @@
 
 #include "dx11/dx11buffer.h"
 #include "dx11/dx11texture.h"
+#include "dx11/dx11sampler.h"
 
 using namespace gi_lib;
 using namespace gi_lib::dx11;
@@ -81,6 +82,14 @@ bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<ITe
 	return SetShaderMember(tag,
 						   resource_cast(texture_2D)->GetShaderResourceView(),
 						   srv_table_);
+
+}
+
+bool ShaderStateComposite::SetSampler(const Tag& tag, const ObjectPtr<ISampler>& sampler){
+
+	return SetShaderMember(tag,
+						   resource_cast(sampler)->GetSamplerStateView(),
+						   sampler_table_);
 
 }
 

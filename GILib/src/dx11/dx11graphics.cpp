@@ -300,8 +300,8 @@ namespace{
 		// Buffers and vector
 		
 
-		// Internal resources
-		InstanceBuilder::Register<DX11Sampler, DX11Sampler, DX11Sampler::FromDescription>();
+		// Samplers
+		InstanceBuilder::Register<ISampler, DX11Sampler, DX11Sampler::FromDescription>();
 
 	}
 
