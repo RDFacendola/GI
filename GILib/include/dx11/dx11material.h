@@ -30,6 +30,8 @@ namespace gi_lib{
 
 		public:
 
+			using IMaterial::SetInput;
+
 			/// \brief Create a new DirectX11 material from shader code.
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to load the material.

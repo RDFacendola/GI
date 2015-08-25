@@ -56,9 +56,9 @@ namespace gi_lib{
 
 		private:
 
-			virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) override;
+			virtual bool SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) override;
 
-			virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) override;
+			virtual bool SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) override;
 
 			unique_ptr<ShaderStateComposite> shader_composite_;						///< \brief Collection of shaders. This class holds just 1 compute shader.
 			
@@ -87,18 +87,17 @@ namespace gi_lib{
 
 		}
 
-		inline bool DX11Computation::SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array){
-
-			return shader_composite_->SetShaderResource(tag,
-														resource_cast(structured_array));
-
-		}
-
-		inline bool DX11Computation::SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer){
+		inline bool DX11Computation::SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer){
 	
 			return shader_composite_->SetConstantBuffer(tag,
 														resource_cast(structured_buffer));
 	
+		}
+		inline bool DX11Computation::SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array){
+
+			return shader_composite_->SetShaderResource(tag,
+														resource_cast(structured_array));
+
 		}
 
 		inline bool DX11Computation::SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D){

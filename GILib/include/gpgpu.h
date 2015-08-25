@@ -87,46 +87,50 @@ namespace gi_lib{
 
 	private:
 
-		/// \brief Set a structure resource as an input for the current computation.
+		/// \brief Set a structure resource as an input for the computation.
 		/// The GPU may only read from the specified structure.
 		/// \param tag Tag of the input structure to set.
 		/// \param structured_buffer Pointer to the structured buffer to bind.
+		/// \param type Concrete type of the buffer.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) = 0;
+		virtual bool SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) = 0;
 
-		/// \brief Set an array resource as an input for the current computation.
+		/// \brief Set an array resource as an input for the computation.
 		/// The GPU may only read from the specified array.
 		/// \param tag Tag of the input array to set.
 		/// \param structured_array Pointer to the structured array to bind.
+		/// \param type Concrete type of the array elements.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) = 0;
+		virtual bool SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) = 0;
 
 	};
+
+	////////////////////////////// ICOMPUTATION ////////////////////////////////////////////////
 	
-}
+	template <typename TType>
+	inline bool IComputation::SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer){
 
-////////////////////////////// ICOMPUTATION ////////////////////////////////////////////////
+		return SetStructuredBuffer(tag,
+								   structured_buffer);
 
-template <typename TType>
-inline bool gi_lib::IComputation::SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer){
+	}
 
-	return SetInput(tag, 
-					structured_buffer);
+	template <typename TElement>
+	inline bool IComputation::SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array){
 
-}
+		return SetStructuredArray(tag,
+								  structured_array);
 
-template <typename TElement>
-inline bool gi_lib::IComputation::SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array){
+	}
 
-	return SetInput(tag, 
-					structured_array);
+	////////////////////////////// MATERIAL :: COMPILE FROM FILE ///////////////////////////////
 
-}
+	inline size_t IComputation::CompileFromFile::GetCacheKey() const{
 
-////////////////////////////// MATERIAL :: COMPILE FROM FILE ///////////////////////////////
+		return gi_lib::Tag(file_name);
 
-inline size_t gi_lib::IComputation::CompileFromFile::GetCacheKey() const{
-
-	return gi_lib::Tag(file_name);
+	}	
 
 }
+
+

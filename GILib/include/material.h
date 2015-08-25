@@ -101,30 +101,31 @@ namespace gi_lib{
 		
 	};
 
+	////////////////////////////// MATERIAL :: COMPILE FROM FILE ///////////////////////////////
+
+	inline size_t IMaterial::CompileFromFile::GetCacheKey() const{
+
+		return gi_lib::Tag(file_name);
+
+	}
+
+	////////////////////////////// IMATERIAL ////////////////////////////////////////////////
+
+	template <typename TType>
+	inline bool IMaterial::SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer){
+
+		return SetStructuredBuffer(tag,
+								   structured_buffer);
+
+	}
+
+	template <typename TElement>
+	inline bool IMaterial::SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array){
+
+		return SetStructuredArray(tag,
+								  structured_array);
+
+	}
+
 }
 
-////////////////////////////// MATERIAL :: COMPILE FROM FILE ///////////////////////////////
-
-inline size_t gi_lib::IMaterial::CompileFromFile::GetCacheKey() const{
-
-	return gi_lib::Tag(file_name);
-
-}
-
-////////////////////////////// IMATERIAL ////////////////////////////////////////////////
-
-template <typename TType>
-inline bool gi_lib::IMaterial::SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer){
-
-	return SetStructuredBuffer(tag,
-							   structured_buffer);
-
-}
-
-template <typename TElement>
-inline bool gi_lib::IMaterial::SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array){
-
-	return SetStructuredArray(tag,
-							  structured_array);
-
-}
