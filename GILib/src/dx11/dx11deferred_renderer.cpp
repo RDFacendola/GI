@@ -64,6 +64,8 @@ material_(new DX11Material(IMaterial::Instantiate{ args.base->GetMaterial() })){
 
 void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Affine3f& view, const Matrix4f& projection){
 
+	
+
 	/*if (world_view_proj_){
 
 		world_view_proj_->Set((projection * view * world).matrix());
@@ -217,12 +219,12 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<IRenderTarget> render_target){
 
 	if (GetScene().GetMainCamera()){
 		
-		ObjectPtr<DX11RenderTarget> dx11_render_target = render_target;
+		auto dx11_render_target = resource_cast(render_target);
 	
 		auto width = dx11_render_target->GetWidth();
 		auto height = dx11_render_target->GetHeight();
 
-		//DrawGBuffer(width, height);									// Scene -> GBuffer
+		DrawGBuffer(width, height);										// Scene -> GBuffer
 		
 		//ComputeLighting(width, height);								// Scene, GBuffer, DepthBuffer -> LightBuffer
 
@@ -275,9 +277,9 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 	// Set up render GBuffer render targets
 
 	gbuffer_->ClearDepth(*immediate_context_,
-								 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
-								 1.0f,
-								 0);
+						 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+						 1.0f,
+						 0);
 
 	Color color;
 
@@ -349,11 +351,12 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 									view_matrix,
 									projection_matrix);
 				
-				// Bind the material
+				// Bind the material (implies committing the pending buffers to the video card)
 
 				material->Commit(*immediate_context_);
 
 				// Draw	the subset
+				
 				DrawIndexedSubset(*immediate_context_,
 								  mesh->GetSubset(subset_index));
 

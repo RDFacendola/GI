@@ -13,6 +13,10 @@
 
 #include "dx11/dx11.h"
 #include "dx11/dx11shader_state.h"
+#include "dx11/dx11texture.h"
+#include "dx11/dx11sampler.h"
+#include "dx11/dx11gpgpu.h"
+#include "dx11/dx11buffer.h"
 
 #include "windows/win_os.h"
 
@@ -72,35 +76,35 @@ namespace gi_lib{
 		inline bool DX11Computation::SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D){
 
 			return shader_composite_->SetShaderResource(tag,
-														texture_2D);
+														resource_cast(texture_2D));
 
 		}
 
 		inline bool DX11Computation::SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state){
 
 			return shader_composite_->SetSampler(tag,
-												 sampler_state);
+												 resource_cast(sampler_state));
 
 		}
 
 		inline bool DX11Computation::SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array){
 
 			return shader_composite_->SetShaderResource(tag,
-														structured_array);
+														resource_cast(structured_array));
 
 		}
 
 		inline bool DX11Computation::SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer){
 	
 			return shader_composite_->SetConstantBuffer(tag,
-														structured_buffer);
+														resource_cast(structured_buffer));
 	
 		}
 
 		inline bool DX11Computation::SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D){
 
 			return shader_composite_->SetUnorderedAccess(tag,
-														 gp_texture_2D);
+														 resource_cast(gp_texture_2D));
 
 		}
 

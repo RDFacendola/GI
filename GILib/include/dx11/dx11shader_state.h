@@ -21,13 +21,13 @@
 
 namespace gi_lib{
 
-	class IStructuredBuffer;
-	class IStructuredArray;
-	class ITexture2D;
-	class IGPTexture2D;
-	class ISampler;
-
 	namespace dx11{
+
+		class DX11StructuredBuffer;
+		class DX11StructuredArray;
+		class DX11Texture2D;
+		class DX11GPTexture2D;
+		class DX11Sampler;
 
 		using windows::COMPtr;
 
@@ -264,23 +264,23 @@ namespace gi_lib{
 
 			/// \brief Set the value of a named constant buffer.
 			/// \return Returns true if a constant buffer matching the specified tag was found, returns false otherwise.
-			bool SetConstantBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& constant_buffer);
+			bool SetConstantBuffer(const Tag& tag, const ObjectPtr<DX11StructuredBuffer>& constant_buffer);
 
 			/// \brief Set the value of a named shader resource view.
 			/// \return Returns true if a shader resource view matching the specified tag was found, returns false otherwise.
-			bool SetShaderResource(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D);
+			bool SetShaderResource(const Tag& tag, const ObjectPtr<DX11Texture2D>& texture_2D);
 
 			/// \brief Set the value of a named shader resource view.
 			/// \return Returns true if a shader resource view matching the specified tag was found, returns false otherwise.
-			bool SetShaderResource(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array);
-
+			bool SetShaderResource(const Tag& tag, const ObjectPtr<DX11StructuredArray>& structured_array);
+			
 			/// \brief Set the value of a named unordered access view.
 			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
-			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D);
+			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2D>& gp_texture_2D);
 
 			/// \brief Set the value of a named sampler state.
 			/// \return Returns true if a sampler state matching the specified tag was found, returns false otherwise.
-			bool SetSampler(const Tag& tag, const ObjectPtr<ISampler>& sampler);
+			bool SetSampler(const Tag& tag, const ObjectPtr<DX11Sampler>& sampler);
 
 		private:
 
@@ -304,21 +304,42 @@ namespace gi_lib{
 		template <typename TShader>
 		void SetShader(ID3D11DeviceContext& context, const COMPtr<TShader>& shader);
 
+		/// \brief Bind all the provided constant buffers to a render context.
+		/// \param start_slot Slot where the first buffer will be bound to.
+		/// \param context Context the constant buffers will be bound to.
+		/// \param buffers Array containing the constant buffers.
+		template <typename TShader>
+		void SetConstantBuffers(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11Buffer>>& buffers);
+
 		/// \brief Bind some constant buffers to a render context.
 		/// \param start_slot Slot where the first buffer will be bound to.
 		/// \param context Context the constant buffers will be bound to.
 		/// \param buffers Array containing the constant buffers.
 		/// \param count Number of buffers.
 		template <typename TShader>
-		void SetConstantBuffers(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11Buffer>>& buffers, size_t count = 0);
-		
+		void SetConstantBuffers(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11Buffer>>& buffers, size_t count);
+
+		/// \brief Bind all the provided shader resources to a render context.
+		/// \param start_slot Slot where the first resource will be bound to.
+		/// \param context Context the resources will be bound to.
+		/// \param buffers Array containing the shader resource views.
+		template <typename TShader>
+		void SetShaderResources(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11ShaderResourceView>>& resources);
+
 		/// \brief Bind some shader resources to a render context.
 		/// \param start_slot Slot where the first resource will be bound to.
 		/// \param context Context the resources will be bound to.
 		/// \param buffers Array containing the shader resource views.
 		/// \param count Number of resources.
 		template <typename TShader>
-		void SetShaderResources(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11ShaderResourceView>>& resources, size_t count = 0);
+		void SetShaderResources(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11ShaderResourceView>>& resources, size_t count);
+
+		/// \brief Bind all the provided samplers to a render context.
+		/// \param start_slot Slot where the first sampler will be bound to.
+		/// \param context Context the samplers will be bound to.
+		/// \param buffers Array containing the sampler states.
+		template <typename TShader>
+		void SetSamplers(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11SamplerState>>& samplers);
 
 		/// \brief Bind some samplers to a render context.
 		/// \param start_slot Slot where the first sampler will be bound to.
@@ -326,7 +347,14 @@ namespace gi_lib{
 		/// \param buffers Array containing the sampler states.
 		/// \param count Number of samplers.
 		template <typename TShader>
-		void SetSamplers(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11SamplerState>>& samplers, size_t count = 0);
+		void SetSamplers(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11SamplerState>>& samplers, size_t count);
+
+		/// \brief Bind all the provided unordered access views to a render context.
+		/// \param start_slot Slot where the first UAV will be bound to.
+		/// \param context Context the UAVs will be bound to.
+		/// \param UAVs Array containing the unordered access views.
+		template <typename TShader>
+		void SetUnorderedAccess(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs);
 
 		/// \brief Bind some unordered access views to a render context.
 		/// \param start_slot Slot where the first UAV will be bound to.
@@ -334,7 +362,7 @@ namespace gi_lib{
 		/// \param UAVs Array containing the unordered access views.
 		/// \param count Number of resources.
 		template <typename TShader>
-		void SetUnorderedAccess(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, size_t count = 0);
+		void SetUnorderedAccess(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, size_t count);
 				
 		//////////////////////////////// BASE SHADER STATE ///////////////////////////////////////
 
@@ -577,6 +605,12 @@ namespace gi_lib{
 
 		inline void ShaderStateComposite::Bind(ID3D11DeviceContext& context){
 
+			// Commit pending constant buffers and structured buffers
+
+
+
+			// Bind the shaders to the graphic pipeline
+
 			for (auto&& shader : shaders_){
 
 				shader->Bind(context);
@@ -653,126 +687,130 @@ namespace gi_lib{
 
 		//////////////////////////////// SET CONSTANT BUFFERS ///////////////////////////////////////
 
+		template <typename TShader>
+		inline void SetConstantBuffers(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11Buffer>>& buffers){
+
+			SetConstantBuffers<TShader>(context,
+										start_slot,
+										buffers,
+										buffers.size());
+
+		}
+
 		template <>
 		inline void SetConstantBuffers<ID3D11VertexShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11Buffer>>& buffers, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = buffers.size();
+				context.VSSetConstantBuffers(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
 
 			}
-
-			context.VSSetConstantBuffers(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
-
+						
 		}
 
 		template <>
 		inline void SetConstantBuffers<ID3D11HullShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11Buffer>>& buffers, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = buffers.size();
-
+				context.HSSetConstantBuffers(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
+				
 			}
-
-			context.HSSetConstantBuffers(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
-
+						
 		}
 
 		template <>
 		inline void SetConstantBuffers<ID3D11DomainShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11Buffer>>& buffers, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = buffers.size();
+				context.DSSetConstantBuffers(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
 
 			}
-
-			context.DSSetConstantBuffers(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
-
+			
 		}
 
 		template <>
 		inline void SetConstantBuffers<ID3D11GeometryShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11Buffer>>& buffers, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = buffers.size();
-
+				context.GSSetConstantBuffers(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
+			
 			}
-
-			context.GSSetConstantBuffers(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
 
 		}
 
 		template <>
 		inline void SetConstantBuffers<ID3D11PixelShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11Buffer>>& buffers, size_t count){
 
-			if (count == 0){
-
-				count = buffers.size();
+			if (count > 0){
+	
+				context.PSSetConstantBuffers(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
 
 			}
-
-			context.PSSetConstantBuffers(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
 
 		}
 
 		template <>
 		inline void SetConstantBuffers<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11Buffer>>& buffers, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = buffers.size();
+				context.CSSetConstantBuffers(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
 
 			}
-
-			context.CSSetConstantBuffers(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11Buffer* const*>(std::addressof(buffers[0])));
 
 		}
 
 		//////////////////////////////// SET SHADER RESOURCES ///////////////////////////////////////
 
+		template <typename TShader>
+		inline void SetShaderResources(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11ShaderResourceView>>& resources){
+
+			SetShaderResources<TShader>(context,
+									    start_slot,
+									    resources,
+									    resources.size());
+
+		}
+
 		template <>
 		inline void SetShaderResources<ID3D11VertexShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11ShaderResourceView>>& resources, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = resources.size();
+				context.VSSetShaderResources(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));
 
 			}
-
-			context.VSSetShaderResources(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));
-
+			
 		}
 
 		template <>
 		inline void SetShaderResources<ID3D11HullShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11ShaderResourceView>>& resources, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = resources.size();
+				context.HSSetShaderResources(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));
 
 			}
-
-			context.HSSetShaderResources(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));
-
+			
 		}
 
 		template <>
@@ -780,176 +818,174 @@ namespace gi_lib{
 
 			if (count == 0){
 
-				count = resources.size();
+				context.DSSetShaderResources(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));
 
 			}
-
-			context.DSSetShaderResources(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));
-
+			
 		}
 
 		template <>
 		inline void SetShaderResources<ID3D11GeometryShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11ShaderResourceView>>& resources, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = resources.size();
-
+				context.GSSetShaderResources(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));		
+			
 			}
-
-			context.GSSetShaderResources(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));
-
+			
 		}
 
 		template <>
 		inline void SetShaderResources<ID3D11PixelShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11ShaderResourceView>>& resources, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = resources.size();
+				context.PSSetShaderResources(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));
 
 			}
-
-			context.PSSetShaderResources(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));
 
 		}
 
 		template <>
 		inline void SetShaderResources<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11ShaderResourceView>>& resources, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = resources.size();
+				context.CSSetShaderResources(static_cast<UINT>(start_slot),
+											 static_cast<UINT>(count),
+											 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));
 
 			}
-
-			context.CSSetShaderResources(static_cast<UINT>(start_slot),
-										 static_cast<UINT>(count),
-										 reinterpret_cast<ID3D11ShaderResourceView* const*>(std::addressof(resources[0])));
 
 		}
 
 		//////////////////////////////// SET SHADER SAMPLERS ///////////////////////////////////////
 
+		template <typename TShader>
+		inline void SetSamplers(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11SamplerState>>& samplers){
+
+			SetSamplers<TShader>(context,
+								 start_slot,
+								 samplers,
+								 samplers.size());
+
+		}
+
 		template <>
 		inline void SetSamplers<ID3D11VertexShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11SamplerState>>& samplers, size_t count){
 			
-			if (count == 0){
+			if (count > 0){
 
-				count = samplers.size();
+				context.VSSetSamplers(static_cast<UINT>(start_slot),
+									  static_cast<UINT>(count),
+									  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
 
 			}
-
-			context.VSSetSamplers(static_cast<UINT>(start_slot),
-								  static_cast<UINT>(count),
-								  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
 
 		}
 
 		template <>
 		inline void SetSamplers<ID3D11HullShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11SamplerState>>& samplers, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = samplers.size();
+				context.HSSetSamplers(static_cast<UINT>(start_slot),
+									  static_cast<UINT>(count),
+									  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
 
 			}
-
-			context.HSSetSamplers(static_cast<UINT>(start_slot),
-								  static_cast<UINT>(count),
-								  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
 
 		}
 
 		template <>
 		inline void SetSamplers<ID3D11DomainShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11SamplerState>>& samplers, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = samplers.size();
+				context.DSSetSamplers(static_cast<UINT>(start_slot),
+									  static_cast<UINT>(count),
+									  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
 
 			}
-
-			context.DSSetSamplers(static_cast<UINT>(start_slot),
-								  static_cast<UINT>(count),
-								  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
 
 		}
 
 		template <>
 		inline void SetSamplers<ID3D11GeometryShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11SamplerState>>& samplers, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = samplers.size();
+				context.GSSetSamplers(static_cast<UINT>(start_slot),
+									  static_cast<UINT>(count),
+									  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
 
 			}
-
-			context.GSSetSamplers(static_cast<UINT>(start_slot),
-								  static_cast<UINT>(count),
-								  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
 
 		}
 
 		template <>
 		inline void SetSamplers<ID3D11PixelShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11SamplerState>>& samplers, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = samplers.size();
+				context.PSSetSamplers(static_cast<UINT>(start_slot),
+									  static_cast<UINT>(count),
+									  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
 
 			}
-
-			context.PSSetSamplers(static_cast<UINT>(start_slot),
-								  static_cast<UINT>(count),
-								  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
-
+			
 		}
 		
 		template <>
 		inline void SetSamplers<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11SamplerState>>& samplers, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = samplers.size();
+				context.CSSetSamplers(static_cast<UINT>(start_slot),
+									  static_cast<UINT>(count),
+									  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
 
 			}
-
-			context.CSSetSamplers(static_cast<UINT>(start_slot),
-								  static_cast<UINT>(count),
-								  reinterpret_cast<ID3D11SamplerState* const*>(std::addressof(samplers[0])));
-
+			
 		}
 
 		//////////////////////////////// SET SHADER UAV ///////////////////////////////////////
 
 		template <typename TShader>
-		inline void gi_lib::dx11::SetUnorderedAccess<TShader>(ID3D11DeviceContext&, size_t, const std::vector<COMPtr<ID3D11UnorderedAccessView>>&, size_t){
+		inline void SetUnorderedAccess(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs){
+
+			SetUnorderedAccess<TShader>(context,
+										start_slot,
+										UAVs,
+										UAVs.size());
+
+		}
+
+		template <typename TShader>
+		inline void SetUnorderedAccess<TShader>(ID3D11DeviceContext&, size_t, const std::vector<COMPtr<ID3D11UnorderedAccessView>>&, size_t){
 
 			// Do nothing, for now
 
 		}
 
 		template <>
-		inline void gi_lib::dx11::SetUnorderedAccess<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, size_t count){
+		inline void SetUnorderedAccess<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
-				count = UAVs.size();
+				context.CSSetUnorderedAccessViews(static_cast<UINT>(start_slot),
+												  static_cast<UINT>(count),
+												  reinterpret_cast<ID3D11UnorderedAccessView* const*>(std::addressof(UAVs[0])),
+												  nullptr);
 
 			}
-
-			context.CSSetUnorderedAccessViews(static_cast<UINT>(start_slot),
-											  static_cast<UINT>(count),
-											  reinterpret_cast<ID3D11UnorderedAccessView* const*>(std::addressof(UAVs[0])),
-											  nullptr);
-
+			
 		}
 
 	}

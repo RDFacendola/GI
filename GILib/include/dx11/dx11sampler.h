@@ -82,7 +82,7 @@ namespace gi_lib{
 
 		inline ObjectPtr<DX11Sampler> resource_cast(const ObjectPtr<ISampler>& resource){
 
-			return checked_cast<DX11Sampler>(resource.Get());
+			return ObjectPtr<DX11Sampler>(resource.Get());
 
 		}
 

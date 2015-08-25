@@ -278,5 +278,8 @@
     <Filter Include="DirectX 11\Resources">
       <UniqueIdentifier>{e9c66e83-2abf-4358-be2f-462af5cd24cd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{01988dd7-b988-492f-852e-94c0f49ef446}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

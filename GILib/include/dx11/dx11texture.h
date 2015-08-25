@@ -160,7 +160,7 @@ namespace gi_lib{
 		inline ObjectPtr<ITexture2D> DX11GPTexture2D::GetTexture()
 		{
 			
-			return texture_;
+			return ObjectPtr<ITexture2D>(texture_);
 
 		}
 
@@ -209,13 +209,13 @@ namespace gi_lib{
 
 		inline ObjectPtr<DX11Texture2D> resource_cast(const ObjectPtr<ITexture2D>& resource){
 
-			return checked_cast<DX11Texture2D>(resource.Get());
+			return ObjectPtr<DX11Texture2D>(resource.Get());
 
 		}
 
 		inline ObjectPtr<DX11GPTexture2D> resource_cast(const ObjectPtr<IGPTexture2D>& resource){
 
-			return checked_cast<DX11GPTexture2D>(resource.Get());
+			return ObjectPtr<DX11GPTexture2D>(resource.Get());
 
 		}
 

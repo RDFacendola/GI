@@ -13,8 +13,9 @@
 
 #include "dx11/dx11.h"
 #include "dx11/dx11shader_state.h"
-
-#include "windows/win_os.h"
+#include "dx11/dx11buffer.h"
+#include "dx11/dx11texture.h"
+#include "dx11/dx11sampler.h"
 
 namespace gi_lib{
 
@@ -93,28 +94,28 @@ namespace gi_lib{
 		inline bool DX11Material::SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D){
 
 			return shader_composite_->SetShaderResource(tag,
-														texture_2D);
+														resource_cast(texture_2D));
 
 		}
 
 		inline bool DX11Material::SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state){
 
 			return shader_composite_->SetSampler(tag,
-												 sampler_state);
+												 resource_cast(sampler_state));
 
 		}
 
 		inline bool DX11Material::SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer){
 
 			return shader_composite_->SetConstantBuffer(tag,
-														structured_buffer);
+														resource_cast(structured_buffer));
 
 		}
 
 		inline bool DX11Material::SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array){
 
 			return shader_composite_->SetShaderResource(tag,
-														structured_array);
+														resource_cast(structured_array));
 
 		}
 
@@ -122,7 +123,7 @@ namespace gi_lib{
 
 		inline ObjectPtr<DX11Material> resource_cast(const ObjectPtr<IMaterial>& resource){
 
-			return checked_cast<DX11Material>(resource.Get());
+			return ObjectPtr<DX11Material>(resource.Get());
 
 		}
 		

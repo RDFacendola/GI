@@ -2,6 +2,8 @@
 
 #include "dx11/dx11.h"
 
+#pragma comment(lib, "dxguid.lib")
+
 #include <sstream>
 #include <algorithm>
 

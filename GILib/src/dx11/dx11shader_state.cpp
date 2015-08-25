@@ -1,6 +1,7 @@
 #include "dx11/dx11shader_state.h"
 
 #include "dx11/dx11buffer.h"
+#include "dx11/dx11gpgpu.h"
 #include "dx11/dx11texture.h"
 #include "dx11/dx11sampler.h"
 
@@ -69,42 +70,42 @@ ShaderStateComposite::ShaderStateComposite(const ShaderStateComposite& other){
 
 }
 
-bool ShaderStateComposite::SetConstantBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& constant_buffer){
+bool ShaderStateComposite::SetConstantBuffer(const Tag& tag, const ObjectPtr<DX11StructuredBuffer>& constant_buffer){
 
 	return SetShaderMember(tag,
-						   resource_cast(constant_buffer)->GetConstantBuffer(),
+						   constant_buffer->GetConstantBuffer(),
 						   cbuffer_table_);
 
 }
 
-bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D){
+bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX11Texture2D>& texture_2D){
 
 	return SetShaderMember(tag,
-						   resource_cast(texture_2D)->GetShaderResourceView(),
+						   texture_2D->GetShaderResourceView(),
 						   srv_table_);
 
 }
 
-bool ShaderStateComposite::SetSampler(const Tag& tag, const ObjectPtr<ISampler>& sampler){
+bool ShaderStateComposite::SetSampler(const Tag& tag, const ObjectPtr<DX11Sampler>& sampler){
 
 	return SetShaderMember(tag,
-						   resource_cast(sampler)->GetSamplerStateView(),
+						   sampler->GetSamplerStateView(),
 						   sampler_table_);
 
 }
 
-bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array){
+bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX11StructuredArray>& structured_array){
 
 	return SetShaderMember(tag,
-						   resource_cast(structured_array)->GetShaderResourceView(),
+						   structured_array->GetShaderResourceView(),
 						   srv_table_);
 
 }
 
-bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D){
+bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2D>& gp_texture_2D){
 
 	return SetShaderMember(tag,
-						   resource_cast(gp_texture_2D)->GetUnorderedAccessView(),
+						   gp_texture_2D->GetUnorderedAccessView(),
 						   uav_table_);
 
 }

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GI", "GI\GI.vcxproj", "{5C9DFE05-9F04-40A0-895A-140A65DDC80D}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -11,6 +11,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gi_lib", "GILib\GILib.vcxproj", "{21C15D82-5532-4597-B69C-EA2ECFA64DF4}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GiFbxConverter", "GiFbxConverter\GiFbxConverter.vcxproj", "{70F05046-6EE8-45A7-BE09-CACBF37EFF63}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{78C8C0D6-C281-46E3-AE51-E42518091716}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -356,13 +356,13 @@ namespace gi_lib{
 
 		inline ObjectPtr<DX11StructuredBuffer> resource_cast(const ObjectPtr<IStructuredBuffer>& resource){
 
-			return checked_cast<DX11StructuredBuffer>(resource.Get());
+			return ObjectPtr<DX11StructuredBuffer>(resource.Get());
 
 		}
 
 		inline ObjectPtr<DX11StructuredArray> resource_cast(const ObjectPtr<IStructuredArray>& resource){
 
-			return checked_cast<DX11StructuredArray>(resource.Get());
+			return ObjectPtr<DX11StructuredArray>(resource.Get());
 
 		}
 

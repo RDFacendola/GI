@@ -453,7 +453,7 @@ void DX11Output::Refresh(){
 
 	auto&& context = *DX11Graphics::GetInstance().GetImmediateContext();
 
-	ObjectPtr<DX11Texture2D> rt_proxy = (*render_target_)[0];
+	auto rt_proxy = resource_cast((*render_target_)[0]);
 
 	context.CopyResource(back_buffer_.Get(),											// Paste the render target onto the backbuffer
 						 rt_proxy->GetTexture().Get());

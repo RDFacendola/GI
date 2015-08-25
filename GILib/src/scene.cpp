@@ -484,7 +484,7 @@ ObjectPtr<IStaticMesh> MeshComponent::GetMesh(){
 
 ObjectPtr<const IStaticMesh> MeshComponent::GetMesh() const{
 
-	return mesh_;
+	return ObjectPtr<const IStaticMesh>(mesh_);
 
 }
 

@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "debug.h"
+
 namespace gi_lib{
 
 	template <typename TObject>
@@ -106,7 +108,7 @@ namespace gi_lib{
 		/// \brief Defines a pointer to an object.
 		/// \param object Object that will be pointed by this pointer.
 		template <typename TOther>
-		ObjectPtr(TOther* object);
+		explicit ObjectPtr(TOther* object);
 
 		/// \brief Copy constructor.
 		/// \param other Other pointer to copy.
@@ -115,7 +117,7 @@ namespace gi_lib{
 		/// \brief Copy constructor.
 		/// \param other Other pointer to copy.
 		template <typename TOther>
-		ObjectPtr(const ObjectPtr<TOther>& other);
+		explicit ObjectPtr(const ObjectPtr<TOther>& other);
 
 		/// \brief Move constructor.
 		/// \param other Instance to move.
@@ -124,7 +126,7 @@ namespace gi_lib{
 		/// \brief Move constructor.
 		/// \param other Instance to move.
 		template <typename TOther>
-		ObjectPtr(ObjectPtr<TOther>&& other);
+		explicit ObjectPtr(ObjectPtr<TOther>&& other);
 
 		/// \brief Destructor.
 		/// Decreases by one the reference count of the pointed object, if any.
@@ -207,7 +209,7 @@ namespace gi_lib{
 		/// \brief Defines a pointer to an object.
 		/// \param object Object that will be pointed by this pointer.
 		template <typename TOther>
-		ObjectWeakPtr(TOther* object);
+		explicit ObjectWeakPtr(TOther* object);
 
 		/// \brief Copy constructor.
 		/// \param other Other pointer to copy.
@@ -216,7 +218,7 @@ namespace gi_lib{
 		/// \brief Copy constructor.
 		/// \param other Other pointer to copy.
 		template <typename TOther>
-		ObjectWeakPtr(const ObjectWeakPtr<TOther>& other);
+		explicit ObjectWeakPtr(const ObjectWeakPtr<TOther>& other);
 
 		/// \brief Create a weak pointer from a strong reference.
 		/// \param other Other pointer to copy.
@@ -225,7 +227,7 @@ namespace gi_lib{
 		/// \brief Create a weak pointer from a strong reference.
 		/// \param other Other pointer to copy.
 		template <typename TOther>
-		ObjectWeakPtr(const ObjectPtr<TOther>& other);
+		explicit ObjectWeakPtr(const ObjectPtr<TOther>& other);
 
 		/// \brief Move constructor.
 		/// \param other Instance to move.
@@ -234,7 +236,7 @@ namespace gi_lib{
 		/// \brief Move constructor.
 		/// \param other Instance to move.
 		template <typename TOther>
-		ObjectWeakPtr(ObjectWeakPtr<TOther>&& other);
+		explicit ObjectWeakPtr(ObjectWeakPtr<TOther>&& other);
 
 		/// \brief Destructor.
 		/// Decreases by one the weak reference count of the pointed object, if any.
@@ -373,7 +375,7 @@ namespace gi_lib{
 	template <typename TObject>
 	template <typename TOther>
 	inline ObjectPtr<TObject>::ObjectPtr(TOther* object) :
-		object_ptr_(static_cast<TObject*>(object)){
+		object_ptr_(checked_cast<TObject>(object)){
 
 		AddRef();
 
@@ -399,7 +401,7 @@ namespace gi_lib{
 	template <typename TObject>
 	template <typename TOther>
 	inline ObjectPtr<TObject>::ObjectPtr(ObjectPtr<TOther>&& other) :
-		object_ptr_(static_cast<TObject*>(other.Get())){
+		object_ptr_(checked_cast<TObject>(other.Get())){
 
 		other.object_ptr_ = nullptr;
 
@@ -417,7 +419,7 @@ namespace gi_lib{
 
 		Release();
 
-		object_ptr_ = static_cast<TObject*>(other.object_ptr_);
+		object_ptr_ = checked_cast<TObject>(other.object_ptr_);
 
 		AddRef();
 
@@ -431,7 +433,7 @@ namespace gi_lib{
 
 		Release();
 
-		object_ptr_ = static_cast<TObject*>(other.object_ptr_);
+		object_ptr_ = checked_cast<TObject>(other.object_ptr_);
 
 		AddRef();
 
@@ -458,7 +460,7 @@ namespace gi_lib{
 
 		Release();
 
-		object_ptr_ = static_cast<TObject*>(other.object_ptr_);
+		object_ptr_ = checked_cast<TObject>(other.object_ptr_);
 
 		other.object_ptr_ = nullptr;
 

@@ -206,7 +206,7 @@ namespace gi_lib{
 
 		inline ObjectPtr<IRenderTarget> DX11Output::GetRenderTarget(){
 
-			return render_target_;
+			return ObjectPtr<IRenderTarget>(render_target_);
 
 		}
 

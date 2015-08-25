@@ -1,7 +1,5 @@
 #include "dx11/dx11gpgpu.h"
 
-#pragma comment(lib, "d3dcompiler.lib")
-
 #include "core.h"
 #include "gilib.h"
 #include "scope_guard.h"

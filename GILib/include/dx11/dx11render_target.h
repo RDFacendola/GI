@@ -189,27 +189,27 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<gi_lib::ITexture2D> DX11RenderTarget::operator[](size_t index){
+		inline ObjectPtr<ITexture2D> DX11RenderTarget::operator[](size_t index){
 
-			return render_target_[index];
-
-		}
-
-		inline ObjectPtr<const gi_lib::ITexture2D> DX11RenderTarget::operator[](size_t index) const{
-
-			return render_target_[index];
+			return ObjectPtr<ITexture2D>(render_target_[index]);
 
 		}
 
-		inline ObjectPtr<gi_lib::ITexture2D> DX11RenderTarget::GetDepthBuffer(){
+		inline ObjectPtr<const ITexture2D> DX11RenderTarget::operator[](size_t index) const{
 
-			return depth_stencil_;
+			return ObjectPtr<const ITexture2D>(render_target_[index]);
 
 		}
 
-		inline ObjectPtr<const gi_lib::ITexture2D> DX11RenderTarget::GetDepthBuffer() const{
+		inline ObjectPtr<ITexture2D> DX11RenderTarget::GetDepthBuffer(){
 
-			return depth_stencil_;
+			return ObjectPtr<ITexture2D>(depth_stencil_);
+
+		}
+
+		inline ObjectPtr<const ITexture2D> DX11RenderTarget::GetDepthBuffer() const{
+
+			return ObjectPtr<const ITexture2D>(depth_stencil_);
 
 		}
 
@@ -222,6 +222,14 @@ namespace gi_lib{
 		inline unsigned int DX11RenderTarget::GetHeight() const{
 
 			return render_target_[0]->GetHeight();
+
+		}
+
+		///////////////////////////// RESOURCE CAST ////////////////////////////////
+
+		inline ObjectPtr<DX11RenderTarget> resource_cast(const ObjectPtr<IRenderTarget>& resource){
+
+			return ObjectPtr<DX11RenderTarget>(resource.Get());
 
 		}
 

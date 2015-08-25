@@ -30,13 +30,13 @@ DeferredRendererComponent::~DeferredRendererComponent(){}
 
 ObjectPtr<IStaticMesh> DeferredRendererComponent::GetMesh(){
 
-	return mesh_component_.GetMesh();
+	return ObjectPtr<IStaticMesh>(mesh_component_.GetMesh());
 
 }
 
 ObjectPtr<const IStaticMesh> DeferredRendererComponent::GetMesh() const{
 
-	return mesh_component_.GetMesh();
+	return ObjectPtr<const IStaticMesh>(mesh_component_.GetMesh());
 
 }
 
@@ -54,7 +54,7 @@ ObjectPtr<DeferredRendererMaterial> DeferredRendererComponent::GetMaterial(unsig
 
 ObjectPtr<const DeferredRendererMaterial> DeferredRendererComponent::GetMaterial(unsigned int material_index) const{
 
-	return materials_[material_index];
+	return ObjectPtr<const DeferredRendererMaterial>(materials_[material_index]);
 
 }
 

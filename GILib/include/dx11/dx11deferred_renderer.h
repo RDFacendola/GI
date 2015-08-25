@@ -145,14 +145,14 @@ namespace gi_lib{
 		inline ObjectPtr<IMaterial> DX11DeferredRendererMaterial::GetMaterial()
 		{
 
-			return material_;
+			return ObjectPtr<IMaterial>(material_);
 
 		}
 		
 		inline ObjectPtr<const IMaterial> gi_lib::dx11::DX11DeferredRendererMaterial::GetMaterial() const
 		{
 
-			return material_;
+			return ObjectPtr<const IMaterial>(material_);
 
 		}
 

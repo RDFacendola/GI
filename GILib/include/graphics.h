@@ -305,19 +305,19 @@ namespace gi_lib{
 	template <typename TResource, typename TArgs, typename use_cache<TArgs>::type*>
 	ObjectPtr<TResource> Resources::Load(const typename TArgs& args){
 
-		return LoadFromCache(type_index(typeid(TResource)),
-							 type_index(typeid(TArgs)),
-							 &args,
-							 args.GetCacheKey());
+		return ObjectPtr<TResource>(LoadFromCache(type_index(typeid(TResource)),
+												  type_index(typeid(TArgs)),
+												  &args,
+												  args.GetCacheKey()));
 				
 	}
 
 	template <typename TResource, typename TArgs, typename no_cache<TArgs>::type*>
 	ObjectPtr<TResource> Resources::Load(const typename TArgs& args){
 
-		return LoadDirect(type_index(typeid(TResource)),
-						  type_index(typeid(TArgs)),
-						  &args);
+		return ObjectPtr<TResource>(LoadDirect(type_index(typeid(TResource)),
+											   type_index(typeid(TArgs)),
+											   &args));
 
 	}
 	
