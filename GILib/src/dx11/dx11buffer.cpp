@@ -32,15 +32,15 @@ DX11Buffer::~DX11Buffer(){
 
 ////////////////////////////// DX11 STRUCTURED BUFFER /////////////////////////////////
 
-DX11StructuredBuffer::DX11StructuredBuffer(size_t size){
+DX11StructuredBuffer::DX11StructuredBuffer(const IStructuredBuffer::FromSize& args){
 
 	ID3D11Buffer* buffer;
 
 	THROW_ON_FAIL(::MakeConstantBuffer(*DX11Graphics::GetInstance().GetDevice(),
-									   size,
+									   args.size,
 									   &buffer));
 
-	buffer_ = new DX11Buffer(size, 
+	buffer_ = new DX11Buffer(args.size,
 							 COMMove(&buffer),
 							 nullptr);
 

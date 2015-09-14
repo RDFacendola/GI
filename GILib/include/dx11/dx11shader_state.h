@@ -14,6 +14,7 @@
 
 #include "dx11/dx11.h"
 #include "dx11/dx11shader.h"
+#include "dx11/dx11commitable.h"
 
 #include "windows/win_os.h"
 
@@ -287,6 +288,8 @@ namespace gi_lib{
 			void AddShaderBindings(BaseShaderState& shader);
 			
 			std::vector<std::unique_ptr<BaseShaderState>> shaders_;						///< \brief Shader collection.
+
+			std::unordered_map<size_t, ObjectPtr<ICommitter>> committer_table_;			///< \brief Used to track the resources that needs to be committed while binding the composite to the pipeline.
 
 			std::unordered_multimap<size_t, CBufferSetter> cbuffer_table_;				///< \brief Table of constant buffers.
 
@@ -607,8 +610,12 @@ namespace gi_lib{
 
 			// Commit pending constant buffers and structured buffers
 
+			for (auto&& committer : committer_table_){
 
+				(*committer.second)(context);
 
+			}
+			
 			// Bind the shaders to the graphic pipeline
 
 			for (auto&& shader : shaders_){

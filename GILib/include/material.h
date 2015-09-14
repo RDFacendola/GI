@@ -115,7 +115,7 @@ namespace gi_lib{
 	inline bool IMaterial::SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer){
 
 		return SetStructuredBuffer(tag,
-								   structured_buffer);
+								   structured_buffer->Unbox());
 
 	}
 
@@ -123,7 +123,7 @@ namespace gi_lib{
 	inline bool IMaterial::SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array){
 
 		return SetStructuredArray(tag,
-								  structured_array);
+								  structured_array->Unbox());
 
 	}
 

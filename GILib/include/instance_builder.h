@@ -14,6 +14,8 @@ using ::std::type_index;
 using ::std::function;
 using ::std::pair;
 
+#define INSTANTIATE(ClassName, ClassType, Arguments)
+
 namespace gi_lib{
 
 	/// \brief Class used to build class instances from metadata programmatically.
@@ -43,7 +45,7 @@ namespace gi_lib{
 		/// \param args_type Type of the arguments required by instance's constructor.
 		/// \param args Arguments that will be passed to the instance's constructor.
 		/// \return Returns a new instance of the specified class type. Returns nullptr if no match was found for the class-argument type pair.
-		/// \remarks If a match is found it is <b>guaranteed<\b> that the return value can be statically casted to the proper class.
+		/// \remarks If a match is found it is <b>guaranteed<\b> that the returned value can be statically casted to the proper class.
 		static void* Build(const type_index& class_type, const type_index& args_type, const void* args);
 
 	private:
@@ -52,6 +54,17 @@ namespace gi_lib{
 								 function<void* (const void*)> >;		// Instance constructor
 
 		static BuilderMap builder_map_;									///< \brief Maps a class type and its arguments to the proper construction function.
+
+	};
+
+	/// \brief Class used to register an instantiable type
+	template <typename TClass, typename TConcrete, typename TArgs>
+	class InstanceRegisterer{
+
+	public:
+
+		/// \brief Instantiate a new object.
+		InstanceRegisterer();
 
 	};
 
@@ -93,6 +106,15 @@ namespace gi_lib{
 			   constructor->second(args) :					// Instantiate a new object.
 			   nullptr;										// Not supported
 			
+	}
+
+	//////////////////////// INSTANCE REGISTERER ////////////////////////
+
+	template <typename TClass, typename TConcrete, typename TArgs>
+	inline InstanceRegisterer<TClass,TConcrete,TArgs>::InstanceRegisterer(){
+
+		InstanceBuilder::Register<TClass, TConcrete, TArgs>();
+
 	}
 
 }

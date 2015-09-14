@@ -9,8 +9,10 @@
 #include "debug.h"
 
 #include "dx11/dx11.h"
+#include "dx11/dx11commitable.h"
 
 #include "windows/win_os.h"
+
 
 namespace gi_lib{
 
@@ -90,7 +92,7 @@ namespace gi_lib{
 
 			/// \brief Create a new constant buffer.
 			/// \param size Size of the constant buffer.
-			DX11StructuredBuffer(size_t size);
+			DX11StructuredBuffer(const IStructuredBuffer::FromSize& args);
 
 			virtual void* Lock() override;
 
@@ -112,6 +114,8 @@ namespace gi_lib{
 			/// \brief Commit the constant buffer back to the GPU memory.
 			/// If the buffer contains no new data, this method does nothing.
 			void Commit(ID3D11DeviceContext& context);
+
+			ObjectPtr<ICommitter> GetCommitter();
 
 			/// \brief Get the underlying constant buffer.
 			ConstantBufferView GetConstantBuffer();
@@ -158,6 +162,8 @@ namespace gi_lib{
 			/// \brief Commit the constant buffer back to the GPU memory.
 			/// If the buffer contains no new data, this method does nothing.
 			void Commit(ID3D11DeviceContext& context);
+
+			ObjectPtr<ICommitter> GetCommitter();
 
 			/// \brief Get the shader resource view used to bind this buffer to the pipeline.
 			ShaderResourceView GetShaderResourceView();
@@ -228,9 +234,9 @@ namespace gi_lib{
 				dirty_ = false;
 
 				memcpy_s(Lock(context),
-					size_,
-					data_,
-					size_);
+						 size_,
+						 data_,
+						 size_);
 
 				Unlock(context);
 
@@ -290,6 +296,12 @@ namespace gi_lib{
 
 		}
 
+		inline ObjectPtr<ICommitter> DX11StructuredBuffer::GetCommitter(){
+
+			return new Committer<DX11StructuredBuffer>(ObjectPtr<DX11StructuredBuffer>(this));
+
+		}
+
 		inline ConstantBufferView DX11StructuredBuffer::GetConstantBuffer(){
 
 			return buffer_->GetBuffer();
@@ -346,6 +358,12 @@ namespace gi_lib{
 
 		}
 	
+		inline ObjectPtr<ICommitter> DX11StructuredArray::GetCommitter(){
+
+			return new Committer<DX11StructuredArray>(ObjectPtr<DX11StructuredArray>(this));
+
+		}
+
 		inline ShaderResourceView DX11StructuredArray::GetShaderResourceView(){
 
 			return buffer_->GetShaderResourceView();

@@ -11,10 +11,19 @@
 #include "dx11graphics.h"
 #include "dx11material.h"
 #include "dx11buffer.h"
+#include "buffer.h"
 
 namespace gi_lib{
 
 	namespace dx11{
+
+		/// \brief Structure of the per-object constant buffer.
+		struct PerObjectBuffer{
+
+			Matrix4f gWorldViewProj;		// World * View * Projection matrix.
+			Matrix4f gWorld;				// World matrix.
+
+		};
 
 		/// \brief Material for a DirectX11 deferred renderer.
 		/// A custom material should not be compiled from code directly since there's no way of knowing whether the code is compatible with the custom renderer.
@@ -48,14 +57,18 @@ namespace gi_lib{
 
 		private:
 
+			static const Tag kDiffuseMapTag;									///< \brief Tag associated to the diffuse map.
+
+			static const Tag kDiffuseSampler;									///< \brief Tag associated to the sampler used to sample from the diffuse map.
+
+			static const Tag kPerObjectTag;										///< \brief Tag associated to the per-object constant buffer.
+
+			ObjectPtr<StructuredBuffer<PerObjectBuffer>> per_object_cbuffer_;	///< \brief Constant buffer containing the per-object constants used by the vertex shader.
+
 			/// \brief Setup the material variables and resources.
 			void Setup();											
 
 			ObjectPtr<DX11Material> material_;							///< \brief DirectX11 material.
-
-			Tag world_view_proj_;										///< \brief Projection * View * World matrix product tag.
-
-			Tag world_;													///< \brief World matrix tag.
 
 		};
 

@@ -109,6 +109,8 @@ namespace gi_lib{
 
 		public:
 
+			using Resources::Load;
+
 			/// \brief Get the DX11 resources manager singleton.
 			/// \return Returns a reference to the DX11 resources manager singleton.
 			static DX11Resources& GetInstance();

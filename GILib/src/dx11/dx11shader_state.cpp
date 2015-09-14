@@ -71,15 +71,23 @@ ShaderStateComposite::ShaderStateComposite(const ShaderStateComposite& other){
 }
 
 bool ShaderStateComposite::SetConstantBuffer(const Tag& tag, const ObjectPtr<DX11StructuredBuffer>& constant_buffer){
+	
+	auto result = SetShaderMember(tag,
+								  constant_buffer->GetConstantBuffer(),
+								  cbuffer_table_);
 
-	return SetShaderMember(tag,
-						   constant_buffer->GetConstantBuffer(),
-						   cbuffer_table_);
+	if (result){
+
+		committer_table_[tag] = constant_buffer->GetCommitter();
+
+	}
+
+	return result;
 
 }
 
 bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX11Texture2D>& texture_2D){
-
+	
 	return SetShaderMember(tag,
 						   texture_2D->GetShaderResourceView(),
 						   srv_table_);
@@ -87,7 +95,7 @@ bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX1
 }
 
 bool ShaderStateComposite::SetSampler(const Tag& tag, const ObjectPtr<DX11Sampler>& sampler){
-
+	
 	return SetShaderMember(tag,
 						   sampler->GetSamplerStateView(),
 						   sampler_table_);
@@ -96,14 +104,22 @@ bool ShaderStateComposite::SetSampler(const Tag& tag, const ObjectPtr<DX11Sample
 
 bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX11StructuredArray>& structured_array){
 
-	return SetShaderMember(tag,
-						   structured_array->GetShaderResourceView(),
-						   srv_table_);
+	auto result = SetShaderMember(tag,
+								  structured_array->GetShaderResourceView(),
+								  srv_table_);
+
+	if (result){
+
+		committer_table_[tag] = structured_array->GetCommitter();
+
+	}
+
+	return result;
 
 }
 
 bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2D>& gp_texture_2D){
-
+	
 	return SetShaderMember(tag,
 						   gp_texture_2D->GetUnorderedAccessView(),
 						   uav_table_);

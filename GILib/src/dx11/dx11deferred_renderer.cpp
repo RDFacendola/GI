@@ -47,6 +47,10 @@ namespace{
 
 ///////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////
 
+const Tag DX11DeferredRendererMaterial::kDiffuseMapTag = "gDiffuseMap";
+const Tag DX11DeferredRendererMaterial::kDiffuseSampler = "gDiffuseSampler";
+const Tag DX11DeferredRendererMaterial::kPerObjectTag = "PerObject";
+
 DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const CompileFromFile& args) :
 material_(new DX11Material(args))
 {
@@ -64,26 +68,28 @@ material_(new DX11Material(IMaterial::Instantiate{ args.base->GetMaterial() })){
 
 void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Affine3f& view, const Matrix4f& projection){
 
+	// Lock
+
+	auto&& buffer = **per_object_cbuffer_;
+
+	// Update
+
+	buffer.gWorld = world.matrix();
+	buffer.gWorldViewProj = (projection * view * world).matrix();
+
+	// Unlock
+
+	per_object_cbuffer_->Unlock();
 	
-
-	/*if (world_view_proj_){
-
-		world_view_proj_->Set((projection * view * world).matrix());
-
-	}
-
-	if (world_){
-		
-		world_->Set(world.matrix());
-
-	}*/
-
 }
 
 void DX11DeferredRendererMaterial::Setup(){
 
-	world_view_proj_ = "gWorldViewProj";
-	world_ = "gWorld";
+	auto& resources = DX11Graphics::GetInstance().GetResources();
+
+	per_object_cbuffer_ = new StructuredBuffer<PerObjectBuffer>(resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({sizeof(PerObjectBuffer)}));
+
+	material_->SetInput(kPerObjectTag, per_object_cbuffer_);
 
 }
 
@@ -342,8 +348,6 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 			for (unsigned int subset_index = 0; subset_index < mesh->GetSubsetCount(); ++subset_index){
 
 				material = drawable.GetMaterial(subset_index);
-
-				// Fill the constant buffers
 
 				world_matrix = drawable.GetComponent<TransformComponent>()->GetWorldTransform();
 

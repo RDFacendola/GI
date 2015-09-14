@@ -22,6 +22,7 @@
     <ClInclude Include="include\buffer.h" />
     <ClInclude Include="include\debug.h" />
     <ClInclude Include="include\dx11\dx11buffer.h" />
+    <ClInclude Include="include\dx11\dx11commitable.h" />
     <ClInclude Include="include\dx11\dx11gpgpu.h" />
     <ClInclude Include="include\dx11\dx11material.h" />
     <ClInclude Include="include\dx11\dx11mesh.h" />

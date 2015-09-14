@@ -298,8 +298,8 @@ namespace{
 		InstanceBuilder::Register<IComputation, DX11Computation, IComputation::CompileFromFile>();
 
 		// Buffers and vector
+		InstanceBuilder::Register<IStructuredBuffer, DX11StructuredBuffer, IStructuredBuffer::FromSize>();
 		
-
 		// Samplers
 		InstanceBuilder::Register<ISampler, DX11Sampler, DX11Sampler::FromDescription>();
 
