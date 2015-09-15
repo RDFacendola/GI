@@ -246,6 +246,9 @@
     <ClCompile Include="src\dx11\dx11shader_state.cpp">
       <Filter>DirectX 11\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="src\instance_builder.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectX 11">

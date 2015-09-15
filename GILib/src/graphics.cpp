@@ -60,6 +60,12 @@ namespace{
 
 }
 
+///////////////////////// COLOR ////////////////////////////////////////
+
+const Color kOpaqueBlack = Color(0.0f, 0.0f, 0.0f, 0.0f);
+
+const Color kTransparentBlack = Color(0.0f, 0.0f, 0.0f, 1.0f);
+
 //////////////////////// RESOURCES :: IMPL //////////////////////////////
 
 /// \brief Private implementation of the Resources class.

@@ -141,13 +141,6 @@ void GILogic::Initialize(Window& window){
 
 	light_transform->SetParent(root);
 	
-	// Compute stuffs
-	auto tonecs = resources.Load<IComputation, IComputation::CompileFromFile>({ Application::GetInstance().GetDirectory() + L"Data\\cstest.hlsl" });
-
-	//tonecs->GetArgument<ITexture2D>("gAlbedo");
-
-	//tonecs->GetArgument<ITexture2D>("uav");
-
 }
 
 void GILogic::Update(const Time & time){

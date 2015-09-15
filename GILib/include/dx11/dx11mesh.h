@@ -9,6 +9,7 @@
 
 #include "mesh.h"
 #include "gimath.h"
+#include "instance_builder.h"
 
 #include "dx11/dx11.h"
 
@@ -69,53 +70,57 @@ namespace gi_lib{
 			AABB bounding_box_;
 
 		};
-		
+
+		///////////////////////////// MESH ////////////////////////////////////////////////
+
+		INSTANTIABLE(IStaticMesh, DX11Mesh, IStaticMesh::FromVertices<VertexFormatNormalTextured>);
+
+		inline size_t dx11::DX11Mesh::GetVertexCount() const{
+
+			return vertex_count_;
+
+		}
+
+		inline size_t dx11::DX11Mesh::GetPolygonCount() const{
+
+			return polygon_count_;
+
+		}
+
+		inline size_t dx11::DX11Mesh::GetLODCount() const{
+
+			return LOD_count_;
+
+		}
+
+		inline size_t dx11::DX11Mesh::GetSize() const{
+
+			return size_;
+
+		}
+
+		inline const AABB& gi_lib::dx11::DX11Mesh::GetBoundingBox() const{
+
+			return bounding_box_;
+
+		}
+
+		inline size_t dx11::DX11Mesh::GetSubsetCount() const{
+
+			return subsets_.size();
+
+		}
+
+		inline const MeshSubset& dx11::DX11Mesh::GetSubset(unsigned int subset_index) const{
+
+			return subsets_[subset_index];
+
+		}
+
 	}
-
+	
 }
 
-///////////////////////////// MESH ////////////////////////////////////////////////
 
-inline size_t gi_lib::dx11::DX11Mesh::GetVertexCount() const{
-
-	return vertex_count_;
-
-}
-
-inline size_t gi_lib::dx11::DX11Mesh::GetPolygonCount() const{
-
-	return polygon_count_;
-
-}
-
-inline size_t gi_lib::dx11::DX11Mesh::GetLODCount() const{
-
-	return LOD_count_;
-
-}
-
-inline size_t gi_lib::dx11::DX11Mesh::GetSize() const{
-
-	return size_;
-
-}
-
-inline const gi_lib::AABB& gi_lib::dx11::DX11Mesh::GetBoundingBox() const{
-
-	return bounding_box_;
-
-}
-
-inline size_t gi_lib::dx11::DX11Mesh::GetSubsetCount() const{
-
-	return subsets_.size();
-
-}
-
-inline const gi_lib::MeshSubset& gi_lib::dx11::DX11Mesh::GetSubset(unsigned int subset_index) const{
-
-	return subsets_[subset_index];
-
-}
 
 #endif

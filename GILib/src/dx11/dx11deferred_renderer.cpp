@@ -11,6 +11,7 @@
 #include "dx11/dx11shader.h"
 
 #include "windows/win_os.h"
+#include "instance_builder.h"
 
 using namespace ::std;
 using namespace ::gi_lib;
@@ -248,9 +249,28 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<IRenderTarget> render_target){
 	
 }
 
-void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int height){
+void DX11TiledDeferredRenderer::BindGBuffer(unsigned int width, unsigned int height){
 
-	// Lazy initialization of the GBuffer
+	// Setup of the input assembler
+
+	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Setup of the output merger
+
+	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
+
+	immediate_context_->OMSetDepthStencilState(depth_state_.Get(),
+											   0);
+
+	immediate_context_->OMSetBlendState(blend_state_.Get(),
+										0,
+										0xFFFFFFFF);
+
+	// Setup of the rasterizer state
+
+	immediate_context_->RSSetState(rasterizer_state_.Get());
+
+	// Setup of the render target surface (GBuffer)
 
 	if (!gbuffer_){
 
@@ -264,40 +284,22 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 
 		gbuffer_->Resize(width,
 						 height);
-		
+
 	}
 
-	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
+	gbuffer_->ClearTargets(*immediate_context_);
+	
+	gbuffer_->ClearDepth(*immediate_context_);
 
-	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	immediate_context_->RSSetState(rasterizer_state_.Get());
-
-	immediate_context_->OMSetDepthStencilState(depth_state_.Get(),
-											   0);
-
-	immediate_context_->OMSetBlendState(blend_state_.Get(),
-										0,
-										0xFFFFFFFF);
-
-	// Set up render GBuffer render targets
-
-	gbuffer_->ClearDepth(*immediate_context_,
-						 D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
-						 1.0f,
-						 0);
-
-	Color color;
-
-	color.color.alpha = 0.0f;
-	color.color.red = 0.1f;
-	color.color.green = 0.1f;
-	color.color.blue = 0.1f;
-
-	gbuffer_->ClearTargets(*immediate_context_,
-							color);
-
+	// Bind the gbuffer to the immediate context
 	gbuffer_->Bind(*immediate_context_);
+
+}
+
+void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int height){
+
+	// Setup the GBuffer and bind it to the immediate context.
+	BindGBuffer(width, height);
 
 	// TODO: Clean this crap and minimize state changes
 	

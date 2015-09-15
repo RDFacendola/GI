@@ -3,18 +3,23 @@
 ///
 /// \author Raffaele D. Facendola
 
+#pragma once
+
 #include <typeindex>
 #include <typeinfo>
 #include <functional>
 #include <utility>
 #include <map>
 
+#include "macros.h"
+
 using ::std::map;
 using ::std::type_index;
 using ::std::function;
 using ::std::pair;
 
-#define INSTANTIATE(ClassName, ClassType, Arguments)
+#define INSTANTIABLE(ClassName, ClassType, Arguments) \
+	static InstanceRegisterer<ClassName, ClassType, Arguments> ANONYMOUS;
 
 namespace gi_lib{
 
@@ -53,7 +58,7 @@ namespace gi_lib{
 		using BuilderMap = map < pair < type_index, type_index >,
 								 function<void* (const void*)> >;		// Instance constructor
 
-		static BuilderMap builder_map_;									///< \brief Maps a class type and its arguments to the proper construction function.
+		static BuilderMap& GetBuilderMap();
 
 	};
 
@@ -70,8 +75,6 @@ namespace gi_lib{
 
 	//////////////////////// INSTANCE BUILDER ///////////////////////
 
-	InstanceBuilder::BuilderMap InstanceBuilder::builder_map_;
-
 	template <typename TClass, typename TConcrete, typename TArgs/*, DERIVES_FROM_DEF(TConcrete, TClass)*/>
 	void InstanceBuilder::Register(){
 
@@ -80,15 +83,16 @@ namespace gi_lib{
 		auto builder_key = make_pair(type_index(typeid(TClass)),
 									 type_index(typeid(TArgs)));
 
-		builder_map_[builder_key] = [](const void* args){
+		auto&& builder_map = GetBuilderMap();
 
+		builder_map[builder_key] = [](const void* args){
+		
 										return new TConcrete(*static_cast<const TArgs*>(args));
 
-									};
+								   };
 
 	}
-
-
+	
 	template <typename TClass, typename TArgs>
 	void InstanceBuilder::Register(){
 
@@ -99,13 +103,23 @@ namespace gi_lib{
 
 	inline void* InstanceBuilder::Build(const type_index& class_type, const type_index& args_type, const void* args){
 
-		auto constructor = builder_map_.find(make_pair(class_type,
-													   args_type));
+		auto&& builder_map = GetBuilderMap();
 
-		return constructor != builder_map_.end() ?
+		auto constructor = builder_map.find(make_pair(class_type,
+														  args_type));
+
+		return constructor != builder_map.end() ?
 			   constructor->second(args) :					// Instantiate a new object.
 			   nullptr;										// Not supported
 			
+	}
+
+	inline InstanceBuilder::BuilderMap& InstanceBuilder::GetBuilderMap(){
+
+		static BuilderMap builder_map;
+
+		return builder_map;
+
 	}
 
 	//////////////////////// INSTANCE REGISTERER ////////////////////////

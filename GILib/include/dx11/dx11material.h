@@ -74,6 +74,9 @@ namespace gi_lib{
 
 		///////////////////////////////// DX11 MATERIAL ///////////////////////////////////
 
+		INSTANTIABLE(IMaterial, DX11Material, IMaterial::CompileFromFile);
+		INSTANTIABLE(IMaterial, DX11Material, IMaterial::Instantiate);
+
 		inline size_t DX11Material::GetSize() const
 		{
 

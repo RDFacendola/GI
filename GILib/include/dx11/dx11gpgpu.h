@@ -19,6 +19,7 @@
 #include "dx11/dx11buffer.h"
 
 #include "windows/win_os.h"
+#include "instance_builder.h"
 
 namespace gi_lib{
 
@@ -65,6 +66,8 @@ namespace gi_lib{
 		};
 		
 		///////////////////////////////// DX11 COMPUTATION ///////////////////////////////////
+
+		INSTANTIABLE(IComputation, DX11Computation, IComputation::CompileFromFile);
 
 		inline size_t DX11Computation::GetSize() const
 		{

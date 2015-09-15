@@ -279,39 +279,6 @@ namespace{
 
 	}
 
-	void RegisterDirectX11Resources(){
-
-		// Texture 2D
-		InstanceBuilder::Register<ITexture2D, DX11Texture2D, ITexture2D::FromFile>();
-
-		// Mesh
-		InstanceBuilder::Register<IStaticMesh, DX11Mesh, IStaticMesh::FromVertices<VertexFormatNormalTextured>>();
-
-		// Materials
-		InstanceBuilder::Register<IMaterial, DX11Material, IMaterial::CompileFromFile>();
-		InstanceBuilder::Register<IMaterial, DX11Material, IMaterial::Instantiate>();
-
-		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>();
-		InstanceBuilder::Register<DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>();
-
-		// Compute shader
-		InstanceBuilder::Register<IComputation, DX11Computation, IComputation::CompileFromFile>();
-
-		// Buffers and vector
-		InstanceBuilder::Register<IStructuredBuffer, DX11StructuredBuffer, IStructuredBuffer::FromSize>();
-		
-		// Samplers
-		InstanceBuilder::Register<ISampler, DX11Sampler, DX11Sampler::FromDescription>();
-
-	}
-
-	void RegisterDirectX11Renderers(){
-
-		// Deferred renderers
-		InstanceBuilder::Register<TiledDeferredRenderer, DX11TiledDeferredRenderer, RendererConstructionArgs>();
-
-	}
-
 }
 
 //////////////////////////////////// OUTPUT //////////////////////////////////////////
@@ -475,11 +442,7 @@ DX11Resources& DX11Resources::GetInstance(){
 
 }
 
-DX11Resources::DX11Resources(){
-
-	RegisterDirectX11Resources();
-
-}
+DX11Resources::DX11Resources(){}
 
 ObjectPtr<IResource> DX11Resources::Load(const type_index& resource_type, const type_index& args_type, const void* args) const{
 
@@ -555,10 +518,6 @@ DX11Graphics::DX11Graphics(): Graphics(){
 	device_ << &device;
 	immediate_context_ << &context;
 	
-	// Register the renderers
-
-	RegisterDirectX11Renderers();
-
 	// Cleanup
 
 	guard.Dismiss();

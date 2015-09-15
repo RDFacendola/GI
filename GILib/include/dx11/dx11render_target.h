@@ -10,6 +10,7 @@
 #include <numeric>
 #include <vector>
 
+#include "graphics.h"
 #include "render_target.h"
 
 #include "dx11/dx11.h"
@@ -124,12 +125,12 @@ namespace gi_lib{
 			/// \param clear_flags Determines whether to clear the depth and\or the stencil buffer. (see: D3D11_CLEAR_FLAGS)
 			/// \param depth Depth value to store inside the depth buffer.
 			/// \param stencil Stencil value to store inside the stencil buffer.
-			void ClearDepth(ID3D11DeviceContext& context, unsigned int clear_flags, float depth, unsigned char stencil);
+			void ClearDepth(ID3D11DeviceContext& context, unsigned int clear_flags = D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, float depth = 1.0f, unsigned char stencil = 0);
 
 			/// \brief Clear every target view.
 			/// \param context The context used to clear the view.
 			/// \param color The color used to clear the targets.
-			void ClearTargets(ID3D11DeviceContext& context, Color color);
+			void ClearTargets(ID3D11DeviceContext& context, Color color = kTransparentBlack);
 
 			/// \brief Bind the render target to the given render context.
 			void Bind(ID3D11DeviceContext& context);

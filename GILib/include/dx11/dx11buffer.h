@@ -12,6 +12,7 @@
 #include "dx11/dx11commitable.h"
 
 #include "windows/win_os.h"
+#include "instance_builder.h"
 
 
 namespace gi_lib{
@@ -259,6 +260,8 @@ namespace gi_lib{
 		}
 
 		//////////////////////////////// DIRECTX11 STRUCTURED BUFFER //////////////////////////////// 
+
+		INSTANTIABLE(IStructuredBuffer, DX11StructuredBuffer, IStructuredBuffer::FromSize);
 
 		inline void* DX11StructuredBuffer::Lock(){
 

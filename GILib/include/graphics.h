@@ -116,7 +116,15 @@ namespace gi_lib{
 
 		float argb[4];										///< \brief Array of components.
 
+		Color();
+
+		Color(float red, float green, float blue, float alpha);
+
 	};
+
+	static const Color kOpaqueBlack;			///< \brief Fully-opaque black color.
+
+	static const Color kTransparentBlack;		///< \brief Fully-transparent black color.
 
 	/// \brief Base interface for renderers.
 	/// \author Raffaele D. Facendola
@@ -299,6 +307,19 @@ namespace gi_lib{
 		virtual IRenderer* CreateRenderer(const type_index& renderer_type, Scene& scene) const = 0;
 
 	};
+
+	///////////////////////////////// COLOR ////////////////////////////////////////
+
+	inline Color::Color(){ /* Uninitialized */}
+
+	inline Color::Color(float red, float green, float blue, float alpha){
+
+		color.red = red;
+		color.green = green;
+		color.blue = blue;
+		color.alpha = alpha;
+
+	}
 
 	///////////////////////////////// RESOURCES ////////////////////////////////////
 

@@ -11,6 +11,7 @@
 #include "dx11/dx11.h"
 
 #include "windows/win_os.h"
+#include "instance_builder.h"
 
 namespace gi_lib{
 
@@ -51,6 +52,8 @@ namespace gi_lib{
 		ObjectPtr<DX11Sampler> resource_cast(const ObjectPtr<ISampler>& resource);
 
 		/////////////////////////////// DX11 SAMPLER ///////////////////////////////
+		
+		INSTANTIABLE(ISampler, DX11Sampler, DX11Sampler::FromDescription);
 
 		inline SamplerStateView DX11Sampler::GetSamplerStateView(){
 

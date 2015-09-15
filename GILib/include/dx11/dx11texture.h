@@ -13,6 +13,7 @@
 #include "dx11/dx11.h"
 
 #include "windows/win_os.h"
+#include "instance_builder.h"
 
 namespace gi_lib{
 
@@ -111,6 +112,8 @@ namespace gi_lib{
 		ObjectPtr<DX11GPTexture2D> resource_cast(const ObjectPtr<IGPTexture2D>& resource);
 
 		/////////////////////////////// DX11 TEXTURE2D ///////////////////////////////
+		
+		INSTANTIABLE(ITexture2D, DX11Texture2D, ITexture2D::FromFile);
 
 		inline unsigned int DX11Texture2D::GetWidth() const{
 

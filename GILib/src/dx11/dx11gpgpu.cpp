@@ -13,8 +13,6 @@ using namespace ::windows;
 
 namespace{
 
-
-
 }
 
 DX11Computation::DX11Computation(const CompileFromFile& arguments) :

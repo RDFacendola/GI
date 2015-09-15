@@ -637,10 +637,14 @@ namespace{
 																				 node,
 																				 context);
 
-			ImportMaterials(mesh, 
-							*mesh_component,
-							context);
+			if (mesh_component){
 
+				ImportMaterials(mesh, 
+								*mesh_component,
+								context);
+
+			}
+			
 		}
 
 	}

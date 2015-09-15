@@ -7,11 +7,13 @@
 
 #include "deferred_renderer.h"
 
+#include "instance_builder.h"
 #include "dx11renderer.h"
 #include "dx11graphics.h"
 #include "dx11material.h"
 #include "dx11buffer.h"
 #include "buffer.h"
+
 
 namespace gi_lib{
 
@@ -97,6 +99,8 @@ namespace gi_lib{
 
 			void SetupLights();
 
+			void BindGBuffer(unsigned int width, unsigned int height);
+
 			void DrawGBuffer(unsigned int width, unsigned int height);
 
 			void ComputeLighting(unsigned int width, unsigned int height);
@@ -149,21 +153,21 @@ namespace gi_lib{
 			Tag tonemap_vignette_;
 
 			Tag tonemap_source_;
-
-			
+						
 		};
-
+		
 		/////////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////////
 
-		inline ObjectPtr<IMaterial> DX11DeferredRendererMaterial::GetMaterial()
-		{
+		INSTANTIABLE(DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile);
+		INSTANTIABLE(DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::Instantiate);
+
+		inline ObjectPtr<IMaterial> DX11DeferredRendererMaterial::GetMaterial(){
 
 			return ObjectPtr<IMaterial>(material_);
 
 		}
 		
-		inline ObjectPtr<const IMaterial> gi_lib::dx11::DX11DeferredRendererMaterial::GetMaterial() const
-		{
+		inline ObjectPtr<const IMaterial> gi_lib::dx11::DX11DeferredRendererMaterial::GetMaterial() const{
 
 			return ObjectPtr<const IMaterial>(material_);
 
@@ -180,6 +184,10 @@ namespace gi_lib{
 			return material_->GetSize();
 
 		}
+
+		///////////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////
+
+		INSTANTIABLE(TiledDeferredRenderer, DX11TiledDeferredRenderer, RendererConstructionArgs);
 
 	}
 
