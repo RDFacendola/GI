@@ -116,7 +116,11 @@ void DX11Mesh::Bind(ID3D11DeviceContext& context){
 	unsigned int stride = static_cast<unsigned int>(vertex_stride_);
 
 	unsigned int offset = 0;
-	
+
+	// Set the proper primitive type
+
+	context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 	// Bind the vertex buffer
 
 	context.IASetVertexBuffers(0,							// Start slot

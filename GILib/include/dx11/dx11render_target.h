@@ -135,6 +135,9 @@ namespace gi_lib{
 			/// \brief Bind the render target to the given render context.
 			void Bind(ID3D11DeviceContext& context);
 
+			/// \brief Unbind the render target from the given render context.
+			void Unbind(ID3D11DeviceContext& context);
+
 		private:
 
 			/// \brief Create the render target surfaces.

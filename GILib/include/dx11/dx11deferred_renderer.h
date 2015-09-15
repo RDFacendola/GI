@@ -50,10 +50,10 @@ namespace gi_lib{
 			virtual ObjectPtr<const IMaterial> GetMaterial() const override;
 
 			/// \brief Set the matrices needed to transform the object.
-			void SetMatrix(const Affine3f& world, const Affine3f& view, const Matrix4f& projection);
+			void SetMatrix(const Affine3f& world, const Matrix4f& view_projection);
 			
-			/// \brief Commit all the constant buffers and bind the material to the pipeline.
-			void Commit(ID3D11DeviceContext& context);
+			/// \brief Bind the material to the pipeline.
+			void Bind(ID3D11DeviceContext& context);
 
 			virtual size_t GetSize() const override;
 
@@ -97,11 +97,24 @@ namespace gi_lib{
 
 		private:
 
-			void SetupLights();
+			/// \brief Draw the current scene on the GBuffer.
+			/// \param width Width of the GBuffer. Should match client size.
+			/// \param height Height of the GBuffer. Should match client size.
+			void DrawGBuffer(unsigned int width, unsigned int height);
 
+			/// \brief Setup the GBuffer and bind it to the pipeline.
+			/// \param width Width of the GBuffer. Should match client size.
+			/// \param height Height of the GBuffer. Should match client size.
 			void BindGBuffer(unsigned int width, unsigned int height);
 
-			void DrawGBuffer(unsigned int width, unsigned int height);
+			/// \brief Draws the specified nodes on the GBuffer.
+			/// \param nodes Nodes to draw.
+			/// \param view_projection_matrix View projection matrix used to transform the nodes in projection space.
+			void DrawNodes(const vector<VolumeComponent*>& nodes, const Matrix4f& view_projection_matrix);
+
+
+			void SetupLights();
+
 
 			void ComputeLighting(unsigned int width, unsigned int height);
 
@@ -173,7 +186,7 @@ namespace gi_lib{
 
 		}
 
-		inline void gi_lib::dx11::DX11DeferredRendererMaterial::Commit(ID3D11DeviceContext& context){
+		inline void gi_lib::dx11::DX11DeferredRendererMaterial::Bind(ID3D11DeviceContext& context){
 
 			material_->Bind(context);
 			

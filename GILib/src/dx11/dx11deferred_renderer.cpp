@@ -36,12 +36,58 @@ namespace{
 
 	};
 	
+	/// \brief Draw a mesh subset using the given context.
 	void DrawIndexedSubset(ID3D11DeviceContext& context, const MeshSubset& subset){
 
 		context.DrawIndexed(static_cast<unsigned int>(subset.count),
 							static_cast<unsigned int>(subset.start_index),
 							0);
 
+	}
+
+	/// \brief Compute the view-projection matrix given a camera and the aspect ratio of the target.
+	Matrix4f ComputeViewProjectionMatrix(const CameraComponent& camera, float aspect_ratio){
+	
+		auto view_matrix = camera.GetViewTransform();
+
+		Matrix4f projection_matrix;
+
+		if (camera.GetProjectionType() == ProjectionType::Perspective){
+
+			// Hey this method should totally become a member method of the camera component!
+			// NOPE! DirectX and OpenGL calculate the projection differently (mostly because of the near plane which in the first case goes from 0 to 1, in the latter goes from -1 to 1).
+			
+			projection_matrix = ComputePerspectiveProjectionLH(camera.GetFieldOfView(),
+															   aspect_ratio,
+															   camera.GetMinimumDistance(),
+															   camera.GetMaximumDistance());
+
+		}
+		else if (camera.GetProjectionType() == ProjectionType::Ortographic){
+
+			THROW(L"Not implemented, buddy!");
+
+		}
+		else{
+
+			THROW(L"What kind of projection are you trying to use again?! O.o");
+
+		}
+		
+		return (projection_matrix * view_matrix).matrix();
+
+	}
+
+	/// \brief Compute the visible nodes inside a given hierachy given the camera and the aspect ratio of the target.
+	vector<VolumeComponent*> ComputeVisibleNodes(const IVolumeHierarchy& volume_hierarchy, const CameraComponent& camera, float aspect_ratio){
+
+		// Basic frustum culling
+
+		auto camera_frustum = camera.GetViewFrustum(aspect_ratio);
+
+		return volume_hierarchy.GetIntersections(camera_frustum,											// Updates the view frustum according to the output ratio.
+												 IVolumeHierarchy::PrecisionLevel::Medium);					// Avoids extreme false positive while keeping reasonably high performances.
+		
 	}
 
 }
@@ -67,7 +113,7 @@ material_(new DX11Material(IMaterial::Instantiate{ args.base->GetMaterial() })){
 
 }
 
-void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Affine3f& view, const Matrix4f& projection){
+void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix4f& view_projection){
 
 	// Lock
 
@@ -76,7 +122,7 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Affine
 	// Update
 
 	buffer.gWorld = world.matrix();
-	buffer.gWorldViewProj = (projection * view * world).matrix();
+	buffer.gWorldViewProj = (view_projection * world).matrix();
 
 	// Unlock
 
@@ -249,15 +295,36 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<IRenderTarget> render_target){
 	
 }
 
+void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int height){
+
+	// Setup the GBuffer and bind it to the immediate context.
+	
+	BindGBuffer(width, height);
+
+	// Draw the visible nodes
+
+	auto& scene = GetScene();
+
+	auto& camera = *scene.GetMainCamera();
+
+	float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
+
+	DrawNodes(ComputeVisibleNodes(scene.GetVolumeHierarchy(), camera, aspect_ratio), 
+			  ComputeViewProjectionMatrix(camera, aspect_ratio));
+	
+	// Cleanup
+
+	gbuffer_->Unbind(*immediate_context_);
+
+}
+
 void DX11TiledDeferredRenderer::BindGBuffer(unsigned int width, unsigned int height){
 
-	// Setup of the input assembler
+	// Rasterizer state setup
 
-	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	immediate_context_->RSSetState(rasterizer_state_.Get());
 
-	// Setup of the output merger
-
-	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
+	// Setup of the output merger - This should be defined per render section actually but for now only opaque geometry with no fancy stencil effects is supported.
 
 	immediate_context_->OMSetDepthStencilState(depth_state_.Get(),
 											   0);
@@ -266,13 +333,12 @@ void DX11TiledDeferredRenderer::BindGBuffer(unsigned int width, unsigned int hei
 										0,
 										0xFFFFFFFF);
 
-	// Setup of the rasterizer state
-
-	immediate_context_->RSSetState(rasterizer_state_.Get());
 
 	// Setup of the render target surface (GBuffer)
 
 	if (!gbuffer_){
+
+		// Lazy initialization
 
 		gbuffer_ = new DX11RenderTarget(width,
 										height,
@@ -281,6 +347,8 @@ void DX11TiledDeferredRenderer::BindGBuffer(unsigned int width, unsigned int hei
 
 	}
 	else{
+
+		// GBuffer resize (will actually resize the target only if the size has been changed since the last frame)
 
 		gbuffer_->Resize(width,
 						 height);
@@ -292,51 +360,21 @@ void DX11TiledDeferredRenderer::BindGBuffer(unsigned int width, unsigned int hei
 	gbuffer_->ClearDepth(*immediate_context_);
 
 	// Bind the gbuffer to the immediate context
+
 	gbuffer_->Bind(*immediate_context_);
 
 }
 
-void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int height){
-
-	// Setup the GBuffer and bind it to the immediate context.
-	BindGBuffer(width, height);
-
-	// TODO: Clean this crap and minimize state changes
-	
-	float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
-
-	Affine3f world_matrix;
-	Affine3f view_matrix;
-	Matrix4f projection_matrix;
-
-	Matrix4f world_view_matrix;
+void DX11TiledDeferredRenderer::DrawNodes(const vector<VolumeComponent*>& nodes, const Matrix4f& view_projection_matrix){
 
 	ObjectPtr<DX11Mesh> mesh;
 	ObjectPtr<DX11DeferredRendererMaterial> material;
 
-	auto& scene = GetScene();
+	// Trivial solution: cycle through each node and for each drawable component draws the subsets.
 
-	auto& camera = *scene.GetMainCamera();
-
-	view_matrix = camera.GetViewTransform();
-
-	projection_matrix = ComputePerspectiveProjectionLH(camera.GetFieldOfView(),
-													   aspect_ratio,
-													   camera.GetMinimumDistance(),
-													   camera.GetMaximumDistance());
-
-	// Frustum culling
-	
-	auto camera_frustum = camera.GetViewFrustum(aspect_ratio);
-
-	auto nodes = scene.GetVolumeHierarchy()
-					  .GetIntersections(camera_frustum,											// Updates the view frustum according to the output ratio.
-										IVolumeHierarchy::PrecisionLevel::Medium);				// Avoids extreme false positive while keeping reasonably high performances.
-
+	// TODO: Implement some batching strategy here!
 
 	for (auto&& node : nodes){
-
-		// Items to draw
 
 		for (auto&& drawable : node->GetComponents<DeferredRendererComponent>()){
 
@@ -347,22 +385,20 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 			mesh->Bind(*immediate_context_);
 
 			// For each subset
+
 			for (unsigned int subset_index = 0; subset_index < mesh->GetSubsetCount(); ++subset_index){
+				
+				// Bind the subset material
 
 				material = drawable.GetMaterial(subset_index);
 
-				world_matrix = drawable.GetComponent<TransformComponent>()->GetWorldTransform();
+				material->SetMatrix(drawable.GetComponent<TransformComponent>()->GetWorldTransform(),
+									view_projection_matrix);
 
-				material->SetMatrix(world_matrix,
-									view_matrix,
-									projection_matrix);
-				
-				// Bind the material (implies committing the pending buffers to the video card)
-
-				material->Commit(*immediate_context_);
+				material->Bind(*immediate_context_);
 
 				// Draw	the subset
-				
+
 				DrawIndexedSubset(*immediate_context_,
 								  mesh->GetSubset(subset_index));
 
@@ -373,6 +409,7 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 	}
 
 }
+
 
 void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int height){
 

@@ -198,6 +198,16 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
 	
 }
 
+void DX11RenderTarget::Unbind(ID3D11DeviceContext& context){
+
+	vector<ID3D11RenderTargetView*> rtv_null_list(render_target_.size(), nullptr);
+
+	context.OMSetRenderTargets(static_cast<unsigned int>(rtv_null_list.size()),
+							   &rtv_null_list[0],
+							   nullptr);
+
+}
+
 void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format){
 
 	// If the method throws ensures that the resource is left in a clean state.
