@@ -54,15 +54,6 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Describes how texture coordinates are mapped.
-	/// Samplers use this information to resolve texture coordinates outside the [0;1] boundaries.
-	enum class TextureMapping : unsigned int{
-
-		WRAP,				///< \brief Repeat the texture for texture coordinates outside the boundary [0;1] every integer.
-		CLAMP				///< \brief Texture coordinates below 0 or above 1 are set to 0 and 1 instead.
-
-	};
-
 	/// \brief Describes a projection type.
 	enum class ProjectionType{
 

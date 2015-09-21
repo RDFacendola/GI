@@ -8,12 +8,20 @@
 #include "tag.h"
 
 #include "resources.h"
-#include "graphics.h"
 
 namespace gi_lib{
 
 	template <typename TObject>
 	class ObjectPtr;
+
+	/// \brief Describes how texture coordinates are mapped.
+	/// Samplers use this information to resolve texture coordinates outside the [0;1] boundaries.
+	enum class TextureMapping : unsigned int{
+
+		WRAP,				///< \brief Repeat the texture for texture coordinates outside the boundary [0;1] every integer.
+		CLAMP				///< \brief Texture coordinates below 0 or above 1 are set to 0 and 1 instead.
+
+	};
 
 	/// \brief Base interface for sampler states.
 	/// \author Raffaele D. Facendola.
