@@ -16,6 +16,13 @@ namespace gi_lib{
 	template <typename TObject>
 	class ObjectPtr;
 
+	/// \brief Texture surface format.
+	enum class TextureFormat : unsigned int{
+
+		RGBA_HALF			///<\ brief 64-bit format with 4 16-bit channels. Each channel stores a half-precision floating point number.
+		
+	};
+
 	/// \brief Base interface for plain textures.
 	/// \author Raffaele D. Facendola.
 	class ITexture2D : public IResource{
@@ -73,7 +80,7 @@ namespace gi_lib{
 
 			unsigned int mips;			///< \brief Total number of MIP levels.
 
-			int format;					///< \brief Format of the texture.
+			TextureFormat format;		///< \brief Format of the texture.
 
 		};
 
