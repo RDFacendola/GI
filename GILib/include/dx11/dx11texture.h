@@ -77,7 +77,7 @@ namespace gi_lib{
 
 		public:
 
-			DX11GPTexture2D(const FromDescription& args);
+			DX11GPTexture2D(unsigned int width, unsigned int height, DXGI_FORMAT format, unsigned int mips = 1);
 
 			virtual ObjectPtr<ITexture2D> GetTexture() override;
 
@@ -160,6 +160,8 @@ namespace gi_lib{
 
 		///////////////////////////// DX11 GP TEXTURE2D //////////////////////////////
 		
+		//INSTANTIABLE(IGPTexture2D, DX11GPTexture2D, IGPTexture2D::FromDescription);
+
 		inline ObjectPtr<ITexture2D> DX11GPTexture2D::GetTexture()
 		{
 			

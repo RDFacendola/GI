@@ -23,6 +23,25 @@ namespace{
 	/// \brief Size ration between two consecutive MIP levels of a texture 2D.
 	const float kMIPRatio2D = 0.25f;
 	
+	/// \brief Convert a texture format to a DXGI format used by DirectX11.
+	/// \param texture_format Texture format to convert.
+	/// \return Returns the DXGI format corresponding to the texture format specified. If no conversion could be performed, returns DXGI_FORMAT_UNKNOWN.
+	DXGI_FORMAT TextureFormatToDXGIFormat(const TextureFormat& texture_format){
+
+		switch (texture_format){
+
+		case TextureFormat::RGBA_HALF:
+
+			return DXGI_FORMAT_R16G16B16A16_FLOAT;
+
+		default:
+			
+			return DXGI_FORMAT_UNKNOWN;
+
+		}
+
+	}
+
 }
 
 ////////////////////////////// TEXTURE 2D //////////////////////////////////////////
@@ -97,7 +116,7 @@ void DX11Texture2D::UpdateDescription(const D3D11_TEXTURE2D_DESC& description){
 
 ////////////////////////////// GP TEXTURE 2D ////////////////////////////////////////
 
-DX11GPTexture2D::DX11GPTexture2D(const FromDescription& args){
+DX11GPTexture2D::DX11GPTexture2D(unsigned int width, unsigned int height, DXGI_FORMAT format, unsigned int mips){
 
 	ID3D11UnorderedAccessView* uav;
 	ID3D11ShaderResourceView* srv;
@@ -105,12 +124,12 @@ DX11GPTexture2D::DX11GPTexture2D(const FromDescription& args){
 	auto&& device = *DX11Graphics::GetInstance().GetDevice();
 
 	THROW_ON_FAIL(::MakeUnorderedTexture(device,		
-										 args.width,
-										 args.height,
-										 DXGI_FORMAT_UNKNOWN,
+										 width,
+										 height,
+										 format,
 										 &uav,
 										 &srv,
-										 false));
+										 mips));
 
 	texture_ = new DX11Texture2D(COMMove(&srv));
 
