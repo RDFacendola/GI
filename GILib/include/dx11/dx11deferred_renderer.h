@@ -13,28 +13,17 @@
 #include "dx11material.h"
 #include "dx11buffer.h"
 #include "buffer.h"
-#include "dx11gpgpu.h"
 
 
 namespace gi_lib{
 
 	namespace dx11{
 
-		/// \brief Structure of the per-object constant buffer passed to the vertex shader.
-		struct VSPerObjectBuffer{
+		/// \brief Structure of the per-object constant buffer.
+		struct PerObjectBuffer{
 
-			Matrix4f world_view_proj;		/// \brief World * View * Projection matrix.
-			Matrix4f world;					/// \brief World matrix.
-
-		};
-
-		/// \brief Structure of a single element of the point light array passed to the light shader.
-		struct CSPointLight{
-
-			Vector4f position_ws;			/// \brief Position of the light in world space.
-			Vector4f color;					/// \brief Color of the point light.
-			float linear_decay;				/// \brief Linear decay of the light, relative to the distance between the light and the surface.
-			float square_decay;				/// \brief Squared decay of the light, relative to the squared distance between the light to the surface.
+			Matrix4f gWorldViewProj;		// World * View * Projection matrix.
+			Matrix4f gWorld;				// World matrix.
 
 		};
 
@@ -76,7 +65,7 @@ namespace gi_lib{
 
 			static const Tag kPerObjectTag;										///< \brief Tag associated to the per-object constant buffer.
 
-			ObjectPtr<StructuredBuffer<VSPerObjectBuffer>> per_object_cbuffer_;	///< \brief Constant buffer containing the per-object constants used by the vertex shader.
+			ObjectPtr<StructuredBuffer<PerObjectBuffer>> per_object_cbuffer_;	///< \brief Constant buffer containing the per-object constants used by the vertex shader.
 
 			/// \brief Setup the material variables and resources.
 			void Setup();											
@@ -123,41 +112,11 @@ namespace gi_lib{
 			/// \param view_projection_matrix View projection matrix used to transform the nodes in projection space.
 			void DrawNodes(const vector<VolumeComponent*>& nodes, const Matrix4f& view_projection_matrix);
 
-			void ComputeLighting(unsigned int width, unsigned int height);
-
-			ObjectPtr<DX11RenderTarget> gbuffer_;						///< \brief GBuffer.
-
-			// Lighting objects
-
-			ObjectPtr<DX11GPTexture2D> light_buffer_;					///< \brief Light buffer.
-
-			ObjectPtr<DX11StructuredArray> point_lights_;				///< \brief Structured array containing the point lights of the scene.
-
-			ObjectPtr<DX11Computation> light_shader_;					///< \brief Compute shader used to accumulate the light on the light buffer.
-
-			static const Tag kAlbedoTag;								///< \brief Tag associated to the albedo surface of the GBuffer.
-
-			static const Tag kNormalShininessTag;						///< \brief Tag associated to the normal and shininess surface of the GBuffer.
-
-			static const Tag kPointLightsTag;							///< \brief Tag associated to the array containing the point lights.
-
-			static const Tag kLightBufferTag;							///< \brief Tag associated to the target lighting buffer.
-
-			// Rendering objects
-
-			COMPtr<ID3D11DeviceContext> immediate_context_;				///< \brief Immediate rendering context.
-
-			COMPtr<ID3D11DepthStencilState> depth_state_;				///< \brief Depth-stencil buffer state.
-
-			COMPtr<ID3D11BlendState> blend_state_;						///< \brief Output merger blending state.
-
-			COMPtr<ID3D11RasterizerState> rasterizer_state_;			///< \brief Rasterizer state.
-
-
-			////////////////// REFACTOR BELOW ////////////////
-
 
 			void SetupLights();
+
+
+			void ComputeLighting(unsigned int width, unsigned int height);
 
 			/// \brief Starts the post process stage.
 			void StartPostProcess();
@@ -174,10 +133,28 @@ namespace gi_lib{
 			/// \param destination Destination render target.
 			void ToneMap(ObjectPtr<ITexture2D>& source, ObjectPtr<IGPTexture2D>& destination);
 
+			// Render context
+
+			COMPtr<ID3D11DeviceContext> immediate_context_;				///< \brief Immediate rendering context.
+
+			COMPtr<ID3D11DepthStencilState> depth_state_;				///< \brief Depth-stencil buffer state.
+
+			COMPtr<ID3D11BlendState> blend_state_;						///< \brief Output merger blending state.
+
+			COMPtr<ID3D11RasterizerState> rasterizer_state_;			///< \brief Rasterizer state.
+
 			// Lights
-			
+
+			ObjectPtr<DX11StructuredArray> light_array_;				///< \brief Array containing the lights.
+
 			// Deferred resources
-			
+
+			ObjectPtr<DX11RenderTarget> gbuffer_;						///< \brief GBuffer.
+
+			ObjectPtr<DX11RenderTarget> light_buffer_;					///< \brief Light buffer.
+
+			COMPtr<ID3D11ComputeShader> light_cs_;						///< \brief DELETE ME
+
 			COMPtr<ID3D11DepthStencilState> disable_depth_test_;		///< \brief Used to disable the depth testing.
 			
 			// Post process - Tonemapping
