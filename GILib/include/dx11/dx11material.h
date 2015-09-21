@@ -57,11 +57,9 @@ namespace gi_lib{
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state) override;
 
-		private:
+			virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) override;
 
-			virtual bool SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) override;
-
-			virtual bool SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) override;
+			virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) override;
 
 			unique_ptr<ShaderStateComposite> shader_composite_;		///< \brief Collection of shaders. Vertex and pixel shaders are compulsory.
 
@@ -110,14 +108,14 @@ namespace gi_lib{
 
 		}
 
-		inline bool DX11Material::SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer){
+		inline bool DX11Material::SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer){
 
 			return shader_composite_->SetConstantBuffer(tag,
 														resource_cast(structured_buffer));
 
 		}
 
-		inline bool DX11Material::SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array){
+		inline bool DX11Material::SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array){
 
 			return shader_composite_->SetShaderResource(tag,
 														resource_cast(structured_array));

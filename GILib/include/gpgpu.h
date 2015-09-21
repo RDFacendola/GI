@@ -78,22 +78,13 @@ namespace gi_lib{
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D) = 0;
 
-		/// \brief Execute the computation on the GPU.
-		/// \param x Threads to dispatch along the X-axis.
-		/// \param y Threads to dispatch along the Y-axis.
-		/// \param z Threads to dispatch along the Z-axis.
-		/// \remarks The total amount of dispatched threads is x*y*z.
-		virtual void Dispatch(unsigned int x, unsigned int y, unsigned int z) = 0;
-
-	private:
-
 		/// \brief Set a structure resource as an input for the computation.
 		/// The GPU may only read from the specified structure.
 		/// \param tag Tag of the input structure to set.
 		/// \param structured_buffer Pointer to the structured buffer to bind.
 		/// \param type Concrete type of the buffer.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		virtual bool SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) = 0;
+		virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) = 0;
 
 		/// \brief Set an array resource as an input for the computation.
 		/// The GPU may only read from the specified array.
@@ -101,7 +92,7 @@ namespace gi_lib{
 		/// \param structured_array Pointer to the structured array to bind.
 		/// \param type Concrete type of the array elements.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		virtual bool SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) = 0;
+		virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) = 0;
 
 	};
 
@@ -110,16 +101,16 @@ namespace gi_lib{
 	template <typename TType>
 	inline bool IComputation::SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer){
 
-		return SetStructuredBuffer(tag,
-								   structured_buffer);
+		return SetInput(tag,
+						structured_buffer->GetBuffer());
 
 	}
 
 	template <typename TElement>
 	inline bool IComputation::SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array){
 
-		return SetStructuredArray(tag,
-								  structured_array);
+		return SetInput(tag,
+						structured_array->GetBuffer());
 
 	}
 

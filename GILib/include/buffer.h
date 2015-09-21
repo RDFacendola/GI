@@ -53,12 +53,30 @@ namespace gi_lib{
 				
 	};
 
+	/// \brief Represents a low-level buffer that behaves like a strongly-typed array of elements.
+	/// This array can be written by a CPU and read by a GPU.
+	/// \author Raffaele D. Facendola
+	class IStructuredArray : public IHardwareBuffer{
+
+	public:
+
+		/// \brief Virtual destructor.
+		virtual ~IStructuredArray(){}
+
+		/// \brief Get the number of elements in the array.
+		virtual size_t GetCount() const = 0;
+
+		/// \brief Get the size of each element in bytes.
+		virtual size_t GetElementSize() const = 0;
+
+	};
+
 	/// \brief Represents a low-level buffer that behaves like a strongly-typed structure.
 	/// The buffer can be written by the CPU and read by the GPU.
 	/// \tparam TType Concrete type of the buffer.
 	/// \author Raffaele D. Facendola
 	template <typename TType>
-	class StructuredBuffer : public IStructuredBuffer{
+	class StructuredBuffer : public IResource{
 
 	public:
 
@@ -79,13 +97,13 @@ namespace gi_lib{
 		/// \remarks Reading from the returned reference results in undefined behavior.
 		TType& operator*();
 
-		const ObjectPtr<IStructuredBuffer>& Unbox() const;
+		const ObjectPtr<IStructuredBuffer>& GetBuffer() const;
 
-		ObjectPtr<IStructuredBuffer>& Unbox();
+		ObjectPtr<IStructuredBuffer>& GetBuffer();
 
-		virtual void* Lock() override;
+		virtual void* Lock();
 
-		virtual void Unlock() override;
+		virtual void Unlock();
 
 		virtual size_t GetSize() const override;
 
@@ -97,28 +115,10 @@ namespace gi_lib{
 
 	/// \brief Represents a low-level buffer that behaves like a strongly-typed array of elements.
 	/// This array can be written by a CPU and read by a GPU.
-	/// \author Raffaele D. Facendola
-	class IStructuredArray : public IHardwareBuffer{
-
-	public:
-
-		/// \brief Virtual destructor.
-		virtual ~IStructuredArray(){}
-
-		/// \brief Get the number of elements in the array.
-		virtual size_t GetCount() = 0;
-
-		/// \brief Get the size of each element in bytes.
-		virtual size_t GetElementSize() = 0;
-
-	};
-
-	/// \brief Represents a low-level buffer that behaves like a strongly-typed array of elements.
-	/// This array can be written by a CPU and read by a GPU.
 	/// \tparam TElement Type of the elements stored within the array.
 	/// \author Raffaele D. Facendola
 	template <typename TElement>
-	class StructuredArray : public IStructuredArray{
+	class StructuredArray : public IResource{
 
 	public:
 
@@ -136,17 +136,17 @@ namespace gi_lib{
 		/// \remarks Reading from the returned reference results in undefined behavior.
 		TElement& operator[](size_t index);
 
-		const ObjectPtr<IStructuredArray>& Unbox() const;
+		const ObjectPtr<IStructuredArray>& GetBuffer() const;
 
-		ObjectPtr<IStructuredArray>& Unbox();
+		ObjectPtr<IStructuredArray>& GetBuffer();
 
-		virtual size_t GetCount() override;
+		virtual size_t GetCount() const;
 
-		virtual size_t GetElementSize() override;
+		virtual size_t GetElementSize() const;
 
-		virtual void* Lock() override;
+		virtual void* Lock();
 
-		virtual void Unlock() override;
+		virtual void Unlock();
 
 		virtual size_t GetSize() const override;
 
@@ -191,14 +191,14 @@ namespace gi_lib{
 	}
 
 	template <typename TType>
-	ObjectPtr<IStructuredBuffer>& StructuredBuffer<TType>::Unbox(){
+	ObjectPtr<IStructuredBuffer>& StructuredBuffer<TType>::GetBuffer(){
 
 		return raw_buffer_;
 
 	}
 
 	template <typename TType>
-	const ObjectPtr<IStructuredBuffer>& StructuredBuffer<TType>::Unbox() const{
+	const ObjectPtr<IStructuredBuffer>& StructuredBuffer<TType>::GetBuffer() const{
 
 		return raw_buffer_;
 
@@ -226,14 +226,14 @@ namespace gi_lib{
 	}
 
 	template <typename TElement>
-	inline size_t StructuredArray<TElement>::GetCount(){
+	inline size_t StructuredArray<TElement>::GetCount() const{
 
 		return raw_array_->GetCount();
 
 	}
 
 	template <typename TElement>
-	inline size_t StructuredArray<TElement>::GetElementSize(){
+	inline size_t StructuredArray<TElement>::GetElementSize() const{
 
 		return raw_array_->GetElementSize();
 
@@ -261,14 +261,14 @@ namespace gi_lib{
 	}
 
 	template <typename TType>
-	ObjectPtr<IStructuredArray>& StructuredArray<TType>::Unbox(){
+	ObjectPtr<IStructuredArray>& StructuredArray<TType>::GetBuffer(){
 
 		return *raw_array_;
 
 	}
 
 	template <typename TType>
-	const ObjectPtr<IStructuredArray>& StructuredArray<TType>::Unbox() const{
+	const ObjectPtr<IStructuredArray>& StructuredArray<TType>::GetBuffer() const{
 
 		return *raw_array_;
 

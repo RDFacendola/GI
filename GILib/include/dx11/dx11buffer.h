@@ -143,9 +143,9 @@ namespace gi_lib{
 
 			virtual void Unlock() override;
 
-			virtual size_t GetCount() override;
+			virtual size_t GetCount() const override;
 			
-			virtual size_t GetElementSize() override;
+			virtual size_t GetElementSize() const override;
 
 			virtual size_t GetSize() const override;
 
@@ -325,13 +325,13 @@ namespace gi_lib{
 
 		}
 
-		inline size_t DX11StructuredArray::GetCount(){
+		inline size_t DX11StructuredArray::GetCount() const{
 
 			return element_count_;
 
 		}
 
-		inline size_t DX11StructuredArray::GetElementSize(){
+		inline size_t DX11StructuredArray::GetElementSize() const{
 
 			return element_size_;
 

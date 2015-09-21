@@ -35,6 +35,9 @@ namespace gi_lib{
 
 		public:
 
+			using IComputation::SetInput;
+			using IComputation::SetOutput;
+
 			DX11Computation(const CompileFromFile& arguments);
 
 			/// \brief No copy-constructor.
@@ -45,9 +48,14 @@ namespace gi_lib{
 			/// \brief No assignment operator.
 			DX11Computation& operator=(const DX11Computation&) = delete;
 
-			virtual void Dispatch(unsigned int x, unsigned int y, unsigned int z) override;
-						
 			virtual size_t GetSize() const override;
+						
+			/// \brief Execute the computation on the GPU.
+			/// \param x Threads to dispatch along the X-axis.
+			/// \param y Threads to dispatch along the Y-axis.
+			/// \param z Threads to dispatch along the Z-axis.
+			/// \remarks The total amount of dispatched threads is x*y*z.
+			virtual void Dispatch(ID3D11DeviceContext& context, unsigned int x, unsigned int y, unsigned int z);
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D) override;
 
@@ -55,14 +63,14 @@ namespace gi_lib{
 
 			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D) override;
 
-		private:
+			virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) override;
 
-			virtual bool SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) override;
-
-			virtual bool SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) override;
+			virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) override;
 
 			unique_ptr<ShaderStateComposite> shader_composite_;						///< \brief Collection of shaders. This class holds just 1 compute shader.
 			
+			Vector3i group_size_;													///< \brief Size of each thread group, as defined inside the compute shader.
+
 		};
 		
 		///////////////////////////////// DX11 COMPUTATION ///////////////////////////////////
@@ -90,13 +98,14 @@ namespace gi_lib{
 
 		}
 
-		inline bool DX11Computation::SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer){
+		inline bool DX11Computation::SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer){
 	
 			return shader_composite_->SetConstantBuffer(tag,
 														resource_cast(structured_buffer));
 	
 		}
-		inline bool DX11Computation::SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array){
+		
+		inline bool DX11Computation::SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array){
 
 			return shader_composite_->SetShaderResource(tag,
 														resource_cast(structured_array));

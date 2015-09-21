@@ -81,15 +81,13 @@ namespace gi_lib{
 		template <typename TElement>
 		bool SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array);
 
-	private:
-
 		/// \brief Set a structure resource as an input for the material.
 		/// The GPU may only read from the specified structure.
 		/// \param tag Tag of the input structure to set.
 		/// \param structured_buffer Pointer to the structured buffer to bind.
 		/// \param type Concrete type of the buffer.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		virtual bool SetStructuredBuffer(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) = 0;
+		virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) = 0;
 
 		/// \brief Set an array resource as an input for the material.
 		/// The GPU may only read from the specified array.
@@ -97,7 +95,7 @@ namespace gi_lib{
 		/// \param structured_array Pointer to the structured array to bind.
 		/// \param type Concrete type of the array elements.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		virtual bool SetStructuredArray(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) = 0;
+		virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) = 0;
 		
 	};
 
@@ -114,16 +112,16 @@ namespace gi_lib{
 	template <typename TType>
 	inline bool IMaterial::SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer){
 
-		return SetStructuredBuffer(tag,
-								   structured_buffer->Unbox());
+		return SetInput(tag,
+								   structured_buffer->GetBuffer());
 
 	}
 
 	template <typename TElement>
 	inline bool IMaterial::SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array){
 
-		return SetStructuredArray(tag,
-								  structured_array->Unbox());
+		return SetInput(tag,
+								  structured_array->GetBuffer());
 
 	}
 
