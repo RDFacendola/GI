@@ -179,7 +179,7 @@ HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width,
 
 }
 
-HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, bool mip_chain){
+HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, unsigned int mips){
 
 	ID3D11Texture2D* texture = nullptr;
 	ID3D11UnorderedAccessView* uav = nullptr;
@@ -202,11 +202,11 @@ HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int wi
 	desc.Format = format;
 	desc.Width = width;
 	desc.Height = height;
-	desc.MipLevels = mip_chain ? 0 : 1;
+	desc.MipLevels = mips;
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
 	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.MiscFlags = mip_chain ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
+	desc.MiscFlags = 0;
 
 	RETURN_ON_FAIL(device.CreateTexture2D(&desc,
 										  nullptr,

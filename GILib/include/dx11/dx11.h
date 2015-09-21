@@ -148,8 +148,8 @@ namespace gi_lib{
 		/// \param format Format of the surface.
 		/// \param unordered_access_view Pointer to the unordered access view. Optional.
 		/// \param shader_resource_view Pointer to the shader resource view. Optional.
-		/// \param mip_chain Whether to generate a full MIP-map chain or not.
-		HRESULT MakeUnorderedTexture(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, bool mip_chain = false);
+		/// \param mips Number of mip maps to generate. If 0 is passed, the full chain is created.
+		HRESULT MakeUnorderedTexture(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, unsigned int mips = 1);
 
 		/// \brief Create a vertex buffer.
 		/// \tparam TVertexFormat Format of the vertex.
