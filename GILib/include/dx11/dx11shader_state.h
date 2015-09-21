@@ -254,6 +254,12 @@ namespace gi_lib{
 			template <typename TShader>
 			bool AddShader(const std::string hlsl, const std::string file_name);
 
+			/// \brief Get the amount of shader inside the composite.
+			size_t GetShaderCount() const;
+
+			/// \brief Get a reference to a particular shader inside the composite
+			const BaseShaderState& GetShaderState(size_t index) const;
+
 			/// \brief Destroy all the shader states stored inside this instance.
 			void Clear();
 
@@ -633,6 +639,18 @@ namespace gi_lib{
 				shader->Unbind(context);
 
 			}
+
+		}
+
+		inline size_t ShaderStateComposite::GetShaderCount() const{
+
+			return shaders_.size();
+
+		}
+
+		inline const BaseShaderState& ShaderStateComposite::GetShaderState(size_t index) const{
+
+			return *shaders_[index];
 
 		}
 
