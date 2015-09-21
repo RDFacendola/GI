@@ -19,22 +19,6 @@ using namespace ::gi_lib::dx11;
 using namespace ::gi_lib::windows;
 
 namespace{
-
-	struct Light{
-
-		float position[4];
-
-	};
-
-	struct PerObjectVS{
-
-		float gWorldViewProj[16];
-		float gWorldView[16];
-		float gWorld[16];
-		float gView[16];
-		float gEye[4];
-
-	};
 	
 	/// \brief Draw a mesh subset using the given context.
 	void DrawIndexedSubset(ID3D11DeviceContext& context, const MeshSubset& subset){
@@ -121,8 +105,8 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix
 
 	// Update
 
-	buffer.gWorld = world.matrix();
-	buffer.gWorldViewProj = (view_projection * world).matrix();
+	buffer.world = world.matrix();
+	buffer.world_view_proj = (view_projection * world).matrix();
 
 	// Unlock
 
@@ -134,13 +118,18 @@ void DX11DeferredRendererMaterial::Setup(){
 
 	auto& resources = DX11Graphics::GetInstance().GetResources();
 
-	per_object_cbuffer_ = new StructuredBuffer<PerObjectBuffer>(resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({sizeof(PerObjectBuffer)}));
+	per_object_cbuffer_ = new StructuredBuffer<VSPerObjectBuffer>(resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({sizeof(VSPerObjectBuffer)}));
 
 	material_->SetInput(kPerObjectTag, per_object_cbuffer_);
 
 }
 
 ///////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////
+
+const Tag DX11TiledDeferredRenderer::kAlbedoTag = "gAlbedo";
+const Tag DX11TiledDeferredRenderer::kNormalShininessTag = "gNormalShininess";
+const Tag DX11TiledDeferredRenderer::kLightBufferTag = "gLightAccumulation";
+const Tag DX11TiledDeferredRenderer::kPointLightsTag = "PerObject";
 
 DX11TiledDeferredRenderer::DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments) :
 TiledDeferredRenderer(arguments.scene){
@@ -235,33 +224,18 @@ TiledDeferredRenderer(arguments.scene){
 
 	rasterizer_state_ << &rasterizer_state;
 	
+	// Lighting setup
+
+	auto&& app = Application::GetInstance();
+
+	light_shader_ = DX11Resources::GetInstance().Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\lighting.hlsl" });
+
+	point_lights_ = new DX11StructuredArray(32, sizeof(CSPointLight));
+
 	// TODO: Remove this
-
-	light_array_ = new DX11StructuredArray(32, sizeof(Light));
-
+	
 	InitializeToneMap();
-
-	auto& file_system = FileSystem::GetInstance();
-
-	auto file_name = Application::GetInstance().GetDirectory() + L"Data\\cstest.hlsl";
-
-	string code = to_string(file_system.Read(file_name));
-
-	ShaderReflection reflection;
-
-	ID3D11ComputeShader* cs;
-
-	wstring errors;
-
-	THROW_ON_FAIL(MakeShader<ID3D11ComputeShader>(device, 
-												  code, 
-												  to_string(file_name), 
-												  &cs, 
-												  &reflection, 
-												  &errors));
-
-	light_cs_ << &cs;
-
+	
 }
 
 DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){}
@@ -279,21 +253,19 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<IRenderTarget> render_target){
 
 		DrawGBuffer(width, height);										// Scene -> GBuffer
 		
-		//ComputeLighting(width, height);								// Scene, GBuffer, DepthBuffer -> LightBuffer
+		ComputeLighting(width, height);									// Scene, GBuffer, DepthBuffer -> LightBuffer
 
-		//StartPostProcess();
-
-		/*ToneMap((*light_buffer_)[0],			// LightBuffer -> Output
+		/*ToneMap((*light_buffer_)[0],									// LightBuffer -> Output
 				  *dx11_render_target); */
 
 	}
 
 	// Cleanup
-	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
-
 	immediate_context_->ClearState();
 	
 }
+
+// GBuffer
 
 void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int height){
 
@@ -315,6 +287,8 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 	// Cleanup
 
 	gbuffer_->Unbind(*immediate_context_);
+
+	// TODO: Unbind the shader resource slots!!!
 
 }
 
@@ -410,86 +384,67 @@ void DX11TiledDeferredRenderer::DrawNodes(const vector<VolumeComponent*>& nodes,
 
 }
 
+// Lighting
 
 void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int height){
 
-	// Lazy initialization of the LightBuffer
+	// Lazy initialization and resize of the light buffer
 
-	if (!light_buffer_){
+	if (!light_buffer_ ||
+		light_buffer_->GetWidth() != width ||
+		light_buffer_->GetHeight() != height){
 
-		THROW(L"MAKE THIS A GP TEXTURE, NOT A RENDER TARGET");
-
-		light_buffer_ = new DX11RenderTarget(width,
-											 height,
-											 { DXGI_FORMAT_R16G16B16A16_FLOAT });
-
+		light_buffer_ = new DX11GPTexture2D(width, 
+											height, 
+											DXGI_FORMAT_R16G16B16A16_FLOAT);
+		
 	}
-	else{
 
-		light_buffer_->Resize(width,
-							  height);
-
-	}
-	/*
-	immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
-
-	ID3D11ShaderResourceView* srv[] = { (*gbuffer_)[0],
-										(*gbuffer_)[1] };
-
-	ID3D11UnorderedAccessView* uav[] = { ObjectPtr<DX11ResourceView>((*light_buffer_)[0]->GetView())->GetUnorderedAccessView() };
-
-	immediate_context_->CSSetShader(light_cs_.get(),
-									nullptr,
-									0);
-
-	immediate_context_->CSSetShaderResources(0, 2, &srv[0]);
-	immediate_context_->CSSetUnorderedAccessViews(0, 1, &uav[0], nullptr);
-
-
-	unsigned int dispatchWidth = (width + 15) / 16;
-	unsigned int dispatchHeight = (height + 15) / 16;
-
-	immediate_context_->Dispatch(dispatchWidth, 
-								 dispatchHeight, 
-								 1);
-
-	uav[0] = nullptr;
-
-	immediate_context_->CSSetUnorderedAccessViews(0, 1, &uav[0], nullptr);
-	*/
-	return;
-
-	// Set up LightBuffer render targets
+	//TODO: Perform a light setup 
 	
-	Color color;
+	//light_array_ = new DX11StructuredArray(32, sizeof(Light));
 
-	ZeroMemory(&color, sizeof(color));
+	//Light* light_ptr = light_array_->Map<Light>(*immediate_context_);
 
-	light_buffer_->ClearTargets(*immediate_context_,
-								color);
+	//for (size_t light_index = 0; light_index < light_array_->GetElementCount(); ++light_index){
 
-	light_buffer_->Bind(*immediate_context_);
+	//	light_ptr->position[0] = light_index * 250.0f - light_array_->GetElementCount() * 125.0f;
+	//	light_ptr->position[1] = std::cosf(static_cast<float>(light_index)) * 50.0f + 75.0f;
+	//	light_ptr->position[2] = 0.0f;
+	//	light_ptr->position[3] = 1.0f;
 
-	// 
+	//	++light_ptr;
 
-	// TODO: Perform an actual light setup and remove the fake lights.
-	/*
-	Light* light_ptr = light_array_->Map<Light>(*immediate_context_);
+	//}
 
-	for (size_t light_index = 0; light_index < light_array_->GetElementCount(); ++light_index){
+	//light_array_->Unmap(*immediate_context_);
 
-		light_ptr->position[0] = light_index * 250.0f - light_array_->GetElementCount() * 125.0f;
-		light_ptr->position[1] = std::cosf(static_cast<float>(light_index)) * 50.0f + 75.0f;
-		light_ptr->position[2] = 0.0f;
-		light_ptr->position[3] = 1.0f;
+	// Set light shader input and output
+		
+	light_shader_->SetOutput(kLightBufferTag, 
+							 ObjectPtr<IGPTexture2D>(light_buffer_));
 
-		++light_ptr;
+	light_shader_->SetInput(kAlbedoTag, 
+							(*gbuffer_)[0]);
 
-	}
+	light_shader_->SetInput(kNormalShininessTag, 
+							(*gbuffer_)[1]);
+	
+	light_shader_->SetInput(kPointLightsTag,
+ 						    ObjectPtr<IStructuredArray>(point_lights_));
 
-	light_array_->Unmap(*immediate_context_);
-	*/
+	// Actual light computation
+
+	light_shader_->Dispatch(*immediate_context_,			// Dispatch one thread for each GBuffer's pixel
+							width,
+							height,
+							1);
+
+	// Clear the compute shader resources bound to the pipeline!
+		
 }
+
+// Tonemapping
 
 void DX11TiledDeferredRenderer::StartPostProcess(){
 

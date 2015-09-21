@@ -51,7 +51,7 @@ namespace gi_lib{
 
 			/// \brief Set the matrices needed to transform the object.
 			void SetMatrix(const Affine3f& world, const Matrix4f& view_projection);
-			
+
 			/// \brief Bind the material to the pipeline.
 			void Bind(ID3D11DeviceContext& context);
 
@@ -68,7 +68,7 @@ namespace gi_lib{
 			ObjectPtr<StructuredBuffer<PerObjectBuffer>> per_object_cbuffer_;	///< \brief Constant buffer containing the per-object constants used by the vertex shader.
 
 			/// \brief Setup the material variables and resources.
-			void Setup();											
+			void Setup();
 
 			ObjectPtr<DX11Material> material_;							///< \brief DirectX11 material.
 
@@ -120,7 +120,7 @@ namespace gi_lib{
 
 			/// \brief Starts the post process stage.
 			void StartPostProcess();
-			
+
 			//void InitializeBloom();
 
 			void Bloom(ObjectPtr<ITexture2D>& source, ObjectPtr<IGPTexture2D>& destination);
@@ -156,7 +156,7 @@ namespace gi_lib{
 			COMPtr<ID3D11ComputeShader> light_cs_;						///< \brief DELETE ME
 
 			COMPtr<ID3D11DepthStencilState> disable_depth_test_;		///< \brief Used to disable the depth testing.
-			
+
 			// Post process - Tonemapping
 
 			ObjectPtr<DX11Material> tonemapper_;						///< \brief Material used to perform tonemapping.
@@ -166,9 +166,9 @@ namespace gi_lib{
 			Tag tonemap_vignette_;
 
 			Tag tonemap_source_;
-						
+
 		};
-		
+
 		/////////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////////
 
 		INSTANTIABLE(DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile);
@@ -179,7 +179,7 @@ namespace gi_lib{
 			return ObjectPtr<IMaterial>(material_);
 
 		}
-		
+
 		inline ObjectPtr<const IMaterial> gi_lib::dx11::DX11DeferredRendererMaterial::GetMaterial() const{
 
 			return ObjectPtr<const IMaterial>(material_);
@@ -189,8 +189,8 @@ namespace gi_lib{
 		inline void gi_lib::dx11::DX11DeferredRendererMaterial::Bind(ID3D11DeviceContext& context){
 
 			material_->Bind(context);
-			
-		}	
+
+		}
 
 		inline size_t gi_lib::dx11::DX11DeferredRendererMaterial::GetSize() const{
 
