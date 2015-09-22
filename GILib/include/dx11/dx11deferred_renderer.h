@@ -12,6 +12,7 @@
 #include "dx11graphics.h"
 #include "dx11material.h"
 #include "dx11buffer.h"
+#include "dx11gpgpu.h"
 #include "buffer.h"
 
 
@@ -20,10 +21,23 @@ namespace gi_lib{
 	namespace dx11{
 
 		/// \brief Structure of the per-object constant buffer.
-		struct PerObjectBuffer{
+		struct VSPerObjectBuffer {
 
-			Matrix4f gWorldViewProj;		// World * View * Projection matrix.
-			Matrix4f gWorld;				// World matrix.
+			Matrix4f world_view_proj;		// World * View * Projection matrix.
+
+			Matrix4f world;					// World matrix.
+
+		};
+
+		struct CSPointLight {
+
+			Vector4f position;
+
+			Vector4f color;
+
+			float linear_decay;
+
+			float square_decay;
 
 		};
 
@@ -65,7 +79,7 @@ namespace gi_lib{
 
 			static const Tag kPerObjectTag;										///< \brief Tag associated to the per-object constant buffer.
 
-			ObjectPtr<StructuredBuffer<PerObjectBuffer>> per_object_cbuffer_;	///< \brief Constant buffer containing the per-object constants used by the vertex shader.
+			ObjectPtr<StructuredBuffer<VSPerObjectBuffer>> per_object_cbuffer_;	///< \brief Constant buffer containing the per-object constants used by the vertex shader.
 
 			/// \brief Setup the material variables and resources.
 			void Setup();
@@ -143,19 +157,26 @@ namespace gi_lib{
 
 			COMPtr<ID3D11RasterizerState> rasterizer_state_;			///< \brief Rasterizer state.
 
-			// Lights
+			COMPtr<ID3D11DepthStencilState> disable_depth_test_;
 
-			ObjectPtr<DX11StructuredArray> light_array_;				///< \brief Array containing the lights.
-
-			// Deferred resources
-
+			// GBuffer
 			ObjectPtr<DX11RenderTarget> gbuffer_;						///< \brief GBuffer.
 
-			ObjectPtr<DX11RenderTarget> light_buffer_;					///< \brief Light buffer.
+			// Light accumulation
 
-			COMPtr<ID3D11ComputeShader> light_cs_;						///< \brief DELETE ME
+			static const Tag kAlbedoTag;
 
-			COMPtr<ID3D11DepthStencilState> disable_depth_test_;		///< \brief Used to disable the depth testing.
+			static const Tag kNormalShininessTag;
+
+			static const Tag kLightBufferTag;
+
+			static const Tag kPointLightsTag;
+
+			ObjectPtr<IGPTexture2D> light_buffer_;						///< \brief Light buffer.
+
+			ObjectPtr<DX11StructuredArray> point_lights_;				///< \brief Array containing the lights.
+
+			ObjectPtr<DX11Computation> light_shader_;
 
 			// Post process - Tonemapping
 

@@ -4,7 +4,7 @@ using namespace gi_lib;
 
 //////////////////////////////////// POINT LIGHT COMPONENT ////////////////////////////////////
 
-const Color PointLightComponent::kDefaultLightColor = Color{ { 1.0f, 1.0f, 1.0f, 1.0f } };
+const Color PointLightComponent::kDefaultLightColor = Color( 1.0f, 1.0f, 1.0f, 1.0f );
 
 const float PointLightComponent::kDefaultLinearDecay = 0.0f;
 const float PointLightComponent::kDefaultSquareDecay = 1.0f / (4.0f * Math::kPi);			
@@ -35,7 +35,7 @@ void PointLightComponent::Finalize(){
 
 //////////////////////////////////// DIRECTIONAL LIGHT COMPONENT ////////////////////////////////////
 
-const Color DirectionalLightComponent::kDefaultLightColor = Color{ { 1.0f, 1.0f, 1.0f, 1.0f } };
+const Color DirectionalLightComponent::kDefaultLightColor = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
 const float DirectionalLightComponent::kDefaultIntensity = 1.0f;
 

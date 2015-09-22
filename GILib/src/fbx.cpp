@@ -569,7 +569,8 @@ namespace{
 			bundle.indices.assign(polygon_vertices,
 								  polygon_vertices + polygon_vertex_count);
 
-			bundle.subsets.push_back(MeshSubset{ 0, polygon_vertex_count });
+			bundle.subsets.push_back(MeshSubset{ 0, 
+												 static_cast<size_t>(polygon_vertex_count) });
 
 		}
 
