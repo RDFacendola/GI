@@ -86,11 +86,15 @@ namespace gi_lib{
 
 			shader_composite_->Bind(context);
 
+			context.IASetInputLayout(input_layout_.Get());
+
 		}
 
 		inline void DX11Material::Unbind(ID3D11DeviceContext& context){
 
 			shader_composite_->Unbind(context);
+
+			context.IASetInputLayout(nullptr);
 
 		}
 
