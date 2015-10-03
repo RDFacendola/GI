@@ -113,7 +113,7 @@ void GILogic::Initialize(Window& window){
 	
 	auto& app = Application::GetInstance();
 
-	fbx_importer.ImportScene(to_string(app.GetDirectory()) + "Data\\oldsponza.fbx",
+	fbx_importer.ImportScene(to_string(app.GetDirectory()) + "Data\\assets\\oldsponza.fbx",
 							 *root);
 
 	

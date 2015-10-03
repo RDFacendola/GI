@@ -228,7 +228,9 @@ TiledDeferredRenderer(arguments.scene){
 
 	auto&& app = Application::GetInstance();
 
-	light_shader_ = DX11Resources::GetInstance().Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\lighting.hlsl" });
+	// Lighting setup
+
+	light_shader_ = DX11Resources::GetInstance().Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
 
 	point_lights_ = new DX11StructuredArray(32, sizeof(CSPointLight));
 
