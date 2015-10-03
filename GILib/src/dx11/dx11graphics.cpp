@@ -7,6 +7,12 @@
 #include <dxgi.h>
 #include <map>
 
+#ifdef _DEBUG
+
+#include <dxgidebug.h>
+
+#endif
+
 #include "core.h"
 #include "scene.h"
 #include "exceptions.h"
@@ -521,6 +527,17 @@ DX11Graphics::DX11Graphics(): Graphics(){
 	// Cleanup
 
 	guard.Dismiss();
+
+}
+
+DX11Graphics::~DX11Graphics(){
+
+#ifdef _DEBUG
+
+	IDXGIDebug::ReportLiveObjects(DXGI_DEBUG_ALL,
+								  DXGI_DEBUG_RLO_ALL);
+
+#else
 
 }
 

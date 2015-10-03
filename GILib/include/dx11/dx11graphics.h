@@ -164,6 +164,8 @@ namespace gi_lib{
 
 			DX11Graphics();
 
+			~DX11Graphics();
+
 			COMPtr<ID3D11Device> device_;
 
 			COMPtr<IDXGIFactory> factory_;
