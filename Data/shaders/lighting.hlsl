@@ -16,11 +16,11 @@ void CSMain(int3 thread_id : SV_DispatchThreadID){
 	float3 surface_normal = normalize(gNormalShininess[thread_id.xy].xyz);
 
 	float i0 = saturate(dot(float3(0, 1, 0), surface_normal)) * 10.0 +				// Sky
-			   saturate(dot(float3(0, -1, 0), surface_normal)) * 0.5f +				// Terrain diffuse
-			   saturate(dot(float3(1, 0, 0), surface_normal)) * 0.5f +
-			   saturate(dot(float3(-1, 0, 0), surface_normal)) * 0.5f +
-			   saturate(dot(float3(0, 0, 1), surface_normal)) * 0.5f +
-			   saturate(dot(float3(0, 0, -1), surface_normal)) * 0.5f;
+			   		 saturate(dot(float3(0, -1, 0), surface_normal)) * 0.5f +				// Terrain diffuse
+			   		 saturate(dot(float3(1, 0, 0), surface_normal)) * 0.5f +
+			   		 saturate(dot(float3(-1, 0, 0), surface_normal)) * 0.5f +
+			   		 saturate(dot(float3(0, 0, 1), surface_normal)) * 0.5f +
+			   		 saturate(dot(float3(0, 0, -1), surface_normal)) * 0.5f;
 
 	gLightAccumulation[thread_id.xy] = albedo * i0;
 
