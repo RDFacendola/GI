@@ -131,6 +131,11 @@ const Tag DX11TiledDeferredRenderer::kNormalShininessTag = "gNormalShininess";
 const Tag DX11TiledDeferredRenderer::kLightBufferTag = "gLightAccumulation";
 const Tag DX11TiledDeferredRenderer::kPointLightsTag = "PerObject";
 
+const Tag DX11TiledDeferredRenderer::kTonemapParamsTag = "TonemapParams";
+const Tag DX11TiledDeferredRenderer::kUnexposedParamsTag = "gUnexposed";
+const Tag DX11TiledDeferredRenderer::kExposedParamsTag = "gExposed";
+
+
 DX11TiledDeferredRenderer::DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments) :
 TiledDeferredRenderer(arguments.scene){
 
@@ -224,7 +229,7 @@ TiledDeferredRenderer(arguments.scene){
 
 	rasterizer_state_ << &rasterizer_state;
 	
-	// Lighting setup
+	// Move the stuffs below somewhere else
 
 	auto&& app = Application::GetInstance();
 
@@ -234,10 +239,21 @@ TiledDeferredRenderer(arguments.scene){
 
 	point_lights_ = new DX11StructuredArray(32, sizeof(CSPointLight));
 
-	// TODO: Remove this
+	// Tonemap setup
+
+	tonemap_shader_ = DX11Resources::GetInstance().Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\tonemap.hlsl" });
 	
-	InitializeToneMap();
-	
+	tonemap_params_ = new DX11StructuredBuffer(sizeof(TonemapParams));
+
+	// One-time setup
+	auto& params = *static_cast<TonemapParams*>(tonemap_params_->Lock());
+
+	params.vignette = 1.0f;
+	params.exposure_mul = 1.035f;
+	params.exposure_add = 0.187f;
+
+	tonemap_params_->Unlock();
+
 }
 
 DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){}
@@ -257,8 +273,7 @@ void DX11TiledDeferredRenderer::Draw(ObjectPtr<IRenderTarget> render_target){
 		
 		ComputeLighting(width, height);									// Scene, GBuffer, DepthBuffer -> LightBuffer
 
-		/*ToneMap((*light_buffer_)[0],									// LightBuffer -> Output
-				  *dx11_render_target); */
+		ComputeTonemap(width, height);									// LightBuffer -> Exposed
 
 	}
 
@@ -446,57 +461,38 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 		
 }
 
-// Tonemapping
+void DX11TiledDeferredRenderer::ComputeTonemap(unsigned int width, unsigned int height){
 
-void DX11TiledDeferredRenderer::StartPostProcess(){
+	// Lazy initialization and resize of the tonemapped image
 
-	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	if (!exposed_buffer_ ||
+		exposed_buffer_->GetWidth() != width ||
+		exposed_buffer_->GetHeight() != height){
 
-	immediate_context_->RSSetState(nullptr);
+		exposed_buffer_ = new DX11GPTexture2D(width,
+											  height,
+											  DXGI_FORMAT_R8G8B8A8_UNORM);
 
-	immediate_context_->OMSetDepthStencilState(disable_depth_test_.Get(),
-											   0);
+	}
 
-	immediate_context_->OMSetBlendState(nullptr, 0, 0xFFFFFFFF);
+	// Set tonemap shader input and output
 
-	immediate_context_->IASetVertexBuffers(0, 0, nullptr, 0, 0);
+	tonemap_shader_->SetInput(kTonemapParamsTag,
+							  ObjectPtr<IStructuredBuffer>(tonemap_params_));
 
-	immediate_context_->IASetIndexBuffer(nullptr, DXGI_FORMAT_R32_UINT, 0);
+	tonemap_shader_->SetOutput(kUnexposedParamsTag,
+							   light_buffer_);
 
-	immediate_context_->IASetInputLayout(nullptr);
+	tonemap_shader_->SetOutput(kExposedParamsTag,
+							   exposed_buffer_);	// Who's the output????
 	
-}
+	// Actual tonemap computation
 
-void DX11TiledDeferredRenderer::InitializeToneMap(){
-		
-	//tonemapper_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\tonemapping.hlsl" });
-
-	//tonemap_source_ = tonemapper_->GetResource("gHDR");
-	//tonemap_vignette_ = tonemapper_->GetParameter("gVignette");
-	//tonemap_exposure_ = tonemapper_->GetParameter("gExposure");
+	tonemap_shader_->Dispatch(*immediate_context_,			// Dispatch one thread for each GBuffer's pixel
+							  width,
+							  height,
+							  1);
 	
-}
+	// Clear the compute shader resources bound to the pipeline!
 
-void DX11TiledDeferredRenderer::ToneMap(ObjectPtr<ITexture2D>& source, ObjectPtr<IGPTexture2D>& destination){
-
-	//immediate_context_->OMSetRenderTargets(0, nullptr, nullptr);
-
-	// Update the tonemap resources
-	//tonemap_source_->Set(source_view);
-	//tonemap_vignette_->Set(5.0f);
-
-	//static Timer timer;
-
-	//tonemap_exposure_->Set(std::cosf(timer.GetTime().GetTotalSeconds()) + 1.0f);
-
-	// Bind the surfaces and the tonemapper to the context.
-
-	//destination.Bind(*immediate_context_);
-
-	//tonemapper_->Commit(*immediate_context_);
-
-	// Draw a full-screen quad
-
-	//immediate_context_->Draw(6, 0);
-	
 }

@@ -29,6 +29,17 @@ namespace gi_lib{
 
 		};
 
+		/// \brief Parameters used by the tonemapper
+		struct TonemapParams{
+
+			float vignette;					// Vignette factor.
+
+			float exposure_mul;				// Multiplicative exposure factor.
+
+			float exposure_add;				// Additive exposure factor.
+
+		};
+
 		struct CSPointLight {
 
 			Vector4f position;
@@ -132,20 +143,7 @@ namespace gi_lib{
 
 			void ComputeLighting(unsigned int width, unsigned int height);
 
-			/// \brief Starts the post process stage.
-			void StartPostProcess();
-
-			//void InitializeBloom();
-
-			void Bloom(ObjectPtr<ITexture2D>& source, ObjectPtr<IGPTexture2D>& destination);
-
-			/// \brief Initialize tonemap-related objects.
-			void InitializeToneMap();
-
-			/// \brief Perform a tonemap to the specified source surface and output the result to the destination surface.
-			/// \param source_view Shader view of the HDR surface.
-			/// \param destination Destination render target.
-			void ToneMap(ObjectPtr<ITexture2D>& source, ObjectPtr<IGPTexture2D>& destination);
+			void ComputeTonemap(unsigned int width, unsigned int height);
 
 			// Render context
 
@@ -160,33 +158,38 @@ namespace gi_lib{
 			COMPtr<ID3D11DepthStencilState> disable_depth_test_;
 
 			// GBuffer
+			
 			ObjectPtr<DX11RenderTarget> gbuffer_;						///< \brief GBuffer.
 
 			// Light accumulation
 
-			static const Tag kAlbedoTag;
+			static const Tag kAlbedoTag;								///< \brief Tag of the surface containing the albedo of the scene.
 
-			static const Tag kNormalShininessTag;
+			static const Tag kNormalShininessTag;						///< \brief Tag of the surface containing the normal and the shininess of the scene.
 
-			static const Tag kLightBufferTag;
+			static const Tag kLightBufferTag;							///< \brief Tag of the buffer used to accumulate light onto.
 
-			static const Tag kPointLightsTag;
+			static const Tag kPointLightsTag;							///< \brief Tag used to identify the array containing point lights.
 
 			ObjectPtr<IGPTexture2D> light_buffer_;						///< \brief Light buffer.
 
 			ObjectPtr<DX11StructuredArray> point_lights_;				///< \brief Array containing the lights.
 
-			ObjectPtr<DX11Computation> light_shader_;
+			ObjectPtr<DX11Computation> light_shader_;					///< \brief Shader performing the light accumulation stage.
 
-			// Post process - Tonemapping
+			// Tonemapping
 
-			ObjectPtr<DX11Material> tonemapper_;						///< \brief Material used to perform tonemapping.
+			static const Tag kTonemapParamsTag;							///< \brief Tag of the constant buffer containing the tonemapping parameters
 
-			Tag tonemap_exposure_;
+			static const Tag kUnexposedParamsTag;						///< \brief Tag of the unexposed buffer used as input of the tonemapping.
 
-			Tag tonemap_vignette_;
+			static const Tag kExposedParamsTag;							///< \brief Tag of the exposed buffer used as output of the tonemapping.
 
-			Tag tonemap_source_;
+			ObjectPtr<DX11StructuredBuffer> tonemap_params_;			///< \brief Buffer containing the tonemap parameters.
+
+			ObjectPtr<DX11Computation> tonemap_shader_;					///< \brief Shader performing the tonemapping stage.
+
+			ObjectPtr<IGPTexture2D> exposed_buffer_;					///< \brief Contains the result of the tonemapping.
 
 		};
 
