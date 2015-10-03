@@ -13,6 +13,7 @@
 #include "fbx/fbx.h"
 
 #include "deferred_renderer.h"
+#include "sampler.h"
 
 using gi_lib::ObjectPtr;
 
@@ -46,6 +47,8 @@ namespace gi{
 		Resources& resources_;											///< \brief Used to load various materials.
 
 		ObjectPtr<DeferredRendererMaterial> base_material_;				///< \brief Base material for every game object.
+
+		ObjectPtr<gi_lib::ISampler> sampler_;							///< \brief Basic sampler used by the material.
 
 	};
 
