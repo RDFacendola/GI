@@ -62,9 +62,11 @@ ShaderStateComposite::ShaderStateComposite(const ShaderStateComposite& other){
 
 	for (auto&& shader : other.shaders_){
 
-		shaders_.push_back(std::unique_ptr<BaseShaderState>(shader->Instantiate()));
+		auto shader_instance = shader->Instantiate();
 
-		AddShaderBindings(*shader);
+		shaders_.push_back(std::unique_ptr<BaseShaderState>(shader_instance));
+
+		AddShaderBindings(*shader_instance);
 
 	}
 
