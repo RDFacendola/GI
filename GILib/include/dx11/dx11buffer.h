@@ -95,6 +95,10 @@ namespace gi_lib{
 			/// \param size Size of the constant buffer.
 			DX11StructuredBuffer(const IStructuredBuffer::FromSize& args);
 
+			/// \brief Create a new constant buffer.
+			/// \param size Size of the constant buffer.
+			DX11StructuredBuffer(size_t size);
+
 			virtual void* Lock() override;
 
 			virtual void Unlock() override;

@@ -303,10 +303,12 @@ HRESULT gi_lib::dx11::MakeIndexBuffer(ID3D11Device& device, const unsigned int* 
 
 HRESULT gi_lib::dx11::MakeConstantBuffer(ID3D11Device& device, size_t size, ID3D11Buffer** buffer){
 
+	static unsigned int kMultipleOf = 16;		// Buffer size must be a multiple of 16 bytes
+
 	D3D11_BUFFER_DESC buffer_desc;
 
 	buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-	buffer_desc.ByteWidth = static_cast<unsigned int>(size);
+	buffer_desc.ByteWidth = (static_cast<unsigned int>(size - 1) / kMultipleOf) * kMultipleOf + kMultipleOf;
 	buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	buffer_desc.MiscFlags = 0;
