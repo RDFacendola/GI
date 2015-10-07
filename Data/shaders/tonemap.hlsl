@@ -25,15 +25,26 @@ float Vignette(uint2 coordinates, uint2 size, float vignette){
 
 }
 
-// Calculate the exposed value of the image
-// coordinates - Coordinates of the point
+// Calculate the exposed value of the image.
+// unexposed - Unexposed color channel.
 // exposure_mul - Multiplicative scaling factor of the exposure.
 // exposure_add - Additive scaling factor of the exposure.
-float4 Expose(uint2 coordinates, float exposure_mul, float exposure_add){
+float ExposeChannel(float unexposed, float exposure_mul, float exposure_add) {
 
-	float4 unexposed = gUnexposed[coordinates];
+	return unexposed / ((unexposed + exposure_add) * exposure_mul);
 
-	return unexposed / (exposure_mul * (unexposed + exposure_add));
+}
+
+// Calculate the exposed value of the image.
+// unexposed - Unexposed color.
+// exposure_mul - Multiplicative scaling factor of the exposure.
+// exposure_add - Additive scaling factor of the exposure.
+float4 Expose(float4 unexposed, float exposure_mul, float exposure_add){
+
+	return float4(ExposeChannel(unexposed.r, exposure_mul, exposure_add),
+				  ExposeChannel(unexposed.g, exposure_mul, exposure_add),
+				  ExposeChannel(unexposed.b, exposure_mul, exposure_add),
+				  1.0);
 
 }
 
@@ -48,13 +59,14 @@ void CSMain(int3 thread_id : SV_DispatchThreadID){
 
 	float vignette = Vignette(thread_id.xy, dimensions, gVignette);
 
-	// Color grading
+	// Color grading - Unreal Engine 4 style
 
 	float4 unexposed = gUnexposed[thread_id.xy];
 
 	float4 exposed = Expose(unexposed, gExposureMul, gExposureAdd);
 
 	// Output
-	gExposed[thread_id.xy] = unexposed;
+
+	gExposed[thread_id.xy] = exposed;
 		
 }
