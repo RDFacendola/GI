@@ -34,14 +34,14 @@ namespace gi{
 		
 	private:
 
-		Graphics & graphics_;
+		Graphics& graphics_;
 
 		unique_ptr<IOutput> output_;
 
 		unique_ptr<TiledDeferredRenderer> deferred_renderer_;
 
-		Scene scene_;
-
+		unique_ptr<Scene> scene_;
+		
 		const IInput* input_;
 
 	};

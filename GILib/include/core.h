@@ -192,6 +192,9 @@ namespace gi_lib{
 		/// \param time The application time.
 		virtual void Update(const Time& time) = 0;
 
+		/// \brief Virtual destructor.
+		virtual ~IWindowLogic();
+
 	};
 
 	/// \brief A window.
@@ -284,12 +287,20 @@ namespace gi_lib{
 
 	}
 
+	//////////////////////////////////// IWINDOW LOGIC //////////////////////////////
+
+	inline IWindowLogic::~IWindowLogic() {}
+
 	//////////////////////////////////// WINDOW /////////////////////////////////////
 
 	inline Window::Window(unique_ptr<IWindowLogic> logic) :
 	logic_(std::move(logic)){}
 
-	inline Window::~Window(){}
+	inline Window::~Window(){
+	
+		logic_ = nullptr;
+
+	}
 
 	inline Observable<Window::OnClosedEventArgs>& Window::OnClosed(){
 

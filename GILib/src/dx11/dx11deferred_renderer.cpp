@@ -256,30 +256,36 @@ TiledDeferredRenderer(arguments.scene){
 
 }
 
-DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){}
+DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){
+	
+	immediate_context_ = nullptr;
+	depth_state_ = nullptr;
+	blend_state_ = nullptr;
+	rasterizer_state_ = nullptr;
+	disable_depth_test_ = nullptr;
+	
+}
 
-void DX11TiledDeferredRenderer::Draw(ObjectPtr<IRenderTarget> render_target){
+ObjectPtr<ITexture2D> DX11TiledDeferredRenderer::Draw(unsigned int width, unsigned int height){
 	
 	// Draws only if there's a camera
 
 	if (GetScene().GetMainCamera()){
-		
-		auto dx11_render_target = resource_cast(render_target);
 	
-		auto width = dx11_render_target->GetWidth();
-		auto height = dx11_render_target->GetHeight();
-
-		DrawGBuffer(width, height);										// Scene -> GBuffer
+		DrawGBuffer(width, height);							// Scene -> GBuffer
 		
-		ComputeLighting(width, height);									// Scene, GBuffer, DepthBuffer -> LightBuffer
+		ComputeLighting(width, height);						// Scene, GBuffer, DepthBuffer -> LightBuffer
 
-		ComputeTonemap(width, height);									// LightBuffer -> Exposed
+		ComputeTonemap(width, height);						// LightBuffer -> Exposed
 
 	}
 
 	// Cleanup
 	immediate_context_->ClearState();
 	
+	// Return the unexposed buffer
+	return exposed_buffer_->GetTexture();
+
 }
 
 // GBuffer
@@ -411,8 +417,8 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 		light_buffer_->GetWidth() != width ||
 		light_buffer_->GetHeight() != height){
 
-		light_buffer_ = new DX11GPTexture2D(width, 
-											height, 
+		light_buffer_ = new DX11GPTexture2D(width,
+											height,											
 											DXGI_FORMAT_R16G16B16A16_FLOAT);
 		
 	}
@@ -484,7 +490,7 @@ void DX11TiledDeferredRenderer::ComputeTonemap(unsigned int width, unsigned int 
 							   light_buffer_);
 
 	tonemap_shader_->SetOutput(kExposedParamsTag,
-							   exposed_buffer_);	// Who's the output????
+							   exposed_buffer_);			
 	
 	// Actual tonemap computation
 

@@ -46,17 +46,23 @@ FlyCameraComponent* fly_camera;
 Window* g_window;
 
 GILogic::GILogic() :
-graphics_(Graphics::GetAPI(API::DIRECTX_11)),
-scene_(make_unique<UniformTree>(AABB{Vector3f::Zero(),
-									 kDomainSize * Vector3f::Ones() },
-								kDomainSubdivisions * Vector3i::Ones())),
-input_(nullptr)
-{}
+	graphics_(Graphics::GetAPI(API::DIRECTX_11)),
+	input_(nullptr){
+
+	scene_ = make_unique<Scene>(make_unique<UniformTree>(AABB{ Vector3f::Zero(),
+															   kDomainSize * Vector3f::Ones() },
+								kDomainSubdivisions * Vector3i::Ones()));
+
+}
 
 GILogic::~GILogic(){
 
+	scene_ = nullptr;
+
 	output_ = nullptr;
 
+	deferred_renderer_ = nullptr;
+	
 }
 
 void GILogic::Initialize(Window& window){
@@ -75,14 +81,14 @@ void GILogic::Initialize(Window& window){
 
 	// Create the renderers
 
-	deferred_renderer_ = std::move(graphics_.CreateRenderer<TiledDeferredRenderer>(scene_));
+	deferred_renderer_ = std::move(graphics_.CreateRenderer<TiledDeferredRenderer>(*scene_));
 
 	// Camera setup
 
-	auto camera_transform = scene_.CreateNode(L"MainCamera",
-											  Translation3f(0.0f, 300.0f, 0.0f),
-											  Quaternionf::Identity(),
-											  AlignedScaling3f(1.0f, 1.0f, 1.0f));
+	auto camera_transform = scene_->CreateNode(L"MainCamera",
+											   Translation3f(0.0f, 300.0f, 0.0f),
+											   Quaternionf::Identity(),
+											   AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
 	auto camera = camera_transform->AddComponent<CameraComponent>();
 
@@ -91,7 +97,7 @@ void GILogic::Initialize(Window& window){
 	camera->SetMaximumDistance(10000.0f);
 	camera->SetFieldOfView(Math::DegToRad(90.0f));
 
-	scene_.SetMainCamera(camera);
+	scene_->SetMainCamera(camera);
 
 	input_ = &window.GetInput();
 
@@ -99,10 +105,10 @@ void GILogic::Initialize(Window& window){
 
 	// Scene import
 
-	auto root = scene_.CreateNode(L"root", 
-								  Translation3f(Vector3f(0.0f, 0.0f, 0.0f)),
-								  Quaternionf::Identity(), 
-								  AlignedScaling3f(Vector3f::Ones() * 3.0f));
+	auto root = scene_->CreateNode(L"root", 
+								   Translation3f(Vector3f(0.0f, 0.0f, 0.0f)),
+								   Quaternionf::Identity(), 
+								   AlignedScaling3f(Vector3f::Ones() * 3.0f));
 
 	auto& resources = graphics_.GetResources();
 
@@ -121,10 +127,10 @@ void GILogic::Initialize(Window& window){
 
 	// Point light
 
-	auto light_transform = scene_.CreateNode(L"PoiLight",
-											 Translation3f(0.0f, 50.0f, 10.0f),
-											 Quaternionf::Identity(),
-											 AlignedScaling3f(1.0f, 1.0f, 1.0f));
+	auto light_transform = scene_->CreateNode(L"PoiLight",
+											  Translation3f(0.0f, 50.0f, 10.0f),
+											  Quaternionf::Identity(),
+											  AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
 	auto point_light = light_transform->AddComponent<PointLightComponent>();
 
@@ -132,10 +138,10 @@ void GILogic::Initialize(Window& window){
 
 	// Directional light
 
-	light_transform = scene_.CreateNode(L"DirLight",
-										Translation3f(0.0f, 0.0f, 0.0f),
-										Quaternionf::Identity(),
-										AlignedScaling3f(1.0f, 1.0f, 1.0f));
+	light_transform = scene_->CreateNode(L"DirLight",
+										 Translation3f(0.0f, 0.0f, 0.0f),
+										 Quaternionf::Identity(),
+										 AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
 	auto directional_light = light_transform->AddComponent<DirectionalLightComponent>();
 
@@ -147,8 +153,9 @@ void GILogic::Update(const Time & time){
 
 	fly_camera->Update(time);
 	
-	deferred_renderer_->Draw(output_->GetRenderTarget());
+	auto next_frame = deferred_renderer_->Draw(output_->GetVideoMode().horizontal_resolution,
+											   output_->GetVideoMode().vertical_resolution);
 
-	output_->Refresh();
-	
+	output_->Display(next_frame);
+
 }

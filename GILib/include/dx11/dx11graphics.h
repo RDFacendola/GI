@@ -67,17 +67,18 @@ namespace gi_lib{
 			virtual void SetAntialiasing(AntialiasingMode antialiasing) override;
 
 			virtual AntialiasingMode GetAntialiasing() const override;
-
-			virtual ObjectPtr<IRenderTarget> GetRenderTarget() override;
-
-			/// \brief Send the backbuffer to the screen and flip the buffers.
-			virtual void Refresh() override;
-
+	
+			virtual void Display(ObjectPtr<ITexture2D>& image) override;
+			
 		private:
 
 			void CreateSwapChain();
 
 			void UpdateBackbuffer();
+
+			/// \brief Send the image to backbuffer to the screen and flip the buffers.
+			/// \param image Image to send
+			void Refresh(COMPtr<ID3D11Texture2D> image);
 
 			VideoMode video_mode_;
 			
@@ -98,8 +99,6 @@ namespace gi_lib{
 			COMPtr<IDXGISwapChain> swap_chain_;
 
 			COMPtr<ID3D11Texture2D> back_buffer_;				///< \brief Reference to the actual backbuffer. It is never referenced outside this class otherwise the resize wouldn't work.
-
-			ObjectPtr<DX11RenderTarget> render_target_;			///< \brief Render target used as a proxy of the backbuffer, referenced outside this class.
 
 		};
 
@@ -166,6 +165,10 @@ namespace gi_lib{
 
 			~DX11Graphics();
 
+			void FlushAll();
+
+			void DebugReport();
+
 			COMPtr<ID3D11Device> device_;
 
 			COMPtr<IDXGIFactory> factory_;
@@ -205,12 +208,6 @@ namespace gi_lib{
 		inline AntialiasingMode DX11Output::GetAntialiasing() const{
 
 			return antialiasing_;
-
-		}
-
-		inline ObjectPtr<IRenderTarget> DX11Output::GetRenderTarget(){
-
-			return ObjectPtr<IRenderTarget>(render_target_);
 
 		}
 

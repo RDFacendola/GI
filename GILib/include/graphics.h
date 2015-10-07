@@ -134,9 +134,11 @@ namespace gi_lib{
 		/// \return Returns the scene the renderer refers to.
 		virtual const Scene& GetScene() const = 0;
 
-		/// \brief Draw the scene from the current main camera to the specified render target.
-		/// \param render_target Render target where the scene will be rendered.
-		virtual void Draw(ObjectPtr<IRenderTarget> render_target) = 0;
+		/// \brief Draw the scene from the current main camera.
+		/// \param Returns a pointer to the drawn image.
+		/// \param width Width of the drawn image.
+		/// \param height Height of the drawn image.
+		virtual ObjectPtr<ITexture2D> Draw(unsigned int width, unsigned int height) = 0;
 
 	protected:
 
@@ -186,13 +188,10 @@ namespace gi_lib{
 		/// \return Return the current antialiasing mode.
 		virtual AntialiasingMode GetAntialiasing() const = 0;
 
-		/// \brief Get the render target associated to this output.
-		/// \return Returns the render target associated to this output.
-		virtual ObjectPtr<IRenderTarget> GetRenderTarget() = 0;
-
-		/// \brief Refresh the output.
-		virtual void Refresh() = 0;
-
+		/// \brief Display the given image onto this output.
+		/// \param image Image to display.
+		virtual void Display(ObjectPtr<ITexture2D>& image) = 0;
+		
 	};
 
 	/// \brief Resource manager interface.

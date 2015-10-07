@@ -9,6 +9,9 @@
 
 #ifdef _DEBUG
 
+#pragma comment(lib,"dxguid.lib")
+
+#include <Initguid.h>
 #include <dxgidebug.h>
 
 #endif
@@ -61,8 +64,17 @@ namespace{
 	/// \brief DirectX 11 API support.
 	const D3D_FEATURE_LEVEL kFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
+#ifndef BGRA_SUPPORT
+	
+	/// \brief Default video format for the back buffer.
+	const DXGI_FORMAT kVideoFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+#else
+	
 	/// \brief Default video format for the back buffer.
 	const DXGI_FORMAT kVideoFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
+
+#endif
 
 	/// \brief Convert a DXGI sample desc to an antialiasing mode.
 	AntialiasingMode SampleDescToAntialiasingMode(const DXGI_SAMPLE_DESC & sample_desc){
@@ -379,7 +391,7 @@ void DX11Output::CreateSwapChain(){
 
 	dxgi_desc.BufferDesc = VideoModeToDXGIMode(video_mode_);
 	dxgi_desc.SampleDesc = AntialiasingModeToSampleDesc(antialiasing_);
-
+	
 	// Create the actual swap chain
 
 	IDXGISwapChain* swap_chain;
@@ -412,24 +424,28 @@ void DX11Output::UpdateBackbuffer(){
 	
 	back_buffer_ << &back_buffer;
 
-	// Create the new render target.
+}
 
-	render_target_ = new DX11RenderTarget(video_mode_.horizontal_resolution,
-										  video_mode_.vertical_resolution,
-										  { kVideoFormat });
+void DX11Output::Display(ObjectPtr<ITexture2D>& image){
+
+	Refresh(resource_cast(image)->GetTexture());
 
 }
 
-void DX11Output::Refresh(){
+void DX11Output::Refresh(COMPtr<ID3D11Texture2D> image){
 
-	// Copy the content of the dummy render target to the actual backbuffer
+	// Copy the content of the image to the actual backbuffer
 
 	auto&& context = *DX11Graphics::GetInstance().GetImmediateContext();
 
-	auto rt_proxy = resource_cast((*render_target_)[0]);
+	D3D11_TEXTURE2D_DESC bb_desc;
+	D3D11_TEXTURE2D_DESC img_desc;
 
-	context.CopyResource(back_buffer_.Get(),											// Paste the render target onto the backbuffer
-						 rt_proxy->GetTexture().Get());
+	back_buffer_->GetDesc(&bb_desc);
+	image->GetDesc(&img_desc);
+
+	context.CopyResource(back_buffer_.Get(),				// Paste the image onto the backbuffer
+						 image.Get());
 	
 	// Flip the buffers
 
@@ -502,6 +518,12 @@ DX11Graphics::DX11Graphics(): Graphics(){
 	
 #endif
 
+	if (kVideoFormat == DXGI_FORMAT_B8G8R8A8_UNORM) {
+
+		device_flags |= D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+
+	}
+
 	//DXGI Device
 	THROW_ON_FAIL(D3D11CreateDevice(kDefaultAdapter,
 									D3D_DRIVER_TYPE_HARDWARE,
@@ -532,12 +554,67 @@ DX11Graphics::DX11Graphics(): Graphics(){
 
 DX11Graphics::~DX11Graphics(){
 
+	FlushAll();			// Clear the context and flush remaining commands.
+
+	DebugReport();
+
+	immediate_context_ = nullptr;
+	factory_ = nullptr;
+	device_ = nullptr;
+
+}
+
+void DX11Graphics::FlushAll() {
+
+	// Remove any pending reference
+
+	immediate_context_->ClearState();
+
+	// Flush any pending command
+
+	D3D11_QUERY_DESC query_desc;
+	ID3D11Query* query;
+
+	query_desc.Query = D3D11_QUERY_EVENT;
+	query_desc.MiscFlags = 0;
+
+	// Flush the command queue and synchronously wait until it becomes empty
+
+	if (SUCCEEDED(device_->CreateQuery(&query_desc,
+									   &query))) {
+
+		immediate_context_->Flush();
+
+		immediate_context_->End(query);
+
+		while (!SUCCEEDED(immediate_context_->GetData(query, nullptr, 0, 0))) {}	// Spin, spin!
+
+		query->Release();
+
+	}
+
+}
+
+void DX11Graphics::DebugReport() {
+
 #ifdef _DEBUG
 
-	IDXGIDebug::ReportLiveObjects(DXGI_DEBUG_ALL,
-								  DXGI_DEBUG_RLO_ALL);
+	ID3D11Debug* d3d_debug;
 
-#else
+	if (SUCCEEDED(device_->QueryInterface(__uuidof(ID3D11Debug),
+										  reinterpret_cast<void**>(&d3d_debug)))) {
+
+		if (FAILED(d3d_debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL | D3D11_RLDO_SUMMARY))) {
+
+			OutputDebugString(L"Unable to report DirectX live objects");
+
+		}
+			
+	}
+
+	DebugBreak();		// Check the output log!
+
+#endif
 
 }
 

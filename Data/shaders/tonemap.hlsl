@@ -50,9 +50,11 @@ void CSMain(int3 thread_id : SV_DispatchThreadID){
 
 	// Color grading
 
-	float4 exposed = Expose(gUnexposed[thread_id.xy], gExposureMul, gExposureAdd);
+	float4 unexposed = gUnexposed[thread_id.xy];
+
+	float4 exposed = Expose(unexposed, gExposureMul, gExposureAdd);
 
 	// Output
-	gExposed[thread_id.xy] = vignette * exposed;
-
+	gExposed[thread_id.xy] = unexposed;
+		
 }

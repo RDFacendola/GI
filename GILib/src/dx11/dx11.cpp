@@ -244,6 +244,14 @@ HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int wi
 
 	}
 
+#ifdef _DEBUG
+
+	const char c_szName[] = "Unordered texture!";
+
+	texture->SetPrivateData(WKPDID_D3DDebugObjectName, sizeof(c_szName) - 1, c_szName);
+
+#endif
+
 	// Cleanup
 
 	cleanup.Dismiss();

@@ -74,6 +74,8 @@ private:
 
 	void DeleteComponent(ComponentSet::iterator it);
 
+	void FinalizeComponent(Component& component);
+
 	ComponentSet component_set_;
 
 	ComponentMap component_map_;
@@ -89,11 +91,19 @@ Component::Arbiter::~Arbiter(){
 
 	autodestroy_ = false;		// This ensures that this destructor is called exactly once
 
-	// Loop needed because Component::Finalize may still add or remove other components. An iteration may not be sufficient.
+	// Finalize all the component together
+
+	for (auto&& component : component_set_) {
+
+		FinalizeComponent(*component);				// TODO: break if a component is added or removed while the object is being destroyed!
+
+	}
+
+	// Destroy each component independently
 
 	while (!component_set_.empty()){
 
-		DeleteComponent(component_set_.begin());
+		DeleteComponent(component_set_.begin());	// Will cause the component set to shrink
 
 	}
 
@@ -126,6 +136,7 @@ void Component::Arbiter::RemoveComponent(Component* component){
 	
 	if (it != component_set_.end()){
 
+		FinalizeComponent(**it);
 		DeleteComponent(it);
 
 		if (autodestroy_ &&
@@ -155,19 +166,25 @@ Component::Arbiter::range Component::Arbiter::GetComponents(type_index type){
 
 }
 
+void Component::Arbiter::FinalizeComponent(Component& component) {
+
+	// Notify the remove event before.
+
+	OnRemovedEventArgs args{ &component };
+
+	component.on_removed_event_.Notify(args);
+
+	// Actual deletion
+
+	component.Finalize();							// Cross-component destruction
+
+}
+
 void Component::Arbiter::DeleteComponent(ComponentSet::iterator it){
 
 	auto component = *it;
 
-	// Notify the remove event before.
-
-	OnRemovedEventArgs args{ component };
-
-	component->on_removed_event_.Notify(args);
-
 	// Actual deletion
-
-	component->Finalize();							// Cross-component destruction
 
 	component->arbiter_ = nullptr;					// No really needed, ensures that the dtor of the component won't access the other components.
 

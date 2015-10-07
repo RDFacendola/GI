@@ -118,18 +118,16 @@ namespace gi_lib{
 			/// \brief No assignment operator.
 			DX11TiledDeferredRenderer& operator=(DX11TiledDeferredRenderer&) = delete;
 
-			virtual void Draw(ObjectPtr<IRenderTarget> render_target) override;
+			virtual ObjectPtr<ITexture2D> Draw(unsigned int width, unsigned int height) override;
 
 		private:
 
 			/// \brief Draw the current scene on the GBuffer.
-			/// \param width Width of the GBuffer. Should match client size.
-			/// \param height Height of the GBuffer. Should match client size.
+			/// \param dimensions Dimensions of the GBuffer in pixels.
 			void DrawGBuffer(unsigned int width, unsigned int height);
 
 			/// \brief Setup the GBuffer and bind it to the pipeline.
-			/// \param width Width of the GBuffer. Should match client size.
-			/// \param height Height of the GBuffer. Should match client size.
+			/// \param dimensions Dimensions of the GBuffer in pixels.
 			void BindGBuffer(unsigned int width, unsigned int height);
 
 			/// \brief Draws the specified nodes on the GBuffer.
@@ -137,12 +135,12 @@ namespace gi_lib{
 			/// \param view_projection_matrix View projection matrix used to transform the nodes in projection space.
 			void DrawNodes(const vector<VolumeComponent*>& nodes, const Matrix4f& view_projection_matrix);
 
-
 			void SetupLights();
 
-
+			/// \param dimensions Dimensions of the LightBuffer in pixels.
 			void ComputeLighting(unsigned int width, unsigned int height);
 
+			/// \param dimensions Dimensions of the Exposed buffer in pixels.
 			void ComputeTonemap(unsigned int width, unsigned int height);
 
 			// Render context

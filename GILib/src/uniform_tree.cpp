@@ -335,12 +335,6 @@ volume_count_(0u){
 
 UniformTree::~UniformTree(){
 
-	for (auto node : nodes_){
-
-		delete node;
-
-	}
-
 	for (auto child : children_){
 
 		delete child;

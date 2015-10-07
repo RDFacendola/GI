@@ -72,12 +72,14 @@ Scene::~Scene(){
 
 	for (auto&& node : nodes_){
 
-		delete node;
+		node->Dispose();
 
 	}
 
 	nodes_.clear();
 
+	volume_hierarchy_ = nullptr;		// 
+	
 }
 
 NodeComponent* Scene::CreateNode(const wstring& name){
