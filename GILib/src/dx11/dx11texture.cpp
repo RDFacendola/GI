@@ -86,13 +86,13 @@ shader_resource_view_(shader_resource_view){
 
 	shader_resource_view_->GetResource(&texture);
 
+	COM_GUARD(texture);
+
 	D3D11_TEXTURE2D_DESC description;
 
 	static_cast<ID3D11Texture2D*>(texture)->GetDesc(&description);
 
 	UpdateDescription(description);
-
-	texture->Release();
 
 }
 
