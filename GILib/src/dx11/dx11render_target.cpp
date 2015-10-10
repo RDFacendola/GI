@@ -105,14 +105,14 @@ DX11RenderTexture2D::DX11RenderTexture2D(const COMPtr<ID3D11RenderTargetView>& r
 
 	render_target_view_->GetResource(&render_target);
 
+	COM_GUARD(render_target);
+
 	D3D11_TEXTURE2D_DESC description;
 
 	static_cast<ID3D11Texture2D*>(render_target)->GetDesc(&description);
 
 	mip_chain_ = description.MipLevels > 1;
 	
-	render_target->Release();
-
 }
 
 void DX11RenderTexture2D::Clear(ID3D11DeviceContext& context, Color color){
@@ -138,6 +138,34 @@ DX11RenderTarget::DX11RenderTarget(unsigned int width, unsigned int height, cons
 	CreateSurfaces(width,
 				   height,
 			       target_format);
+	
+}
+
+DX11RenderTarget::DX11RenderTarget(const COMPtr<ID3D11RenderTargetView>& render_target_view) :
+depth_stencil_(nullptr){
+
+	// Create the SRV from the RTV
+
+	auto device = DX11Graphics::GetInstance().GetDevice();
+
+	ID3D11Resource* resource;
+	ID3D11ShaderResourceView* srv;
+
+	render_target_view->GetResource(&resource);
+
+	COM_GUARD(resource);
+
+	THROW_ON_FAIL(device->CreateShaderResourceView(resource,
+												   nullptr,
+												   &srv));
+
+	render_target_.push_back(new DX11RenderTexture2D(render_target_view,
+													 COMMove(&srv)));
+
+	// Viewport
+
+	viewport_ = MakeViewport(render_target_[0]->GetWidth(),
+							 render_target_[0]->GetHeight());
 	
 }
 
@@ -207,10 +235,24 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
 
 				   });
 
-	context.OMSetRenderTargets(static_cast<unsigned int>(rtv_list.size()),
-							   &rtv_list[0],
-							   depth_stencil_->GetDepthStencilView().Get());
+	if (depth_stencil_) {
 
+		// Depth stencil
+
+		context.OMSetRenderTargets(static_cast<unsigned int>(rtv_list.size()),
+								   &rtv_list[0],
+								   depth_stencil_->GetDepthStencilView().Get());
+
+	}
+	else {
+
+		// No depth stencil here
+		context.OMSetRenderTargets(static_cast<unsigned int>(rtv_list.size()),
+								   &rtv_list[0],
+								   nullptr);
+
+	}
+	
 	context.RSSetViewports(1,
 						   &viewport_);
 	

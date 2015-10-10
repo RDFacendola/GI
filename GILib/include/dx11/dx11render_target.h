@@ -103,6 +103,9 @@ namespace gi_lib{
 			/// \param target_format Describe the format of each target.
 			DX11RenderTarget(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format);
 
+			/// \brief Create a render target from a render target view.
+			DX11RenderTarget(const COMPtr<ID3D11RenderTargetView>& render_target_view);
+
 			virtual ~DX11RenderTarget();
 
 			virtual size_t GetSize() const override;
