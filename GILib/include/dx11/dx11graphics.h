@@ -17,6 +17,8 @@
 #include "windows/win_core.h"
 #include "windows/win_os.h"
 
+#include "fx/dx11fx_scaler.h"
+
 struct ID3D11Device;
 struct IDXGIFactory;
 struct DXGI_SWAP_CHAIN_DESC;
@@ -76,10 +78,6 @@ namespace gi_lib{
 
 			void UpdateBackbuffer();
 
-			/// \brief Send the image to backbuffer to the screen and flip the buffers.
-			/// \param image Image to send
-			void Refresh(COMPtr<ID3D11Texture2D> image);
-
 			VideoMode video_mode_;
 			
 			bool fullscreen_;
@@ -98,7 +96,11 @@ namespace gi_lib{
 
 			COMPtr<IDXGISwapChain> swap_chain_;
 
-			COMPtr<ID3D11Texture2D> back_buffer_;				///< \brief Reference to the actual backbuffer. It is never referenced outside this class otherwise the resize wouldn't work.
+			COMPtr<ID3D11Texture2D> back_buffer_;					///< \brief Reference to the actual backbuffer. It is never referenced outside this class otherwise the resize wouldn't work.
+
+			ObjectPtr<IRenderTarget> render_target_;				///< \brief Render target wrapped around the backbuffer. Only one render target is defined.
+
+			unique_ptr<dx11::fx::DX11FxScaler> scaler_;				///< \brief Used to scale the image onto the backbuffer.
 
 		};
 

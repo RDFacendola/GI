@@ -312,7 +312,7 @@ DX11Output::DX11Output(windows::Window & window, const VideoMode& video_mode) :
 
 	CreateSwapChain();
 
-	//Listeners
+	// Listeners
 	on_window_resized_listener_ = window_.OnResized().Subscribe([this](Listener&, Window::OnResizedEventArgs& args){
 
 		// Store the new dimensions of the buffer
@@ -320,9 +320,10 @@ DX11Output::DX11Output(windows::Window & window, const VideoMode& video_mode) :
 		video_mode_.horizontal_resolution = std::max(args.width, kMinimumBackbufferDimension);
 		video_mode_.vertical_resolution = std::max(args.height, kMinimumBackbufferDimension);
 
-		// Release the old backbuffer
+		// Release the old backbuffer and its render target
 
 		back_buffer_ = nullptr;								
+		render_target_ = nullptr;
 		
 		//Resize the swapchain buffer
 
@@ -335,6 +336,9 @@ DX11Output::DX11Output(windows::Window & window, const VideoMode& video_mode) :
 		UpdateBackbuffer();
 		
 	});
+
+	// Scaler
+	scaler_ = make_unique<fx::DX11FxScaler>();
 
 }
 
@@ -398,12 +402,12 @@ void DX11Output::CreateSwapChain(){
 		
 	auto& graphics = DX11Graphics::GetInstance();
 
-	auto&& factory = *graphics.GetFactory();
-	auto&& device = *graphics.GetDevice();
+	auto factory = graphics.GetFactory();
+	auto device = graphics.GetDevice();
 
-	THROW_ON_FAIL(factory.CreateSwapChain(&device,
-										  &dxgi_desc,
-										  &swap_chain));
+	THROW_ON_FAIL(factory->CreateSwapChain(device.Get(),
+										   &dxgi_desc,
+										   &swap_chain));
 
 	swap_chain_ << &swap_chain;
 
@@ -424,30 +428,28 @@ void DX11Output::UpdateBackbuffer(){
 	
 	back_buffer_ << &back_buffer;
 
+	// Associate a new render target
+
+	auto device = DX11Graphics::GetInstance().GetDevice();
+
+	ID3D11RenderTargetView* rtv;
+
+	THROW_ON_FAIL(device->CreateRenderTargetView(back_buffer_.Get(),
+												 nullptr,
+												 &rtv));
+
+	render_target_ = new DX11RenderTarget(COMMove(&rtv));
+
 }
 
 void DX11Output::Display(ObjectPtr<ITexture2D>& image){
 
-	Refresh(resource_cast(image)->GetTexture());
+	// Copy and scale the content of the image to the actual backbuffer
 
-}
-
-void DX11Output::Refresh(COMPtr<ID3D11Texture2D> image){
-
-	// Copy the content of the image to the actual backbuffer
-
-	auto&& context = *DX11Graphics::GetInstance().GetImmediateContext();
-
-	D3D11_TEXTURE2D_DESC bb_desc;
-	D3D11_TEXTURE2D_DESC img_desc;
-
-	back_buffer_->GetDesc(&bb_desc);
-	image->GetDesc(&img_desc);
-
-	context.CopyResource(back_buffer_.Get(),				// Paste the image onto the backbuffer
-						 image.Get());
+	scaler_->Copy(image,
+				  render_target_);
 	
-	// Flip the buffers
+	// Flip the burgers... ehm buffers!
 
 	swap_chain_->Present(IsVSync() ? 1 : 0,
 						 0);
@@ -518,11 +520,11 @@ DX11Graphics::DX11Graphics(): Graphics(){
 	
 #endif
 
-	if (kVideoFormat == DXGI_FORMAT_B8G8R8A8_UNORM) {
-
-		device_flags |= D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-
-	}
+// 	if (kVideoFormat == DXGI_FORMAT_B8G8R8A8_UNORM) {
+// 
+// 		device_flags |= D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+// 
+// 	}
 
 	//DXGI Device
 	THROW_ON_FAIL(D3D11CreateDevice(kDefaultAdapter,
@@ -556,11 +558,11 @@ DX11Graphics::~DX11Graphics(){
 
 	FlushAll();			// Clear the context and flush remaining commands.
 
-	DebugReport();
-
 	immediate_context_ = nullptr;
 	factory_ = nullptr;
-	device_ = nullptr;
+
+	// Only the device is allowed here!
+	DebugReport();
 
 }
 
@@ -603,6 +605,8 @@ void DX11Graphics::DebugReport() {
 
 	if (SUCCEEDED(device_->QueryInterface(__uuidof(ID3D11Debug),
 										  reinterpret_cast<void**>(&d3d_debug)))) {
+
+		device_ = nullptr;
 
 		if (FAILED(d3d_debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL | D3D11_RLDO_SUMMARY))) {
 
