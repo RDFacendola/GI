@@ -160,6 +160,8 @@
     <ClInclude Include="include\dx11\dx11commitable.h">
       <Filter>DirectX 11\Resources</Filter>
     </ClInclude>
+    <ClInclude Include="include\fx\fx_scaler.h" />
+    <ClInclude Include="include\dx11\fx\dx11fx_scaler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11.cpp">
@@ -249,6 +251,7 @@
     <ClCompile Include="src\instance_builder.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="src\dx11\fx\dx11fx_scaler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectX 11">

@@ -24,7 +24,7 @@ Texture2D gSource;
 
 SamplerState gSourceSampler;
 
-float4 PSMain(VSOut input){
+float4 PSMain(VSOut input) : SV_Target0{
 
 	// Simple pixel shader, take the input and renders it to the output. Useful for upscaling and downscaling.
 

@@ -31,9 +31,11 @@
     <ClInclude Include="include\dx11\dx11shader.h" />
     <ClInclude Include="include\dx11\dx11shader_state.h" />
     <ClInclude Include="include\dx11\dx11texture.h" />
+    <ClInclude Include="include\dx11\fx\dx11fx_scaler.h" />
     <ClInclude Include="include\eigen.h" />
     <ClInclude Include="include\fnv1.h" />
     <ClInclude Include="include\fly_camera_component.h" />
+    <ClInclude Include="include\fx\fx_scaler.h" />
     <ClInclude Include="include\gpgpu.h" />
     <ClInclude Include="include\light_component.h" />
     <ClInclude Include="include\gilib.h" />
@@ -83,6 +85,7 @@
     <ClCompile Include="src\dx11\dx11shader.cpp" />
     <ClCompile Include="src\dx11\dx11shader_state.cpp" />
     <ClCompile Include="src\dx11\dx11texture.cpp" />
+    <ClCompile Include="src\dx11\fx\dx11fx_scaler.cpp" />
     <ClCompile Include="src\fly_camera_component.cpp" />
     <ClCompile Include="src\instance_builder.cpp" />
     <ClCompile Include="src\light_component.cpp" />
