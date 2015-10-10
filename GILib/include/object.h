@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <cstddef>
+
 #include "debug.h"
 
 namespace gi_lib{
@@ -99,7 +101,7 @@ namespace gi_lib{
 		ObjectPtr();
 
 		/// \brief Create an empty pointer.
-		ObjectPtr(nullptr_t);
+		ObjectPtr(std::nullptr_t);
 
 		/// \brief Defines a pointer to an object.
 		/// \param object Object that will be pointed by this pointer.
@@ -200,7 +202,7 @@ namespace gi_lib{
 		ObjectWeakPtr();
 
 		/// \brief Create an empty pointer.
-		ObjectWeakPtr(nullptr_t);
+		ObjectWeakPtr(std::nullptr_t);
 
 		/// \brief Defines a pointer to an object.
 		/// \param object Object that will be pointed by this pointer.
@@ -361,7 +363,7 @@ namespace gi_lib{
 		object_ptr_(nullptr){}
 
 	template <typename TObject>
-	inline ObjectPtr<TObject>::ObjectPtr(nullptr_t) :
+	inline ObjectPtr<TObject>::ObjectPtr(std::nullptr_t) :
 		ObjectPtr(){}
 
 	template <typename TObject>
@@ -548,7 +550,7 @@ namespace gi_lib{
 		ref_count_object_(nullptr){}
 
 	template <typename TObject>
-	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(nullptr_t) :
+	inline ObjectWeakPtr<TObject>::ObjectWeakPtr(std::nullptr_t) :
 		ObjectWeakPtr(){}
 
 	template <typename TObject>
