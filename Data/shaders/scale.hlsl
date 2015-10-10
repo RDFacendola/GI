@@ -18,3 +18,16 @@ void VSMain(uint vertex_id: SV_VertexID, out VSOut output){
 								 1.0f );
 	
 }
+
+
+Texture2D gSource;
+
+SamplerState gSourceSampler;
+
+float4 PSMain(VSOut input){
+
+	// Simple pixel shader, take the input and renders it to the output. Useful for upscaling and downscaling.
+
+	return gSource.Sample(gSourceSampler, input.uv);
+
+}
