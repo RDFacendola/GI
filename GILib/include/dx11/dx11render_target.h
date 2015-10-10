@@ -69,6 +69,9 @@ namespace gi_lib{
 			/// \param mip_chain Whether the render texture will support full MIP-map chain or not.
 			DX11RenderTexture2D(unsigned int width, unsigned int height, DXGI_FORMAT format, bool mip_chain = false);
 
+			/// \brief Create a render texture from a render target view and a shader resource view.
+			DX11RenderTexture2D(const COMPtr<ID3D11RenderTargetView>& render_target_view, const COMPtr<ID3D11ShaderResourceView>& shader_resource_view);
+
 			/// \brief Virtual destructor.
 			virtual ~DX11RenderTexture2D(){}
 

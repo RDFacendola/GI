@@ -97,6 +97,24 @@ DX11Texture2D(::MakeRenderTarget(width,
 
 }
 
+DX11RenderTexture2D::DX11RenderTexture2D(const COMPtr<ID3D11RenderTargetView>& render_target_view, const COMPtr<ID3D11ShaderResourceView>& shader_resource_view) :
+	DX11Texture2D(shader_resource_view),
+	render_target_view_(render_target_view){
+
+	ID3D11Resource* render_target;
+
+	render_target_view_->GetResource(&render_target);
+
+	D3D11_TEXTURE2D_DESC description;
+
+	static_cast<ID3D11Texture2D*>(render_target)->GetDesc(&description);
+
+	mip_chain_ = description.MipLevels > 1;
+	
+	render_target->Release();
+
+}
+
 void DX11RenderTexture2D::Clear(ID3D11DeviceContext& context, Color color){
 	
 	// The color is ARGB, however the method ClearRenderTargetView needs an RGBA.
