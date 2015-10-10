@@ -92,6 +92,8 @@ shader_resource_view_(shader_resource_view){
 
 	UpdateDescription(description);
 
+	texture->Release();
+
 }
 
 size_t DX11Texture2D::GetSize() const{
