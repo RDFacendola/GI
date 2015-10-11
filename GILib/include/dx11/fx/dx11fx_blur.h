@@ -17,7 +17,7 @@ namespace gi_lib {
 
 		namespace fx {
 
-			/// \brief Gaussian blur used to BOOM
+			/// \brief Gaussian filter.
 			class DX11FxGaussianBlur: public gi_lib::fx::FxGaussianBlur {
 
 			public:
