@@ -164,6 +164,8 @@
     <ClInclude Include="include\dx11\fx\dx11fx_scaler.h" />
     <ClInclude Include="include\fx\fx_blur.h" />
     <ClInclude Include="include\dx11\fx\dx11fx_blur.h" />
+    <ClInclude Include="include\fx\fx_filter.h" />
+    <ClInclude Include="include\dx11\fx\dx11fx_filter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11.cpp">
@@ -255,6 +257,7 @@
     </ClCompile>
     <ClCompile Include="src\dx11\fx\dx11fx_scaler.cpp" />
     <ClCompile Include="src\dx11\fx\dx11fx_blur.cpp" />
+    <ClCompile Include="src\dx11\fx\dx11fx_filter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectX 11">

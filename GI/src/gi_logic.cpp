@@ -153,8 +153,8 @@ void GILogic::Update(const Time & time){
 
 	fly_camera->Update(time);
 	
-	auto next_frame = deferred_renderer_->Draw(output_->GetVideoMode().horizontal_resolution,
-											   output_->GetVideoMode().vertical_resolution);
+	auto next_frame = deferred_renderer_->Draw(output_->GetVideoMode().horizontal_resolution * 1.0f,
+											   output_->GetVideoMode().vertical_resolution * 1.0f);
 
 	output_->Display(next_frame);
 
