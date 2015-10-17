@@ -131,13 +131,10 @@ const Tag DX11TiledDeferredRenderer::kNormalShininessTag = "gNormalShininess";
 const Tag DX11TiledDeferredRenderer::kLightBufferTag = "gLightAccumulation";
 const Tag DX11TiledDeferredRenderer::kPointLightsTag = "PerObject";
 
-const Tag DX11TiledDeferredRenderer::kTonemapParamsTag = "TonemapParams";
-const Tag DX11TiledDeferredRenderer::kUnexposedParamsTag = "gUnexposed";
-const Tag DX11TiledDeferredRenderer::kExposedParamsTag = "gExposed";
-
-
 DX11TiledDeferredRenderer::DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments) :
-TiledDeferredRenderer(arguments.scene){
+TiledDeferredRenderer(arguments.scene),
+fx_bloom_(1.0f, 1.0f, Vector2f(0.5f, 0.5f)),
+fx_tonemap_(0.5f){
 
 	auto&& device = *DX11Graphics::GetInstance().GetDevice();
 
@@ -190,7 +187,7 @@ TiledDeferredRenderer(arguments.scene){
 
 	ID3D11BlendState* blend_state;
 	
-	blend_state_desc.AlphaToCoverageEnable = true;
+	blend_state_desc.AlphaToCoverageEnable = false;
 	blend_state_desc.IndependentBlendEnable = false;
 
 	blend_state_desc.RenderTarget[0].BlendEnable = false;
@@ -239,21 +236,6 @@ TiledDeferredRenderer(arguments.scene){
 
 	point_lights_ = new DX11StructuredArray(32, sizeof(CSPointLight));
 
-	// Tonemap setup
-
-	tonemap_shader_ = DX11Resources::GetInstance().Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\tonemap.hlsl" });
-	
-	tonemap_params_ = new DX11StructuredBuffer(sizeof(TonemapParams));
-
-	// One-time setup
-	auto& params = *static_cast<TonemapParams*>(tonemap_params_->Lock());
-
-	params.vignette = 1.0f;
-	params.exposure_mul = 1.035f;
-	params.exposure_add = 0.187f;
-
-	tonemap_params_->Unlock();
-
 }
 
 DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){
@@ -276,7 +258,7 @@ ObjectPtr<ITexture2D> DX11TiledDeferredRenderer::Draw(unsigned int width, unsign
 		
 		ComputeLighting(width, height);						// Scene, GBuffer, DepthBuffer -> LightBuffer
 
-		ComputeTonemap(width, height);						// LightBuffer -> Exposed
+		ComputePostProcess(width, height);					// LightBuffer -> Output
 
 	}
 
@@ -284,7 +266,7 @@ ObjectPtr<ITexture2D> DX11TiledDeferredRenderer::Draw(unsigned int width, unsign
 	immediate_context_->ClearState();
 	
 	// Return the unexposed buffer
-	return exposed_buffer_->GetTexture();
+	return tonemap_output_->GetTexture();
 
 }
 
@@ -389,7 +371,7 @@ void DX11TiledDeferredRenderer::DrawNodes(const vector<VolumeComponent*>& nodes,
 
 				material = drawable.GetMaterial(subset_index);
 
-				material->SetMatrix(drawable.GetComponent<TransformComponent>()->GetWorldTransform(),
+				material->SetMatrix(drawable.GetWorldTransform(),
 									view_projection_matrix);
 
 				material->Bind(*immediate_context_);
@@ -462,43 +444,38 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 							width,
 							height,
 							1);
-
-	// Clear the compute shader resources bound to the pipeline!
-		
+	
 }
 
-void DX11TiledDeferredRenderer::ComputeTonemap(unsigned int width, unsigned int height){
+void DX11TiledDeferredRenderer::ComputePostProcess(unsigned int width, unsigned int height){
 
-	// Lazy initialization and resize of the tonemapped image
+	// LightBuffer == [Bloom] ==> Unexposed ==> [Tonemap] ==> Output
 
-	if (!exposed_buffer_ ||
-		exposed_buffer_->GetWidth() != width ||
-		exposed_buffer_->GetHeight() != height){
+	// Lazy initialization and resize of the bloom and tonemap surfaces
 
-		exposed_buffer_ = new DX11GPTexture2D(width,
-											  height,
+	if (!bloom_output_ ||
+		 bloom_output_->GetWidth() != width ||
+		 bloom_output_->GetHeight() != height) {
+
+		bloom_output_ = new DX11RenderTarget(width, 
+											 height, 
+											 { DXGI_FORMAT_R16G16B16A16_FLOAT });
+
+		tonemap_output_ = new DX11GPTexture2D(width, 
+											  height, 
 											  DXGI_FORMAT_R8G8B8A8_UNORM);
 
 	}
 
-	// Set tonemap shader input and output
+	// Bloom
 
-	tonemap_shader_->SetInput(kTonemapParamsTag,
-							  ObjectPtr<IStructuredBuffer>(tonemap_params_));
+	fx_bloom_.Process(light_buffer_->GetTexture(),
+					  bloom_output_);
 
-	tonemap_shader_->SetOutput(kUnexposedParamsTag,
-							   light_buffer_);
-
-	tonemap_shader_->SetOutput(kExposedParamsTag,
-							   exposed_buffer_);			
 	
-	// Actual tonemap computation
+	// Tonemap
 
-	tonemap_shader_->Dispatch(*immediate_context_,			// Dispatch one thread for each GBuffer's pixel
-							  width,
-							  height,
-							  1);
+	fx_tonemap_.Process((*bloom_output_)[0],
+						tonemap_output_);
 	
-	// Clear the compute shader resources bound to the pipeline!
-
 }

@@ -15,6 +15,8 @@
 #include "dx11gpgpu.h"
 #include "buffer.h"
 
+#include "fx\dx11fx_lighting.h"
+
 
 namespace gi_lib{
 
@@ -26,17 +28,6 @@ namespace gi_lib{
 			Matrix4f world_view_proj;		// World * View * Projection matrix.
 
 			Matrix4f world;					// World matrix.
-
-		};
-
-		/// \brief Parameters used by the tonemapper
-		struct TonemapParams{
-
-			float vignette;					// Vignette factor.
-
-			float exposure_mul;				// Multiplicative exposure factor.
-
-			float exposure_add;				// Additive exposure factor.
 
 		};
 
@@ -141,7 +132,7 @@ namespace gi_lib{
 			void ComputeLighting(unsigned int width, unsigned int height);
 
 			/// \param dimensions Dimensions of the Exposed buffer in pixels.
-			void ComputeTonemap(unsigned int width, unsigned int height);
+			void ComputePostProcess(unsigned int width, unsigned int height);
 
 			// Render context
 
@@ -175,20 +166,16 @@ namespace gi_lib{
 
 			ObjectPtr<DX11Computation> light_shader_;					///< \brief Shader performing the light accumulation stage.
 
-			// Tonemapping
+			// Post process
 
-			static const Tag kTonemapParamsTag;							///< \brief Tag of the constant buffer containing the tonemapping parameters
+			fx::DX11FxBloom fx_bloom_;									///< \brief Performs the bloom filter of the image.
 
-			static const Tag kUnexposedParamsTag;						///< \brief Tag of the unexposed buffer used as input of the tonemapping.
+			ObjectPtr<IRenderTarget> bloom_output_;						///< \brief Contains the result of the bloom filter.
 
-			static const Tag kExposedParamsTag;							///< \brief Tag of the exposed buffer used as output of the tonemapping.
+			fx::DX11FxTonemap fx_tonemap_;								///< \brief Performs the tonemapping of the image.
 
-			ObjectPtr<DX11StructuredBuffer> tonemap_params_;			///< \brief Buffer containing the tonemap parameters.
-
-			ObjectPtr<DX11Computation> tonemap_shader_;					///< \brief Shader performing the tonemapping stage.
-
-			ObjectPtr<IGPTexture2D> exposed_buffer_;					///< \brief Contains the result of the tonemapping.
-
+			ObjectPtr<IGPTexture2D> tonemap_output_;					///< \brief Contains the result of the tonemapping.
+			
 		};
 
 		/////////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////////
