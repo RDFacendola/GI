@@ -381,7 +381,7 @@ void UniformTree::RemoveVolume(VolumeComponent* volume){
 
 	// Remove the volume from the subspace
 
-	auto nodes = tree->nodes_;
+	auto& nodes = tree->nodes_;
 
 	auto it = std::find_if(nodes.begin(),
 						   nodes.end(),
