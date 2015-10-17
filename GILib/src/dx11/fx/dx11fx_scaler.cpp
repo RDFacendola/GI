@@ -18,7 +18,7 @@ DX11FxScaler::DX11FxScaler(){
 		
 	scaling_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\scale.hlsl" });
 
-	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, 1 });
+	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, 16 });
 
 	//Sampler is set only once
 

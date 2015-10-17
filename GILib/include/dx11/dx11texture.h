@@ -190,6 +190,12 @@ namespace gi_lib{
 
 		}
 
+		inline DXGI_FORMAT DX11GPTexture2D::GetFormat() const {
+
+			return texture_->GetFormat();
+
+		}
+
 		inline size_t DX11GPTexture2D::GetSize() const
 		{
 			

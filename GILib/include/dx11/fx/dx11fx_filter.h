@@ -36,14 +36,11 @@ namespace gi_lib {
 			private:
 
 				/// \brief Constant buffer used to pass the parameters to the filtering shader.
-
 				struct Parameters {
 
 					float gThreshold;										///< \brief Brightness threshold below of which colors are suppressed.
 
 				};
-
-				// Tonemapping
 
 				static const Tag kSourceTexture;							///< \brief Tag of the source texture to filter.
 
