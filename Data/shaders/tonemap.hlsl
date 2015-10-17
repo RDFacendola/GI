@@ -5,13 +5,13 @@
 cbuffer TonemapParams{
 
 	float gVignette;
-	float gExposureMul;
-	float gExposureAdd;
+	float gFactor;
+	float gBias;
 
 };
 
-RWTexture2D<float4> gUnexposed;			// Input - Light accumulation buffer
-RWTexture2D<float4> gExposed;				// Output - Processed result
+Texture2D gUnexposed;						// Input
+RWTexture2D<float4> gExposed;				// Output
 
 // Calculate the vignette factor.
 // coordinates - Coordinates of the point
@@ -19,31 +19,36 @@ RWTexture2D<float4> gExposed;				// Output - Processed result
 // vignette - Vignette factor
 float Vignette(uint2 coordinates, uint2 size, float vignette){
 
-	coordinates -= size;
+	float2 uv_coordinates = coordinates;
 
-	return pow(1.0 - dot(coordinates, coordinates), vignette);
+	uv_coordinates /= size;		// Coordinates in the range [0;1]
+	uv_coordinates -= 0.5f;		// Centered on the texture's center.
+	
+	float sqr_distance = dot(uv_coordinates, uv_coordinates);
+	
+	return pow(1.0f - sqr_distance, vignette);
 
 }
 
 // Calculate the exposed value of the image.
 // unexposed - Unexposed color channel.
-// exposure_mul - Multiplicative scaling factor of the exposure.
-// exposure_add - Additive scaling factor of the exposure.
-float ExposeChannel(float unexposed, float exposure_mul, float exposure_add) {
+// factor - Multiplicative factor.
+// bias - Bias factor.
+float ExposeChannel(float unexposed, float factor, float bias) {
 
-	return unexposed / ((unexposed + exposure_add) * exposure_mul);
+	return unexposed / ((unexposed + bias) * factor);
 
 }
 
 // Calculate the exposed value of the image.
-// unexposed - Unexposed color.
-// exposure_mul - Multiplicative scaling factor of the exposure.
-// exposure_add - Additive scaling factor of the exposure.
-float4 Expose(float4 unexposed, float exposure_mul, float exposure_add){
+// unexposed - Unexposed color channel.
+// factor - Multiplicative factor.
+// bias - Bias factor.
+float4 Expose(float4 unexposed, float factor, float bias){
 
-	return float4(ExposeChannel(unexposed.r, exposure_mul, exposure_add),
-				  ExposeChannel(unexposed.g, exposure_mul, exposure_add),
-				  ExposeChannel(unexposed.b, exposure_mul, exposure_add),
+	return float4(ExposeChannel(unexposed.r, factor, bias),
+				  ExposeChannel(unexposed.g, factor, bias),
+				  ExposeChannel(unexposed.b, factor, bias),
 				  1.0);
 
 }
@@ -63,10 +68,10 @@ void CSMain(int3 thread_id : SV_DispatchThreadID){
 
 	float4 unexposed = gUnexposed[thread_id.xy];
 
-	float4 exposed = Expose(unexposed, gExposureMul, gExposureAdd);
+	float4 exposed = Expose(unexposed, gFactor, gBias);
 
 	// Output
 
-	gExposed[thread_id.xy] = exposed;
+	gExposed[thread_id.xy] = exposed * vignette;
 		
 }
