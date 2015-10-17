@@ -74,9 +74,17 @@ DeferredRendererComponent::TypeSet DeferredRendererComponent::GetTypes() const{
 
 }
 
-void DeferredRendererComponent::Initialize(){}
+void DeferredRendererComponent::Initialize(){
 
-void DeferredRendererComponent::Finalize(){}
+	transform_component_ = GetComponent<TransformComponent>();
+
+}
+
+void DeferredRendererComponent::Finalize(){
+
+	transform_component_ = nullptr;
+
+}
 
 /////////////////////////////// TILED DEFERRED RENDERER ///////////////////////////////
 

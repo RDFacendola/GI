@@ -93,6 +93,10 @@ namespace gi_lib{
 		/// \return Returns the specified material.
 		ObjectPtr<const DeferredRendererMaterial> GetMaterial(unsigned int material_index) const;
 
+		/// \brief Get the world transform.
+		/// \return Return the world transform associated to the transform component.
+		const Affine3f& GetWorldTransform() const;
+
 		/// \brief Set a new material.
 		/// \param material_index Index of the material to set.
 		/// \param material New material
@@ -109,6 +113,8 @@ namespace gi_lib{
 	private:
 
 		MeshComponent& mesh_component_;									///< \brief Mesh component to draw (must belong to the same object)
+
+		TransformComponent* transform_component_;						///< \brief Transform component used to draw the mesh (must belong to the same object)
 
 		unique_ptr<Listener> on_mesh_removed_listener_;					///< \brief Detects whether the mesh component have been removed from the object.
 
@@ -149,6 +155,14 @@ namespace gi_lib{
 	////////////// DEFERRED RENDERER MATERIAL ////////////////
 
 	inline DeferredRendererMaterial::~DeferredRendererMaterial(){}
+
+	////////////// DEFERRED RENDERER COMPONENT /////////////////
+
+	inline const Affine3f& DeferredRendererComponent::GetWorldTransform() const {
+
+		return transform_component_->GetWorldTransform();
+
+	}
 
 }
 
