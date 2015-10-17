@@ -22,6 +22,6 @@ void CSMain(int3 thread_id : SV_DispatchThreadID){
 			   		 saturate(dot(float3(0, 0, 1), surface_normal)) * 0.5f +
 			   		 saturate(dot(float3(0, 0, -1), surface_normal)) * 0.5f;
 
-	gLightAccumulation[thread_id.xy] = albedo * i0;
+	gLightAccumulation[thread_id.xy] = float4((albedo * i0).rgb, 1);				// Alpha fixed to opaque
 
 }
