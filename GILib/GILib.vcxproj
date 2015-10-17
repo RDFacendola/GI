@@ -37,6 +37,7 @@
     <ClInclude Include="include\eigen.h" />
     <ClInclude Include="include\fnv1.h" />
     <ClInclude Include="include\fly_camera_component.h" />
+    <ClInclude Include="include\fx\fx_lighting.h" />
     <ClInclude Include="include\fx\fx_blur.h" />
     <ClInclude Include="include\fx\fx_filter.h" />
     <ClInclude Include="include\fx\fx_scaler.h" />
