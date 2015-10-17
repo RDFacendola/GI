@@ -46,7 +46,7 @@ namespace{
 		}
 
 		return AABB{ 0.5f * (max_corner + min_corner),
-					 max_corner - min_corner };
+					 0.5f * (max_corner - min_corner) };
 
 	}
 	
