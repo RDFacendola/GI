@@ -24,9 +24,9 @@ float4 PSMain(VSOut input) : SV_Target0{
 
 	// Performs a high-pass filter.
 
-	auto color = gSource.Sample(gSourceSampler, input.uv);
+	float4 color = gSource.Sample(gSourceSampler, input.uv);
 
-	if (Brightness(input.rgb) > gThreshold) {
+	if (Brightness(color.rgb) > gThreshold) {
 
 		return color;
 
