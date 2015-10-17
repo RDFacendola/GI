@@ -48,6 +48,8 @@ namespace gi_lib {
 
 				ObjectPtr<DX11StructuredArray> blur_kernel_;				///< \brief Contains the actual values of the kernel.
 
+				ObjectPtr<DX11GPTexture2D> temp_texture_;					///< \brief Temporary texture containing the first pass of the Gaussian blur
+
 				float sigma_;												///< \brief Variance of the Gaussian function.
 
 			};
