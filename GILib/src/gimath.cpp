@@ -89,11 +89,15 @@ Frustum::Frustum(const vector<Vector4f>& planes){
 
 	}
 
+	Vector3f normal;
+
 	for (int plane_index = 0; plane_index < 6; ++plane_index){
 
-		planes_[plane_index] = planes[plane_index].normalized();
+		normal = Math::ToVector3(planes[plane_index]).normalized();
 
-		abs_normals_[plane_index] = Math::ToVector3(planes_[plane_index]).cwiseAbs();
+		planes_[plane_index] = Vector4f(normal(0), normal(1), normal(2), planes[plane_index](3));
+
+		abs_normals_[plane_index] = normal.cwiseAbs();
 
 	}
 	
@@ -102,11 +106,12 @@ Frustum::Frustum(const vector<Vector4f>& planes){
 IntersectionType Frustum::Intersect(const AABB& bounds) const{
 
 	/// Theory on: https://fgiesen.wordpress.com/2010/10/17/view-frustum-culling/
+	/// Method 5 with a small tweak: the w component is kept within the plane and the dot product will multiply it by 1.
 
 	int plane_index = 0;
 
 	auto hcenter = Math::ToHomogeneous(bounds.center);	// Needed to compute the distance as a dot product between two 4-elements vectors.
-
+	
 	for (auto& plane : planes_){
 
 		if (plane.dot(hcenter) < -bounds.half_extents.dot(abs_normals_[plane_index])){
