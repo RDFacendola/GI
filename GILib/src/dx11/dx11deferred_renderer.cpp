@@ -253,7 +253,7 @@ ObjectPtr<ITexture2D> DX11TiledDeferredRenderer::Draw(unsigned int width, unsign
 	// Draws only if there's a camera
 
 	if (GetScene().GetMainCamera()){
-	
+
 		DrawGBuffer(width, height);							// Scene -> GBuffer
 		
 		ComputeLighting(width, height);						// Scene, GBuffer, DepthBuffer -> LightBuffer
@@ -292,8 +292,6 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 	// Cleanup
 
 	gbuffer_->Unbind(*immediate_context_);
-
-	// TODO: Unbind the shader resource slots!!!
 
 }
 
@@ -334,7 +332,9 @@ void DX11TiledDeferredRenderer::BindGBuffer(unsigned int width, unsigned int hei
 
 	}
 
-	gbuffer_->ClearTargets(*immediate_context_);
+	static const Color kSkyColor = Color{ 6.6f, 20.5f, 39.6f, 1.0f };
+
+	gbuffer_->ClearTargets(*immediate_context_, kSkyColor);
 	
 	gbuffer_->ClearDepth(*immediate_context_);
 
@@ -401,7 +401,7 @@ void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int
 
 		light_buffer_ = new DX11GPTexture2D(width,
 											height,											
-											DXGI_FORMAT_R16G16B16A16_FLOAT);
+											DXGI_FORMAT_R11G11B10_FLOAT);
 		
 	}
 
@@ -459,7 +459,7 @@ void DX11TiledDeferredRenderer::ComputePostProcess(unsigned int width, unsigned 
 
 		bloom_output_ = new DX11RenderTarget(width, 
 											 height, 
-											 { DXGI_FORMAT_R16G16B16A16_FLOAT });
+											 { DXGI_FORMAT_R11G11B10_FLOAT });
 
 		tonemap_output_ = new DX11GPTexture2D(width, 
 											  height, 

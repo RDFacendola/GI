@@ -105,7 +105,9 @@ namespace gi_lib{
 
 		CameraComponent* main_camera_;						///< \brief Main camera.
 
-		unique_ptr<IVolumeHierarchy> mesh_hierarchy_;		///< \brief Scene volume hierarchy.
+		unique_ptr<IVolumeHierarchy> mesh_hierarchy_;		///< \brief Mesh hierarchy.
+
+		unique_ptr<IVolumeHierarchy> light_hierarchy_;		///< \brief Light hierarchy.
 
 	};
 
