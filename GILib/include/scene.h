@@ -77,13 +77,19 @@ namespace gi_lib{
 		/// \remarks The camera component must belong to the scene.
 		void SetMainCamera(CameraComponent* camera);
 
-		/// \brief Get the volume hierarchy.
-		/// \return Returns the volume hierarchy.
-		IVolumeHierarchy& GetVolumeHierarchy();
+		/// \brief Get the mesh hierarchy.
+		/// \return Returns the mesh hierarchy.
+		IVolumeHierarchy& GetMeshHierarchy();
 
 		/// \brief Get the volume hierarchy.
 		/// \return Returns the volume hierarchy.
-		const IVolumeHierarchy& GetVolumeHierarchy() const;
+		const IVolumeHierarchy& GetMeshHierarchy() const;
+
+		/// \brief Get the light hierarchy.
+		IVolumeHierarchy& GetLightHierarchy();
+
+		/// \brief Get the light hierarchy.
+		const IVolumeHierarchy& GetLightHierarchy() const;
 
 		/// \brief Get the list of the nodes created so far.
 		/// \return Returns the list of the nodes created so far.
@@ -99,7 +105,7 @@ namespace gi_lib{
 
 		CameraComponent* main_camera_;						///< \brief Main camera.
 
-		unique_ptr<IVolumeHierarchy> volume_hierarchy_;		///< \brief Scene volume hierarchy.
+		unique_ptr<IVolumeHierarchy> mesh_hierarchy_;		///< \brief Scene volume hierarchy.
 
 	};
 

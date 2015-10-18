@@ -160,14 +160,30 @@
     <ClInclude Include="include\dx11\dx11commitable.h">
       <Filter>DirectX 11\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="include\fx\fx_scaler.h" />
-    <ClInclude Include="include\dx11\fx\dx11fx_scaler.h" />
-    <ClInclude Include="include\fx\fx_blur.h" />
-    <ClInclude Include="include\dx11\fx\dx11fx_blur.h" />
-    <ClInclude Include="include\fx\fx_filter.h" />
-    <ClInclude Include="include\dx11\fx\dx11fx_filter.h" />
-    <ClInclude Include="include\fx\fx_lighting.h" />
-    <ClInclude Include="include\dx11\fx\dx11fx_lighting.h" />
+    <ClInclude Include="include\fx\fx_blur.h">
+      <Filter>FX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\fx\fx_filter.h">
+      <Filter>FX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\fx\fx_lighting.h">
+      <Filter>FX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\fx\fx_scaler.h">
+      <Filter>FX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\fx\dx11fx_blur.h">
+      <Filter>DirectX 11\FX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\fx\dx11fx_filter.h">
+      <Filter>DirectX 11\FX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\fx\dx11fx_lighting.h">
+      <Filter>DirectX 11\FX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\fx\dx11fx_scaler.h">
+      <Filter>DirectX 11\FX</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11.cpp">
@@ -257,10 +273,18 @@
     <ClCompile Include="src\instance_builder.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11\fx\dx11fx_scaler.cpp" />
-    <ClCompile Include="src\dx11\fx\dx11fx_blur.cpp" />
-    <ClCompile Include="src\dx11\fx\dx11fx_filter.cpp" />
-    <ClCompile Include="src\dx11\fx\dx11fx_lighting.cpp" />
+    <ClCompile Include="src\dx11\fx\dx11fx_blur.cpp">
+      <Filter>DirectX 11\FX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\fx\dx11fx_filter.cpp">
+      <Filter>DirectX 11\FX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\fx\dx11fx_lighting.cpp">
+      <Filter>DirectX 11\FX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\fx\dx11fx_scaler.cpp">
+      <Filter>DirectX 11\FX</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectX 11">
@@ -298,6 +322,12 @@
     </Filter>
     <Filter Include="Assets">
       <UniqueIdentifier>{01988dd7-b988-492f-852e-94c0f49ef446}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FX">
+      <UniqueIdentifier>{1c72c33d-e12a-4c91-8f3d-123e41f4e88f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectX 11\FX">
+      <UniqueIdentifier>{f0650a4e-707b-46f9-9e55-8a317d043039}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -66,7 +66,7 @@ namespace{
 
 Scene::Scene(unique_ptr<IVolumeHierarchy> volume_hierarchy) :
 main_camera_(nullptr),
-volume_hierarchy_(std::move(volume_hierarchy)){}
+mesh_hierarchy_(std::move(volume_hierarchy)){}
 
 Scene::~Scene(){
 
@@ -78,7 +78,7 @@ Scene::~Scene(){
 
 	nodes_.clear();
 
-	volume_hierarchy_ = nullptr;		// 
+	mesh_hierarchy_ = nullptr;		// 
 	
 }
 
@@ -123,15 +123,15 @@ void Scene::SetMainCamera(CameraComponent* main_camera){
 
 }
 
-IVolumeHierarchy& Scene::GetVolumeHierarchy(){
+IVolumeHierarchy& Scene::GetMeshHierarchy(){
 
-	return *volume_hierarchy_;
+	return *mesh_hierarchy_;
 
 }
 
-const IVolumeHierarchy& Scene::GetVolumeHierarchy() const{
+const IVolumeHierarchy& Scene::GetMeshHierarchy() const{
 
-	return *volume_hierarchy_;
+	return *mesh_hierarchy_;
 
 }
 
@@ -432,21 +432,11 @@ void VolumeComponent::Initialize(){
 
 	});
 
-	// Plug the volume inside the volume hierarchy
-
-	GetComponent<NodeComponent>()->GetScene()
-								 .GetVolumeHierarchy()
-								 .AddVolume(this);
-
 }
 
 void VolumeComponent::Finalize(){
 
-	// Remove the volume from the hierarchy
-
-	GetComponent<NodeComponent>()->GetScene()
-								 .GetVolumeHierarchy()
-								 .RemoveVolume(this);
+	// Do nothing....
 
 }
 
@@ -512,9 +502,21 @@ void MeshComponent::Initialize(){
 
 	VolumeComponent::Initialize();
 
+	// Plug the mesh inside the mesh hierarchy
+
+	GetComponent<NodeComponent>()->GetScene()
+								 .GetMeshHierarchy()
+								 .AddVolume(this);
+
 }
 
 void MeshComponent::Finalize(){
+
+	// Remove the volume from the mesh hierarchy
+
+	GetComponent<NodeComponent>()->GetScene()
+								 .GetMeshHierarchy()
+								 .RemoveVolume(this);
 
 	VolumeComponent::Finalize();
 

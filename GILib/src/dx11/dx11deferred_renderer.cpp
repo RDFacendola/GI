@@ -133,7 +133,7 @@ const Tag DX11TiledDeferredRenderer::kPointLightsTag = "PerObject";
 
 DX11TiledDeferredRenderer::DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments) :
 TiledDeferredRenderer(arguments.scene),
-fx_bloom_(1.0f, 1.0f, Vector2f(0.5f, 0.5f)),
+fx_bloom_(1.0f, 1.67f, Vector2f(0.5f, 0.5f)),
 fx_tonemap_(0.5f){
 
 	auto&& device = *DX11Graphics::GetInstance().GetDevice();
@@ -286,7 +286,7 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 
 	float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 
-	DrawNodes(ComputeVisibleNodes(scene.GetVolumeHierarchy(), camera, aspect_ratio), 
+	DrawNodes(ComputeVisibleNodes(scene.GetMeshHierarchy(), camera, aspect_ratio), 
 			  ComputeViewProjectionMatrix(camera, aspect_ratio));
 	
 	// Cleanup

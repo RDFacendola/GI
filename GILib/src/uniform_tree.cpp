@@ -78,7 +78,7 @@ struct UniformTree::Node{
 	/// \brief Push this node down the hierarchy.
 	void PushDown();										
 
-	/// \brief Pull this node up the hierarchy.
+	/// \brief Pull this node up int the hierarchy.
 	void PullUp();	
 
 	void SetParent(UniformTree* new_parent);
@@ -454,9 +454,9 @@ void UniformTree::GetIntersections(const Frustum& frustum, PrecisionLevel precis
 
 bool UniformTree::Encloses(const VolumeComponent& volume){
 
-	// False positive here are not acceptable here
+	// False positive are not acceptable here
 
-	// Volumes must be strictly contained inside the cell, otherwise volumes touching the bounds will never be tested against touching object on neightbour subspaces.
+	// Volumes must be strictly contained inside the cell, otherwise volumes touching the bounds will never be tested against touching object on neighbour subspaces.
 
 	return bounding_box_.Intersect(volume.GetBoundingBox()) && IntersectionType::kInside;
 

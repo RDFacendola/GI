@@ -36,10 +36,10 @@ using namespace ::Eigen;
 const wstring kWindowTitle = L"Global Illumination - Raffaele D. Facendola";
 
 /// \brief Size of the domain (for each edge).
-const float kDomainSize = 4000.0f;
+const float kDomainSize = 5600.0f;
 
 /// \brief Number of times the domain is split along each axis.
-const unsigned int kDomainSubdivisions = 0;
+const unsigned int kDomainSubdivisions = 2;
 
 FlyCameraComponent* fly_camera;
 
@@ -127,7 +127,7 @@ void GILogic::Initialize(Window& window){
 
 	// Point light
 
-	auto light_transform = scene_->CreateNode(L"PoiLight",
+	auto light_transform = scene_->CreateNode(L"PointLight",
 											  Translation3f(0.0f, 50.0f, 10.0f),
 											  Quaternionf::Identity(),
 											  AlignedScaling3f(1.0f, 1.0f, 1.0f));
@@ -138,7 +138,7 @@ void GILogic::Initialize(Window& window){
 
 	// Directional light
 
-	light_transform = scene_->CreateNode(L"DirLight",
+	light_transform = scene_->CreateNode(L"DirectionalLight",
 										 Translation3f(0.0f, 0.0f, 0.0f),
 										 Quaternionf::Identity(),
 										 AlignedScaling3f(1.0f, 1.0f, 1.0f));
