@@ -12,65 +12,90 @@
 #include "graphics.h"
 #include "gimath.h"
 
-namespace gi_lib{
+namespace gi_lib {
 
-	/// \brief Represents a single point light.
-	/// A point light is a light that has a position and irradiates light in all directions.
-	/// The position of the light is defined by a separate transform component.
-	/// \author Raffaele D. Facendola.
-	class PointLightComponent : public Component{
+	/// \brief Base class for each light.
+	/// \author Raffaele D. Facendola
+	class BaseLightComponent : public Component {
 
 	public:
 
-		static const Color kDefaultLightColor;				///< \brief Default light color: white.
+		/// \brief Create a new white light component.
+		BaseLightComponent();
 
-		static const float kDefaultLinearDecay;				///< \brief Default linear decay of the light: none.
-
-		static const float kDefaultSquareDecay;				///< \brief Default square decay of the light: 1/4pi (reverse area of a sphere).
-
-		static const float kDefaultIntensity;				///< \brief Default intensity of the light: 1.
-
-		/// \brief Initializes a point light component using default values for both the color and the decay.
-		PointLightComponent();
+		/// \brief Create a new light component.
+		/// \param color The light's color.
+		BaseLightComponent(const Color& color);
 
 		virtual TypeSet GetTypes() const override;
 
 		/// \brief Get the light's color.
-		/// \return Returns the light's color.
 		Color GetColor() const;
 
 		/// \brief Set the light's color.
-		/// \param color The new light's color.
-		void SetColor(Color color);
+		/// \param color The light's color.
+		void SetColor(const Color& color);
 
-		/// \brief Get the linear decay of the light, relative to the distance between the light and the surface.
-		/// \return Returns the linear decay of the light.
-		float GetLinearDecay() const;
+	private:
 
-		/// \brief Set the linear decay of the light, relative to the distance between the light and the surface.
-		/// \param linear_decay Linear decay of the light.
-		void SetLinearDecay(float linear_decay);
+		Color color_;			///< \brief The light color.
 
-		/// \brief Get the square decay of the light, relative to the squared distance between the light and the surface.
-		/// \return Returns the squared decay of the light.
-		float GetSquareDecay() const;
+	};
 
-		/// \brief Set the squared decay of the light, relative to the squared distance between the light and the surface.
-		/// \param squared_decay Squared decay of the light.
-		void SetSquareDecay(float squared_decay);
+	/// \brief Represents a single point light.
+	/// A point light is a light that has a position and irradiates light in all directions.
+	/// The position of the light is defined by a separate transform component.
+	/// The attenuation of the point lights is defined as Att(d) = (Kc + Kl*d + Kq*d*d)^-1 where
+	/// Kc is a constant factor
+	/// Kl is a linear factor
+	/// Kq is a quadratic factor
+	/// d is the distance of the surface from the light.
+	/// \author Raffaele D. Facendola.
+	class PointLightComponent : public BaseLightComponent {
 
-		/// \brief Get the light intensity.
-		/// \return Returns the light intensity.
-		float GetIntensity() const;
+	public:
 
-		/// \brief Set the intensity of the light.
-		/// \param intensity Intensity of the light
-		void SetIntensity(float intensity);
+		/// \brief Create a new point light.
+		/// The default point light is white and has no attenuation.
+		PointLightComponent();
+
+		/// \brief Create a new point light component.
+		/// \param color The light's color
+		/// \param 
+		PointLightComponent(const Color& color, float constant_factor, float linear_factor, float quadratic_factor);
+
+		virtual TypeSet GetTypes() const override;
+
+		/// \brief Get the constant factor Kc of the point light.
+		float GetConstantFactor() const;
+
+		/// \brief Set the constant factor Kc of the point light.
+		/// \param constant_factor The new constant factor.
+		void SetConstantFactor(float constant_factor);
+
+		/// \brief Get the linear factor Kl of the point light.
+		float GetLinearFactor() const;
+
+		/// \brief Set the linear factor Kl of the point light.
+		/// \param linear_factor The new linear factor.
+		void SetLinearFactor(float linear_factor);
+
+		/// \brief Get the quadratic factor Kq of the point light.
+		float GetQuadraticFactor() const;
+
+		/// \brief Set the quadratic factor Kq of the point light.
+		/// \param quadratic The new quadratic factor.
+		void SetQuadraticFactor(float quadratic_factor);
+
+		/// \brief Set the virtual point light's radius.
+		/// This method will affect both the constant, the linear and the quadratic factor in order to approximate a point light with an actual radius greater than 0.
+		/// \param radius Radius of the sphere.
+		void SetRadius(float radius);
 
 		/// \brief Get the light's position.
 		/// \return Returns the light's position.
 		Vector3f GetPosition() const;
-		
+
 	protected:
 
 		virtual void Initialize() override;
@@ -79,50 +104,33 @@ namespace gi_lib{
 
 	private:
 
-		Color color_;										///< \brief Light color.
+		float constant_factor_;							///< \brief The constant attenuation factor.
 
-		float linear_decay_;								///< \brief Linear decay of the light, relative to the distance between the light and the surface.
+		float linear_factor_;							///< \brief The linear attenuation factor.
 
-		float squared_decay_;								///< \brief Squared decay of the light, relative to the squared distance between the light to the surface.
-			
-		float intensity_;									///< \brief Intensity of the light, as multiplicative factor over the light color.
+		float quadratic_factor_;						///< \brief The quadratic attenuation factor.
 
-		TransformComponent* transform_component_;			///< \brief Used to determine the position of the light.
+		TransformComponent* transform_component_;		///< \brief Used to retrieve the position of the light.
 
 	};
 
 	/// \brief Represents a single directional light.
 	/// A directional light is a light that has no position and irradiates light along one direction.
 	/// The direction of the light is defined by the forward direction of the object given by a transform component.
+	/// The light has no attenuation.
 	/// \author Raffaele D. Facendola.
-	class DirectionalLightComponent : public Component{
+	class DirectionalLightComponent : public BaseLightComponent {
 
 	public:
 
-		static const Color kDefaultLightColor;				///< \brief Default light color: white.
-
-		static const float kDefaultIntensity;				///< \brief Default intensity of the light: 1.
-
-		/// \brief Initializes a directional light component using default values for the color.
+		/// \brief Create a new default directional light component.
+		/// The directional light is white.
 		DirectionalLightComponent();
 
+		/// \brief Initializes a directional light component using default values for the color.
+		DirectionalLightComponent(const Color& color);
+
 		virtual TypeSet GetTypes() const override;
-
-		/// \brief Get the light's color.
-		/// \return Returns the light's color.
-		Color GetColor() const;
-
-		/// \brief Set the light's color.
-		/// \param color The new light's color.
-		void SetColor(Color color);
-
-		/// \brief Get the light intensity.
-		/// \return Returns the light intensity.
-		float GetIntensity() const;
-
-		/// \brief Set the intensity of the light.
-		/// \param intensity Intensity of the light
-		void SetIntensity(float intensity);
 
 		/// \brief Get the light's direction.
 		/// \return Returns the light's direction.
@@ -136,71 +144,177 @@ namespace gi_lib{
 
 	private:
 
-		Color color_;										///< \brief Light color.
+		TransformComponent* transform_component_;			///< \brief Used to determine the position of the light.
 
-		float intensity_;									///< \brief Intensity of the light, as multiplicative factor over the light color.
+	};
+
+	/// \brief Represents a single spot light.
+	/// A spotlight is a light that irradiates from one point towards a direction spreading with a fixed angle.
+	/// The direction and position of the light are defined by the forward direction and position of the object given by a transform component.	
+	/// The attenuation of the point lights is defined as Att(d) = (Kc + Kl*d + Kq*d*d)^-1 where
+	/// Kc is a constant factor
+	/// Kl is a linear factor
+	/// Kq is a quadratic factor
+	/// d is the distance of the surface from the light.
+	/// The point light also defines two angles used to determine the angle of the light cone and penumbra cone and a falloff factor used to determine how sharp the light's edge is.
+	/// The falloff attenuation is defined as Falloff(rho) = saturate((rho - cos(phi*0.5)) / (cos(theta*0.5) - cos(phi*0.5)) ^ f where
+	/// rho is the cosine of the angle between light's direction and the surface.
+	/// phi is the penumbra angle.
+	/// theta is the light angle.
+	/// \author Raffaele D. Facendola.
+	class SpotLightComponent : public BaseLightComponent {
+
+	public:
+
+		/// \brief Create a new default spotlight component.
+		SpotLightComponent();
+
+		/// \brief Initializes a directional light component using default values for the color.
+		SpotLightComponent(const Color& color, float light_angle, float penumbra_angle, float falloff, float constant_factor, float linear_factor, float quadratic_factor);
+
+		virtual TypeSet GetTypes() const override;
+
+		/// \brief Get the light cone angle in radians.
+		float GetLightConeAngle() const;
+
+		/// \brief Set the light cone angle.
+		/// \param light_cone_angle The new light cone angle in radians.
+		void SetLightConeAngle(float light_angle);
+
+		/// \brief Get the penumbra cone angle in radians.
+		float GetPenumbraConeAngle() const;
+
+		/// \brief Set the penumbra cone angle.
+		/// \param penumbra_cone_angle The new penumbra cone angle in radians.
+		void SetPenumbraConeAngle(float penumbra_angle);
+
+		/// \brief Get the falloff factor.
+		float GetFalloff() const;
+
+		/// \brief Set the falloff factor.
+		/// \param falloff The new falloff value.
+		void SetFalloff(float falloff);
+
+		/// \brief Get the constant factor Kc of the point light.
+		float GetConstantFactor() const;
+
+		/// \brief Set the constant factor Kc of the point light.
+		/// \param constant_factor The new constant factor.
+		void SetConstantFactor(float constant_factor);
+
+		/// \brief Get the linear factor Kl of the point light.
+		float GetLinearFactor() const;
+
+		/// \brief Set the linear factor Kl of the point light.
+		/// \param linear_factor The new linear factor.
+		void SetLinearFactor(float linear_factor);
+
+		/// \brief Get the quadratic factor Kq of the point light.
+		float GetQuadraticFactor() const;
+
+		/// \brief Set the quadratic factor Kq of the point light.
+		/// \param quadratic The new quadratic factor.
+		void SetQuadraticFactor(float quadratic_factor);
+
+		/// \brief Get the light's position.
+		/// \return Returns the light's position.
+		Vector3f GetPosition() const;
+
+		/// \brief Get the light's direction.
+		/// \return Returns the light's direction.
+		Vector3f GetDirection() const;
+
+	protected:
+
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
+
+	private:
+
+		float light_angle_;									///< \brief Maximum angle at which a surface point is inside the light cone.
+
+		float penumbra_angle_;								///< \brief Maximum angle at which a surface point is inside the penumbra cone.
+
+		float falloff_;										///< \brief Exponential factor used to determine the sharpness of the light's cone.
+
+		float constant_factor_;								///< \brief The constant attenuation factor.
+
+		float linear_factor_;								///< \brief The linear attenuation factor.
+
+		float quadratic_factor_;							///< \brief The quadratic attenuation factor.
 
 		TransformComponent* transform_component_;			///< \brief Used to determine the position of the light.
 
 	};
 
-	/////////////////////////// POINT LIGHT COMPONENT ///////////////////////////////
+	//////////////////////////// BASE LIGHT COMPONENT ///////////////////////////////
 
-	inline PointLightComponent::PointLightComponent() :
-		color_(kDefaultLightColor),
-		linear_decay_(kDefaultLinearDecay),
-		squared_decay_(kDefaultSquareDecay),
-		intensity_(kDefaultIntensity){}
+	inline BaseLightComponent::BaseLightComponent() :
+		BaseLightComponent(kOpaqueWhite) {}
 
-	inline Color PointLightComponent::GetColor() const{
+	inline BaseLightComponent::BaseLightComponent(const Color& color) : color_(color) {}
+
+	inline Color BaseLightComponent::GetColor() const {
 
 		return color_;
 
 	}
 
-	inline void PointLightComponent::SetColor(Color color){
+	inline void BaseLightComponent::SetColor(const Color& color) {
 
 		color_ = color;
 
 	}
 
-	inline float PointLightComponent::GetLinearDecay() const{
+	/////////////////////////// POINT LIGHT COMPONENT ///////////////////////////////
 
-		return linear_decay_;
+	inline PointLightComponent::PointLightComponent() :
+		PointLightComponent(kOpaqueWhite, 1.0f, 0.0f, 0.0f) {}
 
-	}
+	inline PointLightComponent::PointLightComponent(const Color& color, float constant_factor, float linear_factor, float quadratic_factor) :
+		BaseLightComponent(color),
+		constant_factor_(constant_factor),
+		linear_factor_(linear_factor),
+		quadratic_factor_(quadratic_factor) {}
 
-	inline void PointLightComponent::SetLinearDecay(float linear_decay){
+	inline float PointLightComponent::GetConstantFactor() const {
 
-		linear_decay_ = linear_decay;
-
-	}
-
-	inline float PointLightComponent::GetSquareDecay() const{
-
-		return squared_decay_;
-
-	}
-
-	inline void PointLightComponent::SetSquareDecay(float squared_decay){
-
-		squared_decay_ = squared_decay;
+		return constant_factor_;
 
 	}
 
-	inline float PointLightComponent::GetIntensity() const{
+	inline void PointLightComponent::SetConstantFactor(float constant_factor) {
 
-		return intensity_;
-
-	}
-
-	inline void PointLightComponent::SetIntensity(float intensity){
-
-		intensity_ = intensity;
+		constant_factor_ = constant_factor;
 
 	}
 
-	inline Vector3f PointLightComponent::GetPosition() const{
+	inline float PointLightComponent::GetLinearFactor() const {
+
+		return linear_factor_;
+
+	}
+
+	inline void PointLightComponent::SetLinearFactor(float linear_factor) {
+
+		linear_factor_ = linear_factor;
+
+	}
+
+	inline float PointLightComponent::GetQuadraticFactor() const {
+
+		return quadratic_factor_;
+
+	}
+
+	inline void PointLightComponent::SetQuadraticFactor(float quadratic_factor) {
+
+		quadratic_factor_ = quadratic_factor;
+
+	}
+
+	inline Vector3f PointLightComponent::GetPosition() const {
 
 		return Math::ToVector3(transform_component_->GetWorldTransform().matrix().col(3));
 
@@ -209,38 +323,113 @@ namespace gi_lib{
 	/////////////////////////// DIRECTIONAL LIGHT COMPONENT ///////////////////////////////
 
 	inline DirectionalLightComponent::DirectionalLightComponent() :
-		color_(kDefaultLightColor),
-		intensity_(kDefaultIntensity){}
+		DirectionalLightComponent(kOpaqueWhite) {}
 
-	inline Color DirectionalLightComponent::GetColor() const{
+	inline DirectionalLightComponent::DirectionalLightComponent(const Color& color) :
+		BaseLightComponent(color) {}
 
-		return color_;
-
-	}
-
-	inline void DirectionalLightComponent::SetColor(Color color){
-
-		color_ = color;
-
-	}
-	
-	inline float DirectionalLightComponent::GetIntensity() const{
-
-		return intensity_;
-
-	}
-
-	inline void DirectionalLightComponent::SetIntensity(float intensity){
-
-		intensity_ = intensity;
-
-	}
-
-	inline Vector3f DirectionalLightComponent::GetDirection() const{
+	inline Vector3f DirectionalLightComponent::GetDirection() const {
 
 		return Math::ToVector3(transform_component_->GetWorldTransform().matrix().col(2));
 
 	}
 
+	/////////////////////////// SPOT LIGHT COMPONENT //////////////////////////////////////
+
+	inline SpotLightComponent::SpotLightComponent() :
+		SpotLightComponent(kOpaqueWhite, Math::kPi / 3, Math::kPi / 2, 1.0f, 1.0f, 0.0f, 0.0f) {}
+
+	inline SpotLightComponent::SpotLightComponent(const Color& color, float light_angle, float penumbra_angle, float falloff, float constant_factor, float linear_factor, float quadratic_factor) :
+		BaseLightComponent(color),
+		light_angle_(light_angle),
+		penumbra_angle_(penumbra_angle),
+		falloff_(falloff),
+		constant_factor_(constant_factor),
+		linear_factor_(linear_factor),
+		quadratic_factor_(quadratic_factor) {}
+		
+	inline float SpotLightComponent::GetLightConeAngle() const {
+
+		return light_angle_;
+
+	}
+
+	inline void SpotLightComponent::SetLightConeAngle(float light_angle) {
+
+		light_angle_ = light_angle;
+
+	}
+
+	inline float SpotLightComponent::GetPenumbraConeAngle() const {
+
+		return penumbra_angle_;
+
+	}
+	
+	inline void SpotLightComponent::SetPenumbraConeAngle(float penumbra_angle) {
+
+		penumbra_angle_ = penumbra_angle;
+
+	}
+
+	inline float SpotLightComponent::GetFalloff() const {
+
+		return falloff_;
+
+	}
+
+	inline void SpotLightComponent::SetFalloff(float falloff) {
+
+		falloff_ = falloff;
+
+	}
+	
+	inline float SpotLightComponent::GetConstantFactor() const {
+
+		return constant_factor_;
+
+	}
+
+	inline void SpotLightComponent::SetConstantFactor(float constant_factor) {
+
+		constant_factor_ = constant_factor;
+
+	}
+
+	inline float SpotLightComponent::GetLinearFactor() const {
+
+		return linear_factor_;
+
+	}
+
+	inline void SpotLightComponent::SetLinearFactor(float linear_factor) {
+
+		linear_factor_ = linear_factor;
+
+	}
+
+	inline float SpotLightComponent::GetQuadraticFactor() const {
+
+		return quadratic_factor_;
+
+	}
+
+	inline void SpotLightComponent::SetQuadraticFactor(float quadratic_factor) {
+
+		quadratic_factor_ = quadratic_factor;
+
+	}
+
+	inline Vector3f SpotLightComponent::GetPosition() const {
+
+		return Math::ToVector3(transform_component_->GetWorldTransform().matrix().col(3));
+
+	}
+
+	inline Vector3f SpotLightComponent::GetDirection() const {
+
+		return Math::ToVector3(transform_component_->GetWorldTransform().matrix().col(2));
+
+	}
 
 }

@@ -2,18 +2,23 @@
 
 using namespace gi_lib;
 
+//////////////////////////////////// BASE LIGHT COMPONENT ////////////////////////////////////
+
+BaseLightComponent::TypeSet BaseLightComponent::GetTypes() const {
+
+	auto types = Component::GetTypes();
+
+	types.insert(type_index(typeid(BaseLightComponent)));
+
+	return types;
+
+}
+
 //////////////////////////////////// POINT LIGHT COMPONENT ////////////////////////////////////
-
-const Color PointLightComponent::kDefaultLightColor = Color( 1.0f, 1.0f, 1.0f, 1.0f );
-
-const float PointLightComponent::kDefaultLinearDecay = 0.0f;
-const float PointLightComponent::kDefaultSquareDecay = 1.0f / (4.0f * Math::kPi);			
-
-const float PointLightComponent::kDefaultIntensity = 1.0f;
 
 PointLightComponent::TypeSet PointLightComponent::GetTypes() const{
 
-	auto types = Component::GetTypes();
+	auto types = BaseLightComponent::GetTypes();
 
 	types.insert(type_index(typeid(PointLightComponent)));
 
@@ -35,13 +40,9 @@ void PointLightComponent::Finalize(){
 
 //////////////////////////////////// DIRECTIONAL LIGHT COMPONENT ////////////////////////////////////
 
-const Color DirectionalLightComponent::kDefaultLightColor = Color(1.0f, 1.0f, 1.0f, 1.0f);
-
-const float DirectionalLightComponent::kDefaultIntensity = 1.0f;
-
 DirectionalLightComponent::TypeSet DirectionalLightComponent::GetTypes() const{
 
-	auto types = Component::GetTypes();
+	auto types = BaseLightComponent::GetTypes();
 
 	types.insert(type_index(typeid(DirectionalLightComponent)));
 
@@ -56,6 +57,30 @@ void DirectionalLightComponent::Initialize(){
 }
 
 void DirectionalLightComponent::Finalize(){
+
+	transform_component_ = nullptr;
+
+}
+
+//////////////////////////////////// SPOT LIGHT COMPONENT ////////////////////////////////////
+
+SpotLightComponent::TypeSet SpotLightComponent::GetTypes() const {
+
+	auto types = BaseLightComponent::GetTypes();
+
+	types.insert(type_index(typeid(SpotLightComponent)));
+
+	return types;
+
+}
+
+void SpotLightComponent::Initialize() {
+
+	transform_component_ = GetComponent<TransformComponent>();
+
+}
+
+void SpotLightComponent::Finalize() {
 
 	transform_component_ = nullptr;
 
