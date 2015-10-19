@@ -62,7 +62,7 @@ IntersectionType AABB::Intersect(const AABB& other) const{
 		diff[1] < -other.half_extents(1) &&
 		diff[2] < -other.half_extents(2)){
 
-		return IntersectionType::kInside;	// Strictly enclosed
+		return IntersectionType::kInside | IntersectionType::kIntersect;	// Strictly enclosed (count as intersection)
 
 	}
 
@@ -76,6 +76,32 @@ Sphere Sphere::FromAABB(const AABB& aabb){
 
 	return Sphere{ aabb.center ,
 				   aabb.half_extents.norm() };	// Implies a square root.
+
+}
+
+IntersectionType Sphere::Intersect(const Sphere& sphere) const {
+
+	auto squared_distance = (sphere.center - center).squaredNorm();
+
+	auto square_radius_this = radius * radius;
+	auto square_radius_other = sphere.radius * sphere.radius;
+
+	if (squared_distance <= square_radius_this + square_radius_other) {
+
+		if (squared_distance <= square_radius_other - square_radius_this) {
+
+			return IntersectionType::kInside | IntersectionType::kIntersect; // Count as intersection
+
+		}
+
+		return IntersectionType::kIntersect;
+
+	}
+	else {
+
+		return IntersectionType::kNone;
+
+	}
 
 }
 

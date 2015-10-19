@@ -58,6 +58,10 @@ namespace gi_lib{
 		/// \return Returns a sphere which is an approximation of the specified box.
 		static Sphere FromAABB(const AABB& aabb);
 
+		/// \brief Intersection test between two spheres.
+		/// \param sphere The sphere to test against.
+		IntersectionType Intersect(const Sphere& sphere) const;
+
 	};
 
 	/// \brief Represents a frustum.
