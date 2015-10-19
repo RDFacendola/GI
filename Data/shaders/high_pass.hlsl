@@ -13,10 +13,14 @@ SamplerState gSourceSampler;
 float Brightness(float3 color) {
 
 	// http://www.w3.org/TR/AERT#color-contrast - ((Red value X 299) + (Green value X 587) + (Blue value X 114)) / 1000
+
+	//const float3 conversion_factor = float3(0.299f, 0.587f, 0.144f);
 	
-	return color.r * 0.299 +
-		   color.g * 0.587 +
-		   color.b * 0.144;
+	// https://en.wikipedia.org/wiki/Relative_luminance
+
+	const float3 conversion_factor = float3(0.2126f, 0.7152f, 0.0722f);
+
+	return dot(color.rgb, conversion_factor);
 
 }
 
