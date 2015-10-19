@@ -69,8 +69,7 @@ namespace{
 
 		auto camera_frustum = camera.GetViewFrustum(aspect_ratio);
 
-		return volume_hierarchy.GetIntersections(camera_frustum,											// Updates the view frustum according to the output ratio.
-												 IVolumeHierarchy::PrecisionLevel::Medium);					// Avoids extreme false positive while keeping reasonably high performances.
+		return volume_hierarchy.GetIntersections(camera_frustum);											// Updates the view frustum according to the output ratio.
 		
 	}
 

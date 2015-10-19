@@ -365,52 +365,7 @@ Observable<TransformComponent::OnTransformChangedEventArgs>& TransformComponent:
 
 ///////////////////////// VOLUME COMPONENT /////////////////////////
 
-VolumeComponent::VolumeComponent() :
-VolumeComponent(AABB{ Vector3f::Zero(),
-					  Vector3f::Zero() }){}
-
-VolumeComponent::VolumeComponent(const AABB& bounds) :
-bounding_box_(bounds),
-is_box_dirty_(true),
-is_sphere_dirty_(true){}
-
-VolumeComponent::~VolumeComponent(){}
-
-const AABB& VolumeComponent::GetBoundingBox() const{
-
-	if (is_box_dirty_){
-
-		transformed_bounds_ = bounding_box_ * transform_->GetWorldTransform();
-
-		is_box_dirty_ = false;
-
-	}
-
-	return transformed_bounds_;
-
-}
-
-const Sphere& VolumeComponent::GetBoundingSphere() const{
-
-	if (is_sphere_dirty_){
-
-		bounding_sphere_ = Sphere::FromAABB(GetBoundingBox());
-
-		is_sphere_dirty_ = false;
-
-	}
-
-	return bounding_sphere_;
-
-}
-
-Observable<VolumeComponent::OnBoundsChangedEventArgs>& VolumeComponent::OnBoundsChanged(){
-
-	return on_bounds_changed_;
-
-}
-
-VolumeComponent::TypeSet VolumeComponent::GetTypes() const{
+VolumeComponent::TypeSet VolumeComponent::GetTypes() const {
 
 	auto types = Component::GetTypes();
 
@@ -420,52 +375,13 @@ VolumeComponent::TypeSet VolumeComponent::GetTypes() const{
 
 }
 
-void VolumeComponent::Initialize(){
-
-	// Initialize the transform component
-
-	transform_ = GetComponent<TransformComponent>();
-
-	on_transform_changed_lister_ = transform_->OnTransformChanged().Subscribe([this](_, _){
-
-		SetDirty();	// The world matrix of the transform component changed.
-
-	});
-
-}
-
-void VolumeComponent::Finalize(){
-
-	// Do nothing....
-
-}
-
-void VolumeComponent::SetBoundingBox(const AABB& bounds){
-
-	bounding_box_ = bounds;
-
-	SetDirty();	// The bounds changed
-
-}
-
-void VolumeComponent::SetDirty(){
-
-	is_box_dirty_ = true;
-	is_sphere_dirty_ = true;
-
-	OnBoundsChangedEventArgs args{ this };
-
-	on_bounds_changed_.Notify(args);
-
-}
-
 ////////////////////////////////////// MESH COMPONENT /////////////////////////////////////
 
 MeshComponent::MeshComponent() :
 mesh_(nullptr){}
 
 MeshComponent::MeshComponent(ObjectPtr<IStaticMesh> mesh) :
-VolumeComponent(mesh->GetBoundingBox()),
+bounding_box_(mesh->GetBoundingBox()),
 mesh_(mesh){}
 
 ObjectPtr<IStaticMesh> MeshComponent::GetMesh(){
@@ -484,7 +400,25 @@ void MeshComponent::SetMesh(ObjectPtr<IStaticMesh> mesh){
 
 	mesh_ = mesh;
 
-	SetBoundingBox(mesh->GetBoundingBox());
+	ComputeBounds();
+
+}
+
+IntersectionType MeshComponent::TestAgainst(const Frustum& frustum) const{
+
+	return frustum.Intersect(bounding_sphere_);
+
+}
+
+IntersectionType MeshComponent::TestAgainst(const AABB& box) const{
+
+	return transformed_bounds_.Intersect(box);
+
+}
+
+IntersectionType MeshComponent::TestAgainst(const Sphere& sphere) const{
+
+	return bounding_sphere_.Intersect(sphere);
 
 }
 
@@ -500,7 +434,17 @@ MeshComponent::TypeSet MeshComponent::GetTypes() const{
 
 void MeshComponent::Initialize(){
 
-	VolumeComponent::Initialize();
+	// Listen to the transform component
+	 
+	transform_ = GetComponent<TransformComponent>();
+	 
+	ComputeBounds(false);
+
+	on_transform_changed_lister_ = transform_->OnTransformChanged().Subscribe([this](_, _) {
+	 
+	 	ComputeBounds();	// The world matrix of the transform component changed.
+	 
+	});
 
 	// Plug the mesh inside the mesh hierarchy
 
@@ -518,7 +462,18 @@ void MeshComponent::Finalize(){
 								 .GetMeshHierarchy()
 								 .RemoveVolume(this);
 
-	VolumeComponent::Finalize();
+}
+
+void MeshComponent::ComputeBounds(bool notify) {
+
+	transformed_bounds_ = bounding_box_ * transform_->GetWorldTransform();
+	bounding_sphere_ = Sphere::FromAABB(transformed_bounds_);
+	
+	if (notify) {
+
+		NotifyChange();
+
+	}
 
 }
 

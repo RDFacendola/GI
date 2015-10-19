@@ -306,66 +306,48 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Arguments relative to OnBoundsChanged event.
-		struct OnBoundsChangedEventArgs{
+		/// \brief Arguments relative to OnChanged event.
+		struct OnChangedEventArgs{
 
 			VolumeComponent* volume;	///< \brief Volume whose bounds have changed.
 
 		};
 
-		/// \brief Create a new volume component.
-		VolumeComponent();
-
-		/// \brief Create a new volume component.
-		/// \param bounds The initial bounds of the component.
-		VolumeComponent(const AABB& bounds);
-
 		/// \brief Virtual destructor.
-		virtual ~VolumeComponent();
+		virtual ~VolumeComponent() {};
 
-		/// \brief Get the transformed bounding box.
-		/// \return Returns the transformed bounding box.
-		const AABB& GetBoundingBox() const;
+		/// \brief Test the volume against the specified frustum.
+		/// \param frustum The frustum being tested against.
+		/// \return Returns the intersection type between this volume and the specified frustum from the volume's perspective.
+		/// \remarks This is not intended to be a perfect test! False positive may occur.
+		virtual IntersectionType TestAgainst(const Frustum& frustum) const = 0;
 
-		/// \brief Get the transformed bounding sphere.
-		/// \return Returns the transformed bounding sphere.
-		const Sphere& GetBoundingSphere() const;
+		/// \brief Test the volume against the specified axis-aligned bounding-box.
+		/// \param box The box being tested against.
+		/// \return Returns the intersection type between this volume and the specified box from the volume's perspective.
+		/// \remarks This is not intended to be a perfect test! False positive may occur.
+		virtual IntersectionType TestAgainst(const AABB& box) const = 0;
+
+		/// \brief Test the volume against the specified sphere.
+		/// \param sphere The sphere being tested against.
+		/// \return Returns the intersection type between this volume and the specified sphere from the volume's perspective.
+		/// \remarks This is not intended to be a perfect test! False positive may occur.
+		virtual IntersectionType TestAgainst(const Sphere& sphere) const = 0;
 
 		/// \brief Event that is signaled whenever the bounds change.
 		/// \return Returns the event that is signaled whenever the bounds change.
-		Observable<OnBoundsChangedEventArgs>& OnBoundsChanged();
+		Observable<OnChangedEventArgs>& OnChanged();
 
 		virtual TypeSet GetTypes() const override;
 
 	protected:
 
-		virtual void Initialize() override;
-
-		virtual void Finalize() override;
-
-		/// \brief Set new bounds for this component.
-		/// \param bounds New bounds.
-		void SetBoundingBox(const AABB& bounds);
+		/// \brief Notify that the volume has changed
+		void NotifyChange();
 
 	private:
 
-		void SetDirty();										///< \brief Mark this component as dirty and notify everybody.
-
-		AABB bounding_box_;										///< \brief Bounding box.
-
-		TransformComponent* transform_;							///< \brief Transform component needed to computed the transformed bounds.
-
-		Event<OnBoundsChangedEventArgs> on_bounds_changed_;		///< \brief Event signaled whenever the bounds change.
-
-		unique_ptr<Listener> on_transform_changed_lister_;		///< \brief Listener for the transform changed event.
-
-		mutable AABB transformed_bounds_;						///< \brief Transformed bounds.
-
-		mutable bool is_box_dirty_;								///< \brief Whether the bounds needs to be recalculated.
-
-		mutable Sphere bounding_sphere_;						///< \brief Bounding sphere. Calculated by need.
-
-		mutable bool is_sphere_dirty_;							///< \brief Is the bounding sphere dirty?
+		Event<OnChangedEventArgs> on_changed_;					///< \brief Event signaled whenever the bounds change.
 
 	};
 
@@ -394,6 +376,12 @@ namespace gi_lib{
 		/// \param mesh The new mesh to associate.
 		void SetMesh(ObjectPtr<IStaticMesh> mesh);
 
+		virtual IntersectionType TestAgainst(const Frustum& frustum) const override;
+
+		virtual IntersectionType TestAgainst(const AABB& box) const override;
+
+		virtual IntersectionType TestAgainst(const Sphere& sphere) const override;
+
 		virtual TypeSet GetTypes() const override;
 
 	protected:
@@ -404,7 +392,21 @@ namespace gi_lib{
 
 	private:
 
+		/// \brief Compute the new bounds of the mesh.
+		/// \brief Whether the method will trigger the VolumeComponent::OnChanged event
+		void ComputeBounds(bool notify = true);
+
 		ObjectPtr<IStaticMesh> mesh_;							///< \brief 3D model.
+
+		TransformComponent* transform_;							///< \brief Transform component needed to computed the transformed bounds.
+
+		AABB bounding_box_;										///< \brief Bounding box.
+
+		unique_ptr<Listener> on_transform_changed_lister_;		///< \brief Listener for the transform changed event.
+
+		AABB transformed_bounds_;								///< \brief Transformed bounds.
+
+		Sphere bounding_sphere_;								///< \brief Bounding sphere. Calculated by need.
 
 	};
 
@@ -497,6 +499,22 @@ namespace gi_lib{
 	inline vector<NodeComponent*>& Scene::GetNodes(){
 
 		return nodes_;
+
+	}
+
+	////////////////////////////////// VOLUME COMPONENT ///////////////////////////////////
+
+	inline Observable<VolumeComponent::OnChangedEventArgs>& VolumeComponent::OnChanged() {
+
+		return on_changed_;
+
+	}
+
+	inline void VolumeComponent::NotifyChange() {
+
+		auto args = OnChangedEventArgs{ this };
+
+		on_changed_.Notify(args);
 
 	}
 

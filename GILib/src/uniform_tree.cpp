@@ -99,7 +99,7 @@ volume_(volume){
 
 	parent_->nodes_.push_back(this);
 
-	on_bounds_changed_listener_ = volume->OnBoundsChanged().Subscribe([this](_, _){
+	on_bounds_changed_listener_ = volume->OnChanged().Subscribe([this](_, _){
 
 		this->PullUp();	// Relocate the moving node
 
@@ -197,7 +197,6 @@ void UniformTree::Node::SetParent(UniformTree* new_parent){
 
 struct UniformTree::Impl{
 
-	template <IVolumeHierarchy::PrecisionLevel precision>
 	static void GetIntersections(const UniformTree* tree, const Frustum& frustum, vector<VolumeComponent*>& intersections);
 
 private:
@@ -215,7 +214,6 @@ private:
 											 VolumeComponent*,
 											 VolumeMapper>;
 	
-	template <IVolumeHierarchy::PrecisionLevel precision>
 	static void GetIntersections(const vector<UniformTree::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections);
 
 };
@@ -226,7 +224,6 @@ VolumeComponent** UniformTree::Impl::VolumeMapper::operator()(UniformTree::Node*
 
 }
 
-template <IVolumeHierarchy::PrecisionLevel precision>
 void UniformTree::Impl::GetIntersections(const UniformTree* tree, const Frustum& frustum, vector<VolumeComponent*>& intersections){
 
 	// Stop the recursion if this space doesn't intersect or if the subspace has no volumes inside.
@@ -236,17 +233,17 @@ void UniformTree::Impl::GetIntersections(const UniformTree* tree, const Frustum&
 
 		// Test against volumes
 
-		GetIntersections<precision>(tree->nodes_, 
-									frustum, 
-									intersections);
+		GetIntersections(tree->nodes_, 
+						 frustum, 
+						 intersections);
 
 		// Recursion
 
 		for (auto child : tree->children_){
 
-			GetIntersections<precision>(child,
-										frustum, 
-										intersections);
+			GetIntersections(child,
+							 frustum, 
+							 intersections);
 
 		}
 
@@ -254,25 +251,9 @@ void UniformTree::Impl::GetIntersections(const UniformTree* tree, const Frustum&
 
 }
 
-template <>
-void UniformTree::Impl::GetIntersections<IVolumeHierarchy::PrecisionLevel::Coarse>(const vector<UniformTree::Node*>& nodes, const Frustum&, vector<VolumeComponent*>& intersections){
+void UniformTree::Impl::GetIntersections(const vector<UniformTree::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections){
 
-	// Copy every volume without testing. This may lead to some false positive (even far away) but requires no further test.
-
-	auto size = intersections.size();
-
-	intersections.resize(size + nodes.size());
-
-	std::copy(iterator_wrapper(nodes.begin()),
-			  iterator_wrapper(nodes.end()),
-			  intersections.begin() + size);
-
-}
-
-template <>
-void UniformTree::Impl::GetIntersections<IVolumeHierarchy::PrecisionLevel::Medium>(const vector<UniformTree::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections){
-
-	// Test each volume using the bounding sphere. May lead to some false positive near the frustum and is reasonably quick.
+	// Test each volume inside this node against the frustum
 
 	auto size = intersections.size();
 
@@ -283,34 +264,7 @@ void UniformTree::Impl::GetIntersections<IVolumeHierarchy::PrecisionLevel::Mediu
 							intersections.begin() + size,
 							[&frustum](const iterator_wrapper::reference volume){
 
-								return frustum.Intersect(volume->GetBoundingSphere()) && IntersectionType::kIntersect;
-
-							});
-
-	intersections.erase(end,
-						intersections.end());	// Shrink
-
-}
-
-template <>
-void UniformTree::Impl::GetIntersections<IVolumeHierarchy::PrecisionLevel::Fine>(const vector<UniformTree::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections){
-
-	// Test each volume using maximum precision. No false positive is reported, however the performances may be affected.
-
-	auto size = intersections.size();
-
-	intersections.resize(size + nodes.size());	// Overshoot
-
-	auto end = std::copy_if(iterator_wrapper(nodes.begin()),
-							iterator_wrapper(nodes.end()),
-							intersections.begin() + size,
-							[&frustum](const iterator_wrapper::reference volume){
-
-								// Hypothesis: rejected volumes are always more than accepted volumes.
-								// Optimize the rejection case using a bounding sphere test first.
-
-								return (frustum.Intersect(volume->GetBoundingSphere()) && IntersectionType::kIntersect) &&
-									   (frustum.Intersect(volume->GetBoundingBox()) && IntersectionType::kIntersect);
+								return volume->TestAgainst(frustum) && IntersectionType::kIntersect;
 
 							});
 
@@ -397,13 +351,13 @@ void UniformTree::RemoveVolume(VolumeComponent* volume){
 	
 }
 
-vector<VolumeComponent*> UniformTree::GetIntersections(const Frustum& frustum, PrecisionLevel precision) const{
+vector<VolumeComponent*> UniformTree::GetIntersections(const Frustum& frustum) const{
 
 	vector<VolumeComponent*> intersections;
 
 	intersections.reserve(volume_count_);	// Theoretical maximum number of volumes
 
-	GetIntersections(frustum, precision, intersections);
+	Impl::GetIntersections(this, frustum, intersections);
 
 	intersections.shrink_to_fit();			// Shrink to the actual value
 
@@ -429,35 +383,12 @@ void UniformTree::Split(const Vector3i& splits){
 
 }
 
-void UniformTree::GetIntersections(const Frustum& frustum, PrecisionLevel precision, vector<VolumeComponent*>& intersections) const{
-
-	switch (precision){
-
-	case PrecisionLevel::Coarse:
-
-		Impl::GetIntersections<PrecisionLevel::Coarse>(this, frustum, intersections);
-		break;
-
-	case PrecisionLevel::Medium:
-
-		Impl::GetIntersections<PrecisionLevel::Medium>(this, frustum, intersections);
-		break;
-
-	case PrecisionLevel::Fine:
-
-		Impl::GetIntersections<PrecisionLevel::Fine>(this, frustum, intersections);
-		break;
-
-	}
-
-}
-
 bool UniformTree::Encloses(const VolumeComponent& volume){
 
 	// False positive are not acceptable here
 
-	// Volumes must be strictly contained inside the cell, otherwise volumes touching the bounds will never be tested against touching object on neighbour subspaces.
+	// Volumes must be strictly contained inside the cell, otherwise volumes touching the bounds will never be tested against touching object on neighbor subspaces.
 
-	return bounding_box_.Intersect(volume.GetBoundingBox()) && IntersectionType::kInside;
-
+	return volume.TestAgainst(bounding_box_) && IntersectionType::kInside;
+	
 }

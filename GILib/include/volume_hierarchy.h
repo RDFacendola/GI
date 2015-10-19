@@ -24,15 +24,6 @@ namespace gi_lib{
 	class IVolumeHierarchy{
 
 	public:
-		
-		/// \brief Precision of the intersection test.
-		enum class PrecisionLevel{
-
-			Coarse,				///< \brief A coarse test may produce false positives.
-			Medium,				///< \brief A medium-grained test that could produce some false positive.
-			Fine,				///< \brief A fine-grained test never produce false positives.
-			
-		};
 
 		/// \brief Virtual destructor.
 		virtual ~IVolumeHierarchy(){};
@@ -46,11 +37,9 @@ namespace gi_lib{
 		virtual void RemoveVolume(VolumeComponent* volume) = 0;
 
 		/// \brief Get all the volume component who intersects with the given frustum.
-		/// \param frustum Frustum.
-		/// \param precision Precision level of the test.
-		/// \remarks Coarse tests are faster but may lead to false positives.
-		///          Fine tests, however, achieve lesser performances and produce no false positive.
-		virtual vector<VolumeComponent*> GetIntersections(const Frustum& frustum, PrecisionLevel precision) const = 0;
+		/// \param frustum Frustum to test against.
+		/// \return Returns the list of all the volumes who intersect the specified frustum.
+		virtual vector<VolumeComponent*> GetIntersections(const Frustum& frustum) const = 0;
 
 	};
 

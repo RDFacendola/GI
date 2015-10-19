@@ -32,7 +32,7 @@ namespace gi_lib{
 
 		virtual void RemoveVolume(VolumeComponent* volume) override;
 
-		virtual vector<VolumeComponent*> GetIntersections(const Frustum& frustum, PrecisionLevel precision) const;
+		virtual vector<VolumeComponent*> GetIntersections(const Frustum& frustum) const;
 
 	private:
 
@@ -50,22 +50,14 @@ namespace gi_lib{
 		/// \param splits Number of splits left on each axis.
 		void Split(const Vector3i& splits);
 
-		/// \brief Get all the volume component who intersects with the given frustum.
-		/// \param frustum Frustum.
-		/// \param precision Precision level of the test.
-		/// \param The result vector.
-		/// \remarks Coarse tests are faster but may lead to false positives.
-		///          Fine tests, however, achieve lesser performances and produce no false positive.
-		void GetIntersections(const Frustum& frustum, PrecisionLevel precision, vector<VolumeComponent*>& intersection) const;
-
 		/// \brief Check whether a particular volume is fully enclosed in this subspace.
 		/// \param volume Volume to check.
 		/// \return Returns true if the volume is fully enclosed in this subspace, returns false otherwise.
 		bool Encloses(const VolumeComponent& volume);
 
-		UniformTree* parent_;						///< \brief Parent space.
+		UniformTree* parent_;								///< \brief Parent space.
 
-		vector<UniformTree*> children_;			///< \brief Subspaces.
+		vector<UniformTree*> children_;						///< \brief Subspaces.
 
 		vector<Node*> nodes_;								///< \brief Volumes contained in this subspace.
 
