@@ -113,6 +113,8 @@ namespace gi_lib{
 
 	};
 
+	static const Color kOpaqueWhite;			///< \brief Fully-opaque white color.
+
 	static const Color kOpaqueBlack;			///< \brief Fully-opaque black color.
 
 	static const Color kTransparentBlack;		///< \brief Fully-transparent black color.

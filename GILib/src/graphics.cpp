@@ -62,9 +62,11 @@ namespace{
 
 ///////////////////////// COLOR ////////////////////////////////////////
 
-const Color kOpaqueBlack = Color(0.0f, 0.0f, 0.0f, 0.0f);
+const Color kOpaqueWhite = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
-const Color kTransparentBlack = Color(0.0f, 0.0f, 0.0f, 1.0f);
+const Color kOpaqueBlack = Color(0.0f, 0.0f, 0.0f, 1.0f);
+
+const Color kTransparentBlack = Color(0.0f, 0.0f, 0.0f, 0.0f);
 
 //////////////////////// RESOURCES :: IMPL //////////////////////////////
 

@@ -332,7 +332,7 @@ void DX11TiledDeferredRenderer::BindGBuffer(unsigned int width, unsigned int hei
 
 	}
 
-	static const Color kSkyColor = Color{ 6.6f, 20.5f, 39.6f, 1.0f };
+	static const Color kSkyColor = Color{ 0.66f, 2.05f, 3.96f, 1.0f };
 
 	gbuffer_->ClearTargets(*immediate_context_, kSkyColor);
 	

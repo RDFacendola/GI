@@ -13,7 +13,7 @@ namespace gi_lib{
 	
 	/// \brief Represents an uniform tree.
 	/// The tree subdivides its domain in equally sized cells recursively.
-	/// This solution works best for applications where the volumes are distribuited uniformly throughout the domain, however it has a large memory footprint.
+	/// This solution works best for applications where the volumes are distributed uniformly throughout the domain, however it has a large memory footprint.
 	/// \author Raffaele D. Facendola
 	class UniformTree : public IVolumeHierarchy
 	{
