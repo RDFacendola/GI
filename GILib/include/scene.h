@@ -43,7 +43,7 @@ namespace gi_lib{
 	public:
 
 		/// \brief Default constructor.
-		Scene(unique_ptr<IVolumeHierarchy> volume_hierarchy);
+		Scene(unique_ptr<IVolumeHierarchy> mesh_hierarchy, unique_ptr<IVolumeHierarchy> light_hierarchy);
 
 		/// \brief Scene destructor.
 		~Scene();
@@ -86,9 +86,11 @@ namespace gi_lib{
 		const IVolumeHierarchy& GetMeshHierarchy() const;
 
 		/// \brief Get the light hierarchy.
+		/// \return Returns the light hierarchy
 		IVolumeHierarchy& GetLightHierarchy();
 
 		/// \brief Get the light hierarchy.
+		/// \return Returns the light hierarchy/// \brief Get the light hierarchy.
 		const IVolumeHierarchy& GetLightHierarchy() const;
 
 		/// \brief Get the list of the nodes created so far.

@@ -64,9 +64,10 @@ namespace{
 
 ////////////////////////////////////// SCENE //////////////////////////////////////////
 
-Scene::Scene(unique_ptr<IVolumeHierarchy> volume_hierarchy) :
+Scene::Scene(unique_ptr<IVolumeHierarchy> mesh_hierarchy, unique_ptr<IVolumeHierarchy> light_hierarchy) :
 main_camera_(nullptr),
-mesh_hierarchy_(std::move(volume_hierarchy)){}
+mesh_hierarchy_(std::move(mesh_hierarchy)),
+light_hierarchy_(std::move(light_hierarchy)){}
 
 Scene::~Scene(){
 
@@ -132,6 +133,18 @@ IVolumeHierarchy& Scene::GetMeshHierarchy(){
 const IVolumeHierarchy& Scene::GetMeshHierarchy() const{
 
 	return *mesh_hierarchy_;
+
+}
+
+IVolumeHierarchy& Scene::GetLightHierarchy() {
+	
+	return *light_hierarchy_;
+
+}
+
+const IVolumeHierarchy& Scene::GetLightHierarchy() const {
+
+	return *light_hierarchy_;
 
 }
 

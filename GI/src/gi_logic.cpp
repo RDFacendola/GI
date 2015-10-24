@@ -49,9 +49,12 @@ GILogic::GILogic() :
 	graphics_(Graphics::GetAPI(API::DIRECTX_11)),
 	input_(nullptr){
 
-	scene_ = make_unique<Scene>(make_unique<UniformTree>(AABB{ Vector3f::Zero(),
+	scene_ = make_unique<Scene>(make_unique<UniformTree>(AABB{ Vector3f::Zero(),							// Mesh hierarchy
 															   kDomainSize * Vector3f::Ones() },
-								kDomainSubdivisions * Vector3i::Ones()));
+														 kDomainSubdivisions * Vector3i::Ones()),
+								make_unique<UniformTree>(AABB{ Vector3f::Zero(),							// Light hierarchy
+															   kDomainSize * Vector3f::Ones() },
+														 kDomainSubdivisions * Vector3i::Ones()));
 
 }
 
