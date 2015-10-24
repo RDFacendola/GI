@@ -17,15 +17,15 @@ namespace gi_lib {
 
 		namespace fx {
 
-			/// \brief This class is used to suppress color under a threshold.
+			/// \brief This class is used to suppress color whose brightness falls under a given threshold.
 			/// \author Raffaele D. Facendola
-			class DX11FxHighPass : public gi_lib::fx::FxHighPass {
+			class DX11FxBrightPass : public gi_lib::fx::FxHighPass {
 
 			public:
 
 				/// \brief Create a new High-pass filter.
 				/// \param threshold Threshold below of which the colors are suppressed.
-				DX11FxHighPass(float threshold);
+				DX11FxBrightPass(float threshold);
 
 				virtual float GetThreshold() const override;
 
@@ -60,7 +60,7 @@ namespace gi_lib {
 
 			////////////////////////////////// DX11 FX HIGH PASS ////////////////////////////////
 
-			inline float DX11FxHighPass::GetThreshold() const {
+			inline float DX11FxBrightPass::GetThreshold() const {
 
 				return threshold_;
 

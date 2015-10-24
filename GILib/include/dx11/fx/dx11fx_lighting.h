@@ -61,7 +61,7 @@ namespace gi_lib {
 
 				DX11FxGaussianBlur fx_blur_;						///< \brief Filter used to perform a Gaussian blur.
 
-				DX11FxHighPass fx_high_pass_;						///< \brief Filter used to perform a High-pass process.
+				DX11FxBrightPass fx_high_pass_;						///< \brief Filter used to perform a High-pass process.
 				
 				ObjectPtr<DX11RenderTarget> glow_surface_;			///< \brief Surface containing the "glowing" pixels. Only one surface.
 

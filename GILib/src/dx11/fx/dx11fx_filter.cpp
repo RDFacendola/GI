@@ -10,15 +10,15 @@ using namespace gi_lib::dx11::fx;
 
 ////////////////////////////////// DX11 FX HIGH PASS ////////////////////////////////
 
-const Tag DX11FxHighPass::kSourceTexture = "gSource";
+const Tag DX11FxBrightPass::kSourceTexture = "gSource";
 
-const Tag DX11FxHighPass::kSampler = "gSourceSampler";
+const Tag DX11FxBrightPass::kSampler = "gSourceSampler";
 
-const Tag DX11FxHighPass::kParameters = "Parameters";
+const Tag DX11FxBrightPass::kParameters = "Parameters";
 
-DX11FxHighPass::DX11FxHighPass(float threshold) {
+DX11FxBrightPass::DX11FxBrightPass(float threshold) {
 
-	filter_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\high_pass.hlsl" });
+	filter_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\bright_pass.hlsl" });
 
 	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, 16 });
 
@@ -36,7 +36,7 @@ DX11FxHighPass::DX11FxHighPass(float threshold) {
 
 }
 
-void DX11FxHighPass::SetThreshold(float threshold) {
+void DX11FxBrightPass::SetThreshold(float threshold) {
 
 	threshold_ = threshold;
 
@@ -48,7 +48,7 @@ void DX11FxHighPass::SetThreshold(float threshold) {
 
 }
 
-void DX11FxHighPass::Filter(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) {
+void DX11FxBrightPass::Filter(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) {
 
 	auto device_context = DX11Graphics::GetInstance().GetImmediateContext();
  
