@@ -18,6 +18,9 @@ using ::std::vector;
 
 namespace gi_lib{
 
+	struct AABB;
+	struct Sphere;
+
 	/// \brief Intersection types.
 	ENUM_FLAGS(IntersectionType, unsigned int){
 
@@ -44,6 +47,10 @@ namespace gi_lib{
 		/// \return Returns the classification of the intersection between this instance and the specified box.
 		IntersectionType Intersect(const AABB& aabb) const;
 
+		/// \brief Intersection test between a box and a sphere.
+		/// \param sphere The sphere being tested against against.
+		IntersectionType Intersect(const Sphere& sphere) const;
+
 	};
 
 	/// \brief Bounding sphere.
@@ -61,6 +68,10 @@ namespace gi_lib{
 		/// \brief Intersection test between two spheres.
 		/// \param sphere The sphere to test against.
 		IntersectionType Intersect(const Sphere& sphere) const;
+
+		/// \brief Intersection test between a sphere and a box.
+		/// \param box The box being tested against.
+		IntersectionType Intersect(const AABB& box) const;
 
 	};
 

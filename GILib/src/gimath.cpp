@@ -15,7 +15,7 @@ float Math::kRadToDeg = 1.0f / Math::kDegToRad;
 
 ///////////////////////////////////////// AABB /////////////////////////////////////////
 
-AABB AABB::operator*(const Affine3f& transform) const{
+AABB AABB::operator*(const Affine3f& transform) const {
 
 	/// Theory on: http://dev.theomader.com/transform-bounding-boxes/
 
@@ -29,7 +29,7 @@ AABB AABB::operator*(const Affine3f& transform) const{
 
 	Vector3f a, b, col;
 
-	for (int i = 0; i < 3; i++){
+	for (int i = 0; i < 3; i++) {
 
 		col = Math::ToVector3(matrix.col(i));
 
@@ -43,16 +43,16 @@ AABB AABB::operator*(const Affine3f& transform) const{
 
 	return AABB{ 0.5f * (max_transformed + min_transformed),
 				 0.5f * (max_transformed - min_transformed) };
-		
+
 }
 
-IntersectionType AABB::Intersect(const AABB& other) const{
+IntersectionType AABB::Intersect(const AABB& other) const {
 
 	float diff[3];
 
 	if ((diff[0] = std::fabs(other.center(0) - center(0)) - half_extents(0)) >= other.half_extents(0) ||
 		(diff[1] = std::fabs(other.center(1) - center(1)) - half_extents(1)) >= other.half_extents(1) ||
-		(diff[2] = std::fabs(other.center(2) - center(2)) - half_extents(2)) >= other.half_extents(2)){
+		(diff[2] = std::fabs(other.center(2) - center(2)) - half_extents(2)) >= other.half_extents(2)) {
 
 		return IntersectionType::kNone;		// Strictly separated
 
@@ -60,7 +60,7 @@ IntersectionType AABB::Intersect(const AABB& other) const{
 
 	if (diff[0] < -other.half_extents(0) &&
 		diff[1] < -other.half_extents(1) &&
-		diff[2] < -other.half_extents(2)){
+		diff[2] < -other.half_extents(2)) {
 
 		return IntersectionType::kInside | IntersectionType::kIntersect;	// Strictly enclosed (count as intersection)
 
@@ -70,9 +70,48 @@ IntersectionType AABB::Intersect(const AABB& other) const{
 
 }
 
+IntersectionType AABB::Intersect(const Sphere& sphere) const {
+
+	// Clamps the sphere's center inside the box
+
+	auto clamped_center = sphere.center.cwiseMax(center - half_extents).cwiseMin(center + half_extents);
+
+	// If the distance between the clamped center and the actual sphere center is less than the sphere's radius, the two must intersect
+
+	auto squared_sphere_radius = sphere.radius * sphere.radius;
+
+	if ((sphere.center - clamped_center).squaredNorm() < squared_sphere_radius) {
+
+		// Check whether the opposite corner of the box wrt the sphere center is inside the sphere.
+		// The box is symmetrical: if the opposite corner is inside the sphere, every other corner is inside as well.
+
+		auto max_corner = center + half_extents;
+		auto min_corner = center - half_extents;
+
+		Vector3f opposite_corner( center(0) > sphere.center(0) ? max_corner(0) : min_corner(0),
+								  center(1) > sphere.center(1) ? max_corner(1) : min_corner(1),
+								  center(2) > sphere.center(2) ? max_corner(2) : min_corner(2) );
+
+		if ((sphere.center - opposite_corner).squaredNorm() < squared_sphere_radius) {
+
+			return IntersectionType::kInside | IntersectionType::kIntersect;			// Count as intersection.
+
+		}
+		
+		return IntersectionType::kIntersect;
+
+	}
+	else {
+
+		return IntersectionType::kNone;
+
+	}
+
+}
+
 ///////////////////////////////////////// SPHERE /////////////////////////////////////////
 
-Sphere Sphere::FromAABB(const AABB& aabb){
+Sphere Sphere::FromAABB(const AABB& aabb) {
 
 	return Sphere{ aabb.center ,
 				   aabb.half_extents.norm() };	// Implies a square root.
@@ -86,7 +125,7 @@ IntersectionType Sphere::Intersect(const Sphere& sphere) const {
 	auto square_radius_this = radius * radius;
 	auto square_radius_other = sphere.radius * sphere.radius;
 
-	if (squared_distance <= square_radius_this + square_radius_other) {
+	if (squared_distance <= square_radius_other + square_radius_this) {
 
 		if (squared_distance <= square_radius_other - square_radius_this) {
 
@@ -103,6 +142,38 @@ IntersectionType Sphere::Intersect(const Sphere& sphere) const {
 
 	}
 
+}
+
+IntersectionType Sphere::Intersect(const AABB& box) const {
+
+	// Clamps the sphere's center inside the box
+	auto clamped_center = center.cwiseMax(box.center - box.half_extents).cwiseMin(box.center + box.half_extents);
+	
+	// If the distance between the clamped center and the actual sphere center is less than the sphere's radius, the two must intersect
+
+	if( (center - clamped_center).squaredNorm() < radius * radius ){
+
+		// If the sphere is contained wrt each axis, the sphere is totally contained inside the box
+
+		auto axis_diff = (center - box.center).cwiseAbs() - box.half_extents;
+
+		if (axis_diff(0) + radius <= 0 &&
+			axis_diff(1) + radius <= 0 &&
+			axis_diff(2) + radius <= 0 ) {
+
+			return IntersectionType::kIntersect | IntersectionType::kInside;		// Count as intersection
+
+		}
+
+		return IntersectionType::kIntersect;
+
+	}
+	else {
+
+		return IntersectionType::kNone;
+
+	}
+	
 }
 
 ///////////////////////////////////////// FRUSTUM /////////////////////////////////////////
