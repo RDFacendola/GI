@@ -220,19 +220,23 @@ namespace gi_lib{
 		void SetScale(const AlignedScaling3f & scale);
 
 		/// \brief Get the right direction.
-		/// The right direction defines the positive X-axis in local space.
+		/// The right direction defines the positive X-axis in world space.
 		/// \return Returns the right direction.
 		Vector3f GetRight() const;
 
 		/// \brief Get the up direction.
-		/// The up direction defines the positive Y-axis in local space.
+		/// The up direction defines the positive Y-axis in world space.
 		/// \return Returns the up direction.
 		Vector3f GetUp() const;
 
 		/// \brief Get the forward direction.
-		/// The forward direction defines the positive Z-axis in local space.
+		/// The forward direction defines the positive Z-axis in world space.
 		/// \return Returns the forward direction.
 		Vector3f GetForward() const;
+
+		/// \brief Get the position in world space.
+		/// \return Returns the position in world space.
+		Vector3f GetPosition() const;
 
 		/// \brief Get the local transform.
 		/// \return Returns the local transform matrix.
@@ -524,19 +528,25 @@ namespace gi_lib{
 
 	inline Vector3f TransformComponent::GetRight() const{
 		
-		return Math::ToVector3(GetLocalTransform().matrix().col(0)).normalized();
+		return Math::ToVector3(GetWorldTransform().matrix().col(0)).normalized();
 
 	}
 
 	inline Vector3f TransformComponent::GetUp() const{
 
-		return Math::ToVector3(GetLocalTransform().matrix().col(1)).normalized();
+		return Math::ToVector3(GetWorldTransform().matrix().col(1)).normalized();
 		
 	}
 
 	inline Vector3f TransformComponent::GetForward() const{
 
-		return Math::ToVector3(GetLocalTransform().matrix().col(2)).normalized();
+		return Math::ToVector3(GetWorldTransform().matrix().col(2)).normalized();
+
+	}
+
+	inline Vector3f TransformComponent::GetPosition() const {
+
+		return Math::ToVector3(GetWorldTransform().matrix().col(3));
 
 	}
 
