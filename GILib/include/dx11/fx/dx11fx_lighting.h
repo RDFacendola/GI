@@ -21,6 +21,47 @@ namespace gi_lib {
 
 		namespace fx {
 
+			/// \brief This class is used to suppress color whose brightness falls under a given threshold.
+			/// \author Raffaele D. Facendola
+			class DX11FxBrightPass : public gi_lib::fx::FxBrightPass {
+
+			public:
+
+				/// \brief Create a new High-pass filter.
+				/// \param threshold Threshold below of which the colors are suppressed.
+				DX11FxBrightPass(float threshold);
+
+				virtual float GetThreshold() const override;
+
+				virtual void SetThreshold(float threshold) override;
+
+				virtual void Filter(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) override;
+
+			private:
+
+				/// \brief Constant buffer used to pass the parameters to the filtering shader.
+				struct Parameters {
+
+					float gThreshold;										///< \brief Brightness threshold below of which colors are suppressed.
+
+				};
+
+				static const Tag kSourceTexture;							///< \brief Tag of the source texture to filter.
+
+				static const Tag kSampler;									///< \brief Tag of the sampler used to sample the source texture.
+
+				static const Tag kParameters;								///< \brief Tag of the constant buffer used to pass parameters to the shader.
+
+				ObjectPtr<DX11Material> filter_shader_;						///< \brief Shader performing the scaling.
+
+				ObjectPtr<DX11Sampler> sampler_;							///< \brief Sampler used to sample the source texture.
+
+				ObjectPtr<DX11StructuredBuffer> parameters_;				///< \brief Parameters used to perform the filtering.
+
+				float threshold_;											///< \brief Variance of the Gaussian function.
+
+			};
+
 			/// \brief Performs a bloom filtering of an image using DirectX11
 			/// \author Raffaele D. Facendola
 			class DX11FxBloom : public gi_lib::fx::FxBloom {
@@ -122,7 +163,15 @@ namespace gi_lib {
 				ObjectPtr<DX11Computation> tonemap_shader_;					///< \brief Shader performing the tonemapping stage.
 				
 			};
-			
+
+			////////////////////////////////// DX11 FX BRIGHT PASS ////////////////////////////////
+
+			inline float DX11FxBrightPass::GetThreshold() const {
+
+				return threshold_;
+
+			}
+
 			//////////////////////////////////// DX11 FX BLOOM ////////////////////////////////////
 
 			inline float DX11FxBloom::GetMinBrightness() const{
