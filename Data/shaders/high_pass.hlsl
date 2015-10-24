@@ -1,4 +1,4 @@
-#include "quad.h"
+#include "quad.hlsl"
 
 cbuffer Parameters {
 

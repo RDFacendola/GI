@@ -1,4 +1,4 @@
-#include "quad.h"
+#include "quad.hlsl"
 
 Texture2D gSource;
 Texture2D gGlow;
