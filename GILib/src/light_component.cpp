@@ -1,5 +1,7 @@
 #include "light_component.h"
 
+#include <limits>
+
 using namespace gi_lib;
 
 //////////////////////////////////// BASE LIGHT COMPONENT ////////////////////////////////////
@@ -14,6 +16,45 @@ BaseLightComponent::TypeSet BaseLightComponent::GetTypes() const {
 
 }
 
+void BaseLightComponent::ComputeBounds(bool notify) {
+
+	ComputeBounds();
+
+	if (notify) {
+
+		VolumeComponent::NotifyChange();
+
+	}
+
+}
+
+void BaseLightComponent::Initialize() {
+
+	transform_ = GetComponent<TransformComponent>();
+	
+	ComputeBounds(false);
+	
+	on_transform_changed_lister_ = transform_->OnTransformChanged().Subscribe([this](_, _) {
+
+		ComputeBounds();	// The world matrix of the transform component changed.
+
+	});
+
+	GetComponent<NodeComponent>()->GetScene()
+								 .GetLightHierarchy()
+								 .AddVolume(this);
+}
+
+void BaseLightComponent::Finalize() {
+
+	GetComponent<NodeComponent>()->GetScene()
+								 .GetLightHierarchy()
+								 .RemoveVolume(this);
+	
+	transform_ = nullptr;
+	
+}
+
 //////////////////////////////////// POINT LIGHT COMPONENT ////////////////////////////////////
 
 PointLightComponent::TypeSet PointLightComponent::GetTypes() const{
@@ -26,15 +67,51 @@ PointLightComponent::TypeSet PointLightComponent::GetTypes() const{
 
 }
 
-void PointLightComponent::Initialize(){
-
-	transform_component_ = GetComponent<TransformComponent>();
+PointLightComponent::PointLightComponent(const Color& color, float radius) :
+	BaseLightComponent(color),
+	constant_factor_(1.0f),
+	linear_factor_(2.0f / radius),
+	quadratic_factor_(1.0f / (radius * radius)){
 
 }
 
-void PointLightComponent::Finalize(){
+void PointLightComponent::SetRadius(float radius) {
 
-	transform_component_ = nullptr;
+	constant_factor_ = 1.0f;
+	linear_factor_ = 2.0f / radius;
+	quadratic_factor_ = 1.0f / (radius * radius);
+
+	BaseLightComponent::ComputeBounds(true);
+
+}
+
+void PointLightComponent::ComputeBounds() {
+
+	// The point light influence is theoretically infinite, however we can cut its influence when its contribution drops below a given threshold
+
+	// threshold = 1 / (kq*d^2 + kl*d + kc)  - Solve for "d"
+
+	const float r_threshold = 1.0f / 0.05f;		// 1 / threshold
+
+	float influence_radius;
+
+	if (quadratic_factor_ > 0.0f) {
+
+		float delta = linear_factor_ * linear_factor_ - 4.0f * quadratic_factor_ * (constant_factor_ - r_threshold);	// b^2 - 4ac 
+
+		influence_radius = (-linear_factor_ + std::sqrtf(delta)) / (2.0f * quadratic_factor_);					// (-b + sqrt(delta)) / 2a, ignoring -sqrt(delta) as it would make the influence radius negative.
+
+	}
+	else {
+
+		influence_radius = (r_threshold - constant_factor_) / linear_factor_;
+
+	}
+
+	assert(influence_radius > 0.0f);		// oh snap!
+
+	bounds_ = Sphere{ GetTransformComponent().GetPosition(),
+					  influence_radius };
 
 }
 
@@ -50,18 +127,6 @@ DirectionalLightComponent::TypeSet DirectionalLightComponent::GetTypes() const{
 
 }
 
-void DirectionalLightComponent::Initialize(){
-
-	transform_component_ = GetComponent<TransformComponent>();
-
-}
-
-void DirectionalLightComponent::Finalize(){
-
-	transform_component_ = nullptr;
-
-}
-
 //////////////////////////////////// SPOT LIGHT COMPONENT ////////////////////////////////////
 
 SpotLightComponent::TypeSet SpotLightComponent::GetTypes() const {
@@ -74,14 +139,29 @@ SpotLightComponent::TypeSet SpotLightComponent::GetTypes() const {
 
 }
 
-void SpotLightComponent::Initialize() {
+IntersectionType SpotLightComponent::TestAgainst(const Frustum& frustum) const {
 
-	transform_component_ = GetComponent<TransformComponent>();
+	THROW(L"NOT YET IMPLEMENTED");
+	return IntersectionType::kIntersect;
 
 }
 
-void SpotLightComponent::Finalize() {
+IntersectionType SpotLightComponent::TestAgainst(const AABB& box) const {
 
-	transform_component_ = nullptr;
+	THROW(L"NOT YET IMPLEMENTED");
+	return IntersectionType::kIntersect;
+
+}
+
+IntersectionType SpotLightComponent::TestAgainst(const Sphere& sphere) const {
+
+	THROW(L"NOT YET IMPLEMENTED");
+	return IntersectionType::kIntersect;
+
+}
+
+void SpotLightComponent::ComputeBounds() {
+
+	THROW(L"NOT YET IMPLEMENTED");
 
 }

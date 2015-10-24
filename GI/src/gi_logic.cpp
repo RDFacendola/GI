@@ -135,7 +135,7 @@ void GILogic::Initialize(Window& window){
 											  Quaternionf::Identity(),
 											  AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
-	auto point_light = light_transform->AddComponent<PointLightComponent>();
+	auto point_light = light_transform->AddComponent<PointLightComponent>(kOpaqueWhite, 100.0f);
 
 	light_transform->SetParent(root);
 
@@ -146,7 +146,7 @@ void GILogic::Initialize(Window& window){
 										 Quaternionf::Identity(),
 										 AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
-	auto directional_light = light_transform->AddComponent<DirectionalLightComponent>();
+	auto directional_light = light_transform->AddComponent<DirectionalLightComponent>(kOpaqueWhite);
 
 	light_transform->SetParent(root);
 	

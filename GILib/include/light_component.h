@@ -16,7 +16,7 @@ namespace gi_lib {
 
 	/// \brief Base class for each light.
 	/// \author Raffaele D. Facendola
-	class BaseLightComponent : public Component {
+	class BaseLightComponent : public VolumeComponent {
 
 	public:
 
@@ -36,9 +36,29 @@ namespace gi_lib {
 		/// \param color The light's color.
 		void SetColor(const Color& color);
 
-	private:
+	protected:
 
-		Color color_;			///< \brief The light color.
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
+
+		/// \brief Access the transform component of the object.
+		const TransformComponent& GetTransformComponent() const;
+		
+		/// \brief Compute the light bounds.
+		/// \param notify Whether the VolumeComponent::OnChanged event should be triggered
+		void ComputeBounds(bool notify);
+
+	private:
+		
+		/// \brief Compute the light bounds.
+		virtual void ComputeBounds() = 0;
+
+		Color color_;											///< \brief The light color.
+
+		TransformComponent* transform_;							///< \brief Pointer to the transform component for faster access.
+
+		unique_ptr<Listener> on_transform_changed_lister_;		///< \brief Listener for the transform changed event.
 
 	};
 
@@ -55,16 +75,25 @@ namespace gi_lib {
 
 	public:
 
-		/// \brief Create a new point light.
-		/// The default point light is white and has no attenuation.
-		PointLightComponent();
+		/// \brief Create a new point light component.
+		/// \param color The light's color.
+		/// \param radius Radius of the light sphere.
+		PointLightComponent(const Color& color, float radius);
 
 		/// \brief Create a new point light component.
 		/// \param color The light's color
-		/// \param 
+		/// \param constant_factor Constant attenuation factor.
+		/// \param linear_factor Linear attenuation factor.
+		/// \param quadratic_factor Quadratic attenuation factor.
 		PointLightComponent(const Color& color, float constant_factor, float linear_factor, float quadratic_factor);
 
 		virtual TypeSet GetTypes() const override;
+
+		virtual IntersectionType TestAgainst(const Frustum& frustum) const override;
+
+		virtual IntersectionType TestAgainst(const AABB& box) const override;
+
+		virtual IntersectionType TestAgainst(const Sphere& sphere) const override;
 
 		/// \brief Get the constant factor Kc of the point light.
 		float GetConstantFactor() const;
@@ -96,13 +125,9 @@ namespace gi_lib {
 		/// \return Returns the light's position.
 		Vector3f GetPosition() const;
 
-	protected:
-
-		virtual void Initialize() override;
-
-		virtual void Finalize() override;
-
 	private:
+
+		virtual void ComputeBounds() override;
 
 		float constant_factor_;							///< \brief The constant attenuation factor.
 
@@ -110,7 +135,7 @@ namespace gi_lib {
 
 		float quadratic_factor_;						///< \brief The quadratic attenuation factor.
 
-		TransformComponent* transform_component_;		///< \brief Used to retrieve the position of the light.
+		Sphere bounds_;									///< \brief Bounds of the light.
 
 	};
 
@@ -123,12 +148,14 @@ namespace gi_lib {
 
 	public:
 
-		/// \brief Create a new default directional light component.
-		/// The directional light is white.
-		DirectionalLightComponent();
-
 		/// \brief Initializes a directional light component using default values for the color.
 		DirectionalLightComponent(const Color& color);
+		
+		virtual IntersectionType TestAgainst(const Frustum& frustum) const override;
+
+		virtual IntersectionType TestAgainst(const AABB& box) const override;
+
+		virtual IntersectionType TestAgainst(const Sphere& sphere) const override;
 
 		virtual TypeSet GetTypes() const override;
 
@@ -136,15 +163,9 @@ namespace gi_lib {
 		/// \return Returns the light's direction.
 		Vector3f GetDirection() const;
 
-	protected:
-
-		virtual void Initialize() override;
-
-		virtual void Finalize() override;
-
 	private:
 
-		TransformComponent* transform_component_;			///< \brief Used to determine the position of the light.
+		virtual void ComputeBounds() override;
 
 	};
 
@@ -173,6 +194,12 @@ namespace gi_lib {
 		SpotLightComponent(const Color& color, float light_angle, float penumbra_angle, float falloff, float constant_factor, float linear_factor, float quadratic_factor);
 
 		virtual TypeSet GetTypes() const override;
+
+		virtual IntersectionType TestAgainst(const Frustum& frustum) const override;
+
+		virtual IntersectionType TestAgainst(const AABB& box) const override;
+
+		virtual IntersectionType TestAgainst(const Sphere& sphere) const override;
 
 		/// \brief Get the light cone angle in radians.
 		float GetLightConeAngle() const;
@@ -224,13 +251,9 @@ namespace gi_lib {
 		/// \return Returns the light's direction.
 		Vector3f GetDirection() const;
 
-	protected:
-
-		virtual void Initialize() override;
-
-		virtual void Finalize() override;
-
 	private:
+
+		virtual void ComputeBounds() override;
 
 		float light_angle_;									///< \brief Maximum angle at which a surface point is inside the light cone.
 
@@ -243,8 +266,6 @@ namespace gi_lib {
 		float linear_factor_;								///< \brief The linear attenuation factor.
 
 		float quadratic_factor_;							///< \brief The quadratic attenuation factor.
-
-		TransformComponent* transform_component_;			///< \brief Used to determine the position of the light.
 
 	};
 
@@ -267,10 +288,14 @@ namespace gi_lib {
 
 	}
 
-	/////////////////////////// POINT LIGHT COMPONENT ///////////////////////////////
+	/// \brief Access the transform component of the object.
+	inline const TransformComponent& BaseLightComponent::GetTransformComponent() const {
 
-	inline PointLightComponent::PointLightComponent() :
-		PointLightComponent(kOpaqueWhite, 1.0f, 0.0f, 0.0f) {}
+		return *transform_;
+
+	}
+
+	/////////////////////////// POINT LIGHT COMPONENT ///////////////////////////////
 
 	inline PointLightComponent::PointLightComponent(const Color& color, float constant_factor, float linear_factor, float quadratic_factor) :
 		BaseLightComponent(color),
@@ -278,6 +303,24 @@ namespace gi_lib {
 		linear_factor_(linear_factor),
 		quadratic_factor_(quadratic_factor) {}
 
+	inline IntersectionType PointLightComponent::TestAgainst(const Frustum& frustum) const {
+
+		return frustum.Intersect(bounds_);
+
+	}
+
+	inline IntersectionType PointLightComponent::TestAgainst(const AABB& box) const {
+
+		return bounds_.Intersect(box);
+
+	}
+
+	inline IntersectionType PointLightComponent::TestAgainst(const Sphere& sphere) const {
+
+		return bounds_.Intersect(sphere);
+
+	}
+	
 	inline float PointLightComponent::GetConstantFactor() const {
 
 		return constant_factor_;
@@ -287,6 +330,8 @@ namespace gi_lib {
 	inline void PointLightComponent::SetConstantFactor(float constant_factor) {
 
 		constant_factor_ = constant_factor;
+		
+		BaseLightComponent::ComputeBounds(true);
 
 	}
 
@@ -300,6 +345,8 @@ namespace gi_lib {
 
 		linear_factor_ = linear_factor;
 
+		BaseLightComponent::ComputeBounds(true);
+
 	}
 
 	inline float PointLightComponent::GetQuadraticFactor() const {
@@ -311,26 +358,52 @@ namespace gi_lib {
 	inline void PointLightComponent::SetQuadraticFactor(float quadratic_factor) {
 
 		quadratic_factor_ = quadratic_factor;
+		
+		BaseLightComponent::ComputeBounds(true);
 
 	}
 
 	inline Vector3f PointLightComponent::GetPosition() const {
 
-		return Math::ToVector3(transform_component_->GetWorldTransform().matrix().col(3));
+		return Math::ToVector3(GetTransformComponent().GetWorldTransform().matrix().col(3));
 
 	}
 
 	/////////////////////////// DIRECTIONAL LIGHT COMPONENT ///////////////////////////////
 
-	inline DirectionalLightComponent::DirectionalLightComponent() :
-		DirectionalLightComponent(kOpaqueWhite) {}
-
 	inline DirectionalLightComponent::DirectionalLightComponent(const Color& color) :
 		BaseLightComponent(color) {}
 
+	inline IntersectionType DirectionalLightComponent::TestAgainst(const Frustum&) const{
+
+		// A directional light is infinite in size and range
+		return IntersectionType::kIntersect;
+
+	}
+
+	inline IntersectionType DirectionalLightComponent::TestAgainst(const AABB&) const {
+		
+		// A directional light is infinite in size and range
+		return IntersectionType::kIntersect;
+
+	}
+
+	inline IntersectionType DirectionalLightComponent::TestAgainst(const Sphere&) const {
+
+		// A directional light is infinite in size and range
+		return IntersectionType::kIntersect;
+
+	}
+
 	inline Vector3f DirectionalLightComponent::GetDirection() const {
 
-		return Math::ToVector3(transform_component_->GetWorldTransform().matrix().col(2));
+		return Math::ToVector3(GetTransformComponent().GetWorldTransform().matrix().col(2));
+
+	}
+
+	inline void DirectionalLightComponent::ComputeBounds() {
+
+		// Do nothing, whatever
 
 	}
 
@@ -358,6 +431,8 @@ namespace gi_lib {
 
 		light_angle_ = light_angle;
 
+		BaseLightComponent::ComputeBounds(true);
+
 	}
 
 	inline float SpotLightComponent::GetPenumbraConeAngle() const {
@@ -369,6 +444,8 @@ namespace gi_lib {
 	inline void SpotLightComponent::SetPenumbraConeAngle(float penumbra_angle) {
 
 		penumbra_angle_ = penumbra_angle;
+
+		//BaseLightComponent::ComputeBounds(true);		Not needed
 
 	}
 
@@ -382,6 +459,8 @@ namespace gi_lib {
 
 		falloff_ = falloff;
 
+		// BaseLightComponent::ComputeBounds(true);		// Not needed
+
 	}
 	
 	inline float SpotLightComponent::GetConstantFactor() const {
@@ -393,6 +472,8 @@ namespace gi_lib {
 	inline void SpotLightComponent::SetConstantFactor(float constant_factor) {
 
 		constant_factor_ = constant_factor;
+
+		BaseLightComponent::ComputeBounds(true);
 
 	}
 
@@ -406,6 +487,8 @@ namespace gi_lib {
 
 		linear_factor_ = linear_factor;
 
+		BaseLightComponent::ComputeBounds(true);
+
 	}
 
 	inline float SpotLightComponent::GetQuadraticFactor() const {
@@ -418,17 +501,19 @@ namespace gi_lib {
 
 		quadratic_factor_ = quadratic_factor;
 
+		BaseLightComponent::ComputeBounds(true);
+
 	}
 
 	inline Vector3f SpotLightComponent::GetPosition() const {
 
-		return Math::ToVector3(transform_component_->GetWorldTransform().matrix().col(3));
+		return Math::ToVector3(GetTransformComponent().GetWorldTransform().matrix().col(3));
 
 	}
 
 	inline Vector3f SpotLightComponent::GetDirection() const {
 
-		return Math::ToVector3(transform_component_->GetWorldTransform().matrix().col(2));
+		return Math::ToVector3(GetTransformComponent().GetWorldTransform().matrix().col(2));
 
 	}
 
