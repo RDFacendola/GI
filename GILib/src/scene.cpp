@@ -320,6 +320,9 @@ void TransformComponent::SetParent(TransformComponent* parent){
 
 	}
 
+	// The world transform is now invalid
+	SetDirty(true);
+
 }
 
 TransformComponent::range TransformComponent::GetChildren(){
