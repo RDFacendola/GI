@@ -131,11 +131,11 @@ void GILogic::Initialize(Window& window){
 	// Point light
 
 	auto light_transform = scene_->CreateNode(L"PointLight",
-											  Translation3f(0.0f, 50.0f, 10.0f),
+											  Translation3f(1500.0f, 250.0f, 0.0f),
 											  Quaternionf::Identity(),
 											  AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
-	auto point_light = light_transform->AddComponent<PointLightComponent>(kOpaqueWhite, 100.0f);
+	auto point_light = light_transform->AddComponent<PointLightComponent>(Color(8.f, 12.f, 16.f, 1.0f), 100.0f);
 
 	light_transform->SetParent(root);
 
@@ -143,10 +143,10 @@ void GILogic::Initialize(Window& window){
 
 	light_transform = scene_->CreateNode(L"DirectionalLight",
 										 Translation3f(0.0f, 0.0f, 0.0f),
-										 Quaternionf::Identity(),
+										 Quaternionf(AngleAxisf(Math::kDegToRad * 45.0f, Vector3f(0.0f, 0.0f, 1.0f))),
 										 AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
-	auto directional_light = light_transform->AddComponent<DirectionalLightComponent>(kOpaqueWhite);
+	auto directional_light = light_transform->AddComponent<DirectionalLightComponent>(Color(1.78f, 1.32f, 0.68f, 1.0f));
 
 	light_transform->SetParent(root);
 	

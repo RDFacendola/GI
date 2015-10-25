@@ -397,7 +397,7 @@ namespace gi_lib {
 
 	inline Vector3f DirectionalLightComponent::GetDirection() const {
 
-		return Math::ToVector3(GetTransformComponent().GetWorldTransform().matrix().col(2));
+		return GetTransformComponent().GetForward();
 
 	}
 

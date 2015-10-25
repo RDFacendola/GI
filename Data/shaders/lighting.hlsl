@@ -1,9 +1,15 @@
+#include "render_def.hlsl"
+#include "light_def.hlsl"
+#include "phong_def.hlsl"
 
-// GBuffer surfaces
-Texture2D gAlbedo;
-Texture2D gNormalShininess;
+cbuffer gParameters {
 
-// Lights
+	float4x4 inv_view_proj_matrix;		///< \brief Inverse view-projection matrix.
+	float4 camera_position;				///< \brief Camera position in world space.
+	uint point_lights;					///< \brief Number of point lights.
+	uint directional_lights;			///< \brief Number of directional lights.
+
+};
 
 // Light accumulation buffer
 RWTexture2D<float4> gLightAccumulation;
@@ -11,19 +17,28 @@ RWTexture2D<float4> gLightAccumulation;
 [numthreads(16,16,1)]
 void CSMain(int3 thread_id : SV_DispatchThreadID){
 
-	float4 albedo = gAlbedo[thread_id.xy];
+	float4 color = float4(0,0,0,0);
 
-	float3 surface_normal = normalize(gNormalShininess[thread_id.xy].xyz);
+	uint light_index;
 
-	float4 sun_albedo = float4(0.89f, 0.66f, 0.34f, 0.0f);		// float4(227, 168, 87, 0)
+	SurfaceData surface = GatherSurfaceData(thread_id.xy, inv_view_proj_matrix);
 
-	float4 sky_contribution = saturate(dot(float3(-0.71f, 0.71f, 0), surface_normal)) * sun_albedo * 4.5f;
+	// Accumulate point lights
+	for (light_index = 0; light_index < point_lights; ++light_index) {
+
+		color += ComputePhong(surface, gPointLights[light_index], camera_position);
+
+	}
+
+	// Accumulate directional lights
+	for (light_index = 0; light_index < directional_lights; ++light_index) {
+
+		color += ComputePhong(surface, gDirectionalLights[light_index], camera_position);
+
+	}
+
+	// Done
+
+	gLightAccumulation[thread_id.xy] = float4(color.rgb, 1);	// Opaque
 	
-	float4 global_contribution = 0.1f;
-
-	float4 final_color = albedo * (sky_contribution + global_contribution);
-
-
-	gLightAccumulation[thread_id.xy] = float4(final_color.rgb, 1);				// Alpha fixed to opaque
-
 }

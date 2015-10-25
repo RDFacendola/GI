@@ -111,13 +111,16 @@ namespace gi_lib{
 
 		Color(float red, float green, float blue, float alpha);
 
+		/// \brief Converts this to a 4-elements vector.
+		Vector4f ToVector4f() const;
+
 	};
 
-	static const Color kOpaqueWhite;			///< \brief Fully-opaque white color.
+	extern const Color kOpaqueWhite;			///< \brief Fully-opaque white color.
 
-	static const Color kOpaqueBlack;			///< \brief Fully-opaque black color.
+	extern const Color kOpaqueBlack;			///< \brief Fully-opaque black color.
 
-	static const Color kTransparentBlack;		///< \brief Fully-transparent black color.
+	extern const Color kTransparentBlack;		///< \brief Fully-transparent black color.
 
 	/// \brief Base interface for renderers.
 	/// \author Raffaele D. Facendola
@@ -310,6 +313,15 @@ namespace gi_lib{
 		color.green = green;
 		color.blue = blue;
 		color.alpha = alpha;
+
+	}
+
+	inline Vector4f Color::ToVector4f() const {
+
+		return Vector4f(color.red,
+						color.green,
+						color.blue,
+						color.alpha);
 
 	}
 

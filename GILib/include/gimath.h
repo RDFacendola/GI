@@ -156,6 +156,12 @@ namespace gi_lib{
 		/// \remarks The function will drop the 4th element.
 		static Vector3f ToVector3(const Vector4f& vector);
 
+		/// \brief Converts a 3-elements vector to a 1-elements vector.
+		/// \param vector The vector to convert.
+		/// \param w The fourth element.
+		/// \return Returns a 4-element vector where the elements are the elements of the specified vector plus w as the fourth one.
+		static Vector4f ToVector4(const Vector3f& vector, float w);
+
 		/// \brief Create a new plane from a point and a normal.
 		/// \param normal Normal of the plane. Must be normalized.
 		/// \param point Any point on the plane.
@@ -219,6 +225,15 @@ namespace gi_lib{
 						vector(1), 
 						vector(2));
 
+	}
+
+	inline Vector4f Math::ToVector4(const Vector3f& vector, float w) {
+
+		return Vector4f(vector(0),
+						vector(1),
+						vector(2),
+						w);
+		
 	}
 
 	inline Vector4f Math::MakePlane(const Vector3f& normal, const Vector3f& point){

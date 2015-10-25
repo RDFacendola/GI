@@ -12,6 +12,7 @@
 
 #include "windows/win_os.h"
 #include "instance_builder.h"
+#include "light_component.h"
 
 using namespace ::std;
 using namespace ::gi_lib;
@@ -127,8 +128,11 @@ void DX11DeferredRendererMaterial::Setup(){
 
 const Tag DX11TiledDeferredRenderer::kAlbedoTag = "gAlbedo";
 const Tag DX11TiledDeferredRenderer::kNormalShininessTag = "gNormalShininess";
+const Tag DX11TiledDeferredRenderer::kDepthStencilTag = "gDepthStencil";
+const Tag DX11TiledDeferredRenderer::kPointLightsTag = "gPointLights";
+const Tag DX11TiledDeferredRenderer::kDirectionalLightsTag = "gDirectionalLights";
 const Tag DX11TiledDeferredRenderer::kLightBufferTag = "gLightAccumulation";
-const Tag DX11TiledDeferredRenderer::kPointLightsTag = "PerObject";
+const Tag DX11TiledDeferredRenderer::kLightParametersTag = "gParameters";
 
 DX11TiledDeferredRenderer::DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments) :
 TiledDeferredRenderer(arguments.scene),
@@ -229,11 +233,25 @@ fx_tonemap_(0.5f){
 
 	auto&& app = Application::GetInstance();
 
-	// Lighting setup
+	// Light accumulation setup
 
 	light_shader_ = DX11Resources::GetInstance().Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
 
-	point_lights_ = new DX11StructuredArray(32, sizeof(CSPointLight));
+	point_lights_ = new DX11StructuredArray(32, sizeof(PointLight));
+	directional_lights_ = new DX11StructuredArray(32, sizeof(DirectionalLight));
+	light_accumulation_parameters_ = new DX11StructuredBuffer(sizeof(LightAccumulationParameters));
+
+	// One-time setup
+	bool check;
+
+	check = light_shader_->SetInput(kLightParametersTag,
+									ObjectPtr<IStructuredBuffer>(light_accumulation_parameters_));
+
+	check = light_shader_->SetInput(kPointLightsTag,
+									ObjectPtr<IStructuredArray>(point_lights_));
+
+	check = light_shader_->SetInput(kDirectionalLightsTag,
+									ObjectPtr<IStructuredArray>(directional_lights_));
 
 }
 
@@ -251,13 +269,24 @@ ObjectPtr<ITexture2D> DX11TiledDeferredRenderer::Draw(unsigned int width, unsign
 	
 	// Draws only if there's a camera
 
-	if (GetScene().GetMainCamera()){
+	auto main_camera = GetScene().GetMainCamera();
 
-		DrawGBuffer(width, height);							// Scene -> GBuffer
+	if (main_camera){
+
+		FrameInfo frame_info;
+
+		frame_info.scene = &GetScene();
+		frame_info.camera = main_camera;
+		frame_info.aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
+		frame_info.width = width;
+		frame_info.height = height;
+		frame_info.view_proj_matrix = ComputeViewProjectionMatrix(*main_camera, frame_info.aspect_ratio);
+
+		DrawGBuffer(frame_info);							// Scene -> GBuffer
 		
-		ComputeLighting(width, height);						// Scene, GBuffer, DepthBuffer -> LightBuffer
+		ComputeLighting(frame_info);						// Scene, GBuffer, DepthBuffer -> LightBuffer
 
-		ComputePostProcess(width, height);					// LightBuffer -> Output
+		ComputePostProcess(frame_info);					// LightBuffer -> Output
 
 	}
 
@@ -271,22 +300,16 @@ ObjectPtr<ITexture2D> DX11TiledDeferredRenderer::Draw(unsigned int width, unsign
 
 // GBuffer
 
-void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int height){
+void DX11TiledDeferredRenderer::DrawGBuffer(const FrameInfo& frame_info){
 
 	// Setup the GBuffer and bind it to the immediate context.
 	
-	BindGBuffer(width, height);
+	BindGBuffer(frame_info);
 
 	// Draw the visible nodes
 
-	auto& scene = GetScene();
-
-	auto& camera = *scene.GetMainCamera();
-
-	float aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
-
-	DrawNodes(ComputeVisibleNodes(scene.GetMeshHierarchy(), camera, aspect_ratio), 
-			  ComputeViewProjectionMatrix(camera, aspect_ratio));
+	DrawNodes(ComputeVisibleNodes(frame_info.scene->GetMeshHierarchy(), *frame_info.camera, frame_info.aspect_ratio), 
+			  frame_info);
 	
 	// Cleanup
 
@@ -294,7 +317,7 @@ void DX11TiledDeferredRenderer::DrawGBuffer(unsigned int width, unsigned int hei
 
 }
 
-void DX11TiledDeferredRenderer::BindGBuffer(unsigned int width, unsigned int height){
+void DX11TiledDeferredRenderer::BindGBuffer(const FrameInfo& frame_info){
 
 	// Rasterizer state setup
 
@@ -316,8 +339,8 @@ void DX11TiledDeferredRenderer::BindGBuffer(unsigned int width, unsigned int hei
 
 		// Lazy initialization
 
-		gbuffer_ = new DX11RenderTarget(width,
-										height,
+		gbuffer_ = new DX11RenderTarget(frame_info.width,
+										frame_info.height,
 										{ DXGI_FORMAT_R16G16B16A16_FLOAT,
 										  DXGI_FORMAT_R16G16B16A16_FLOAT });
 
@@ -326,8 +349,8 @@ void DX11TiledDeferredRenderer::BindGBuffer(unsigned int width, unsigned int hei
 
 		// GBuffer resize (will actually resize the target only if the size has been changed since the last frame)
 
-		gbuffer_->Resize(width,
-						 height);
+		gbuffer_->Resize(frame_info.width,
+						 frame_info.height);
 
 	}
 
@@ -343,7 +366,7 @@ void DX11TiledDeferredRenderer::BindGBuffer(unsigned int width, unsigned int hei
 
 }
 
-void DX11TiledDeferredRenderer::DrawNodes(const vector<VolumeComponent*>& nodes, const Matrix4f& view_projection_matrix){
+void DX11TiledDeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes, const FrameInfo& frame_info){
 
 	ObjectPtr<DX11Mesh> mesh;
 	ObjectPtr<DX11DeferredRendererMaterial> material;
@@ -352,7 +375,7 @@ void DX11TiledDeferredRenderer::DrawNodes(const vector<VolumeComponent*>& nodes,
 
 	// TODO: Implement some batching strategy here!
 
-	for (auto&& node : nodes){
+	for (auto&& node : meshes){
 
 		for (auto&& drawable : node->GetComponents<DeferredRendererComponent>()){
 
@@ -371,7 +394,7 @@ void DX11TiledDeferredRenderer::DrawNodes(const vector<VolumeComponent*>& nodes,
 				material = drawable.GetMaterial(subset_index);
 
 				material->SetMatrix(drawable.GetWorldTransform(),
-									view_projection_matrix);
+									frame_info.view_proj_matrix);
 
 				material->Bind(*immediate_context_);
 
@@ -390,78 +413,112 @@ void DX11TiledDeferredRenderer::DrawNodes(const vector<VolumeComponent*>& nodes,
 
 // Lighting
 
-void DX11TiledDeferredRenderer::ComputeLighting(unsigned int width, unsigned int height){
+void DX11TiledDeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
 
-	// Lazy initialization and resize of the light buffer
+	// Lazy setup and resize of the light accumulation buffer
 
 	if (!light_buffer_ ||
-		light_buffer_->GetWidth() != width ||
-		light_buffer_->GetHeight() != height){
+		light_buffer_->GetWidth() != frame_info.width ||
+		light_buffer_->GetHeight() != frame_info.height){
 
-		light_buffer_ = new DX11GPTexture2D(width,
-											height,											
+		light_buffer_ = new DX11GPTexture2D(frame_info.width,
+											frame_info.height,											
 											DXGI_FORMAT_R11G11B10_FLOAT);
 		
 	}
 
-	//TODO: Perform a light setup 
+	// Accumulate the visible lights
 	
-	//light_array_ = new DX11StructuredArray(32, sizeof(Light));
+	AccumulateLight(ComputeVisibleNodes(frame_info.scene->GetLightHierarchy(), *frame_info.camera, frame_info.aspect_ratio),
+					frame_info);
 
-	//Light* light_ptr = light_array_->Map<Light>(*immediate_context_);
+}
 
-	//for (size_t light_index = 0; light_index < light_array_->GetElementCount(); ++light_index){
+void DX11TiledDeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& lights, const FrameInfo& frame_info) {
 
-	//	light_ptr->position[0] = light_index * 250.0f - light_array_->GetElementCount() * 125.0f;
-	//	light_ptr->position[1] = std::cosf(static_cast<float>(light_index)) * 50.0f + 75.0f;
-	//	light_ptr->position[2] = 0.0f;
-	//	light_ptr->position[3] = 1.0f;
+	PointLight* point_lights_ptr = reinterpret_cast<PointLight*>(point_lights_->Lock());
+	DirectionalLight* directional_lights_ptr = reinterpret_cast<DirectionalLight*>(directional_lights_->Lock());
+	LightAccumulationParameters* parameters_ptr = reinterpret_cast<LightAccumulationParameters*>(light_accumulation_parameters_->Lock());
 
-	//	++light_ptr;
+	unsigned int point_light_index = 0;
+	unsigned int directional_light_index = 0;
 
-	//}
+	for (auto&& node : lights) {
 
-	//light_array_->Unmap(*immediate_context_);
+		for (auto&& point_light : node->GetComponents<PointLightComponent>()) {
 
-	// Set light shader input and output
-		
-	light_shader_->SetOutput(kLightBufferTag, 
-							 ObjectPtr<IGPTexture2D>(light_buffer_));
+			point_lights_ptr[point_light_index].position = Math::ToVector4(point_light.GetPosition(), 1.0f);
+			point_lights_ptr[point_light_index].color = point_light.GetColor().ToVector4f();
+			point_lights_ptr[point_light_index].kc = point_light.GetConstantFactor();
+			point_lights_ptr[point_light_index].kl= point_light.GetLinearFactor();
+			point_lights_ptr[point_light_index].kq = point_light.GetQuadraticFactor();
 
-	light_shader_->SetInput(kAlbedoTag, 
-							(*gbuffer_)[0]);
+			++point_light_index;
 
-	light_shader_->SetInput(kNormalShininessTag, 
-							(*gbuffer_)[1]);
+		}
+
+		for (auto&& directional_light : node->GetComponents<DirectionalLightComponent>()) {
+
+			directional_lights_ptr[directional_light_index].direction = Math::ToVector4(directional_light.GetDirection(), 1.0f);
+			directional_lights_ptr[directional_light_index].color = directional_light.GetColor().ToVector4f();
+
+			++directional_light_index;
+
+		}
+
+	}
+
+	parameters_ptr->camera_position = frame_info.camera->GetPosition();
+	parameters_ptr->inv_view_proj_matrix = frame_info.view_proj_matrix.inverse();
+	parameters_ptr->point_lights = point_light_index;
+	parameters_ptr->directional_lights = directional_light_index;
+
+	point_lights_->Unlock();
+	directional_lights_->Unlock();
+	light_accumulation_parameters_->Unlock();
 	
-	light_shader_->SetInput(kPointLightsTag,
- 						    ObjectPtr<IStructuredArray>(point_lights_));
+	// These entities may change from frame to frame
+	bool check;
+
+	check = light_shader_->SetInput(kAlbedoTag,
+									(*gbuffer_)[0]);
+
+	check = light_shader_->SetInput(kNormalShininessTag,
+									(*gbuffer_)[1]);
+	
+	check = light_shader_->SetInput(kDepthStencilTag,
+									gbuffer_->GetDepthBuffer());
+	
+	check = light_shader_->SetOutput(kLightBufferTag,
+									 ObjectPtr<IGPTexture2D>(light_buffer_));
 
 	// Actual light computation
 
 	light_shader_->Dispatch(*immediate_context_,			// Dispatch one thread for each GBuffer's pixel
-							width,
-							height,
+							light_buffer_->GetWidth(),
+							light_buffer_->GetHeight(),
 							1);
-	
+
 }
 
-void DX11TiledDeferredRenderer::ComputePostProcess(unsigned int width, unsigned int height){
+// Post processing
+
+void DX11TiledDeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
 
 	// LightBuffer == [Bloom] ==> Unexposed ==> [Tonemap] ==> Output
 
 	// Lazy initialization and resize of the bloom and tonemap surfaces
 
 	if (!bloom_output_ ||
-		 bloom_output_->GetWidth() != width ||
-		 bloom_output_->GetHeight() != height) {
+		 bloom_output_->GetWidth() != frame_info.width ||
+		 bloom_output_->GetHeight() != frame_info.height) {
 
-		bloom_output_ = new DX11RenderTarget(width, 
-											 height, 
+		bloom_output_ = new DX11RenderTarget(frame_info.width,
+											 frame_info.height, 
 											 { DXGI_FORMAT_R11G11B10_FLOAT });
 
-		tonemap_output_ = new DX11GPTexture2D(width, 
-											  height, 
+		tonemap_output_ = new DX11GPTexture2D(frame_info.width,
+											  frame_info.height, 
 											  DXGI_FORMAT_R8G8B8A8_UNORM);
 
 	}

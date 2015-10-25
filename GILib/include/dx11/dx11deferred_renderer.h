@@ -31,15 +31,40 @@ namespace gi_lib{
 
 		};
 
-		struct CSPointLight {
+		/// \brief Constant buffer used to pass parameters to the light accumulation shader.
+		struct LightAccumulationParameters{
 
-			Vector4f position;
+			Matrix4f inv_view_proj_matrix;			///< \brief Inverse view-projection matrix.
 
-			Vector4f color;
+			Vector3f camera_position;				///< \brief Camera position in world space.
+			float reserved;							///< \brief Padding
+			
+			unsigned int point_lights;				///< \brief Amount of point lights.
+			unsigned int directional_lights;		///< \brief Amount of directional lights.
 
-			float linear_decay;
+		};
 
-			float square_decay;
+		/// \brief Describes a single point light.
+		/// \remarks See "light_def.hlsl"
+		struct PointLight {
+
+			Vector4f position;			///< \brief Position of the light in world space.
+
+			Vector4f color;				///< \brief Color of the light.
+
+			float kc;					///< \brief Constant attenuation factor.
+			float kl;					///< \brief Linear attenuation factor.
+			float kq;					///< \brief Quadratic attenuation factor.
+			float reserved;
+
+		};
+
+		/// \brief Describes a single directional light.
+		/// \remarks See "light_def.hlsl"
+		struct DirectionalLight {
+
+			Vector4f direction;			///< \brief Normal of the light in world space.
+			Vector4f color;				///< \brief Color of the light.
 
 		};
 
@@ -113,68 +138,101 @@ namespace gi_lib{
 
 		private:
 
+			/// \brief Information about the frame being rendered.
+			struct FrameInfo {
+
+				Scene* scene;
+
+				CameraComponent* camera;
+
+				Matrix4f view_proj_matrix;
+
+				unsigned int width;
+
+				unsigned int height;
+
+				float aspect_ratio;
+				
+			};
+
 			/// \brief Draw the current scene on the GBuffer.
 			/// \param dimensions Dimensions of the GBuffer in pixels.
-			void DrawGBuffer(unsigned int width, unsigned int height);
+			void DrawGBuffer(const FrameInfo& frame_info);
 
 			/// \brief Setup the GBuffer and bind it to the pipeline.
 			/// \param dimensions Dimensions of the GBuffer in pixels.
-			void BindGBuffer(unsigned int width, unsigned int height);
+			void BindGBuffer(const FrameInfo& frame_info);
 
 			/// \brief Draws the specified nodes on the GBuffer.
 			/// \param nodes Nodes to draw.
-			/// \param view_projection_matrix View projection matrix used to transform the nodes in projection space.
-			void DrawNodes(const vector<VolumeComponent*>& nodes, const Matrix4f& view_projection_matrix);
+			/// \param frame_info Information about the frame being rendered.
+			void DrawNodes(const vector<VolumeComponent*>& meshes, const FrameInfo& frame_info);
 
 			void SetupLights();
 
 			/// \param dimensions Dimensions of the LightBuffer in pixels.
-			void ComputeLighting(unsigned int width, unsigned int height);
+			/// \param frame_info Information about the frame being rendered.
+			void ComputeLighting(const FrameInfo& frame_info);
+
+			/// \brief Accumulate the light from the specified light sources inside the light accumulation buffer.
+			/// \param lights Lights whose contribution needs to be accumulated.
+			/// \param frame_info Information about the frame being rendered.
+			void AccumulateLight(const vector<VolumeComponent*>& lights, const FrameInfo& frame_info);
 
 			/// \param dimensions Dimensions of the Exposed buffer in pixels.
-			void ComputePostProcess(unsigned int width, unsigned int height);
+			void ComputePostProcess(const FrameInfo& frame_info);
 
 			// Render context
 
-			COMPtr<ID3D11DeviceContext> immediate_context_;				///< \brief Immediate rendering context.
+			COMPtr<ID3D11DeviceContext> immediate_context_;						///< \brief Immediate rendering context.
 
-			COMPtr<ID3D11DepthStencilState> depth_state_;				///< \brief Depth-stencil buffer state.
+			COMPtr<ID3D11DepthStencilState> depth_state_;						///< \brief Depth-stencil buffer state.
 
-			COMPtr<ID3D11BlendState> blend_state_;						///< \brief Output merger blending state.
+			COMPtr<ID3D11BlendState> blend_state_;								///< \brief Output merger blending state.
 
-			COMPtr<ID3D11RasterizerState> rasterizer_state_;			///< \brief Rasterizer state.
+			COMPtr<ID3D11RasterizerState> rasterizer_state_;					///< \brief Rasterizer state.
 
 			COMPtr<ID3D11DepthStencilState> disable_depth_test_;
 
 			// GBuffer
 			
-			ObjectPtr<DX11RenderTarget> gbuffer_;						///< \brief GBuffer.
+			ObjectPtr<DX11RenderTarget> gbuffer_;								///< \brief GBuffer.
 
 			// Light accumulation
 
-			static const Tag kAlbedoTag;								///< \brief Tag of the surface containing the albedo of the scene.
+			static const Tag kAlbedoTag;										///< \brief Tag of the surface containing the albedo of the scene.
 
-			static const Tag kNormalShininessTag;						///< \brief Tag of the surface containing the normal and the shininess of the scene.
+			static const Tag kNormalShininessTag;								///< \brief Tag of the surface containing the normal and the shininess of the scene.
 
-			static const Tag kLightBufferTag;							///< \brief Tag of the buffer used to accumulate light onto.
+			static const Tag kDepthStencilTag;									///< \brief Tag of the surface containing the depth stencil.
 
-			static const Tag kPointLightsTag;							///< \brief Tag used to identify the array containing point lights.
+			static const Tag kPointLightsTag;									///< \brief Tag used to identify the array containing the point lights.
 
-			ObjectPtr<IGPTexture2D> light_buffer_;						///< \brief Light buffer.
+			static const Tag kDirectionalLightsTag;								///< \brief Tag used to identify the array containing the directional lights.
 
-			ObjectPtr<DX11StructuredArray> point_lights_;				///< \brief Array containing the lights.
+			static const Tag kLightBufferTag;									///< \brief Tag of the buffer used to accumulate light onto.
 
-			ObjectPtr<DX11Computation> light_shader_;					///< \brief Shader performing the light accumulation stage.
+			static const Tag kLightParametersTag;								///< \brief Tag of the constant buffer used to pass light accumulation parameters.
+
+			ObjectPtr<IGPTexture2D> light_buffer_;								///< \brief Light buffer.
+
+			ObjectPtr<DX11StructuredArray> point_lights_;						///< \brief Array containing the point lights.
+
+			ObjectPtr<DX11StructuredArray> directional_lights_;					///< \brief Array containing the directional lights.
+
+			ObjectPtr<DX11StructuredBuffer> light_accumulation_parameters_;		///< \brief Constant buffer used to send light accumulation parameters to the shader.
+
+			ObjectPtr<DX11Computation> light_shader_;							///< \brief Shader performing the light accumulation stage.
 
 			// Post process
 
-			fx::DX11FxBloom fx_bloom_;									///< \brief Performs the bloom filter of the image.
+			fx::DX11FxBloom fx_bloom_;											///< \brief Performs the bloom filter of the image.
 
-			ObjectPtr<IRenderTarget> bloom_output_;						///< \brief Contains the result of the bloom filter.
+			ObjectPtr<IRenderTarget> bloom_output_;								///< \brief Contains the result of the bloom filter.
 
-			fx::DX11FxTonemap fx_tonemap_;								///< \brief Performs the tonemapping of the image.
+			fx::DX11FxTonemap fx_tonemap_;										///< \brief Performs the tonemapping of the image.
 
-			ObjectPtr<IGPTexture2D> tonemap_output_;					///< \brief Contains the result of the tonemapping.
+			ObjectPtr<IGPTexture2D> tonemap_output_;							///< \brief Contains the result of the tonemapping.
 			
 		};
 
