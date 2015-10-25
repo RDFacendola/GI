@@ -75,6 +75,9 @@ namespace gi_lib {
 
 	public:
 
+		/// \brief Default cutoff value.
+		static const float kDefaultCutoff;
+
 		/// \brief Create a new point light component.
 		/// \param color The light's color.
 		/// \param radius Radius of the light sphere.
@@ -116,6 +119,13 @@ namespace gi_lib {
 		/// \param quadratic The new quadratic factor.
 		void SetQuadraticFactor(float quadratic_factor);
 
+		/// \brief Get the light cutoff of the point light.
+		float GetCutoff() const;
+
+		/// \brief Set the light cutoff of the point light.
+		/// \param cutoff The new cutoff value. Points with light influence below the cutoff value are considered to be in shadow.
+		void SetCutoff(float cutoff);
+
 		/// \brief Set the virtual point light's radius.
 		/// This method will affect both the constant, the linear and the quadratic factor in order to approximate a point light with an actual radius greater than 0.
 		/// \param radius Radius of the sphere.
@@ -134,6 +144,8 @@ namespace gi_lib {
 		float linear_factor_;							///< \brief The linear attenuation factor.
 
 		float quadratic_factor_;						///< \brief The quadratic attenuation factor.
+
+		float cutoff_;									///< \brief Minimum influence below of which the light is considered to have no influence at all.
 
 		Sphere bounds_;									///< \brief Bounds of the light.
 
@@ -301,7 +313,8 @@ namespace gi_lib {
 		BaseLightComponent(color),
 		constant_factor_(constant_factor),
 		linear_factor_(linear_factor),
-		quadratic_factor_(quadratic_factor) {}
+		quadratic_factor_(quadratic_factor),
+		cutoff_(kDefaultCutoff) {}
 
 	inline IntersectionType PointLightComponent::TestAgainst(const Frustum& frustum) const {
 
@@ -366,6 +379,18 @@ namespace gi_lib {
 	inline Vector3f PointLightComponent::GetPosition() const {
 
 		return Math::ToVector3(GetTransformComponent().GetWorldTransform().matrix().col(3));
+
+	}
+
+	inline float PointLightComponent::GetCutoff() const {
+
+		return cutoff_;
+
+	}
+
+	inline void PointLightComponent::SetCutoff(float cutoff) {
+
+		cutoff_ = cutoff;
 
 	}
 

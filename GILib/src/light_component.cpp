@@ -57,6 +57,8 @@ void BaseLightComponent::Finalize() {
 
 //////////////////////////////////// POINT LIGHT COMPONENT ////////////////////////////////////
 
+const float PointLightComponent::kDefaultCutoff = 0.001f;
+
 PointLightComponent::TypeSet PointLightComponent::GetTypes() const{
 
 	auto types = BaseLightComponent::GetTypes();
@@ -71,7 +73,8 @@ PointLightComponent::PointLightComponent(const Color& color, float radius) :
 	BaseLightComponent(color),
 	constant_factor_(1.0f),
 	linear_factor_(2.0f / radius),
-	quadratic_factor_(1.0f / (radius * radius)){
+	quadratic_factor_(1.0f / (radius * radius)),
+	cutoff_(kDefaultCutoff){
 
 }
 
@@ -89,22 +92,22 @@ void PointLightComponent::ComputeBounds() {
 
 	// The point light influence is theoretically infinite, however we can cut its influence when its contribution drops below a given threshold
 
-	// threshold = 1 / (kq*d^2 + kl*d + kc)  - Solve for "d"
+	// cutoff = 1 / (kq*d^2 + kl*d + kc)  - Solve for "d"
 
-	const float r_threshold = 1.0f / 0.05f;		// 1 / threshold
+	const float r_cutoff = 1.0f / cutoff_;
 
 	float influence_radius;
 
 	if (quadratic_factor_ > 0.0f) {
 
-		float delta = linear_factor_ * linear_factor_ - 4.0f * quadratic_factor_ * (constant_factor_ - r_threshold);	// b^2 - 4ac 
+		float delta = linear_factor_ * linear_factor_ - 4.0f * quadratic_factor_ * (constant_factor_ - r_cutoff);	// b^2 - 4ac 
 
 		influence_radius = (-linear_factor_ + std::sqrtf(delta)) / (2.0f * quadratic_factor_);					// (-b + sqrt(delta)) / 2a, ignoring -sqrt(delta) as it would make the influence radius negative.
 
 	}
 	else {
 
-		influence_radius = (r_threshold - constant_factor_) / linear_factor_;
+		influence_radius = (r_cutoff - constant_factor_) / linear_factor_;
 
 	}
 

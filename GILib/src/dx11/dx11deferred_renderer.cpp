@@ -428,8 +428,9 @@ void DX11TiledDeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
 	}
 
 	// Accumulate the visible lights
-	
-	AccumulateLight(ComputeVisibleNodes(frame_info.scene->GetLightHierarchy(), *frame_info.camera, frame_info.aspect_ratio),
+	auto&& visible_lights = ComputeVisibleNodes(frame_info.scene->GetLightHierarchy(), *frame_info.camera, frame_info.aspect_ratio);
+
+	AccumulateLight(visible_lights,
 					frame_info);
 
 }
@@ -452,6 +453,7 @@ void DX11TiledDeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& 
 			point_lights_ptr[point_light_index].kc = point_light.GetConstantFactor();
 			point_lights_ptr[point_light_index].kl= point_light.GetLinearFactor();
 			point_lights_ptr[point_light_index].kq = point_light.GetQuadraticFactor();
+			point_lights_ptr[point_light_index].cutoff = point_light.GetCutoff();
 
 			++point_light_index;
 

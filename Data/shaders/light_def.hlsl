@@ -13,7 +13,7 @@ struct PointLight {
 	float kc;				// Constant attenuation factor.
 	float kl;				// Linear attenuation factor.
 	float kq;				// Quadratic attenuation factor.
-	float reserved;
+	float cutoff;			// Minimum light influence.
 
 };
 
@@ -37,7 +37,9 @@ float GetAttenuation(PointLight light, float3 surface) {
 
 	float d = distance(light.position.xyz, surface);
 
-	return saturate(1.0f / (light.kc + light.kl * d + light.kq * d * d));
+	float attenuation = 1.0f / (light.kc + light.kl * d + light.kq * d * d);
+
+	return saturate((attenuation - light.cutoff) / (1 - light.cutoff));	// Maps the range [1;cutoff] to [1;0]
 
 }
 

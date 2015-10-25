@@ -55,7 +55,8 @@ namespace gi_lib{
 			float kc;					///< \brief Constant attenuation factor.
 			float kl;					///< \brief Linear attenuation factor.
 			float kq;					///< \brief Quadratic attenuation factor.
-			float reserved;
+			
+			float cutoff;				///< \brief Light minimum influence.
 
 		};
 
