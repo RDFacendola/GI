@@ -128,36 +128,73 @@ void GILogic::Initialize(Window& window){
 	
 	// Lights setup 
 
-	// Point light
-
-	auto light_transform = scene_->CreateNode(L"PointLight",
-											  Translation3f(0.0f, 200.0f, 0.0f),
-											  Quaternionf::Identity(),
-											  AlignedScaling3f(1.0f, 1.0f, 1.0f));
-
-	auto point_light = light_transform->AddComponent<PointLightComponent>(Color(250.f, 100.f, 0.f, 1.0f), 100.0f);
-
-	point_light->SetCutoff(0.01f);
-
-	light_transform->SetParent(root);
-
-	// Directional light
-
-	light_transform = scene_->CreateNode(L"DirectionalLight",
-										 Translation3f(0.0f, 0.0f, 0.0f),
-										 Quaternionf(AngleAxisf(Math::kDegToRad * 90.0f, Vector3f(1.0f, 0.0f, 0.0f)) * AngleAxisf(Math::kDegToRad * 45.0f, Vector3f(0.0f, 0.0f, 1.0f))),
-										 AlignedScaling3f(1.0f, 1.0f, 1.0f));
-
-	auto directional_light = light_transform->AddComponent<DirectionalLightComponent>(Color(2.0f, 2.0f, 2.0f, 1.0f));
-
-	light_transform->SetParent(root);
+	SetupLights(*scene_);
 	
+}
+
+void GILogic::SetupLights(Scene& scene) {
+
+	// Point lights
+	static std::vector<Color> kLightColors{ Color(250.f, 100.f, 100.f, 1.f),
+											Color(100.f, 250.f, 100.f, 1.f),
+											Color(100.f, 100.f, 250.f, 1.f),
+											Color(250.f, 250.f, 100.f, 1.f),
+											Color(250.f, 100.f, 250.f, 1.f),
+											Color(100.f, 250.f, 250.f, 1.f) };
+
+	for (auto&& light_color : kLightColors) {
+
+		auto light = scene_->CreateNode(L"PointLight",
+									    Translation3f::Identity(),
+										Quaternionf::Identity(),
+										AlignedScaling3f(1.0f, 1.0f, 1.0f));
+
+		light->AddComponent<PointLightComponent>(light_color, 100.0f)
+			 ->SetCutoff(0.01f);
+
+		point_lights.push_back(light);
+		
+	}
+	
+	// Sky contribution
+
+	auto light = scene_->CreateNode(L"DirectionalLight",
+									Translation3f(0.0f, 0.0f, 0.0f),
+									Quaternionf(AngleAxisf(Math::kDegToRad * 90.0f, Vector3f(1.0f, 0.0f, 0.0f)) * 
+												AngleAxisf(Math::kDegToRad * 45.0f, Vector3f(0.0f, 0.0f, 1.0f))),
+									AlignedScaling3f(1.0f, 1.0f, 1.0f));
+
+	auto directional_light = light->AddComponent<DirectionalLightComponent>(Color(0.1f, 0.1f, 0.1f, 1.0f));
+
 }
 
 void GILogic::Update(const Time & time){
 
 	fly_camera->Update(time);
 	
+	static const float xRadius = 2000.0f;
+	static const float yRadius = 250.0f;
+	static const float zRadius = 750.0f;
+	
+	static const float angular_speed = Math::kPi / 16.0f;
+	static const float oscillation_speed = Math::kPi / 4.0f;
+
+	float light_index = 0.0f;
+	float light_angle;
+
+	for (auto&& point_light : point_lights) {
+
+		light_angle = light_index / point_lights.size();
+		light_angle *= Math::kPi * 2.0f;
+
+		point_light->SetTranslation(Translation3f(std::cosf(light_angle + time.GetTotalSeconds() * angular_speed) * xRadius,
+												  std::cosf(light_angle + time.GetTotalSeconds() * oscillation_speed) * yRadius + 300.0f,
+												  std::sinf(light_angle + time.GetTotalSeconds() * angular_speed) * zRadius));
+
+		++light_index;
+
+	}
+
 	auto next_frame = deferred_renderer_->Draw(output_->GetVideoMode().horizontal_resolution * 1.0f,
 											   output_->GetVideoMode().vertical_resolution * 1.0f);
 

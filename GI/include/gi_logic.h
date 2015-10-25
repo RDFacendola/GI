@@ -12,6 +12,7 @@ using namespace std;
 namespace gi_lib{
 	
 	class TiledDeferredRenderer;
+	class TransformComponent;
 
 }
 
@@ -33,6 +34,10 @@ namespace gi{
 		virtual void Update(const Time & time) override;
 		
 	private:
+
+		void SetupLights(Scene& scene);
+
+		std::vector<TransformComponent*> point_lights;
 
 		Graphics& graphics_;
 
