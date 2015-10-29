@@ -105,6 +105,42 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Base interface for plain texture arrays.
+	/// \author Raffaele D. Facendola.
+	class ITexture2DArray : public IResource {
+
+	public:
+
+		/// \brief Interface destructor.
+		virtual ~ITexture2DArray() {}
+
+		/// \brief Get the width of the texture.
+		/// \return Returns the width of the texture, in pixel.
+		virtual unsigned int GetWidth() const = 0;
+
+		/// \brief Get the height of the texture.
+		/// \return Returns the height of the texture, in pixel.
+		virtual unsigned int GetHeight() const = 0;
+
+		/// \brief Get the MIP map level count.
+		/// \return Returns the MIP map level count.
+		virtual unsigned int GetMIPCount() const = 0;
+
+		/// \brief Get the number of elements in the array.
+		/// \return Returns the number of elements in the array.
+		virtual unsigned int GetCount() const = 0;
+
+		/// \brief Access a texture in the array by index.
+		/// \param index The index of the texture to access.
+		/// \return Returns the texture at specified index.
+		virtual ObjectPtr<ITexture2D> operator[](size_t index) = 0;
+
+		/// \brief Access a texture in the array by index.
+		/// \param index The index of the texture to access.
+		/// \return Returns the texture at specified index.
+		virtual ObjectPtr<const ITexture2D> operator[](size_t index) const = 0;
+
+	};
 }
 
 ////////////////////////////// TEXTURE 2D :: FROM FILE ///////////////////////////////
