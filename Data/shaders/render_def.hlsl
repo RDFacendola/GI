@@ -5,6 +5,8 @@
 #ifndef RENDER_DEF_HLSL_
 #define RENDER_DEF_HLSL_
 
+#include "projection_def.hlsl"
+
 /// GBuffer definition
 struct GBuffer {
 
@@ -30,19 +32,8 @@ struct SurfaceData {
 
 float3 ComputeSurfacePosition(float2 uv, float depth, float4x4 inv_view_proj_matrix) {
 
-	// Compute the position in projection space
-
-	float4 position_ps = float4(uv * float2(2.0, -2.0) + float2(-1.0f, 1.0f),		// [-1;1] - [1;-1] (left;top)-(right;bottom)
-							    depth, 
-							    1.0f);
-
-	// Unproject the position into world space
-
-	float4 position_ws = mul(inv_view_proj_matrix, position_ps);
-
-	position_ws /= position_ws.w;
-
-	return position_ws.xyz;
+	return Unproject(inv_view_proj_matrix,
+					 TextureSpaceToProjectionSpace(uv, depth)).xyz;
 
 }
 

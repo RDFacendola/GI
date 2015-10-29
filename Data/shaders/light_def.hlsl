@@ -1,5 +1,5 @@
 /// \file light_def.hlsl
-/// \brief This file contains the definition of light structures
+/// \brief This file contains the definition of light structures and methods to handle lights.
 /// \author Raffaele D. Facendola
 
 #ifndef LIGHT_DEF_HLSL_
