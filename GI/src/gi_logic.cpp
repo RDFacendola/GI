@@ -150,7 +150,7 @@ void GILogic::SetupLights(Scene& scene) {
 										AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
 		light->AddComponent<PointLightComponent>(light_color, 100.0f)
-			 ->SetCutoff(0.005f);
+			 ->SetCutoff(0.01f);
 
 		point_lights.push_back(light);
 		
