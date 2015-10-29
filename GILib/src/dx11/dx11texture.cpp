@@ -44,7 +44,7 @@ namespace{
 
 }
 
-////////////////////////////// TEXTURE 2D //////////////////////////////////////////
+////////////////////////////// DX11 TEXTURE 2D //////////////////////////////////////////
 
 DX11Texture2D::DX11Texture2D(const FromFile& bundle){
 	
@@ -116,7 +116,7 @@ void DX11Texture2D::UpdateDescription(const D3D11_TEXTURE2D_DESC& description){
 	
 }
 
-////////////////////////////// GP TEXTURE 2D ////////////////////////////////////////
+////////////////////////////// DX11 GP TEXTURE 2D ////////////////////////////////////////
 
 DX11GPTexture2D::DX11GPTexture2D(unsigned int width, unsigned int height, DXGI_FORMAT format, unsigned int mips){
 
@@ -139,3 +139,40 @@ DX11GPTexture2D::DX11GPTexture2D(unsigned int width, unsigned int height, DXGI_F
 	
 }
 
+///////////////////////////// DX11 TEXTURE 2D ARRAY ////////////////////////////////
+
+DX11Texture2DArray::DX11Texture2DArray(const COMPtr<ID3D11ShaderResourceView>& shader_resource_view) :
+	shader_resource_view_(shader_resource_view){
+
+	ID3D11Resource* texture;
+
+	shader_resource_view_->GetResource(&texture);
+
+	COM_GUARD(texture);
+
+	D3D11_TEXTURE2D_DESC description;
+
+	static_cast<ID3D11Texture2D*>(texture)->GetDesc(&description);
+
+	// Update texture info
+
+	width_ = description.Width;
+	height_ = description.Height;
+	mip_levels_ = description.MipLevels;
+	bits_per_pixel_ = static_cast<unsigned int>(BitsPerPixel(description.Format));
+	format_ = description.Format;
+	count_ = description.ArraySize;
+
+}
+
+size_t DX11Texture2DArray::GetSize() const {
+
+	auto level_size = width_ * height_ * bits_per_pixel_ * kBitOverByte;	//Size of the most detailed level.
+
+	// MIP map footprint -> Sum of a geometrical serie...
+
+	auto element_size = static_cast<size_t>(level_size * ((1.0f - std::powf(kMIPRatio2D, static_cast<float>(mip_levels_))) / (1.0f - kMIPRatio2D)));
+
+	return element_size * count_;
+
+}

@@ -45,6 +45,7 @@ namespace gi_lib{
 
 			virtual unsigned int GetMIPCount() const override;
 
+			/// \brief Get the surface format.
 			DXGI_FORMAT GetFormat() const;
 
 			/// \brief Get the shader resource view used to bind this texture to the pipeline.
@@ -105,12 +106,60 @@ namespace gi_lib{
 
 		};
 
+		/// \brief DirectX11 2D texture array
+		class DX11Texture2DArray : public ITexture2DArray {
+
+		public:
+
+			DX11Texture2DArray(const COMPtr<ID3D11ShaderResourceView>& shader_resource_view);
+
+			virtual unsigned int GetWidth() const override;
+
+			virtual unsigned int GetHeight() const override;
+
+			virtual unsigned int GetMIPCount() const override;
+
+			virtual unsigned int GetCount() const override;
+
+			virtual size_t GetSize() const override;
+
+			/// \brief Get the surface format.
+			DXGI_FORMAT GetFormat() const;
+			
+			/// \brief Get the shader resource view used to bind this texture to the pipeline.
+			/// \remarks The view is for the entire array not just for the single slices.
+			ShaderResourceView GetShaderResourceView();
+
+			/// \brief Get a pointer to the hardware texture
+			COMPtr<ID3D11Texture2D> GetTextureArray();
+			
+		private:
+
+			COMPtr<ID3D11ShaderResourceView> shader_resource_view_;		///< \brief Pointer to the shader resource view of the texture array.
+
+			unsigned int width_;										///< \brief Width of the textures, in pixels.
+
+			unsigned int height_;										///< \brief Height of the textures, in pixels.
+
+			unsigned int bits_per_pixel_;								///< \brief Bits per pixel.
+
+			unsigned int mip_levels_;									///< \brief MIP levels.
+
+			unsigned int count_;										///< \brief Elements in the array.
+
+			DXGI_FORMAT format_;										///< \brief Surface format.
+
+		};
+
 		/// \brief Downcasts an ITexture2D to the proper concrete type.
 		ObjectPtr<DX11Texture2D> resource_cast(const ObjectPtr<ITexture2D>& resource);
 
 		/// \brief Downcasts an IGPTexture2D to the proper concrete type.
 		ObjectPtr<DX11GPTexture2D> resource_cast(const ObjectPtr<IGPTexture2D>& resource);
 
+		/// \brief Downcasts an ITexture2DArray to the proper concrete type.
+		ObjectPtr<DX11Texture2DArray> resource_cast(const ObjectPtr<ITexture2DArray>& resource);
+		
 		/////////////////////////////// DX11 TEXTURE2D ///////////////////////////////
 		
 		INSTANTIABLE(ITexture2D, DX11Texture2D, ITexture2D::FromFile);
@@ -215,6 +264,57 @@ namespace gi_lib{
 									   unordered_access_view_);
 
 		}
+
+		///////////////////////////// DX11 TEXTURE 2D ARRAY //////////////////////////////
+
+		inline unsigned int DX11Texture2DArray::GetWidth() const {
+
+			return width_;
+
+		}
+
+		inline unsigned int DX11Texture2DArray::GetHeight()const {
+
+			return height_;
+
+		}
+
+		inline unsigned int DX11Texture2DArray::GetMIPCount() const {
+
+			return mip_levels_;
+
+		}
+
+		inline unsigned int DX11Texture2DArray::GetCount() const {
+
+			return count_;
+
+		}
+
+		inline DXGI_FORMAT DX11Texture2DArray::GetFormat() const {
+
+			return format_;
+
+		}
+
+		inline ShaderResourceView DX11Texture2DArray::GetShaderResourceView() {
+
+			return ShaderResourceView(this,
+									  shader_resource_view_);
+
+		}
+
+		inline COMPtr<ID3D11Texture2D> DX11Texture2DArray::GetTextureArray() {
+
+			ID3D11Resource* resource;
+
+			shader_resource_view_->GetResource(&resource);
+
+			ID3D11Texture2D* texture = static_cast<ID3D11Texture2D*>(resource);
+
+			return windows::COMMove(&texture);
+
+		}
 		
 		///////////////////////////// RESOURCE CAST ////////////////////////////////
 
@@ -227,6 +327,12 @@ namespace gi_lib{
 		inline ObjectPtr<DX11GPTexture2D> resource_cast(const ObjectPtr<IGPTexture2D>& resource){
 
 			return ObjectPtr<DX11GPTexture2D>(resource.Get());
+
+		}
+
+		inline ObjectPtr<DX11Texture2DArray> resource_cast(const ObjectPtr<ITexture2DArray>& resource) {
+
+			return ObjectPtr<DX11Texture2DArray>(resource.Get());
 
 		}
 
