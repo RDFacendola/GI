@@ -130,17 +130,8 @@ namespace gi_lib{
 		/// \return Returns the number of elements in the array.
 		virtual unsigned int GetCount() const = 0;
 
-		/// \brief Access a texture in the array by index.
-		/// \param index The index of the texture to access.
-		/// \return Returns the texture at specified index.
-		virtual ObjectPtr<ITexture2D> operator[](size_t index) = 0;
-
-		/// \brief Access a texture in the array by index.
-		/// \param index The index of the texture to access.
-		/// \return Returns the texture at specified index.
-		virtual ObjectPtr<const ITexture2D> operator[](size_t index) const = 0;
-
 	};
+
 }
 
 ////////////////////////////// TEXTURE 2D :: FROM FILE ///////////////////////////////
