@@ -161,6 +161,64 @@ namespace gi_lib{
 			
 		};
 		
+		/// \brief DirectX11 render target array.
+		/// \author Raffaele D. Facendola
+		class DX11RenderTargetArray : public IRenderTargetArray {
+
+		public:
+
+			/// \brief Create a render target array.
+			/// \param width Width of each target.
+			/// \param height Height of each target.
+			/// \param count Elements inside the array.
+			/// \param format Describe the format of each slice.
+			DX11RenderTargetArray(unsigned int width, unsigned int height, unsigned int count, DXGI_FORMAT format);
+
+			virtual ~DX11RenderTargetArray();
+
+			virtual size_t GetCount() const override;
+
+			virtual ObjectPtr<ITexture2D> GetDepthBuffer() override;
+
+			virtual ObjectPtr<const ITexture2D> GetDepthBuffer() const override;
+
+			virtual unsigned int GetWidth() const override;
+
+			virtual unsigned int GetHeight() const override;
+
+			virtual size_t GetSize() const override;
+
+			/// \brief Clear the depth stencil view.
+			/// \param context The context used to clear the view.
+			/// \param clear_flags Determines whether to clear the depth and\or the stencil buffer. (see: D3D11_CLEAR_FLAGS)
+			/// \param depth Depth value to store inside the depth buffer.
+			/// \param stencil Stencil value to store inside the stencil buffer.
+			void ClearDepth(ID3D11DeviceContext& context, unsigned int clear_flags = D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, float depth = 1.0f, unsigned char stencil = 0);
+
+			/// \brief Clear every target view.
+			/// \param context The context used to clear the view.
+			/// \param color The color used to clear the targets.
+			void ClearTargets(ID3D11DeviceContext& context, Color color = kTransparentBlack);
+
+			/// \brief Bind an element of the array to the given render context.
+			/// \param index Index of the element to bind.
+			void Bind(ID3D11DeviceContext& context, unsigned int index);
+
+			/// \brief Unbind the render target from the given render context.
+			void Unbind(ID3D11DeviceContext& context);
+
+		private:
+
+			ObjectPtr<DX11Texture2DArray> render_target_array_;					///< \brief Actual render target array surfaces.
+
+			ObjectPtr<DX11DepthTexture2D> depth_stencil_;						///< \brief Depth surface.
+
+			vector<COMPtr<ID3D11RenderTargetView>> rtv_list_;					///< \brief List containing the render target view for each array element.
+
+			D3D11_VIEWPORT viewport_;											///< \brief Render target viewport.
+
+		};
+
 		/////////////////////////////// DX11 DEPTH TEXTURE 2D ///////////////////////////////
 
 		inline COMPtr<ID3D11DepthStencilView> DX11DepthTexture2D::GetDepthStencilView() const{
@@ -232,6 +290,44 @@ namespace gi_lib{
 		inline unsigned int DX11RenderTarget::GetHeight() const{
 
 			return render_target_[0]->GetHeight();
+
+		}
+
+		/////////////////////////////// DX11 RENDER TARGET ARRAY //////////////////////////////////////
+
+		inline ObjectPtr<ITexture2D> DX11RenderTargetArray::GetDepthBuffer() {
+
+			return ObjectPtr<ITexture2D>(depth_stencil_);
+
+		}
+
+		inline ObjectPtr<const ITexture2D> DX11RenderTargetArray::GetDepthBuffer() const {
+
+			return ObjectPtr<const ITexture2D>(depth_stencil_);
+
+		}
+
+		inline unsigned int DX11RenderTargetArray::GetWidth() const {
+
+			return render_target_array_->GetHeight();
+		}
+
+		inline unsigned int DX11RenderTargetArray::GetHeight() const {
+
+			return render_target_array_->GetHeight();
+
+		}
+
+		inline size_t DX11RenderTargetArray::GetCount() const {
+
+			return render_target_array_->GetCount();
+
+		}
+
+		inline size_t DX11RenderTargetArray::GetSize() const {
+
+			return render_target_array_->GetSize() +
+				   depth_stencil_->GetSize();
 
 		}
 

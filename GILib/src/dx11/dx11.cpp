@@ -112,7 +112,7 @@ HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width,
 	ID3D11RenderTargetView* rtv = nullptr;
 	ID3D11ShaderResourceView* srv = nullptr;
 
-	auto cleanup = make_scope_guard([&texture, &rtv, &srv](){
+	auto cleanup = make_scope_guard([&rtv, &srv](){
 
 		if (rtv)		rtv->Release();
 		if (srv)		srv->Release();
@@ -166,6 +166,103 @@ HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width,
 	}
 	
 	if (shader_resource_view){
+
+		*shader_resource_view = srv;
+
+	}
+
+	// Cleanup
+
+	cleanup.Dismiss();
+
+	return S_OK;
+
+}
+
+HRESULT gi_lib::dx11::MakeRenderTargetArray(ID3D11Device& device, unsigned int width, unsigned int height, unsigned int count, DXGI_FORMAT format, ID3D11ShaderResourceView** shader_resource_view, std::vector<ID3D11RenderTargetView*>* render_target_view_list, bool mip_chain) {
+
+	ID3D11Texture2D* texture = nullptr;
+	vector<ID3D11RenderTargetView*> rtv;
+	ID3D11ShaderResourceView* srv = nullptr;
+
+	auto cleanup = make_scope_guard([&rtv, &srv]() {
+
+		for (auto&& rtv_item : rtv) {
+
+			if (rtv_item) rtv_item->Release();
+
+		}
+		
+		rtv.clear();
+
+		if (srv)		srv->Release();
+
+	});
+
+	D3D11_TEXTURE2D_DESC desc;
+
+	ZeroMemory(&desc, sizeof(D3D11_TEXTURE2D_DESC));
+
+	desc.ArraySize = count;
+	desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	desc.CPUAccessFlags = 0;
+	desc.Format = format;
+	desc.Width = width;
+	desc.Height = height;
+	desc.MipLevels = mip_chain ? 0 : 1;
+	desc.SampleDesc.Count = 1;
+	desc.SampleDesc.Quality = 0;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.MiscFlags = mip_chain ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0;
+	
+	RETURN_ON_FAIL(device.CreateTexture2D(&desc,
+										  nullptr,
+										  &texture));
+
+	COM_GUARD(texture);
+
+	if (render_target_view_list) {
+
+		rtv.resize(count);
+
+		std::fill(rtv.begin(), rtv.end(), nullptr);
+
+		D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
+
+		rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+		rtv_desc.Format = format;
+
+		for (unsigned int slice_index = 0; slice_index < count; ++slice_index) {
+
+			rtv_desc.Texture2DArray.ArraySize = 1;						// 1 element
+			rtv_desc.Texture2DArray.FirstArraySlice = slice_index;		// i-th element
+			rtv_desc.Texture2DArray.MipSlice = 0;						// Most detailed mipmap
+			
+			RETURN_ON_FAIL(device.CreateRenderTargetView(texture,
+														 &rtv_desc,
+														 &rtv[slice_index]));
+
+		}
+
+	}
+
+	if (shader_resource_view) {
+
+		RETURN_ON_FAIL(device.CreateShaderResourceView(texture,
+													   nullptr,
+													   &srv));
+
+	}
+
+	// Output
+
+	if (render_target_view_list) {
+
+		*render_target_view_list = std::move(rtv);
+
+	}
+
+	if (shader_resource_view) {
 
 		*shader_resource_view = srv;
 

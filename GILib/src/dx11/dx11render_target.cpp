@@ -306,3 +306,131 @@ void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, c
 	guard.Dismiss();
 
 }
+
+////////////////////////////// DX11 RENDER TARGET ARRAY ////////////////////////////////////
+
+DX11RenderTargetArray::~DX11RenderTargetArray() {}
+
+DX11RenderTargetArray::DX11RenderTargetArray(unsigned int width, unsigned int height, unsigned int count, DXGI_FORMAT format) {
+
+	// If the method throws ensures that the resource is left in a clean state.
+
+	auto&& guard = make_scope_guard([this]() {
+
+		depth_stencil_ = nullptr;
+		render_target_array_ = nullptr;
+		rtv_list_.clear();
+
+	});
+
+	// Create the render target surfaces.
+	ID3D11ShaderResourceView* srv;
+	vector<ID3D11RenderTargetView*> rtv_list;
+
+	THROW_ON_FAIL(MakeRenderTargetArray(*DX11Graphics::GetInstance().GetDevice(),
+										width,
+										height,
+										count,
+										format,
+										&srv,
+										&rtv_list,
+										false));
+										
+	render_target_array_ = new DX11Texture2DArray(COMMove(&srv));
+							
+	rtv_list_.reserve(rtv_list.size());
+
+	for (auto&& render_target_view : rtv_list) {
+
+		rtv_list_.push_back(COMMove(&render_target_view));
+
+	}
+
+	// Depth buffer
+
+	depth_stencil_ = new DX11DepthTexture2D(width,
+											height);
+
+	// Viewport
+
+	viewport_ = MakeViewport(width,
+							 height);
+
+	// Cleanup
+
+	guard.Dismiss();
+
+}
+
+void DX11RenderTargetArray::ClearDepth(ID3D11DeviceContext& context, unsigned int clear_flags, float depth, unsigned char stencil) {
+
+	if (depth_stencil_) {
+
+		depth_stencil_->Clear(context,
+							  clear_flags,
+							  depth,
+							  stencil);
+
+	}
+
+}
+
+void DX11RenderTargetArray::ClearTargets(ID3D11DeviceContext& context, Color color) {
+
+	// The color is ARGB, however the method ClearRenderTargetView needs an RGBA.
+
+	float rgba_color[4];
+
+	rgba_color[0] = color.color.red;
+	rgba_color[1] = color.color.green;
+	rgba_color[2] = color.color.blue;
+	rgba_color[3] = color.color.alpha;
+
+	for (auto& render_target_view : rtv_list_) {
+
+		context.ClearRenderTargetView(render_target_view.Get(),
+									  rgba_color);
+
+	}
+
+}
+
+void DX11RenderTargetArray::Bind(ID3D11DeviceContext& context, unsigned int index) {
+
+	vector<ID3D11RenderTargetView*> rtv_list(1, rtv_list_[index].Get());
+
+	if (depth_stencil_) {
+
+		// Depth stencil
+
+		context.OMSetRenderTargets(static_cast<unsigned int>(rtv_list.size()),
+								   &rtv_list[0],
+								   depth_stencil_->GetDepthStencilView().Get());
+
+	}
+	else {
+
+		// No depth stencil here
+
+		context.OMSetRenderTargets(static_cast<unsigned int>(rtv_list.size()),
+								   &rtv_list[0],
+								   nullptr);
+
+	}
+
+	context.RSSetViewports(1,
+						   &viewport_);
+
+}
+
+void DX11RenderTargetArray::Unbind(ID3D11DeviceContext& context) {
+
+	// Only one surface is actually bound to the context
+
+	vector<ID3D11RenderTargetView*> rtv_null_list(1, nullptr);
+
+	context.OMSetRenderTargets(static_cast<unsigned int>(rtv_null_list.size()),
+							   &rtv_null_list[0],
+							   nullptr);
+
+}

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <d3d11.h>
+#include <vector>
 
 #include "eigen.h"
 #include "object.h"
@@ -140,6 +141,17 @@ namespace gi_lib{
 		/// \param shader_resource_view Pointer to the shader resource view. Optional.
 		/// \param mip_chain Whether to generate a full MIP-map chain or not.
 		HRESULT MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11ShaderResourceView** shader_resource_view, ID3D11RenderTargetView** render_target_view, bool mip_chain = false);
+		
+		/// \brief Create a render target array.
+		/// \param device Device used to create the texture.
+		/// \param width Width of the texture in pixels.
+		/// \param height Height of the texture in pixels.
+		/// \param count Elements inside the array.
+		/// \param format Format of the surface.
+		/// \param render_target_view_list Pointer to the render target view list. Optional.
+		/// \param shader_resource_view Pointer to the shader resource view. Optional.
+		/// \param mips Number of mip maps to generate. If 0 is passed, the full chain is created.
+		HRESULT MakeRenderTargetArray(ID3D11Device& device, unsigned int width, unsigned int height, unsigned int count, DXGI_FORMAT format, ID3D11ShaderResourceView** shader_resource_view, std::vector<ID3D11RenderTargetView*>* render_target_view_list, bool mip_chain = false);
 
 		/// \brief Create a 2D texture that can be bound to a compute shader as unordered access.
 		/// \param device Device used to create the texture.
