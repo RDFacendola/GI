@@ -55,6 +55,8 @@ namespace gi_lib{
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D) override;
 
+			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2DArray>& texture_2D_array) override;
+
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state) override;
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) override;
@@ -103,6 +105,13 @@ namespace gi_lib{
 			return shader_composite_->SetShaderResource(tag,
 														resource_cast(texture_2D));
 
+		}
+
+		inline bool DX11Material::SetInput(const Tag& tag, const ObjectPtr<ITexture2DArray>& texture_2D_array){
+
+			return shader_composite_->SetShaderResource(tag,
+														resource_cast(texture_2D_array));
+			
 		}
 
 		inline bool DX11Material::SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state){

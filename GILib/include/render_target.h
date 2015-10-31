@@ -12,6 +12,7 @@
 namespace gi_lib{
 
 	class ITexture2D;
+	class ITexture2DArray;
 
 	template <typename TObject>
 	class ObjectPtr;
@@ -79,6 +80,14 @@ namespace gi_lib{
 		/// \brief Get the number of elements in the array.
 		/// \return Returns the number of elements in the array.
 		virtual size_t GetCount() const = 0;
+
+		/// \brief Get the texture associated to the render target array.
+		/// \return Returns the texture associated to the render target array.
+		virtual ObjectPtr<ITexture2DArray> GetRenderTargets() = 0;
+
+		/// \brief Get the texture associated the the render target array.
+		/// \return Returns the texture associated to the render target array.
+		virtual ObjectPtr<const ITexture2DArray> GetRenderTargets() const = 0;
 
 		/// \brief Get the texture associated to the depth stencil buffer.
 		/// The texture is guaranteed to have a 24bit uniform channel for the depth information and a 8bit unsigned int channel for the stencil.

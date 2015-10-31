@@ -178,6 +178,10 @@ namespace gi_lib{
 
 			virtual size_t GetCount() const override;
 
+			virtual ObjectPtr<ITexture2DArray> GetRenderTargets() override;
+
+			virtual ObjectPtr<const ITexture2DArray> GetRenderTargets() const override;
+
 			virtual ObjectPtr<ITexture2D> GetDepthBuffer() override;
 
 			virtual ObjectPtr<const ITexture2D> GetDepthBuffer() const override;
@@ -294,6 +298,18 @@ namespace gi_lib{
 		}
 
 		/////////////////////////////// DX11 RENDER TARGET ARRAY //////////////////////////////////////
+
+		inline ObjectPtr<ITexture2DArray> DX11RenderTargetArray::GetRenderTargets() {
+
+			return ObjectPtr<ITexture2DArray>(render_target_array_);
+
+		}
+
+		inline ObjectPtr<const ITexture2DArray> DX11RenderTargetArray::GetRenderTargets() const {
+
+			return ObjectPtr<const ITexture2DArray>(render_target_array_);
+
+		}
 
 		inline ObjectPtr<ITexture2D> DX11RenderTargetArray::GetDepthBuffer() {
 
