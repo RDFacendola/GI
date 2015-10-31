@@ -1,0 +1,12 @@
+digraph "gi_lib::ITexture2DArray"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::ITexture2DArray\n||+ ~ITexture2DArray()\l+ GetWidth()\l+ GetHeight()\l+ GetMIPCount()\l+ GetCount()\l}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node2 -> Node1 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node2 [label="{gi_lib::IResource\n||+ ~IResource()\l+ GetSize()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_i_resource.html",tooltip="Base interface for graphical resources. Resources are reference counted. You may improve this class t..."];
+  Node3 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node3 [label="{gi_lib::Object\n||+ Object()\l+ ~Object()\l+ operator=()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_object.html",tooltip="Base interface for every object whose life cycle is determined by a reference counter. "];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node4 [label="{gi_lib::dx11::DX11Texture2\lDArray\n||+ DX11Texture2DArray()\l+ GetWidth()\l+ GetHeight()\l+ GetMIPCount()\l+ GetCount()\l+ GetSize()\l+ GetFormat()\l+ GetShaderResourceView()\l+ GetTextureArray()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1dx11_1_1_d_x11_texture2_d_array.html",tooltip="DirectX11 2D texture array. "];
+}

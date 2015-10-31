@@ -1,0 +1,8 @@
+digraph "gi_lib::dx11::ShaderReflection"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::dx11::ShaderReflection\n|+ shader_type\l+ buffers\l+ shader_resource_views\l+ samplers\l+ unordered_access_views\l+ @1\l|}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node2 -> Node1 [color="grey25",fontsize="10",style="solid",label=" +compute_shader" ,arrowhead="odiamond",fontname="Helvetica"];
+  Node2 [label="{gi_lib::dx11::ComputeShader\lReflection\n|+ thread_group_x\l+ thread_group_y\l+ thread_group_z\l|}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structgi__lib_1_1dx11_1_1_compute_shader_reflection.html",tooltip="Additional description of a compute shader. "];
+}

@@ -1,0 +1,39 @@
+digraph "include/material.h"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="include/material.h",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="typeindex",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="string",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="resources.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$resources_8h.html",tooltip="Generic graphical resource interfaces. "];
+  Node4 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="vector",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node4 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="object.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$object_8h.html",tooltip="This file contains the classes needed to manage reference counted object and smart pointers..."];
+  Node6 -> Node7 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="cstddef",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node6 -> Node8 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="debug.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$debug_8h.html",tooltip="Debug macros and methods. "];
+  Node8 -> Node9 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="assert.h",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node10 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 [label="tag.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$tag_8h.html",tooltip="This file contains the classes used to handle hashed strings. "];
+  Node10 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node11 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 [label="texture.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$texture_8h.html",tooltip="This file contains the interfaces used to define texture resources. "];
+  Node11 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 -> Node10 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node12 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 [label="buffer.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$buffer_8h.html",tooltip="This file contains the interfaces of buffer resources. "];
+  Node12 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node13 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 [label="sampler.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$sampler_8h.html",tooltip="This file contains the interfaces used to define sampler states. "];
+  Node13 -> Node10 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+}

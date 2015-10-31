@@ -1,0 +1,9 @@
+digraph "include/fbx" {
+  compound=true
+  node [ fontsize="10", fontname="Helvetica"];
+  edge [ labelfontsize="10", labelfontname="Helvetica"];
+  subgraph clusterdir_6e52bfc87664c872db47d56ba392ebee {
+    graph [ bgcolor="#ddddee", pencolor="black", label="include" fontname="Helvetica", fontsize="10", URL="dir_6e52bfc87664c872db47d56ba392ebee.html"]
+  dir_463edc872b35ce99ff29d9910ebd41ff [shape=box, label="fbx", style="filled", fillcolor="#eeeeff", pencolor="black", URL="dir_463edc872b35ce99ff29d9910ebd41ff.html"];
+  }
+}

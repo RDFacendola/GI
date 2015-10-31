@@ -1,0 +1,6 @@
+digraph "gi_lib::IStaticMesh::FromVertices&lt; TVertexFormat &gt;"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::IStaticMesh\l::FromVertices\< TVertexFormat \>\n|+ NO_CACHE\l+ indices\l+ vertices\l+ subsets\l|}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+}

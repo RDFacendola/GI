@@ -1,0 +1,20 @@
+digraph "gi_lib::IHardwareBuffer"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::IHardwareBuffer\n||+ ~IHardwareBuffer()\l+ Lock()\l+ Unlock()\l}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node2 -> Node1 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node2 [label="{gi_lib::IResource\n||+ ~IResource()\l+ GetSize()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_i_resource.html",tooltip="Base interface for graphical resources. Resources are reference counted. You may improve this class t..."];
+  Node3 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node3 [label="{gi_lib::Object\n||+ Object()\l+ ~Object()\l+ operator=()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_object.html",tooltip="Base interface for every object whose life cycle is determined by a reference counter. "];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node4 [label="{gi_lib::dx11::DX11Buffer\n||+ DX11Buffer()\l+ DX11Buffer()\l+ ~DX11Buffer()\l+ operator=()\l+ Lock()\l+ Unlock()\l+ GetSize()\l+ Lock()\l+ Unlock()\l+ Commit()\l+ GetBuffer()\l+ GetShaderResourceView()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1dx11_1_1_d_x11_buffer.html",tooltip="Represents a generic buffer. "];
+  Node1 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node5 [label="{gi_lib::IStructuredArray\n||+ ~IStructuredArray()\l+ GetCount()\l+ GetElementSize()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_i_structured_array.html",tooltip="Represents a low-level buffer that behaves like a strongly-typed array of elements. This array can be written by a CPU and read by a GPU. "];
+  Node5 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node6 [label="{gi_lib::dx11::DX11Structured\lArray\n||+ DX11StructuredArray()\l+ Lock()\l+ Unlock()\l+ GetCount()\l+ GetElementSize()\l+ GetSize()\l+ Lock()\l+ Unlock()\l+ Commit()\l+ GetCommitter()\l+ GetShaderResourceView()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1dx11_1_1_d_x11_structured_array.html",tooltip="Represents a low-level buffer that behaves like a strongly-typed array of elements under DirectX 11..."];
+  Node1 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node7 [label="{gi_lib::IStructuredBuffer\n||+ ~IStructuredBuffer()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_i_structured_buffer.html",tooltip="Represents a low-level buffer that behaves like a strongly-typed structure. The buffer can be written..."];
+  Node7 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node8 [label="{gi_lib::dx11::DX11Structured\lBuffer\n||+ DX11StructuredBuffer()\l+ DX11StructuredBuffer()\l+ Lock()\l+ Unlock()\l+ GetSize()\l+ Lock()\l+ Unlock()\l+ Commit()\l+ GetCommitter()\l+ GetConstantBuffer()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1dx11_1_1_d_x11_structured_buffer.html",tooltip="Represents a low-level buffer that behaves like a strongly-typed structure under DirectX 11..."];
+}

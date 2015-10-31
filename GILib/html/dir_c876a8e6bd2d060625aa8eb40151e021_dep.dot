@@ -1,0 +1,11 @@
+digraph "C:/Users/raffa/Desktop/GI/GI/include" {
+  compound=true
+  node [ fontsize="10", fontname="Helvetica"];
+  edge [ labelfontsize="10", labelfontname="Helvetica"];
+  subgraph clusterdir_6db62532f0a9a23e32e905cfd07e40ec {
+    graph [ bgcolor="#ddddee", pencolor="black", label="GI" fontname="Helvetica", fontsize="10", URL="dir_6db62532f0a9a23e32e905cfd07e40ec.html"]
+  dir_c876a8e6bd2d060625aa8eb40151e021 [shape=box, label="include", style="filled", fillcolor="#eeeeff", pencolor="black", URL="dir_c876a8e6bd2d060625aa8eb40151e021.html"];
+  }
+  dir_6e52bfc87664c872db47d56ba392ebee [shape=box label="include" fillcolor="white" style="filled" color="red" URL="dir_6e52bfc87664c872db47d56ba392ebee.html"];
+  dir_c876a8e6bd2d060625aa8eb40151e021->dir_6e52bfc87664c872db47d56ba392ebee [headlabel="10", labeldistance=1.5 headhref="dir_000001_000005.html"];
+}

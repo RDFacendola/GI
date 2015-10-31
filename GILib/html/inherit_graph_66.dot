@@ -1,0 +1,11 @@
+digraph "Graphical Class Hierarchy"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="iterator",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="gi_lib::IndexedIterator\l\< TDirect, TIndex, TType \>",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structgi__lib_1_1_indexed_iterator.html",tooltip="Wraps a collection and an iterator. The iterator is used to visit the collection in a non-linear way..."];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="gi_lib::IteratorWrapper\l\< TIterator, TWrapped,\l TPointerMap \>",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structgi__lib_1_1_iterator_wrapper.html",tooltip="Wraps an input iterator that dereferences to another type. "];
+}

@@ -1,0 +1,14 @@
+digraph "gi_lib::dx11::DX11Computation"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::dx11::DX11Computation\n|+ group_size_\l|+ DX11Computation()\l+ DX11Computation()\l+ ~DX11Computation()\l+ operator=()\l+ GetSize()\l+ Dispatch()\l+ SetInput()\l+ SetInput()\l+ SetOutput()\l+ SetInput()\l+ SetInput()\l}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node2 -> Node1 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node2 [label="{gi_lib::IComputation\n||+ ~IComputation()\l+ SetInput()\l+ SetInput()\l+ SetInput()\l+ SetInput()\l+ SetOutput()\l+ SetInput()\l+ SetInput()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_i_computation.html",tooltip="Base interface for GPU computations. "];
+  Node3 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node3 [label="{gi_lib::IResource\n||+ ~IResource()\l+ GetSize()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_i_resource.html",tooltip="Base interface for graphical resources. Resources are reference counted. You may improve this class t..."];
+  Node4 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node4 [label="{gi_lib::Object\n||+ Object()\l+ ~Object()\l+ operator=()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_object.html",tooltip="Base interface for every object whose life cycle is determined by a reference counter. "];
+  Node5 -> Node1 [color="grey25",fontsize="10",style="solid",label=" +shader_composite_" ,arrowhead="odiamond",fontname="Helvetica"];
+  Node5 [label="{unique_ptr\< gi_lib\l::dx11::ShaderStateComposite \>\n||}",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+}

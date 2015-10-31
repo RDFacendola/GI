@@ -1,0 +1,39 @@
+digraph "include/core.h"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="include/core.h",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="string",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="vector",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="observable.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$observable_8h.html",tooltip="Classes used to implement and manage the observer pattern. "];
+  Node4 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="map",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node4 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="functional",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node4 -> Node7 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="memory",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node4 -> Node8 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="tuple",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node4 -> Node9 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="unique.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$unique_8h.html",tooltip="Classes and functions used to manage unique objects. "];
+  Node9 -> Node10 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 [label="atomic",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node11 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 [label="input.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$input_8h.html",tooltip="Classes to manage the user input. "];
+  Node11 -> Node12 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 [label="gimath.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$gimath_8h.html",tooltip="Mathematical and geometrical classes and methods. "];
+  Node12 -> Node13 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 [label="eigen.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$eigen_8h.html",tooltip="Wrapper around Eigen headers. "];
+  Node13 -> Node14 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node14 [label="Eigen\\Geometry",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node12 -> Node15 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node15 [label="math.h",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node12 -> Node16 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node16 [label="algorithm",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node12 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 -> Node17 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node17 [label="enums.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$enums_8h.html",tooltip="Interfaces related to enumerables. "];
+}

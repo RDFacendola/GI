@@ -1,0 +1,10 @@
+digraph "gi_lib::Event&lt; TArgument &gt;"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::Event\< TArgument \>\n||+ ~Event()\l+ Notify()\l}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node2 -> Node1 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node2 [label="{gi_lib::Observable\l\< TArgument \>\n|# listeners_\l|+ Observable()\l+ ~Observable()\l+ Subscribe()\l# Unsubscribe()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_observable.html",tooltip="Observable object. "];
+  Node3 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node3 [label="{gi_lib::BaseObservable\n||+ BaseObservable()\l+ BaseObservable()\l+ ~BaseObservable()\l+ operator=()\l# Unsubscribe()\l# Invalidate()\l# GenerateListener()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_base_observable.html",tooltip="Base class for observable objects. "];
+}

@@ -1,0 +1,11 @@
+digraph "Graphical Class Hierarchy"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="gi_lib::IRenderer",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_i_renderer.html",tooltip="Base interface for renderers. "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="gi_lib::TiledDeferredRenderer",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_tiled_deferred_renderer.html",tooltip="Deferred renderer with tiled lighting computation. "];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="gi_lib::dx11::DX11TiledDeferred\lRenderer",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1dx11_1_1_d_x11_tiled_deferred_renderer.html",tooltip="Deferred renderer with tiled lighting computation for DirectX11. "];
+}

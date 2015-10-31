@@ -1,0 +1,46 @@
+digraph "include/scene.h"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="include/scene.h",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="C:/Users/raffa/Desktop\l/GI/GI/include/gi_logic.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$gi__logic_8h.html"];
+  Node2 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="C:/Users/raffa/Desktop\l/GI/GI/src/gi.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$gi_8cpp.html"];
+  Node2 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="C:/Users/raffa/Desktop\l/GI/GI/src/gi_logic.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$gi__logic_8cpp.html"];
+  Node1 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="C:/Users/raffa/Desktop\l/GI/GI/include/material\l_importer.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$material__importer_8h.html",tooltip="Class to handle the material import. "];
+  Node5 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="C:/Users/raffa/Desktop\l/GI/GI/src/material_importer.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$material__importer_8cpp.html"];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node7 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="include/deferred_renderer.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$deferred__renderer_8h.html",tooltip="Deferred rendering classes. "];
+  Node7 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 -> Node8 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="include/dx11/dx11deferred\l_renderer.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$dx11deferred__renderer_8h.html",tooltip="Deferred rendering classes for DirectX11. "];
+  Node8 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="src/dx11/dx11deferred\l_renderer.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$dx11deferred__renderer_8cpp.html"];
+  Node8 -> Node10 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 [label="src/dx11/dx11graphics.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$dx11graphics_8cpp.html"];
+  Node7 -> Node11 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 [label="src/deferred_renderer.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$deferred__renderer_8cpp.html"];
+  Node7 -> Node10 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node12 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 [label="include/light_component.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$light__component_8h.html",tooltip="Components used to describe lights. "];
+  Node12 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 -> Node9 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 -> Node13 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 [label="src/light_component.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$light__component_8cpp.html"];
+  Node1 -> Node10 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node14 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node14 [label="src/fbx.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$_g_i_lib_2src_2fbx_8cpp.html"];
+  Node1 -> Node15 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node15 [label="src/fly_camera_component.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$fly__camera__component_8cpp.html"];
+  Node1 -> Node16 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node16 [label="src/scene.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$scene_8cpp.html"];
+  Node1 -> Node17 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node17 [label="src/uniform_tree.cpp",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$uniform__tree_8cpp.html"];
+}

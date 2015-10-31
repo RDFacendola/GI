@@ -1,0 +1,6 @@
+digraph "gi_lib::MemoryProfile"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::MemoryProfile\n|+ total_physical_memory\l+ total_virtual_memory\l+ total_page_memory\l+ available_physical\l_memory\l+ available_virtual_memory\l+ available_page_memory\l|}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+}

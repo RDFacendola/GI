@@ -1,0 +1,8 @@
+digraph "gi_lib::fx::FxBrightPass"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::fx::FxBrightPass\n||+ GetThreshold()\l+ SetThreshold()\l+ Filter()\l}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node2 [label="{gi_lib::dx11::fx::DX11Fx\lBrightPass\n||+ DX11FxBrightPass()\l+ GetThreshold()\l+ SetThreshold()\l+ Filter()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1dx11_1_1fx_1_1_d_x11_fx_bright_pass.html",tooltip="This class is used to suppress color whose brightness falls under a given threshold. "];
+}

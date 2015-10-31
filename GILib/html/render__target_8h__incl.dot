@@ -1,0 +1,20 @@
+digraph "include/render_target.h"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="include/render_target.h",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="resources.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$resources_8h.html",tooltip="Generic graphical resource interfaces. "];
+  Node2 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="string",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node2 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="vector",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node2 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="object.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$object_8h.html",tooltip="This file contains the classes needed to manage reference counted object and smart pointers..."];
+  Node5 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="cstddef",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node5 -> Node7 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="debug.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$debug_8h.html",tooltip="Debug macros and methods. "];
+  Node7 -> Node8 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="assert.h",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+}

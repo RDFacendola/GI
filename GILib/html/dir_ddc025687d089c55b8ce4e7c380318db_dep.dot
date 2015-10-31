@@ -1,0 +1,11 @@
+digraph "C:/Users/raffa/Desktop/GI/GiFbxConverter/src" {
+  compound=true
+  node [ fontsize="10", fontname="Helvetica"];
+  edge [ labelfontsize="10", labelfontname="Helvetica"];
+  subgraph clusterdir_bedee29de5e3ba2e0dad58b8186a137a {
+    graph [ bgcolor="#ddddee", pencolor="black", label="GiFbxConverter" fontname="Helvetica", fontsize="10", URL="dir_bedee29de5e3ba2e0dad58b8186a137a.html"]
+  dir_ddc025687d089c55b8ce4e7c380318db [shape=box, label="src", style="filled", fillcolor="#eeeeff", pencolor="black", URL="dir_ddc025687d089c55b8ce4e7c380318db.html"];
+  }
+  dir_d9e966a502bff642a2a2e0b1a8f5ddef [shape=box label="include" URL="dir_d9e966a502bff642a2a2e0b1a8f5ddef.html"];
+  dir_ddc025687d089c55b8ce4e7c380318db->dir_d9e966a502bff642a2a2e0b1a8f5ddef [headlabel="4", labeldistance=1.5 headhref="dir_000007_000004.html"];
+}

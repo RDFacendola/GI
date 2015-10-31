@@ -1,0 +1,7 @@
+digraph "Graphical Class Hierarchy"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="gi_lib::DeferredRenderer\lMaterial::Instantiate",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structgi__lib_1_1_deferred_renderer_material_1_1_instantiate.html",tooltip="Structure used to instantiate an existing material. "];
+}

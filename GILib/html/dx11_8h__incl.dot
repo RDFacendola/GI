@@ -1,0 +1,39 @@
+digraph "include/dx11/dx11.h"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="include/dx11/dx11.h",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node1 -> Node2 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="d3d11.h",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="vector",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node4 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="eigen.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$eigen_8h.html",tooltip="Wrapper around Eigen headers. "];
+  Node4 -> Node5 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="Eigen\\Geometry",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="object.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$object_8h.html",tooltip="This file contains the classes needed to manage reference counted object and smart pointers..."];
+  Node6 -> Node7 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node7 [label="cstddef",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node6 -> Node8 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node8 [label="debug.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$debug_8h.html",tooltip="Debug macros and methods. "];
+  Node8 -> Node9 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node9 [label="assert.h",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node1 -> Node10 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 [label="resources.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$resources_8h.html",tooltip="Generic graphical resource interfaces. "];
+  Node10 -> Node11 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node11 [label="string",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node10 -> Node3 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node10 -> Node6 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node1 -> Node12 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 [label="windows/win_os.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$win__os_8h.html",tooltip="Windows-specific interfaces. "];
+  Node12 -> Node13 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node13 [label="Windows.h",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node12 -> Node11 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node12 -> Node14 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node14 [label="exceptions.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$exceptions_8h.html",tooltip="Defines classes and macros used for exception handling. "];
+  Node14 -> Node11 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node14 -> Node15 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node15 [label="macros.h",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$macros_8h.html",tooltip="Bad and ugly macros are declared here :D. "];
+  Node12 -> Node15 [color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+}

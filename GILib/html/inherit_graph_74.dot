@@ -1,0 +1,7 @@
+digraph "Graphical Class Hierarchy"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="gi_lib::ITexture2D\l::FromFile",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structgi__lib_1_1_i_texture2_d_1_1_from_file.html",tooltip="Cached structure used to load a texture 2D from file. The texture is guaranteed to be read-only..."];
+}

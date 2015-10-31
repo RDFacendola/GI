@@ -1,0 +1,10 @@
+digraph "gi_lib::TransformComponent::OnTransformChangedEventArgs"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::TransformComponent\l::OnTransformChangedEventArgs\n||}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node2 -> Node1 [color="grey25",fontsize="10",style="solid",label=" +transform" ,arrowhead="odiamond",fontname="Helvetica"];
+  Node2 [label="{gi_lib::TransformComponent\n||+ TransformComponent()\l+ TransformComponent()\l+ GetTranslation()\l+ SetTranslation()\l+ GetRotation()\l+ SetRotation()\l+ GetScale()\l+ SetScale()\l+ GetRight()\l+ GetUp()\l+ GetForward()\l+ GetPosition()\l+ GetLocalTransform()\l+ GetWorldTransform()\l+ GetParent()\l+ GetParent()\l+ SetParent()\l+ GetChildren()\l+ GetChildren()\l+ GetTypes()\l+ OnTransformChanged()\l# Initialize()\l# Finalize()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_transform_component.html",tooltip="Expose 3D-space transform capabilities. The composite transformation is calculated by applying the sc..."];
+  Node3 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node3 [label="{gi_lib::Component\n||+ Component()\l+ Component()\l+ ~Component()\l+ operator=()\l+ AddComponent()\l+ RemoveComponent()\l+ GetComponent()\l+ GetComponent()\l+ GetComponents()\l+ GetComponents()\l+ GetTypes()\l+ Dispose()\l+ OnRemoved()\l+ Create()\l+ Create()\l# Initialize()\l# Finalize()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_component.html",tooltip="Represents a component of a component-based entity. A component-based entity is an abstract object wh..."];
+}

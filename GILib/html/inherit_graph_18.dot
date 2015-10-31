@@ -1,0 +1,7 @@
+digraph "Graphical Class Hierarchy"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="gi_lib::dx11::ConstantBufferView",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1dx11_1_1_constant_buffer_view.html",tooltip="Wraps a constant buffer with a resource. "];
+}

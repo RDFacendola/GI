@@ -1,0 +1,12 @@
+digraph "gi_lib::IStructuredArray"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::IStructuredArray\n||+ ~IStructuredArray()\l+ GetCount()\l+ GetElementSize()\l}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node2 -> Node1 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node2 [label="{gi_lib::IHardwareBuffer\n||+ ~IHardwareBuffer()\l+ Lock()\l+ Unlock()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_i_hardware_buffer.html",tooltip="Represents a low-level buffer stored in GPU-memory. The buffer can be written by the CPU and read by ..."];
+  Node3 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node3 [label="{gi_lib::IResource\n||+ ~IResource()\l+ GetSize()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_i_resource.html",tooltip="Base interface for graphical resources. Resources are reference counted. You may improve this class t..."];
+  Node4 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",arrowtail="onormal",fontname="Helvetica"];
+  Node4 [label="{gi_lib::Object\n||+ Object()\l+ ~Object()\l+ operator=()\l}",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classgi__lib_1_1_object.html",tooltip="Base interface for every object whose life cycle is determined by a reference counter. "];
+}

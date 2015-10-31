@@ -1,0 +1,6 @@
+digraph "gi_lib::Range&lt; TIterator &gt;"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::Range\< TIterator \>\n|# begin_\l# end_\l|+ Range()\l+ Range()\l+ begin()\l+ end()\l+ operator*()\l+ operator-\>()\l+ operator++()\l+ operator++()\l+ IsEmpty()\l}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+}

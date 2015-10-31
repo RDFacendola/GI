@@ -1,0 +1,6 @@
+digraph "gi_lib::dx11::BaseShaderState"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::dx11::BaseShader\lState\n|# shader_resource_views_\l# unordered_access_views_\l# constant_buffers_\l# samplers_\l|+ BaseShaderState()\l+ BaseShaderState()\l+ BaseShaderState()\l+ ~BaseShaderState()\l+ GetReflection()\l+ SetShaderResourceView()\l+ SetUnorderedAccessView()\l+ SetConstantBufferView()\l+ SetSamplerStateView()\l+ Bind()\l+ Unbind()\l+ Instantiate()\l}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+}

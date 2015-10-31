@@ -1,0 +1,7 @@
+digraph "Graphical Class Hierarchy"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="gi_lib::Resources::Impl",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$struct_resources_1_1_impl.html",tooltip="Private implementation of the Resources class. Cached resources are stored with two weak pointers (on..."];
+}

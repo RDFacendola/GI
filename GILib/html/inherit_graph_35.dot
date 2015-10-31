@@ -1,0 +1,7 @@
+digraph "Graphical Class Hierarchy"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  rankdir="LR";
+  Node1 [label="gi_lib::dx11::ShaderTraits\l\< ID3D11PixelShader \>",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$structgi__lib_1_1dx11_1_1_shader_traits_3_01_i_d3_d11_pixel_shader_01_4.html",tooltip="Pixel shader type traits. "];
+}

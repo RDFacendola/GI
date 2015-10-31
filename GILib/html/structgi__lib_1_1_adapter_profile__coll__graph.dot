@@ -1,0 +1,10 @@
+digraph "gi_lib::AdapterProfile"
+{
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="{gi_lib::AdapterProfile\n|+ name\l+ dedicated_memory\l+ shared_memory\l+ max_anisotropy\l+ max_mips\l|}",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black"];
+  Node2 -> Node1 [color="grey25",fontsize="10",style="solid",label=" +antialiasing_modes" ,arrowhead="odiamond",fontname="Helvetica"];
+  Node2 [label="{vector\< AntialiasingMode \>\n||}",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+  Node3 -> Node1 [color="grey25",fontsize="10",style="solid",label=" +video_modes" ,arrowhead="odiamond",fontname="Helvetica"];
+  Node3 [label="{vector\< gi_lib::VideoMode \>\n||}",height=0.2,width=0.4,color="grey75", fillcolor="white", style="filled"];
+}

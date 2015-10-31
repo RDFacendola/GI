@@ -1,0 +1,26 @@
+var classgi__lib_1_1windows_1_1_c_o_m_ptr =
+[
+    [ "COMPtr", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a84f8b785378e609c5fd3bce811bb69b5", null ],
+    [ "COMPtr", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a877aebe3cc82934435ad095e6cd82d36", null ],
+    [ "COMPtr", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a2db21207c888533fb6589cf5352b7704", null ],
+    [ "COMPtr", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a7feb7959380278e9b8183163748f211c", null ],
+    [ "COMPtr", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a2c6ed84709f5d671d394d8f712fec640", null ],
+    [ "COMPtr", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a7297627945fff71bd1d603dc084f707e", null ],
+    [ "COMPtr", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a09c5b9504bc7a144e60ba9f7aabdb14f", null ],
+    [ "COMPtr", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a8f04d9e5cb6f22fee7dfcfea328b00a4", null ],
+    [ "~COMPtr", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#ac08c1eb57794aac97bcaed0af63a48b1", null ],
+    [ "Get", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#adfbf4f9aea67a1f8a344abd6a80b7742", null ],
+    [ "operator bool", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a5c8d34250b26a50d1e5651d13b93826a", null ],
+    [ "operator!=", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a70e4e46527707b4571b34ee13d8decd7", null ],
+    [ "operator*", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a444f9022eb95eabc9a16f972517d3a4b", null ],
+    [ "operator->", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a57b4ab3dcadedc1f8d770e0051606d82", null ],
+    [ "operator<<", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a7fc78e6dac501e2122575007c29df282", null ],
+    [ "operator=", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#ab875fdd282cf76cb1af876ed9e25d463", null ],
+    [ "operator=", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a8ee523c2670bf021567eaddb712d54b6", null ],
+    [ "operator=", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#af84141d844740e985b50cba7e0943154", null ],
+    [ "operator=", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a386af7b3704d23ff612e8e2f2f5856b9", null ],
+    [ "operator==", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a31d3a7b6107c6f346e6578c01f0753d7", null ],
+    [ "operator>>", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a1f1c50b20969e4560c0610d25e338a61", null ],
+    [ "Release", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#acaa2a5ac2968da039bff49421ce4ce77", null ],
+    [ "Setter", "classgi__lib_1_1windows_1_1_c_o_m_ptr.html#a32e7de6aab268b504fd89430bfee9dee", null ]
+];
