@@ -100,8 +100,7 @@ material_(new DX11Material(IMaterial::Instantiate{ args.base->GetMaterial() })){
 void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix4f& view_projection){
 
 	// Lock
-
-	auto&& buffer = **per_object_cbuffer_;
+	auto& buffer = *per_object_cbuffer_->Lock<VSPerObjectBuffer>();
 
 	// Update
 
@@ -118,9 +117,9 @@ void DX11DeferredRendererMaterial::Setup(){
 
 	auto& resources = DX11Graphics::GetInstance().GetResources();
 
-	per_object_cbuffer_ = new StructuredBuffer<VSPerObjectBuffer>(resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({sizeof(VSPerObjectBuffer)}));
+	per_object_cbuffer_ = resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({sizeof(VSPerObjectBuffer)});
 
-	material_->SetInput(kPerObjectTag, per_object_cbuffer_);
+	material_->SetInput(kPerObjectTag, ObjectPtr<IStructuredBuffer>(per_object_cbuffer_));
 
 }
 
@@ -437,9 +436,9 @@ void DX11TiledDeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
 
 void DX11TiledDeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& lights, const FrameInfo& frame_info) {
 
-	PointLight* point_lights_ptr = reinterpret_cast<PointLight*>(point_lights_->Lock());
-	DirectionalLight* directional_lights_ptr = reinterpret_cast<DirectionalLight*>(directional_lights_->Lock());
-	LightAccumulationParameters* parameters_ptr = reinterpret_cast<LightAccumulationParameters*>(light_accumulation_parameters_->Lock());
+	auto point_lights_ptr = point_lights_->Lock<PointLight>();
+	auto directional_lights_ptr = directional_lights_->Lock<DirectionalLight>();
+	auto parameters_ptr = light_accumulation_parameters_->Lock<LightAccumulationParameters>();
 
 	unsigned int point_light_index = 0;
 	unsigned int directional_light_index = 0;

@@ -27,6 +27,8 @@ namespace gi_lib{
 
 		public:
 			
+			using IHardwareBuffer::Lock;
+
 			/// \brief Create a new generic buffer.
 			/// \param size Size of the buffer, in bytes.
 			/// \param Pointer to the directx11 buffer. Compulsory.
@@ -91,6 +93,8 @@ namespace gi_lib{
 
 		public:
 
+			using IHardwareBuffer::Lock;
+
 			/// \brief Create a new constant buffer.
 			/// \param size Size of the constant buffer.
 			DX11StructuredBuffer(const IStructuredBuffer::FromSize& args);
@@ -137,6 +141,8 @@ namespace gi_lib{
 		class DX11StructuredArray : public IStructuredArray{
 
 		public:
+
+			using IHardwareBuffer::Lock;
 
 			/// \brief Create a new structured array.
 			/// \param element_count Number of the elemnts stored inside the array.

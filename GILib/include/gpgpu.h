@@ -52,24 +52,6 @@ namespace gi_lib{
 		/// \param sampler Pointer to the sampler state to bind.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state) = 0;
-		
-		/// \brief Set a structure resource as an input for the current computation.
-		/// The GPU may only read from the specified structure.
-		/// \tparam TType Concrete type of the structure.
-		/// \param tag Tag of the input structure to set.
-		/// \param structured_buffer Pointer to the structured buffer to bind.
-		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		template <typename TType>
-		bool SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer);
-
-		/// \brief Set an array resource as an input for the current computation.
-		/// The GPU may only read from the specified array.
-		/// \tparam TElement Type of the array's elements.
-		/// \param tag Tag of the input array to set.
-		/// \param structured_array Pointer to the structured array to bind.
-		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		template <typename TElement>
-		bool SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array);
 
 		/// \brief Set a texture resource as an input/output for the current computation.
 		/// The GPU has both read and write permissions.
@@ -95,24 +77,6 @@ namespace gi_lib{
 		virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) = 0;
 
 	};
-
-	////////////////////////////// ICOMPUTATION ////////////////////////////////////////////////
-	
-	template <typename TType>
-	inline bool IComputation::SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer){
-
-		return SetInput(tag,
-						structured_buffer->GetBuffer());
-
-	}
-
-	template <typename TElement>
-	inline bool IComputation::SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array){
-
-		return SetInput(tag,
-						structured_array->GetBuffer());
-
-	}
 
 	////////////////////////////// MATERIAL :: COMPILE FROM FILE ///////////////////////////////
 

@@ -65,24 +65,6 @@ namespace gi_lib{
 
 		/// \brief Set a structure resource as an input for the material.
 		/// The GPU may only read from the specified structure.
-		/// \tparam TType Concrete type of the structure.
-		/// \param tag Tag of the input structure to set.
-		/// \param structured_buffer Pointer to the structured buffer to bind.
-		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		template <typename TType>
-		bool SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer);
-
-		/// \brief Set an array resource as an input for the material.
-		/// The GPU may only read from the specified array.
-		/// \tparam TElement Type of the array's elements.
-		/// \param tag Tag of the input array to set.
-		/// \param structured_array Pointer to the structured array to bind.
-		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		template <typename TElement>
-		bool SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array);
-
-		/// \brief Set a structure resource as an input for the material.
-		/// The GPU may only read from the specified structure.
 		/// \param tag Tag of the input structure to set.
 		/// \param structured_buffer Pointer to the structured buffer to bind.
 		/// \param type Concrete type of the buffer.
@@ -104,24 +86,6 @@ namespace gi_lib{
 	inline size_t IMaterial::CompileFromFile::GetCacheKey() const{
 
 		return gi_lib::Tag(file_name);
-
-	}
-
-	////////////////////////////// IMATERIAL ////////////////////////////////////////////////
-
-	template <typename TType>
-	inline bool IMaterial::SetInput(const Tag& tag, const ObjectPtr<StructuredBuffer<TType>>& structured_buffer){
-
-		return SetInput(tag,
-								   structured_buffer->GetBuffer());
-
-	}
-
-	template <typename TElement>
-	inline bool IMaterial::SetInput(const Tag& tag, const ObjectPtr<StructuredArray<TElement>>& structured_array){
-
-		return SetInput(tag,
-								  structured_array->GetBuffer());
 
 	}
 

@@ -107,7 +107,7 @@ namespace gi_lib{
 
 			static const Tag kPerObjectTag;										///< \brief Tag associated to the per-object constant buffer.
 
-			ObjectPtr<StructuredBuffer<VSPerObjectBuffer>> per_object_cbuffer_;	///< \brief Constant buffer containing the per-object constants used by the vertex shader.
+			ObjectPtr<DX11StructuredBuffer> per_object_cbuffer_;				///< \brief Constant buffer containing the per-object constants used by the vertex shader.
 
 			/// \brief Setup the material variables and resources.
 			void Setup();
