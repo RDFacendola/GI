@@ -395,9 +395,15 @@ void DX11RenderTargetArray::ClearTargets(ID3D11DeviceContext& context, Color col
 
 }
 
-void DX11RenderTargetArray::Bind(ID3D11DeviceContext& context, unsigned int index) {
+void DX11RenderTargetArray::Bind(ID3D11DeviceContext& context, unsigned int index, D3D11_VIEWPORT* viewport) {
 
 	vector<ID3D11RenderTargetView*> rtv_list(1, rtv_list_[index].Get());
+
+	if (!viewport) {
+
+		viewport = &viewport_;
+
+	}
 
 	if (depth_stencil_) {
 
@@ -419,7 +425,7 @@ void DX11RenderTargetArray::Bind(ID3D11DeviceContext& context, unsigned int inde
 	}
 
 	context.RSSetViewports(1,
-						   &viewport_);
+						   viewport);
 
 }
 

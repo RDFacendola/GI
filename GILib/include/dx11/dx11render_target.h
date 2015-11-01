@@ -206,7 +206,8 @@ namespace gi_lib{
 
 			/// \brief Bind an element of the array to the given render context.
 			/// \param index Index of the element to bind.
-			void Bind(ID3D11DeviceContext& context, unsigned int index);
+			/// \param viewport Viewport to use. Set this parameter to null to render to the whole surface.
+			void Bind(ID3D11DeviceContext& context, unsigned int index, D3D11_VIEWPORT* viewport = nullptr);
 
 			/// \brief Unbind the render target from the given render context.
 			void Unbind(ID3D11DeviceContext& context);
