@@ -36,6 +36,14 @@ namespace gi_lib {
 		/// \param color The light's color.
 		void SetColor(const Color& color);
 
+		/// \brief Get whether the light casts shadows or not.
+		/// \return Returns true if the light is able to cast shadows, returns false otherwise.
+		bool IsShadowEnabled() const;
+
+		/// \brief Set whether the light should cast shadows or not.
+		/// \param enable True if the light should cast shadows, false otherwise.
+		void EnableShadow(bool enable);
+
 	protected:
 
 		virtual void Initialize() override;
@@ -44,7 +52,7 @@ namespace gi_lib {
 
 		/// \brief Access the transform component of the object.
 		const TransformComponent& GetTransformComponent() const;
-		
+
 		/// \brief Compute the light bounds.
 		/// \param notify Whether the VolumeComponent::OnChanged event should be triggered
 		void ComputeBounds(bool notify);
@@ -53,6 +61,8 @@ namespace gi_lib {
 		
 		/// \brief Compute the light bounds.
 		virtual void ComputeBounds() = 0;
+
+		bool shadow_enabled_;									///< \brief Whether the light casts shadows or not.
 
 		Color color_;											///< \brief The light color.
 
@@ -135,9 +145,9 @@ namespace gi_lib {
 		/// \return Returns the light's position.
 		Vector3f GetPosition() const;
 
-		/// \brief Get the light's view matrix.
-		/// \return Returns the light's view matrix.
-		Affine3f GetView() const;
+		/// \brief Get the light's world transform.
+		/// \return Returns the light's world transform.
+		Affine3f GetWorldTransform() const;
 
 		/// \brief Returns the bounding sphere of the light.
 		/// \return Returns the light's bounding sphere.
@@ -294,7 +304,9 @@ namespace gi_lib {
 	inline BaseLightComponent::BaseLightComponent() :
 		BaseLightComponent(kOpaqueWhite) {}
 
-	inline BaseLightComponent::BaseLightComponent(const Color& color) : color_(color) {}
+	inline BaseLightComponent::BaseLightComponent(const Color& color) : 
+		color_(color),
+		shadow_enabled_(false){}
 
 	inline Color BaseLightComponent::GetColor() const {
 
@@ -315,6 +327,18 @@ namespace gi_lib {
 
 	}
 
+	inline bool BaseLightComponent::IsShadowEnabled() const {
+
+		return shadow_enabled_;
+
+	}
+
+	inline void BaseLightComponent::EnableShadow(bool enabled) {
+
+		shadow_enabled_ = enabled;
+
+	}
+
 	/////////////////////////// POINT LIGHT COMPONENT ///////////////////////////////
 
 	inline PointLightComponent::PointLightComponent(const Color& color, float constant_factor, float linear_factor, float quadratic_factor) :
@@ -322,7 +346,7 @@ namespace gi_lib {
 		constant_factor_(constant_factor),
 		linear_factor_(linear_factor),
 		quadratic_factor_(quadratic_factor),
-		cutoff_(kDefaultCutoff) {}
+		cutoff_(kDefaultCutoff){}
 
 	inline IntersectionType PointLightComponent::TestAgainst(const Frustum& frustum) const {
 
@@ -390,9 +414,9 @@ namespace gi_lib {
 
 	}
 
-	inline Affine3f PointLightComponent::GetView() const {
+	inline Affine3f PointLightComponent::GetWorldTransform() const {
 
-		return GetTransformComponent().GetWorldTransform().inverse();
+		return GetTransformComponent().GetWorldTransform();
 
 	}
 

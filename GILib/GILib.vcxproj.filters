@@ -184,6 +184,7 @@
     <ClInclude Include="include\dx11\fx\dx11fx_scaler.h">
       <Filter>DirectX 11\FX</Filter>
     </ClInclude>
+    <ClInclude Include="include\dx11\dx11shadow.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11.cpp">
@@ -285,6 +286,7 @@
     <ClCompile Include="src\dx11\fx\dx11fx_scaler.cpp">
       <Filter>DirectX 11\FX</Filter>
     </ClCompile>
+    <ClCompile Include="src\dx11\dx11shadow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectX 11">

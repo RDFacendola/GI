@@ -30,6 +30,7 @@
     <ClInclude Include="include\dx11\dx11sampler.h" />
     <ClInclude Include="include\dx11\dx11shader.h" />
     <ClInclude Include="include\dx11\dx11shader_state.h" />
+    <ClInclude Include="include\dx11\dx11shadow.h" />
     <ClInclude Include="include\dx11\dx11texture.h" />
     <ClInclude Include="include\dx11\fx\dx11fx_blur.h" />
     <ClInclude Include="include\dx11\fx\dx11fx_filter.h" />
@@ -90,6 +91,7 @@
     <ClCompile Include="src\dx11\dx11sampler.cpp" />
     <ClCompile Include="src\dx11\dx11shader.cpp" />
     <ClCompile Include="src\dx11\dx11shader_state.cpp" />
+    <ClCompile Include="src\dx11\dx11shadow.cpp" />
     <ClCompile Include="src\dx11\dx11texture.cpp" />
     <ClCompile Include="src\dx11\fx\dx11fx_blur.cpp" />
     <ClCompile Include="src\dx11\fx\dx11fx_filter.cpp" />
