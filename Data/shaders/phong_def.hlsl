@@ -39,7 +39,7 @@ float4 ComputePhong(SurfaceData surface, PointLight light, float3 camera_positio
 
 	float attenuation = GetAttenuation(light, surface.position);								// [0;1]
 
-	return float4(color.rgb * light.color * attenuation,										// Attenuate light contribution
+	return float4(color * light.color.rgb * attenuation,										// Attenuate light contribution
 				  surface.albedo.a);															// Restore surface's alpha
 
 }
@@ -54,7 +54,7 @@ float4 ComputePhong(SurfaceData surface, DirectionalLight light, float3 camera_p
 								camera_position,
 								surface);
 
-	return float4(color.rgb * light.color, 
+	return float4(color * light.color.rgb, 
 				  surface.albedo.a);						// Restore surface's alpha
 
 }

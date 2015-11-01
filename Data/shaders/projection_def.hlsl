@@ -64,7 +64,7 @@ float4 ProjectToParaboloidSpace(float3 position, float near_plane, float far_pla
 	// | Qy = Iy / Iz + 1
 	// | Qz = 1
 
-	float depth = length(position);					// Depth of the point wrt the center of the paraboloid projection.
+	float depth = length(position);					// Depth of the point wrt the center of the paraboloid projection (0;0;0)
 
 	float3 I = position / depth;					
 
