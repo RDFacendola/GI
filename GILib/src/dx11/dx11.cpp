@@ -202,7 +202,7 @@ HRESULT gi_lib::dx11::MakeRenderTargetArray(ID3D11Device& device, unsigned int w
 	D3D11_TEXTURE2D_DESC desc;
 
 	ZeroMemory(&desc, sizeof(D3D11_TEXTURE2D_DESC));
-
+	
 	desc.ArraySize = count;
 	desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 	desc.CPUAccessFlags = 0;
@@ -248,8 +248,17 @@ HRESULT gi_lib::dx11::MakeRenderTargetArray(ID3D11Device& device, unsigned int w
 
 	if (shader_resource_view) {
 
+		D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
+
+		srv_desc.Format = format;
+		srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+		srv_desc.Texture2DArray.ArraySize = count;
+		srv_desc.Texture2DArray.FirstArraySlice = 0;
+		srv_desc.Texture2DArray.MipLevels = static_cast<unsigned int>(-1);
+		srv_desc.Texture2DArray.MostDetailedMip = 0;
+
 		RETURN_ON_FAIL(device.CreateShaderResourceView(texture,
-													   nullptr,
+													   &srv_desc,
 													   &srv));
 
 	}
