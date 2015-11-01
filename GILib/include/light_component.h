@@ -135,6 +135,14 @@ namespace gi_lib {
 		/// \return Returns the light's position.
 		Vector3f GetPosition() const;
 
+		/// \brief Get the light's view matrix.
+		/// \return Returns the light's view matrix.
+		Affine3f GetView() const;
+
+		/// \brief Returns the bounding sphere of the light.
+		/// \return Returns the light's bounding sphere.
+		const Sphere& GetBoundingSphere() const;
+
 	private:
 
 		virtual void ComputeBounds() override;
@@ -379,6 +387,18 @@ namespace gi_lib {
 	inline Vector3f PointLightComponent::GetPosition() const {
 
 		return Math::ToVector3(GetTransformComponent().GetWorldTransform().matrix().col(3));
+
+	}
+
+	inline Affine3f PointLightComponent::GetView() const {
+
+		return GetTransformComponent().GetWorldTransform().inverse();
+
+	}
+
+	inline const Sphere& PointLightComponent::GetBoundingSphere() const {
+
+		return bounds_;
 
 	}
 
