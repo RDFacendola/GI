@@ -9,6 +9,7 @@
 #include "dx11/dx11render_target.h"
 #include "dx11/dx11mesh.h"
 #include "dx11/dx11shader.h"
+#include "dx11/dx11shadow.h"
 
 #include "windows/win_os.h"
 #include "instance_builder.h"
@@ -22,7 +23,7 @@ using namespace ::gi_lib::windows;
 namespace{
 	
 	/// \brief Draw a mesh subset using the given context.
-	void DrawIndexedSubset(ID3D11DeviceContext& context, const MeshSubset& subset){
+	inline void DrawIndexedSubset(ID3D11DeviceContext& context, const MeshSubset& subset){
 
 		context.DrawIndexed(static_cast<unsigned int>(subset.count),
 							static_cast<unsigned int>(subset.start_index),
@@ -132,6 +133,10 @@ const Tag DX11TiledDeferredRenderer::kPointLightsTag = "gPointLights";
 const Tag DX11TiledDeferredRenderer::kDirectionalLightsTag = "gDirectionalLights";
 const Tag DX11TiledDeferredRenderer::kLightBufferTag = "gLightAccumulation";
 const Tag DX11TiledDeferredRenderer::kLightParametersTag = "gParameters";
+const Tag DX11TiledDeferredRenderer::kVSMShadowAtlasTag = "gVSMShadowAtlas";
+const Tag DX11TiledDeferredRenderer::kVSMSamplerTag = "gVSMSampler";
+const Tag DX11TiledDeferredRenderer::kPointShadowsTag = "gPointShadows";
+const Tag DX11TiledDeferredRenderer::kDirectionalShadowsTag = "gDirectionalShadows";
 
 DX11TiledDeferredRenderer::DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments) :
 TiledDeferredRenderer(arguments.scene),
@@ -236,10 +241,18 @@ fx_tonemap_(0.5f){
 
 	light_shader_ = DX11Resources::GetInstance().Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
 
-	point_lights_ = new DX11StructuredArray(32, sizeof(PointLight));
-	directional_lights_ = new DX11StructuredArray(32, sizeof(DirectionalLight));
-	light_accumulation_parameters_ = new DX11StructuredBuffer(sizeof(LightAccumulationParameters));
+	shadow_atlas_ = make_unique<DX11VSMAtlas>(4096, 4096, 1, true);
 
+	point_lights_ = new DX11StructuredArray(32, sizeof(PointLight));
+
+	point_shadows_ = new DX11StructuredArray(32, sizeof(PointShadow));
+	
+	directional_lights_ = new DX11StructuredArray(32, sizeof(DirectionalLight));
+
+	directional_shadows_ = new DX11StructuredArray(32, sizeof(DirectionalShadow));
+
+	light_accumulation_parameters_ = new DX11StructuredBuffer(sizeof(LightAccumulationParameters));
+		
 	// One-time setup
 	bool check;
 
@@ -249,9 +262,21 @@ fx_tonemap_(0.5f){
 	check = light_shader_->SetInput(kPointLightsTag,
 									ObjectPtr<IStructuredArray>(point_lights_));
 
+	check = light_shader_->SetInput(kPointShadowsTag,
+									ObjectPtr<IStructuredArray>(point_shadows_));
+
 	check = light_shader_->SetInput(kDirectionalLightsTag,
 									ObjectPtr<IStructuredArray>(directional_lights_));
 
+	check = light_shader_->SetInput(kDirectionalShadowsTag,
+									ObjectPtr<IStructuredArray>(directional_shadows_));
+
+	check = light_shader_->SetInput(kVSMSamplerTag,
+									ObjectPtr<ISampler>(shadow_atlas_->GetSampler()));
+
+	check = light_shader_->SetInput(kVSMShadowAtlasTag,
+									ObjectPtr<ITexture2DArray>(shadow_atlas_->GetAtlas()));
+	
 }
 
 DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){
@@ -429,16 +454,25 @@ void DX11TiledDeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
 	// Accumulate the visible lights
 	auto&& visible_lights = ComputeVisibleNodes(frame_info.scene->GetLightHierarchy(), *frame_info.camera, frame_info.aspect_ratio);
 
+	// Clear the shadow atlas from any existing shadowmap
+	shadow_atlas_->Restore();
+
 	AccumulateLight(visible_lights,
 					frame_info);
 
 }
 
 void DX11TiledDeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& lights, const FrameInfo& frame_info) {
+	
+	auto point_lights = point_lights_->Lock<PointLight>();
+	
+	auto point_shadows = point_shadows_->Lock<PointShadow>();
 
-	auto point_lights_ptr = point_lights_->Lock<PointLight>();
-	auto directional_lights_ptr = directional_lights_->Lock<DirectionalLight>();
-	auto parameters_ptr = light_accumulation_parameters_->Lock<LightAccumulationParameters>();
+	auto directional_lights = directional_lights_->Lock<DirectionalLight>();
+	
+	auto directional_shadows = directional_shadows_->Lock<DirectionalShadow>();
+
+	auto light_accumulation_parameters = light_accumulation_parameters_->Lock<LightAccumulationParameters>();
 
 	unsigned int point_light_index = 0;
 	unsigned int directional_light_index = 0;
@@ -447,12 +481,9 @@ void DX11TiledDeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& 
 
 		for (auto&& point_light : node->GetComponents<PointLightComponent>()) {
 
-			point_lights_ptr[point_light_index].position = Math::ToVector4(point_light.GetPosition(), 1.0f);
-			point_lights_ptr[point_light_index].color = point_light.GetColor().ToVector4f();
-			point_lights_ptr[point_light_index].kc = point_light.GetConstantFactor();
-			point_lights_ptr[point_light_index].kl= point_light.GetLinearFactor();
-			point_lights_ptr[point_light_index].kq = point_light.GetQuadraticFactor();
-			point_lights_ptr[point_light_index].cutoff = point_light.GetCutoff();
+			UpdateLight(point_light, 
+						point_lights[point_light_index], 
+						point_shadows[point_light_index]);
 
 			++point_light_index;
 
@@ -460,8 +491,9 @@ void DX11TiledDeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& 
 
 		for (auto&& directional_light : node->GetComponents<DirectionalLightComponent>()) {
 
-			directional_lights_ptr[directional_light_index].direction = Math::ToVector4(directional_light.GetDirection(), 1.0f);
-			directional_lights_ptr[directional_light_index].color = directional_light.GetColor().ToVector4f();
+			UpdateLight(directional_light,
+						directional_lights[directional_light_index],
+						directional_shadows[directional_light_index]);
 
 			++directional_light_index;
 
@@ -469,13 +501,15 @@ void DX11TiledDeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& 
 
 	}
 
-	parameters_ptr->camera_position = frame_info.camera->GetPosition();
-	parameters_ptr->inv_view_proj_matrix = frame_info.view_proj_matrix.inverse();
-	parameters_ptr->point_lights = point_light_index;
-	parameters_ptr->directional_lights = directional_light_index;
+	light_accumulation_parameters->camera_position = frame_info.camera->GetPosition();
+	light_accumulation_parameters->inv_view_proj_matrix = frame_info.view_proj_matrix.inverse();
+	light_accumulation_parameters->point_lights = point_light_index;
+	light_accumulation_parameters->directional_lights = directional_light_index;
 
 	point_lights_->Unlock();
+	point_shadows_->Unlock();
 	directional_lights_->Unlock();
+	directional_shadows_->Unlock();
 	light_accumulation_parameters_->Unlock();
 	
 	// These entities may change from frame to frame
@@ -499,6 +533,39 @@ void DX11TiledDeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& 
 							light_buffer_->GetWidth(),
 							light_buffer_->GetHeight(),
 							1);
+
+}
+
+void DX11TiledDeferredRenderer::UpdateLight(const PointLightComponent& point_light, PointLight& light, PointShadow& shadow) {
+
+	// Light
+
+	light.position = Math::ToVector4(point_light.GetPosition(), 1.0f);
+	light.color = point_light.GetColor().ToVector4f();
+	light.kc = point_light.GetConstantFactor();
+	light.kl = point_light.GetLinearFactor();
+	light.kq = point_light.GetQuadraticFactor();
+	light.cutoff = point_light.GetCutoff();
+
+	// Shadow map calculation
+
+	shadow_atlas_->ComputeShadowmap(point_light, 
+									GetScene(), 
+									shadow);
+	
+}
+
+void DX11TiledDeferredRenderer::UpdateLight(const DirectionalLightComponent& directional_light, DirectionalLight& light, DirectionalShadow& shadow) {
+
+	// Light
+
+	light.direction = Math::ToVector4(directional_light.GetDirection(), 1.0f);
+	light.color = directional_light.GetColor().ToVector4f();
+
+	// Shadow
+	shadow_atlas_->ComputeShadowmap(directional_light,
+									GetScene(),
+									shadow);
 
 }
 

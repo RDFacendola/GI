@@ -20,14 +20,22 @@
 
 namespace gi_lib{
 
+	class PointLightComponent;
+	class DirectionalLightComponent;
+
 	namespace dx11{
 
+		struct PointShadow;
+		struct DirectionalShadow;
+
+		class DX11VSMAtlas;
+		
 		/// \brief Structure of the per-object constant buffer.
 		struct VSPerObjectBuffer {
 
-			Matrix4f world_view_proj;		// World * View * Projection matrix.
+			Matrix4f world_view_proj;		///< \brief World * View * Projection matrix.
 
-			Matrix4f world;					// World matrix.
+			Matrix4f world;					///< \brief World matrix.
 
 		};
 
@@ -37,9 +45,11 @@ namespace gi_lib{
 			Matrix4f inv_view_proj_matrix;			///< \brief Inverse view-projection matrix.
 
 			Vector3f camera_position;				///< \brief Camera position in world space.
-			float reserved;							///< \brief Padding
+
+			float reserved;
 			
 			unsigned int point_lights;				///< \brief Amount of point lights.
+
 			unsigned int directional_lights;		///< \brief Amount of directional lights.
 
 		};
@@ -53,7 +63,9 @@ namespace gi_lib{
 			Vector4f color;				///< \brief Color of the light.
 
 			float kc;					///< \brief Constant attenuation factor.
+
 			float kl;					///< \brief Linear attenuation factor.
+
 			float kq;					///< \brief Quadratic attenuation factor.
 			
 			float cutoff;				///< \brief Light minimum influence.
@@ -65,6 +77,7 @@ namespace gi_lib{
 		struct DirectionalLight {
 
 			Vector4f direction;			///< \brief Normal of the light in world space.
+
 			Vector4f color;				///< \brief Color of the light.
 
 		};
@@ -168,9 +181,7 @@ namespace gi_lib{
 			/// \param nodes Nodes to draw.
 			/// \param frame_info Information about the frame being rendered.
 			void DrawNodes(const vector<VolumeComponent*>& meshes, const FrameInfo& frame_info);
-
-			void SetupLights();
-
+			
 			/// \param dimensions Dimensions of the LightBuffer in pixels.
 			/// \param frame_info Information about the frame being rendered.
 			void ComputeLighting(const FrameInfo& frame_info);
@@ -180,6 +191,18 @@ namespace gi_lib{
 			/// \param frame_info Information about the frame being rendered.
 			void AccumulateLight(const vector<VolumeComponent*>& lights, const FrameInfo& frame_info);
 
+			/// \brief Write the informations about a point light and its shadow.
+			/// \param point_light Source light.
+			/// \param light Contains the informations of the point light. Output.
+			/// \param shadow Contains the informations of the point shadow. Output.
+			void UpdateLight(const PointLightComponent& point_light, PointLight& light, PointShadow& shadow);
+
+			/// \brief Write the informations about a directional light and its shadow.
+			/// \param directional_light Source light.
+			/// \param light Contains the informations of the directional light. Output.
+			/// \param shadow Contains the informations of the directional shadow. Output.
+			void UpdateLight(const DirectionalLightComponent& directional_light, DirectionalLight& light, DirectionalShadow& shadow);
+			
 			/// \param dimensions Dimensions of the Exposed buffer in pixels.
 			void ComputePostProcess(const FrameInfo& frame_info);
 
@@ -224,6 +247,22 @@ namespace gi_lib{
 			ObjectPtr<DX11StructuredBuffer> light_accumulation_parameters_;		///< \brief Constant buffer used to send light accumulation parameters to the shader.
 
 			ObjectPtr<DX11Computation> light_shader_;							///< \brief Shader performing the light accumulation stage.
+
+			// Shadows
+
+			static const Tag kVSMShadowAtlasTag;								///< \brief Tag of the atlas containing the shadowmaps
+
+			static const Tag kVSMSamplerTag;									///< \brief Tag of the sampler used to sample the VSM.
+
+			static const Tag kPointShadowsTag;									///< \brief Tag used to identify the array containing the point shadows.
+
+			static const Tag kDirectionalShadowsTag;							///< \brief Tag used to identify the array containing the directional shadows.
+
+			unique_ptr<DX11VSMAtlas> shadow_atlas_;								///< \brief Contains the variance shadow maps.
+
+			ObjectPtr<DX11StructuredArray> point_shadows_;						///< \brief Array containing the point lights.
+
+			ObjectPtr<DX11StructuredArray> directional_shadows_;				///< \brief Array containing the directional lights.
 
 			// Post process
 

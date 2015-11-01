@@ -2,6 +2,8 @@
 #include "light_def.hlsl"
 #include "phong_def.hlsl"
 
+#include "shadow_def.hlsl"
+
 cbuffer gParameters {
 
 	float4x4 inv_view_proj_matrix;		///< \brief Inverse view-projection matrix.
@@ -26,14 +28,14 @@ void CSMain(int3 thread_id : SV_DispatchThreadID){
 	// Accumulate point lights
 	for (light_index = 0; light_index < point_lights; ++light_index) {
 
-		color += ComputePhong(surface, gPointLights[light_index], camera_position);
+		color += ComputePhong(surface, gPointLights[light_index], camera_position.xyz) * (ComputeShadow(surface, gPointShadows[light_index]));
 
 	}
 
 	// Accumulate directional lights
 	for (light_index = 0; light_index < directional_lights; ++light_index) {
 
-		color += ComputePhong(surface, gDirectionalLights[light_index], camera_position);
+		color += ComputePhong(surface, gDirectionalLights[light_index], camera_position.xyz) * ComputeShadow(surface, gDirectionalShadows[light_index]);
 
 	}
 

@@ -135,27 +135,31 @@ void GILogic::Initialize(Window& window){
 void GILogic::SetupLights(Scene& scene) {
 
 	// Point lights
-	static std::vector<Color> kLightColors{ Color(250.f, 100.f, 100.f, 1.f),
-											Color(100.f, 250.f, 100.f, 1.f),
-											Color(100.f, 100.f, 250.f, 1.f),
-											Color(250.f, 250.f, 100.f, 1.f),
-											Color(250.f, 100.f, 250.f, 1.f),
-											Color(100.f, 250.f, 250.f, 1.f) };
+	static std::vector<Color> kLightColors{ Color(25.f, 10.f, 10.f, 1.f),
+											Color(10.f, 25.f, 10.f, 1.f),
+											/*Color(10.f, 10.f, 25.f, 1.f),
+											Color(25.f, 25.f, 10.f, 1.f),
+											Color(25.f, 10.f, 25.f, 1.f),
+											Color(10.f, 25.f, 25.f, 1.f) */};
 
 	for (auto&& light_color : kLightColors) {
 
-		auto light = scene_->CreateNode(L"PointLight",
-									    Translation3f::Identity(),
-										Quaternionf::Identity(),
-										AlignedScaling3f(1.0f, 1.0f, 1.0f));
+		auto light_node = scene_->CreateNode(L"PointLight",
+											 Translation3f::Identity(),
+											 Quaternionf::Identity(),
+											 AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
-		light->AddComponent<PointLightComponent>(light_color, 100.0f)
-			 ->SetCutoff(0.005f);
+		auto light_component = light_node->AddComponent<PointLightComponent>(light_color, 100.0f);
+		
+		light_component->SetCutoff(0.0005f);
+		light_component->EnableShadow(point_lights.size() == 0);
 
-		point_lights.push_back(light);
+		point_lights.push_back(light_node);
 		
 	}
 	
+	
+
 	// Sky contribution
 
 	auto light = scene_->CreateNode(L"DirectionalLight",
@@ -164,7 +168,9 @@ void GILogic::SetupLights(Scene& scene) {
 												AngleAxisf(Math::kDegToRad * 45.0f, Vector3f(0.0f, 0.0f, 1.0f))),
 									AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
-	auto directional_light = light->AddComponent<DirectionalLightComponent>(Color(0.1f, 0.1f, 0.1f, 1.0f));
+	//auto directional_light = light->AddComponent<DirectionalLightComponent>(Color(0.1f, 0.1f, 0.1f, 1.0f));
+
+	//directional_light->EnableShadow(true);
 
 }
 
@@ -177,7 +183,7 @@ void GILogic::Update(const Time & time){
 	static const float zRadius = 750.0f;
 	
 	static const float angular_speed = Math::kPi / 16.0f;
-	static const float oscillation_speed = Math::kPi / 4.0f;
+	static const float oscillation_speed = Math::kPi / 7.0f;
 
 	float light_index = 0.0f;
 	float light_angle;
