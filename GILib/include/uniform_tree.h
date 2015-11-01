@@ -32,7 +32,9 @@ namespace gi_lib{
 
 		virtual void RemoveVolume(VolumeComponent* volume) override;
 
-		virtual vector<VolumeComponent*> GetIntersections(const Frustum& frustum) const;
+		virtual vector<VolumeComponent*> GetIntersections(const Frustum& frustum) const override;
+
+		virtual vector<VolumeComponent*> GetIntersections(const Sphere& sphere) const override;
 
 	private:
 

@@ -41,6 +41,11 @@ namespace gi_lib{
 		/// \return Returns the list of all the volumes who intersect the specified frustum.
 		virtual vector<VolumeComponent*> GetIntersections(const Frustum& frustum) const = 0;
 
+		/// \brief Get all the volume component who intersects with the given sphere.
+		/// \param sphere Sphere to test against.
+		/// \return Returns the list of all the volumes who intersect the specified sphere.
+		virtual vector<VolumeComponent*> GetIntersections(const Sphere& sphere) const = 0;
+
 	};
 
 }

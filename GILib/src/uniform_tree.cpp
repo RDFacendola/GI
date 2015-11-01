@@ -199,6 +199,8 @@ struct UniformTree::Impl{
 
 	static void GetIntersections(const UniformTree* tree, const Frustum& frustum, vector<VolumeComponent*>& intersections);
 
+	static void GetIntersections(const UniformTree* tree, const Sphere& frustum, vector<VolumeComponent*>& intersections);
+
 private:
 
 	/// \brief Simple wrapper around the Node struct.
@@ -214,7 +216,8 @@ private:
 											 VolumeComponent*,
 											 VolumeMapper>;
 	
-	static void GetIntersections(const vector<UniformTree::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections);
+	template <typename TVolume>
+	static void GetIntersections(const vector<UniformTree::Node*>& nodes, const TVolume& volume, vector<VolumeComponent*>& intersections);
 
 };
 
@@ -251,7 +254,35 @@ void UniformTree::Impl::GetIntersections(const UniformTree* tree, const Frustum&
 
 }
 
-void UniformTree::Impl::GetIntersections(const vector<UniformTree::Node*>& nodes, const Frustum& frustum, vector<VolumeComponent*>& intersections){
+void UniformTree::Impl::GetIntersections(const UniformTree* tree, const Sphere& sphere, vector<VolumeComponent*>& intersections){
+
+	// Stop the recursion if this space doesn't intersect or if the subspace has no volumes inside.
+
+	if (tree->volume_count_ > 0 &&
+		(sphere.Intersect(tree->bounding_box_) && IntersectionType::kIntersect)){
+
+		// Test against volumes
+
+		GetIntersections(tree->nodes_, 
+						 sphere, 
+						 intersections);
+
+		// Recursion
+
+		for (auto child : tree->children_){
+
+			GetIntersections(child,
+							 sphere, 
+							 intersections);
+
+		}
+
+	}
+
+}
+
+template <typename TVolume>
+void UniformTree::Impl::GetIntersections(const vector<UniformTree::Node*>& nodes, const TVolume& volume, vector<VolumeComponent*>& intersections){
 
 	// Test each volume inside this node against the frustum
 
@@ -262,9 +293,9 @@ void UniformTree::Impl::GetIntersections(const vector<UniformTree::Node*>& nodes
 	auto end = std::copy_if(iterator_wrapper(nodes.begin()),
 							iterator_wrapper(nodes.end()),
 							intersections.begin() + size,
-							[&frustum](const iterator_wrapper::reference volume){
+							[&volume](const iterator_wrapper::reference v){
 
-								return volume->TestAgainst(frustum) && IntersectionType::kIntersect;
+								return v->TestAgainst(volume) && IntersectionType::kIntersect;
 
 							});
 
@@ -358,6 +389,20 @@ vector<VolumeComponent*> UniformTree::GetIntersections(const Frustum& frustum) c
 	intersections.reserve(volume_count_);	// Theoretical maximum number of volumes
 
 	Impl::GetIntersections(this, frustum, intersections);
+
+	intersections.shrink_to_fit();			// Shrink to the actual value
+
+	return intersections;
+
+}
+
+vector<VolumeComponent*> UniformTree::GetIntersections(const Sphere& sphere) const {
+
+	vector<VolumeComponent*> intersections;
+
+	intersections.reserve(volume_count_);	// Theoretical maximum number of volumes
+
+	Impl::GetIntersections(this, sphere, intersections);
 
 	intersections.shrink_to_fit();			// Shrink to the actual value
 
