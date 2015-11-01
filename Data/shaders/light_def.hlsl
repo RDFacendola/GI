@@ -9,10 +9,15 @@
 struct PointLight {
 
 	float4 position;		// Position of the light in world space.
+	
 	float4 color;			// Color of the light.
+	
 	float kc;				// Constant attenuation factor.
+	
 	float kl;				// Linear attenuation factor.
+	
 	float kq;				// Quadratic attenuation factor.
+	
 	float cutoff;			// Minimum light influence.
 
 };
@@ -21,14 +26,14 @@ struct PointLight {
 struct DirectionalLight {
 
 	float4 direction;		// Normal of the light in world space.
+	
 	float4 color;			// Color of the light.
 
 };
 
-/// Light arrays
-
-StructuredBuffer<PointLight> gPointLights;
-StructuredBuffer<DirectionalLight> gDirectionalLights;
+StructuredBuffer<PointLight> gPointLights;					// Buffer containing the point lights.
+		
+StructuredBuffer<DirectionalLight> gDirectionalLights;		// Buffer containing the directional lights.
 
 /// \brief Computes the attenuation of a point light source hitting a surface.
 /// \param light Light source.

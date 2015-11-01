@@ -47,8 +47,10 @@ void PSMain(VSOut input, out GBuffer output){
 
 	output.albedo = gDiffuseMap.Sample(gDiffuseSampler, input.uv);
 
+	clip(output.albedo.a < 0.1f ? -1 : 1);
+
 	output.normal_shininess.xyz = input.normal_ws;
 
-	output.normal_shininess.w = 25.0f;			// Dummy shininess
+	output.normal_shininess.w = 15.0f;			// Dummy shininess
 
 }
