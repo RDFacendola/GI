@@ -390,6 +390,9 @@ namespace gi_lib{
 
 		virtual TypeSet GetTypes() const override;
 
+		/// \brief Get the world transform of the mesh.
+		const Affine3f& GetWorldTransform() const;
+
 	protected:
 
 		virtual void Initialize() override;
@@ -525,6 +528,14 @@ namespace gi_lib{
 		auto args = OnChangedEventArgs{ this };
 
 		on_changed_.Notify(args);
+
+	}
+
+	////////////////////////////////// MESH COMPONENT //////////////////////////////////////
+
+	inline const Affine3f& MeshComponent::GetWorldTransform() const {
+
+		return transform_->GetWorldTransform();
 
 	}
 
