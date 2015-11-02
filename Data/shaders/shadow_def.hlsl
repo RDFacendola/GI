@@ -66,16 +66,7 @@ float2 SampleVSMShadowAtlas(int atlas_page, float2 min_uv, float2 max_uv, float2
 
 	float2 shadowmap_uv = saturate(uv) * (max_uv - min_uv) + min_uv;		// UVs in shadowmap space.
 
-	float width;
-	float height;
-	float dummy0;
-	float dummy1;
-
-	gVSMShadowAtlas.GetDimensions(0, width, height, dummy0, dummy1);
-
-	float2 uv_bias = float2(0.5f / width, 0.5f / height);
-
-	float3 uvw = float3(shadowmap_uv + uv_bias, float(atlas_page));
+	float3 uvw = float3(shadowmap_uv, float(atlas_page));
 
 	return gVSMShadowAtlas.SampleLevel(gVSMSampler, uvw, 0).xy;
 		

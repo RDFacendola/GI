@@ -137,16 +137,16 @@ void GILogic::SetupLights(Scene& scene) {
 	// Point lights
 	static std::vector<Color> kLightColors{ Color(25.f, 10.f, 10.f, 1.f),
 											Color(10.f, 25.f, 10.f, 1.f),
-											Color(10.f, 10.f, 25.f, 1.f),
+											/* Color(10.f, 10.f, 25.f, 1.f),
 											Color(25.f, 25.f, 10.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),
-											Color(10.f, 25.f, 25.f, 1.f) };
+											Color(10.f, 25.f, 25.f, 1.f)*/ };
 
 	for (auto&& light_color : kLightColors) {
 
 		auto light_node = scene_->CreateNode(L"PointLight",
 											 Translation3f::Identity(),
-											 Quaternionf(AngleAxisf(Math::DegToRad(90.0f), Vector3f(1.0f, 0.0f,0.0f))),
+											 Quaternionf(AngleAxisf(Math::DegToRad(90.0f), Vector3f(1.0f, 0.0f, 0.0f))),
 											 AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
 		auto light_component = light_node->AddComponent<PointLightComponent>(light_color, 100.0f);
