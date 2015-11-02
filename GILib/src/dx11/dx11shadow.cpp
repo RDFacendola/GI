@@ -42,7 +42,7 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pag
 
 	// Create the shadow resources
 
-	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, 16 });
+	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, 0 });
 
 	atlas_ = new DX11RenderTargetArray(width, 
 									   height, 
@@ -65,17 +65,23 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pag
 	check = shadow_material_->SetInput(kPerLight,
 									   ObjectPtr<IStructuredBuffer>(per_light_));
 
+	point_shadows_ = 0;
+
 }
 
 void DX11VSMAtlas::Restore() {
 
 	// Clear the atlas pages
 	atlas_->ClearDepth(*immediate_context_);
-	atlas_->ClearTargets(*immediate_context_, kOpaqueWhite);			// Technically not needed
+	atlas_->ClearTargets(*immediate_context_, kOpaqueWhite);
+
+	point_shadows_ = 0;
 
 }
 
 bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow) {
+
+	static const Vector2f uv_dimensions(0.50f, 0.25f);		// Simplification: each point light needs the same precision.
 
 	if (!point_light.IsShadowEnabled()) {
 
@@ -86,74 +92,58 @@ bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, cons
 
 	auto light_transform = point_light.GetWorldTransform().inverse();
 
-	// Simplification hypothesis: point lights have 2 1024x1024 shadowmaps.
-	
 	shadow.atlas_page = 0;
-	shadow.min_uv = Vector2f::Zero();
-	shadow.max_uv = Vector2f::Ones().cwiseProduct(Vector2f(1.00f, 0.50f));
-	shadow.near_plane = 0.1f;
-	shadow.far_plane = 4000.0f;
+	shadow.min_uv = Vector2f(uv_dimensions(0) * (point_shadows_ / 4),
+							 uv_dimensions(1) * (point_shadows_ % 4));
+
+	shadow.max_uv = shadow.min_uv + uv_dimensions;
+	shadow.near_plane = 1.0f;
+	shadow.far_plane = point_light.GetBoundingSphere().radius;
 	shadow.light_view_matrix = light_transform.matrix();
 	shadow.enabled = 1;
 
 	// Render the geometry that can be seen from the light
 
-	auto nodes = scene.GetMeshHierarchy().GetIntersections(point_light.GetBoundingSphere());
-	
-	D3D11_VIEWPORT front_viewport;
-	D3D11_VIEWPORT rear_viewport;
+	DrawShadowmap(shadow, 
+				  scene.GetMeshHierarchy().GetIntersections(point_light.GetBoundingSphere()),
+				  light_transform);
 
-	Vector2f top_left = shadow.min_uv.cwiseProduct(Vector2f(atlas_->GetWidth(), atlas_->GetHeight()));
+	++point_shadows_;
 
-	Vector2f dimensions = (shadow.max_uv - shadow.min_uv).cwiseProduct(Vector2f(atlas_->GetWidth() * 0.5f, atlas_->GetHeight()));
+	return true;
 
-	// FRONT
+}
 
-	front_viewport.TopLeftX = top_left(0);
-	front_viewport.TopLeftY = top_left(1);
-	front_viewport.MinDepth = 0.0f;
-	front_viewport.MaxDepth = 1.0f;
-	front_viewport.Width = dimensions(0);
-	front_viewport.Height = dimensions(1);
+void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Affine3f& light_view_transform){
+
+	D3D11_VIEWPORT view_port;
+
+	view_port.TopLeftX = shadow.min_uv(0) * atlas_->GetWidth();
+	view_port.TopLeftY = shadow.min_uv(1) * atlas_->GetHeight();
+	view_port.MinDepth = 0.0f;
+	view_port.MaxDepth = 1.0f;
+	view_port.Width = (shadow.max_uv(0) - shadow.min_uv(0)) * atlas_->GetWidth();
+	view_port.Height = (shadow.max_uv(1) - shadow.min_uv(1)) * atlas_->GetHeight();
+
+	// Per-light setup
 
 	auto& per_light_front = *per_light_->Lock<PerLight>();
 
 	per_light_front.near_plane = shadow.near_plane;
 	per_light_front.far_plane = shadow.far_plane;
-	per_light_front.front_factor = 1.0f;
 
 	per_light_->Unlock();
 
-	atlas_->Bind(*immediate_context_, shadow.atlas_page, &front_viewport);
+	atlas_->Bind(*immediate_context_, shadow.atlas_page, &view_port);
 
-	DrawShadowmap(nodes, light_transform);
+	// Draw the geometry to the shadowmap
 
-	// REAR
+	DrawShadowmap(nodes, 
+				  light_view_transform);
 
-	rear_viewport.TopLeftX = top_left(0) + dimensions(0);
-	rear_viewport.TopLeftY = top_left(1);
-	rear_viewport.MinDepth = 0.0f;
-	rear_viewport.MaxDepth = 1.0f;
-	rear_viewport.Width = dimensions(0);
-	rear_viewport.Height = dimensions(1);
-
-	auto& per_light_rear = *per_light_->Lock<PerLight>();
-
-	per_light_rear.near_plane = shadow.near_plane;
-	per_light_rear.far_plane = shadow.far_plane;
-	per_light_rear.front_factor = -1.0f;
-
-	per_light_->Unlock();
-
-	atlas_->Bind(*immediate_context_, shadow.atlas_page, &rear_viewport);
-
-	DrawShadowmap(nodes, light_transform);
-
-	// CLEAR
+	// Cleanup
 
 	atlas_->Unbind(*immediate_context_);
-	
-	return true;
 
 }
 
@@ -165,7 +155,7 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Aff
 
 		for (auto&& mesh_component : node->GetComponents<MeshComponent>()) {
 
-			// Draw each subset with the shadow material
+			// Per-object setup
 
 			mesh = mesh_component.GetMesh();
 

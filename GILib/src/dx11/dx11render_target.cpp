@@ -439,4 +439,10 @@ void DX11RenderTargetArray::Unbind(ID3D11DeviceContext& context) {
 							   &rtv_null_list[0],
 							   nullptr);
 
+	// Remove the optional shaders (the mandatory ones are overwritten anyway)
+
+	context.GSSetShader(nullptr, nullptr, 0);
+	context.HSSetShader(nullptr, nullptr, 0);
+	context.DSSetShader(nullptr, nullptr, 0);
+
 }

@@ -68,9 +68,9 @@ float4 ProjectToParaboloidSpace(float3 position, float near_plane, float far_pla
 
 	float3 I = position / depth;					
 
-	return float4(I.x / (I.z + 1),
-				  I.y / (I.z + 1),
-				  (depth - near_plane) / (far_plane - near_plane),
+	return float4(I.x / (abs(I.z) + 1),
+				  I.y / (abs(I.z) + 1),
+				  saturate((depth - near_plane) / (far_plane - near_plane)),		// Fragments closer than the near plane are fully lit, while fragments beyond the far plane are fully shadowed.
 				  1.0f);
 
 }

@@ -82,6 +82,7 @@ namespace gi_lib {
 			/// \return Returns true if the shadowmap was calculated correctly, returns false otherwise.
 			bool ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow);
 
+
 			/// \brief Get the shadow atlas.
 			ObjectPtr<ITexture2DArray> GetAtlas();
 
@@ -106,9 +107,9 @@ namespace gi_lib {
 
 				float far_plane;									///< \brief Far clipping plane.
 
-				float front_factor;
-
 			};
+
+			void DrawShadowmap(const PointShadow&, const vector<VolumeComponent*>& nodes, const Affine3f& light_view_transform);
 
 			void DrawShadowmap(const vector<VolumeComponent*> nodes, const Affine3f& light_view_transform);
 
@@ -123,6 +124,8 @@ namespace gi_lib {
 			ObjectPtr<DX11StructuredBuffer> per_object_;			///< \brief Per-object constant buffer.
 
 			ObjectPtr<DX11StructuredBuffer> per_light_;				///< \brief Per-light constant buffer.
+
+			unsigned int point_shadows_;							///< \brief Number of point shadows stored so far.
 
 		};
 

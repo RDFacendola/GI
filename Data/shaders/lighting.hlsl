@@ -28,7 +28,7 @@ void CSMain(int3 thread_id : SV_DispatchThreadID){
 	// Accumulate point lights
 	for (light_index = 0; light_index < point_lights; ++light_index) {
 
-		color += ComputePhong(surface, gPointLights[light_index], camera_position.xyz) * (ComputeShadow(surface, gPointShadows[light_index]));
+		color += ComputePhong(surface, gPointLights[light_index], camera_position.xyz) * ComputeShadow(surface, gPointShadows[light_index]);
 
 	}
 
