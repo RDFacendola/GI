@@ -51,29 +51,50 @@ void GSMain(triangle VSOut input[3], inout TriangleStream<VSOut> output) {
 
 	// Adjust the viewport position (front paraboloid on the left half, rear paraboloid on the right one)
 
-	// Front paraboloid
-	[unroll]
-	for (int i = 0; i < 3; ++i) {
+	int i;
 
-		input[i].position_ps.x -= 0.5f;
+	if (abs(input[0].z + input[1].z + input[2].z) >= 2.0f) {
 
-		//input[i].z = 1.0f;
+		// The primitive is fully in front or rear the light POV, output just one primitive.
 
-		output.Append(input[i]);
+		[unroll]
+		for (i = 0; i < 3; ++i) {
+
+			input[i].position_ps.x -= 0.5f * input[i].z;		// Output on the front or on the rear paraboloid, according to the z.
+
+			input[i].z = 1.0f;									// Prevent clipping at pixel level.
+
+			output.Append(input[i]);
+
+		}
 
 	}
+	else {
 
-	output.RestartStrip();
+		// The primitive spans both the front and the rear paraboloid, output one primitive per paraboloid.
 
-	// Rear paraboloid
-	[unroll]
-	for (int i = 2; i >= 0; --i) {
+		[unroll]
+		for (i = 0; i < 3; ++i) {
 
-		input[i].position_ps.x += 1.0f;
+			input[i].position_ps.x -= 0.5f;						// Front paraboloid
 
-		input[i].z *= -1.0f;
+			output.Append(input[i]);
 
-		output.Append(input[i]);
+		}
+
+		output.RestartStrip();
+
+		// Rear paraboloid
+		[unroll]
+		for (i = 2; i >= 0; --i) {
+
+			input[i].position_ps.x += 1.0f;						// Rear paraboloid
+
+			input[i].z *= -1.0f;								// Flip the polygon
+
+			output.Append(input[i]);
+
+		}
 
 	}
 
