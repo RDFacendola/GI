@@ -455,7 +455,7 @@ void DX11TiledDeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
 	auto&& visible_lights = ComputeVisibleNodes(frame_info.scene->GetLightHierarchy(), *frame_info.camera, frame_info.aspect_ratio);
 
 	// Clear the shadow atlas from any existing shadowmap
-	shadow_atlas_->Restore();
+	shadow_atlas_->Begin();
 
 	AccumulateLight(visible_lights,
 					frame_info);

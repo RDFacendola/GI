@@ -65,8 +65,8 @@ namespace gi_lib {
 			/// \brief Create a new VSM shadow atlas.
 			DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pages, bool full_precision = false);
 
-			/// \brief Clear the atlas from any existing shadowmap.
-			void Restore();
+			/// \brief Clear the atlas from any existing shadowmap and reinitializes the shadowmap.
+			void Begin();
 
 			/// \brief Computes a variance shadowmap.
 			/// \param point_light Point light casting the shadow.
@@ -114,6 +114,8 @@ namespace gi_lib {
 			void DrawShadowmap(const vector<VolumeComponent*> nodes, const Affine3f& light_view_transform);
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
+
+			COMPtr<ID3D11RasterizerState> rasterizer_state_;		///< \brief Rasterizer state.
 
 			ObjectPtr<DX11RenderTargetArray> atlas_;				///< \brief Array of render targets used as shadow atlas.
 

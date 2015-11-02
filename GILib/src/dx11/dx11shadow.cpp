@@ -40,9 +40,31 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pag
 
 	immediate_context_ << &context;
 
+	// 
+
+	D3D11_RASTERIZER_DESC rasterizer_state_desc;
+
+	ID3D11RasterizerState* rasterizer_state;
+
+	rasterizer_state_desc.FillMode = D3D11_FILL_SOLID;
+	rasterizer_state_desc.CullMode = D3D11_CULL_BACK;
+	rasterizer_state_desc.FrontCounterClockwise = false;
+	rasterizer_state_desc.DepthBias = 100000;
+	rasterizer_state_desc.SlopeScaledDepthBias = 1.0f;
+	rasterizer_state_desc.DepthBiasClamp = 0.0f;
+	rasterizer_state_desc.DepthClipEnable = true;
+	rasterizer_state_desc.ScissorEnable = false;
+	rasterizer_state_desc.MultisampleEnable = false;
+	rasterizer_state_desc.AntialiasedLineEnable = false;
+
+	device.CreateRasterizerState(&rasterizer_state_desc,
+								 &rasterizer_state);
+
+	rasterizer_state_ << &rasterizer_state;
+
 	// Create the shadow resources
 
-	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, 0 });
+	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, 8 });
 
 	atlas_ = new DX11RenderTargetArray(width, 
 									   height, 
@@ -69,13 +91,16 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pag
 
 }
 
-void DX11VSMAtlas::Restore() {
+
+void DX11VSMAtlas::Begin() {
 
 	// Clear the atlas pages
 	atlas_->ClearDepth(*immediate_context_);
 	atlas_->ClearTargets(*immediate_context_, kOpaqueWhite);
 
 	point_shadows_ = 0;
+
+	immediate_context_->RSSetState(rasterizer_state_.Get());
 
 }
 
