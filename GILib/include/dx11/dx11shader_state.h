@@ -846,7 +846,7 @@ namespace gi_lib{
 		template <>
 		inline void SetShaderResources<ID3D11DomainShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11ShaderResourceView>>& resources, size_t count){
 
-			if (count == 0){
+			if (count > 0){
 
 				context.DSSetShaderResources(static_cast<UINT>(start_slot),
 											 static_cast<UINT>(count),
