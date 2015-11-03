@@ -51,6 +51,6 @@ void PSMain(VSOut input, out GBuffer output){
 
 	output.normal_shininess.xyz = input.normal_ws;
 
-	output.normal_shininess.w = 15.0f;			// Dummy shininess
+	output.normal_shininess.w = 5.0f;			// Dummy shininess
 
 }

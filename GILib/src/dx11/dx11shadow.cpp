@@ -50,7 +50,7 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pag
 	rasterizer_state_desc.CullMode = D3D11_CULL_BACK;
 	rasterizer_state_desc.FrontCounterClockwise = false;
 	rasterizer_state_desc.DepthBias = 100000;
-	rasterizer_state_desc.SlopeScaledDepthBias = 1.0f;
+	rasterizer_state_desc.SlopeScaledDepthBias = 0.5f;
 	rasterizer_state_desc.DepthBiasClamp = 0.0f;
 	rasterizer_state_desc.DepthClipEnable = true;
 	rasterizer_state_desc.ScissorEnable = false;
