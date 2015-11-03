@@ -186,6 +186,8 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Aff
 
 			mesh->Bind(*immediate_context_);
 
+			immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);		// Override with 3-point patches
+
 			auto& per_object = *per_object_->Lock<PerObject>();
 
 			per_object.world_light = (light_view_transform * mesh_component.GetWorldTransform()).matrix();

@@ -1,19 +1,17 @@
 #include "projection_def.hlsl"
 
-/////////////////////////////////// VERTEX SHADER ///////////////////////////////////////
-
 struct VSIn {
 
 	float4 position : SV_Position;				// Vertex position.
-	
+
 };
+
+/////////////////////////////////// VERTEX SHADER ///////////////////////////////////////
 
 struct VSOut {
 
-	float4 position_ps: SV_Position;			// Vertex position in paraboloid space.
+	float4 position_ls: SV_Position;			// Vertex position in light space.
 
-	float z : TEXCOORD0;						// Z-coordinate of the vertex as seen from the paraboloid.
-	
 };
 
 cbuffer PerObject{
@@ -21,6 +19,63 @@ cbuffer PerObject{
 	float4x4 gWorldLight;						// World * Light-view matrix.
 
 };
+
+VSOut VSMain(VSIn input){
+
+	VSOut output;
+
+	output.position_ls = mul(gWorldLight, input.position);
+
+	return output;
+
+}
+
+/////////////////////////////////// HULL SHADER ////////////////////////////////////////
+
+struct HSOut {
+
+	float4 position_ls: SV_Position;			// Vertex position in light space.
+
+};
+
+struct TessOut {
+
+	float edge_tessellation[3] : SV_TessFactor;
+	float inside_tessellation : SV_InsideTessFactor;
+
+};
+
+TessOut TessFunction(InputPatch<VSOut, 3> patch, uint patch_id : SV_PrimitiveID) {
+
+	TessOut output;
+
+	output.edge_tessellation[0] = 8;
+	output.edge_tessellation[1] = 8;
+	output.edge_tessellation[2] = 8;
+
+	output.inside_tessellation = 3;				
+
+	return output;
+
+}
+
+[domain("tri")]
+[partitioning("integer")]
+[outputtopology("triangle_cw")]
+[outputcontrolpoints(3)]
+[patchconstantfunc("TessFunction")]
+[maxtessfactor(64.0f)]
+HSOut HSMain(InputPatch<VSOut, 3> input, uint i : SV_OutputControlPointID, uint patch_id : SV_PrimitiveID) {
+
+	HSOut output;
+
+	output.position_ls = input[i].position_ls;
+
+	return output;
+
+}
+
+/////////////////////////////////// DOMAIN SHADER //////////////////////////////////////
 
 cbuffer PerLight {
 
@@ -30,9 +85,20 @@ cbuffer PerLight {
 
 };
 
-void VSMain(VSIn input, out VSOut output){
+struct DSOut {
 
-	float4 position_ls = mul(gWorldLight, input.position);
+	float4 position_ps: SV_Position;			// Vertex position in paraboloid space.
+
+	float z : TEXCOORD0;						// Z-coordinate of the vertex as seen from the paraboloid.
+
+};
+
+[domain("tri")]
+DSOut DSMain(TessOut tessellation, float3 uvw : SV_DomainLocation, const OutputPatch<HSOut, 3> input) {
+
+	float4 position_ls = input[0].position_ls * uvw.x + input[1].position_ls * uvw.y + input[2].position_ls * uvw.z;
+
+	DSOut output;
 
 	output.z = sign(position_ls.z);				// 1 for front paraboloid, -1 for rear paraboloid
 
@@ -42,18 +108,20 @@ void VSMain(VSIn input, out VSOut output){
 
 	output.position_ps.x *= 0.5f;				// Squash the X coordinate horizontally in order to fit both the front and the rear paraboloid in the same texture
 
+	return output;
+
 }
 
 /////////////////////////////////// GEOMETRY SHADER ////////////////////////////////////
 
 [maxvertexcount(6)]
-void GSMain(triangle VSOut input[3], inout TriangleStream<VSOut> output) {
+void GSMain(triangle DSOut input[3], inout TriangleStream<DSOut> output) {
 
 	// Adjust the viewport position (front paraboloid on the left half, rear paraboloid on the right one)
 
 	int i;
 
-	if (abs(input[0].z + input[1].z + input[2].z) >= 2.0f) {
+	if (abs(input[0].z + input[1].z + input[2].z) >= 3.0f) {
 
 		// The primitive is fully in front or rear the light POV, output just one primitive.
 
@@ -102,7 +170,7 @@ void GSMain(triangle VSOut input[3], inout TriangleStream<VSOut> output) {
 
 /////////////////////////////////// PIXEL SHADER ///////////////////////////////////////
 
-float2 PSMain(VSOut input) : SV_Target0{
+float2 PSMain(DSOut input) : SV_Target0{
 
 	clip(input.z);
 
