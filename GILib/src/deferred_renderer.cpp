@@ -7,18 +7,18 @@ using namespace gi_lib;
 
 /////////////////////////////// TILED DEFERRED RENDERER ///////////////////////////////
 
-TiledDeferredRenderer::TiledDeferredRenderer(Scene& scene) :
+DeferredRenderer::DeferredRenderer(Scene& scene) :
 scene_(scene){}
 
-TiledDeferredRenderer::~TiledDeferredRenderer(){}
+DeferredRenderer::~DeferredRenderer(){}
 
-Scene& TiledDeferredRenderer::GetScene(){
+Scene& DeferredRenderer::GetScene(){
 
 	return scene_;
 
 }
 
-const Scene& TiledDeferredRenderer::GetScene() const{
+const Scene& DeferredRenderer::GetScene() const{
 
 	return scene_;
 

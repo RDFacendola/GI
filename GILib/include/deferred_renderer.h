@@ -57,21 +57,21 @@ namespace gi_lib{
 
 	};
 
-	/// \brief Deferred renderer with tiled lighting computation.
+	/// \brief Renderer with deferred lighting computation.
 	/// \author Raffaele D. Facendola
-	class TiledDeferredRenderer : public IRenderer{
+	class DeferredRenderer : public IRenderer{
 
 	public:
 				
 		/// \brief Create a new tiled deferred renderer.
 		/// \param scene Scene assigned to the renderer.
-		TiledDeferredRenderer(Scene& scene);
+		DeferredRenderer(Scene& scene);
 
 		/// \brief No assignment operator.
-		TiledDeferredRenderer& operator=(const TiledDeferredRenderer&) = delete;
+		DeferredRenderer& operator=(const DeferredRenderer&) = delete;
 
 		/// \brief Virtual destructor.
-		virtual ~TiledDeferredRenderer();
+		virtual ~DeferredRenderer();
 
 		/// \brief Get the scene this renderer is assigned to.
 		/// \return Returns the scene this renderer is assigned to.

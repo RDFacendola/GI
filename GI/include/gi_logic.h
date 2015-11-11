@@ -11,7 +11,7 @@ using namespace std;
 
 namespace gi_lib{
 	
-	class TiledDeferredRenderer;
+	class DeferredRenderer;
 	class TransformComponent;
 
 }
@@ -43,7 +43,7 @@ namespace gi{
 
 		unique_ptr<IOutput> output_;
 
-		unique_ptr<TiledDeferredRenderer> deferred_renderer_;
+		unique_ptr<DeferredRenderer> deferred_renderer_;
 
 		unique_ptr<Scene> scene_;
 		

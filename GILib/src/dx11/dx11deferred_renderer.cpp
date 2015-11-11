@@ -129,20 +129,20 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix
 
 ///////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////
 
-const Tag DX11TiledDeferredRenderer::kAlbedoTag = "gAlbedo";
-const Tag DX11TiledDeferredRenderer::kNormalShininessTag = "gNormalShininess";
-const Tag DX11TiledDeferredRenderer::kDepthStencilTag = "gDepthStencil";
-const Tag DX11TiledDeferredRenderer::kPointLightsTag = "gPointLights";
-const Tag DX11TiledDeferredRenderer::kDirectionalLightsTag = "gDirectionalLights";
-const Tag DX11TiledDeferredRenderer::kLightBufferTag = "gLightAccumulation";
-const Tag DX11TiledDeferredRenderer::kLightParametersTag = "gParameters";
-const Tag DX11TiledDeferredRenderer::kVSMShadowAtlasTag = "gVSMShadowAtlas";
-const Tag DX11TiledDeferredRenderer::kVSMSamplerTag = "gVSMSampler";
-const Tag DX11TiledDeferredRenderer::kPointShadowsTag = "gPointShadows";
-const Tag DX11TiledDeferredRenderer::kDirectionalShadowsTag = "gDirectionalShadows";
+const Tag DX11DeferredRenderer::kAlbedoTag = "gAlbedo";
+const Tag DX11DeferredRenderer::kNormalShininessTag = "gNormalShininess";
+const Tag DX11DeferredRenderer::kDepthStencilTag = "gDepthStencil";
+const Tag DX11DeferredRenderer::kPointLightsTag = "gPointLights";
+const Tag DX11DeferredRenderer::kDirectionalLightsTag = "gDirectionalLights";
+const Tag DX11DeferredRenderer::kLightBufferTag = "gLightAccumulation";
+const Tag DX11DeferredRenderer::kLightParametersTag = "gParameters";
+const Tag DX11DeferredRenderer::kVSMShadowAtlasTag = "gVSMShadowAtlas";
+const Tag DX11DeferredRenderer::kVSMSamplerTag = "gVSMSampler";
+const Tag DX11DeferredRenderer::kPointShadowsTag = "gPointShadows";
+const Tag DX11DeferredRenderer::kDirectionalShadowsTag = "gDirectionalShadows";
 
-DX11TiledDeferredRenderer::DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments) :
-TiledDeferredRenderer(arguments.scene),
+DX11DeferredRenderer::DX11DeferredRenderer(const RendererConstructionArgs& arguments) :
+DeferredRenderer(arguments.scene),
 fx_bloom_(1.0f, 1.67f, Vector2f(0.5f, 0.5f)),
 fx_tonemap_(0.5f){
 
@@ -282,7 +282,7 @@ fx_tonemap_(0.5f){
 	
 }
 
-DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){
+DX11DeferredRenderer::~DX11DeferredRenderer(){
 	
 	immediate_context_ = nullptr;
 	depth_state_ = nullptr;
@@ -292,7 +292,7 @@ DX11TiledDeferredRenderer::~DX11TiledDeferredRenderer(){
 	
 }
 
-ObjectPtr<ITexture2D> DX11TiledDeferredRenderer::Draw(unsigned int width, unsigned int height){
+ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(unsigned int width, unsigned int height){
 	
 	// Draws only if there's a camera
 
@@ -327,7 +327,7 @@ ObjectPtr<ITexture2D> DX11TiledDeferredRenderer::Draw(unsigned int width, unsign
 
 // GBuffer
 
-void DX11TiledDeferredRenderer::DrawGBuffer(const FrameInfo& frame_info){
+void DX11DeferredRenderer::DrawGBuffer(const FrameInfo& frame_info){
 
 	// Setup the GBuffer and bind it to the immediate context.
 	
@@ -344,7 +344,7 @@ void DX11TiledDeferredRenderer::DrawGBuffer(const FrameInfo& frame_info){
 
 }
 
-void DX11TiledDeferredRenderer::BindGBuffer(const FrameInfo& frame_info){
+void DX11DeferredRenderer::BindGBuffer(const FrameInfo& frame_info){
 
 	// Rasterizer state setup
 
@@ -393,7 +393,7 @@ void DX11TiledDeferredRenderer::BindGBuffer(const FrameInfo& frame_info){
 
 }
 
-void DX11TiledDeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes, const FrameInfo& frame_info){
+void DX11DeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes, const FrameInfo& frame_info){
 
 	ObjectPtr<DX11Mesh> mesh;
 	ObjectPtr<DX11DeferredRendererMaterial> material;
@@ -440,7 +440,7 @@ void DX11TiledDeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes
 
 // Lighting
 
-void DX11TiledDeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
+void DX11DeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
 
 	// Lazy setup and resize of the light accumulation buffer
 
@@ -465,7 +465,7 @@ void DX11TiledDeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
 
 }
 
-void DX11TiledDeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& lights, const FrameInfo& frame_info) {
+void DX11DeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& lights, const FrameInfo& frame_info) {
 	
 	auto point_lights = point_lights_->Lock<PointLight>();
 	
@@ -539,7 +539,7 @@ void DX11TiledDeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& 
 
 }
 
-void DX11TiledDeferredRenderer::UpdateLight(const PointLightComponent& point_light, PointLight& light, PointShadow& shadow) {
+void DX11DeferredRenderer::UpdateLight(const PointLightComponent& point_light, PointLight& light, PointShadow& shadow) {
 
 	// Light
 
@@ -558,7 +558,7 @@ void DX11TiledDeferredRenderer::UpdateLight(const PointLightComponent& point_lig
 	
 }
 
-void DX11TiledDeferredRenderer::UpdateLight(const DirectionalLightComponent& directional_light, DirectionalLight& light, DirectionalShadow& shadow) {
+void DX11DeferredRenderer::UpdateLight(const DirectionalLightComponent& directional_light, DirectionalLight& light, DirectionalShadow& shadow) {
 
 	// Light
 
@@ -574,7 +574,7 @@ void DX11TiledDeferredRenderer::UpdateLight(const DirectionalLightComponent& dir
 
 // Post processing
 
-void DX11TiledDeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
+void DX11DeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
 
 	// LightBuffer == [Bloom] ==> Unexposed ==> [Tonemap] ==> Output
 

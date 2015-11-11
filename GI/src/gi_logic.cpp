@@ -84,7 +84,7 @@ void GILogic::Initialize(Window& window){
 
 	// Create the renderers
 
-	deferred_renderer_ = std::move(graphics_.CreateRenderer<TiledDeferredRenderer>(*scene_));
+	deferred_renderer_ = std::move(graphics_.CreateRenderer<DeferredRenderer>(*scene_));
 
 	// Camera setup
 

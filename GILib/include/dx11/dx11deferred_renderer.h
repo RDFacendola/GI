@@ -130,22 +130,22 @@ namespace gi_lib{
 
 		/// \brief Deferred renderer with tiled lighting computation for DirectX11.
 		/// \author Raffaele D. Facendola
-		class DX11TiledDeferredRenderer : public TiledDeferredRenderer{
+		class DX11DeferredRenderer : public DeferredRenderer{
 
 		public:
 
 			/// \brief Create a new tiled deferred renderer.
 			/// \param arguments Arguments used to construct the renderer.
-			DX11TiledDeferredRenderer(const RendererConstructionArgs& arguments);
+			DX11DeferredRenderer(const RendererConstructionArgs& arguments);
 
 			/// \brief No copy constructor.
-			DX11TiledDeferredRenderer(const DX11TiledDeferredRenderer&) = delete;
+			DX11DeferredRenderer(const DX11DeferredRenderer&) = delete;
 
 			/// \brief Virtual destructor.
-			virtual ~DX11TiledDeferredRenderer();
+			virtual ~DX11DeferredRenderer();
 
 			/// \brief No assignment operator.
-			DX11TiledDeferredRenderer& operator=(DX11TiledDeferredRenderer&) = delete;
+			DX11DeferredRenderer& operator=(DX11DeferredRenderer&) = delete;
 
 			virtual ObjectPtr<ITexture2D> Draw(unsigned int width, unsigned int height) override;
 
@@ -305,7 +305,7 @@ namespace gi_lib{
 
 		///////////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////
 
-		INSTANTIABLE(TiledDeferredRenderer, DX11TiledDeferredRenderer, RendererConstructionArgs);
+		INSTANTIABLE(DeferredRenderer, DX11DeferredRenderer, RendererConstructionArgs);
 
 	}
 
