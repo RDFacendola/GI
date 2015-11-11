@@ -31,15 +31,6 @@ namespace gi_lib{
 		/// This structure is identical to the one used by the base material.
 		using CompileFromFile = IMaterial::CompileFromFile;
 
-		/// \brief Structure used to instantiate an existing material.
-		struct Instantiate{
-
-			NO_CACHE;
-
-			ObjectPtr<DeferredRendererMaterial> base;	///< \brief Material to instantiate.
-
-		};
-		
 		/// \brief Virtual destructor.
 		virtual ~DeferredRendererMaterial();
 
