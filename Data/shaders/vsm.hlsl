@@ -49,11 +49,11 @@ TessOut TessFunction(InputPatch<VSOut, 3> patch, uint patch_id : SV_PrimitiveID)
 
 	TessOut output;
 
-	output.edge_tessellation[0] = 8;
-	output.edge_tessellation[1] = 8;
-	output.edge_tessellation[2] = 8;
+	output.edge_tessellation[0] = 1;
+	output.edge_tessellation[1] = 1;
+	output.edge_tessellation[2] = 1;
 
-	output.inside_tessellation = 3;				
+	output.inside_tessellation = 1;				
 
 	return output;
 
@@ -89,7 +89,7 @@ struct DSOut {
 
 	float4 position_ps: SV_Position;			// Vertex position in paraboloid space.
 
-	float z : TEXCOORD0;						// Z-coordinate of the vertex as seen from the paraboloid.
+	float z : Depth;							// Z-coordinate of the vertex as seen from the paraboloid.
 
 };
 
@@ -100,14 +100,14 @@ DSOut DSMain(TessOut tessellation, float3 uvw : SV_DomainLocation, const OutputP
 
 	DSOut output;
 
-	output.z = sign(position_ls.z);				// 1 for front paraboloid, -1 for rear paraboloid
+	output.z = position_ls.z;					// Positive for front paraboloid, negative for rear paraboloid
 
 	output.position_ps = ProjectToParaboloidSpace(position_ls.xyz,
 												  gNearPlane,
 												  gFarPlane);
-
+	
 	output.position_ps.x *= 0.5f;				// Squash the X coordinate horizontally in order to fit both the front and the rear paraboloid in the same texture
-
+	
 	return output;
 
 }
@@ -121,7 +121,7 @@ void GSMain(triangle DSOut input[3], inout TriangleStream<DSOut> output) {
 
 	int i;
 
-	if (abs(input[0].z + input[1].z + input[2].z) >= 3.0f) {
+	if (false) {
 
 		// The primitive is fully in front or rear the light POV, output just one primitive.
 
