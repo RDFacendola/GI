@@ -84,17 +84,30 @@ const Tag DX11DeferredRendererMaterial::kDiffuseSampler = "gDiffuseSampler";
 const Tag DX11DeferredRendererMaterial::kPerObjectTag = "PerObject";
 
 DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const CompileFromFile& args) :
-material_(new DX11Material(args))
-{
+material_(new DX11Material(args)){
 
-	Setup();
+	auto& resources = DX11Graphics::GetInstance().GetResources();
+
+	per_object_cbuffer_ = resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(VSPerObjectBuffer) });
+
+	material_->SetInput(kPerObjectTag, ObjectPtr<IStructuredBuffer>(per_object_cbuffer_));
 
 }
 
-DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const Instantiate& args) :
-material_(new DX11Material(IMaterial::Instantiate{ args.base->GetMaterial() })){
+DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const ObjectPtr<DX11Material>& base_material) :
+material_(base_material->Instantiate()){
 
-	Setup();
+	auto& resources = DX11Graphics::GetInstance().GetResources();
+
+	per_object_cbuffer_ = resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(VSPerObjectBuffer) });
+
+	material_->SetInput(kPerObjectTag, ObjectPtr<IStructuredBuffer>(per_object_cbuffer_));
+
+}
+
+ObjectPtr<DeferredRendererMaterial> DX11DeferredRendererMaterial::Instantiate() const{
+
+	return new DX11DeferredRendererMaterial(material_);		
 
 }
 
@@ -112,16 +125,6 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix
 
 	per_object_cbuffer_->Unlock();
 	
-}
-
-void DX11DeferredRendererMaterial::Setup(){
-
-	auto& resources = DX11Graphics::GetInstance().GetResources();
-
-	per_object_cbuffer_ = resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({sizeof(VSPerObjectBuffer)});
-
-	material_->SetInput(kPerObjectTag, ObjectPtr<IStructuredBuffer>(per_object_cbuffer_));
-
 }
 
 ///////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////

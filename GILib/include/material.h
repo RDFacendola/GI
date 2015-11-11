@@ -36,16 +36,7 @@ namespace gi_lib{
 			size_t GetCacheKey() const;
 
 		};
-
-		/// \brief Structure used to instantiate an existing material.
-		struct Instantiate{
-
-			NO_CACHE;
-
-			ObjectPtr<IMaterial> base;	///< \brief Material to instantiate.
-
-		};
-
+		
 		/// \brief Virtual destructor.
 		virtual ~IMaterial(){};
 
@@ -86,6 +77,11 @@ namespace gi_lib{
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) = 0;
 		
+		/// \brief Create a new copy of this material.
+		/// Use this material to create a new material instance which shares common states with other instances.
+		/// \return Returns a pointer to the new material instance.
+		virtual ObjectPtr<IMaterial> Instantiate() = 0;
+
 	};
 
 	////////////////////////////// MATERIAL :: COMPILE FROM FILE ///////////////////////////////

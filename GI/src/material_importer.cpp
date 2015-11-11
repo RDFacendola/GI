@@ -41,9 +41,7 @@ namespace{
 
 		static const Tag kDiffuseMapTag = "gDiffuseMap";
 		
-		ObjectPtr<DeferredRendererMaterial> deferred_material_instance = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::Instantiate>({ base_material });
-
-		auto material_instance = deferred_material_instance->GetMaterial();
+		auto material_instance = base_material->Instantiate();
 
 		// Diffuse map
 
@@ -51,12 +49,10 @@ namespace{
 		BindTexture2D(resources,
 					  fbx_material["DiffuseColor"],
 					  kDiffuseMapTag,
-					  *material_instance,
+					  *material_instance->GetMaterial(),
 					  base_directory);
-
-		// Okay
-
-		return deferred_material_instance;
+		
+		return material_instance;
 
 	}
 

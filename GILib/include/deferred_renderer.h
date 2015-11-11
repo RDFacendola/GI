@@ -50,6 +50,10 @@ namespace gi_lib{
 		/// \return Returns the base material.
 		virtual ObjectPtr<const IMaterial> GetMaterial() const = 0;
 
+		/// \brief Instantiate this material.
+		/// \return Returns a new instance of this material.
+		virtual ObjectPtr<DeferredRendererMaterial> Instantiate() const = 0;
+
 	};
 
 	/// \brief Component used to draw object using a deferred renderer.

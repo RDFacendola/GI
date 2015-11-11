@@ -95,14 +95,11 @@ namespace gi_lib{
 			/// \param bundle Bundle used to load the material.
 			DX11DeferredRendererMaterial(const CompileFromFile& args);
 
-			/// \brief Instantiate a DirectX11 deferred material from another one.
-			/// \param device The device used to load the graphical resources.
-			/// \param bundle Bundle used to instantiate the material.
-			DX11DeferredRendererMaterial(const Instantiate& args);
-
 			virtual ObjectPtr<IMaterial> GetMaterial() override;
 
 			virtual ObjectPtr<const IMaterial> GetMaterial() const override;
+
+			ObjectPtr<DeferredRendererMaterial> Instantiate() const override;
 
 			/// \brief Set the matrices needed to transform the object.
 			void SetMatrix(const Affine3f& world, const Matrix4f& view_projection);
@@ -113,6 +110,8 @@ namespace gi_lib{
 			virtual size_t GetSize() const override;
 
 		private:
+
+			DX11DeferredRendererMaterial(const ObjectPtr<DX11Material>& base_material);
 
 			static const Tag kDiffuseMapTag;									///< \brief Tag associated to the diffuse map.
 
@@ -279,7 +278,6 @@ namespace gi_lib{
 		/////////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////////
 
 		INSTANTIABLE(DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile);
-		INSTANTIABLE(DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::Instantiate);
 
 		inline ObjectPtr<IMaterial> DX11DeferredRendererMaterial::GetMaterial(){
 

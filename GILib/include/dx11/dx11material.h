@@ -36,12 +36,7 @@ namespace gi_lib{
 			/// \param device The device used to load the graphical resources.
 			/// \param bundle Bundle used to load the material.
 			DX11Material(const CompileFromFile& args);
-
-			/// \brief Instantiate a DirectX11 material from another one.
-			/// \param device The device used to load the graphical resources.
-			/// \param bundle Bundle used to instantiate the material.
-			DX11Material(const Instantiate& args);
-
+			
 			/// \brief Default destructor.
 			virtual ~DX11Material();
 
@@ -63,6 +58,14 @@ namespace gi_lib{
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) override;
 
+			virtual ObjectPtr<IMaterial> Instantiate() override;
+
+		protected:
+
+			DX11Material(unique_ptr<ShaderStateComposite> shader_composite, const COMPtr<ID3D11InputLayout> input_layout);
+
+		private:
+
 			unique_ptr<ShaderStateComposite> shader_composite_;		///< \brief Collection of shaders. Vertex and pixel shaders are compulsory.
 
 			COMPtr<ID3D11InputLayout> input_layout_;				///< \brief Vertex input layout, defined per material.
@@ -75,7 +78,6 @@ namespace gi_lib{
 		///////////////////////////////// DX11 MATERIAL ///////////////////////////////////
 
 		INSTANTIABLE(IMaterial, DX11Material, IMaterial::CompileFromFile);
-		INSTANTIABLE(IMaterial, DX11Material, IMaterial::Instantiate);
 
 		inline size_t DX11Material::GetSize() const
 		{
