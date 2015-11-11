@@ -75,7 +75,7 @@ void MaterialImporter::OnImportMaterial(const wstring& base_directory, FbxMateri
 	static const Tag kSamplerTag = "gDiffuseSampler";
 
 	// Add a renderer component for the deferred renderer.
-	auto deferred_component = mesh.AddComponent<DeferredRendererComponent>(mesh);
+	auto deferred_component = mesh.AddComponent<AspectComponent<DeferredRendererMaterial>>(mesh);
 
 	// Instantiate the proper materials for each mesh subset.
 

@@ -419,6 +419,78 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Component used to bind each mesh with a material.
+	/// The component will store one material per mesh subset.
+	/// \tparam TMaterial Type of the material stored per mesh.
+	template <typename TMaterial>
+	class AspectComponent : public Component {
+
+	public:
+
+		/// \brief No default constructor.
+		AspectComponent() = delete;
+
+		/// \brief Create a new deferred renderer component.
+		/// \param mesh_component Mesh component to draw.		
+		AspectComponent(MeshComponent& mesh_component);
+
+		/// \brief No assignment operator.
+		AspectComponent& operator=(const AspectComponent&) = delete;
+
+		/// \brief Virtual destructor.
+		virtual ~AspectComponent();
+
+		/// \brief Get the mesh component.
+		/// \return Returns the mesh component.
+		ObjectPtr<IStaticMesh> GetMesh();
+
+		/// \brief Get the mesh component.
+		/// \return Returns the mesh component.
+		ObjectPtr<const IStaticMesh> GetMesh() const;
+
+		/// \brief Get the material count.
+		/// \return Returns the material count.
+		unsigned int GetMaterialCount() const;
+
+		/// \brief Get a material.
+		/// \param material_index Index of the material to retrieve.
+		/// \return Returns the specified material.
+		ObjectPtr<TMaterial> GetMaterial(unsigned int material_index);
+
+		/// \brief Get a material.
+		/// \param material_index Index of the material to retrieve.
+		/// \return Returns the specified material.
+		ObjectPtr<const TMaterial> GetMaterial(unsigned int material_index) const;
+
+		/// \brief Get the world transform.
+		/// \return Return the world transform associated to the transform component.
+		const Affine3f& GetWorldTransform() const;
+
+		/// \brief Set a new material.
+		/// \param material_index Index of the material to set.
+		/// \param material New material
+		void SetMaterial(unsigned int material_index, ObjectPtr<TMaterial> material);
+
+		virtual TypeSet GetTypes() const override;
+
+	protected:
+
+		virtual void Initialize() override;
+
+		virtual void Finalize() override;
+
+	private:
+
+		MeshComponent& mesh_component_;									///< \brief Mesh component to draw (must belong to the same object)
+
+		TransformComponent* transform_component_;						///< \brief Transform component used to draw the mesh (must belong to the same object)
+
+		unique_ptr<Listener> on_mesh_removed_listener_;					///< \brief Detects whether the mesh component have been removed from the object.
+
+		vector<ObjectPtr<TMaterial>> materials_;						///< \brief List of materials (one per mesh subset)
+
+	};
+
 	/// \brief Basic class for camera components.
 	/// \author Raffaele D. Facendola.
 	class CameraComponent : public Component{
@@ -562,6 +634,105 @@ namespace gi_lib{
 	inline Vector3f TransformComponent::GetPosition() const {
 
 		return Math::ToVector3(GetWorldTransform().matrix().col(3));
+
+	}
+
+	////////////////////////////////// DEFERRED RENDERER COMPONENT //////////////////////////////////
+
+	template <typename TMaterial>
+	AspectComponent<TMaterial>::AspectComponent(MeshComponent& mesh_component) :
+		mesh_component_(mesh_component) {
+
+		// If the mesh component gets removed, this component is removed as well.
+
+		on_mesh_removed_listener_ = mesh_component.OnRemoved().Subscribe([this](Listener& listener, Component::OnRemovedEventArgs&) {
+
+			listener.Unsubscribe();
+
+			RemoveComponent();
+
+		});
+
+		// One material per mesh subset.
+
+		materials_.resize(mesh_component_.GetMesh()->GetSubsetCount());
+
+	}
+
+	template <typename TMaterial>
+	AspectComponent<TMaterial>::~AspectComponent() {}
+
+	template <typename TMaterial>
+	inline ObjectPtr<IStaticMesh> AspectComponent<TMaterial>::GetMesh() {
+
+		return ObjectPtr<IStaticMesh>(mesh_component_.GetMesh());
+
+	}
+
+	template <typename TMaterial>
+	inline ObjectPtr<const IStaticMesh> AspectComponent<TMaterial>::GetMesh() const {
+
+		return ObjectPtr<const IStaticMesh>(mesh_component_.GetMesh());
+
+	}
+
+	template <typename TMaterial>
+	inline unsigned int AspectComponent<TMaterial>::GetMaterialCount() const {
+
+		return static_cast<unsigned int>(mesh_component_.GetMesh()->GetSubsetCount());
+
+	}
+
+	template <typename TMaterial>
+	inline ObjectPtr<TMaterial> AspectComponent<TMaterial>::GetMaterial(unsigned int material_index) {
+
+		return materials_[material_index];
+
+	}
+
+	template <typename TMaterial>
+	inline ObjectPtr<const TMaterial> AspectComponent<TMaterial>::GetMaterial(unsigned int material_index) const {
+
+		return ObjectPtr<const TMaterial>(materials_[material_index]);
+
+	}
+
+	template <typename TMaterial>
+	inline void AspectComponent<TMaterial>::SetMaterial(unsigned int material_index, ObjectPtr<TMaterial> material) {
+
+		materials_[material_index] = material;
+
+	}
+
+	template <typename TMaterial>
+	typename AspectComponent<TMaterial>::TypeSet AspectComponent<TMaterial>::GetTypes() const {
+
+		auto types = Component::GetTypes();
+
+		types.insert(type_index(typeid(AspectComponent<TMaterial>)));
+
+		return types;
+
+	}
+
+	template <typename TMaterial>
+	inline void AspectComponent<TMaterial>::Initialize() {
+
+		transform_component_ = GetComponent<TransformComponent>();
+
+	}
+
+	template <typename TMaterial>
+	inline void AspectComponent<TMaterial>::Finalize() {
+
+		transform_component_ = nullptr;
+
+	}
+
+	template <typename TMaterial>
+	inline const Affine3f& AspectComponent<TMaterial>::GetWorldTransform() const {
+
+		return transform_component_->GetWorldTransform();
 
 	}
 

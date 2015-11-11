@@ -404,7 +404,7 @@ void DX11TiledDeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes
 
 	for (auto&& node : meshes){
 
-		for (auto&& drawable : node->GetComponents<DeferredRendererComponent>()){
+		for (auto&& drawable : node->GetComponents<AspectComponent<DeferredRendererMaterial>>()){
 
 			// Bind the mesh
 
