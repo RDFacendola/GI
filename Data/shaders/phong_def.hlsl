@@ -21,7 +21,7 @@ float3 ComputePhong(float3 light_direction, float3 camera_position, SurfaceData 
 	float4 specular = pow(saturate(dot(reflection_direction, view_direction)),					// Specular contribution
 						  surface.shininess);
 
-	float4 color = (diffuse + specular);
+	float4 color = diffuse + specular;
 
 	return color.rgb;
 

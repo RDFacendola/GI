@@ -64,7 +64,7 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pag
 
 	// Create the shadow resources
 
-	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, 8 });
+	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
 
 	atlas_ = new DX11RenderTargetArray(width, 
 									   height, 

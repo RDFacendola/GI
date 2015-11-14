@@ -66,7 +66,7 @@ resources_(resources){
 
 	base_material_ = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\gbuffer.hlsl" });
 
-	sampler_ = resources.Load<ISampler, ISampler::FromDescription>({TextureMapping::WRAP, 16});
+	sampler_ = resources.Load<ISampler, ISampler::FromDescription>({TextureMapping::WRAP, TextureFiltering::ANISOTROPIC, 16});
 
 }
 

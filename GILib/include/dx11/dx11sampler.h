@@ -34,6 +34,8 @@ namespace gi_lib{
 
 			virtual TextureMapping GetTextureMapping() const override;
 
+			virtual TextureFiltering GetTextureFiltering() const override;
+
 			/// \brief Get the sampler state view.
 			/// \return Returns the sampler state view.
 			SamplerStateView GetSamplerStateView();
@@ -45,6 +47,8 @@ namespace gi_lib{
 			unsigned int max_anisotropy_;					///< \brief Maximum anisotropy.
 
 			TextureMapping texture_mapping_;				///< \brief Texture mapping along each dimension.
+
+			TextureFiltering texture_filtering_;			///< \brief How the texture is sampled.
 
 		};
 
@@ -78,6 +82,12 @@ namespace gi_lib{
 		inline TextureMapping DX11Sampler::GetTextureMapping() const{
 
 			return texture_mapping_;
+
+		}
+
+		inline TextureFiltering DX11Sampler::GetTextureFiltering() const {
+
+			return texture_filtering_;
 
 		}
 	

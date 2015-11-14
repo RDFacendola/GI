@@ -198,10 +198,17 @@ namespace gi_lib{
 		/// \brief Create a sampler state.
 		/// \param device Device used to create the sampler.
 		/// \param address_mode Texture mapping mode while sampling.
-		/// \param anisotropy_level Maximum anisotropy level. Set to 0 to disable anisotropic filtering and enable trilinear filtering.
+		/// \param texture_filtering Texture filtering.
+		/// \param anisotropy_level Maximum anisotropy level. Used only if "texture_filtering" is "ANISOTRoPIC"
 		/// \param border_color Border color to use when the address mode specified is D3D11_TEXTURE_ADDRESS_BORDER.
-		/// \param sampler Pointer to the object that will hold the sampler if the method succeeds..
-		HRESULT MakeSampler(ID3D11Device& device, D3D11_TEXTURE_ADDRESS_MODE address_mode, unsigned int anisotropy_level, Vector4f border_color, ID3D11SamplerState** sampler);
+		/// \param sampler Pointer to the object that will hold the sampler if the method succeeded.
+		HRESULT MakeSampler(ID3D11Device& device, D3D11_TEXTURE_ADDRESS_MODE address_mode, D3D11_FILTER texture_filtering, unsigned int anisotropy_level, Vector4f border_color, ID3D11SamplerState** sampler);
+
+		/// \brief Create a sampler state used to sample a texture using percentage-closer filtering.
+		/// \param device Device used to create the sampler.
+		/// \param address_mode Texture mapping mode while sampling.
+		/// \param sampler Pointer to the object that will hold the sampler if the method succeeded.
+		HRESULT MakePCFSampler(ID3D11Device& device, D3D11_TEXTURE_ADDRESS_MODE address_mode, ID3D11SamplerState** sampler);
 
 		/// \brief Create a depth stencil view for the specified resource.
 		/// \param device Device used to create the depth stencil view.

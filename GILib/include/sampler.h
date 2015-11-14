@@ -23,6 +23,17 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Describes how the texture should be filtered while sampling int.
+	enum class TextureFiltering : unsigned int {
+
+		NEAREST,			///< \brief The nearest pixel is sampled without filtering.
+		BILINEAR,			///< \brief Bilinear interpolation on the nearest mipmap level.
+		TRILINEAR,			///< \brief Bilinear interpolation on the two nearest mipmap levels with an additional interpolation between the two results.
+		ANISOTROPIC,		///< \brief Orientation-corrected interpolation.
+		PERCENTAGE_CLOSER,	///< \brief Percentage closer filtering.
+
+	};
+
 	/// \brief Base interface for sampler states.
 	/// \author Raffaele D. Facendola.
 	class ISampler : public IResource{
@@ -37,7 +48,10 @@ namespace gi_lib{
 			/// \brief Texture mapping.
 			TextureMapping texture_mapping;
 
-			/// \brief Anisotropy level.
+			/// \brief How the texture should be filtered.
+			TextureFiltering texture_filtering;
+
+			/// \brief Anisotropy level, used only when texture_filtering is "ANISOTROPIC".
 			unsigned int anisotropy_level;
 
 			/// \brief Get the cache key associated to the structure.
@@ -45,8 +59,7 @@ namespace gi_lib{
 			size_t GetCacheKey() const;
 
 		};
-
-
+		
 		/// \brief Interface destructor.
 		virtual ~ISampler(){}
 
@@ -58,16 +71,22 @@ namespace gi_lib{
 		/// \return Returns the texture mapping along each dimension.
 		virtual TextureMapping GetTextureMapping() const = 0;
 
+		/// \brief Get the texture filtering mode.
+		/// \return Returns the texture filtering mode.
+		virtual TextureFiltering GetTextureFiltering() const = 0;
+
 	};
 
 	/////////////////////////////// ISAMPLER :: FROM DESCRIPTION ///////////////////////////////
 
 	inline size_t ISampler::FromDescription::GetCacheKey() const{
 
-		// | ... | texture_mapping | anisotropy_level |
-		//      40                 8                  0
+		// | ... | texture_filtering | texture_mapping | anisotropy_level |
+		//      32                   16                8                  0
 
-		return (anisotropy_level & 0xFF) | (static_cast<unsigned int>(texture_mapping) << 8);
+		return (anisotropy_level & 0xFF) | 
+			   (static_cast<unsigned int>(texture_mapping) << 8) |
+			   (static_cast<unsigned int>(texture_filtering) << 16);
 
 	}
 

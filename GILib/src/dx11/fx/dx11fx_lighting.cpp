@@ -21,7 +21,7 @@ DX11FxBrightPass::DX11FxBrightPass(float threshold) {
 
 	filter_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\bright_pass.hlsl" });
 
-	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, 16 });
+	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
 
 	parameters_ = new DX11StructuredBuffer(sizeof(Parameters));
 
@@ -96,7 +96,7 @@ DX11FxBloom::DX11FxBloom(float min_brightness, float sigma, const Vector2f& blur
 
 	composite_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\bloom_composite.hlsl" });
 
-	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, 16 });
+	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
 
 	//One-time setup
 
