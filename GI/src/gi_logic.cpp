@@ -47,7 +47,8 @@ Window* g_window;
 
 GILogic::GILogic() :
 	graphics_(Graphics::GetAPI(API::DIRECTX_11)),
-	input_(nullptr){
+	input_(nullptr),
+	paused_(false){
 
 	scene_ = make_unique<Scene>(make_unique<UniformTree>(AABB{ Vector3f::Zero(),							// Mesh hierarchy
 															   kDomainSize * Vector3f::Ones() },
@@ -179,26 +180,37 @@ void GILogic::Update(const Time & time){
 
 	fly_camera->Update(time);
 	
-	static const float xRadius = 3750.0f;
-	static const float yRadius = 250.0f;
-	static const float zRadius = 750.0f;
+	if (input_->GetKeyboardStatus().IsPressed((25))){
+
+		paused_ = !paused_;
+
+	}
+
+	if (!paused_) {
+
+		static const float xRadius = 3750.0f;
+		static const float yRadius = 250.0f;
+		static const float zRadius = 750.0f;
 	
-	static const float angular_speed = Math::kPi / 16.0f;
-	static const float oscillation_speed = Math::kPi / 7.0f;
+		static const float angular_speed = Math::kPi / 16.0f;
+		static const float oscillation_speed = Math::kPi / 7.0f;
 
-	float light_index = 0.0f;
-	float light_angle;
+		float light_index = 0.0f;
+		float light_angle;
 
-	for (auto&& point_light : point_lights) {
+		for (auto&& point_light : point_lights) {
 
-		light_angle = light_index / point_lights.size();
-		light_angle *= Math::kPi * 2.0f;
+			light_angle = light_index / point_lights.size();
+			light_angle *= Math::kPi * 2.0f;
 
-		point_light->SetTranslation(Translation3f(std::cosf(light_angle + time.GetTotalSeconds() * angular_speed) * xRadius,
-												  std::cosf(light_angle + time.GetTotalSeconds() * oscillation_speed) * yRadius + 300.0f,
-												  std::sinf(light_angle + time.GetTotalSeconds() * angular_speed) * zRadius + zRadius - 50.0f));
+			point_light->SetTranslation(Translation3f(std::cosf(light_angle + time.GetTotalSeconds() * angular_speed) * xRadius,
+													  std::cosf(light_angle + time.GetTotalSeconds() * oscillation_speed) * yRadius + 300.0f,
+													  std::sinf(light_angle + time.GetTotalSeconds() * angular_speed) * zRadius + zRadius - 50.0f));
 
-		++light_index;
+			++light_index;
+
+		}
+
 
 	}
 

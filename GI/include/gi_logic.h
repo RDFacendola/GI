@@ -49,6 +49,8 @@ namespace gi{
 		
 		const IInput* input_;
 
+		bool paused_;
+
 	};
 
 }
