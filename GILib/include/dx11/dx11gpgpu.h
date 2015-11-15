@@ -63,12 +63,14 @@ namespace gi_lib{
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state) override;
 
-			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D) override;
-
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredBuffer>& structured_buffer) override;
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) override;
 
+			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D) override;
+
+			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2DArray>& gp_texture_2D_array) override;
+			
 			unique_ptr<ShaderStateComposite> shader_composite_;						///< \brief Collection of shaders. This class holds just 1 compute shader.
 			
 			Vector3i group_size_;													///< \brief Size of each thread group, as defined inside the compute shader.
@@ -125,6 +127,13 @@ namespace gi_lib{
 
 			return shader_composite_->SetUnorderedAccess(tag,
 														 resource_cast(gp_texture_2D));
+
+		}
+
+		inline bool DX11Computation::SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2DArray>& gp_texture_2D_array){
+
+			return shader_composite_->SetUnorderedAccess(tag,
+														 resource_cast(gp_texture_2D_array));
 
 		}
 

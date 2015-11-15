@@ -67,6 +67,13 @@ namespace gi_lib{
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D) = 0;
 
+		/// \brief Set a texture array resource as an input/output for the current computation.
+		/// The GPU has both read and write permissions.
+		/// \param tag Tag of the input/output texture array to set.
+		/// \param gp_texture_2D_array Pointer to the general-purpose 2D texture array to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2DArray>& gp_texture_2D_array) = 0;
+
 		/// \brief Set a structure resource as an input for the computation.
 		/// The GPU may only read from the specified structure.
 		/// \param tag Tag of the input structure to set.

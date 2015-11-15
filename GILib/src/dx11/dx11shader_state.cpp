@@ -136,6 +136,14 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX
 
 }
 
+bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2DArray>& gp_texture_2D_array){
+	
+	return SetShaderMember(tag,
+						   gp_texture_2D_array->GetUnorderedAccessView(),
+						   uav_table_);
+
+}
+
 void ShaderStateComposite::AddShaderBindings(BaseShaderState& shader_state){
 
 	auto&& reflection = shader_state.GetReflection();

@@ -29,6 +29,7 @@ namespace gi_lib{
 		class DX11Texture2D;
 		class DX11Texture2DArray;
 		class DX11GPTexture2D;
+		class DX11GPTexture2DArray;
 		class DX11Sampler;
 		
 		using windows::COMPtr;
@@ -289,6 +290,10 @@ namespace gi_lib{
 			/// \brief Set the value of a named unordered access view.
 			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
 			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2D>& gp_texture_2D);
+
+			/// \brief Set the value of a named unordered access view.
+			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
+			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2DArray>& gp_texture_2D_array);
 
 			/// \brief Set the value of a named sampler state.
 			/// \return Returns true if a sampler state matching the specified tag was found, returns false otherwise.
