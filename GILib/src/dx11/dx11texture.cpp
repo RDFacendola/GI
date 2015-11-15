@@ -141,7 +141,7 @@ DX11Texture2DArray::DX11Texture2DArray(const COMPtr<ID3D11ShaderResourceView>& s
 	height_ = description.Height;
 	mip_levels_ = description.MipLevels;
 	bits_per_pixel_ = static_cast<unsigned int>(BitsPerPixel(description.Format));
-	format_ = description.Format;
+	format_ = DXGIFormatToTextureFormat(description.Format);
 	count_ = description.ArraySize;
 
 }

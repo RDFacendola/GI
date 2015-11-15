@@ -120,12 +120,11 @@ namespace gi_lib{
 			virtual unsigned int GetMIPCount() const override;
 
 			virtual unsigned int GetCount() const override;
+			
+			TextureFormat GetFormat() const override;
 
 			virtual size_t GetSize() const override;
 
-			/// \brief Get the surface format.
-			DXGI_FORMAT GetFormat() const;
-			
 			/// \brief Get the shader resource view used to bind this texture to the pipeline.
 			/// \remarks The view is for the entire array not just for the single slices.
 			ShaderResourceView GetShaderResourceView();
@@ -147,7 +146,7 @@ namespace gi_lib{
 
 			unsigned int count_;										///< \brief Elements in the array.
 
-			DXGI_FORMAT format_;										///< \brief Surface format.
+			TextureFormat format_;										///< \brief Surface format.
 
 		};
 
@@ -167,6 +166,8 @@ namespace gi_lib{
 			virtual unsigned int GetMIPCount() const override;
 
 			virtual unsigned int GetCount() const override;
+			
+			TextureFormat GetFormat() const override;
 
 			virtual size_t GetSize() const override;
 
@@ -337,7 +338,7 @@ namespace gi_lib{
 
 		}
 
-		inline DXGI_FORMAT DX11Texture2DArray::GetFormat() const {
+		inline TextureFormat DX11Texture2DArray::GetFormat() const {
 
 			return format_;
 
@@ -393,6 +394,12 @@ namespace gi_lib{
 		inline unsigned int DX11GPTexture2DArray::GetCount() const{
 
 			return texture_array_->GetCount();
+
+		}
+	
+		inline TextureFormat DX11GPTexture2DArray::GetFormat() const {
+
+			return texture_array_->GetFormat();
 
 		}
 

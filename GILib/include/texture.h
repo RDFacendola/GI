@@ -166,6 +166,10 @@ namespace gi_lib{
 		/// \return Returns the number of elements in the array.
 		virtual unsigned int GetCount() const = 0;
 
+		/// \brief Get the texture format.
+		/// \return Returns the texture format.
+		virtual TextureFormat GetFormat() const = 0;
+
 	};
 
 	/// \brief Base interface for general-purpose texture arrays.
@@ -197,6 +201,10 @@ namespace gi_lib{
 		/// \brief Get the number of elements in the array.
 		/// \return Returns the number of elements in the array.
 		virtual unsigned int GetCount() const = 0;
+
+		/// \brief Get the texture format.
+		/// \return Returns the texture format.
+		virtual TextureFormat GetFormat() const = 0;
 
 	};
 
