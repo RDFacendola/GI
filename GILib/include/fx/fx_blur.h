@@ -35,6 +35,11 @@ namespace gi_lib {
 			/// \param destination Destination texture containing the result.
 			virtual void Blur(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination) = 0;
 
+			/// \brief Performs a Gaussian blur of the specified texture array.
+			/// \param source Texture array to blur.
+			/// \param destination Destination texture containing the result.
+			virtual void Blur(const ObjectPtr<ITexture2DArray>& source, const ObjectPtr<IGPTexture2DArray>& destination) = 0;
+
 		};
 		
 	}

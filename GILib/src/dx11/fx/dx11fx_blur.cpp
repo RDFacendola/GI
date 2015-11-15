@@ -15,19 +15,31 @@ const Tag DX11FxGaussianBlur::kBlurKernel = "gBlurKernel";
 
 DX11FxGaussianBlur::DX11FxGaussianBlur(float sigma) {
 
-	horizontal_blur_shader_ = new DX11Computation(IComputation::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\hblur.hlsl" });
+	auto directory = Application::GetInstance().GetDirectory();
 
-	vertical_blur_shader_ = new DX11Computation(IComputation::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\vblur.hlsl" });
+	hblur_shader_ = new DX11Computation(IComputation::CompileFromFile{ directory + L"Data\\Shaders\\hblur.hlsl" });
 
-	blur_kernel_ = new DX11StructuredArray(kKernelSize, sizeof(float));
+	vblur_shader_ = new DX11Computation(IComputation::CompileFromFile{ directory + L"Data\\Shaders\\vblur.hlsl" });
+
+	hblur_array_shader_ = new DX11Computation(IComputation::CompileFromFile{ directory + L"Data\\Shaders\\hblur_array.hlsl" });
+
+	vblur_array_shader_ = new DX11Computation(IComputation::CompileFromFile{ directory + L"Data\\Shaders\\vblur_array.hlsl" });
+
+	kernel_ = new DX11StructuredArray(kKernelSize, sizeof(float));
 
 	// One-time setup
 
-	horizontal_blur_shader_->SetInput(kBlurKernel,
-									  ObjectPtr<IStructuredArray>(blur_kernel_));
+	hblur_shader_->SetInput(kBlurKernel,
+							ObjectPtr<IStructuredArray>(kernel_));
 
-	vertical_blur_shader_->SetInput(kBlurKernel,
-									ObjectPtr<IStructuredArray>(blur_kernel_));
+	vblur_shader_->SetInput(kBlurKernel,
+							ObjectPtr<IStructuredArray>(kernel_));
+
+	hblur_array_shader_->SetInput(kBlurKernel,
+								  ObjectPtr<IStructuredArray>(kernel_));
+
+	vblur_array_shader_->SetInput(kBlurKernel,
+								  ObjectPtr<IStructuredArray>(kernel_));
 
 	SetSigma(sigma);
 
@@ -37,7 +49,7 @@ void DX11FxGaussianBlur::SetSigma(float sigma){
 
 	sigma_ = sigma;
 
-	auto kernel = reinterpret_cast<float*>(blur_kernel_->Lock());
+	auto kernel = reinterpret_cast<float*>(kernel_->Lock());
 
 	// Calculate the Gaussian kernel
 
@@ -63,7 +75,7 @@ void DX11FxGaussianBlur::SetSigma(float sigma){
 
 	// Done
 
-	blur_kernel_->Unlock();
+	kernel_->Unlock();
 
 }
 
@@ -91,28 +103,81 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectP
 
 	// Horizontal blur - Source => Temp
 
-	horizontal_blur_shader_->SetInput(kSourceTexture,
-									  source);
+	hblur_shader_->SetInput(kSourceTexture,
+							source);
 
-	horizontal_blur_shader_->SetOutput(kDestinationTexture,
+	hblur_shader_->SetOutput(kDestinationTexture,
 									   ObjectPtr<IGPTexture2D>(temp_texture_));
 
-	horizontal_blur_shader_->Dispatch(*context,
-									  width,
-									  height, 
-									  1);
+	hblur_shader_->Dispatch(*context,
+							width,
+							height, 
+							1);
 
 	// Vertical blur - Temp => Destination
 
-	vertical_blur_shader_->SetInput(kSourceTexture,
-									ObjectPtr<ITexture2D>(temp_texture_->GetTexture()));
+	vblur_shader_->SetInput(kSourceTexture,
+							temp_texture_->GetTexture());
 
-	vertical_blur_shader_->SetOutput(kDestinationTexture,
-									 destination);
+	vblur_shader_->SetOutput(kDestinationTexture,
+							 destination);
 
-	vertical_blur_shader_->Dispatch(*context,
-									width,
-									height, 
-									1);
+	vblur_shader_->Dispatch(*context,
+							width,
+							height, 
+							1);
+
+}
+
+void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2DArray>& source, const ObjectPtr<IGPTexture2DArray>& destination){
+
+	auto context = DX11Graphics::GetInstance().GetImmediateContext();
+
+	auto width = source->GetWidth();
+	auto height = source->GetHeight();
+	auto depth = source->GetCount();		// dispatched along the Z axis.
+
+	auto format = destination->GetFormat();
+
+	// Lazy initialization of the working texture
+	if (temp_texture_array_ == nullptr ||
+		temp_texture_array_->GetWidth() != width ||
+		temp_texture_array_->GetHeight() != height ||
+		temp_texture_array_->GetCount() != depth ||
+		temp_texture_array_->GetFormat() != format) {
+
+		temp_texture_array_ = new DX11GPTexture2DArray(ITexture2DArray::FromDescription{ width,
+																						 height,
+																						 depth,
+																						 1,
+																						 format });
+
+	}
+
+	// Horizontal blur - Source => Temp
+
+	hblur_array_shader_->SetInput(kSourceTexture,
+								  source);
+
+	hblur_array_shader_->SetOutput(kDestinationTexture,
+								   ObjectPtr<IGPTexture2DArray>(temp_texture_array_));
+
+	hblur_array_shader_->Dispatch(*context,
+								  width,
+								  height, 
+								  depth);
+
+	// Vertical blur - Temp => Destination
+
+	vblur_array_shader_->SetInput(kSourceTexture,
+								  temp_texture_array_->GetTextureArray());
+
+	vblur_array_shader_->SetOutput(kDestinationTexture,
+								   destination);
+
+	vblur_array_shader_->Dispatch(*context,
+								  width,
+								  height, 
+								  depth);
 
 }

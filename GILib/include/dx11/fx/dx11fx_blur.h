@@ -32,6 +32,8 @@ namespace gi_lib {
 
 				virtual void Blur(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination) override;
 
+				virtual void Blur(const ObjectPtr<ITexture2DArray>& source, const ObjectPtr<IGPTexture2DArray>& destination) override;
+
 			private:
 
 				// Tonemapping
@@ -42,13 +44,19 @@ namespace gi_lib {
 
 				static const Tag kBlurKernel;								///< \brief Tag of the kernel used for weighting.
 
-				ObjectPtr<DX11Computation> horizontal_blur_shader_;			///< \brief Used to perform the horizontal blur pass.
+				ObjectPtr<DX11StructuredArray> kernel_;						///< \brief Contains the actual values of the kernel.
 
-				ObjectPtr<DX11Computation> vertical_blur_shader_;			///< \brief Used to perform the vertical blur pass.
+				ObjectPtr<DX11Computation> hblur_shader_;					///< \brief Used to perform the horizontal blur pass.
 
-				ObjectPtr<DX11StructuredArray> blur_kernel_;				///< \brief Contains the actual values of the kernel.
+				ObjectPtr<DX11Computation> vblur_shader_;					///< \brief Used to perform the vertical blur pass.
 
-				ObjectPtr<DX11GPTexture2D> temp_texture_;					///< \brief Temporary texture containing the first pass of the Gaussian blur
+				ObjectPtr<DX11Computation> hblur_array_shader_;				///< \brief Used to perform the horizontal blur pass for texture arrays.
+
+				ObjectPtr<DX11Computation> vblur_array_shader_;				///< \brief Used to perform the vertical blur pass for texture arrays.
+
+				ObjectPtr<DX11GPTexture2D> temp_texture_;					///< \brief Temporary texture containing the first pass of the Gaussian blur.
+
+				ObjectPtr<DX11GPTexture2DArray> temp_texture_array_;		///< \brief Temporary texture array containing the first pass of the Gaussian blur.
 
 				float sigma_;												///< \brief Variance of the Gaussian function.
 
