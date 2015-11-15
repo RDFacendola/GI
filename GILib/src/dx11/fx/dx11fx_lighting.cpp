@@ -159,7 +159,7 @@ void DX11FxBloom::InitializeSurfaces(const ObjectPtr<ITexture2D>& source) {
 
 	// Blur and glow surfaces have the same size and format, it is sufficient to check only one of those.
 
-	auto format = resource_cast(source)->GetFormat();
+	auto format = source->GetFormat();
 
 	unsigned int scaled_width = static_cast<unsigned int>(source->GetWidth() * blur_scaling_(0));
 	unsigned int scaled_height = static_cast<unsigned int>(source->GetHeight() * blur_scaling_(1));
@@ -169,13 +169,14 @@ void DX11FxBloom::InitializeSurfaces(const ObjectPtr<ITexture2D>& source) {
 		blur_surface_->GetHeight() != scaled_height ||
 		format != blur_surface_->GetFormat()) {
 
-		blur_surface_ = new DX11GPTexture2D(scaled_width,
-											scaled_height,
-											format);
+		blur_surface_ = new DX11GPTexture2D(IGPTexture2D::FromDescription{ scaled_width,
+																		   scaled_height,
+																		   1,
+																		   format });
 		
-		glow_surface_= new DX11RenderTarget(scaled_width,
-											scaled_height,
-											{ format });
+		glow_surface_ = new DX11RenderTarget(IRenderTarget::FromDescription{ scaled_width,
+																			 scaled_height,
+																			 { format } });
 	}
 	
 }

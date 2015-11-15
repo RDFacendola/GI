@@ -98,10 +98,7 @@ namespace gi_lib{
 		public:
 
 			/// \brief Create a multiple render target array.
-			/// \param width Width of each target.
-			/// \param height Height of each target.
-			/// \param target_format Describe the format of each target.
-			DX11RenderTarget(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format);
+			DX11RenderTarget(const IRenderTarget::FromDescription& args);
 
 			/// \brief Create a render target from a render target view.
 			DX11RenderTarget(const COMPtr<ID3D11RenderTargetView>& render_target_view);
@@ -151,7 +148,7 @@ namespace gi_lib{
 			/// \param width The width of each texture.
 			/// \param height The height of each texture.
 			/// \param target_format The format of each texture.
-			void CreateSurfaces(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format);
+			void CreateSurfaces(unsigned int width, unsigned int height, const std::vector<TextureFormat>& target_format);
 
 			std::vector<ObjectPtr<DX11RenderTexture2D>> render_target_;			///< \brief Render target surfaces.
 
@@ -168,11 +165,7 @@ namespace gi_lib{
 		public:
 
 			/// \brief Create a render target array.
-			/// \param width Width of each target.
-			/// \param height Height of each target.
-			/// \param count Elements inside the array.
-			/// \param format Describe the format of each slice.
-			DX11RenderTargetArray(unsigned int width, unsigned int height, unsigned int count, DXGI_FORMAT format);
+			DX11RenderTargetArray(const IRenderTargetArray::FromDescription& args);
 
 			virtual ~DX11RenderTargetArray();
 

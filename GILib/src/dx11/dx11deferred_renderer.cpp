@@ -366,10 +366,10 @@ void DX11DeferredRenderer::BindGBuffer(const FrameInfo& frame_info){
 
 		// Lazy initialization
 
-		gbuffer_ = new DX11RenderTarget(frame_info.width,
-										frame_info.height,
-										{ DXGI_FORMAT_R16G16B16A16_FLOAT,
-										  DXGI_FORMAT_R16G16B16A16_FLOAT });
+		gbuffer_ = new DX11RenderTarget(IRenderTarget::FromDescription{ frame_info.width,
+																		frame_info.height,
+																		{ TextureFormat::RGBA_HALF,
+																		  TextureFormat::RGBA_HALF } } );
 
 	}
 	else{
@@ -448,9 +448,10 @@ void DX11DeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
 		light_buffer_->GetWidth() != frame_info.width ||
 		light_buffer_->GetHeight() != frame_info.height){
 
-		light_buffer_ = new DX11GPTexture2D(frame_info.width,
-											frame_info.height,											
-											DXGI_FORMAT_R11G11B10_FLOAT);
+		light_buffer_ = new DX11GPTexture2D(IGPTexture2D::FromDescription{ frame_info.width,
+																		   frame_info.height,
+																		   1,
+																		   TextureFormat::RGB_FLOAT });
 		
 	}
 
@@ -584,13 +585,14 @@ void DX11DeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
 		 bloom_output_->GetWidth() != frame_info.width ||
 		 bloom_output_->GetHeight() != frame_info.height) {
 
-		bloom_output_ = new DX11RenderTarget(frame_info.width,
-											 frame_info.height, 
-											 { DXGI_FORMAT_R11G11B10_FLOAT });
+		bloom_output_ = new DX11RenderTarget(IRenderTarget::FromDescription{ frame_info.width,
+																			 frame_info.height,
+																			 { TextureFormat::RGB_FLOAT } });
 
-		tonemap_output_ = new DX11GPTexture2D(frame_info.width,
-											  frame_info.height, 
-											  DXGI_FORMAT_R8G8B8A8_UNORM);
+		tonemap_output_ = new DX11GPTexture2D(IGPTexture2D::FromDescription{ frame_info.width,
+																			 frame_info.height,
+																			 1,
+																			 TextureFormat::RGBA_HALF_UNORM });
 
 	}
 

@@ -45,8 +45,7 @@ namespace gi_lib{
 
 			virtual unsigned int GetMIPCount() const override;
 
-			/// \brief Get the surface format.
-			DXGI_FORMAT GetFormat() const;
+			virtual TextureFormat GetFormat() const override;
 
 			/// \brief Get the shader resource view used to bind this texture to the pipeline.
 			ShaderResourceView GetShaderResourceView();
@@ -68,7 +67,7 @@ namespace gi_lib{
 
 			unsigned int mip_levels_;									///< \brief MIP levels.
 
-			DXGI_FORMAT format_;										///< \brief Surface format.
+			TextureFormat format_;										///< \brief Surface format.
 
 		};
 
@@ -78,7 +77,8 @@ namespace gi_lib{
 
 		public:
 
-			DX11GPTexture2D(unsigned int width, unsigned int height, DXGI_FORMAT format, unsigned int mips = 1);
+			/// \brief Create a new general-purpose 2D texture from an explicit description.
+			DX11GPTexture2D(const IGPTexture2D::FromDescription& args);
 
 			virtual ObjectPtr<ITexture2D> GetTexture() override;
 
@@ -88,10 +88,10 @@ namespace gi_lib{
 
 			virtual unsigned int GetMIPCount() const override;
 
+			virtual TextureFormat GetFormat() const override;
+
 			virtual size_t GetSize() const override;
-
-			DXGI_FORMAT GetFormat() const;
-
+						
 			/// \brief Get the shader resource view used to bind this texture to the pipeline.
 			ShaderResourceView GetShaderResourceView();
 
@@ -151,6 +151,39 @@ namespace gi_lib{
 
 		};
 
+		/// \brief DirectX11 general-purpose 2D texture array.
+		class DX11GPTexture2DArray : public IGPTexture2DArray {
+
+		public:
+
+			DX11GPTexture2DArray(const ITexture2DArray::FromDescription& args);
+
+			virtual ObjectPtr<ITexture2DArray> GetTextureArray() override;
+
+			virtual unsigned int GetWidth() const override;
+
+			virtual unsigned int GetHeight() const override;
+
+			virtual unsigned int GetMIPCount() const override;
+
+			virtual unsigned int GetCount() const override;
+
+			virtual size_t GetSize() const override;
+
+			/// \brief Get the shader resource view used to bind this texture to the pipeline.
+			ShaderResourceView GetShaderResourceView();
+
+			/// \brief Get the unordered access view used to bind this texture to the pipeline.
+			UnorderedAccessView GetUnorderedAccessView();
+
+		private:
+
+			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;		///< \brief Pointer to the unordered access view of the texture array.
+
+			ObjectPtr<DX11Texture2DArray> texture_array_;					///< \brief Underlying texture array.
+
+		};
+
 		/// \brief Downcasts an ITexture2D to the proper concrete type.
 		ObjectPtr<DX11Texture2D> resource_cast(const ObjectPtr<ITexture2D>& resource);
 
@@ -159,6 +192,19 @@ namespace gi_lib{
 
 		/// \brief Downcasts an ITexture2DArray to the proper concrete type.
 		ObjectPtr<DX11Texture2DArray> resource_cast(const ObjectPtr<ITexture2DArray>& resource);
+		
+		/// \brief Downcasts an IGPTexture2DArray to the proper concrete type.
+		ObjectPtr<DX11GPTexture2DArray> resource_cast(const ObjectPtr<IGPTexture2DArray>& resource);
+
+		/// \brief Convert a texture format to a DXGI format used by DirectX11.
+		/// \param texture_format Texture format to convert.
+		/// \return Returns the DXGI format corresponding to the texture format specified. If no conversion could be performed, returns DXGI_FORMAT_UNKNOWN.
+		DXGI_FORMAT TextureFormatToDXGIFormat(const TextureFormat& texture_format);
+
+		/// \brief Convert a DXGI format used by DirectX11 to a texture format.
+		/// \param texture_format Texture format to convert.
+		/// \return Returns the texture format corresponding to the texture format specified.
+		TextureFormat DXGIFormatToTextureFormat(const DXGI_FORMAT& texture_format);
 		
 		/////////////////////////////// DX11 TEXTURE2D ///////////////////////////////
 		
@@ -182,7 +228,7 @@ namespace gi_lib{
 
 		}
 
-		inline DXGI_FORMAT DX11Texture2D::GetFormat() const{
+		inline TextureFormat DX11Texture2D::GetFormat() const{
 
 			return format_;
 
@@ -209,7 +255,7 @@ namespace gi_lib{
 
 		///////////////////////////// DX11 GP TEXTURE2D //////////////////////////////
 		
-		//INSTANTIABLE(IGPTexture2D, DX11GPTexture2D, IGPTexture2D::FromDescription);
+		INSTANTIABLE(IGPTexture2D, DX11GPTexture2D, IGPTexture2D::FromDescription);
 
 		inline ObjectPtr<ITexture2D> DX11GPTexture2D::GetTexture()
 		{
@@ -239,7 +285,7 @@ namespace gi_lib{
 
 		}
 
-		inline DXGI_FORMAT DX11GPTexture2D::GetFormat() const {
+		inline TextureFormat DX11GPTexture2D::GetFormat() const {
 
 			return texture_->GetFormat();
 
@@ -316,6 +362,61 @@ namespace gi_lib{
 
 		}
 		
+		///////////////////////////// DX11 GP TEXTURE 2D ARRAY //////////////////////////////
+
+		INSTANTIABLE(IGPTexture2DArray, DX11GPTexture2DArray, ITexture2DArray::FromDescription);
+
+		inline ObjectPtr<ITexture2DArray> DX11GPTexture2DArray::GetTextureArray(){
+			
+			return ObjectPtr<ITexture2DArray>(texture_array_);
+
+		}
+
+		inline unsigned int DX11GPTexture2DArray::GetWidth() const{
+			
+			return texture_array_->GetWidth();
+
+		}
+
+		inline unsigned int DX11GPTexture2DArray::GetHeight() const{
+			
+			return texture_array_->GetHeight();
+
+		}
+
+		inline unsigned int DX11GPTexture2DArray::GetMIPCount() const{
+
+			return texture_array_->GetMIPCount();
+
+		}
+
+		inline unsigned int DX11GPTexture2DArray::GetCount() const{
+
+			return texture_array_->GetCount();
+
+		}
+
+		inline size_t DX11GPTexture2DArray::GetSize() const{
+
+			return texture_array_->GetSize();
+
+		}
+
+		/// \brief Get the shader resource view used to bind this texture to the pipeline.
+		inline ShaderResourceView DX11GPTexture2DArray::GetShaderResourceView() {
+
+			return texture_array_->GetShaderResourceView();
+
+		}
+
+		/// \brief Get the unordered access view used to bind this texture to the pipeline.
+		inline UnorderedAccessView DX11GPTexture2DArray::GetUnorderedAccessView() {
+
+			return UnorderedAccessView(this,
+									   unordered_access_view_);
+
+		}
+
 		///////////////////////////// RESOURCE CAST ////////////////////////////////
 
 		inline ObjectPtr<DX11Texture2D> resource_cast(const ObjectPtr<ITexture2D>& resource){
@@ -333,6 +434,12 @@ namespace gi_lib{
 		inline ObjectPtr<DX11Texture2DArray> resource_cast(const ObjectPtr<ITexture2DArray>& resource) {
 
 			return ObjectPtr<DX11Texture2DArray>(resource.Get());
+
+		}
+
+		inline ObjectPtr<DX11GPTexture2DArray> resource_cast(const ObjectPtr<IGPTexture2DArray>& resource) {
+
+			return ObjectPtr<DX11GPTexture2DArray>(resource.Get());
 
 		}
 

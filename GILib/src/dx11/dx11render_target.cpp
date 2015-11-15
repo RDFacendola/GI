@@ -133,11 +133,11 @@ void DX11RenderTexture2D::Clear(ID3D11DeviceContext& context, Color color){
 
 ///////////////////////////// RENDER TARGET ///////////////////////////////////////
 
-DX11RenderTarget::DX11RenderTarget(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format){
+DX11RenderTarget::DX11RenderTarget(const IRenderTarget::FromDescription& args){
 	
-	CreateSurfaces(width,
-				   height,
-			       target_format);
+	CreateSurfaces(args.width,
+				   args.height,
+			       args.format);
 	
 }
 
@@ -181,7 +181,7 @@ bool DX11RenderTarget::Resize(unsigned int width, unsigned int height){
 
 	// Naive approach: discard the old targets and create the new ones preserving the old settings
 
-	std::vector<DXGI_FORMAT> target_format;
+	std::vector<TextureFormat> target_format;
 
 	target_format.reserve(render_target_.size());
 
@@ -268,7 +268,7 @@ void DX11RenderTarget::Unbind(ID3D11DeviceContext& context){
 
 }
 
-void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, const std::vector<DXGI_FORMAT>& target_format){
+void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, const std::vector<TextureFormat>& target_format){
 
 	// If the method throws ensures that the resource is left in a clean state.
 
@@ -287,7 +287,7 @@ void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, c
 
 		render_target_.push_back(new DX11RenderTexture2D(width,
 														 height,
-														 format,
+														 TextureFormatToDXGIFormat(format),
 														 false));
 	}
 
@@ -311,7 +311,7 @@ void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, c
 
 DX11RenderTargetArray::~DX11RenderTargetArray() {}
 
-DX11RenderTargetArray::DX11RenderTargetArray(unsigned int width, unsigned int height, unsigned int count, DXGI_FORMAT format) {
+DX11RenderTargetArray::DX11RenderTargetArray(const IRenderTargetArray::FromDescription& args) {
 
 	// If the method throws ensures that the resource is left in a clean state.
 
@@ -322,16 +322,16 @@ DX11RenderTargetArray::DX11RenderTargetArray(unsigned int width, unsigned int he
 		rtv_list_.clear();
 
 	});
-
+	
 	// Create the render target surfaces.
 	ID3D11ShaderResourceView* srv;
 	vector<ID3D11RenderTargetView*> rtv_list;
 
 	THROW_ON_FAIL(MakeRenderTargetArray(*DX11Graphics::GetInstance().GetDevice(),
-										width,
-										height,
-										count,
-										format,
+										args.width,
+										args.height,
+										args.count,
+										TextureFormatToDXGIFormat(args.format),
 										&srv,
 										&rtv_list,
 										false));
@@ -348,13 +348,13 @@ DX11RenderTargetArray::DX11RenderTargetArray(unsigned int width, unsigned int he
 
 	// Depth buffer
 
-	depth_stencil_ = new DX11DepthTexture2D(width,
-											height);
+	depth_stencil_ = new DX11DepthTexture2D(args.width,
+											args.height);
 
 	// Viewport
 
-	viewport_ = MakeViewport(width,
-							 height);
+	viewport_ = MakeViewport(args.width,
+							 args.height);
 
 	// Cleanup
 

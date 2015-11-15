@@ -6,9 +6,12 @@
 #pragma once
 
 #include "object.h"
+
 #include "dx11sampler.h"
 #include "dx11render_target.h"
 #include "dx11material.h"
+
+#include "fx\dx11fx_blur.h"
 
 namespace gi_lib {
 
@@ -119,6 +122,8 @@ namespace gi_lib {
 
 			ObjectPtr<DX11RenderTargetArray> atlas_;				///< \brief Array of render targets used as shadow atlas.
 
+			ObjectPtr<DX11GPTexture2DArray> blur_atlas_;			///< \brief Contains the blurred version of the shadows stored inside the atlas.
+
 			ObjectPtr<DX11Sampler> sampler_;						///<\ brief Sampler used to sample the VSM.
 
 			ObjectPtr<DX11Material> shadow_material_;				///< \brief Material used to write the VSM.
@@ -126,6 +131,8 @@ namespace gi_lib {
 			ObjectPtr<DX11StructuredBuffer> per_object_;			///< \brief Per-object constant buffer.
 
 			ObjectPtr<DX11StructuredBuffer> per_light_;				///< \brief Per-light constant buffer.
+
+			unique_ptr<fx::DX11FxGaussianBlur> fx_blur_;			///< \brief Used to blur the shadowmap.
 
 			unsigned int point_shadows_;							///< \brief Number of point shadows stored so far.
 

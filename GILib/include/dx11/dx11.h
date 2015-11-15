@@ -163,6 +163,17 @@ namespace gi_lib{
 		/// \param mips Number of mip maps to generate. If 0 is passed, the full chain is created.
 		HRESULT MakeUnorderedTexture(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, unsigned int mips = 1);
 
+		/// \brief Create a 2D texture array that can be bound to a compute shader as unordered access.
+		/// \param device Device used to create the texture.
+		/// \param width Width of the texture in pixels.
+		/// \param height Height of the texture in pixels.
+		/// \param count Number of elements in the array.
+		/// \param format Format of the surface.
+		/// \param unordered_access_view Pointer to the unordered access view. Optional.
+		/// \param shader_resource_view Pointer to the shader resource view. Optional.
+		/// \param mips Number of mip maps to generate. If 0 is passed, the full chain is created.
+		HRESULT MakeUnorderedTextureArray(ID3D11Device& device, unsigned int width, unsigned int height, unsigned int count, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, unsigned int mips = 1);
+		
 		/// \brief Create a vertex buffer.
 		/// \tparam TVertexFormat Format of the vertex.
 		/// \param device Device used to create the vertex buffer.

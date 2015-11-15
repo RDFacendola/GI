@@ -180,7 +180,7 @@ void GILogic::Update(const Time & time){
 
 	fly_camera->Update(time);
 	
-	if (input_->GetKeyboardStatus().IsPressed((25))){
+	if (input_->GetKeyboardStatus().IsPressed((25))){		// "P"
 
 		paused_ = !paused_;
 

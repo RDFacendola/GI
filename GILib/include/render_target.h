@@ -7,7 +7,10 @@
 
 #pragma once
 
+#include <vector>
+
 #include "resources.h"
+#include "texture.h"
 
 namespace gi_lib{
 
@@ -23,6 +26,20 @@ namespace gi_lib{
 	class IRenderTarget : public IResource{
 
 	public:
+
+		/// \brief Structure used to create an empty render target from an explicit description.
+		/// \author Raffaele D. Facendola.
+		struct FromDescription {
+
+			NO_CACHE;
+
+			unsigned int width;						///< \brief Width of the most detailed level of the texture.
+
+			unsigned int height;					///< \brief Height of the most detailed level of the texture.
+
+			std::vector<TextureFormat> format;		///< \brief Format of each render target surface.
+
+		};
 
 		virtual ~IRenderTarget(){};
 
@@ -74,6 +91,22 @@ namespace gi_lib{
 	class IRenderTargetArray : public IResource {
 		
 	public:
+
+		/// \brief Structure used to create an empty render target array from an explicit description.
+		/// \author Raffaele D. Facendola.
+		struct FromDescription {
+
+			NO_CACHE;
+
+			unsigned int width;			///< \brief Width of the most detailed level of the texture.
+
+			unsigned int height;		///< \brief Height of the most detailed level of the texture.
+
+			unsigned int count;			///< \brief Elements inside the array
+
+			TextureFormat format;		///< \brief Format of the texture.
+
+		};
 
 		virtual ~IRenderTargetArray() {};
 

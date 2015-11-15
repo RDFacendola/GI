@@ -66,11 +66,19 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pag
 
 	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
 
-	atlas_ = new DX11RenderTargetArray(width, 
-									   height, 
-									   pages, 
-									   full_precision ? DXGI_FORMAT_R32G32_FLOAT : DXGI_FORMAT_R16G16_FLOAT);
+	auto format = full_precision ? TextureFormat::RG_FLOAT : TextureFormat::RG_HALF;
+
+	atlas_ = new DX11RenderTargetArray(IRenderTargetArray::FromDescription{ width, 
+																		    height, 
+																		    pages,
+																		    format } );
 	
+	blur_atlas_ = new DX11GPTexture2DArray(ITexture2DArray::FromDescription{ width, 
+																			 height, 
+																			 pages,
+																			 1, 
+																			 format } );
+
 	shadow_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\vsm.hlsl" });
 
 	per_object_ = new DX11StructuredBuffer(sizeof(PerObject));

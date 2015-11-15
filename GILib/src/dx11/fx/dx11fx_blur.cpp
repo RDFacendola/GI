@@ -73,7 +73,7 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectP
 
 	auto width = source->GetWidth();
 	auto height = source->GetHeight();
-	auto format = resource_cast(destination)->GetFormat();
+	auto format = destination->GetFormat();
 
 	// Lazy initialization of the working texture
 	if (temp_texture_ == nullptr ||
@@ -81,7 +81,10 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectP
 		temp_texture_->GetHeight() != height ||
 		temp_texture_->GetFormat() != format) {
 
-		temp_texture_ = new DX11GPTexture2D(width, height, format);
+		temp_texture_ = new DX11GPTexture2D(IGPTexture2D::FromDescription{ width,
+																		   height,
+																		   1,
+																		   format });
 
 
 	}
