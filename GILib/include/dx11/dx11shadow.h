@@ -71,6 +71,9 @@ namespace gi_lib {
 			/// \brief Clear the atlas from any existing shadowmap and reinitializes the shadowmap.
 			void Begin();
 
+			/// \brief Finalize the shadows and commit the result to the final atlas.
+			void Commit();
+
 			/// \brief Computes a variance shadowmap.
 			/// \param point_light Point light casting the shadow.
 			/// \param scene Scene containing the caster geometry.
@@ -132,7 +135,7 @@ namespace gi_lib {
 
 			ObjectPtr<DX11StructuredBuffer> per_light_;				///< \brief Per-light constant buffer.
 
-			unique_ptr<fx::DX11FxGaussianBlur> fx_blur_;			///< \brief Used to blur the shadowmap.
+			fx::DX11FxGaussianBlur fx_blur_;						///< \brief Used to blur the shadowmap.
 
 			unsigned int point_shadows_;							///< \brief Number of point shadows stored so far.
 
@@ -142,7 +145,7 @@ namespace gi_lib {
 
 		inline ObjectPtr<ITexture2DArray> DX11VSMAtlas::GetAtlas() {
 
-			return atlas_->GetRenderTargets();
+			return blur_atlas_->GetTextureArray();
 
 		}
 				

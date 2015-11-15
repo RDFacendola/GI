@@ -136,8 +136,8 @@ void GILogic::Initialize(Window& window){
 void GILogic::SetupLights(Scene& scene) {
 
 	// Point lights
-	static std::vector<Color> kLightColors{ Color(25.f, 10.f, 10.f, 1.f),
-											Color(10.f, 25.f, 10.f, 1.f),
+	static std::vector<Color> kLightColors{ Color(25.f, 25.f, 25.f, 1.f),
+											Color(25.f, 25.f, 25.f, 1.f),
 											/* Color(10.f, 10.f, 25.f, 1.f),
 											Color(25.f, 25.f, 10.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),

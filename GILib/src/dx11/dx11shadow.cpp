@@ -28,7 +28,8 @@ namespace {
 const Tag DX11VSMAtlas::kPerObject = "PerObject";
 const Tag DX11VSMAtlas::kPerLight = "PerLight";
 
-DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pages, bool full_precision) {
+DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pages, bool full_precision) :
+	fx_blur_(1.67f){
 
 	auto&& device = *DX11Graphics::GetInstance().GetDevice();
 
@@ -112,9 +113,18 @@ void DX11VSMAtlas::Begin() {
 
 }
 
+void DX11VSMAtlas::Commit() {
+
+	// Blur the shadowmaps contained inside the atlas and store the result inside the blurred version of the atlas.
+
+	fx_blur_.Blur(atlas_->GetRenderTargets(),
+				  ObjectPtr<IGPTexture2DArray>(blur_atlas_));
+	
+}
+
 bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow) {
 
-	static const Vector2f uv_dimensions(0.50f, 0.25f);		// Simplification: each point light needs the same precision.
+	static const Vector2f uv_dimensions(1.f, 0.5f);		// Simplification: each point light needs the same precision.
 
 	if (!point_light.IsShadowEnabled()) {
 
@@ -126,8 +136,8 @@ bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, cons
 	auto light_transform = point_light.GetWorldTransform().inverse();
 
 	shadow.atlas_page = 0;
-	shadow.min_uv = Vector2f(uv_dimensions(0) * (point_shadows_ / 4),
-							 uv_dimensions(1) * (point_shadows_ % 4));
+	shadow.min_uv = Vector2f(uv_dimensions(0) * (point_shadows_ / 2),
+							 uv_dimensions(1) * (point_shadows_ % 2));
 
 	shadow.max_uv = shadow.min_uv + uv_dimensions;
 	shadow.near_plane = 1.0f;

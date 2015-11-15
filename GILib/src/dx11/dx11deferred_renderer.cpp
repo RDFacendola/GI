@@ -516,7 +516,12 @@ void DX11DeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& light
 	directional_shadows_->Unlock();
 	light_accumulation_parameters_->Unlock();
 	
+	// Finalize the shadows
+	
+	shadow_atlas_->Commit();
+
 	// These entities may change from frame to frame
+	
 	bool check;
 
 	check = light_shader_->SetInput(kAlbedoTag,
