@@ -44,6 +44,15 @@ namespace gi_lib {
 		/// \param enable True if the light should cast shadows, false otherwise.
 		void EnableShadow(bool enable);
 
+		/// \brief Get the shadowmap size associated to this light.
+		/// A shadowmap is always square with an edge of 2^Size pixels.
+		/// \return Returns the shadowmap size associated to this light.
+		unsigned int GetShadowMapSize() const;
+
+		/// \brief Set the shadowmap size associated to this light.
+		/// \param size The size of the shadowmap. A shadowmap is always square with an edge of 2^Size pixels.
+		void SetShadowMapSize(unsigned int size);
+
 	protected:
 
 		virtual void Initialize() override;
@@ -64,8 +73,10 @@ namespace gi_lib {
 
 		bool shadow_enabled_;									///< \brief Whether the light casts shadows or not.
 
+		unsigned int shadowmap_size_;							///< \brief The size of the shadowmap. A shadowmap is always square with an edge of 2^Size pixels.
+		
 		Color color_;											///< \brief The light color.
-
+				
 		TransformComponent* transform_;							///< \brief Pointer to the transform component for faster access.
 
 		unique_ptr<Listener> on_transform_changed_lister_;		///< \brief Listener for the transform changed event.
@@ -189,6 +200,10 @@ namespace gi_lib {
 
 		virtual TypeSet GetTypes() const override;
 
+		/// \brief Get the light's world transform.
+		/// \return Returns the light's world transform.
+		Affine3f GetWorldTransform() const;
+
 		/// \brief Get the light's direction.
 		/// \return Returns the light's direction.
 		Vector3f GetDirection() const;
@@ -306,7 +321,8 @@ namespace gi_lib {
 
 	inline BaseLightComponent::BaseLightComponent(const Color& color) : 
 		color_(color),
-		shadow_enabled_(false){}
+		shadow_enabled_(false),
+		shadowmap_size_(8){}
 
 	inline Color BaseLightComponent::GetColor() const {
 
@@ -336,6 +352,18 @@ namespace gi_lib {
 	inline void BaseLightComponent::EnableShadow(bool enabled) {
 
 		shadow_enabled_ = enabled;
+
+	}
+
+	inline unsigned int BaseLightComponent::GetShadowMapSize() const {
+
+		return shadowmap_size_;
+
+	}
+
+	inline void BaseLightComponent::SetShadowMapSize(unsigned int size) {
+
+		shadowmap_size_ = size;
 
 	}
 
@@ -461,6 +489,12 @@ namespace gi_lib {
 
 		// A directional light is infinite in size and range
 		return IntersectionType::kIntersect;
+
+	}
+
+	inline Affine3f DirectionalLightComponent::GetWorldTransform() const {
+
+		return GetTransformComponent().GetWorldTransform();
 
 	}
 
