@@ -1,5 +1,7 @@
 #include "dx11/dx11shadow.h"
 
+#include <algorithm>
+
 #include "dx11/dx11graphics.h"
 #include "dx11/dx11mesh.h"
 
@@ -9,6 +11,9 @@
 using namespace ::std;
 using namespace ::gi_lib;
 using namespace ::dx11;
+
+#undef max
+#undef min
 
 namespace {
 
@@ -122,9 +127,9 @@ void DX11VSMAtlas::Commit() {
 	
 }
 
-bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow) {
+bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow, float near_plane, float far_plane) {
 
-	static const Vector2f uv_dimensions(1.f, 0.5f);		// Simplification: each point light needs the same precision.
+	static const Vector2f uv_dimensions(1.0f, 0.5f);		// Simplification: each point light needs the same precision.
 
 	if (!point_light.IsShadowEnabled()) {
 
@@ -136,12 +141,14 @@ bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, cons
 	auto light_transform = point_light.GetWorldTransform().inverse();
 
 	shadow.atlas_page = 0;
-	shadow.min_uv = Vector2f(uv_dimensions(0) * (point_shadows_ / 2),
-							 uv_dimensions(1) * (point_shadows_ % 2));
+
+	shadow.min_uv = Vector2f(uv_dimensions(0) * (point_shadows_ / 4),
+							 uv_dimensions(1) * (point_shadows_ % 4));
 
 	shadow.max_uv = shadow.min_uv + uv_dimensions;
-	shadow.near_plane = 1.0f;
-	shadow.far_plane = point_light.GetBoundingSphere().radius;
+
+	shadow.near_plane = std::max(0.0f, near_plane);
+	shadow.far_plane = std::min(point_light.GetBoundingSphere().radius, far_plane);
 	shadow.light_view_matrix = light_transform.matrix();
 	shadow.enabled = 1;
 
