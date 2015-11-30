@@ -78,17 +78,18 @@ namespace gi_lib {
 			/// \param point_light Point light casting the shadow.
 			/// \param scene Scene containing the caster geometry.
 			/// \param shadow Structure containing the data used to access the shadowmap for the HLSL code.
+			/// \param near_plane Geometry nearer than this threshold is considered fully lit.
+			/// \param far_plane Geometry farthest than this threshold is considered fully shadowed.
 			/// \return Returns true if the shadowmap was calculated correctly, returns false otherwise.
-			bool ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow);
-
+			bool ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow, float near_plane = 1.0f, float far_plane = std::numeric_limits<float>::infinity());
+			
 			/// \brief Computes a variance shadowmap.
 			/// \param directional_light Point light casting the shadow.
 			/// \param scene Scene containing the caster geometry.
 			/// \param shadow Structure containing the data used to access the shadowmap for the HLSL code.
 			/// \return Returns true if the shadowmap was calculated correctly, returns false otherwise.
 			bool ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow);
-
-
+			
 			/// \brief Get the shadow atlas.
 			ObjectPtr<ITexture2DArray> GetAtlas();
 
@@ -100,20 +101,6 @@ namespace gi_lib {
 			static const Tag kPerObject;							///< \brief Tag of the per-object constant buffer.
 
 			static const Tag kPerLight;								///< \brief Tag of the per-light constant buffer.
-
-			struct PerObject {
-
-				Matrix4f world_light;								///< \brief World * Light-view matrix.
-
-			};
-
-			struct PerLight {
-
-				float near_plane;									///< \brief Near clipping plane.
-
-				float far_plane;									///< \brief Far clipping plane.
-
-			};
 
 			void DrawShadowmap(const PointShadow&, const vector<VolumeComponent*>& nodes, const Affine3f& light_view_transform);
 

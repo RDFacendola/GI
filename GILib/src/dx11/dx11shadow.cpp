@@ -16,7 +16,23 @@ using namespace ::dx11;
 #undef min
 
 namespace {
+	
+	/// \brief Vertex shader constant buffer used to draw the geometry from the light perspective.
+	struct VSMPerObjectCBuffer {
 
+		Matrix4f world_light;								///< \brief World * Light-view matrix.
+
+	};
+
+	/// \brief Pixel shader constant buffer used to project the fragments to paraboloid space.
+	struct VSMPerLightCBuffer {
+
+		float near_plane;									///< \brief Near clipping plane.
+
+		float far_plane;									///< \brief Far clipping plane.
+
+	};
+	
 	/// \brief Draw a mesh subset using the given context.
 	inline void DrawIndexedSubset(ID3D11DeviceContext& context, const MeshSubset& subset) {
 
@@ -87,9 +103,9 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pag
 
 	shadow_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\vsm.hlsl" });
 
-	per_object_ = new DX11StructuredBuffer(sizeof(PerObject));
+	per_object_ = new DX11StructuredBuffer(sizeof(VSMPerObjectCBuffer));
 
-	per_light_ = new DX11StructuredBuffer(sizeof(PerLight));
+	per_light_ = new DX11StructuredBuffer(sizeof(VSMPerLightCBuffer));
 
 	// One-time setup
 
@@ -164,6 +180,44 @@ bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, cons
 
 }
 
+bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow) {
+
+	if (!directional_light.IsShadowEnabled()) {
+
+		shadow.enabled = 0;
+		return false;
+
+	}
+/*
+
+	static const Vector2f uv_dimensions(1.0f, 0.5f);		// Simplification: each point light needs the same precision.
+
+	auto light_transform = directional_light.GetWorldTransform().inverse();
+
+
+	shadow.atlas_page = 0;
+	
+	shadow.min_uv = Vector2f(uv_dimensions(0) * (point_shadows_ / 4),
+							 uv_dimensions(1) * (point_shadows_ % 4));
+
+	shadow.max_uv = shadow.min_uv + uv_dimensions;
+
+	shadow.light_view_matrix = light_transform.matrix();
+	shadow.enabled = 1;
+
+	// Render the geometry that can be seen from the light
+
+	DrawShadowmap(shadow,
+				  scene.GetMeshHierarchy().GetIntersections(directional_light.GetBoundingSphere()),
+				  light_transform);
+
+	++point_shadows_;
+*/
+
+	return true;
+
+}
+
 void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Affine3f& light_view_transform){
 
 	D3D11_VIEWPORT view_port;
@@ -177,7 +231,7 @@ void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeC
 
 	// Per-light setup
 
-	auto& per_light_front = *per_light_->Lock<PerLight>();
+	auto& per_light_front = *per_light_->Lock<VSMPerLightCBuffer>();
 
 	per_light_front.near_plane = shadow.near_plane;
 	per_light_front.far_plane = shadow.far_plane;
@@ -213,7 +267,7 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Aff
 
 			immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);		// Override with 3-point patches
 
-			auto& per_object = *per_object_->Lock<PerObject>();
+			auto& per_object = *per_object_->Lock<VSMPerObjectCBuffer>();
 
 			per_object.world_light = (light_view_transform * mesh_component.GetWorldTransform()).matrix();
 
@@ -226,7 +280,7 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Aff
 				// Draw	the subset
 
 				DrawIndexedSubset(*immediate_context_,
-								  mesh->GetSubset(subset_index));
+									mesh->GetSubset(subset_index));
 
 			}
 
@@ -236,17 +290,3 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Aff
 
 }
 
-bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow) {
-
-	if (!directional_light.IsShadowEnabled()) {
-
-		shadow.enabled = 0;
-		return false;
-
-	}
-
-	shadow.enabled = false;
-
-	return false;
-
-}
