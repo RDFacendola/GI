@@ -383,14 +383,14 @@ HRESULT gi_lib::dx11::MakeUnorderedTextureArray(ID3D11Device& device, unsigned i
 
 	ZeroMemory(&desc, sizeof(D3D11_TEXTURE2D_DESC));
 
-	desc.ArraySize = 1;
+	desc.ArraySize = count;
 	desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
 	desc.CPUAccessFlags = 0;
 	desc.Format = format;
 	desc.Width = width;
 	desc.Height = height;
 	desc.MipLevels = mips;
-	desc.SampleDesc.Count = count;
+	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
 	desc.Usage = D3D11_USAGE_DEFAULT;
 	desc.MiscFlags = 0;
