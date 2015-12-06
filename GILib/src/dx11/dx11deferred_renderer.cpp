@@ -38,12 +38,12 @@ namespace{
 
 		Matrix4f projection_matrix;
 
+		// Hey this method should totally become a member method of the camera component!
+		// NOPE! DirectX and OpenGL calculate the projection differently (mostly because of the near plane which, in the first, case goes from 0 to 1, in the latter goes from -1 to 1).
+		// TODO: Actually we may just keep the OGL notation and let Z(dx) = Z(gl)/2 + 0.5 while working on DX
+		
 		if (camera.GetProjectionType() == ProjectionType::Perspective){
-
-			// Hey this method should totally become a member method of the camera component!
-			// NOPE! DirectX and OpenGL calculate the projection differently (mostly because of the near plane which, in the first, case goes from 0 to 1, in the latter goes from -1 to 1).
-			// TODO: Actually both DX and OGL works the same, just keep the OGL notation and let Z(dx) = Z(gl)/2 + 0.5 while working on DX
-
+						
 			projection_matrix = ComputePerspectiveProjectionLH(camera.GetFieldOfView(),
 															   aspect_ratio,
 															   camera.GetMinimumDistance(),
@@ -52,12 +52,15 @@ namespace{
 		}
 		else if (camera.GetProjectionType() == ProjectionType::Ortographic){
 
-			THROW(L"Not implemented, buddy!");
+			projection_matrix = ComputeOrthographicProjectionLH(camera.GetOrthoSize() * aspect_ratio,
+																camera.GetOrthoSize(),
+																camera.GetMinimumDistance(),
+																camera.GetMaximumDistance());
 
 		}
 		else{
 
-			THROW(L"What kind of projection are you trying to use again?! O.o");
+			THROW(L"Unsupported projection mode!");
 
 		}
 		
@@ -314,7 +317,7 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(unsigned int width, unsigned in
 		
 		ComputeLighting(frame_info);						// Scene, GBuffer, DepthBuffer -> LightBuffer
 
-		ComputePostProcess(frame_info);					// LightBuffer -> Output
+		ComputePostProcess(frame_info);						// LightBuffer -> Output
 
 	}
 

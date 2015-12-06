@@ -249,10 +249,17 @@ namespace gi_lib{
 		/// \brief Compute the left-handed perspective projection matrix.
 		/// \param field_of_view Field of view, in radians.
 		/// \param aspect_ratio Width-to-height aspect ratio.
-		/// \param near_plane Distance of the near clipping plane.
-		/// \param far_plane Distance of the far clipping plane.
+		/// \param near_plane Distance of the near clipping plane in world units.
+		/// \param far_plane Distance of the far clipping plane in world units.
 		Matrix4f ComputePerspectiveProjectionLH(float field_of_view, float aspect_ratio, float near_plane, float far_plane);
 		
+		/// \brief Compute the left-handed orthographic projection matrix.
+		/// \param width Width of the viewport in world units.
+		/// \param height Height of the viewport in world units.
+		/// \param near_plane Distance of the near clipping plane in world units.
+		/// \param far_plane Distance of the far clipping plane in world units.
+		Matrix4f ComputeOrthographicProjectionLH(float width, float height, float near_plane, float far_plane);
+
 		////////////////////////////// CONSTANT BUFFER VIEW ///////////////////////////////////////
 
 		inline ConstantBufferView::ConstantBufferView(){}

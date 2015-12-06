@@ -60,6 +60,43 @@ namespace{
 
 	}
 
+	/// \brief Calculate the view frustum from a orthographic camera description.
+	/// \param camera_transform Camera transform matrix in world space.
+	/// \param near_distance Minimum projected distance in world units.
+	/// \param far_distance Maximum projected distance in world units.
+	/// \param ortho_size Vertical orthographic size in radians.
+	/// \param aspect_ratio Width-to-height aspect ratio.
+	Frustum ComputeOrthographicViewFrustum(const Affine3f& camera_transform, float near_distance, float far_distance, float ortho_size, float aspect_ratio) {
+
+		auto& camera_matrix = camera_transform.matrix();
+
+		// Camera position
+
+		auto camera_position = Math::ToVector3(camera_matrix.col(3));					// Position of the camera in world space.
+
+		// Camera directions
+
+		auto right_vector = Math::ToVector3(camera_matrix.col(0)).normalized();			// Right vector, from camera's point of view.
+
+		auto up_vector = Math::ToVector3(camera_matrix.col(1)).normalized();			// Up vector, from camera's point of view.
+
+		auto forward_vector = Math::ToVector3(camera_matrix.col(2)).normalized();		// Forward vector, from camera's point of view.
+
+		// Half dimensions
+
+		Vector2f half_dim(ortho_size * aspect_ratio,
+						  ortho_size);
+
+		// Create the frustum
+		return Frustum({ Math::MakePlane( forward_vector, camera_position + forward_vector * near_distance),		// Near clipping plane
+						 Math::MakePlane(-forward_vector, camera_position + forward_vector * far_distance),			// Far clipping plane
+						 Math::MakePlane(-right_vector, camera_position + right_vector * half_dim(0)),				// Right clipping plane
+						 Math::MakePlane( right_vector, camera_position - right_vector * half_dim(0)),				// Left clipping plane
+						 Math::MakePlane(-up_vector, camera_position + up_vector * half_dim(1)),					// Top clipping plane
+						 Math::MakePlane( up_vector, camera_position - up_vector * half_dim(1)) });					// Bottom clipping plane
+		
+	}
+
 }
 
 ////////////////////////////////////// SCENE //////////////////////////////////////////
@@ -530,6 +567,18 @@ void CameraComponent::SetFieldOfView(float field_of_view){
 
 }
 
+float CameraComponent::GetOrthoSize() const {
+
+	return ortho_size_;
+
+}
+
+void CameraComponent::SetOrthoSize(float ortho_size) {
+
+	ortho_size_ = ortho_size;
+
+}
+
 float CameraComponent::GetMinimumDistance() const{
 
 	return minimum_distance_;
@@ -565,11 +614,18 @@ Frustum CameraComponent::GetViewFrustum(float aspect_ratio) const{
 											aspect_ratio);
 
 	}
-	else{
+	else if(projection_type_ == ProjectionType::Ortographic){
 
-		// Orthographic projection
+		return ComputeOrthographicViewFrustum(transform_->GetWorldTransform(),
+											  minimum_distance_,
+											  maximum_distance_,
+											  ortho_size_,
+											  aspect_ratio);
+		
+	}
+	else {
 
-		THROW(L"Orthographic projection not yet implemented!");
+		THROW(L"Unsupported projection mode!");
 
 	}
 	

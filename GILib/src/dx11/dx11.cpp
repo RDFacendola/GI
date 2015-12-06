@@ -698,3 +698,19 @@ Matrix4f gi_lib::dx11::ComputePerspectiveProjectionLH(float field_of_view, float
 	return projection_matrix;
 
 }
+
+Matrix4f gi_lib::dx11::ComputeOrthographicProjectionLH(float width, float height, float near_plane, float far_plane) {
+
+	Matrix4f projection_matrix = Matrix4f::Identity();
+
+	projection_matrix(0, 0) = 2.f / width;
+
+	projection_matrix(1, 1) = 2.f / height;
+
+	projection_matrix(2, 2) = 1.f / (far_plane - near_plane);
+
+	projection_matrix(2, 3) = -near_plane / (far_plane - near_plane);
+
+	return projection_matrix;
+
+}

@@ -524,6 +524,16 @@ namespace gi_lib{
 		/// \param field_of_view Vertical field of view, in radians.
 		void SetFieldOfView(float field_of_view);
 
+		/// \brief Get the vertical orthographic size in world units.
+		/// This value is only used when the projection type is "Orthographic".
+		/// \return Returns the vertical orthographic size in world units.
+		float GetOrthoSize() const;
+
+		/// \brief Set the vertical orthographic size.
+		/// This value is only used when the projection type is "Orthographic".
+		/// \param ortho_size Vertical orthographic size in world units.
+		void SetOrthoSize(float ortho_size);
+
 		/// \brief Get the near clipping plane distance.
 		/// \return Returns the near clipping plane distance.
 		float GetMinimumDistance() const;
@@ -566,8 +576,14 @@ namespace gi_lib{
 
 		ProjectionType projection_type_;	///< \brief Projection type.
 
-		float field_of_view_;				///< \brief Vertical field of view.
+		union {
 
+			float field_of_view_;			///< \brief Vertical field of view.
+
+			float ortho_size_;				///<\ brief Vertical orthographic size.
+
+		};
+		
 		float minimum_distance_;			///< \brief Near clipping plane distance.
 
 		float maximum_distance_;			///< \brief Far clipping plane distance.
