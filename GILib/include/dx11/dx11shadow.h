@@ -35,7 +35,7 @@ namespace gi_lib {
 
 			float far_plane;						///< \brief Far clipping plane of the light.
 
-			int atlas_page;							///< \brief Index of the page inside the atlas containing the shadowmap.
+			unsigned int atlas_page;				///< \brief Index of the page inside the atlas containing the shadowmap.
 
 			int enabled;							///< \brief Whether the shadow is enabled (!0) or not (0).
 
@@ -51,11 +51,13 @@ namespace gi_lib {
 
 			Vector2f max_uv;						///< \brief Maximum uv coordinates inside the shadowmap page.
 
-			int atlas_page;							///< \brief Index of the page inside the atlas containing the shadowmap.
+			float near_plane;						///< \brief Near clipping plane of the light.
+
+			float far_plane;						///< \brief Far clipping plane of the light.
+
+			unsigned int atlas_page;				///< \brief Index of the page inside the atlas containing the shadowmap.
 
 			int enabled;							///< \brief Whether the shadow is enabled (!0) or not (0).
-
-			Vector2f reserved;
 
 		};
 
@@ -66,7 +68,7 @@ namespace gi_lib {
 		public:
 
 			/// \brief Create a new VSM shadow atlas.
-			DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pages, bool full_precision = false);
+			DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_precision = false);
 
 			/// \brief Clear the atlas from any existing shadowmap and reinitializes the shadowmap.
 			void Begin();
@@ -102,13 +104,17 @@ namespace gi_lib {
 
 			static const Tag kPerLight;								///< \brief Tag of the per-light constant buffer.
 
-			void DrawShadowmap(const PointShadow&, const vector<VolumeComponent*>& nodes, const Affine3f& light_view_transform);
+			void DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Affine3f& light_view_transform);
 
 			void DrawShadowmap(const vector<VolumeComponent*> nodes, const Affine3f& light_view_transform);
+			void DrawShadowmap(const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED);
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
 
 			COMPtr<ID3D11RasterizerState> rasterizer_state_;		///< \brief Rasterizer state.
+
+			vector<vector<AlignedBox2i>> chunks_;					///< \brief Contains the free chunks for each atlas page.
+																	///			A chunk is a free region of space within the atlas.
 
 			ObjectPtr<DX11RenderTargetArray> atlas_;				///< \brief Array of render targets used as shadow atlas.
 
@@ -121,11 +127,9 @@ namespace gi_lib {
 			ObjectPtr<DX11StructuredBuffer> per_object_;			///< \brief Per-object constant buffer.
 
 			ObjectPtr<DX11StructuredBuffer> per_light_;				///< \brief Per-light constant buffer.
-
+			
 			fx::DX11FxGaussianBlur fx_blur_;						///< \brief Used to blur the shadowmap.
-
-			unsigned int point_shadows_;							///< \brief Number of point shadows stored so far.
-
+			
 		};
 
 		/////////////////////////////////////// DX11 VSM SHADOW ATLAS ///////////////////////////////////////

@@ -154,6 +154,7 @@ void GILogic::SetupLights(Scene& scene) {
 		
 		light_component->SetCutoff(0.0001f);
 		light_component->EnableShadow(true);
+		light_component->SetShadowMapSize(Vector2i(512, 512));
 
 		point_lights.push_back(light_node);
 		
@@ -173,6 +174,7 @@ void GILogic::SetupLights(Scene& scene) {
 		auto light_component = light_node->AddComponent<DirectionalLightComponent>(Color(1.1f, 1.1f, 1.1f, 1.0f));
 
 		light_component->EnableShadow(false);
+		light_component->SetShadowMapSize(Vector2i(1024, 1024));
 
 		directional_lights.push_back(light_node);
 

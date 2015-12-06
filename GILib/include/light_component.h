@@ -44,14 +44,13 @@ namespace gi_lib {
 		/// \param enable True if the light should cast shadows, false otherwise.
 		void EnableShadow(bool enable);
 
-		/// \brief Get the shadowmap size associated to this light.
-		/// A shadowmap is always square with an edge of 2^Size pixels.
+		/// \brief Get the shadowmap size associated to this light in pixels.
 		/// \return Returns the shadowmap size associated to this light.
-		unsigned int GetShadowMapSize() const;
+		const Vector2i& GetShadowMapSize() const;
 
 		/// \brief Set the shadowmap size associated to this light.
-		/// \param size The size of the shadowmap. A shadowmap is always square with an edge of 2^Size pixels.
-		void SetShadowMapSize(unsigned int size);
+		/// \param size The size of the shadowmap in pixels.
+		void SetShadowMapSize(const Vector2i& size);
 
 	protected:
 
@@ -73,7 +72,7 @@ namespace gi_lib {
 
 		bool shadow_enabled_;									///< \brief Whether the light casts shadows or not.
 
-		unsigned int shadowmap_size_;							///< \brief The size of the shadowmap. A shadowmap is always square with an edge of 2^Size pixels.
+		Vector2i shadowmap_size_;								///< \brief The size of the shadowmap in pixels.
 		
 		Color color_;											///< \brief The light color.
 				
@@ -322,7 +321,7 @@ namespace gi_lib {
 	inline BaseLightComponent::BaseLightComponent(const Color& color) : 
 		color_(color),
 		shadow_enabled_(false),
-		shadowmap_size_(8){}
+		shadowmap_size_(512,512){}
 
 	inline Color BaseLightComponent::GetColor() const {
 
@@ -355,13 +354,13 @@ namespace gi_lib {
 
 	}
 
-	inline unsigned int BaseLightComponent::GetShadowMapSize() const {
+	inline const Vector2i& BaseLightComponent::GetShadowMapSize() const {
 
 		return shadowmap_size_;
 
 	}
 
-	inline void BaseLightComponent::SetShadowMapSize(unsigned int size) {
+	inline void BaseLightComponent::SetShadowMapSize(const Vector2i& size) {
 
 		shadowmap_size_ = size;
 

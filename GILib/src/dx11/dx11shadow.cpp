@@ -41,6 +41,145 @@ namespace {
 							0);
 
 	}
+	
+	/// \brief Find the smallest chunk which can accommodate the given size in the given chunk array.
+	/// If the method succeeds the best chunk is then moved at the end of the collection.
+	/// \param size Size of the square region to accommodate.
+	/// \return Returns returns the iterator to the best chunk in the given list. If non such chunk can be found the method returns an iterator to the end of the given collection
+	template <typename TIterator>
+	TIterator GetBestChunk(const Vector2i& size, TIterator begin, TIterator end) {
+
+		auto best_chunk = end;
+
+		for (auto it = begin; it != end; ++it) {
+
+			if(it->sizes()(0) + 1 >= size(0) &&									// Fits horizontally
+			   it->sizes()(1) + 1 >= size(1) &&									// Fits vertically
+			   (best_chunk == end ||
+			    it->sizes().maxCoeff() < best_chunk->sizes().maxCoeff())){		// Just an heuristic guess of "smallest"
+
+				best_chunk = it;
+
+			}
+
+		}
+
+		if (best_chunk != end) {
+
+			// Swap the last element of the range with the best chunk and returns
+
+			std::swap(*best_chunk,
+					  *(--end));
+
+		}
+
+		
+		return end;
+		
+	}
+	
+	/// \brief Splits the given chunk along each direction according to the requested size and returns the remaining chunks.
+	/// The reserved chunk starts always from the top-left corner of the chunk.
+	/// \param size Size of the reserved chunk.
+	/// \param chunk Chunk to split.
+	vector<AlignedBox2i> SplitChunk(const Vector2i& size, const AlignedBox2i& chunk) {
+
+		// The reserved chunk is the top-left.
+		vector<AlignedBox2i> bits;
+
+		if (chunk.sizes()(0) + 1 > size(0)) {
+
+			bits.push_back(AlignedBox2i(Vector2i(chunk.min()(0) + size(0), chunk.min()(1)),
+										Vector2i(chunk.max()(0), chunk.min()(1) + size(1) - 1)));
+
+		}
+
+		if (chunk.sizes()(1) + 1 > size(1)) {
+
+			bits.push_back(AlignedBox2i(Vector2i(chunk.min()(0), chunk.min()(1) + size(1)),
+										chunk.max()));
+
+		}
+
+		return bits;
+
+	}
+
+	/// \brief Reserve a free chunk in the given chunk list and returns informations about the reserved chunk
+	/// \param size Size of the region to reserve.
+	/// \param chunks List of free chunks for each atlas page.
+	/// \param page_index If the method succeeds, this parameter contains the atlas page where the chunk has been reserved.
+	/// \param reserved_chunk if the method succeeds, this parameter contains the boundaries of the reserved chunk.
+	/// \return Returns true if the method succeeds, return false otherwise.
+	bool ReserveChunk(const Vector2i& size, const Vector2i& atlas_size, vector<vector<AlignedBox2i>>& chunks, unsigned int& page_index, AlignedBox2i& reserved_chunk) {
+
+		page_index = 0;
+
+		// A directional shadow requires only one chunk in any atlas page
+
+		for (auto&& page_chunks : chunks) {
+
+			auto it = GetBestChunk(size, 
+								   page_chunks.begin(), 
+								   page_chunks.end());
+
+			if (it != page_chunks.end()) {
+
+				reserved_chunk = AlignedBox2i(it->min(),
+											  it->min() + size - Vector2i::Ones());
+
+				// Update the chunk list
+
+				auto bits = SplitChunk(size, *it);
+
+				page_chunks.pop_back();
+
+				page_chunks.insert(page_chunks.end(),
+								   bits.begin(),
+								   bits.end());
+				
+				return true;
+
+			}
+
+			++page_index;
+
+		}
+
+		return false;
+
+	}
+
+	/// \brief Reserve a free chunk in the given chunk list and fill the proper shadow information.
+	/// \param size Size of the region to reserve.
+	/// \param chunks List of free chunks for each atlas page.
+	/// \param shadow If the method succeeds, this object contains the updated shadow informations.
+	/// \return Returns true if the method succeeds, return false otherwise.
+	bool ReserveChunk(const Vector2i& size, const Vector2i& atlas_size, vector<vector<AlignedBox2i>>& chunks, PointShadow& shadow) {
+
+		unsigned int page_index;
+		AlignedBox2i reserved_chunk;
+
+		if (ReserveChunk(size.cwiseProduct(Vector2i(2,1)),		// A dual-paraboloid shadowmap requires twice the size to store both the front and the rear shadowmaps
+						 atlas_size, 
+						 chunks, 
+						 page_index, 
+						 reserved_chunk)) {
+
+			auto uv_size = (atlas_size - Vector2i::Ones()).cast<float>();
+
+			shadow.atlas_page = page_index;
+			
+			shadow.min_uv = reserved_chunk.min().cast<float>().cwiseQuotient(uv_size);
+			shadow.max_uv = reserved_chunk.max().cast<float>().cwiseQuotient(uv_size);
+
+			return true;
+
+		}
+
+		return false;
+
+	}
 
 }
 
@@ -49,7 +188,7 @@ namespace {
 const Tag DX11VSMAtlas::kPerObject = "PerObject";
 const Tag DX11VSMAtlas::kPerLight = "PerLight";
 
-DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pages, bool full_precision) :
+DX11VSMAtlas::DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_precision) :
 	fx_blur_(1.67f){
 
 	auto&& device = *DX11Graphics::GetInstance().GetDevice();
@@ -90,13 +229,13 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pag
 
 	auto format = full_precision ? TextureFormat::RG_FLOAT : TextureFormat::RG_HALF;
 
-	atlas_ = new DX11RenderTargetArray(IRenderTargetArray::FromDescription{ width, 
-																		    height, 
+	atlas_ = new DX11RenderTargetArray(IRenderTargetArray::FromDescription{ size,
+																		    size, 
 																		    pages,
 																		    format } );
 	
-	blur_atlas_ = new DX11GPTexture2DArray(ITexture2DArray::FromDescription{ width, 
-																			 height, 
+	blur_atlas_ = new DX11GPTexture2DArray(ITexture2DArray::FromDescription{ size,
+																			 size, 
 																			 pages,
 																			 1, 
 																			 format } );
@@ -116,25 +255,38 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pag
 
 	check = shadow_material_->SetInput(kPerLight,
 									   ObjectPtr<IStructuredBuffer>(per_light_));
-
-	point_shadows_ = 0;
-
+	
 }
-
 
 void DX11VSMAtlas::Begin() {
 
-	// Clear the atlas pages
+	// Clear the atlas pages - TODO: Clear by need
+
 	atlas_->ClearDepth(*immediate_context_);
 	atlas_->ClearTargets(*immediate_context_, kOpaqueWhite);
-
-	point_shadows_ = 0;
-
+	
 	immediate_context_->RSSetState(rasterizer_state_.Get());
+
+	// Clear any existing chunk and starts over (basically we restore one big chunk for each atlas page)
+
+	chunks_.resize(atlas_->GetCount());
+
+	for (auto&& page_chunk : chunks_) {
+
+		page_chunk.clear();
+		page_chunk.push_back(AlignedBox2i(Vector2i::Zero(),
+										  Vector2i(atlas_->GetWidth() - 1, 
+												   atlas_->GetHeight() - 1)));
+
+	}
 
 }
 
 void DX11VSMAtlas::Commit() {
+
+	// Unbind the previously bound atlas
+
+	atlas_->Unbind(*immediate_context_);
 
 	// Blur the shadowmaps contained inside the atlas and store the result inside the blurred version of the atlas.
 
@@ -145,37 +297,33 @@ void DX11VSMAtlas::Commit() {
 
 bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow, float near_plane, float far_plane) {
 
-	static const Vector2f uv_dimensions(1.0f, 0.5f);		// Simplification: each point light needs the same precision.
-
-	if (!point_light.IsShadowEnabled()) {
+	if (!point_light.IsShadowEnabled() ||
+		!ReserveChunk(point_light.GetShadowMapSize(),
+					  Vector2i(atlas_->GetWidth(), atlas_->GetHeight()),
+					  chunks_,
+					  shadow)){
 
 		shadow.enabled = 0;
 		return false;
 
 	}
-
+	
 	auto light_transform = point_light.GetWorldTransform().inverse();
 
-	shadow.atlas_page = 0;
-
-	shadow.min_uv = Vector2f(uv_dimensions(0) * (point_shadows_ / 4),
-							 uv_dimensions(1) * (point_shadows_ % 4));
-
-	shadow.max_uv = shadow.min_uv + uv_dimensions;
+	// Fill the remaining shadow infos
 
 	shadow.near_plane = std::max(0.0f, near_plane);
 	shadow.far_plane = std::min(point_light.GetBoundingSphere().radius, far_plane);
 	shadow.light_view_matrix = light_transform.matrix();
+
 	shadow.enabled = 1;
 
-	// Render the geometry that can be seen from the light
+	// Draw the actual shadowmap
 
 	DrawShadowmap(shadow, 
 				  scene.GetMeshHierarchy().GetIntersections(point_light.GetBoundingSphere()),
 				  light_transform);
-
-	++point_shadows_;
-
+		
 	return true;
 
 }
@@ -238,20 +386,25 @@ void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeC
 
 	per_light_->Unlock();
 
-	atlas_->Bind(*immediate_context_, shadow.atlas_page, &view_port);
+	atlas_->Bind(*immediate_context_, 
+				 shadow.atlas_page, 
+				 &view_port);
 
 	// Draw the geometry to the shadowmap
 
 	DrawShadowmap(nodes, 
-				  light_view_transform);
+				  shadow_material_,
+				  light_view_transform.matrix(),
+				  D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);		// Dual paraboloid works best with tessellated geometry because its projection is non-linear
+	
+}
 
-	// Cleanup
 
 	atlas_->Unbind(*immediate_context_);
 
 }
 
-void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Affine3f& light_view_transform) {
+void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, D3D11_PRIMITIVE_TOPOLOGY topology) {
 	
 	ObjectPtr<DX11Mesh> mesh;
 
@@ -265,22 +418,26 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Aff
 
 			mesh->Bind(*immediate_context_);
 
-			immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);		// Override with 3-point patches
+			if (topology != D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED) {
+
+				immediate_context_->IASetPrimitiveTopology(topology);		// Override mesh topology with user-defined one
+
+			}
 
 			auto& per_object = *per_object_->Lock<VSMPerObjectCBuffer>();
 
-			per_object.world_light = (light_view_transform * mesh_component.GetWorldTransform()).matrix();
+			per_object.world_light = (light_transform * mesh_component.GetWorldTransform()).matrix();
 
 			per_object_->Unlock();
 
 			for (unsigned int subset_index = 0; subset_index < mesh->GetSubsetCount(); ++subset_index) {
 
-				shadow_material_->Bind(*immediate_context_);
+				shadow_material->Bind(*immediate_context_);
 
 				// Draw	the subset
 
 				DrawIndexedSubset(*immediate_context_,
-									mesh->GetSubset(subset_index));
+								  mesh->GetSubset(subset_index));
 
 			}
 

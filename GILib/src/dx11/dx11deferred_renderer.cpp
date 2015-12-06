@@ -245,7 +245,7 @@ fx_tonemap_(0.5f){
 
 	light_shader_ = DX11Resources::GetInstance().Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
 
-	shadow_atlas_ = make_unique<DX11VSMAtlas>(4096, 4096, 1, true);
+	shadow_atlas_ = make_unique<DX11VSMAtlas>(2048, 1, true);
 
 	point_lights_ = new DX11StructuredArray(32, sizeof(PointLight));
 
