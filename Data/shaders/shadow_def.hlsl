@@ -22,7 +22,7 @@ struct PointShadow {
 
 	float far_plane;						// Far clipping plane of the light.
 
-	unsigned int atlas_page;							// Index of the page inside the atlas containing the shadowmap.
+	unsigned int atlas_page;				// Index of the page inside the atlas containing the shadowmap.
 	
 	int enabled;							// Whether the shadow is enabled (!0) or not (0).
 	
@@ -32,7 +32,8 @@ struct PointShadow {
 /// The shadowmap techinque used is: variance shadow mapping.
 struct DirectionalShadow {
 
-	float4x4 light_view_matrix;				// Matrix used to transform from world-space to light-view-space.
+
+	float4x4 light_view_matrix;				// Matrix used to transform from world-space to light-projection-space.
 
 	float2 min_uv;							// Minimum uv coordinates inside the shadowmap page.
 
@@ -143,7 +144,20 @@ float ComputeShadow(SurfaceData surface, PointShadow shadow) {
 /// \return Returns a value in the range 1 (fully lit) to 0 (fully shadowed).
 float ComputeShadow(SurfaceData surface, DirectionalShadow shadow) {
 
-	return 1.0f;				// Not yet implemented.
+	if (shadow.enabled == 0) {
+
+		return 1.0f;			// Fully lit
+
+	}
+
+	float4 surface_ps = mul(shadow.light_view_matrix, float4(surface.position, 1));				// Surface point in light-space (projected).
+
+	float2 moments = SampleVSMShadowAtlas(shadow.atlas_page,
+										  shadow.min_uv,
+										  shadow.max_uv,
+										  ProjectionSpaceToTextureSpace(surface_ps));			// Get the shadow moments.
+
+	return ComputeVSMFactor(moments, surface_ps.z);												// Get the lit factor via Chebyshev's inequality.
 
 }
 

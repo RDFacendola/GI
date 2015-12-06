@@ -51,13 +51,11 @@ namespace gi_lib {
 
 			Vector2f max_uv;						///< \brief Maximum uv coordinates inside the shadowmap page.
 
-			float near_plane;						///< \brief Near clipping plane of the light.
-
-			float far_plane;						///< \brief Far clipping plane of the light.
-
 			unsigned int atlas_page;				///< \brief Index of the page inside the atlas containing the shadowmap.
 
 			int enabled;							///< \brief Whether the shadow is enabled (!0) or not (0).
+
+			Vector2f reserved;						///< \brief For padding purposes only.
 
 		};
 
@@ -89,8 +87,9 @@ namespace gi_lib {
 			/// \param directional_light Point light casting the shadow.
 			/// \param scene Scene containing the caster geometry.
 			/// \param shadow Structure containing the data used to access the shadowmap for the HLSL code.
+			/// \param far_plane Geometry farthest than this threshold is considered fully shadowed.
 			/// \return Returns true if the shadowmap was calculated correctly, returns false otherwise.
-			bool ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow);
+			bool ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow, float aspect_ratio, float far_plane = std::numeric_limits<float>::infinity());
 			
 			/// \brief Get the shadow atlas.
 			ObjectPtr<ITexture2DArray> GetAtlas();
@@ -106,7 +105,8 @@ namespace gi_lib {
 
 			void DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Affine3f& light_view_transform);
 
-			void DrawShadowmap(const vector<VolumeComponent*> nodes, const Affine3f& light_view_transform);
+			void DrawShadowmap(const DirectionalShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_proj_transform);
+
 			void DrawShadowmap(const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED);
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
@@ -122,7 +122,9 @@ namespace gi_lib {
 
 			ObjectPtr<DX11Sampler> sampler_;						///<\ brief Sampler used to sample the VSM.
 
-			ObjectPtr<DX11Material> shadow_material_;				///< \brief Material used to write the VSM.
+			ObjectPtr<DX11Material> dpvsm_material_;				///< \brief Material used to write the Dual-paraboloid VSM. (Point lights)
+
+			ObjectPtr<DX11Material> vsm_material_;					///< \brief Material used to write the VSM. (Directional lights)
 
 			ObjectPtr<DX11StructuredBuffer> per_object_;			///< \brief Per-object constant buffer.
 

@@ -560,9 +560,13 @@ namespace gi_lib{
 		/// \return Return the view-space matrix.
 		Affine3f GetViewTransform() const;
 
-		/// \brief Get the camera position.
-		/// \return Returns the camera position in world space.
-		Vector3f GetPosition() const;
+		/// \brief Access the transform component of this camera.
+		/// \return Returns the transform component of this camera.
+		TransformComponent& GetTransformComponent();
+
+		/// \brief Access the transform component of this camera.
+		/// \return Returns the transform component of this camera.
+		const TransformComponent& GetTransformComponent() const;
 
 		virtual TypeSet GetTypes() const override;
 
@@ -769,9 +773,15 @@ namespace gi_lib{
 
 	}
 
-	inline Vector3f CameraComponent::GetPosition() const {
+	inline TransformComponent& CameraComponent::GetTransformComponent() {
 
-		return transform_->GetPosition();
+		return *transform_;
+
+	}
+
+	inline const TransformComponent& CameraComponent::GetTransformComponent() const {
+
+		return *transform_;
 
 	}
 

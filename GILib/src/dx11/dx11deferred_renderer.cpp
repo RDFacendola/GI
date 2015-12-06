@@ -501,6 +501,7 @@ void DX11DeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& light
 		for (auto&& directional_light : node->GetComponents<DirectionalLightComponent>()) {
 
 			UpdateLight(directional_light,
+						frame_info.aspect_ratio,
 						directional_lights[directional_light_index],
 						directional_shadows[directional_light_index]);
 
@@ -510,7 +511,7 @@ void DX11DeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& light
 
 	}
 
-	light_accumulation_parameters->camera_position = frame_info.camera->GetPosition();
+	light_accumulation_parameters->camera_position = frame_info.camera->GetTransformComponent().GetPosition();
 	light_accumulation_parameters->inv_view_proj_matrix = frame_info.view_proj_matrix.inverse();
 	light_accumulation_parameters->point_lights = point_light_index;
 	light_accumulation_parameters->directional_lights = directional_light_index;
@@ -569,7 +570,7 @@ void DX11DeferredRenderer::UpdateLight(const PointLightComponent& point_light, P
 	
 }
 
-void DX11DeferredRenderer::UpdateLight(const DirectionalLightComponent& directional_light, DirectionalLight& light, DirectionalShadow& shadow) {
+void DX11DeferredRenderer::UpdateLight(const DirectionalLightComponent& directional_light, float aspect_ratio, DirectionalLight& light, DirectionalShadow& shadow) {
 
 	// Light
 
@@ -579,7 +580,8 @@ void DX11DeferredRenderer::UpdateLight(const DirectionalLightComponent& directio
 	// Shadow
 	shadow_atlas_->ComputeShadowmap(directional_light,
 									GetScene(),
-									shadow);
+									shadow,
+									aspect_ratio);
 
 }
 

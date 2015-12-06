@@ -20,7 +20,8 @@ namespace {
 	/// \brief Vertex shader constant buffer used to draw the geometry from the light perspective.
 	struct VSMPerObjectCBuffer {
 
-		Matrix4f world_light;								///< \brief World * Light-view matrix.
+		Matrix4f world_light;								///< \brief World * Light-view matrix for point lights,
+															///			World * Light-view * Light-proj matrix for directional lights
 
 	};
 
@@ -111,7 +112,7 @@ namespace {
 	/// \param page_index If the method succeeds, this parameter contains the atlas page where the chunk has been reserved.
 	/// \param reserved_chunk if the method succeeds, this parameter contains the boundaries of the reserved chunk.
 	/// \return Returns true if the method succeeds, return false otherwise.
-	bool ReserveChunk(const Vector2i& size, const Vector2i& atlas_size, vector<vector<AlignedBox2i>>& chunks, unsigned int& page_index, AlignedBox2i& reserved_chunk) {
+	bool ReserveChunk(const Vector2i& size, vector<vector<AlignedBox2i>>& chunks, unsigned int& page_index, AlignedBox2i& reserved_chunk) {
 
 		page_index = 0;
 
@@ -161,7 +162,6 @@ namespace {
 		AlignedBox2i reserved_chunk;
 
 		if (ReserveChunk(size.cwiseProduct(Vector2i(2,1)),		// A dual-paraboloid shadowmap requires twice the size to store both the front and the rear shadowmaps
-						 atlas_size, 
 						 chunks, 
 						 page_index, 
 						 reserved_chunk)) {
@@ -179,6 +179,127 @@ namespace {
 
 		return false;
 
+	}
+
+	/// \brief Reserve a free chunk in the given chunk list and fill the proper shadow information.
+	/// \param size Size of the region to reserve.
+	/// \param chunks List of free chunks for each atlas page.
+	/// \param shadow If the method succeeds, this object contains the updated shadow informations.
+	/// \return Returns true if the method succeeds, return false otherwise.
+	bool ReserveChunk(const Vector2i& size, const Vector2i& atlas_size, vector<vector<AlignedBox2i>>& chunks, DirectionalShadow& shadow) {
+
+		unsigned int page_index;
+		AlignedBox2i reserved_chunk;
+
+		if (ReserveChunk(size, 
+						 chunks, 
+						 page_index, 
+						 reserved_chunk)) {
+
+			auto uv_size = (atlas_size - Vector2i::Ones()).cast<float>();
+
+			shadow.atlas_page = page_index;
+			
+			shadow.min_uv = reserved_chunk.min().cast<float>().cwiseQuotient(uv_size);
+			shadow.max_uv = reserved_chunk.max().cast<float>().cwiseQuotient(uv_size);
+
+			return true;
+
+		}
+
+		return false;
+
+	}
+	
+	/// \brief Get the minimum and the maximum depth along the specified direction for any given mesh in the provided volume collection.
+	/// \param volumes Volumes collection to cycle through
+	/// \param direction Depth direction.
+	/// \return Returns a 2-element vector where the first element is the minimum depth found and the second is the maximum one.
+	Vector2f GetZRange(const vector<VolumeComponent*>& volumes, const Vector3f& direction) {
+
+		Vector2f range(std::numeric_limits<float>::infinity(),			// Min
+					   -std::numeric_limits<float>::infinity());		// Max
+
+		float distance;
+
+		for (auto&& volume : volumes) {
+
+			for (auto&& mesh_component : volume->GetComponents<MeshComponent>()) {
+
+				auto& sphere = mesh_component.GetBoundingSphere();
+
+				distance = sphere.center.dot(direction);
+
+				if (distance - sphere.radius < range(0)) {
+
+					range(0) = distance - sphere.radius;
+
+				}
+
+				if (distance + sphere.radius > range(1)) {
+
+					range(1) = distance + sphere.radius;
+
+				}
+
+			}
+
+		}
+		
+		return range;
+
+	}
+
+	/// \brief Get the light frustum associated to the specified directional light.
+	/// The frustum is computed based on the assumption that the affected geometry is the one inside the camera's frustum only.
+	/// \param directional_light Light whose frustum will be computed.
+	/// \param camera The view camera.
+	/// \param ortho_size The computed orthographic size. Output, optional.
+	/// \return Returns the frustum associated to the directional light.
+	Frustum GetLightFrustum(const DirectionalLightComponent& directional_light, const CameraComponent& camera, float aspect_ratio, Vector2f* ortho_size) {
+
+		if (camera.GetProjectionType() == ProjectionType::Perspective) {
+
+			// Take the diameter of the view frustum as upper bound of the orthographic size - This assumes that the light's position is in the center of the frustum
+
+			float far_height = 2.0f * camera.GetMaximumDistance() * std::tanf(camera.GetFieldOfView() * 0.5f);		// Height of the far plane
+
+			float diameter = Vector3f(far_height * aspect_ratio, far_height, camera.GetMaximumDistance()).norm();	
+
+			float half_diameter = diameter * 0.5f;
+
+			if (ortho_size) {
+
+				*ortho_size = Vector2f(diameter, diameter);		// Equal for each direction
+
+			}
+
+			// Create the frustum
+			auto& camera_transform = camera.GetTransformComponent();
+
+			auto& light_transform = *directional_light.GetComponent<TransformComponent>();
+			
+			auto light_position = camera_transform.GetPosition() + camera_transform.GetForward() * (camera.GetMinimumDistance() + camera.GetMaximumDistance()) * 0.5f;
+
+			auto light_forward = light_transform.GetForward();
+			auto light_right = light_transform.GetRight();
+			auto light_up = light_transform.GetUp();
+
+			// Create the frustum
+			return Frustum({ Math::MakePlane( light_forward, light_position + light_forward * std::numeric_limits<float>::infinity()),			// Near clipping plane. The projection range is infinite.
+							 Math::MakePlane(-light_forward, light_position - light_forward * std::numeric_limits<float>::infinity()),			// Far clipping plane. The projection range is infinite.
+							 Math::MakePlane(-light_right, light_position + light_right * half_diameter),										// Right clipping plane
+							 Math::MakePlane( light_right, light_position - light_right * half_diameter),										// Left clipping plane
+							 Math::MakePlane(-light_up, light_position + light_up * half_diameter),												// Top clipping plane
+							 Math::MakePlane( light_up, light_position - light_up * half_diameter) });											// Bottom clipping plane
+			
+		}
+		else {
+
+			THROW(L"Not supported, buddy!");
+
+		}
+		
 	}
 
 }
@@ -240,7 +361,9 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_prec
 																			 1, 
 																			 format } );
 
-	shadow_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\paraboloid_vsm.hlsl" });
+	dpvsm_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\paraboloid_vsm.hlsl" });
+
+	vsm_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\vsm.hlsl" });
 
 	per_object_ = new DX11StructuredBuffer(sizeof(VSMPerObjectCBuffer));
 
@@ -248,13 +371,14 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_prec
 
 	// One-time setup
 
-	bool check;
+	dpvsm_material_->SetInput(kPerObject,
+							  ObjectPtr<IStructuredBuffer>(per_object_));
 
-	check = shadow_material_->SetInput(kPerObject,
-									   ObjectPtr<IStructuredBuffer>(per_object_));
+	dpvsm_material_->SetInput(kPerLight,
+							  ObjectPtr<IStructuredBuffer>(per_light_));
 
-	check = shadow_material_->SetInput(kPerLight,
-									   ObjectPtr<IStructuredBuffer>(per_light_));
+	vsm_material_->SetInput(kPerObject,
+							ObjectPtr<IStructuredBuffer>(per_object_));
 	
 }
 
@@ -328,39 +452,58 @@ bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, cons
 
 }
 
-bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow) {
-
-	if (!directional_light.IsShadowEnabled()) {
-
+bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow, float aspect_ratio, float far_plane) {
+		
+	if (!directional_light.IsShadowEnabled() ||
+		!ReserveChunk(directional_light.GetShadowMapSize(),
+					  Vector2i(atlas_->GetWidth(), atlas_->GetHeight()),
+					  chunks_,
+					  shadow)){
+		
 		shadow.enabled = 0;
 		return false;
 
 	}
-/*
 
-	static const Vector2f uv_dimensions(1.0f, 0.5f);		// Simplification: each point light needs the same precision.
+	// Calculate the light's boundaries
 
-	auto light_transform = directional_light.GetWorldTransform().inverse();
+	Vector2f ortho_size;
 
+	auto& camera = *scene.GetMainCamera();
 
-	shadow.atlas_page = 0;
+	auto lit_geometry = scene.GetMeshHierarchy().GetIntersections(GetLightFrustum(directional_light, 
+																				  camera, 
+																				  aspect_ratio,
+																				  &ortho_size));
+
+	auto z_range = GetZRange(lit_geometry,
+							 directional_light.GetDirection());
+
+	z_range(1) = std::min(z_range(1), z_range(0) + far_plane);		// Clamp the maximum depth wrt the minimum depth found.
+
+	// The directional light is always considered to exists in the middle of the view frustum, the direction is left untouched
+
+	auto light_world_transform = directional_light.GetWorldTransform().matrix();
+
+	light_world_transform.col(3) = Math::ToVector4(camera.GetTransformComponent().GetPosition() + camera.GetTransformComponent().GetForward() * (camera.GetMaximumDistance() * 0.5f), 
+												   1.0f);
+
+	auto light_transform = ComputeOrthographicProjectionLH(ortho_size(0),
+														   ortho_size(1),
+														   z_range(0),
+										 				   z_range(1)) * light_world_transform.inverse();
 	
-	shadow.min_uv = Vector2f(uv_dimensions(0) * (point_shadows_ / 4),
-							 uv_dimensions(1) * (point_shadows_ % 4));
+	// Fill the remaining shadow infos
 
-	shadow.max_uv = shadow.min_uv + uv_dimensions;
+	shadow.light_view_matrix = light_transform;
 
-	shadow.light_view_matrix = light_transform.matrix();
 	shadow.enabled = 1;
 
-	// Render the geometry that can be seen from the light
+	// Draw the actual shadowmap
 
 	DrawShadowmap(shadow,
-				  scene.GetMeshHierarchy().GetIntersections(directional_light.GetBoundingSphere()),
+				  lit_geometry,
 				  light_transform);
-
-	++point_shadows_;
-*/
 
 	return true;
 
@@ -393,14 +536,32 @@ void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeC
 	// Draw the geometry to the shadowmap
 
 	DrawShadowmap(nodes, 
-				  shadow_material_,
+				  dpvsm_material_,
 				  light_view_transform.matrix(),
 				  D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);		// Dual paraboloid works best with tessellated geometry because its projection is non-linear
 	
 }
 
+void DX11VSMAtlas::DrawShadowmap(const DirectionalShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_proj_transform) {
+	
+	D3D11_VIEWPORT view_port;
 
-	atlas_->Unbind(*immediate_context_);
+	view_port.TopLeftX = shadow.min_uv(0) * atlas_->GetWidth();
+	view_port.TopLeftY = shadow.min_uv(1) * atlas_->GetHeight();
+	view_port.MinDepth = 0.0f;
+	view_port.MaxDepth = 1.0f;
+	view_port.Width = (shadow.max_uv(0) - shadow.min_uv(0)) * atlas_->GetWidth();
+	view_port.Height = (shadow.max_uv(1) - shadow.min_uv(1)) * atlas_->GetHeight();
+
+	atlas_->Bind(*immediate_context_,
+				 shadow.atlas_page,
+				 &view_port);
+
+	// Draw the geometry to the shadowmap
+
+	DrawShadowmap(nodes,
+				  vsm_material_,
+				  light_proj_transform);
 
 }
 
@@ -438,6 +599,8 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Obj
 
 				DrawIndexedSubset(*immediate_context_,
 								  mesh->GetSubset(subset_index));
+
+				shadow_material->Unbind(*immediate_context_);
 
 			}
 

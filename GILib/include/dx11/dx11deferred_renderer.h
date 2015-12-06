@@ -198,9 +198,10 @@ namespace gi_lib{
 
 			/// \brief Write the informations about a directional light and its shadow.
 			/// \param directional_light Source light.
+			/// \param aspect_ratio Aspect ratio of the client viewport.
 			/// \param light Contains the informations of the directional light. Output.
 			/// \param shadow Contains the informations of the directional shadow. Output.
-			void UpdateLight(const DirectionalLightComponent& directional_light, DirectionalLight& light, DirectionalShadow& shadow);
+			void UpdateLight(const DirectionalLightComponent& directional_light, float aspect_ratio, DirectionalLight& light, DirectionalShadow& shadow);
 			
 			/// \param dimensions Dimensions of the Exposed buffer in pixels.
 			void ComputePostProcess(const FrameInfo& frame_info);
