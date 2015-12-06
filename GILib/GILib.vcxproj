@@ -264,7 +264,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;SUPPRESS_TODOS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)GILib\include;$(SolutionDir)Libs\stack_walker\include;$(SolutionDir)Libs\DirectXTK\Inc;$(SolutionDir)Libs\DirectXTex\DirectXTex;$(SolutionDir)Libs\FBX SDK\2015.1\include;$(SolutionDir)Libs\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)GILib\include;$(SolutionDir)Libs\stack_walker\include;$(SolutionDir)Libs\DirectXTK\Inc;$(SolutionDir)Libs\DirectXTex\DirectXTex;$(SolutionDir)Libs\FBX SDK\2015.1\include;$(SolutionDir)Libs\Eigen;$(SolutionDir)Libs\rapidjson-0.11\rapidjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>

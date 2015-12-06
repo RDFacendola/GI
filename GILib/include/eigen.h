@@ -37,4 +37,8 @@ namespace gi_lib{
 	using ::Eigen::AlignedScaling3f;
 	using ::Eigen::Quaternionf;
 
+	using ::Eigen::AlignedBox2f;			// Rectangle
+	using ::Eigen::AlignedBox3f;			// AABB
+	using ::Eigen::AlignedBox2i;			// Rectangle
+
 }

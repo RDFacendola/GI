@@ -39,6 +39,8 @@ namespace gi{
 
 		std::vector<TransformComponent*> point_lights;
 
+		std::vector<TransformComponent*> directional_lights;
+
 		Graphics& graphics_;
 
 		unique_ptr<IOutput> output_;

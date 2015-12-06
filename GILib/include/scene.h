@@ -393,6 +393,9 @@ namespace gi_lib{
 		/// \brief Get the world transform of the mesh.
 		const Affine3f& GetWorldTransform() const;
 
+		/// \brief Get the bounding sphere in world space.
+		const Sphere& GetBoundingSphere() const;
+
 	protected:
 
 		virtual void Initialize() override;
@@ -415,7 +418,7 @@ namespace gi_lib{
 
 		AABB transformed_bounds_;								///< \brief Transformed bounds.
 
-		Sphere bounding_sphere_;								///< \brief Bounding sphere. Calculated by need.
+		Sphere bounding_sphere_;								///< \brief Bounding sphere.
 
 	};
 
@@ -608,6 +611,12 @@ namespace gi_lib{
 	inline const Affine3f& MeshComponent::GetWorldTransform() const {
 
 		return transform_->GetWorldTransform();
+
+	}
+
+	inline const Sphere& MeshComponent::GetBoundingSphere() const {
+
+		return bounding_sphere_;
 
 	}
 

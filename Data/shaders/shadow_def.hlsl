@@ -22,7 +22,7 @@ struct PointShadow {
 
 	float far_plane;						// Far clipping plane of the light.
 
-	int atlas_page;							// Index of the page inside the atlas containing the shadowmap.
+	unsigned int atlas_page;							// Index of the page inside the atlas containing the shadowmap.
 	
 	int enabled;							// Whether the shadow is enabled (!0) or not (0).
 	

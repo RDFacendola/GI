@@ -101,7 +101,7 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int width, unsigned height, unsigned int pag
 																			 1, 
 																			 format } );
 
-	shadow_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\vsm.hlsl" });
+	shadow_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\paraboloid_vsm.hlsl" });
 
 	per_object_ = new DX11StructuredBuffer(sizeof(VSMPerObjectCBuffer));
 

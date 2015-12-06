@@ -41,8 +41,9 @@ namespace{
 		if (camera.GetProjectionType() == ProjectionType::Perspective){
 
 			// Hey this method should totally become a member method of the camera component!
-			// NOPE! DirectX and OpenGL calculate the projection differently (mostly because of the near plane which in the first case goes from 0 to 1, in the latter goes from -1 to 1).
-			
+			// NOPE! DirectX and OpenGL calculate the projection differently (mostly because of the near plane which, in the first, case goes from 0 to 1, in the latter goes from -1 to 1).
+			// TODO: Actually both DX and OGL works the same, just keep the OGL notation and let Z(dx) = Z(gl)/2 + 0.5 while working on DX
+
 			projection_matrix = ComputePerspectiveProjectionLH(camera.GetFieldOfView(),
 															   aspect_ratio,
 															   camera.GetMinimumDistance(),
@@ -458,8 +459,6 @@ void DX11DeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
 	// Accumulate the visible lights
 	auto&& visible_lights = ComputeVisibleNodes(frame_info.scene->GetLightHierarchy(), *frame_info.camera, frame_info.aspect_ratio);
 
-	// Clear the shadow atlas from any existing shadowmap
-	shadow_atlas_->Begin();
 
 	AccumulateLight(visible_lights,
 					frame_info);
@@ -468,6 +467,9 @@ void DX11DeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
 
 void DX11DeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& lights, const FrameInfo& frame_info) {
 	
+	// Clear the shadow atlas from any existing shadowmap
+	shadow_atlas_->Begin();
+
 	auto point_lights = point_lights_->Lock<PointLight>();
 	
 	auto point_shadows = point_shadows_->Lock<PointShadow>();
