@@ -402,11 +402,19 @@ HRESULT gi_lib::dx11::MakeUnorderedTextureArray(ID3D11Device& device, unsigned i
 	COM_GUARD(texture);
 
 	if (unordered_access_view){
-		
-		RETURN_ON_FAIL(MakeUnorderedAccessView(device,
-											   *texture,
-											   &uav));
+	
+		D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
 
+		uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2DARRAY;
+		uav_desc.Format = format;
+		uav_desc.Texture2DArray.ArraySize = count;
+		uav_desc.Texture2DArray.FirstArraySlice = 0;
+		uav_desc.Texture2DArray.MipSlice = 0;
+		
+		RETURN_ON_FAIL(device.CreateUnorderedAccessView(texture,
+														&uav_desc,
+														&uav));
+		
 	}
 	
 	if (shader_resource_view){
