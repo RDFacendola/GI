@@ -49,7 +49,7 @@ void PSMain(VSOut input, out GBuffer output){
 
 	clip(output.albedo.a < 0.1f ? -1 : 1);
 
-	output.normal_shininess.xyz = input.normal_ws;
+	output.normal_shininess.xy = EncodeNormals(input.normal_ws);
 
 	output.normal_shininess.w = 5.0f;			// Dummy shininess
 
