@@ -34,7 +34,14 @@ VSOut VSMain(VSIn input){
 
 float2 PSMain(VSOut input) : SV_Target0{
 
+	// See http://http.developer.nvidia.com/GPUGems3/gpugems3_ch08.html
+
+	float2 moments;
+
+	float dx = ddx(input.position_ps.z);
+	float dy = ddy(input.position_ps.z);
+
 	return float2(input.position_ps.z,
-				  input.position_ps.z * input.position_ps.z);
+				  input.position_ps.z * input.position_ps.z + 0.25f * (dx * dx + dy * dy));
 
 }

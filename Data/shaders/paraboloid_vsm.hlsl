@@ -172,9 +172,16 @@ void GSMain(triangle DSOut input[3], inout TriangleStream<DSOut> output) {
 
 float2 PSMain(DSOut input) : SV_Target0{
 
+	// See http://http.developer.nvidia.com/GPUGems3/gpugems3_ch08.html
+
 	clip(input.z);
 
+	float2 moments;
+
+	float dx = ddx(input.position_ps.z);
+	float dy = ddy(input.position_ps.z);
+
 	return float2(input.position_ps.z,
-				  input.position_ps.z * input.position_ps.z);
+				  input.position_ps.z * input.position_ps.z + 0.25f * (dx * dx + dy * dy));
 
 }

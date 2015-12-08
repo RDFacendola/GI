@@ -8,6 +8,8 @@
 #include "projection_def.hlsl"
 #include "render_def.hlsl"
 
+#define VSM_THRESHOLD 0.05f
+
 /// \brief Structure used to calculate the shadow casted by a point light.
 /// The shadowmap technique used is: Dual-paraboloid variance shadow mapping.
 struct PointShadow {
@@ -31,8 +33,7 @@ struct PointShadow {
 /// \brief Structure used to calculate the shadow casted by a directional light.
 /// The shadowmap techinque used is: variance shadow mapping.
 struct DirectionalShadow {
-
-
+	
 	float4x4 light_view_matrix;				// Matrix used to transform from world-space to light-projection-space.
 
 	float2 min_uv;							// Minimum uv coordinates inside the shadowmap page.
@@ -87,12 +88,14 @@ float ComputeVSMFactor(float2 moments, float depth) {
 
 	}
 
-	float variance = moments.y - moments.x * moments.x;					// E[x^2] - E[x]^2
+	float variance = moments.y - moments.x * moments.x;							// E[x^2] - E[x]^2
 
-	float mD = moments.x - depth;										// Difference from the expected depth value E[x]
+	float mD = moments.x - depth;												// Difference from the expected depth value E[x]
 
-	return saturate(variance / (variance + mD * mD));					// Chebyshev's inequality. It's an upper bound: it may lead to false positives.
+	float lit_factor = saturate(variance / (variance + mD * mD));				// Chebyshev's inequality. It's an upper bound: it may lead to false positives.
 
+	return saturate((lit_factor - VSM_THRESHOLD) / (1.0f - VSM_THRESHOLD));		// Avoids lightbleeding by suppressing light under a certain threshold, and rescaling the remaining range.
+	
 }
 
 /// \brief Computes the visibility of the surface from the given point light.

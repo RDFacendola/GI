@@ -138,8 +138,8 @@ void GILogic::SetupLights(Scene& scene) {
 	// Point lights
 	static std::vector<Color> kLightColors{ Color(6.f, 5.f, 5.f, 1.f),
 											Color(5.f, 5.f, 6.f, 1.f),
-											/*Color(5.f, 6.f, 5.f, 1.f),
-											Color(10.f, 10.f, 25.f, 1.f),
+											Color(5.f, 6.f, 5.f, 1.f),
+											/*Color(10.f, 10.f, 25.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),
 											Color(10.f, 25.f, 25.f, 1.f)*/ };
 
@@ -165,13 +165,13 @@ void GILogic::SetupLights(Scene& scene) {
 		
 		auto light_node = scene_->CreateNode(L"DirectionalLight",
 											 Translation3f(0.0f, 0.0f, 0.0f),
-											 Quaternionf(AngleAxisf(Math::kDegToRad * 90.0f, Vector3f(1.0f, 0.0f, 0.0f))),
+											 Quaternionf::Identity(),
 											 AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
 		auto light_component = light_node->AddComponent<DirectionalLightComponent>(Color(1.1f, 1.1f, 1.1f, 1.0f));
 
 		light_component->EnableShadow(true);
-		light_component->SetShadowMapSize(Vector2i(1024, 1024));
+		light_component->SetShadowMapSize(Vector2i(512, 512));
 
 		directional_lights.push_back(light_node);
 
@@ -226,7 +226,10 @@ void GILogic::Update(const Time & time){
 			light_angle = light_index / directional_lights.size();
 			light_angle *= Math::kPi * 2.0f;
 			
-			directional_light->SetRotation(Quaternionf(AngleAxisf(game_time * angular_speed, Vector3f(1.0f, 0.0f, 0.0f))));
+			directional_light->SetRotation(Quaternionf(AngleAxisf(Math::DegToRad(90.f), Vector3f(1.f, 0.f, 0.f))) *
+										   Quaternionf(AngleAxisf(game_time * angular_speed, Vector3f(0.f, 1.f, 0.f))));
+			
+			auto forward = directional_light->GetForward();
 
 			++light_index;
 
