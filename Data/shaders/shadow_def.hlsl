@@ -94,8 +94,8 @@ float ComputeVSMFactor(float2 moments, float depth) {
 
 	float lit_factor = saturate(variance / (variance + mD * mD));				// Chebyshev's inequality. It's an upper bound: it may lead to false positives.
 
-	return saturate((lit_factor - VSM_THRESHOLD) / (1.0f - VSM_THRESHOLD));		// Avoids lightbleeding by suppressing light under a certain threshold, and rescaling the remaining range.
-	
+	return smoothstep(VSM_THRESHOLD, 1.0f, lit_factor);							// Avoids lightbleeding by suppressing light under a certain threshold, and rescaling the remaining range.
+
 }
 
 /// \brief Computes the visibility of the surface from the given point light.
