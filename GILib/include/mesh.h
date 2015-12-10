@@ -17,9 +17,11 @@ namespace gi_lib{
 	/// \brief The vertex declares position, texture coordinates and normals.
 	struct VertexFormatNormalTextured{
 
-		Vector3f position;			///< Position of the vertex.
-		Vector3f normal;			///< Vertex normal.
-		Vector2f tex_coord;			///< Texture coordinates.
+		Vector3f position;			///< \brief Position of the vertex.
+		Vector3f normal;			///< \brief Vertex normal.
+		Vector2f tex_coord;			///< \brief Texture coordinates.
+		Vector3f tangent;			///< \brief Tangent vector.
+		Vector3f binormal;			///< \brief Binormal vector.
 
 	};
 

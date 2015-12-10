@@ -57,7 +57,9 @@ shader_composite_(make_unique<ShaderStateComposite>()){
 
 	auto bytecode = COMMove(&blob);
 
-	D3D11_INPUT_ELEMENT_DESC input_elements[3];
+	static const size_t kInputElements = 5;
+
+	D3D11_INPUT_ELEMENT_DESC input_elements[kInputElements];
 
 	input_elements[0].SemanticName = "SV_Position";
 	input_elements[0].SemanticIndex = 0;
@@ -83,8 +85,24 @@ shader_composite_(make_unique<ShaderStateComposite>()){
 	input_elements[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 	input_elements[2].InstanceDataStepRate = 0;
 
+	input_elements[3].SemanticName = "TANGENT";
+	input_elements[3].SemanticIndex = 0;
+	input_elements[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	input_elements[3].InputSlot = 0;
+	input_elements[3].AlignedByteOffset = 32;
+	input_elements[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	input_elements[3].InstanceDataStepRate = 0;
+
+	input_elements[4].SemanticName = "BINORMAL";
+	input_elements[4].SemanticIndex = 0;
+	input_elements[4].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+	input_elements[4].InputSlot = 0;
+	input_elements[4].AlignedByteOffset = 44;
+	input_elements[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	input_elements[4].InstanceDataStepRate = 0;
+
 	THROW_ON_FAIL(device.CreateInputLayout(input_elements,
-										   3,
+										   kInputElements,
 										   bytecode->GetBufferPointer(),
 										   bytecode->GetBufferSize(),
 										   &input_layout));
