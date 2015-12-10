@@ -99,6 +99,7 @@
     <ClCompile Include="src\dx11\fx\dx11fx_lighting.cpp" />
     <ClCompile Include="src\dx11\fx\dx11fx_scaler.cpp" />
     <ClCompile Include="src\fly_camera_component.cpp" />
+    <ClCompile Include="src\gilib.cpp" />
     <ClCompile Include="src\instance_builder.cpp" />
     <ClCompile Include="src\light_component.cpp" />
     <ClCompile Include="src\dx11\dx11.cpp" />

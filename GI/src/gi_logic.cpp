@@ -5,6 +5,7 @@
 #include <typeinfo>
 
 #include "fbx/fbx.h"
+#include "wavefront/wavefront_obj.h"
 
 #include "Eigen/Geometry"
 
@@ -25,6 +26,7 @@
 #include "gpgpu.h"
 
 #include <Windows.h>
+
 
 using namespace ::std;
 using namespace ::gi;
@@ -116,17 +118,16 @@ void GILogic::Initialize(Window& window){
 
 	auto& resources = graphics_.GetResources();
 
-	MaterialImporter material_importer(resources);
-
-	FbxImporter fbx_importer(material_importer,
-							 resources);
-	
 	auto& app = Application::GetInstance();
 
-	fbx_importer.ImportScene(to_string(app.GetDirectory()) + "Data\\assets\\oldsponza.fbx",
-							 *root);
+	MtlMaterialImporter material_importer(resources);
 
-	
+	wavefront::ObjImporter obj_importer(material_importer,
+										resources);
+
+	obj_importer.ImportScene(app.GetDirectory() + L"Data\\assets\\Sponza\\SponzaNoFlag.obj",
+							 *root);
+		
 	// Lights setup 
 
 	SetupLights(*scene_);
@@ -137,9 +138,9 @@ void GILogic::SetupLights(Scene& scene) {
 
 	// Point lights
 	static std::vector<Color> kLightColors{ Color(6.f, 5.f, 5.f, 1.f),
-											Color(5.f, 5.f, 6.f, 1.f),
+											/*Color(5.f, 5.f, 6.f, 1.f),
 											Color(5.f, 6.f, 5.f, 1.f),
-											/*Color(10.f, 10.f, 25.f, 1.f),
+											Color(10.f, 10.f, 25.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),
 											Color(10.f, 25.f, 25.f, 1.f)*/ };
 

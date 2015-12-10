@@ -8,7 +8,7 @@
 #include "mesh.h"
 #include "graphics.h"
 #include "core.h"
-
+#include "gilib.h"
 
 using namespace gi_lib;
 using namespace gi_lib::wavefront; 
@@ -18,23 +18,68 @@ using namespace Eigen;
 
 namespace {
 
-	vector<string> Split(const string& source, char delimiter) {
+	const char kVertexPositionToken[] = "v";
+	const char kTextureCoordinatesToken[] = "vt";
+	const char kVertexNormalsToken[] = "vn";
+	const char kPolygonToken[] = "f";
+	const char kGroupToken[] = "g";
+	const char kUseMaterialToken[] = "usemtl";
+	const char kMaterialLibraryToken[] = "mtllib";
+	const char kNewMaterialToken[] = "newmtl";
 
-		std::stringstream source_stream(source);
+
+	/// \brief Objects needed while importing.
+	struct ImportContext {
+
+		IMtlMaterialImporter* material_importer;
+
+		Resources* resources;
+
+		wstring base_directory;
+
+	};
+
+	class MtlProperty : public IMtlProperty {
+
+	public:
+
+		MtlProperty(const string& name, const string& value);
+
+		virtual string GetName() const override;
+
+		virtual bool Read(float& out) const override;
+
+		virtual bool Read(Vector3f& out) const override;
+
+		virtual bool Read(string& out) const override;
+
+	private:
 		
-		std::string item;
+		string name_;
 
-		vector<string> elements;
+		string value_;
 
-		while (std::getline(source_stream, item, delimiter)) {
+	};
+
+	class MtlMaterial : public IMtlMaterial {
+
+	public:
+		
+		MtlMaterial(const string& name);
+
+		void AddProperty(const string& property_name, const string& property_value);
+
+		virtual string GetName() const override;
+
+		virtual unique_ptr<IMtlProperty> operator [](const string& property_name) const override;
+
+	private:
+
+		string name_;
 			
-			elements.push_back(item);
+		std::map<string, string> properties_;
 
-		}
-
-		return elements;
-
-	}
+	};
 
 	struct MtlParser {
 		
@@ -43,10 +88,10 @@ namespace {
 		void ParseLine(const string& line);
 
 		void ParseMaterial(istringstream& line_stream);
+		
+		const MtlMaterial& GetMaterial(const string& material_name) const;
 
-		void FinalizeCurrentMaterial();
-
-		string current_material_;										///< \brief Current material name.
+		vector<unique_ptr<MtlMaterial>> materials_;				///< \brief List of the materials inside the library.
 
 	};
 
@@ -66,9 +111,9 @@ namespace {
 
 		ObjParser& operator=(const ObjParser&) = delete;
 		
-		bool Parse(TransformComponent& root);
+		bool Parse(TransformComponent& root, const ImportContext& context);
 
-		void ParseLine(const string& line, TransformComponent& root);
+		void ParseLine(const string& line, TransformComponent& root, const ImportContext& context);
 
 		void ParseVertexPosition(istringstream& line_stream);
 
@@ -78,7 +123,7 @@ namespace {
 
 		void ParsePolygon(istringstream& line_stream);
 
-		void ParseGroup(istringstream& line_stream, TransformComponent& root);
+		void ParseGroup(istringstream& line_stream, TransformComponent& root, const ImportContext& context);
 
 		void ParseMaterial(istringstream& line_stream);
 
@@ -86,7 +131,7 @@ namespace {
 				
 		void AppendPolygon(const vector<VertexDefinition>& polygon);
 		
-		void FinalizeCurrentMesh(TransformComponent& root);
+		void FinalizeCurrentMesh(TransformComponent& root, const ImportContext& context);
 
 		Resources& resources_;
 
@@ -108,6 +153,70 @@ namespace {
 
 	};
 
+	//////////////////////////////////// MTL PROPERTY //////////////////////////////////////////////
+
+	MtlProperty::MtlProperty(const string& name, const string& value) :
+		name_(name),
+		value_(value){}
+
+	string MtlProperty::GetName() const{
+
+		return name_;
+
+	}
+
+	bool MtlProperty::Read(float& out) const{
+
+		istringstream value_stream(value_);
+		
+		return static_cast<bool>(value_stream >> out);
+
+	}
+
+	bool MtlProperty::Read(Vector3f& out) const{
+
+		istringstream value_stream(value_);
+
+		return (value_stream >> out(0)) &&
+			   (value_stream >> out(1)) &&
+			   (value_stream >> out(2));
+	}
+
+	bool MtlProperty::Read(string& out) const{
+
+		istringstream value_stream(value_);
+
+		return static_cast<bool>(value_stream >> out);
+
+	}
+
+	//////////////////////////////////// MTL MATERIAL //////////////////////////////////////////////
+
+	MtlMaterial::MtlMaterial(const string& name):
+	name_(name){}
+
+	string MtlMaterial::GetName() const {
+
+		return name_;
+
+	}
+
+	unique_ptr<IMtlProperty> MtlMaterial::operator [](const string& property_name) const {
+
+		auto it = properties_.find(property_name);
+
+		return it != properties_.end() ?
+			   make_unique<MtlProperty>(property_name, it->second) :
+			   nullptr;
+
+	}
+
+	void MtlMaterial::AddProperty(const string& property_name, const string& property_value) {
+
+		properties_.insert(std::make_pair(property_name, property_value));
+
+	}
+
 	//////////////////////////////////// MTL PARSER ////////////////////////////////////////////////
 
 	bool MtlParser::Parse(const wstring& file_name) {
@@ -124,8 +233,6 @@ namespace {
 
 			}
 
-			FinalizeCurrentMaterial();
-
 			return true;
 
 		}
@@ -139,17 +246,21 @@ namespace {
 		istringstream line_stream(line);
 
 		string token;
+		string property_value;
 
 		line_stream >> token;
 
-		if (token == "newmtl") {
+		if (token == kNewMaterialToken) {
 
 			ParseMaterial(line_stream);
 
 		}
-		else if (token == "vt") {
+		else if(materials_.size() > 0){
 
-			
+			// Interprets the rest of the string as the property value
+			line_stream >> property_value;
+
+			materials_.back()->AddProperty(token, property_value);
 
 		}
 
@@ -157,18 +268,31 @@ namespace {
 
 	void MtlParser::ParseMaterial(istringstream& line_stream) {
 
-		// Finalize the previous material
+		// Initialize a new material
 
-		FinalizeCurrentMaterial();
+		string material_name;
 
-		// Initialize the new mesh
+		line_stream >> material_name;
 
-		line_stream >> current_material_;
+		materials_.push_back(make_unique<MtlMaterial>(material_name));
 
 	}
 
-	void MtlParser::FinalizeCurrentMaterial() {
+	const MtlMaterial& MtlParser::GetMaterial(const string& material_name) const{
 
+		auto it = std::find_if(materials_.begin(), 
+							   materials_.end(), 
+							   [&material_name](const unique_ptr<MtlMaterial>& material) {
+
+									return material->GetName() == material_name;
+
+							   });
+
+		static const MtlMaterial kEmpty("Empty");
+
+		return it != materials_.end() ?
+			   *(it->get()) :
+			   kEmpty;
 
 	}
 
@@ -251,6 +375,36 @@ namespace {
 
 		// Unrolls the vertex strip to produce only triangles
 		
+		if (vertices.size() == 3) {
+
+			AppendPolygon(vertices);		// 0 1 2
+				
+		}
+		else if (vertices.size() == 4) {
+
+			vector<VertexDefinition> polygon_vertices;
+
+			polygon_vertices.push_back(vertices[0]);
+			polygon_vertices.push_back(vertices[1]);
+			polygon_vertices.push_back(vertices[2]);
+
+			AppendPolygon(polygon_vertices);
+
+			polygon_vertices.clear();
+
+			polygon_vertices.push_back(vertices[0]);
+			polygon_vertices.push_back(vertices[2]);
+			polygon_vertices.push_back(vertices[3]);
+
+			AppendPolygon(polygon_vertices);
+
+		}
+		else {
+
+			THROW(L"Unsupported polygon topology");
+
+		}
+
 		for (size_t vertex_index = 0; vertex_index < vertices.size() - 2; ++vertex_index) {
 
 			AppendPolygon(vector<VertexDefinition>(vertices.begin() + vertex_index, vertices.begin() + vertex_index + 3));
@@ -277,11 +431,11 @@ namespace {
 
 	}
 
-	void ObjParser::ParseGroup(istringstream& line_stream, TransformComponent& root) {
+	void ObjParser::ParseGroup(istringstream& line_stream, TransformComponent& root, const ImportContext& context) {
 
 		// Finalize the previous mesh
 
-		FinalizeCurrentMesh(root);
+		FinalizeCurrentMesh(root, context);
 		
 		// Initialize the new mesh
 
@@ -311,11 +465,22 @@ namespace {
 
 	}
 
-	void ObjParser::FinalizeCurrentMesh(TransformComponent& root) {
+	void ObjParser::FinalizeCurrentMesh(TransformComponent& root, const ImportContext& context) {
 		
 		if (current_group_.size() > 0) {
+			
+			// Import a dummy node with identity local transform where the mesh component will be attached
 
-			// One huge subset
+			auto& scene = root.GetComponent<NodeComponent>()->GetScene();
+
+			auto imported_node = scene.CreateNode(to_wstring(current_group_),
+												  Translation3f(Vector3f::Zero()),
+												  Quaternionf::Identity(),
+												  AlignedScaling3f(Vector3f::Ones()));
+
+			imported_node->SetParent(&root);
+
+			// Import the actual mesh
 
 			mesh_.subsets.push_back(MeshSubset{ 0, mesh_.vertices.size() / 3 });
 
@@ -323,17 +488,21 @@ namespace {
 
 			if (mesh) {
 
-				root.AddComponent<MeshComponent>(mesh);
+				auto mesh_component = imported_node->AddComponent<MeshComponent>(mesh);
+
+				// Import the material
+
+				context.material_importer->OnImportMaterial(context.base_directory,
+															material_library_.GetMaterial(current_material_),
+															*mesh_component);
 
 			}
-
-			// TODO: Import the proper material
 
 		}
 
 	}
 
-	bool ObjParser::Parse(TransformComponent& root) {
+	bool ObjParser::Parse(TransformComponent& root, const ImportContext& context) {
 
 		std::ifstream scene_file(file_name_.c_str());
 
@@ -343,11 +512,11 @@ namespace {
 
 			while (getline(scene_file, line)) {
 
-				ParseLine(line, root);
+				ParseLine(line, root, context);
 
 			}
 
-			FinalizeCurrentMesh(root);
+			FinalizeCurrentMesh(root, context);
 
 			return true;
 
@@ -357,7 +526,7 @@ namespace {
 
 	}
 
-	void ObjParser::ParseLine(const string& line, TransformComponent& root) {
+	void ObjParser::ParseLine(const string& line, TransformComponent& root, const ImportContext& context) {
 
 		istringstream line_stream(line);
 
@@ -365,37 +534,37 @@ namespace {
 
 		line_stream >> token;
 
-		if (token == "v") {
+		if (token == kVertexPositionToken) {
 
 			ParseVertexPosition(line_stream);
 
 		}
-		else if (token == "vt") {
+		else if (token == kTextureCoordinatesToken) {
 
 			ParseTextureCoordinates(line_stream);
 
 		}
-		else if (token == "vn") {
+		else if (token == kVertexNormalsToken) {
 
 			ParseVertexNormals(line_stream);
 
 		}
-		else if (token == "f") {
+		else if (token == kPolygonToken) {
 
 			ParsePolygon(line_stream);
 
 		}
-		else if (token == "g") {
+		else if (token == kGroupToken) {
 
-			ParseGroup(line_stream, root);
+			ParseGroup(line_stream, root, context);
 
 		}
-		else if (token == "usemtl") {
+		else if (token == kUseMaterialToken) {
 
 			ParseMaterial(line_stream);
 
 		}
-		else if (token == "mtllib") {
+		else if (token == kMaterialLibraryToken) {
 
 			ParseMaterialLibrary(line_stream);
 
@@ -407,7 +576,8 @@ namespace {
 
 ////////////////////////////////// OBJ IMPORTER /////////////////////////////////////
 
-ObjImporter::ObjImporter(Resources& resources) :
+ObjImporter::ObjImporter(IMtlMaterialImporter& importer, Resources& resources) :
+	material_importer_(importer),
 	resources_(resources) {
 
 }
@@ -416,6 +586,15 @@ bool ObjImporter::ImportScene(const wstring& file_name, TransformComponent& root
 
 	ObjParser parser(file_name, resources_);
 
-	return parser.Parse(root);
+	// Context setup
+
+	auto& file_system = FileSystem::GetInstance();
+	
+	ImportContext context{ &material_importer_, 
+						   &resources_, 
+						   file_system.GetDirectory(file_name) };
+
+	return parser.Parse(root,
+						context);
 
 }

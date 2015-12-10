@@ -293,6 +293,9 @@
     <ClCompile Include="src\wavefront\wavefront_obj.cpp">
       <Filter>Wavefront OBJ</Filter>
     </ClCompile>
+    <ClCompile Include="src\gilib.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectX 11">

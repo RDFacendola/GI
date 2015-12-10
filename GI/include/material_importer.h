@@ -11,6 +11,7 @@
 #include <resources.h>
 
 #include "fbx/fbx.h"
+#include "wavefront/wavefront_obj.h"
 
 #include "deferred_renderer.h"
 #include "sampler.h"
@@ -23,22 +24,47 @@ using gi_lib::MeshComponent;
 
 using gi_lib::DeferredRendererMaterial;
 
+using gi_lib::wavefront::IMtlMaterialImporter;
+using gi_lib::wavefront::IMtlMaterial;
+
 using gi_lib::fbx::IFbxMaterialImporter;
 using gi_lib::fbx::IFbxMaterial;
 using gi_lib::fbx::FbxMaterialCollection;
 
+
 namespace gi{
 
-
-	/// \brief Handle the material import from a fbx file.
+	/// \brief Handle the material import from a obj file and a mtl material library file.
 	/// \author Raffaele. D. Facendola
-	class MaterialImporter : public IFbxMaterialImporter{
+	class MtlMaterialImporter : public IMtlMaterialImporter {
 
 	public:
 
 		/// \brief Create a new material importer.
 		/// \param resources Factory used to load and instantiate materials.
-		MaterialImporter(Resources& resources);
+		MtlMaterialImporter(Resources& resources);
+
+		virtual void OnImportMaterial(const wstring& base_directory, const IMtlMaterial& material, MeshComponent& mesh) override;
+
+	private:
+		
+		Resources& resources_;											///< \brief Used to load various materials.
+
+		ObjectPtr<DeferredRendererMaterial> base_material_;				///< \brief Base material for every game object.
+
+		ObjectPtr<gi_lib::ISampler> sampler_;							///< \brief Basic sampler used by the material.
+
+	};
+
+	/// \brief Handle the material import from a fbx file.
+	/// \author Raffaele. D. Facendola
+	class FbxMaterialImporter : public IFbxMaterialImporter{
+
+	public:
+
+		/// \brief Create a new material importer.
+		/// \param resources Factory used to load and instantiate materials.
+		FbxMaterialImporter(Resources& resources);
 
 		virtual void OnImportMaterial(const wstring& base_directory, FbxMaterialCollection& materials, MeshComponent& mesh) override;
 

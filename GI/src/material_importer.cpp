@@ -9,6 +9,7 @@ using namespace gi_lib::fbx;
 
 namespace{
 
+		
 	/// \brief Bind a fbx property to a shader texture 2d.
 	/// \param resources Object used to load the proper 
 	bool BindTexture2D(Resources& resources, unique_ptr<IFbxProperty> fbx_property, const Tag& texture_semantic, IMaterial& material, const wstring& base_directory){
@@ -40,12 +41,15 @@ namespace{
 	ObjectPtr<DeferredRendererMaterial> InstantiateMaterial(Resources& resources, ObjectPtr<DeferredRendererMaterial> base_material, IFbxMaterial& fbx_material, const wstring& base_directory) {
 
 		static const Tag kDiffuseMapTag = "gDiffuseMap";
+		static const Tag kNormalMapTag = "gNormalMap";
 		
 		auto material_instance = base_material->Instantiate();
 
 		// Diffuse map
 
-		//Use this when importing model from 3ds max: fbx_material["3dsMax|Parameters|diff_color_map"]
+		//gisponza: Use this when importing model from 3ds max: fbx_material["3dsMax|Parameters|diff_color_map"]
+		//oldsponza: fbx_material["DiffuseColor"]
+
 		BindTexture2D(resources,
 					  fbx_material["DiffuseColor"],
 					  kDiffuseMapTag,
@@ -57,7 +61,64 @@ namespace{
 	}
 
 }
-MaterialImporter::MaterialImporter(Resources& resources) :
+
+/////////////////////////////////////// MTL MATERIAL IMPORTER /////////////////////////////////////////
+
+MtlMaterialImporter::MtlMaterialImporter(Resources& resources) :
+resources_(resources) {
+
+	using gi_lib::ISampler;
+
+	auto& app = Application::GetInstance();
+
+	base_material_ = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\gbuffer.hlsl" });
+
+	sampler_ = resources.Load<ISampler, ISampler::FromDescription>({ TextureMapping::WRAP, TextureFiltering::ANISOTROPIC, 16 });
+
+}
+
+void MtlMaterialImporter::OnImportMaterial(const wstring& base_directory, const IMtlMaterial& material, MeshComponent& mesh){
+	
+	auto deferred_component = mesh.AddComponent<AspectComponent<DeferredRendererMaterial>>(mesh);
+
+	auto material_instance = base_material_->Instantiate();
+
+	deferred_component->SetMaterial(0, material_instance);
+
+	// Setup the material properties
+	static const string kMapKdProperty = "map_Kd";
+
+	static const Tag kDiffuseMapTag = "gDiffuseMap";
+	static const Tag kSamplerTag = "gDiffuseSampler";
+
+	string texture_name;
+
+	auto property_map_kd = material[kMapKdProperty];
+
+	if (property_map_kd &&
+		property_map_kd->Read(texture_name)) {
+
+		auto diffuse_map = resources_.Load<ITexture2D, ITexture2D::FromFile>({ base_directory + to_wstring(texture_name) });
+
+		if (diffuse_map) {
+
+			assert(material_instance->GetMaterial()->SetInput(kDiffuseMapTag,
+															  diffuse_map));
+
+		}
+
+
+
+	}
+
+	assert(material_instance->GetMaterial()->SetInput(kSamplerTag,
+													  sampler_));
+
+}
+
+/////////////////////////////////////// FBX MATERIAL IMPORTER /////////////////////////////////////////
+
+FbxMaterialImporter::FbxMaterialImporter(Resources& resources) :
 resources_(resources){
 
 	using gi_lib::ISampler;
@@ -70,7 +131,7 @@ resources_(resources){
 
 }
 
-void MaterialImporter::OnImportMaterial(const wstring& base_directory, FbxMaterialCollection& materials, MeshComponent& mesh){
+void FbxMaterialImporter::OnImportMaterial(const wstring& base_directory, FbxMaterialCollection& materials, MeshComponent& mesh){
 
 	static const Tag kSamplerTag = "gDiffuseSampler";
 
