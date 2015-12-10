@@ -49,6 +49,9 @@ namespace gi_lib{
 			/// \brief Bind the mesh to the given context.
 			void Bind(ID3D11DeviceContext& context);
 
+			/// \brief Draws the specified subset.
+			void DrawSubset(ID3D11DeviceContext& context, unsigned int subset_index) const;
+
 		private:
 
 			COMPtr<ID3D11Buffer> vertex_buffer_;

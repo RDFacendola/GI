@@ -136,3 +136,22 @@ void DX11Mesh::Bind(ID3D11DeviceContext& context){
 							 0);
 
 }
+
+void DX11Mesh::DrawSubset(ID3D11DeviceContext& context, unsigned int subset_index) const {
+
+	if (index_buffer_) {
+
+		context.DrawIndexed(static_cast<unsigned int>(subsets_[subset_index].count),
+							static_cast<unsigned int>(subsets_[subset_index].start_index),
+							0);
+
+	}
+	else {
+
+		context.Draw(static_cast<unsigned int>(subsets_[subset_index].count),
+					 static_cast<unsigned int>(subsets_[subset_index].start_index));
+
+	}
+	
+
+}

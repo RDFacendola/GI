@@ -22,15 +22,6 @@ using namespace ::gi_lib::windows;
 
 namespace{
 	
-	/// \brief Draw a mesh subset using the given context.
-	inline void DrawIndexedSubset(ID3D11DeviceContext& context, const MeshSubset& subset){
-
-		context.DrawIndexed(static_cast<unsigned int>(subset.count),
-							static_cast<unsigned int>(subset.start_index),
-							0);
-
-	}
-
 	/// \brief Compute the view-projection matrix given a camera and the aspect ratio of the target.
 	Matrix4f ComputeViewProjectionMatrix(const CameraComponent& camera, float aspect_ratio){
 	
@@ -430,9 +421,8 @@ void DX11DeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes, con
 				material->Bind(*immediate_context_);
 
 				// Draw	the subset
-
-				DrawIndexedSubset(*immediate_context_,
-								  mesh->GetSubset(subset_index));
+				mesh->DrawSubset(*immediate_context_, 
+								 subset_index);
 
 			}
 

@@ -33,16 +33,7 @@ namespace {
 		float far_plane;									///< \brief Far clipping plane.
 
 	};
-	
-	/// \brief Draw a mesh subset using the given context.
-	inline void DrawIndexedSubset(ID3D11DeviceContext& context, const MeshSubset& subset) {
-
-		context.DrawIndexed(static_cast<unsigned int>(subset.count),
-							static_cast<unsigned int>(subset.start_index),
-							0);
-
-	}
-	
+		
 	/// \brief Find the smallest chunk which can accommodate the given size in the given chunk array.
 	/// If the method succeeds the best chunk is then moved at the end of the collection.
 	/// \param size Size of the square region to accommodate.
@@ -597,8 +588,8 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Obj
 
 				// Draw	the subset
 
-				DrawIndexedSubset(*immediate_context_,
-								  mesh->GetSubset(subset_index));
+				mesh->DrawSubset(*immediate_context_, 
+								 subset_index);
 
 				shadow_material->Unbind(*immediate_context_);
 
