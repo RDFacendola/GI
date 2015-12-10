@@ -141,14 +141,14 @@ void DX11Mesh::DrawSubset(ID3D11DeviceContext& context, unsigned int subset_inde
 
 	if (index_buffer_) {
 
-		context.DrawIndexed(static_cast<unsigned int>(subsets_[subset_index].count),
+		context.DrawIndexed(static_cast<unsigned int>(subsets_[subset_index].count),			// One per index
 							static_cast<unsigned int>(subsets_[subset_index].start_index),
 							0);
 
 	}
 	else {
 
-		context.Draw(static_cast<unsigned int>(subsets_[subset_index].count),
+		context.Draw(static_cast<unsigned int>(subsets_[subset_index].count * 3),				// One per vertex
 					 static_cast<unsigned int>(subsets_[subset_index].start_index));
 
 	}
