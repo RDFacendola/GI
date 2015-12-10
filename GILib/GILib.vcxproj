@@ -81,6 +81,7 @@
     <ClInclude Include="include\resources.h" />
     <ClInclude Include="include\macros.h" />
     <ClInclude Include="include\material.h" />
+    <ClInclude Include="include\wavefront\wavefront_obj.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11buffer.cpp" />
@@ -117,6 +118,7 @@
     <ClCompile Include="src\timer.cpp" />
     <ClCompile Include="src\windows\win_core.cpp" />
     <ClCompile Include="src\windows\win_input.cpp" />
+    <ClCompile Include="src\wavefront\wavefront_obj.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{21C15D82-5532-4597-B69C-EA2ECFA64DF4}</ProjectGuid>
