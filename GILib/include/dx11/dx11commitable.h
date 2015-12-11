@@ -31,6 +31,7 @@ namespace gi_lib{
 		public:
 
 			/// \brief Create a new committer.
+			/// The committer must commit the resource at least once before releasing the ownership!
 			/// \param subject Resource to commit.
 			Committer(const ObjectPtr<TType>& subject);
 
@@ -38,6 +39,8 @@ namespace gi_lib{
 			virtual void operator()(ID3D11DeviceContext& context) override;
 
 		private:
+
+			ObjectPtr<TType> ownership_;	///< \brief Used to hold the ownership for the first time.
 
 			ObjectWeakPtr<TType> subject_;	///< \brief Object that needs to be committed.
 
@@ -47,7 +50,8 @@ namespace gi_lib{
 
 		template <typename TType>
 		Committer<TType>::Committer(const ObjectPtr<TType>& subject) :
-			subject_(subject){}
+			subject_(subject),
+			ownership_(subject){}
 
 		template <typename TType>
 		inline void Committer<TType>::operator()(ID3D11DeviceContext& context){
@@ -57,6 +61,8 @@ namespace gi_lib{
 			if (ptr){
 
 				ptr->Commit(context);
+
+				ownership_ = nullptr;	// Release the ownership
 
 			}
 
