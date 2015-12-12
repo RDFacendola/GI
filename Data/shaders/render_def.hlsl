@@ -10,15 +10,15 @@
 /// GBuffer definition
 struct GBuffer {
 
-	float4 albedo : SV_Target0;					// Diffuse.R | Diffuse.G | Diffuse.B | Diffuse.A
-	float4 normal_shininess : SV_Target1;		// NormalWS.X | NormalWS.Y | NormalWS.Z | Shininess
+	float4 albedo : SV_Target0;							// Diffuse.R | Diffuse.G | Diffuse.B | Diffuse.A
+	float4 normal_specular_shininess : SV_Target1;		// NormalWS.X | NormalWS.Y | Specular | Shininess
 
 };
 
 // GBuffer surfaces
-Texture2D gAlbedo;				// Albedo.R | Albedo.G | Albedo.B | Albedo.A
-Texture2D gNormalShininess;		// NormalWS.X | NormalWS.Y | NormalWS.Z | Shininess
-Texture2D gDepthStencil;		// Depth | Stencil
+Texture2D gAlbedo;						// Albedo.R | Albedo.G | Albedo.B | Albedo.A
+Texture2D gNormalSpecularShininess;		// NormalWS.X | NormalWS.Y | Specular | Shininess
+Texture2D gDepthStencil;				// Depth | Stencil
 
 /// Surface infos
 struct SurfaceData {
@@ -26,6 +26,7 @@ struct SurfaceData {
 	float3 position;		// Position of the surface in world space.
 	float4 albedo;			// Albedo of the surface.
 	float3 normal;			// Normal of the surface in world space.
+	float specular;			// Specular power.
 	float shininess;		// Shininess for specular factor.
 
 };
@@ -80,7 +81,7 @@ SurfaceData GatherSurfaceData(uint2 position, float4x4 inv_view_proj_matrix) {
 	// Sample the raw surface infos from the GBuffer
 
 	float4 albedo = gAlbedo[position];
-	float4 normal_shininess = gNormalShininess[position];
+	float4 normal_specular_shininess = gNormalSpecularShininess[position];
 	float depth = gDepthStencil[position].x;
 
 	// Convert viewport coordinates to uv-like coordinates.
@@ -97,8 +98,9 @@ SurfaceData GatherSurfaceData(uint2 position, float4x4 inv_view_proj_matrix) {
 
 	surface_data.position = ComputeSurfacePosition(uv, depth, inv_view_proj_matrix);
 	surface_data.albedo = albedo;
-	surface_data.normal = DecodeNormals(normal_shininess.xy);
-	surface_data.shininess = normal_shininess.w;
+	surface_data.normal = DecodeNormals(normal_specular_shininess.xy);
+	surface_data.specular = normal_specular_shininess.z;
+	surface_data.shininess = normal_specular_shininess.w;
 
 	return surface_data;
 

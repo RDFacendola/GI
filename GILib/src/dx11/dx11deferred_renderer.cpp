@@ -125,7 +125,7 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix
 ///////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////
 
 const Tag DX11DeferredRenderer::kAlbedoTag = "gAlbedo";
-const Tag DX11DeferredRenderer::kNormalShininessTag = "gNormalShininess";
+const Tag DX11DeferredRenderer::kNormalShininessTag = "gNormalSpecularShininess";
 const Tag DX11DeferredRenderer::kDepthStencilTag = "gDepthStencil";
 const Tag DX11DeferredRenderer::kPointLightsTag = "gPointLights";
 const Tag DX11DeferredRenderer::kDirectionalLightsTag = "gDirectionalLights";

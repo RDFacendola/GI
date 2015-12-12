@@ -51,14 +51,30 @@ Texture2D gSpecularMap;
 
 SamplerState gDiffuseSampler;
 
+cbuffer PerMaterial {
+
+	float gShininess;
+
+	float3 reserved;
+
+};
+
 void PSMain(VSOut input, out GBuffer output){
 
 	output.albedo = gDiffuseMap.Sample(gDiffuseSampler, input.uv);
 
 	clip(output.albedo.a < 0.1f ? -1 : 1);
+	
+	float3 normals_ws = gNormalMap.Sample(gDiffuseSampler, input.uv).xyz;
 
-	output.normal_shininess.xy = EncodeNormals(input.normal_ws);
+	float3x3 tangent_matrix = float3x3(normalize(input.tangent_ws), 
+									   normalize(input.binormal_ws), 
+									   normalize(input.normal_ws));
 
-	output.normal_shininess.w = 5.0f;			// Dummy shininess
+	normals_ws = normalize(mul(normals_ws * 2.0f - 1.0f, tangent_matrix));
+
+	output.normal_specular_shininess.xy = EncodeNormals(normals_ws);
+	output.normal_specular_shininess.z = gSpecularMap.Sample(gDiffuseSampler, input.uv).r;
+	output.normal_specular_shininess.w = gShininess;
 
 }
