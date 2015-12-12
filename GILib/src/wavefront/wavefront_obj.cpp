@@ -417,15 +417,40 @@ namespace {
 
 		assert(polygon.size() == 3);		// It's a triangle, right?
 
-		// TODO: calculate the actual tangent and binormal vector
+		// Compute the tangent and the bitangent vector
+
+		// See - http://www.terathon.com/code/tangent.html
+
+		Vector3f v1 = positions_[polygon[0].position_index_ - 1];
+		Vector3f v2 = positions_[polygon[1].position_index_ - 1];
+		Vector3f v3 = positions_[polygon[2].position_index_ - 1];
+
+		Vector2f uv1 = texture_coordinates_[polygon[0].texture_coordinates_index_ - 1];
+		Vector2f uv2 = texture_coordinates_[polygon[1].texture_coordinates_index_ - 1];
+		Vector2f uv3 = texture_coordinates_[polygon[2].texture_coordinates_index_ - 1];
+
+		Vector3f v2v1 = v2 - v1;
+		Vector3f v3v1 = v3 - v1;
+
+		float uv2uv1 = uv2(1) - uv1(1);
+		float uv3uv1 = uv3(1) - uv1(1);
+
+		Vector3f base_tangent = Vector3f(uv3uv1 * v2v1(0) - uv2uv1 * v3v1(0), 
+									     uv3uv1 * v2v1(1) - uv2uv1 * v3v1(1), 
+									     uv3uv1 * v2v1(2) - uv2uv1 * v3v1(2));		// Polygon tangent vector aligned with texture's u coordinate.
 
 		for (auto&& vertex : polygon) {
 
+			Vector3f normal = normals_[vertex.normals_index_ - 1];
+
+			Vector3f bitangent = normal.cross(base_tangent).normalized();
+			Vector3f tangent = bitangent.cross(normal).normalized();
+
 			mesh_.vertices.push_back(VertexFormatNormalTextured{ positions_[vertex.position_index_ - 1],								// Position
-																 normals_[vertex.normals_index_ - 1],									// Normals
+																 normal,																// Normals
 																 texture_coordinates_[vertex.texture_coordinates_index_ - 1],			// Texture coordinates
-																 Vector3f::Zero(),														// Tangent
-																 Vector3f::Zero() });													// Binormal
+																 tangent,																// Tangent
+																 bitangent });															// Bitangent
 
 		}
 
