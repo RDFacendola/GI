@@ -16,6 +16,7 @@
 #include "deferred_renderer.h"
 #include "sampler.h"
 
+
 using gi_lib::ObjectPtr;
 
 using gi_lib::Application;
@@ -31,6 +32,8 @@ using gi_lib::fbx::IFbxMaterialImporter;
 using gi_lib::fbx::IFbxMaterial;
 using gi_lib::fbx::FbxMaterialCollection;
 
+using gi_lib::IMaterial;
+using gi_lib::Tag;
 
 namespace gi{
 
@@ -48,6 +51,10 @@ namespace gi{
 
 	private:
 		
+		bool BindTexture(const wstring& base_directory, const IMtlMaterial& mtl_material, const string& mtl_property, const Tag& semantic, IMaterial& destination) const;
+
+		bool BindProperty(const IMtlMaterial& mtl_material, const string& mtl_property, float default_value, float& destination);
+
 		Resources& resources_;											///< \brief Used to load various materials.
 
 		ObjectPtr<DeferredRendererMaterial> base_material_;				///< \brief Base material for every game object.

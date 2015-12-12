@@ -9,7 +9,14 @@ using namespace gi_lib::fbx;
 
 namespace{
 
-		
+	struct PerMaterial {
+
+		float gShininess;			// Material shininess
+
+		Vector3f reserved;
+
+	};
+
 	/// \brief Bind a fbx property to a shader texture 2d.
 	/// \param resources Object used to load the proper 
 	bool BindTexture2D(Resources& resources, unique_ptr<IFbxProperty> fbx_property, const Tag& texture_semantic, IMaterial& material, const wstring& base_directory){
@@ -60,6 +67,8 @@ namespace{
 
 	}
 
+
+
 }
 
 /////////////////////////////////////// MTL MATERIAL IMPORTER /////////////////////////////////////////
@@ -86,33 +95,77 @@ void MtlMaterialImporter::OnImportMaterial(const wstring& base_directory, const 
 	deferred_component->SetMaterial(0, material_instance);
 
 	// Setup the material properties
-	static const string kMapKdProperty = "map_Kd";
+	
+	auto per_material = resources_.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(PerMaterial) });
+	
+	auto& buffer = *per_material->Lock<PerMaterial>();
 
-	static const Tag kDiffuseMapTag = "gDiffuseMap";
-	static const Tag kSamplerTag = "gDiffuseSampler";
+	BindTexture(base_directory, material, "map_Kd", "gDiffuseMap", *material_instance->GetMaterial());
+	BindTexture(base_directory, material, "map_bump", "gNormalMap", *material_instance->GetMaterial());
+	BindTexture(base_directory, material, "map_Ks", "gSpecularMap", *material_instance->GetMaterial());
+
+	BindProperty(material, "Ns", 5.0f, buffer.gShininess);
+
+	per_material->Unlock();
+
+	if(!material_instance->GetMaterial()->SetInput("PerMaterial", 
+												   ObjectPtr<IStructuredBuffer>(per_material))){
+		
+		THROW(L"Unable to find PerMaterial constant buffer!");
+
+	}
+
+	if (!material_instance->GetMaterial()->SetInput("gDiffuseSampler",
+													sampler_)) {
+
+		THROW(L"Unable to find gDiffuseSampler sampler state!");
+
+	}
+
+}
+
+bool MtlMaterialImporter::BindProperty(const IMtlMaterial& mtl_material, const string& mtl_property, float default_value, float& destination) {
+
+	float property_value;
+
+	auto property = mtl_material[mtl_property];
+
+	if (property &&
+		property->Read(property_value)) {
+
+		destination = property_value;
+
+		return true;
+
+	}
+
+	destination = default_value;
+
+	return true;
+
+}
+
+bool MtlMaterialImporter::BindTexture(const wstring& base_directory, const IMtlMaterial& mtl_material, const string& mtl_property, const Tag& semantic, IMaterial& destination) const{
 
 	string texture_name;
 
-	auto property_map_kd = material[kMapKdProperty];
+	auto property_map_kd = mtl_material[mtl_property];
 
 	if (property_map_kd &&
 		property_map_kd->Read(texture_name)) {
 
-		auto diffuse_map = resources_.Load<ITexture2D, ITexture2D::FromFile>({ base_directory + to_wstring(texture_name) });
+		auto texture = resources_.Load<ITexture2D, ITexture2D::FromFile>({ base_directory + to_wstring(texture_name) });
 
-		if (diffuse_map) {
+		if (texture) {
 
-			assert(material_instance->GetMaterial()->SetInput(kDiffuseMapTag,
-															  diffuse_map));
+			return destination.SetInput(semantic,
+										texture);
 
 		}
 
-
-
 	}
 
-	assert(material_instance->GetMaterial()->SetInput(kSamplerTag,
-													  sampler_));
+	return false;
 
 }
 
