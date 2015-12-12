@@ -220,6 +220,10 @@ DXGI_FORMAT gi_lib::dx11::TextureFormatToDXGIFormat(const TextureFormat& texture
 
 		return DXGI_FORMAT_R24G8_TYPELESS;
 
+	case TextureFormat::BC3_UNORM:
+
+		return DXGI_FORMAT_BC3_UNORM;
+
 	default:
 
 		return DXGI_FORMAT_UNKNOWN;
@@ -263,6 +267,10 @@ TextureFormat gi_lib::dx11::DXGIFormatToTextureFormat(const DXGI_FORMAT& texture
 	case DXGI_FORMAT_R24G8_TYPELESS:
 
 		return TextureFormat::DEPTH_STENCIL;
+
+	case DXGI_FORMAT_BC3_UNORM:
+
+		return TextureFormat::BC3_UNORM;
 
 	default:
 

@@ -32,6 +32,8 @@ namespace gi_lib{
 
 		DEPTH_STENCIL,		///< \brief 32-bit format with 1 24-bit depth channel and 1 8-bit typeless channel.
 
+		BC3_UNORM,			///< \brief Block-compressed texture with interpolated alpha. Also known as DXT4/DXT5.
+
 	};
 
 	/// \brief Base interface for plain textures.
