@@ -20,13 +20,19 @@ void CopyToClipboard(const wstring &);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd){
 
+#define CATCH_EXCEPTIONS
+
+#ifdef CATCH_EXCEPTIONS
 	try{
+#endif
 
 		auto & app = Application::GetInstance();
 		
 		app.AddWindow<gi::GILogic>();
 
 		app.Join();
+
+#ifdef CATCH_EXCEPTIONS
 
 	}catch (const Exception & e){
 
@@ -48,6 +54,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				   MB_OK | MB_ICONERROR);
 
 	}
+
+#endif
 
 }
 

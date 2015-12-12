@@ -255,7 +255,7 @@ namespace {
 
 			float far_height = 2.0f * camera.GetMaximumDistance() * std::tanf(camera.GetFieldOfView() * 0.5f);		// Height of the far plane
 
-			float diameter = Vector3f(far_height * aspect_ratio, far_height, camera.GetMaximumDistance()).norm();	
+			float diameter = Vector3f(far_height * aspect_ratio, far_height, camera.GetMaximumDistance()).norm() / 3.0f;	
 
 			float half_diameter = diameter * 0.5f;
 
@@ -270,19 +270,21 @@ namespace {
 
 			auto& light_transform = *directional_light.GetComponent<TransformComponent>();
 			
-			auto light_position = camera_transform.GetPosition() + camera_transform.GetForward() * (camera.GetMinimumDistance() + camera.GetMaximumDistance()) * 0.5f;
+			Vector3f frustum_center = camera_transform.GetPosition() + camera_transform.GetForward() * (camera.GetMinimumDistance() + camera.GetMaximumDistance()) * 0.5f;
 
-			auto light_forward = light_transform.GetForward();
-			auto light_right = light_transform.GetRight();
-			auto light_up = light_transform.GetUp();
+			Vector3f light_forward = light_transform.GetForward();
+			Vector3f light_right = light_transform.GetRight();
+			Vector3f light_up = light_transform.GetUp();
+
+			Vector3f domain_size = 15000.f * Vector3f::Identity();
 
 			// Create the frustum
-			return Frustum({ Math::MakePlane( light_forward, light_position + light_forward * std::numeric_limits<float>::infinity()),			// Near clipping plane. The projection range is infinite.
-							 Math::MakePlane(-light_forward, light_position - light_forward * std::numeric_limits<float>::infinity()),			// Far clipping plane. The projection range is infinite.
-							 Math::MakePlane(-light_right, light_position + light_right * half_diameter),										// Right clipping plane
-							 Math::MakePlane( light_right, light_position - light_right * half_diameter),										// Left clipping plane
-							 Math::MakePlane(-light_up, light_position + light_up * half_diameter),												// Top clipping plane
-							 Math::MakePlane( light_up, light_position - light_up * half_diameter) });											// Bottom clipping plane
+			return Frustum({ Math::MakePlane( light_forward, frustum_center + light_forward.cwiseProduct(domain_size)),			// Near clipping plane. The projection range is infinite.
+							 Math::MakePlane(-light_forward, frustum_center - light_forward.cwiseProduct(domain_size)),			// Far clipping plane. The projection range is infinite.
+							 Math::MakePlane(-light_right, frustum_center + light_right * half_diameter),						// Right clipping plane
+							 Math::MakePlane( light_right, frustum_center - light_right * half_diameter),						// Left clipping plane
+							 Math::MakePlane(-light_up, frustum_center + light_up * half_diameter),								// Top clipping plane
+							 Math::MakePlane( light_up, frustum_center - light_up * half_diameter) });							// Bottom clipping plane
 			
 		}
 		else {
@@ -337,7 +339,7 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_prec
 
 	// Create the shadow resources
 
-	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
+	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::ANISOTROPIC, 4 });
 
 	auto format = full_precision ? TextureFormat::RG_FLOAT : TextureFormat::RG_HALF;
 
@@ -458,26 +460,25 @@ bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional
 
 	// Calculate the light's boundaries
 
-	Vector2f ortho_size;
+	Vector2f ortho_size(10000.f, 10000.f);
 
 	auto& camera = *scene.GetMainCamera();
 
-	auto lit_geometry = scene.GetMeshHierarchy().GetIntersections(GetLightFrustum(directional_light, 
-																				  camera, 
-																				  aspect_ratio,
-																				  &ortho_size));
+	Sphere domain{ Vector3f::Zero(), 15000.f };
 
+	auto lit_geometry = scene.GetMeshHierarchy().GetIntersections(domain);
+
+	
 	auto z_range = GetZRange(lit_geometry,
 							 directional_light.GetDirection());
 
 	z_range(1) = std::min(z_range(1), z_range(0) + far_plane);		// Clamp the maximum depth wrt the minimum depth found.
 
-	// The directional light is always considered to exists in the middle of the view frustum, the direction is left untouched
-
 	auto light_world_transform = directional_light.GetWorldTransform().matrix();
 
-	light_world_transform.col(3) = Math::ToVector4(camera.GetTransformComponent().GetPosition() + camera.GetTransformComponent().GetForward() * (camera.GetMaximumDistance() * 0.5f), 
-												   1.0f);
+/*
+	light_world_transform.col(3) = Math::ToVector4(camera.GetTransformComponent().GetPosition() + camera.GetTransformComponent().GetForward() * (camera.GetMaximumDistance() * 0.5f),
+												   1.0f);*/
 
 	auto light_transform = ComputeOrthographicProjectionLH(ortho_size(0),
 														   ortho_size(1),

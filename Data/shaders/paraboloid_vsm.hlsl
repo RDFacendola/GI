@@ -49,11 +49,11 @@ TessOut TessFunction(InputPatch<VSOut, 3> patch, uint patch_id : SV_PrimitiveID)
 
 	TessOut output;
 
-	output.edge_tessellation[0] = 3;
-	output.edge_tessellation[1] = 3;
-	output.edge_tessellation[2] = 3;
+	output.edge_tessellation[0] = 1;
+	output.edge_tessellation[1] = 1;
+	output.edge_tessellation[2] = 1;
 
-	output.inside_tessellation = 2;				
+	output.inside_tessellation = 1;				
 
 	return output;
 

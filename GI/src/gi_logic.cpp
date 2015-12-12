@@ -138,8 +138,8 @@ void GILogic::SetupLights(Scene& scene) {
 
 	// Point lights
 	static std::vector<Color> kLightColors{ Color(6.f, 5.f, 5.f, 1.f),
-											/*Color(5.f, 5.f, 6.f, 1.f),
-											Color(5.f, 6.f, 5.f, 1.f),
+											Color(5.f, 5.f, 6.f, 1.f),
+											/*Color(5.f, 6.f, 5.f, 1.f),
 											Color(10.f, 10.f, 25.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),
 											Color(10.f, 25.f, 25.f, 1.f)*/ };
@@ -172,7 +172,7 @@ void GILogic::SetupLights(Scene& scene) {
 		auto light_component = light_node->AddComponent<DirectionalLightComponent>(Color(1.1f, 1.1f, 1.1f, 1.0f));
 
 		light_component->EnableShadow(true);
-		light_component->SetShadowMapSize(Vector2i(512, 512));
+		light_component->SetShadowMapSize(Vector2i(1024, 1024));
 
 		directional_lights.push_back(light_node);
 
