@@ -1,6 +1,14 @@
 # 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
 # File Created: 20.08.2010 18:13:43
 
+# Ns: Shininess
+# Kd: Diffuse
+# Ks: Specular
+# map_Ka: Diffuse map
+# map_Ks: Specular map
+# map_bump: Normal map
+# map_d: Used to "dissolve". Basically an external alpha channel
+
 newmtl leaf
 	Ns 10.0000
 	Ni 1.5000
@@ -15,7 +23,7 @@ newmtl leaf
 	map_Ka textures\sponza_thorn_diff.dds
 	map_Kd textures\sponza_thorn_diff.dds
 	map_Ks textures\sponza_thorn_spec.dds
-	map_bump textures\sponza_thorn_dds.dds
+	map_bump textures\sponza_thorn_ddn.dds
 	map_d textures\sponza_thorn_mask.dds
 
 newmtl vase_round
@@ -48,6 +56,7 @@ newmtl Material__57
 	map_Ka textures\vase_plant.dds
 	map_Kd textures\vase_plant.dds
 	map_Ks textures\vase_plant_spec.dds
+	map_bump textures\vase_plant_ddn.dds
 	map_d textures\vase_plant_mask.dds
 
 newmtl Material__298
@@ -63,6 +72,7 @@ newmtl Material__298
 	Ke 0.0000 0.0000 0.0000
 	map_Ka textures\background.dds
 	map_Kd textures\background.dds
+	map_Ks textures\background_spec.dds
 	map_bump textures\background_ddn.dds
 
 newmtl 16___Default
@@ -126,6 +136,7 @@ newmtl ceiling
 	map_Ka textures\sponza_ceiling_a_diff.dds
 	map_Kd textures\sponza_ceiling_a_diff.dds
 	map_Ks textures\sponza_ceiling_a_spec.dds
+	map_bump textures\sponza_ceiling_a_ddn.dds
 
 newmtl column_a
 	Ns 10.0000
@@ -157,6 +168,7 @@ newmtl floor
 	map_Ka textures\sponza_floor_a_diff.dds
 	map_Kd textures\sponza_floor_a_diff.dds
 	map_Ks textures\sponza_floor_a_spec.dds
+	map_bump textures\sponza_floor_a_ddn.dds
 
 newmtl column_c
 	Ns 10.0000
@@ -188,7 +200,7 @@ newmtl details
 	map_Ka textures\sponza_details_diff.dds
 	map_Kd textures\sponza_details_diff.dds
 	map_Ks textures\sponza_details_spec.dds
-
+	map_bump textures\sponza_details_ddn.dds
 newmtl column_b
 	Ns 10.0000
 	Ni 1.5000
@@ -231,6 +243,7 @@ newmtl flagpole
 	map_Ka textures\sponza_flagpole_diff.dds
 	map_Kd textures\sponza_flagpole_diff.dds
 	map_Ks textures\sponza_flagpole_spec.dds
+	map_bump textures\sponza_flagpole_ddn.dds
 
 newmtl fabric_e
 	Ns 10.0000
@@ -246,6 +259,7 @@ newmtl fabric_e
 	map_Ka textures\sponza_fabric_green_diff.dds
 	map_Kd textures\sponza_fabric_green_diff.dds
 	map_Ks textures\sponza_fabric_spec.dds
+	map_bump textures\sponza_fabric_ddn.dds
 
 newmtl fabric_d
 	Ns 10.0000
@@ -261,6 +275,7 @@ newmtl fabric_d
 	map_Ka textures\sponza_fabric_blue_diff.dds
 	map_Kd textures\sponza_fabric_blue_diff.dds
 	map_Ks textures\sponza_fabric_spec.dds
+	map_bump textures\sponza_fabric_ddn.dds
 
 newmtl fabric_a
 	Ns 10.0000
@@ -276,6 +291,7 @@ newmtl fabric_a
 	map_Ka textures\sponza_fabric_diff.dds
 	map_Kd textures\sponza_fabric_diff.dds
 	map_Ks textures\sponza_fabric_spec.dds
+	map_bump textures\sponza_fabric_ddn.dds
 
 newmtl fabric_g
 	Ns 10.0000
@@ -290,6 +306,8 @@ newmtl fabric_g
 	Ke 0.0000 0.0000 0.0000
 	map_Ka textures\sponza_curtain_blue_diff.dds
 	map_Kd textures\sponza_curtain_blue_diff.dds
+	map_Ks textures\sponza_curtain_spec.dds
+	map_bump textures\sponza_curtain_ddn.dds
 
 newmtl fabric_c
 	Ns 10.0000
@@ -304,6 +322,8 @@ newmtl fabric_c
 	Ke 0.0000 0.0000 0.0000
 	map_Ka textures\sponza_curtain_diff.dds
 	map_Kd textures\sponza_curtain_diff.dds
+	map_Ks textures\sponza_curtain_spec.dds
+	map_bump textures\sponza_curtain_ddn.dds
 
 newmtl fabric_f
 	Ns 10.0000
@@ -318,6 +338,8 @@ newmtl fabric_f
 	Ke 0.0000 0.0000 0.0000
 	map_Ka textures\sponza_curtain_green_diff.dds
 	map_Kd textures\sponza_curtain_green_diff.dds
+	map_Ks textures\sponza_curtain_spec.dds
+	map_bump textures\sponza_curtain_ddn.dds
 
 newmtl chain
 	Ns 10.0000
@@ -332,6 +354,7 @@ newmtl chain
 	Ke 0.0000 0.0000 0.0000
 	map_Ka textures\chain_texture.dds
 	map_Kd textures\chain_texture.dds
+	map_bump textures\chain_texture_spec.dds
 	map_bump textures\chain_texture_ddn.dds
 	map_d textures\chain_texture_mask.dds
 
@@ -348,6 +371,8 @@ newmtl vase_hanging
 	Ke 0.0000 0.0000 0.0000
 	map_Ka textures\vase_hanging.dds
 	map_Kd textures\vase_hanging.dds
+	map_Ks textures\vase_hanging_spec.dds
+	map_bump textures\vase_hanging_ddn.dds
 
 newmtl vase
 	Ns 10.0000
@@ -362,6 +387,7 @@ newmtl vase
 	Ke 0.0000 0.0000 0.0000
 	map_Ka textures\vase_dif.dds
 	map_Kd textures\vase_dif.dds
+	map_Ks textures\vase_spec.dds
 	map_bump textures\vase_ddn.dds
 
 newmtl Material__25
@@ -392,3 +418,5 @@ newmtl roof
 	Ke 0.0000 0.0000 0.0000
 	map_Ka textures\sponza_roof_diff.dds
 	map_Kd textures\sponza_roof_diff.dds
+	map_Ks textures\sponza_roof_spec.dds
+	map_bump textures\sponza_roof_ddn.dds
