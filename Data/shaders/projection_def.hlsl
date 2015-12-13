@@ -39,6 +39,32 @@ float4 Unproject(float4x4 space, float4 position_ps) {
 
 }
 
+/// \brief Project a point into octahedron space.
+/// \param position Coordinates of the point to project.
+/// \param near_clipping Near clipping plane.
+/// \param far_plane Far clipping plane.
+float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_plane) {
+
+	float depth = length(position);														// Depth of the point wrt the center of the octahedron projection (0;0;0)
+
+	depth = saturate((length(position) - near_plane) / (far_plane - near_plane));		// Fragments closer than the near plane are fully lit, while fragments beyond the far plane are fully shadowed.
+
+	float3 I = position / (abs(position.x) + abs(position.y) + abs(position.z));		// Normalize using Manhattan distance
+	
+	// Rotate I by 45 degrees and scale up to fill the entire space
+
+	float cos_theta = 0.7071f;															// cos(45deg) = sin(45deg)
+	
+	float2 J = float2(I.x * cos_theta - I.y * cos_theta,
+					  I.x * cos_theta + I.y * cos_theta) * 1.4142f;						// Scale up to fill the entire square
+
+	return float4(J.x,
+				  J.y,
+				  depth,
+				  1.0f);
+
+}
+
 /// \brief Project a point into paraboloid space.
 /// \param position Coordinates of the point to project.
 /// \param near_clipping Near clipping plane.
