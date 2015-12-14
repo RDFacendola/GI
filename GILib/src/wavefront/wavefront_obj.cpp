@@ -432,12 +432,14 @@ namespace {
 		Vector3f v2v1 = v2 - v1;
 		Vector3f v3v1 = v3 - v1;
 
-		float uv2uv1 = uv2(1) - uv1(1);
-		float uv3uv1 = uv3(1) - uv1(1);
+		Vector2f uv2uv1 = uv2 - uv1;
+		Vector2f uv3uv1 = uv3 - uv1;
 
-		Vector3f base_tangent = Vector3f(uv3uv1 * v2v1(0) - uv2uv1 * v3v1(0), 
-									     uv3uv1 * v2v1(1) - uv2uv1 * v3v1(1), 
-									     uv3uv1 * v2v1(2) - uv2uv1 * v3v1(2));		// Polygon tangent vector aligned with texture's u coordinate.
+		Vector3f base_tangent = Vector3f(uv3uv1(1) * v2v1(0) - uv2uv1(1) * v3v1(0), 
+									     uv3uv1(1) * v2v1(1) - uv2uv1(1) * v3v1(1), 
+									     uv3uv1(1) * v2v1(2) - uv2uv1(1) * v3v1(2));		// Polygon tangent vector aligned with texture's u coordinate.
+
+		//base_tangent /= (uv2uv1(0) * uv3uv1(1) - uv3uv1(0) * uv2uv1(0));
 
 		for (auto&& vertex : polygon) {
 
