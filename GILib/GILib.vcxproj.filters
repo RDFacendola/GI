@@ -184,9 +184,11 @@
     <ClInclude Include="include\dx11\fx\dx11fx_scaler.h">
       <Filter>DirectX 11\FX</Filter>
     </ClInclude>
-    <ClInclude Include="include\dx11\dx11shadow.h" />
     <ClInclude Include="include\wavefront\wavefront_obj.h">
       <Filter>Wavefront OBJ</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11shadow.h">
+      <Filter>DirectX 11</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -289,12 +291,14 @@
     <ClCompile Include="src\dx11\fx\dx11fx_scaler.cpp">
       <Filter>DirectX 11\FX</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11\dx11shadow.cpp" />
     <ClCompile Include="src\wavefront\wavefront_obj.cpp">
       <Filter>Wavefront OBJ</Filter>
     </ClCompile>
     <ClCompile Include="src\gilib.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11shadow.cpp">
+      <Filter>DirectX 11</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

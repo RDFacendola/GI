@@ -105,7 +105,7 @@ DX11Mesh::DX11Mesh(const FromVertices<VertexFormatNormalTextured>& bundle){
 
 }
 
-void DX11Mesh::Bind(ID3D11DeviceContext& context){
+void DX11Mesh::Bind(ID3D11DeviceContext& context, bool tessellable){
 
 	// Only 1 vertex stream is used.
 
@@ -119,7 +119,19 @@ void DX11Mesh::Bind(ID3D11DeviceContext& context){
 
 	// Set the proper primitive type
 
-	context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	auto topology = tessellable ?
+					D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST :
+					D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	D3D11_PRIMITIVE_TOPOLOGY previous_topology;
+
+	context.IAGetPrimitiveTopology(&previous_topology);
+
+	if (topology != previous_topology) {
+		
+		context.IASetPrimitiveTopology(topology);
+
+	}
 
 	// Bind the vertex buffer
 

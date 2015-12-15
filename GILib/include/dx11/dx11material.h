@@ -48,6 +48,9 @@ namespace gi_lib{
 			/// \brief Unbind the material from the pipeline.
 			void Unbind(ID3D11DeviceContext& context);
 
+			/// \brief Commit the pending resources to the shader.
+			void Commit(ID3D11DeviceContext& context);
+
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D) override;
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2DArray>& texture_2D_array) override;
@@ -99,6 +102,12 @@ namespace gi_lib{
 			shader_composite_->Unbind(context);
 
 			context.IASetInputLayout(nullptr);
+
+		}
+
+		inline void DX11Material::Commit(ID3D11DeviceContext& context) {
+
+			shader_composite_->Commit(context);
 
 		}
 

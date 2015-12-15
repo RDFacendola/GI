@@ -271,6 +271,9 @@ namespace gi_lib{
 			/// \brief Unbind the shaders from the given device context.
 			virtual void Unbind(ID3D11DeviceContext& context);
 
+			/// \brief Commit the "dirty" resources to the shader.
+			virtual void Commit(ID3D11DeviceContext& context);
+
 			/// \brief Set the value of a named constant buffer.
 			/// \return Returns true if a constant buffer matching the specified tag was found, returns false otherwise.
 			bool SetConstantBuffer(const Tag& tag, const ObjectPtr<DX11StructuredBuffer>& constant_buffer);
@@ -624,14 +627,8 @@ namespace gi_lib{
 
 		inline void ShaderStateComposite::Bind(ID3D11DeviceContext& context){
 
-			// Commit pending constant buffers and structured buffers
+			Commit(context);
 
-			for (auto&& committer : committer_table_){
-
-				(*committer.second)(context);
-
-			}
-			
 			// Bind the shaders to the graphic pipeline
 
 			for (auto&& shader : shaders_){
@@ -639,6 +636,19 @@ namespace gi_lib{
 				shader->Bind(context);
 
 			}
+
+		}
+
+		inline void ShaderStateComposite::Commit(ID3D11DeviceContext& context) {
+	
+			// Commit pending constant buffers and structured buffers
+
+			for (auto&& committer : committer_table_) {
+
+				(*committer.second)(context);
+
+			}
+			
 
 		}
 

@@ -47,7 +47,7 @@ namespace gi_lib{
 			virtual const MeshSubset& GetSubset(unsigned int subset_index) const override;
 
 			/// \brief Bind the mesh to the given context.
-			void Bind(ID3D11DeviceContext& context);
+			void Bind(ID3D11DeviceContext& context, bool tessellable = false);
 
 			/// \brief Draws the specified subset.
 			void DrawSubset(ID3D11DeviceContext& context, unsigned int subset_index) const;

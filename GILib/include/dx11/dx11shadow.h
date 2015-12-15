@@ -107,7 +107,7 @@ namespace gi_lib {
 
 			void DrawShadowmap(const DirectionalShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_proj_transform);
 
-			void DrawShadowmap(const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, D3D11_PRIMITIVE_TOPOLOGY topology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED);
+			void DrawShadowmap(const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable = false);
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
 

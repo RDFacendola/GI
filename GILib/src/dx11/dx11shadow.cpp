@@ -25,7 +25,7 @@ namespace {
 
 	};
 
-	/// \brief Pixel shader constant buffer used to project the fragments to paraboloid space.
+	/// \brief Pixel shader constant buffer used to project the fragments to shadow space.
 	struct VSMPerLightCBuffer {
 
 		float near_plane;									///< \brief Near clipping plane.
@@ -530,7 +530,7 @@ void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeC
 	DrawShadowmap(nodes, 
 				  dpvsm_material_,
 				  light_view_transform.matrix(),
-				  D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);		// Dual paraboloid works best with tessellated geometry because its projection is non-linear
+				  true);
 	
 }
 
@@ -557,9 +557,11 @@ void DX11VSMAtlas::DrawShadowmap(const DirectionalShadow& shadow, const vector<V
 
 }
 
-void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, D3D11_PRIMITIVE_TOPOLOGY topology) {
+void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable) {
 	
 	ObjectPtr<DX11Mesh> mesh;
+	
+	shadow_material->Bind(*immediate_context_);
 
 	for (auto&& node : nodes) {
 
@@ -569,13 +571,8 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Obj
 
 			mesh = mesh_component.GetMesh();
 
-			mesh->Bind(*immediate_context_);
-
-			if (topology != D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED) {
-
-				immediate_context_->IASetPrimitiveTopology(topology);		// Override mesh topology with user-defined one
-
-			}
+			mesh->Bind(*immediate_context_,
+					   tessellable);
 
 			auto& per_object = *per_object_->Lock<VSMPerObjectCBuffer>();
 
@@ -585,20 +582,20 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Obj
 
 			for (unsigned int subset_index = 0; subset_index < mesh->GetSubsetCount(); ++subset_index) {
 
-				shadow_material->Bind(*immediate_context_);
+				shadow_material->Commit(*immediate_context_);
 
 				// Draw	the subset
 
 				mesh->DrawSubset(*immediate_context_, 
 								 subset_index);
 
-				shadow_material->Unbind(*immediate_context_);
-
 			}
 
 		}
 
 	}
+
+	shadow_material->Unbind(*immediate_context_);
 
 }
 
