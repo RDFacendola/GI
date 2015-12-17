@@ -52,7 +52,7 @@ newmtl Material__57
 	Ka 0.5880 0.5880 0.5880
 	Kd 0.5880 0.5880 0.5880
 	Ks 0.0000 0.0000 0.0000
-	Ke 0.0000 0.0000 0.0000
+	Ke 5.0000 5.0000 5.0000
 	map_Ka textures\vase_plant.dds
 	map_Kd textures\vase_plant.dds
 	map_Ks textures\vase_plant_spec.dds
