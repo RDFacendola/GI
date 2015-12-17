@@ -124,7 +124,7 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix
 
 ///////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////
 
-const Tag DX11DeferredRenderer::kAlbedoTag = "gAlbedo";
+const Tag DX11DeferredRenderer::kAlbedoEmissivityTag = "gAlbedoEmissivity";
 const Tag DX11DeferredRenderer::kNormalShininessTag = "gNormalSpecularShininess";
 const Tag DX11DeferredRenderer::kDepthStencilTag = "gDepthStencil";
 const Tag DX11DeferredRenderer::kPointLightsTag = "gPointLights";
@@ -520,7 +520,7 @@ void DX11DeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& light
 	
 	bool check;
 
-	check = light_shader_->SetInput(kAlbedoTag,
+	check = light_shader_->SetInput(kAlbedoEmissivityTag,
 									(*gbuffer_)[0]);
 
 	check = light_shader_->SetInput(kNormalShininessTag,

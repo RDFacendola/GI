@@ -224,7 +224,7 @@ namespace gi_lib{
 
 			// Light accumulation
 
-			static const Tag kAlbedoTag;										///< \brief Tag of the surface containing the albedo of the scene.
+			static const Tag kAlbedoEmissivityTag;										///< \brief Tag of the surface containing the albedo of the scene.
 
 			static const Tag kNormalShininessTag;								///< \brief Tag of the surface containing the normal and the shininess of the scene.
 

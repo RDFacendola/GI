@@ -54,17 +54,18 @@ SamplerState gDiffuseSampler;
 cbuffer PerMaterial {
 
 	float gShininess;
+	float gEmissivity;
 
-	float3 reserved;
+	float2 reserved;
 
 };
 
 void PSMain(VSOut input, out GBuffer output){
 
-	output.albedo = gDiffuseMap.Sample(gDiffuseSampler, input.uv);
+	float4 albedo = gDiffuseMap.Sample(gDiffuseSampler, input.uv);
 
-	clip(output.albedo.a < 0.1f ? -1 : 1);
-	
+	clip(albedo.a < 0.1f ? -1 : 1);
+
 	float3 normals_ws = gNormalMap.Sample(gDiffuseSampler, input.uv).xyz;
 
 	float3x3 tangent_matrix = float3x3(normalize(input.tangent_ws), 
@@ -72,7 +73,9 @@ void PSMain(VSOut input, out GBuffer output){
 									   normalize(input.normal_ws));
 
 	normals_ws = normalize(mul(normals_ws * 2.0f - 1.0f, tangent_matrix));
-
+	
+	output.albedo_emissivity.xyz = albedo.xyz;
+	output.albedo_emissivity.w = gEmissivity;
 	output.normal_specular_shininess.xy = EncodeNormals(normals_ws);
 	output.normal_specular_shininess.z = gSpecularMap.Sample(gDiffuseSampler, input.uv).r;
 	output.normal_specular_shininess.w = gShininess;

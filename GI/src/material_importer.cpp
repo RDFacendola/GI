@@ -12,8 +12,9 @@ namespace{
 	struct PerMaterial {
 
 		float gShininess;			// Material shininess
+		float gEmissivity;			// Material emissivity (self-illumination)
 
-		Vector3f reserved;
+		Vector2f reserved;
 
 	};
 
@@ -105,7 +106,8 @@ void MtlMaterialImporter::OnImportMaterial(const wstring& base_directory, const 
 	BindTexture(base_directory, material, "map_Ks", "gSpecularMap", *material_instance->GetMaterial());
 
 	BindProperty(material, "Ns", 5.0f, buffer.gShininess);
-
+	BindProperty(material, "Ke", 0.0f, buffer.gEmissivity);
+	
 	per_material->Unlock();
 
 	if(!material_instance->GetMaterial()->SetInput("PerMaterial", 
