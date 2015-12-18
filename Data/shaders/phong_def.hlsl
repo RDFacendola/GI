@@ -27,8 +27,8 @@ float3 ComputePhong(float3 light_direction, float3 camera_position, SurfaceData 
 
 	float3 diffuse = surface.albedo.rgb * saturate(dot(light_direction, surface.normal));							// Diffuse contribution
 
-	float3 specular = pow(saturate(dot(reflection_direction, view_direction)),										// Specular contribution
-						  surface.shininess) * surface.specular;
+	float3 specular = surface.specular * saturate(pow(saturate(dot(reflection_direction, view_direction)),										// Specular contribution
+													  surface.shininess));
 
 	float3 color = diffuse + specular;
 
@@ -53,7 +53,7 @@ float3 ComputePhong(SurfaceData surface, PointLight light, float3 camera_positio
 										camera_position,
 										surface);
 
-	float attenuation = GetAttenuation(light, surface.position) * shadow;								// Used to attenuate the light contribution
+	float attenuation = saturate(GetAttenuation(light, surface.position) * shadow);								// Used to attenuate the light contribution
 
 	return surface_color * light.color.rgb * attenuation * saturate(1.0f - surface.emissivity);
 
