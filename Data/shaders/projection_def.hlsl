@@ -51,15 +51,16 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 
 	float3 I = position / (abs(position.x) + abs(position.y) + abs(position.z));		// Normalize using Manhattan distance
 	
-	// Rotate I by 45 degrees and scale up to fill the entire space
+	// The octahedron space maps to a square space rotated by 45 degress on the Z axis.
+	// If we compensate for this rotation and scale up the image we can double the actual shadowmap resolution for free.
 
 	float cos_theta = 0.7071f;															// cos(45deg) = sin(45deg)
 	
-	float2 J = float2(I.x * cos_theta - I.y * cos_theta,
-					  I.x * cos_theta + I.y * cos_theta) * 1.4142f;						// Scale up to fill the entire square
+	I.xy = float2(I.x * cos_theta - I.y * cos_theta,
+			      I.x * cos_theta + I.y * cos_theta) * 1.4142f;
 
-	return float4(J.x,
-				  J.y,
+	return float4(I.x,
+				  I.y,
 				  depth,
 				  1.0f);
 
