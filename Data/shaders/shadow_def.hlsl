@@ -111,31 +111,14 @@ float ComputeShadow(SurfaceData surface, PointShadow shadow) {
 
 	float4 surface_ls = mul(shadow.light_view_matrix, float4(surface.position, 1));				// Surface point in light-space.
 
-	float2 min_uv = shadow.min_uv;
-	float2 max_uv = shadow.max_uv;
-	
-	if (surface_ls.z >= 0.f) {
-
-		// Front paraboloid
-		surface_ls.z *= 1.0f;
-		max_uv.x = (max_uv.x + min_uv.x) * 0.5f;
-
-	}
-	else {
-
-		// Rear paraboloid
-		surface_ls.z *= -1.0f;
-		min_uv.x = (max_uv.x + min_uv.x) * 0.5f;
-
-	}
-
-	float4 surface_ps = ProjectToParaboloidSpace(surface_ls.xyz, 
+	float4 surface_ps = ProjectToOctahedronSpace(surface_ls.xyz,
 												 shadow.near_plane, 
-												 shadow.far_plane);								// Surface in paraboloid space. XY contains the uv coordinates, Z the depth of the point.
-		
+												 shadow.far_plane,
+												 surface_ls.z < 0.0f);							// Surface in paraboloid space. XY contains the uv coordinates, Z the depth of the point.
+
 	float2 moments = SampleVSMShadowAtlas(shadow.atlas_page, 
-										  min_uv, 
-										  max_uv, 
+										  shadow.min_uv, 
+										  shadow.max_uv, 
 										  ProjectionSpaceToTextureSpace(surface_ps));			// Get the shadow moments.
 
 	return ComputeVSMFactor(moments, surface_ps.z);												// Get the lit factor via Chebyshev's inequality.

@@ -43,7 +43,8 @@ float4 Unproject(float4x4 space, float4 position_ps) {
 /// \param position Coordinates of the point to project.
 /// \param near_clipping Near clipping plane.
 /// \param far_plane Far clipping plane.
-float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_plane) {
+/// \param flip Whether to flip the coordinates to fit the position inside the back pyramid
+float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_plane, bool flip) {
 
 	float depth = length(position);														// Depth of the point wrt the center of the octahedron projection (0;0;0)
 
@@ -58,6 +59,17 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 	
 	I.xy = float2(I.x * cos_theta - I.y * cos_theta,
 			      I.x * cos_theta + I.y * cos_theta) * 1.4142f;
+
+	if (flip) {
+
+		I.x = I.x * -0.5f + 0.5f;
+
+	}
+	else {
+
+		I.x = I.x * 0.5f - 0.5f;
+
+	}
 
 	return float4(I.x,
 				  I.y,

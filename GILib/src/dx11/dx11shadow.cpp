@@ -152,7 +152,7 @@ namespace {
 		unsigned int page_index;
 		AlignedBox2i reserved_chunk;
 
-		if (ReserveChunk(size.cwiseProduct(Vector2i(2,1)),		// A dual-paraboloid shadowmap requires twice the size to store both the front and the rear shadowmaps
+		if (ReserveChunk(size,		
 						 chunks, 
 						 page_index, 
 						 reserved_chunk)) {
@@ -354,7 +354,7 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_prec
 																			 1, 
 																			 format } );
 
-	dpvsm_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\paraboloid_vsm.hlsl" });
+	dpvsm_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\octahedron_vsm.hlsl" });
 
 	vsm_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\vsm.hlsl" });
 
@@ -529,8 +529,7 @@ void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeC
 
 	DrawShadowmap(nodes, 
 				  dpvsm_material_,
-				  light_view_transform.matrix(),
-				  true);
+				  light_view_transform.matrix());
 	
 }
 

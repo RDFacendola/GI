@@ -124,10 +124,18 @@ void GILogic::Initialize(Window& window){
 
 	wavefront::ObjImporter obj_importer(material_importer,
 										resources);
-
+		
 	obj_importer.ImportScene(app.GetDirectory() + L"Data\\assets\\Sponza\\SponzaNoFlag.obj",
 							 *root);
-		
+	
+	auto skybox = scene_->CreateNode(L"skybox",
+									 Translation3f(Vector3f::Zero()),
+									 Quaternionf::Identity(),
+									 AlignedScaling3f(Vector3f::Ones() * 500.0f));
+
+	obj_importer.ImportScene(app.GetDirectory() + L"Data\\assets\\Skybox\\Skybox.obj",
+							 *skybox);
+
 	// Lights setup 
 
 	SetupLights(*scene_);
@@ -137,12 +145,12 @@ void GILogic::Initialize(Window& window){
 void GILogic::SetupLights(Scene& scene) {
 
 	// Point lights
-	static std::vector<Color> kLightColors{ Color(6.f, 5.f, 5.f, 1.f),
-											Color(5.f, 5.f, 6.f, 1.f),
-											/*Color(5.f, 6.f, 5.f, 1.f),
+	static std::vector<Color> kLightColors{ Color(7.f, 6.f, 6.f, 1.f),
+											/*Color(5.f, 5.f, 6.f, 1.f),
+											Color(5.f, 6.f, 5.f, 1.f),
 											Color(10.f, 10.f, 25.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),
-											Color(10.f, 25.f, 25.f, 1.f)*/ };
+											Color(10.f, 25.f, 25.f, 1.f)*/};
 
 	for (auto&& light_color : kLightColors) {
 
@@ -153,9 +161,9 @@ void GILogic::SetupLights(Scene& scene) {
 
 		auto light_component = light_node->AddComponent<PointLightComponent>(light_color, 100.f);
 		
-		light_component->SetCutoff(0.0001f);
+		light_component->SetCutoff(0.0005f);
 		light_component->EnableShadow(true);
-		light_component->SetShadowMapSize(Vector2i(512, 512));
+		light_component->SetShadowMapSize(Vector2i(1024, 512));
 
 		point_lights.push_back(light_node);
 		
@@ -164,6 +172,8 @@ void GILogic::SetupLights(Scene& scene) {
 	// Sky contribution
 	{
 		
+		return;
+
 		auto light_node = scene_->CreateNode(L"DirectionalLight",
 											 Translation3f(0.0f, 0.0f, 0.0f),
 											 Quaternionf::Identity(),
