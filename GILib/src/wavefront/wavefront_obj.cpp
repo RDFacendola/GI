@@ -23,6 +23,7 @@ namespace {
 	const char kVertexNormalsToken[] = "vn";
 	const char kPolygonToken[] = "f";
 	const char kGroupToken[] = "g";
+	const char kObjectToken[] = "o";
 	const char kUseMaterialToken[] = "usemtl";
 	const char kMaterialLibraryToken[] = "mtllib";
 	const char kNewMaterialToken[] = "newmtl";
@@ -405,12 +406,6 @@ namespace {
 
 		}
 
-		for (size_t vertex_index = 0; vertex_index < vertices.size() - 2; ++vertex_index) {
-
-			AppendPolygon(vector<VertexDefinition>(vertices.begin() + vertex_index, vertices.begin() + vertex_index + 3));
-
-		}
-
 	}
 
 	void ObjParser::AppendPolygon(const vector<VertexDefinition>& polygon) {
@@ -581,7 +576,7 @@ namespace {
 			ParsePolygon(line_stream);
 
 		}
-		else if (token == kGroupToken) {
+		else if (token == kGroupToken || token == kObjectToken) {
 
 			ParseGroup(line_stream, root, context);
 
