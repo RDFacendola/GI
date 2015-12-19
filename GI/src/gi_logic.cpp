@@ -163,7 +163,7 @@ void GILogic::SetupLights(Scene& scene) {
 		
 		light_component->SetCutoff(0.0005f);
 		light_component->EnableShadow(true);
-		light_component->SetShadowMapSize(Vector2i(1024, 512));
+		light_component->SetShadowMapSize(Vector2i(2048, 1024));
 
 		point_lights.push_back(light_node);
 		
@@ -203,7 +203,7 @@ void GILogic::Update(const Time & time){
 
 	if (!paused_) {
 
-		static const float xRadius = 3750.0f;
+		static const float xRadius = 3500.0f;
 		static const float yRadius = 250.0f;
 		static const float zRadius = 750.0f;
 	

@@ -104,54 +104,123 @@ int SlicePolygon(float4 polygon[3], float4 plane, out float4 strip[5]) {
 
 }
 
-/// Output the given triangle strip.
-/// side: -1 back side, 1 front side, 0 both
-void OutputStrip(float4 strip[5], int vertices, inout TriangleStream<GSOut> output_stream, int sign_mask) {
+/// \brief Output the given triangle strip.
+void OutputStrip(float4 strip[5], int vertices, inout TriangleStream<GSOut> output_stream, bool rear) {
 
 	GSOut output;
-	
-	// Fit both the front and the rear shadowmap on the same viewport. The front one is on the left, while the back one is on the right.
 
-	// At least one vertex is on the positive Z plane: append the strip as-is
+	for (int index = 0; index < vertices; ++index) {
 
-	if (sign_mask & 0x1) {
+		output.position_ps = ProjectToOctahedronSpace(strip[index].xyz, gNearPlane, gFarPlane, rear);
 
-		for (int index = 0; index < vertices; ++index) {
-
-			output.position_ps = ProjectToOctahedronSpace(strip[index].xyz, gNearPlane, gFarPlane, false);
-		
-			output_stream.Append(output);
-		
-		}
-	
-		output_stream.RestartStrip();
+		output_stream.Append(output);
 
 	}
-		
-	// At least one vertex is on the negative Z plane: append the strip flipped on the x axis (this will transform cw polygons to ccw and viceversa)
 
-	if (sign_mask & 0x4) {
+	output_stream.Append(output);
 
-		for (int index = 0; index < vertices; ++index) {
-
-			output.position_ps = ProjectToOctahedronSpace(strip[index].xyz, gNearPlane, gFarPlane, true);
-		
-			output_stream.Append(output);
-		
-		}
-	
-		output_stream.RestartStrip();
-
-	}
-	
 }
 
-[maxvertexcount(30)]
+/// \brief Output the given triangle strip as triangle list.
+/// You must ensure that the strip doesn't span the XY plane, otherwise this function will output the wrong result
+void OutputTriangleList(float4 strip[5], int vertices, inout TriangleStream<GSOut> output_stream) {
+
+	GSOut output;
+
+	int2 offset = int2(2, 1);
+
+	bool rear;
+	
+	for (int index = 0; index < vertices - 2; ++index) {
+
+		rear = strip[index + offset.x].z < 0.f || strip[index].z < 0.f || strip[index + offset.y].z < 0.f;
+
+		output.position_ps = ProjectToOctahedronSpace(strip[index + offset.x].xyz, gNearPlane, gFarPlane, rear);
+
+		output_stream.Append(output);
+
+		output.position_ps = ProjectToOctahedronSpace(strip[index].xyz, gNearPlane, gFarPlane, rear);
+
+		output_stream.Append(output);
+
+		output.position_ps = ProjectToOctahedronSpace(strip[index + offset.y].xyz, gNearPlane, gFarPlane, rear);
+
+		output_stream.Append(output);
+
+		output_stream.RestartStrip();
+
+		offset.xy = offset.yx;
+
+	}
+
+}
+
+/// \brief Output the given triangle strip.
+
+void OutputStrip(float4 strip[5], int vertices, inout TriangleStream<GSOut> output_stream, int z_sign_mask) {
+
+	bool split_z = (z_sign_mask & 0x5) == 0x5;
+
+	if (!split_z) {
+
+		// Don't split
+
+		OutputStrip(strip, vertices, output_stream, (z_sign_mask & 0x5) == 0x4);		// 5 vertices max
+
+	}
+	else {
+
+		// Split along Z - Note that since the front and the rear shadowmaps are not contiguous, we must output a triangle list :\
+
+		// Strip: 0 - 1 - 2 - 3 - 4 => List: (2 - 0 - 1) - (2 - 1 - 3) - (4 - 2 - 3)
+
+		static const float4 kZPlane = float4(0, 0, 1, 0);
+
+		int vertices;
+
+		float4 substrip[5];
+		float4 input[3];
+
+		// (2 - 0 - 1)
+
+		input[0] = strip[2];
+		input[1] = strip[0];
+		input[2] = strip[1];
+
+		vertices = SlicePolygon(input, kZPlane, substrip);
+
+		OutputTriangleList(substrip, vertices, output_stream);							// 9 vertices max
+
+		// (2 - 1 - 3)
+
+		input[0] = strip[2];
+		input[1] = strip[1];
+		input[2] = strip[3];
+
+		vertices = SlicePolygon(input, kZPlane, substrip);
+
+		OutputTriangleList(substrip, vertices, output_stream);							// 9 vertices max
+
+		// (4 - 2 - 3)
+
+		input[0] = strip[4];
+		input[1] = strip[2];
+		input[2] = strip[3];
+
+		vertices = SlicePolygon(input, kZPlane, substrip);
+
+		OutputTriangleList(substrip, vertices, output_stream);							// 9 vertices max
+
+	}
+		
+}
+
+[maxvertexcount(40)]
 void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> output_stream) {
 	
 	static const float4 kXPlane = float4(1, 0, 0, 0);
 	static const float4 kYPlane = float4(0, 1, 0, 0);
-	
+
 	float4 strip[5];
 
 	int3 sign_mask = int3( GetSignMask(input[0].x, input[1].x, input[2].x),
@@ -190,15 +259,15 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 
 		SlicePolygon(input, kXPlane, strip);									// Will output a triangle and a trapezoid (5 vertices total)
 
-		input[0] = strip[0];
-		input[1] = strip[1];
-		input[2] = strip[2];
-
 		float4 substrip[5];
 
 		// First
 
-		int vertices = SlicePolygon(input, kYPlane, substrip);					// Split the triangle
+		input[0] = strip[0];
+		input[1] = strip[1];
+		input[2] = strip[2];
+
+		int vertices = SlicePolygon(input, kYPlane, substrip);
 
 		OutputStrip(substrip, vertices, output_stream, sign_mask.z);
 		
@@ -232,8 +301,6 @@ float2 PSMain(GSOut input) : SV_Target0{
 
 	// See http://http.developer.nvidia.com/GPUGems3/gpugems3_ch08.html
 	
-	clip(input.position_ps.z);
-
 	float2 moments;
 
 	float dx = ddx(input.position_ps.z);

@@ -50,15 +50,15 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 
 	depth = saturate((length(position) - near_plane) / (far_plane - near_plane));		// Fragments closer than the near plane are fully lit, while fragments beyond the far plane are fully shadowed.
 
-	float3 I = position / (abs(position.x) + abs(position.y) + abs(position.z));		// Normalize using Manhattan distance
+	float3 I = position / dot(1, abs(position));										// // Normalize using Manhattan distance
 	
 	// The octahedron space maps to a square space rotated by 45 degress on the Z axis.
 	// If we compensate for this rotation and scale up the image we can double the actual shadowmap resolution for free.
 
-	float cos_theta = 0.7071f;															// cos(45deg) = sin(45deg)
+	float cos_theta = cos(radians(45));													// cos(45deg) = sin(45deg)
 	
 	I.xy = float2(I.x * cos_theta - I.y * cos_theta,
-			      I.x * cos_theta + I.y * cos_theta) * 1.4142f;
+			      I.x * cos_theta + I.y * cos_theta) * sqrt(2.f);
 
 	if (flip) {
 
