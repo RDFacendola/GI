@@ -31,268 +31,163 @@ struct GSOut {
 
 };
 
-float4 GetIntersection(float4 a, float4 b, float dota, float dotb) {
+/// \brief Project a vertex into octahedron space and append the result to the output stream.
+/// \param vertex Vertex to project to octahedron space and append.
+/// \param flip Whether clamping the projection to the rear pyramid (true) or the front one(false).
+/// \param output_stream The output stream.
+void ProjectAndAppend(float4 vertex, int flip, inout TriangleStream<GSOut> output_stream) {
 
-	return lerp(a,
-				b, 
-				-dota / (dotb - dota));
-	
+	GSOut output_vertex;
+
+	output_vertex.position_ps = ProjectToOctahedronSpace(vertex.xyz, gNearPlane, gFarPlane, flip);
+
+	output_stream.Append(output_vertex);
+
 }
 
-// Slices a polygon given a splitting plane.
-int SlicePolygon(float4 polygon[3], float4 plane, out float4 strip[5]) {
+/// \brief Slice a triangle along a plane and append the result to the output stream.
+/// \param polygon The polygon to slice.
+/// \param plane The plane the polygon will be sliced against.
+/// \param flip Whether the result will be projected on the rear (true) pyramid or the front one (false).
+/// \param output_stream The output stream.
+void SliceAndAppend(float4 polygon[3], float4 plane, bool flip, inout TriangleStream<GSOut> output_stream) {
 
-	float dots[3];
+	float4 strip[5];
 
-	dots[0] = dot(polygon[0], plane);
-	dots[1] = dot(polygon[1], plane);
-	dots[2] = dot(polygon[2], plane);
-	
-	int dot01 = sign(dots[0] * dots[1]);
-	int dot02 = sign(dots[0] * dots[2]);
-	int dot12 = sign(dots[1] * dots[2]);
-	
-	int vertices;
+	if (SlicePolygon(polygon, plane, strip)) {
 
-	if (dot01 + dot02 + dot12 >= 0) {
-
-		// The polygon should not be split!
-		
-		strip[0] = polygon[0];
-		strip[1] = polygon[1];
-		strip[2] = polygon[2];
-		strip[3] = polygon[1];		// Not really needed
-		strip[4] = polygon[2];		// Not really needed
-
-		vertices = 3;
-
-	}else if(dot01 < 0 && dot12 >= 0){
-
-		strip[0] = polygon[0];
-		strip[1] = GetIntersection(polygon[0], polygon[1], dots[0], dots[1]);
-		strip[2] = GetIntersection(polygon[0], polygon[2], dots[0], dots[2]);
-		strip[3] = polygon[1];
-		strip[4] = polygon[2];
-
-		vertices = 5;
-		
-	}
-	else if (dot12 < 0 && dot02 >= 0) {
-		
-		strip[0] = polygon[1];
-		strip[1] = GetIntersection(polygon[1], polygon[2], dots[1], dots[2]);
-		strip[2] = GetIntersection(polygon[1], polygon[0], dots[1], dots[0]);
-		strip[3] = polygon[2];
-		strip[4] = polygon[0];
-
-		vertices = 5;
+		ProjectAndAppend(strip[0], flip, output_stream);
+		ProjectAndAppend(strip[1], flip, output_stream);
+		ProjectAndAppend(strip[2], flip, output_stream);
+		ProjectAndAppend(strip[3], flip, output_stream);
+		ProjectAndAppend(strip[4], flip, output_stream);
 
 	}
 	else {
 
-		strip[0] = polygon[2];
-		strip[1] = GetIntersection(polygon[2], polygon[0], dots[2], dots[0]);
-		strip[2] = GetIntersection(polygon[2], polygon[1], dots[2], dots[1]);
-		strip[3] = polygon[0];
-		strip[4] = polygon[1];
-		
-		vertices = 5;
-
-	}
-	
-	return vertices;
-
-}
-
-/// \brief Output the given triangle strip.
-void OutputStrip(float4 strip[5], int vertices, inout TriangleStream<GSOut> output_stream, bool rear) {
-
-	GSOut output;
-
-	for (int index = 0; index < vertices; ++index) {
-
-		output.position_ps = ProjectToOctahedronSpace(strip[index].xyz, gNearPlane, gFarPlane, rear);
-
-		output_stream.Append(output);
-
-	}
-
-	output_stream.Append(output);
-
-}
-
-/// \brief Output the given triangle strip as triangle list.
-/// You must ensure that the strip doesn't span the XY plane, otherwise this function will output the wrong result
-void OutputTriangleList(float4 strip[5], int vertices, inout TriangleStream<GSOut> output_stream) {
-
-	GSOut output;
-
-	int2 offset = int2(2, 1);
-
-	bool rear;
-	
-	for (int index = 0; index < vertices - 2; ++index) {
-
-		rear = strip[index + offset.x].z < 0.f || strip[index].z < 0.f || strip[index + offset.y].z < 0.f;
-
-		output.position_ps = ProjectToOctahedronSpace(strip[index + offset.x].xyz, gNearPlane, gFarPlane, rear);
-
-		output_stream.Append(output);
-
-		output.position_ps = ProjectToOctahedronSpace(strip[index].xyz, gNearPlane, gFarPlane, rear);
-
-		output_stream.Append(output);
-
-		output.position_ps = ProjectToOctahedronSpace(strip[index + offset.y].xyz, gNearPlane, gFarPlane, rear);
-
-		output_stream.Append(output);
-
-		output_stream.RestartStrip();
-
-		offset.xy = offset.yx;
+		ProjectAndAppend(strip[0], flip, output_stream);
+		ProjectAndAppend(strip[1], flip, output_stream);
+		ProjectAndAppend(strip[2], flip, output_stream);
 
 	}
 
 }
 
-/// \brief Output the given triangle strip.
+void GSMainXY(float4 input[3], inout TriangleStream<GSOut> output_stream, bool flip) {
 
-void OutputStrip(float4 strip[5], int vertices, inout TriangleStream<GSOut> output_stream, int z_sign_mask) {
+	int2 sign_mask = int2( GetSignMask(input[0].x, input[1].x, input[2].x),
+						   GetSignMask(input[0].y, input[1].y, input[2].y) );
 
-	bool split_z = (z_sign_mask & 0x5) == 0x5;
+	bool split_x = (sign_mask.x & 0x5) == 0x5;
+	bool split_y = (sign_mask.y & 0x5) == 0x5;
 
-	if (!split_z) {
 
-		// Don't split
+	if (!split_x && !split_y) {
 
-		OutputStrip(strip, vertices, output_stream, (z_sign_mask & 0x5) == 0x4);		// 5 vertices max
+		// No split required - 3 vertices output
+
+		ProjectAndAppend(input[0], flip, output_stream);
+		ProjectAndAppend(input[1], flip, output_stream);
+		ProjectAndAppend(input[2], flip, output_stream);
+
+	}
+	else if (split_x ^ split_y) {
+
+		// Split along X or Y - 5 vertices output
+
+		float4 strip[5];
+
+		float4 plane = (split_x) ? float4(1, 0, 0, 0) : float4(0, 1, 0, 0);
+
+		SlicePolygon(input, plane, strip);
+
+		ProjectAndAppend(strip[0], flip, output_stream);
+		ProjectAndAppend(strip[1], flip, output_stream);
+		ProjectAndAppend(strip[2], flip, output_stream);
+		ProjectAndAppend(strip[3], flip, output_stream);
+		ProjectAndAppend(strip[4], flip, output_stream);
 
 	}
 	else {
 
-		// Split along Z - Note that since the front and the rear shadowmaps are not contiguous, we must output a triangle list :\
+		// Split along X and Y - Up to 15 vertices output + 4 for strip restart
+		
+		float4 strip[5];
 
-		// Strip: 0 - 1 - 2 - 3 - 4 => List: (2 - 0 - 1) - (2 - 1 - 3) - (4 - 2 - 3)
+		SlicePolygon(input, float4(1, 0, 0, 0), strip);
 
-		static const float4 kZPlane = float4(0, 0, 1, 0);
+		// Unwind the triangle fan centered at strip[2]
 
-		int vertices;
+		input[0] = strip[2];								
 
-		float4 substrip[5];
-		float4 input[3];
-
-		// (2 - 0 - 1)
-
-		input[0] = strip[2];
 		input[1] = strip[0];
 		input[2] = strip[1];
 
-		vertices = SlicePolygon(input, kZPlane, substrip);
+		SliceAndAppend(input, float4(0, 1, 0, 0), flip, output_stream);
+		
+		output_stream.RestartStrip();
 
-		OutputTriangleList(substrip, vertices, output_stream);							// 9 vertices max
-
-		// (2 - 1 - 3)
-
-		input[0] = strip[2];
 		input[1] = strip[1];
 		input[2] = strip[3];
 
-		vertices = SlicePolygon(input, kZPlane, substrip);
+		SliceAndAppend(input, float4(0, 1, 0, 0), flip, output_stream);
 
-		OutputTriangleList(substrip, vertices, output_stream);							// 9 vertices max
+		output_stream.RestartStrip();
 
-		// (4 - 2 - 3)
+		input[1] = strip[3];
+		input[2] = strip[4];
 
-		input[0] = strip[4];
-		input[1] = strip[2];
-		input[2] = strip[3];
-
-		vertices = SlicePolygon(input, kZPlane, substrip);
-
-		OutputTriangleList(substrip, vertices, output_stream);							// 9 vertices max
+		SliceAndAppend(input, float4(0, 1, 0, 0), flip, output_stream);
 
 	}
-		
+
 }
 
 [maxvertexcount(40)]
 void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> output_stream) {
 	
-	static const float4 kXPlane = float4(1, 0, 0, 0);
-	static const float4 kYPlane = float4(0, 1, 0, 0);
+	bool split_z = (GetSignMask(input[0].z, input[1].z, input[2].z) & 0x5) == 0x5;
+	
+	// Splitting along Z takes precedence since we cannot output a strip for the spanning triangles but a list
 
-	float4 strip[5];
+	if (!split_z) {
 
-	int3 sign_mask = int3( GetSignMask(input[0].x, input[1].x, input[2].x),
-						   GetSignMask(input[0].y, input[1].y, input[2].y),
-						   GetSignMask(input[0].z, input[1].z, input[2].z) );
-
-	bool split_x = (sign_mask.x & 0x5) == 0x5;
-	bool split_y = (sign_mask.y & 0x5) == 0x5;
-
-	if (!split_x && !split_y) {
-
-		// Don't split
-
-		strip[0] = input[0];
-		strip[1] = input[1];
-		strip[2] = input[2];
-		strip[3] = 0;			// Whatever
-		strip[4] = 0;			// Whatever
-
-		OutputStrip(strip, 3, output_stream, sign_mask.z);
-
-	}else if (split_x ^ split_y) {
-
-		// Split along X or Y
-
-		int vertices = SlicePolygon(input, 
-									split_x ? kXPlane : kYPlane, 
-									strip);
-
-		OutputStrip(strip, vertices, output_stream, sign_mask.z);
+		GSMainXY(input, output_stream, input[0].z < 0.0f);
 
 	}
-	else{
-		
-		// Split along X and Y
+	else {
+				
+		float4 strip[5];
 
-		SlicePolygon(input, kXPlane, strip);									// Will output a triangle and a trapezoid (5 vertices total)
+		SlicePolygon(input, float4(0, 0, 1, 0), strip);		// This will return "true" for sure - 5 vertices
 
-		float4 substrip[5];
+		bool flip = strip[0].z < 0.0f;
 
-		// First
+		// Unwind the triangle fan centered at strip[2]
 
-		input[0] = strip[0];
-		input[1] = strip[1];
-		input[2] = strip[2];
+		input[0] = strip[2];								
 
-		int vertices = SlicePolygon(input, kYPlane, substrip);
+		input[1] = strip[0];
+		input[2] = strip[1];
 
-		OutputStrip(substrip, vertices, output_stream, sign_mask.z);
-		
-		// Second
+		GSMainXY(input, output_stream, flip);
 
-		input[0] = strip[2];
+		output_stream.RestartStrip();
+
 		input[1] = strip[1];
 		input[2] = strip[3];
 
-		vertices = SlicePolygon(input, kYPlane, substrip);
+		GSMainXY(input, output_stream, !flip);
 
-		OutputStrip(substrip, vertices, output_stream, sign_mask.z);
+		output_stream.RestartStrip();
 
-		// Third
-
-		input[0] = strip[2];
 		input[1] = strip[3];
 		input[2] = strip[4];
 
-		vertices = SlicePolygon(input, kYPlane, substrip);
+		GSMainXY(input, output_stream, !flip);
 		
-		OutputStrip(substrip, vertices, output_stream, sign_mask.z);
-
 	}
-	
+			
 }
 
 /////////////////////////////////// PIXEL SHADER ///////////////////////////////////////
