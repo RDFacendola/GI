@@ -163,7 +163,7 @@ void GILogic::SetupLights(Scene& scene) {
 		
 		light_component->SetCutoff(0.0005f);
 		light_component->EnableShadow(true);
-		light_component->SetShadowMapSize(Vector2i(2048, 1024));
+		light_component->SetShadowMapSize(Vector2i(1024, 512));
 
 		point_lights.push_back(light_node);
 		
