@@ -30,7 +30,7 @@ float4 GetIntersection(float4 a, float4 b, float dota, float dotb) {
 
 	return lerp(a,
 				b,
-				-dota / (dotb - dota));
+				saturate(-dota / (dotb - dota)));			// Saturate so that the result falls always between a and b at most.
 
 }
 
@@ -55,44 +55,36 @@ bool SlicePolygon(float4 polygon[3], float4 plane, out float4 strip[5]) {
 
 	bool sliced = true;
 
+	int3 order;
+
 	if (!(dot01 < 0 || dot02 < 0 || dot12 < 0)) {
 
-		strip[0] = polygon[0];
-		strip[1] = polygon[1];
-		strip[2] = polygon[2];
-		strip[3] = polygon[1];		// Not really needed
-		strip[4] = polygon[2];		// Not really needed
-
-		sliced = false;				// The polygon should not be split!
+		order = int3(0, 1, 2);		// Any order will do
+		
+		sliced = false;				
 
 	}
 	else if (dot01 < 0 && dot12 >= 0) {
 
-		strip[0] = polygon[0];
-		strip[1] = GetIntersection(polygon[0], polygon[1], dots[0], dots[1]);
-		strip[2] = GetIntersection(polygon[0], polygon[2], dots[0], dots[2]);
-		strip[3] = polygon[1];
-		strip[4] = polygon[2];
+		order = int3(0, 1, 2);
 
 	}
 	else if (dot12 < 0 && dot02 >= 0) {
 
-		strip[0] = polygon[1];
-		strip[1] = GetIntersection(polygon[1], polygon[2], dots[1], dots[2]);
-		strip[2] = GetIntersection(polygon[1], polygon[0], dots[1], dots[0]);
-		strip[3] = polygon[2];
-		strip[4] = polygon[0];
+		order = int3(1, 2, 0);
 
 	}
 	else {
 
-		strip[0] = polygon[2];
-		strip[1] = GetIntersection(polygon[2], polygon[0], dots[2], dots[0]);
-		strip[2] = GetIntersection(polygon[2], polygon[1], dots[2], dots[1]);
-		strip[3] = polygon[0];
-		strip[4] = polygon[1];
+		order = int3(2, 0, 1);
 
 	}
+	
+	strip[0] = polygon[order.x];
+	strip[1] = GetIntersection(polygon[order.x], polygon[order.y], dots[order.x], dots[order.y]);
+	strip[2] = GetIntersection(polygon[order.x], polygon[order.z], dots[order.x], dots[order.z]);
+	strip[3] = polygon[order.y];
+	strip[4] = polygon[order.z];
 
 	return sliced;
 

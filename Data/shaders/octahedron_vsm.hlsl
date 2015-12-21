@@ -66,8 +66,8 @@ void SliceAndAppend(float4 polygon[3], float4 plane, bool flip, inout TriangleSt
 	else {
 
 		ProjectAndAppend(strip[0], flip, output_stream);
-		ProjectAndAppend(strip[1], flip, output_stream);
-		ProjectAndAppend(strip[2], flip, output_stream);
+		ProjectAndAppend(strip[3], flip, output_stream);
+		ProjectAndAppend(strip[4], flip, output_stream);
 
 	}
 
