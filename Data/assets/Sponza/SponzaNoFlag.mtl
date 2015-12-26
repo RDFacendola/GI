@@ -25,6 +25,7 @@ newmtl leaf
 	map_Ks textures\sponza_thorn_spec.dds
 	map_bump textures\sponza_thorn_ddn.dds
 	map_d textures\sponza_thorn_mask.dds
+	shadowcaster false
 
 newmtl vase_round
 	Ns 10.0000
@@ -58,7 +59,8 @@ newmtl Material__57
 	map_Ks textures\vase_plant_spec.dds
 	map_bump textures\vase_plant_ddn.dds
 	map_d textures\vase_plant_mask.dds
-
+	shadowcaster false
+	
 newmtl Material__298
 	Ns 10.0000
 	Ni 1.5000
