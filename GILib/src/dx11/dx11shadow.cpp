@@ -425,7 +425,18 @@ bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, cons
 
 	}
 	
-	auto light_transform = point_light.GetWorldTransform().inverse();
+	// Neutralize the light scaling
+
+	auto& transform_component = point_light.GetTransformComponent();
+
+	Matrix4f light_transform;
+
+	light_transform.col(0) = Math::ToVector4(transform_component.GetRight(), 0.f);
+	light_transform.col(1) = Math::ToVector4(transform_component.GetUp(), 0.f);
+	light_transform.col(2) = Math::ToVector4(transform_component.GetForward(), 0.f);
+	light_transform.col(3) = Math::ToVector4(transform_component.GetPosition(), 1.f);
+
+	light_transform = light_transform.inverse();
 
 	// Fill the remaining shadow infos
 
@@ -501,7 +512,7 @@ bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional
 
 }
 
-void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Affine3f& light_view_transform){
+void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_view_transform){
 
 	D3D11_VIEWPORT view_port;
 

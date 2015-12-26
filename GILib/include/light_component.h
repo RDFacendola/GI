@@ -52,14 +52,14 @@ namespace gi_lib {
 		/// \param size The size of the shadowmap in pixels.
 		void SetShadowMapSize(const Vector2i& size);
 
+		/// \brief Access the transform component of the object.
+		const TransformComponent& GetTransformComponent() const;
+
 	protected:
 
 		virtual void Initialize() override;
 
 		virtual void Finalize() override;
-
-		/// \brief Access the transform component of the object.
-		const TransformComponent& GetTransformComponent() const;
 
 		/// \brief Compute the light bounds.
 		/// \param notify Whether the VolumeComponent::OnChanged event should be triggered

@@ -103,7 +103,7 @@ namespace gi_lib {
 
 			static const Tag kPerLight;								///< \brief Tag of the per-light constant buffer.
 
-			void DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Affine3f& light_view_transform);
+			void DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_view_transform);
 
 			void DrawShadowmap(const DirectionalShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_proj_transform);
 

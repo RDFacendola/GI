@@ -162,14 +162,14 @@ void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh)
 
 	auto base_material = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\mat_emissive.hlsl" });
 
-	static std::vector<Color> kLightColors{ Color(7.f, 6.f, 6.f, 1.f),
-											/*Color(10.f, 10.f, 25.f, 1.f),
-											Color(5.f, 5.f, 6.f, 1.f),
-											Color(5.f, 6.f, 5.f, 1.f),
+	static std::vector<Color> kLightColors{ Color(5.f, 5.f, 5.f, 1.f),
+											Color(5.f, 5.f, 5.f, 1.f),
+											Color(5.f, 5.f, 5.f, 1.f),
+											/*Color(5.f, 5.f, 5.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),
 											Color(10.f, 25.f, 25.f, 1.f)*/};
 
-	static float kPointLightRadius = 100.0f;
+	static float kPointLightRadius = 250.0f;
 
 	for (auto&& light_color : kLightColors) {
 
@@ -182,9 +182,9 @@ void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh)
 
 		auto light_component = light_node->AddComponent<PointLightComponent>(light_color, kPointLightRadius);
 		
-		light_component->SetCutoff(0.0005f);
+		light_component->SetCutoff(0.001f);
 		light_component->EnableShadow(true);
-		light_component->SetShadowMapSize(Vector2i(512, 256));
+		light_component->SetShadowMapSize(Vector2i(1024, 512));
 
 		point_lights.push_back(light_node);
 		
@@ -246,12 +246,12 @@ void GILogic::Update(const Time & time){
 
 	if (!paused_) {
 
-		static const float xRadius = 3500.0f;
-		static const float yRadius = 250.0f;
-		static const float zRadius = 750.0f;
+		static const float xRadius = 2000.0f;
+		static const float yRadius = 750.0f;
+		static const float zRadius = 400.0f;
 	
 		static const float angular_speed = Math::kPi / 16.0f;
-		static const float oscillation_speed = Math::kPi / 7.0f;
+		static const float oscillation_speed = Math::kPi / 6.0f;
 
 		static float game_time = 0.0f;
 
@@ -265,9 +265,9 @@ void GILogic::Update(const Time & time){
 			light_angle = light_index / point_lights.size();
 			light_angle *= Math::kPi * 2.0f;
 
- 			point_light->SetTranslation(Translation3f(std::cosf(light_angle + game_time * angular_speed) * xRadius,
- 													  std::cosf(light_angle + game_time * oscillation_speed) * yRadius + 300.0f,
- 													  std::sinf(light_angle + game_time * angular_speed) * zRadius + zRadius - 50.0f));
+ 			point_light->SetTranslation(Translation3f(std::cosf(light_angle + game_time * angular_speed) * xRadius - 150.f,
+ 													  std::cosf(light_angle + game_time * oscillation_speed) * yRadius + 1000.f,
+ 													  std::sinf(light_angle + game_time * angular_speed) * zRadius - 150.f));
 
 			++light_index;
 
