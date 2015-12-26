@@ -35,7 +35,7 @@ namespace gi{
 		
 	private:
 
-		void SetupLights(Scene& scene);
+		void SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh);
 
 		std::vector<TransformComponent*> point_lights;
 

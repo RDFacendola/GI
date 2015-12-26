@@ -139,35 +139,77 @@ void GILogic::Initialize(Window& window){
 
 	// Lights setup 
 
-	SetupLights(*scene_);
+	SetupLights(*scene_, 
+				obj_importer.ImportMesh(app.GetDirectory() + L"Data\\assets\\Light\\Sphere.obj", "Icosphere"));
 	
 }
 
-void GILogic::SetupLights(Scene& scene) {
+void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh) {
+
+	// Disable light's shadowcasting
+	
+	point_light_mesh->SetFlags(MeshFlags::kNone);
 
 	// Point lights
+
+	struct PerPointLight {
+
+		Vector4f gColor;			// Point light emissive color
+
+	};
+
+	auto& resources = graphics_.GetResources();
+
+	auto base_material = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\mat_emissive.hlsl" });
+
 	static std::vector<Color> kLightColors{ Color(7.f, 6.f, 6.f, 1.f),
-											/*Color(5.f, 5.f, 6.f, 1.f),
+											/*Color(10.f, 10.f, 25.f, 1.f),
+											Color(5.f, 5.f, 6.f, 1.f),
 											Color(5.f, 6.f, 5.f, 1.f),
-											Color(10.f, 10.f, 25.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),
 											Color(10.f, 25.f, 25.f, 1.f)*/};
+
+	static float kPointLightRadius = 100.0f;
 
 	for (auto&& light_color : kLightColors) {
 
 		auto light_node = scene_->CreateNode(L"PointLight",
 											 Translation3f::Identity(),
 											 Quaternionf::Identity(),
-											 AlignedScaling3f(1.0f, 1.0f, 1.0f));
+											 AlignedScaling3f(kPointLightRadius, kPointLightRadius, kPointLightRadius));
 
-		auto light_component = light_node->AddComponent<PointLightComponent>(light_color, 100.f);
+		// Point light setup
+
+		auto light_component = light_node->AddComponent<PointLightComponent>(light_color, kPointLightRadius);
 		
 		light_component->SetCutoff(0.0005f);
 		light_component->EnableShadow(true);
-		light_component->SetShadowMapSize(Vector2i(1024, 512));
+		light_component->SetShadowMapSize(Vector2i(512, 256));
 
 		point_lights.push_back(light_node);
 		
+		// Light mesh
+
+		auto mesh_component = light_node->AddComponent<MeshComponent>(point_light_mesh);
+
+		// Light material
+
+		auto deferred_component = light_node->AddComponent<AspectComponent<DeferredRendererMaterial>>(*mesh_component);
+
+		auto material_instance = base_material->Instantiate();
+
+		deferred_component->SetMaterial(0, material_instance);
+
+		auto per_point_light = resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(PerPointLight) });
+
+		auto& buffer = *per_point_light->Lock<PerPointLight>();
+
+		buffer.gColor = light_color.ToVector4f();
+
+		per_point_light->Unlock();
+
+		material_instance->GetMaterial()->SetInput("PerMaterial", ObjectPtr<IStructuredBuffer>(per_point_light));
+
 	}
 	
 	// Sky contribution

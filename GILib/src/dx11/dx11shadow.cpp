@@ -581,12 +581,16 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Obj
 
 			for (unsigned int subset_index = 0; subset_index < mesh->GetSubsetCount(); ++subset_index) {
 
-				shadow_material->Commit(*immediate_context_);
+				if (mesh->GetFlags(subset_index) && MeshFlags::kShadowcaster) {
+					
+					shadow_material->Commit(*immediate_context_);
 
-				// Draw	the subset
+					// Draw	the subset
 
-				mesh->DrawSubset(*immediate_context_, 
-								 subset_index);
+					mesh->DrawSubset(*immediate_context_, 
+									 subset_index);
+
+				}
 
 			}
 

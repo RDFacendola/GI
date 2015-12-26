@@ -52,6 +52,14 @@ namespace gi_lib{
 			/// \brief Draws the specified subset.
 			void DrawSubset(ID3D11DeviceContext& context, unsigned int subset_index) const;
 
+			virtual MeshFlags GetFlags(unsigned int subset_index) const override;
+
+			virtual void SetFlags(unsigned int subset_index, MeshFlags flags) override;
+
+			virtual MeshFlags GetFlags() const override;
+
+			virtual void SetFlags(MeshFlags flags) override;
+
 		private:
 
 			COMPtr<ID3D11Buffer> vertex_buffer_;
@@ -59,6 +67,8 @@ namespace gi_lib{
 			COMPtr<ID3D11Buffer> index_buffer_;
 
 			vector<MeshSubset> subsets_;
+
+			vector<MeshFlags> flags_;										///< \brief Flags for each subset.
 
 			size_t vertex_count_;
 

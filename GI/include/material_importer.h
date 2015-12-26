@@ -54,8 +54,9 @@ namespace gi{
 		
 		bool BindTexture(const wstring& base_directory, const IMtlMaterial& mtl_material, const string& mtl_property, const Tag& semantic, IMaterial& destination) const;
 
-		bool BindProperty(const IMtlMaterial& mtl_material, const string& mtl_property, float default_value, float& destination);
-
+		template <typename TProperty>
+		bool BindProperty(const IMtlMaterial& mtl_material, const string& mtl_property, TProperty default_value, TProperty& destination);
+		
 		Resources& resources_;											///< \brief Used to load various materials.
 
 		ObjectPtr<DeferredRendererMaterial> base_material_;				///< \brief Base material for every game object.
@@ -85,5 +86,29 @@ namespace gi{
 		ObjectPtr<gi_lib::ISampler> sampler_;							///< \brief Basic sampler used by the material.
 
 	};
+
+	////////////////////////////// MTL MATERIAL PROPERTY /////////////////////////////////
+
+	template <typename TProperty>
+	bool MtlMaterialImporter::BindProperty(const IMtlMaterial& mtl_material, const string& mtl_property, TProperty default_value, TProperty& destination) {
+
+		TProperty property_value;
+
+		auto property = mtl_material[mtl_property];
+
+		if (property &&
+			property->Read(property_value)) {
+
+			destination = property_value;
+
+			return true;
+
+		}
+
+		destination = default_value;
+
+		return true;
+
+	}
 
 }

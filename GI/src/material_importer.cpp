@@ -130,30 +130,18 @@ void MtlMaterialImporter::OnImportMaterial(const wstring& base_directory, const 
 		deferred_component->SetMaterial(material_index,
 										material_instance);
 
+		// Set the mesh flags
+
+		string is_shadowcaster;
+
+		BindProperty<string>(material, "shadowcaster", "true", is_shadowcaster);
+
+		mesh.GetMesh()->SetFlags(is_shadowcaster == "true" ? 
+								 MeshFlags::kShadowcaster : 
+								 MeshFlags::kNone);
+
 	}
 	
-
-}
-
-bool MtlMaterialImporter::BindProperty(const IMtlMaterial& mtl_material, const string& mtl_property, float default_value, float& destination) {
-
-	float property_value;
-
-	auto property = mtl_material[mtl_property];
-
-	if (property &&
-		property->Read(property_value)) {
-
-		destination = property_value;
-
-		return true;
-
-	}
-
-	destination = default_value;
-
-	return true;
-
 }
 
 bool MtlMaterialImporter::BindTexture(const wstring& base_directory, const IMtlMaterial& mtl_material, const string& mtl_property, const Tag& semantic, IMaterial& destination) const{

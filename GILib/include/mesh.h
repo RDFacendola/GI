@@ -9,11 +9,19 @@
 
 #include "eigen.h"
 #include "resources.h"
+#include "enums.h"
 
 namespace gi_lib{
 
 	struct AABB;
 	
+	ENUM_FLAGS(MeshFlags, int) {
+
+		kNone = 0,
+		kShadowcaster = 1,
+
+	};
+
 	/// \brief The vertex declares position, texture coordinates and normals.
 	struct VertexFormatNormalTextured{
 
@@ -83,6 +91,26 @@ namespace gi_lib{
 		/// \param subset_index Index of the subset to get.
 		/// \return Returns the specified mesh subset.
 		virtual const MeshSubset& GetSubset(unsigned int subset_index) const = 0;
+
+		/// \brief Get a mesh subset's flags.
+		/// \param subset_index Index of the subset to access.
+		/// \return Returns the flags of the specified subset.
+		virtual MeshFlags GetFlags(unsigned int subset_index) const = 0;
+
+		/// \brief Set a mesh subset's flags.
+		/// \param subset_index Index of the subset to access.
+		/// \param flag Subset's flags.
+		virtual void SetFlags(unsigned int subset_index, MeshFlags flags) = 0;
+
+		/// \brief Get the shared mesh flags.
+		/// This method will return the list of flags that are shared among all the subsets.
+		/// \return Returns the flags of the mesh.
+		virtual MeshFlags GetFlags() const = 0;
+
+		/// \brief Set the mesh flags.
+		/// \param subset_index Index of the subset to access.
+		/// \remarks This method will override each individual subset flags.
+		virtual void SetFlags(MeshFlags flags) = 0;
 
 	};
 

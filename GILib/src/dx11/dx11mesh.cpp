@@ -96,6 +96,10 @@ DX11Mesh::DX11Mesh(const FromVertices<VertexFormatNormalTextured>& bundle){
 
 	subsets_ = bundle.subsets;
 
+	flags_.resize(subsets_.size());
+
+	std::fill(flags_.begin(), flags_.end(), MeshFlags::kNone);
+
 	vertex_count_ = bundle.vertices.size();
 	LOD_count_ = 1;
 	size_ = vb_size + ib_size;
@@ -165,5 +169,38 @@ void DX11Mesh::DrawSubset(ID3D11DeviceContext& context, unsigned int subset_inde
 
 	}
 	
+
+}
+
+MeshFlags DX11Mesh::GetFlags(unsigned int subset_index) const{
+	
+	return flags_[subset_index];
+
+}
+
+void DX11Mesh::SetFlags(unsigned int subset_index, MeshFlags flags){
+	
+	flags_[subset_index] = flags;
+
+}
+
+gi_lib::MeshFlags DX11Mesh::GetFlags() const{
+	
+	return std::accumulate(flags_.begin(),
+						   flags_.end(),
+						   static_cast<MeshFlags>(0),
+						   [](MeshFlags sum, MeshFlags current) {
+
+								return sum & current;
+
+						   });	
+
+}
+
+void DX11Mesh::SetFlags(MeshFlags flags){
+	
+	std::fill(flags_.begin(),
+			  flags_.end(),
+			  flags);
 
 }
