@@ -87,42 +87,51 @@ resources_(resources) {
 
 }
 
-void MtlMaterialImporter::OnImportMaterial(const wstring& base_directory, const IMtlMaterial& material, MeshComponent& mesh){
+void MtlMaterialImporter::OnImportMaterial(const wstring& base_directory, const MtlMaterialCollection& material_collection, MeshComponent& mesh){
 	
+	// Add a renderer component for the deferred renderer.
 	auto deferred_component = mesh.AddComponent<AspectComponent<DeferredRendererMaterial>>(mesh);
 
-	auto material_instance = base_material_->Instantiate();
+	// Instantiate the proper materials for each mesh subset.
 
-	deferred_component->SetMaterial(0, material_instance);
+	for (unsigned int material_index = 0; material_index < deferred_component->GetMaterialCount(); ++material_index) {
 
-	// Setup the material properties
+		auto material_instance = base_material_->Instantiate();
+
+		auto per_material = resources_.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(PerMaterial) });
 	
-	auto per_material = resources_.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(PerMaterial) });
-	
-	auto& buffer = *per_material->Lock<PerMaterial>();
-
-	BindTexture(base_directory, material, "map_Kd", "gDiffuseMap", *material_instance->GetMaterial());
-	BindTexture(base_directory, material, "map_bump", "gNormalMap", *material_instance->GetMaterial());
-	BindTexture(base_directory, material, "map_Ks", "gSpecularMap", *material_instance->GetMaterial());
-
-	BindProperty(material, "Ns", 5.0f, buffer.gShininess);
-	BindProperty(material, "Ke", 0.0f, buffer.gEmissivity);
-	
-	per_material->Unlock();
-
-	if(!material_instance->GetMaterial()->SetInput("PerMaterial", 
-												   ObjectPtr<IStructuredBuffer>(per_material))){
+		auto& buffer = *per_material->Lock<PerMaterial>();
 		
-		THROW(L"Unable to find PerMaterial constant buffer!");
+		auto& material = *material_collection[material_index];
+
+		BindTexture(base_directory, material, "map_Kd", "gDiffuseMap", *material_instance->GetMaterial());
+		BindTexture(base_directory, material, "map_bump", "gNormalMap", *material_instance->GetMaterial());
+		BindTexture(base_directory, material, "map_Ks", "gSpecularMap", *material_instance->GetMaterial());
+
+		BindProperty(material, "Ns", 5.0f, buffer.gShininess);
+		BindProperty(material, "Ke", 0.0f, buffer.gEmissivity);
+	
+		per_material->Unlock();
+
+		if(!material_instance->GetMaterial()->SetInput("PerMaterial", 
+													   ObjectPtr<IStructuredBuffer>(per_material))){
+		
+			THROW(L"Unable to find PerMaterial constant buffer!");
+
+		}
+
+		if (!material_instance->GetMaterial()->SetInput("gDiffuseSampler",
+														sampler_)) {
+
+			THROW(L"Unable to find gDiffuseSampler sampler state!");
+
+		}
+		
+		deferred_component->SetMaterial(material_index,
+										material_instance);
 
 	}
-
-	if (!material_instance->GetMaterial()->SetInput("gDiffuseSampler",
-													sampler_)) {
-
-		THROW(L"Unable to find gDiffuseSampler sampler state!");
-
-	}
+	
 
 }
 

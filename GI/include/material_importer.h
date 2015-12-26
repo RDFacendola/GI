@@ -27,6 +27,7 @@ using gi_lib::DeferredRendererMaterial;
 
 using gi_lib::wavefront::IMtlMaterialImporter;
 using gi_lib::wavefront::IMtlMaterial;
+using gi_lib::wavefront::MtlMaterialCollection;
 
 using gi_lib::fbx::IFbxMaterialImporter;
 using gi_lib::fbx::IFbxMaterial;
@@ -47,7 +48,7 @@ namespace gi{
 		/// \param resources Factory used to load and instantiate materials.
 		MtlMaterialImporter(Resources& resources);
 
-		virtual void OnImportMaterial(const wstring& base_directory, const IMtlMaterial& material, MeshComponent& mesh) override;
+		virtual void OnImportMaterial(const wstring& base_directory, const MtlMaterialCollection& material_collection, MeshComponent& mesh) override;
 
 	private:
 		

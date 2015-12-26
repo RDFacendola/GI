@@ -122,11 +122,11 @@ void GILogic::Initialize(Window& window){
 
 	MtlMaterialImporter material_importer(resources);
 
-	wavefront::ObjImporter obj_importer(material_importer,
-										resources);
+	wavefront::ObjImporter obj_importer(resources);
 		
 	obj_importer.ImportScene(app.GetDirectory() + L"Data\\assets\\Sponza\\SponzaNoFlag.obj",
-							 *root);
+							 *root,
+							 material_importer);
 	
 	auto skybox = scene_->CreateNode(L"skybox",
 									 Translation3f(Vector3f::Zero()),
@@ -134,7 +134,8 @@ void GILogic::Initialize(Window& window){
 									 AlignedScaling3f(Vector3f::Ones() * 500.0f));
 
 	obj_importer.ImportScene(app.GetDirectory() + L"Data\\assets\\Skybox\\Skybox.obj",
-							 *skybox);
+							 *skybox,
+							 material_importer);
 
 	// Lights setup 
 
