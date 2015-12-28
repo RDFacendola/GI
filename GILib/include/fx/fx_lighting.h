@@ -68,12 +68,7 @@ namespace gi_lib {
 		};
 
 		/// \brief Performs the tonemapping of an image.
-		///
-		/// The tonemapping function is:
-		/// T(x) = x / ((x + bias) * factor)
-		///
 		/// \author Raffaele D. Facendola
-		/// \see https://docs.unrealengine.com/latest/INT/Engine/Rendering/PostProcessEffects/ColorGrading/index.html
 		class FxTonemap {
 
 		public:
@@ -84,20 +79,16 @@ namespace gi_lib {
 			/// \brief Set the vignette factor.
 			virtual void SetVignette(float vignette) = 0;
 
-			/// \brief Get the multiplicative factor.
-			virtual float GetFactor() const = 0;
+			/// \brief Get the key value of the image.
+			/// Think of this value as desired average luminance or general "mood".
+			virtual float GetKeyValue() const = 0;
 
 			/// \brief Set the multiplicative factor.
-			virtual void SetFactor(float factor) = 0;
-
-			/// \brief Get the bias.
-			virtual float GetBias() const = 0;
-
-			/// \brief Set the bias.
-			virtual void SetBias(float bias) = 0;
+			virtual void SetKeyValue(float key_value) = 0;
 
 			/// \brief Performs a tonemapping of the given image.
-			virtual void Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination) = 0;
+			/// \param average_luminance Average luminance of the current frame stored as 1x1 texture.
+			virtual void Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<ITexture2D>& average_luminance, const ObjectPtr<IGPTexture2D>& destination) = 0;
 			
 		};
 

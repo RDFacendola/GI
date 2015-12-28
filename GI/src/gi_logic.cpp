@@ -163,9 +163,9 @@ void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh)
 	auto base_material = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\mat_emissive.hlsl" });
 
 	static std::vector<Color> kLightColors{ Color(5.f, 5.f, 5.f, 1.f),
-											Color(5.f, 5.f, 5.f, 1.f),
-											Color(5.f, 5.f, 5.f, 1.f),
 											/*Color(5.f, 5.f, 5.f, 1.f),
+											Color(5.f, 5.f, 5.f, 1.f),
+											Color(5.f, 5.f, 5.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),
 											Color(10.f, 25.f, 25.f, 1.f)*/};
 
@@ -215,11 +215,10 @@ void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh)
 	// Sky contribution
 	{
 		
-		return;
-
 		auto light_node = scene_->CreateNode(L"DirectionalLight",
 											 Translation3f(0.0f, 0.0f, 0.0f),
-											 Quaternionf::Identity(),
+											 Quaternionf(AngleAxisf(Math::DegToRad(90.f), Vector3f(0, 1, 0)) *
+														 AngleAxisf(Math::DegToRad(45.f), Vector3f(1, 0, 0))),
 											 AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
 		auto light_component = light_node->AddComponent<DirectionalLightComponent>(Color(1.1f, 1.1f, 1.1f, 1.0f));
@@ -275,23 +274,24 @@ void GILogic::Update(const Time & time){
 
 		light_index = 0.0f;
 
-		for (auto&&directional_light : directional_lights) {
+		//for (auto&&directional_light : directional_lights) {
 
-			light_angle = light_index / directional_lights.size();
-			light_angle *= Math::kPi * 2.0f;
-			
-			directional_light->SetRotation(Quaternionf(AngleAxisf(Math::DegToRad(90.f), Vector3f(1.f, 0.f, 0.f))) *
-										   Quaternionf(AngleAxisf(game_time * angular_speed, Vector3f(0.f, 1.f, 0.f))));
-			
-			auto forward = directional_light->GetForward();
+		//	light_angle = light_index / directional_lights.size();
+		//	light_angle *= Math::kPi * 2.0f;
+		//	
+		//	directional_light->SetRotation(Quaternionf(AngleAxisf(Math::DegToRad(90.f), Vector3f(1.f, 0.f, 0.f))) *
+		//								   Quaternionf(AngleAxisf(game_time * angular_speed, Vector3f(0.f, 1.f, 0.f))));
+		//	
+		//	auto forward = directional_light->GetForward();
 
-			++light_index;
+		//	++light_index;
 
-		}
+		//}
 
 	}
 
-	auto next_frame = deferred_renderer_->Draw(output_->GetVideoMode().horizontal_resolution * 1.0f,
+	auto next_frame = deferred_renderer_->Draw(time,
+											   output_->GetVideoMode().horizontal_resolution * 1.0f,
 											   output_->GetVideoMode().vertical_resolution * 1.0f);
 
 	output_->Display(next_frame);

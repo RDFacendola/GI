@@ -147,7 +147,7 @@ namespace gi_lib{
 			/// \brief No assignment operator.
 			DX11DeferredRenderer& operator=(DX11DeferredRenderer&) = delete;
 
-			virtual ObjectPtr<ITexture2D> Draw(unsigned int width, unsigned int height) override;
+			virtual ObjectPtr<ITexture2D> Draw(const Time& time, unsigned int width, unsigned int height) override;
 
 		private:
 
@@ -165,6 +165,8 @@ namespace gi_lib{
 				unsigned int height;
 
 				float aspect_ratio;
+
+				float time_delta;				///< \brief Time passed since the last frame, in seconds.
 				
 			};
 

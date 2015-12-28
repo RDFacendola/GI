@@ -139,7 +139,7 @@ const Tag DX11DeferredRenderer::kDirectionalShadowsTag = "gDirectionalShadows";
 DX11DeferredRenderer::DX11DeferredRenderer(const RendererConstructionArgs& arguments) :
 DeferredRenderer(arguments.scene),
 fx_bloom_(1.0f, 1.67f, Vector2f(0.5f, 0.5f)),
-fx_tonemap_(0.5f){
+fx_tonemap_(0.5f, 0.4f){
 
 	auto&& device = *DX11Graphics::GetInstance().GetDevice();
 
@@ -287,7 +287,7 @@ DX11DeferredRenderer::~DX11DeferredRenderer(){
 	
 }
 
-ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(unsigned int width, unsigned int height){
+ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int width, unsigned int height){
 	
 	// Draws only if there's a camera
 
@@ -303,6 +303,7 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(unsigned int width, unsigned in
 		frame_info.width = width;
 		frame_info.height = height;
 		frame_info.view_proj_matrix = ComputeViewProjectionMatrix(*main_camera, frame_info.aspect_ratio);
+		frame_info.time_delta = time.GetDeltaSeconds();
 
 		DrawGBuffer(frame_info);							// Scene -> GBuffer
 		
@@ -578,7 +579,7 @@ void DX11DeferredRenderer::UpdateLight(const DirectionalLightComponent& directio
 // Post processing
 
 void DX11DeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
-
+		
 	// LightBuffer == [Bloom] ==> Unexposed ==> [Tonemap] ==> Output
 
 	// Lazy initialization and resize of the bloom and tonemap surfaces
@@ -598,6 +599,10 @@ void DX11DeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
 
 	}
 
+	// Average luminance
+
+	// TODO: Calculate average luminance for the light buffer (to be used for auto exposure)
+
 	// Bloom
 
 	fx_bloom_.Process(light_buffer_->GetTexture(),
@@ -607,6 +612,7 @@ void DX11DeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
 	// Tonemap
 
 	fx_tonemap_.Process((*bloom_output_)[0],
+						(*bloom_output_)[0],			// TODO: Replace with the actual average luminance ¬.¬
 						tonemap_output_);
 	
 }

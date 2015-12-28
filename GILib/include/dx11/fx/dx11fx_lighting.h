@@ -119,25 +119,23 @@ namespace gi_lib {
 			public:
 				
 				/// \brief Create a new tonemapping shader.
-				DX11FxTonemap(float vignette = 1.0f, float factor = 1.035f, float bias = 0.187f);
+				DX11FxTonemap(float vignette, float key_value);
 
 				virtual float GetVignette() const override;
 
 				virtual void SetVignette(float vignette) override;
 
-				virtual float GetFactor() const override;
+				virtual float GetKeyValue() const override;
 
-				virtual void SetFactor(float factor) override;
-
-				virtual float GetBias() const override;
-
-				virtual void SetBias(float bias) override;
-
-				virtual void Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination) override;
+				virtual void SetKeyValue(float key_value) override;
+								
+				virtual void Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<ITexture2D>& average_luminance, const ObjectPtr<IGPTexture2D>& destination) override;
 				
 			private:
 
 				static const Tag kParameters;					///< \brief Tag of the constant buffer containing the tonemapping parameters
+
+				static const Tag kAverageLuminance;				///< \brief Tag of the texture containing the average luminance of the image.
 
 				static const Tag kSource;						///< \brief Tag of the unexposed buffer used as input of the tonemapping.
 
@@ -148,9 +146,9 @@ namespace gi_lib {
 
 					float vignette;					// Vignette factor.
 
-					float factor;					// Multiplicative factor.
+					float key_value;				// Key value of the image. (sort of a 'mood')
 
-					float bias;						// Bias factor.
+					Vector2f reserved;				
 
 				};
 
@@ -226,34 +224,20 @@ namespace gi_lib {
 
 			}
 
-			inline float DX11FxTonemap::GetFactor() const{
+			inline float DX11FxTonemap::GetKeyValue() const{
 				
-				return parameters_.factor;
+				return parameters_.key_value;
 
 			}
 
-			inline void DX11FxTonemap::SetFactor(float factor){
+			inline void DX11FxTonemap::SetKeyValue(float key_value){
 
-				parameters_.factor = factor;
+				parameters_.key_value = key_value;
 
 				dirty_ = true;
 
 			}
-
-			inline float DX11FxTonemap::GetBias() const{
-				
-				return parameters_.bias;
-
-			}
-
-			inline void DX11FxTonemap::SetBias(float bias){
-
-				parameters_.bias = bias;
-
-				dirty_ = true;
-
-			}
-
+			
 		}
 
 	}

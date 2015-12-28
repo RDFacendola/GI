@@ -31,6 +31,7 @@ namespace gi_lib{
 
 	class Window;
 	class Scene;
+	class Time;
 
 	class IResource;
 	class IRenderer;
@@ -141,9 +142,10 @@ namespace gi_lib{
 
 		/// \brief Draw the scene from the current main camera.
 		/// \param Returns a pointer to the drawn image.
+		/// \param time Current game time.
 		/// \param width Width of the drawn image.
 		/// \param height Height of the drawn image.
-		virtual ObjectPtr<ITexture2D> Draw(unsigned int width, unsigned int height) = 0;
+		virtual ObjectPtr<ITexture2D> Draw(const Time& time, unsigned int width, unsigned int height) = 0;
 
 	protected:
 
