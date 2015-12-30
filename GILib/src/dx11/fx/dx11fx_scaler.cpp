@@ -12,11 +12,11 @@ using namespace gi_lib::dx11::fx;
 
 const Tag DX11FxScaler::kSourceTexture = "gSource";
 
-const Tag DX11FxScaler::kSampler = "gSourceSampler";
+const Tag DX11FxScaler::kSampler = "gSampler";
 
 DX11FxScaler::DX11FxScaler(){
 		
-	scaling_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\scale.hlsl" });
+	scaling_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\common\\passthrough_ps.hlsl" });
 
 	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
 

@@ -1,5 +1,5 @@
-#include "quad.hlsl"
-#include "color.hlsl"
+#include "common/quad.hlsl"
+#include "common/color.hlsl"
 
 cbuffer Parameters {
 
@@ -13,11 +13,11 @@ SamplerState gSourceSampler;
 
 float4 PSMain(VSOut input) : SV_Target0{
 
-	// Performs a high-pass filter.
+	// Performs a bright-pass filter.
 
 	float4 color = gSource.Sample(gSourceSampler, input.uv);
 
-	float luminance = RelativeLuminance(color.rgb);
+	float luminance = Luminance(color.rgb);
 
 	return color * saturate(1.0f - gThreshold / luminance);		// Color whose luminance is equal to the threshold and below will cause a black output
 		

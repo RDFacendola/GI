@@ -83,18 +83,18 @@ void DX11FxBrightPass::Filter(const ObjectPtr<ITexture2D>& source, const ObjectP
 
 //////////////////////////////////// DX11 FX BLOOM ////////////////////////////////////
 
-const Tag DX11FxBloom::kSourceTexture = "gSource";
+const Tag DX11FxBloom::kSourceTexture = "gOperand1";
 
-const Tag DX11FxBloom::kGlowTexture = "gGlow";
+const Tag DX11FxBloom::kGlowTexture = "gOperand2";
 
-const Tag DX11FxBloom::kSampler = "gSourceSampler";
+const Tag DX11FxBloom::kSampler = "gSampler";
 
 DX11FxBloom::DX11FxBloom(float min_brightness, float sigma, const Vector2f& blur_scaling) :
 	fx_blur_(sigma),
 	fx_high_pass_(min_brightness),
 	blur_scaling_(blur_scaling){
 
-	composite_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\bloom_composite.hlsl" });
+	composite_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\common\\add_ps.hlsl" });
 
 	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
 

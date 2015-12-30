@@ -1,4 +1,4 @@
-#include "hlsl_def.hlsl"
+#include "common/hlsl_def.hlsl"
 #include "projection_def.hlsl"
 
 /////////////////////////////////// VERTEX SHADER ///////////////////////////////////////
