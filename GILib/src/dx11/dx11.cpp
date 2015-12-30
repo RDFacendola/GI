@@ -598,6 +598,30 @@ HRESULT gi_lib::dx11::MakeStructuredBuffer(ID3D11Device& device, unsigned int el
 
 }
 
+HRESULT gi_lib::dx11::MakeStagingBuffer(ID3D11Device& device, unsigned int element_count, unsigned int element_size, bool read_only, ID3D11Buffer** buffer) {
+
+	D3D11_BUFFER_DESC buffer_desc;
+
+	buffer_desc.Usage = D3D11_USAGE_STAGING;
+
+	buffer_desc.ByteWidth = element_size * element_count;
+
+	buffer_desc.BindFlags = 0;
+
+	buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | (!read_only ? D3D11_CPU_ACCESS_WRITE : 0);
+
+	buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+
+	buffer_desc.StructureByteStride = element_size;
+
+	RETURN_ON_FAIL(device.CreateBuffer(&buffer_desc,
+									   nullptr,
+									   buffer));
+		
+	return S_OK;
+
+}
+
 HRESULT gi_lib::dx11::MakeSampler(ID3D11Device& device, D3D11_TEXTURE_ADDRESS_MODE address_mode, D3D11_FILTER texture_filtering, unsigned int anisotropy_level, Vector4f border_color, ID3D11SamplerState** sampler){
 
 	D3D11_SAMPLER_DESC desc;
