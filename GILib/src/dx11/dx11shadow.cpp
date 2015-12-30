@@ -436,7 +436,7 @@ bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, cons
 	light_transform.col(2) = Math::ToVector4(transform_component.GetForward(), 0.f);
 	light_transform.col(3) = Math::ToVector4(transform_component.GetPosition(), 1.f);
 
-	light_transform = light_transform.inverse();
+	light_transform = light_transform.inverse().eval();
 
 	// Fill the remaining shadow infos
 
