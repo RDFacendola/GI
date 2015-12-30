@@ -189,12 +189,62 @@ namespace gi_lib{
 
 		};
 		
+		/// \brief Represents a low-level buffer that behaves like a strongly-typed array of elements under DirectX11.
+		/// This array can be written by the GPU and read by the CPU.
+		/// \author Raffaele D. Facendola
+		class DX11ScratchStructuredArray : public IScratchStructuredArray {
+
+		public:
+
+			DX11ScratchStructuredArray(const FromElementSize& arguments);
+
+			virtual size_t GetSize() const override;
+
+			virtual size_t GetCount() const override;
+
+			virtual size_t GetElementSize() const override;
+
+			/// \brief Get the shader resource view used to bind this buffer to the pipeline (read only).
+			ShaderResourceView GetShaderResourceView();
+
+			/// \brief Get the unordered access view used to bind this texture to the pipeline (read/write).
+			UnorderedAccessView GetUnorderedAccessView();
+
+			/// \brief Refresh the content of the buffer.
+			/// This method causes any unwritten GPU value to be written back to the system memory.
+			void Refresh(ID3D11DeviceContext& context);
+
+		protected:
+
+			virtual void Read(size_t index, void* destination, size_t destination_size) const override;
+
+		private:
+
+			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;		///< \brief Pointer to the unordered access view of the structured array.
+
+			COMPtr<ID3D11ShaderResourceView> shader_resource_view_;			///< \brief Pointer to the shader resource view of the array.
+
+			COMPtr<ID3D11Buffer> buffer_;									///< \brief Buffer containing the computation result.
+
+			COMPtr<ID3D11Buffer> readback_buffer_;							///< \brief Buffer used to read back the computation to the system memory.
+						
+			size_t element_size_;											///< \brief Size of each element in bytes.
+
+			size_t element_count_;											///< \brief Number of elements inside the array.
+
+			void* raw_buffer_;												///< \brief Raw representation of the buffer in system memory
+
+		};
+
 		/// \brief Downcasts an IStructuredBuffer to the proper concrete type.
 		ObjectPtr<DX11StructuredBuffer> resource_cast(const ObjectPtr<IStructuredBuffer>& resource);
 
 		/// \brief Downcasts an IStructuredArray to the proper concrete type.
 		ObjectPtr<DX11StructuredArray> resource_cast(const ObjectPtr<IStructuredArray>& resource);
 
+		/// \brief Downcasts an IScratchStructuredArray to the proper concrete type.
+		ObjectPtr<DX11ScratchStructuredArray> resource_cast(const ObjectPtr<IScratchStructuredArray>& resource);
+		
 		//////////////////////////////// DIRECTX11 BUFFER //////////////////////////////// 
 
 		inline void* DX11Buffer::Lock(){
@@ -322,7 +372,7 @@ namespace gi_lib{
 		}
 		
 		//////////////////////////////// DIRECTX11 STRUCTURED ARRAY //////////////////////////////// 
-
+		
 		inline void* DX11StructuredArray::Lock(){
 
 			return buffer_->Lock();
@@ -383,6 +433,58 @@ namespace gi_lib{
 
 		}
 
+		//////////////////////////////// DIRECTX11 SCRATCH STRUCTURED ARRAY //////////////////////////
+		
+		INSTANTIABLE(IScratchStructuredArray, DX11ScratchStructuredArray, IScratchStructuredArray::FromElementSize);
+
+		inline void DX11ScratchStructuredArray::Read(size_t index, void* destination, size_t destination_size) const {
+
+			assert(index < element_count_);
+			assert(destination_size == element_size_);
+				
+			char* buffer = reinterpret_cast<char*>(raw_buffer_);
+			
+			buffer += index * destination_size;
+
+			memcpy_s(destination, 
+					 destination_size, 
+					 buffer, 
+					 element_size_);
+
+		}
+
+		inline size_t DX11ScratchStructuredArray::GetSize() const{
+
+			return (element_count_ * element_size_) * 3;			// GPU buffer, Staging buffer and system memory buffer
+
+		}
+
+		inline size_t DX11ScratchStructuredArray::GetCount() const {
+
+			return element_count_;
+
+		}
+
+		inline size_t DX11ScratchStructuredArray::GetElementSize() const {
+
+			return element_size_;
+
+		}
+		
+		inline ShaderResourceView DX11ScratchStructuredArray::GetShaderResourceView() {
+
+			return ShaderResourceView(this,
+									  shader_resource_view_);
+
+		}
+
+		inline UnorderedAccessView DX11ScratchStructuredArray::GetUnorderedAccessView() {
+
+			return UnorderedAccessView(this,
+									   unordered_access_view_);
+
+		}
+
 		////////////////////////////////// RESOURCE CAST ///////////////////////////////////////
 
 		inline ObjectPtr<DX11StructuredBuffer> resource_cast(const ObjectPtr<IStructuredBuffer>& resource){
@@ -394,6 +496,12 @@ namespace gi_lib{
 		inline ObjectPtr<DX11StructuredArray> resource_cast(const ObjectPtr<IStructuredArray>& resource){
 
 			return ObjectPtr<DX11StructuredArray>(resource.Get());
+
+		}
+
+		inline ObjectPtr<DX11ScratchStructuredArray> resource_cast(const ObjectPtr<IScratchStructuredArray>& resource) {
+
+			return ObjectPtr<DX11ScratchStructuredArray>(resource.Get());
 
 		}
 

@@ -74,6 +74,13 @@ namespace gi_lib{
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2DArray>& gp_texture_2D_array) = 0;
 
+		/// \brief Set a scratch structured array as input/output for the current computation.
+		/// The GPU has both read and write permissions.
+		/// \param tag Tag of the input/output scratch structured array to set.
+		/// \param scratch_structured_array Pointer to the scratch structured array to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IScratchStructuredArray>& scratch_structured_array) = 0;
+
 		/// \brief Set a structure resource as an input for the computation.
 		/// The GPU may only read from the specified structure.
 		/// \param tag Tag of the input structure to set.

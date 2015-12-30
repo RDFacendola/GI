@@ -65,4 +65,3 @@ void DX11Computation::Dispatch(ID3D11DeviceContext& context, unsigned int x, uns
 	// Yay!
 
 }
-

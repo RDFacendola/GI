@@ -70,6 +70,8 @@ namespace gi_lib{
 			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D) override;
 
 			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2DArray>& gp_texture_2D_array) override;
+
+			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IScratchStructuredArray>& scratch_structured_array) override;
 			
 			unique_ptr<ShaderStateComposite> shader_composite_;						///< \brief Collection of shaders. This class holds just 1 compute shader.
 			
@@ -136,6 +138,14 @@ namespace gi_lib{
 														 resource_cast(gp_texture_2D_array));
 
 		}
+
+		inline bool gi_lib::dx11::DX11Computation::SetOutput(const Tag& tag, const ObjectPtr<IScratchStructuredArray>& scratch_structured_array){
+			
+			return shader_composite_->SetUnorderedAccess(tag,
+														 resource_cast(scratch_structured_array));
+
+		}
+
 
 	}
 

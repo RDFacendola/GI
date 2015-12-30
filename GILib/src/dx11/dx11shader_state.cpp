@@ -144,6 +144,15 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX
 
 }
 
+bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11ScratchStructuredArray>& scratch_structured_array) {
+
+	return SetShaderMember(tag,
+						   scratch_structured_array->GetUnorderedAccessView(),
+						   uav_table_);
+	
+}
+
+
 void ShaderStateComposite::AddShaderBindings(BaseShaderState& shader_state){
 
 	auto&& reflection = shader_state.GetReflection();

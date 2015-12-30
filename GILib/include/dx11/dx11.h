@@ -198,13 +198,23 @@ namespace gi_lib{
 		/// \brief Create a structured buffer.
 		/// \tparam TElement Type of each element in the buffer.
 		/// \param device Device used to create the structured buffer.
-		/// \param elements Number of elements inside the buffer.
+		/// \param element_count Number of elements inside the buffer.
+		/// \param element_size Size of each element.
 		/// \param dynamic Whether the buffer can be written by the CPU or not.
 		/// \param buffer Pointer to the object that will hold the buffer.
 		/// \param shader_resource_view Pointer to the shader resource view. If nullptr is specified, the buffer won't have any shader resource view associated to it.
 		/// \param unordered_access_view Pointer to the unordered access view. If nullptr is specified, the buffer won't have any unordered access view associated to it.
 		/// \remarks A dynamic buffer may not be written by the GPU, thus it must not define an unordered access view.
 		HRESULT MakeStructuredBuffer(ID3D11Device& device, unsigned int element_count, unsigned int element_size, bool dynamic, ID3D11Buffer** buffer, ID3D11ShaderResourceView** shader_resource_view, ID3D11UnorderedAccessView** unordered_access_view);
+
+		/// \brief Create a staging buffer used to read back values from the GPU to the system memory.
+		/// \tparam TElement Type of each element in the buffer.
+		/// \param device Device used to create the structured buffer.
+		/// \param element_count Number of elements inside the buffer.
+		/// \param element_size Size of each element.
+		/// \param read_only Whether the buffer should be read-only or both read/write.
+		/// \param buffer Pointer to the object that will hold the buffer.
+		HRESULT MakeStagingBuffer(ID3D11Device& device, unsigned int element_count, unsigned int element_size, bool read_only, ID3D11Buffer** buffer);
 
 		/// \brief Create a sampler state.
 		/// \param device Device used to create the sampler.

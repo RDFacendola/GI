@@ -31,7 +31,8 @@ namespace gi_lib{
 		class DX11GPTexture2D;
 		class DX11GPTexture2DArray;
 		class DX11Sampler;
-		
+		class DX11ScratchStructuredArray;
+
 		using windows::COMPtr;
 
 		/// \brief Base class for a shader state.
@@ -298,6 +299,10 @@ namespace gi_lib{
 			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
 			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2DArray>& gp_texture_2D_array);
 
+			/// \brief Set the value of a named unordered access view.
+			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
+			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11ScratchStructuredArray>& scratch_structured_array);
+			
 			/// \brief Set the value of a named sampler state.
 			/// \return Returns true if a sampler state matching the specified tag was found, returns false otherwise.
 			bool SetSampler(const Tag& tag, const ObjectPtr<DX11Sampler>& sampler);
