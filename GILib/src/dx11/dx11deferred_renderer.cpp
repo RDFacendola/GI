@@ -14,10 +14,13 @@
 #include "windows/win_os.h"
 #include "instance_builder.h"
 #include "light_component.h"
+#include "dx11/dx11buffer.h"
 
 using namespace ::std;
 using namespace ::gi_lib;
+using namespace ::gi_lib::fx;
 using namespace ::gi_lib::dx11;
+using namespace ::gi_lib::dx11::fx;
 using namespace ::gi_lib::windows;
 
 namespace{
@@ -136,8 +139,11 @@ const Tag DX11DeferredRenderer::kVSMSamplerTag = "gVSMSampler";
 const Tag DX11DeferredRenderer::kPointShadowsTag = "gPointShadows";
 const Tag DX11DeferredRenderer::kDirectionalShadowsTag = "gDirectionalShadows";
 
+const float DX11DeferredRenderer::kLuminanceAdaptationRate = 1.0f;
+
 DX11DeferredRenderer::DX11DeferredRenderer(const RendererConstructionArgs& arguments) :
 DeferredRenderer(arguments.scene),
+fx_luminance_(0.0156f, 64.0f, 0.85f, 0.95f),
 fx_bloom_(1.0f, 1.67f, Vector2f(0.5f, 0.5f)),
 fx_tonemap_(0.5f, 0.4f){
 
@@ -252,6 +258,7 @@ fx_tonemap_(0.5f, 0.4f){
 	light_accumulation_parameters_ = new DX11StructuredBuffer(sizeof(LightAccumulationParameters));
 		
 	// One-time setup
+
 	bool check;
 
 	check = light_shader_->SetInput(kLightParametersTag,
@@ -274,6 +281,10 @@ fx_tonemap_(0.5f, 0.4f){
 
 	check = light_shader_->SetInput(kVSMShadowAtlasTag,
 									ObjectPtr<ITexture2DArray>(shadow_atlas_->GetAtlas()));
+	
+	// Post process setup
+
+	average_luminance_ = 0.f;
 	
 }
 
@@ -599,9 +610,13 @@ void DX11DeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
 
 	}
 
-	// Average luminance
+	// Average linear luminance used for eye adaptation
+	
+	auto current_luminance = fx_luminance_.ComputeAverageLuminance(light_buffer_->GetTexture());
 
-	// TODO: Calculate average luminance for the light buffer (to be used for auto exposure)
+	average_luminance_ = average_luminance_ + (current_luminance - average_luminance_) * (1.f - std::expf(-frame_info.time_delta * kLuminanceAdaptationRate));
+
+	fx_tonemap_.SetAverageLuminance(average_luminance_);
 
 	// Bloom
 
@@ -612,7 +627,6 @@ void DX11DeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
 	// Tonemap
 
 	fx_tonemap_.Process((*bloom_output_)[0],
-						(*bloom_output_)[0],			// TODO: Replace with the actual average luminance ¬.¬
 						tonemap_output_);
 	
 }

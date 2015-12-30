@@ -4,13 +4,13 @@ cbuffer TonemapParams{
 
 	float gVignette;			// Vignette factor.
 	float gKeyValue;			// 'Mood' of the final image.
+	float gAvgLuminance;		// Average luminance of the image. Linear.
 
-	float2 reserved;
+	float reserved;
 
 };
 
 Texture2D gUnexposed;						// Input
-Texture2D gAverageLuminance;				// Contains the average luminance of the current frame.
 RWTexture2D<float4> gExposed;				// Output
 
 /// \brief Performs an exposure adjustment of a given color.
@@ -85,7 +85,9 @@ float3 Tonemap(float3 linear_color){
 
 	linear_color = max(0, linear_color - 0.004f);
 	
-	return (linear_color * (6.2f * linear_color + 0.5f)) / (linear_color*(6.2f*linear_color + 1.7f) + 0.06f);
+	linear_color = (linear_color * (6.2f * linear_color + 0.5f)) / (linear_color*(6.2f*linear_color + 1.7f) + 0.06f);
+
+	return pow(linear_color, 2.2f);
 	
 #endif
 
@@ -132,11 +134,7 @@ void CSMain(int3 thread_id : SV_DispatchThreadID){
 
 	// Exposure adjustment
 
-	float average_luminance = gAverageLuminance[int2(0,0)].x;
-
-	average_luminance = 0.6f;
-
-	color = Expose(color, average_luminance, gKeyValue, 0.0f);
+	color = Expose(color, gAvgLuminance, gKeyValue, 0.0f);
 
 	// Tone mapping
 

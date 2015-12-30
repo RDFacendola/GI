@@ -124,10 +124,14 @@ void GILogic::Initialize(Window& window){
 
 	wavefront::ObjImporter obj_importer(resources);
 		
+#if 1
+
 	obj_importer.ImportScene(app.GetDirectory() + L"Data\\assets\\Sponza\\SponzaNoFlag.obj",
 							 *root,
 							 material_importer);
 	
+#endif
+
 	auto skybox = scene_->CreateNode(L"skybox",
 									 Translation3f(Vector3f::Zero()),
 									 Quaternionf::Identity(),

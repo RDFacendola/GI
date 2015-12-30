@@ -86,9 +86,14 @@ namespace gi_lib {
 			/// \brief Set the multiplicative factor.
 			virtual void SetKeyValue(float key_value) = 0;
 
+			/// \brief Get the average linear luminance of the current frame.
+			virtual float GetAverageLuminance() const = 0;
+			
+			/// \brief Set the average linear luminance of the current frame.
+			virtual void SetAverageLuminance(float average_luminance) = 0;
+			
 			/// \brief Performs a tonemapping of the given image.
-			/// \param average_luminance Average luminance of the current frame stored as 1x1 texture.
-			virtual void Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<ITexture2D>& average_luminance, const ObjectPtr<IGPTexture2D>& destination) = 0;
+			virtual void Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination) = 0;
 			
 		};
 

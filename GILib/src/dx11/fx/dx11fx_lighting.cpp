@@ -184,7 +184,6 @@ void DX11FxBloom::InitializeSurfaces(const ObjectPtr<ITexture2D>& source) {
 /////////////////////////////////// DX11 FX TONEMAPPING ////////////////////////////////////
 
 const Tag DX11FxTonemap::kParameters = "TonemapParams";
-const Tag DX11FxTonemap::kAverageLuminance = "gAverageLuminance";
 const Tag DX11FxTonemap::kSource = "gUnexposed";
 const Tag DX11FxTonemap::kDestination = "gExposed";
 
@@ -206,7 +205,7 @@ DX11FxTonemap::DX11FxTonemap(float vignette, float key_value) {
 
 }
 
-void DX11FxTonemap::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<ITexture2D>& average_luminance, const ObjectPtr<IGPTexture2D>& destination){
+void DX11FxTonemap::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination){
 	
 	// Update shader parameters
 
@@ -227,9 +226,6 @@ void DX11FxTonemap::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr
 
 	tonemap_shader_->SetInput(kSource,
 							  source);
-
-	tonemap_shader_->SetInput(kAverageLuminance,
-							  average_luminance);
 
 	tonemap_shader_->SetOutput(kDestination,
 							   destination);			

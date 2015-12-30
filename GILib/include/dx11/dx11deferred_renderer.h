@@ -15,8 +15,8 @@
 #include "dx11gpgpu.h"
 #include "buffer.h"
 
+#include "fx\dx11fx_filter.h"
 #include "fx\dx11fx_lighting.h"
-
 
 namespace gi_lib{
 
@@ -267,6 +267,12 @@ namespace gi_lib{
 			ObjectPtr<DX11StructuredArray> directional_shadows_;				///< \brief Array containing the directional lights.
 
 			// Post process
+
+			static const float kLuminanceAdaptationRate;						///< \brief Rate at which the exposure is adapted to the image's luminance
+
+			fx::DX11FxLuminance fx_luminance_;									///<\ brief Used to calculate the luminance of the image.
+
+			float average_luminance_;											///< \brief Current average luminance.
 
 			fx::DX11FxBloom fx_bloom_;											///< \brief Performs the bloom filter of the image.
 

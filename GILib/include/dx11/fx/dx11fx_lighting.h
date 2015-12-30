@@ -19,6 +19,10 @@ namespace gi_lib {
 
 	namespace dx11 {
 
+		class DX11Material;
+		class DX11Sampler;
+		class DXStructuredbuffer;
+
 		namespace fx {
 
 			/// \brief This class is used to suppress color whose brightness falls under a given threshold.
@@ -85,6 +89,8 @@ namespace gi_lib {
 
 				virtual void SetBlurScaling(const Vector2f& scaling) override;
 
+				virtual void SetAverageLuminance(float average_luminance) override;
+
 				virtual void Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) override;
 								
 			private:
@@ -128,14 +134,16 @@ namespace gi_lib {
 				virtual float GetKeyValue() const override;
 
 				virtual void SetKeyValue(float key_value) override;
+
+				virtual float GetAverageLuminance() const override;
+
+				virtual void SetAverageLuminance(float average_luminance) override;
 								
-				virtual void Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<ITexture2D>& average_luminance, const ObjectPtr<IGPTexture2D>& destination) override;
+				virtual void Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination) override;
 				
 			private:
 
 				static const Tag kParameters;					///< \brief Tag of the constant buffer containing the tonemapping parameters
-
-				static const Tag kAverageLuminance;				///< \brief Tag of the texture containing the average luminance of the image.
 
 				static const Tag kSource;						///< \brief Tag of the unexposed buffer used as input of the tonemapping.
 
@@ -148,7 +156,9 @@ namespace gi_lib {
 
 					float key_value;				// Key value of the image. (sort of a 'mood')
 
-					Vector2f reserved;				
+					float average_luminance;		// Average linear luminance of the current frame.
+
+					float reserved;				
 
 				};
 
@@ -233,6 +243,20 @@ namespace gi_lib {
 			inline void DX11FxTonemap::SetKeyValue(float key_value){
 
 				parameters_.key_value = key_value;
+
+				dirty_ = true;
+
+			}
+
+			inline float DX11FxTonemap::GetAverageLuminance() const {
+
+				return parameters_.average_luminance;
+
+			}
+
+			inline void DX11FxTonemap::SetAverageLuminance(float average_luminance) {
+
+				parameters_.average_luminance = average_luminance;
 
 				dirty_ = true;
 
