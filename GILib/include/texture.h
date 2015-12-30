@@ -19,6 +19,8 @@ namespace gi_lib{
 	/// \brief Texture surface format.
 	enum class TextureFormat : unsigned int{
 
+		HALF,				///< \brief 16-bit format with a single half-precision floating point number.
+
 		RGBA_HALF,			///< \brief 64-bit format with 4 16-bit channels. Each channel stores a half-precision floating point number.
 		RGBA_FLOAT,			///< \brief 128-bit format with 4 32-bit channels. Each channel stores a single-precision floating point number.
 		

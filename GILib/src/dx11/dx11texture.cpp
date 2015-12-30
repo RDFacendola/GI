@@ -224,6 +224,10 @@ DXGI_FORMAT gi_lib::dx11::TextureFormatToDXGIFormat(const TextureFormat& texture
 
 		return DXGI_FORMAT_BC3_UNORM;
 
+	case TextureFormat::HALF:
+
+		return DXGI_FORMAT_R16_FLOAT;
+
 	default:
 
 		return DXGI_FORMAT_UNKNOWN;
@@ -271,6 +275,10 @@ TextureFormat gi_lib::dx11::DXGIFormatToTextureFormat(const DXGI_FORMAT& texture
 	case DXGI_FORMAT_BC3_UNORM:
 
 		return TextureFormat::BC3_UNORM;
+
+	case DXGI_FORMAT_R16_FLOAT:
+
+		return TextureFormat::HALF;
 
 	default:
 
