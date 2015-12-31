@@ -99,6 +99,8 @@ void DX11Texture2D::UpdateDescription(const D3D11_TEXTURE2D_DESC& description){
 
 ////////////////////////////// DX11 GP TEXTURE 2D ////////////////////////////////////////
 
+std::vector<ObjectPtr<DX11GPTexture2D>> DX11GPTexture2D::cache_;
+
 DX11GPTexture2D::DX11GPTexture2D(const IGPTexture2D::FromDescription& args){
 
 	ID3D11UnorderedAccessView* uav;
@@ -118,6 +120,54 @@ DX11GPTexture2D::DX11GPTexture2D(const IGPTexture2D::FromDescription& args){
 
 	unordered_access_view_ << &uav;
 	
+}
+
+void DX11GPTexture2D::PushToCache(ObjectPtr<DX11GPTexture2D>& texture) {
+
+	cache_.push_back(texture);
+
+}
+
+ObjectPtr<DX11GPTexture2D> DX11GPTexture2D::PopFromCache(unsigned int width, unsigned int height, TextureFormat format, bool generate) {
+
+	auto it = std::find_if(cache_.begin(),
+						   cache_.end(),
+						   [width, height, format](const ObjectPtr<DX11GPTexture2D>& cached_texture) {
+
+								return width == cached_texture->GetWidth() &&
+									   height == cached_texture->GetHeight() &&
+									   format == cached_texture->GetFormat() &&
+									   cached_texture->GetMIPCount() == 1;
+
+						   });
+
+	if (it != cache_.end()) {
+
+		auto ptr = *it;
+
+		cache_.erase(it);
+
+		return ptr;
+		
+	}
+	else if (generate) {
+
+		return new DX11GPTexture2D(FromDescription{ width, height, 1, format });
+
+	}
+	else {
+
+		return nullptr;
+
+	}
+
+}
+
+
+void DX11GPTexture2D::PurgeCache() {
+
+	cache_.clear();
+
 }
 
 ///////////////////////////// DX11 TEXTURE 2D ARRAY ////////////////////////////////

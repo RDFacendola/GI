@@ -334,6 +334,9 @@ DX11Output::DX11Output(windows::Window & window, const VideoMode& video_mode) :
 								   0);
 
 		UpdateBackbuffer();
+
+		// Delete temporary resources
+		DX11GPTexture2D::PurgeCache();
 		
 	});
 
@@ -567,6 +570,10 @@ DX11Graphics::~DX11Graphics(){
 }
 
 void DX11Graphics::FlushAll() {
+
+	// Clear any temporary cache
+
+	DX11GPTexture2D::PurgeCache();
 
 	// Remove any pending reference
 

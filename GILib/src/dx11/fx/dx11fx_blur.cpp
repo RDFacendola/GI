@@ -88,19 +88,9 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectP
 	auto format = destination->GetFormat();
 
 	// Lazy initialization of the working texture
-	if (temp_texture_ == nullptr ||
-		temp_texture_->GetWidth() != width ||
-		temp_texture_->GetHeight() != height ||
-		temp_texture_->GetFormat() != format) {
 
-		temp_texture_ = new DX11GPTexture2D(IGPTexture2D::FromDescription{ width,
-																		   height,
-																		   1,
-																		   format });
-
-
-	}
-
+	temp_texture_ = DX11GPTexture2D::PopFromCache(width, height, format, true);
+	
 	// Horizontal blur - Source => Temp
 
 	hblur_shader_->SetInput(kSourceTexture,
@@ -126,6 +116,9 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectP
 							width,
 							height, 
 							1);
+
+	// Not needed anymore
+	DX11GPTexture2D::PushToCache(temp_texture_);
 
 }
 
