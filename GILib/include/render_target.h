@@ -39,6 +39,8 @@ namespace gi_lib{
 
 			std::vector<TextureFormat> format;		///< \brief Format of each render target surface.
 
+			bool depth;								///< \brief Whether the render target should have a depth buffer.
+
 		};
 
 		virtual ~IRenderTarget(){};
@@ -80,6 +82,10 @@ namespace gi_lib{
 		/// \brief Get the height of the render target in pixels.
 		/// \return Returns the height of the render target.
 		virtual unsigned int GetHeight() const = 0;
+
+		/// \brief Get the format of each surface inside the render target.
+		/// \return Returns the format of each surface inside the render target.
+		virtual std::vector<TextureFormat> GetFormat() const = 0;
 
 	};
 

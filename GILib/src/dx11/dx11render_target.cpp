@@ -133,11 +133,14 @@ void DX11RenderTexture2D::Clear(ID3D11DeviceContext& context, Color color){
 
 ///////////////////////////// RENDER TARGET ///////////////////////////////////////
 
+std::vector<ObjectPtr<DX11RenderTarget>> DX11RenderTarget::cache_;
+
 DX11RenderTarget::DX11RenderTarget(const IRenderTarget::FromDescription& args){
 	
 	CreateSurfaces(args.width,
 				   args.height,
-			       args.format);
+			       args.format,
+				   args.depth);
 	
 }
 
@@ -171,6 +174,22 @@ depth_stencil_(nullptr){
 
 DX11RenderTarget::~DX11RenderTarget(){}
 
+vector<TextureFormat> DX11RenderTarget::GetFormat() const {
+
+	vector<TextureFormat> formats;
+
+	formats.reserve(render_target_.size());
+
+	for (auto&& surface : render_target_) {
+
+		formats.push_back(surface->GetFormat());
+
+	}
+
+	return formats;
+
+}
+
 bool DX11RenderTarget::Resize(unsigned int width, unsigned int height){
 
 	if (width == GetWidth() && height == GetHeight()){
@@ -193,7 +212,8 @@ bool DX11RenderTarget::Resize(unsigned int width, unsigned int height){
 
 	CreateSurfaces(width,
 				   height,
-				   target_format);
+				   target_format,
+				   depth_stencil_ != nullptr);
 
 	return true;
 
@@ -247,6 +267,7 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
 	else {
 
 		// No depth stencil here
+
 		context.OMSetRenderTargets(static_cast<unsigned int>(rtv_list.size()),
 								   &rtv_list[0],
 								   nullptr);
@@ -268,7 +289,7 @@ void DX11RenderTarget::Unbind(ID3D11DeviceContext& context){
 
 }
 
-void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, const std::vector<TextureFormat>& target_format){
+void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, const std::vector<TextureFormat>& target_format, bool depth){
 
 	// If the method throws ensures that the resource is left in a clean state.
 
@@ -293,8 +314,17 @@ void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, c
 
 	// Depth buffer
 
-	depth_stencil_ = new DX11DepthTexture2D(width,
-											height);
+	if (depth) {
+
+		depth_stencil_ = new DX11DepthTexture2D(width,
+												height);
+
+	}
+	else {
+
+		nullptr;
+
+	}
 	
 	// Viewport
 
@@ -304,6 +334,53 @@ void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, c
 	// Cleanup
 
 	guard.Dismiss();
+
+}
+
+void DX11RenderTarget::PushToCache(ObjectPtr<DX11RenderTarget>& texture) {
+
+	cache_.push_back(texture);
+
+}
+
+ObjectPtr<DX11RenderTarget> DX11RenderTarget::PopFromCache(unsigned int width, unsigned int height, vector<TextureFormat> format, bool has_depth, bool generate) {
+
+	auto it = std::find_if(cache_.begin(),
+						   cache_.end(),
+						   [width, height, format, has_depth](const ObjectPtr<DX11RenderTarget>& cached_texture) {
+
+								return width == cached_texture->GetWidth() &&
+									   height == cached_texture->GetHeight() &&
+									   (has_depth ^ (cached_texture->depth_stencil_ != nullptr)) &&
+									   format == cached_texture->GetFormat();
+
+						   });
+
+	if (it != cache_.end()) {
+
+		auto ptr = *it;
+
+		cache_.erase(it);
+
+		return ptr;
+		
+	}
+	else if (generate) {
+
+		return new DX11RenderTarget(FromDescription{ width, height, format, has_depth });
+
+	}
+	else {
+
+		return nullptr;
+
+	}
+
+}
+
+void DX11RenderTarget::PurgeCache() {
+
+	cache_.clear();
 
 }
 

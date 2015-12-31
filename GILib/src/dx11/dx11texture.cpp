@@ -163,7 +163,6 @@ ObjectPtr<DX11GPTexture2D> DX11GPTexture2D::PopFromCache(unsigned int width, uns
 
 }
 
-
 void DX11GPTexture2D::PurgeCache() {
 
 	cache_.clear();

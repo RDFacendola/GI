@@ -337,7 +337,8 @@ DX11Output::DX11Output(windows::Window & window, const VideoMode& video_mode) :
 
 		// Delete temporary resources
 		DX11GPTexture2D::PurgeCache();
-		
+		DX11RenderTarget::PurgeCache();
+
 	});
 
 	// Scaler
@@ -574,6 +575,7 @@ void DX11Graphics::FlushAll() {
 	// Clear any temporary cache
 
 	DX11GPTexture2D::PurgeCache();
+	DX11RenderTarget::PurgeCache();
 
 	// Remove any pending reference
 
