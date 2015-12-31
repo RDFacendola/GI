@@ -1,4 +1,6 @@
 
+#include "common/color.hlsl"
+
 // Parameters
 cbuffer TonemapParams{
 
@@ -12,20 +14,6 @@ cbuffer TonemapParams{
 
 Texture2D gUnexposed;						// Input
 RWTexture2D<float4> gExposed;				// Output
-
-/// \brief Performs an exposure adjustment of a given color.
-/// \param unexposed_color The color to adjust.
-float3 Expose(float3 unexposed_color, float average_luminance, float key_value, float threshold) {
-
-	average_luminance = max(average_luminance, 0.001f);
-
-	float exposure = key_value / average_luminance;						// Linear exposure
-
-	exposure = log2(max(exposure, 0.0001f)) - threshold;
-	
-	return exp2(exposure) * unexposed_color;
-
-}
 
 /// \brief Helper function used by the Uncharted 2 tonemapping procedure.
 float3 UnchartedTonemap(float3 linear_color) {
@@ -134,7 +122,7 @@ void CSMain(int3 thread_id : SV_DispatchThreadID){
 
 	// Exposure adjustment
 
-	color = Expose(color, gAvgLuminance, gKeyValue, 0.0f);
+	color = Expose(color, gAvgLuminance, gKeyValue, 0);
 
 	// Tone mapping
 
