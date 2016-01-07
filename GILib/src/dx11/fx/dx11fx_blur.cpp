@@ -97,7 +97,7 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectP
 							source);
 
 	hblur_shader_->SetOutput(kDestinationTexture,
-									   ObjectPtr<IGPTexture2D>(temp_texture_));
+							 ObjectPtr<IGPTexture2D>(temp_texture_));
 
 	hblur_shader_->Dispatch(*context,
 							width,

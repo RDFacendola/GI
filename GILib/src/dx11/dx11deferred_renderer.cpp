@@ -139,13 +139,11 @@ const Tag DX11DeferredRenderer::kVSMSamplerTag = "gVSMSampler";
 const Tag DX11DeferredRenderer::kPointShadowsTag = "gPointShadows";
 const Tag DX11DeferredRenderer::kDirectionalShadowsTag = "gDirectionalShadows";
 
-const float DX11DeferredRenderer::kLuminanceAdaptationRate = 1.0f;
-
 DX11DeferredRenderer::DX11DeferredRenderer(const RendererConstructionArgs& arguments) :
 DeferredRenderer(arguments.scene),
-fx_luminance_(0.0156f, 64.0f, 0.85f, 0.95f),
-fx_bloom_(1.0f, 1.67f, Vector2f(0.5f, 0.5f)),
-fx_tonemap_(0.5f, 0.4f){
+fx_luminance_(kMinLuminance, kMaxLuminance, kLuminanceLowPercentage, kLuminanceHighPercentage),
+fx_bloom_(kBloomExposure, kBloomStrength, kBloomBlurSigma),
+fx_tonemap_(kVignette, kKeyValue){
 
 	auto&& device = *DX11Graphics::GetInstance().GetDevice();
 
@@ -376,7 +374,8 @@ void DX11DeferredRenderer::BindGBuffer(const FrameInfo& frame_info){
 		gbuffer_ = new DX11RenderTarget(IRenderTarget::FromDescription{ frame_info.width,
 																		frame_info.height,
 																		{ TextureFormat::RGBA_HALF,
-																		  TextureFormat::RGBA_HALF } } );
+																		  TextureFormat::RGBA_HALF },
+																		true } );
 
 	}
 	else{
@@ -601,7 +600,8 @@ void DX11DeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
 
 		bloom_output_ = new DX11RenderTarget(IRenderTarget::FromDescription{ frame_info.width,
 																			 frame_info.height,
-																			 { TextureFormat::RGB_FLOAT } });
+																			 { TextureFormat::RGB_FLOAT },
+																			 false });
 
 		tonemap_output_ = new DX11GPTexture2D(IGPTexture2D::FromDescription{ frame_info.width,
 																			 frame_info.height,
@@ -610,21 +610,28 @@ void DX11DeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
 
 	}
 
-	// Average linear luminance used for eye adaptation
+	// Average linear luminance used for eye adaptation. Smoothly interpolate between the last luminance and the current one.
 	
-	auto current_luminance = fx_luminance_.ComputeAverageLuminance(light_buffer_->GetTexture());
+	auto current_luminance = std::fmaxf(kMinAdaptLuminance, std::fminf(kMaxAdaptLuminance, fx_luminance_.ComputeAverageLuminance(light_buffer_->GetTexture())));
 
 	average_luminance_ = average_luminance_ + (current_luminance - average_luminance_) * (1.f - std::expf(-frame_info.time_delta * kLuminanceAdaptationRate));
 
-	fx_tonemap_.SetAverageLuminance(average_luminance_);
-
 	// Bloom
+
+	fx_bloom_.SetAverageLuminance(average_luminance_);
+
+	fx_bloom_.SetKeyValue(kKeyValue);
+
+	fx_bloom_.SetThreshold(1.0f);
 
 	fx_bloom_.Process(light_buffer_->GetTexture(),
 					  bloom_output_);
-
-	
+		
 	// Tonemap
+
+	fx_tonemap_.SetAverageLuminance(average_luminance_);
+
+	fx_tonemap_.SetKeyValue(kKeyValue);
 
 	fx_tonemap_.Process((*bloom_output_)[0],
 						tonemap_output_);

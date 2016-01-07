@@ -11,6 +11,7 @@
 
 #include "dx11fx_blur.h"
 #include "dx11fx_filter.h"
+#include "dx11fx_scaler.h"
 
 #include "dx11/dx11gpgpu.h"
 #include "dx11/dx11render_target.h"
@@ -32,12 +33,14 @@ namespace gi_lib {
 			public:
 
 				/// \brief Create a new High-pass filter.
-				/// \param threshold Threshold below of which the colors are suppressed.
-				DX11FxBrightPass(float threshold);
+				/// \param offset Offset used to shift the exposure value of the scene. Higher values will cause more areas being left in darkness.
+				DX11FxBrightPass(float offset);
 
-				virtual float GetThreshold() const override;
+				virtual void SetThreshold(float offset) override;
 
-				virtual void SetThreshold(float threshold) override;
+				virtual void SetKeyValue(float key_value) override;
+
+				virtual void SetAverageLuminance(float average_luminance) override;
 
 				virtual void Filter(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) override;
 
@@ -46,7 +49,9 @@ namespace gi_lib {
 				/// \brief Constant buffer used to pass the parameters to the filtering shader.
 				struct Parameters {
 
-					float gThreshold;										///< \brief Brightness threshold below of which colors are suppressed.
+					float gThreshold;										///< \brief Offset used to shift the exposure value of the scene.
+					float gKeyValue;										///< \brief Target luminance of the scene.
+					float gAverageLuminance;								///< \brief Current average luminance of the scene.
 
 				};
 
@@ -62,8 +67,6 @@ namespace gi_lib {
 
 				ObjectPtr<DX11StructuredBuffer> parameters_;				///< \brief Parameters used to perform the filtering.
 
-				float threshold_;											///< \brief Variance of the Gaussian function.
-
 			};
 
 			/// \brief Performs a bloom filtering of an image using DirectX11
@@ -73,50 +76,70 @@ namespace gi_lib {
 			public:
 
 				/// \brief Create a new bloom filter.
-				/// \param min_brightness Minimum brightness above of which the color is considered to be "glowing".
+				/// \param exposure_offset Exposure offset to filter out darker parts of the scene.
+				/// \param bloom_strength How strong the bloom effect is. 
 				/// \param sigma Sigma used to compute the Gaussian blur kernel.
-				DX11FxBloom(float min_brightness, float sigma, const Vector2f& blur_scaling);
+				DX11FxBloom(float exposure_offset, float bloom_strength, float sigma);
 
-				virtual float GetMinBrightness() const override;
-
-				virtual void SetMinBrightness(float min_brightness) override;
+				virtual void SetThreshold(float threshold) override;
 
 				virtual float GetSigma() const override;
 
 				virtual void SetSigma(float sigma) override;
 
-				virtual Vector2f GetBlurScaling() const override;
-
-				virtual void SetBlurScaling(const Vector2f& scaling) override;
+				virtual void SetKeyValue(float key_value) override;
 
 				virtual void SetAverageLuminance(float average_luminance) override;
+
+				virtual void SetBloomStrength(float strength) override;
 
 				virtual void Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) override;
 								
 			private:
+				
+				static const Tag kBase;									///< \brief Tag of the base texture to composite.
 
+				static const Tag kBloom;								///< \brief Tag of the bloom texture to composite.
+			
+				static const Tag kBloomCompositeParameters;				///< \brief Tag of the constant buffer containing the parameters passed to the bloom composite shader.
+
+				static const Tag kDownscaled;							///< \brief Tag of the downscaled texture to add.
+
+				static const Tag kUpscaled;								///< \brief Tag of the upscaled texture to add.
+
+				static const Tag kParameters;							///< \brief Tag of the constant buffer containing the shader parameters.
+
+				static const Tag kSampler;								///< \brief Tag of the sampler used to sample the textures.
+				
+				static const size_t kDownscaledSurfaces;				///< \brief Number of downscaled surfaces.
+
+				/// \brief Constant buffer used to pass the parameters to the filtering shader.
+				struct BloomCompositeParameters {
+
+					float gBloomStrength;								///< \brief Bloom strength.
+					
+				};
+		
 				/// \brief Initializes the working surfaces
 				void InitializeSurfaces(const ObjectPtr<ITexture2D>& source);
-
-				static const Tag kSourceTexture;					///< \brief Tag of the source texture.
-
-				static const Tag kGlowTexture;						///< \brief Tag of the blurred glow texture.
-
-				static const Tag kSampler;							///< \brief Tag of the sampler used to sample the textures.
-
-				Vector2f blur_scaling_;								///< \brief Scaling of the blurred surface. Set this value below 1 to increase blurring performances.
-
-				DX11FxGaussianBlur fx_blur_;						///< \brief Filter used to perform a Gaussian blur.
-
-				DX11FxBrightPass fx_high_pass_;						///< \brief Filter used to perform a High-pass process.
 				
-				ObjectPtr<DX11RenderTarget> glow_surface_;			///< \brief Surface containing the "glowing" pixels. Only one surface.
+				DX11FxGaussianBlur fx_blur_;									///< \brief Filter used to perform a Gaussian blur.
 
-				ObjectPtr<DX11GPTexture2D> blur_surface_;			///< \brief Surface containing the Gaussian blur result.
+				DX11FxBrightPass fx_bright_pass_;								///< \brief Filter used to perform a Bright-pass process.
 
-				ObjectPtr<DX11Material> composite_shader_;			///< \brief Shader used to composite the blurred image with the source image.
+				DX11FxScaler fx_downscale_;										///< \brief Used to perform down scaling.
+					
+				ObjectPtr<DX11Material> upscale_shader_;						///< \brief Used to add blurred surfaces while upscaling.
 
-				ObjectPtr<DX11Sampler> sampler_;					///< \brief Sampler used to sample the source texture.
+				ObjectPtr<DX11Material> composite_shader_;						///< \brief Shader used to accumulate the various buffers.
+				
+				vector<ObjectPtr<DX11RenderTarget>> bright_surfaces_;			///< \brief Surface containing the "glowing" pixels. Only one surface.
+
+				vector<ObjectPtr<DX11GPTexture2D>> blur_surfaces_;				///< \brief Surfaces containing the Gaussian blur result at half resolution per iteration.
+				
+				ObjectPtr<DX11Sampler> sampler_;								///< \brief Sampler used to sample the source texture.
+
+				ObjectPtr<DX11StructuredBuffer> bloom_composite_parameters_;	///< \brief Parameters used to perform the filtering.
 
 			};
 
@@ -172,25 +195,11 @@ namespace gi_lib {
 				
 			};
 
-			////////////////////////////////// DX11 FX BRIGHT PASS ////////////////////////////////
-
-			inline float DX11FxBrightPass::GetThreshold() const {
-
-				return threshold_;
-
-			}
-
 			//////////////////////////////////// DX11 FX BLOOM ////////////////////////////////////
 
-			inline float DX11FxBloom::GetMinBrightness() const{
+			inline void DX11FxBloom::SetThreshold(float threshold){
 
-				return fx_high_pass_.GetThreshold();
-
-			}
-
-			inline void DX11FxBloom::SetMinBrightness(float min_brightness){
-
-				fx_high_pass_.SetThreshold(min_brightness);
+				fx_bright_pass_.SetThreshold(threshold);
 
 			}
 
@@ -203,18 +212,6 @@ namespace gi_lib {
 			inline void DX11FxBloom::SetSigma(float sigma){
 
 				fx_blur_.SetSigma(sigma);
-
-			}
-
-			inline Vector2f DX11FxBloom::GetBlurScaling() const {
-
-				return blur_scaling_;
-
-			}
-
-			inline void DX11FxBloom::SetBlurScaling(const Vector2f& scaling) {
-
-				blur_scaling_ = scaling;
 
 			}
 

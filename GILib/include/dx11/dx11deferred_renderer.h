@@ -30,6 +30,30 @@ namespace gi_lib{
 
 		class DX11VSMAtlas;
 		
+		// Tonemapping
+
+		const float kVignette = 0.5f;
+
+		// Bloom
+
+		const float kBloomExposure = 1.0f;
+		const float kBloomStrength = 0.33f;
+		const float kBloomBlurSigma = 1.67f;
+
+		// Auto exposure
+
+		const float kKeyValue = 0.4f;
+		const float kMinLuminance = 0.0156f;
+		const float kMaxLuminance = 64.0f;
+		const float kLuminanceLowPercentage = 0.85f;
+		const float kLuminanceHighPercentage = 0.95f;
+
+		// Eye adaptation
+
+		const float kMinAdaptLuminance = 0.2f;
+		const float kMaxAdaptLuminance = 1.0f;
+		const float kLuminanceAdaptationRate = 0.75f;
+
 		/// \brief Structure of the per-object constant buffer.
 		struct VSPerObjectBuffer {
 
@@ -267,8 +291,6 @@ namespace gi_lib{
 			ObjectPtr<DX11StructuredArray> directional_shadows_;				///< \brief Array containing the directional lights.
 
 			// Post process
-
-			static const float kLuminanceAdaptationRate;						///< \brief Rate at which the exposure is adapted to the image's luminance
 
 			fx::DX11FxLuminance fx_luminance_;									///<\ brief Used to calculate the luminance of the image.
 

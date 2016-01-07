@@ -39,11 +39,23 @@ DX11FxBrightPass::DX11FxBrightPass(float threshold) {
 
 void DX11FxBrightPass::SetThreshold(float threshold) {
 
-	threshold_ = threshold;
+	parameters_->Lock<Parameters>()->gThreshold = threshold;
+	
+	parameters_->Unlock();
 
-	auto parameters = reinterpret_cast<Parameters*>(parameters_->Lock());
+}
 
-	parameters->gThreshold = threshold;
+void DX11FxBrightPass::SetKeyValue(float key_value){
+
+	parameters_->Lock<Parameters>()->gKeyValue = key_value;
+
+	parameters_->Unlock();
+
+}
+
+void DX11FxBrightPass::SetAverageLuminance(float average_luminance){
+
+	parameters_->Lock<Parameters>()->gAverageLuminance = average_luminance;
 
 	parameters_->Unlock();
 
@@ -83,67 +95,132 @@ void DX11FxBrightPass::Filter(const ObjectPtr<ITexture2D>& source, const ObjectP
 
 //////////////////////////////////// DX11 FX BLOOM ////////////////////////////////////
 
-const Tag DX11FxBloom::kSourceTexture = "gOperand1";
 
-const Tag DX11FxBloom::kGlowTexture = "gOperand2";
-
+const Tag DX11FxBloom::kBase = "gBase";
+const Tag DX11FxBloom::kBloom = "gBloom";
+const Tag DX11FxBloom::kDownscaled = "gDownscaled";
+const Tag DX11FxBloom::kUpscaled = "gUpscaled";
+const Tag DX11FxBloom::kParameters = "Parameters";
 const Tag DX11FxBloom::kSampler = "gSampler";
+const Tag DX11FxBloom::kBloomCompositeParameters = "Parameters";
 
-DX11FxBloom::DX11FxBloom(float min_brightness, float sigma, const Vector2f& blur_scaling) :
+const size_t DX11FxBloom::kDownscaledSurfaces = 6;
+
+DX11FxBloom::DX11FxBloom(float exposure_offset, float bloom_strength, float sigma) :
 	fx_blur_(sigma),
-	fx_high_pass_(min_brightness),
-	blur_scaling_(blur_scaling){
+	fx_bright_pass_(exposure_offset){
+	
+	composite_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\bloom_composite.hlsl" });
 
-	composite_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\common\\add_ps.hlsl" });
+	upscale_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\bloom_upscale.hlsl" });
 
 	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
+
+	bloom_composite_parameters_ = new DX11StructuredBuffer(sizeof(BloomCompositeParameters));
+
+	SetBloomStrength(bloom_strength);
 
 	//One-time setup
 
 	composite_shader_->SetInput(kSampler,
 								ObjectPtr<ISampler>(sampler_));
 
+	composite_shader_->SetInput(kBloomCompositeParameters,
+								ObjectPtr<IStructuredBuffer>(bloom_composite_parameters_));
+
+	upscale_shader_->SetInput(kSampler,
+							  ObjectPtr<ISampler>(sampler_));
+
 }
 
 void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) {
 
- 	// Lazy initialization of the blur surface and glow surface
+ 	// Lazy initialization of the surfaces
  	InitializeSurfaces(source);
 
- 	
- 	// High pass filtering - Source => Glow surface
- 
- 	fx_high_pass_.Filter(source, 
- 						 ObjectPtr<IRenderTarget>(glow_surface_));
- 
- 	// Gaussian blur - Glow surface => Blur surface
- 
- 	fx_blur_.Blur((*glow_surface_)[0], 
- 				  ObjectPtr<IGPTexture2D>(blur_surface_));
+	// Performs a bright pass of the source texture (the destination is also downscaled here)
 
-	// Bloom composite - Blur surface + Source => Destination
+	fx_bright_pass_.Filter(source,
+						   ObjectPtr<IRenderTarget>(bright_surfaces_[0]));
 
+	// Downscale recursively
+
+	for (size_t index = 1; index < bright_surfaces_.size(); ++index) {
+
+		fx_downscale_.Copy((*bright_surfaces_[index - 1])[0],
+						   ObjectPtr<IRenderTarget>(bright_surfaces_[index]));
+
+	}
+
+	// Blur each downscaled surface
+
+	for (size_t index = 0; index < bright_surfaces_.size(); ++index) {
+
+		fx_blur_.Blur((*bright_surfaces_[index])[0],
+					  ObjectPtr<IGPTexture2D>(blur_surfaces_[index]));
+						
+		// Additional blur passes to smooth out the jagginess of lower-resolution surfaces.
+
+		for (size_t passes = 0; passes < index; ++passes) {
+
+			fx_blur_.Blur(blur_surfaces_[index]->GetTexture(),
+						  ObjectPtr<IGPTexture2D>(blur_surfaces_[index]));
+		
+		}
+
+	}
+
+	// We only draw GPU-generated quads
+			
 	auto device_context = DX11Graphics::GetInstance().GetImmediateContext();
+
+	device_context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+	device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Upscaling & Bloom add - Recycle the bright surfaces as destination of the upscaling
+
+	ObjectPtr<ITexture2D> downscaled = blur_surfaces_.back()->GetTexture();
+
+	for (size_t index = bright_surfaces_.size() - 1; index > 0; --index) {
+
+		upscale_shader_->SetInput(kDownscaled,
+								  downscaled);
+
+		upscale_shader_->SetInput(kUpscaled,
+								  blur_surfaces_[index - 1]->GetTexture());
+
+		bright_surfaces_[index - 1]->ClearDepth(*device_context);
+
+		bright_surfaces_[index - 1]->Bind(*device_context);		// Output
+
+		upscale_shader_->Bind(*device_context);
+				
+		// Render a quad
+
+		device_context->Draw(6, 0);								// Fire the rendering
+
+	}
+		
+	upscale_shader_->Unbind(*device_context);
+
+	// Bloom compositing
 
 	auto dx_destination = resource_cast(destination);
 
 	dx_destination->ClearDepth(*device_context);												// Clear the existing depth
 
-	composite_shader_->SetInput(kSourceTexture,
+	composite_shader_->SetInput(kBase,
 								source);														// Source texture
 	
-	composite_shader_->SetInput(kGlowTexture,
-								ObjectPtr<ITexture2D>(blur_surface_->GetTexture()));			// Glow texture
+	composite_shader_->SetInput(kBloom,
+								(*bright_surfaces_[0])[0]);
 
 	dx_destination->Bind(*device_context);														// Destination texture
 
 	composite_shader_->Bind(*device_context);													// Bind the shader
 
 	// Render a quad
-
-	device_context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
-	device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+	
 	device_context->Draw(6, 0);									// Fire the rendering
 
 	// Cleanup
@@ -151,8 +228,7 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 	composite_shader_->Unbind(*device_context);
 
 	dx_destination->Unbind(*device_context);
-
-
+	
 }
 
 void DX11FxBloom::InitializeSurfaces(const ObjectPtr<ITexture2D>& source) {
@@ -160,25 +236,72 @@ void DX11FxBloom::InitializeSurfaces(const ObjectPtr<ITexture2D>& source) {
 	// Blur and glow surfaces have the same size and format, it is sufficient to check only one of those.
 
 	auto format = source->GetFormat();
+	auto width = source->GetWidth();
+	auto height = source->GetHeight();
 
-	unsigned int scaled_width = static_cast<unsigned int>(source->GetWidth() * blur_scaling_(0));
-	unsigned int scaled_height = static_cast<unsigned int>(source->GetHeight() * blur_scaling_(1));
+	if (bright_surfaces_.size() == 0 ||
+		bright_surfaces_[0]->GetWidth() != (width >> 1) ||
+		bright_surfaces_[0]->GetHeight() != (height >> 1) ||
+		format != source->GetFormat()) {
 
-	if (blur_surface_ == nullptr ||
-		blur_surface_->GetWidth() != scaled_width ||
-		blur_surface_->GetHeight() != scaled_height ||
-		format != blur_surface_->GetFormat()) {
+		// Release the temporary resources
 
-		blur_surface_ = new DX11GPTexture2D(IGPTexture2D::FromDescription{ scaled_width,
-																		   scaled_height,
-																		   1,
-																		   format });
-		
-		glow_surface_ = new DX11RenderTarget(IRenderTarget::FromDescription{ scaled_width,
-																			 scaled_height,
-																			 { format } });
+		for (auto&& surface : blur_surfaces_) {
+
+			DX11GPTexture2D::PushToCache(surface);
+
+		}
+
+		for (auto&& surface : bright_surfaces_) {
+
+			DX11RenderTarget::PushToCache(surface);
+
+		}
+
+		blur_surfaces_.clear();
+		bright_surfaces_.clear();
+
+		// Build the downscaled versions
+
+		for (size_t index = 1; index < kDownscaledSurfaces && width >> index > 0 && height >> index > 0; ++index) {
+
+			bright_surfaces_.push_back(DX11RenderTarget::PopFromCache(width >> index,
+																	  height >> index,
+																	  { format },
+																	  false,
+																	  true));
+
+			blur_surfaces_.push_back(DX11GPTexture2D::PopFromCache(width >> index, 
+																   height >> index, 
+																   format, 
+																   true));
+
+		}
+
 	}
 	
+}
+
+void DX11FxBloom::SetKeyValue(float key_value) {
+
+	fx_bright_pass_.SetKeyValue(key_value);
+
+}
+
+void DX11FxBloom::SetAverageLuminance(float average_luminance) {
+
+	fx_bright_pass_.SetAverageLuminance(average_luminance);
+
+}
+
+void DX11FxBloom::SetBloomStrength(float strength) {
+
+	// Since each downscaled version of the bloom adds color, we just scale down the strength accordingly (such that it is not anymore a sum but an average)
+
+	bloom_composite_parameters_->Lock<BloomCompositeParameters>()->gBloomStrength= strength * 1.0f / kDownscaledSurfaces;
+
+	bloom_composite_parameters_->Unlock();
+
 }
 
 /////////////////////////////////// DX11 FX TONEMAPPING ////////////////////////////////////

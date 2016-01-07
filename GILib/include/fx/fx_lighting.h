@@ -20,11 +20,14 @@ namespace gi_lib {
 
 		public:
 
-			/// \brief Get the sigma below of which colors are suppressed.
-			virtual float GetThreshold() const = 0;
-
 			/// \brief Set the threshold below of which colors are suppressed.
 			virtual void SetThreshold(float threshold) = 0;
+			
+			/// \brief Set the multiplicative factor.
+			virtual void SetKeyValue(float key_value) = 0;
+
+			/// \brief Set the average linear luminance of the current frame.
+			virtual void SetAverageLuminance(float average_luminance) = 0;
 
 			/// \brief Performs a Gaussian blur of the specified texture.
 			/// \param source Texture to blur.
@@ -39,12 +42,9 @@ namespace gi_lib {
 
 		public:
 
-			/// \brief Get the minimum brightness needed for a color to be considered as "glowing".
-			virtual float GetMinBrightness() const = 0;
-
 			/// \brief Set the minimum brightness needed for a color to be considered as "glowing".
 			/// \param min_brightness Minimum brightness
-			virtual void SetMinBrightness(float min_brightness) = 0;
+			virtual void SetThreshold(float threshold) = 0;
 
 			/// \brief Get the sigma used to compute the Gaussian blur kernel.
 			virtual float GetSigma() const = 0;
@@ -53,13 +53,15 @@ namespace gi_lib {
 			/// \param sigma The new sigma.
 			virtual void SetSigma(float sigma) = 0;
 
-			/// \brief Get the scaling of the blurred surface.
-			virtual Vector2f GetBlurScaling() const = 0;
+			/// \brief Set the multiplicative factor.
+			virtual void SetKeyValue(float key_value) = 0;
 
-			/// \brief Set the scaling of the blurred surface.
-			/// \param scaling The new scaling of the blurred surface.
-			virtual void SetBlurScaling(const Vector2f& scaling) = 0;
+			/// \brief Set the average linear luminance of the current frame.
+			virtual void SetAverageLuminance(float average_luminance) = 0;
 			
+			/// \brief Set the bloom strength.
+			virtual void SetBloomStrength(float strength) = 0;
+
 			/// \brief Process the source image using a bloom filter.
 			/// \param source Source image.
 			/// \param destination Destination image containing the processed image.

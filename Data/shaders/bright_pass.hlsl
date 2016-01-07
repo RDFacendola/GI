@@ -3,7 +3,11 @@
 
 cbuffer Parameters {
 
-	float gThreshold;
+	float gThreshold;					///< \brief Exposure threshold below of which the color is killed.
+	float gKeyValue;
+	float gAverageLuminance;			///< \brief Average luminance of the scene.
+	
+	float reserved;
 
 };
 
@@ -13,12 +17,14 @@ SamplerState gSourceSampler;
 
 float4 PSMain(VSOut input) : SV_Target0{
 
-	// Performs a bright-pass filter.
+	//Performs a bright-pass filter.
 
 	float4 color = gSource.Sample(gSourceSampler, input.uv);
 
-	float luminance = Luminance(color.rgb);
+	float3 exposed_color = Expose(color.rgb, gAverageLuminance, gKeyValue, gThreshold);
 
-	return color * saturate(1.0f - gThreshold / luminance);		// Color whose luminance is equal to the threshold and below will cause a black output
-		
+	return dot(exposed_color, 0.25f) < 0.001f ?
+		   0.f :
+		   float4(exposed_color, color.a);
+			
 }
