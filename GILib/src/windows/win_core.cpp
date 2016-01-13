@@ -406,6 +406,18 @@ void Window::SetTitle(const wstring & title){
 
 }
 
+void Window::SetSize(size_t width, size_t height) {
+
+	SetWindowPos(handle_,
+				 0,
+				 0,
+				 0,
+				 width,
+				 height,
+				 SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER);
+
+}
+
 void Window::Show(bool show){
 
 	ShowWindow(handle_, 

@@ -237,6 +237,11 @@ namespace gi_lib{
 		/// \param title The title to show in the title bar.
 		virtual void SetTitle(const wstring& title) = 0;
 
+		/// \brief Set the window's size.
+		/// \param width The width of the window in pixels.
+		/// \param height The height of the window in pixels.
+		virtual void SetSize(size_t width, size_t height) = 0;
+
 		/// \brief Show or hide the window.
 		/// \param show Shows the window if "true", hides it otherwise.
 		virtual void Show(bool show = true) = 0;

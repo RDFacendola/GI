@@ -304,6 +304,9 @@ namespace{
 DX11Output::DX11Output(windows::Window & window, const VideoMode& video_mode) :
 	window_(window){
 
+	window_.SetSize(video_mode.horizontal_resolution,
+					video_mode.vertical_resolution);
+
 	fullscreen_ = false;							// Windowed
 	vsync_ = false;									// Disabled by default
 	antialiasing_ = AntialiasingMode::NONE;			// Disabled by default.

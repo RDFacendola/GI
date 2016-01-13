@@ -77,6 +77,8 @@ namespace gi_lib{
 			
 			virtual void SetTitle(const wstring& title) override;
 
+			virtual void SetSize(size_t width, size_t height) override;
+
 			virtual void Show(bool show = true) override;
 
 			virtual bool IsVisible() override;
