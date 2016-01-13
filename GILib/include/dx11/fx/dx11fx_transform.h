@@ -1,11 +1,11 @@
-/// \file dx11fx_scaler.h
-/// \brief This file contains classes used to scale a texture using the GPU.
+/// \file dx11fx_transform.h
+/// \brief This file contains classes used to transform a texture using the GPU.
 ///
 /// \author Raffaele D. Facendola
 
 #pragma once
 
-#include "fx\fx_scaler.h"
+#include "fx\fx_transform.h"
 
 #include "..\dx11material.h"
 #include "..\dx11sampler.h"

@@ -17,7 +17,7 @@
 #include "windows/win_core.h"
 #include "windows/win_os.h"
 
-#include "fx/dx11fx_scaler.h"
+#include "fx/dx11fx_transform.h"
 
 struct ID3D11Device;
 struct IDXGIFactory;

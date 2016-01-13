@@ -1,5 +1,5 @@
-/// \file fx_scaler.h
-/// \brief This file contains classes used to scale a texture using the GPU.
+/// \file fx_transform.h
+/// \brief This file contains classes used to transform a texture using the GPU.
 ///
 /// \author Raffaele D. Facendola
 

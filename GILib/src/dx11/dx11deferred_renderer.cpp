@@ -17,7 +17,7 @@
 #include "dx11/dx11buffer.h"
 
 #include "dx11/fx/dx11fx_postprocess.h"
-#include "dx11/fx/dx11fx_scaler.h"
+#include "dx11/fx/dx11fx_transform.h"
 #include "dx11/fx/dx11fx_blur.h"
 #include "dx11/fx/dx11fx_filter.h"
 

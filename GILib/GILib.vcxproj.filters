@@ -166,16 +166,10 @@
     <ClInclude Include="include\fx\fx_filter.h">
       <Filter>FX</Filter>
     </ClInclude>
-    <ClInclude Include="include\fx\fx_scaler.h">
-      <Filter>FX</Filter>
-    </ClInclude>
     <ClInclude Include="include\dx11\fx\dx11fx_blur.h">
       <Filter>DirectX 11\FX</Filter>
     </ClInclude>
     <ClInclude Include="include\dx11\fx\dx11fx_filter.h">
-      <Filter>DirectX 11\FX</Filter>
-    </ClInclude>
-    <ClInclude Include="include\dx11\fx\dx11fx_scaler.h">
       <Filter>DirectX 11\FX</Filter>
     </ClInclude>
     <ClInclude Include="include\wavefront\wavefront_obj.h">
@@ -189,6 +183,12 @@
     </ClInclude>
     <ClInclude Include="include\dx11\fx\dx11fx_postprocess.h">
       <Filter>DirectX 11\FX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\fx\dx11fx_transform.h">
+      <Filter>DirectX 11\FX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\fx\fx_transform.h">
+      <Filter>FX</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -285,9 +285,6 @@
     <ClCompile Include="src\dx11\fx\dx11fx_filter.cpp">
       <Filter>DirectX 11\FX</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11\fx\dx11fx_scaler.cpp">
-      <Filter>DirectX 11\FX</Filter>
-    </ClCompile>
     <ClCompile Include="src\wavefront\wavefront_obj.cpp">
       <Filter>Wavefront OBJ</Filter>
     </ClCompile>
@@ -298,6 +295,9 @@
       <Filter>DirectX 11</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\fx\dx11fx_postprocess.cpp">
+      <Filter>DirectX 11\FX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\fx\dx11fx_transform.cpp">
       <Filter>DirectX 11\FX</Filter>
     </ClCompile>
   </ItemGroup>

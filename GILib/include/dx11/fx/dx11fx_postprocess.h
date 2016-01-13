@@ -11,7 +11,7 @@
 
 #include "dx11fx_blur.h"
 #include "dx11fx_filter.h"
-#include "dx11fx_scaler.h"
+#include "dx11fx_transform.h"
 
 #include "dx11/dx11gpgpu.h"
 #include "dx11/dx11render_target.h"
