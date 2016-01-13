@@ -1,4 +1,4 @@
-#include "dx11/fx/dx11fx_filter.h"
+#include "dx11/fx/dx11fx_image.h"
 
 #include "core.h"
 

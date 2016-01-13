@@ -1,5 +1,5 @@
-/// \file fx_filter.h
-/// \brief This file contains classes used to filter a texture using the GPU.
+/// \file fx_image.h
+/// \brief This file contains classes used to get image infos and histograms using the GPU.
 ///
 /// \author Raffaele D. Facendola
 

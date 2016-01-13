@@ -1,15 +1,13 @@
-/// \file dx11fx_filter.h
-/// \brief This file contains classes used to filter a texture using the GPU.
+/// \file dx11fx_image.h
+/// \brief This file contains classes used to get image infos and histograms using the GPU.
 ///
 /// \author Raffaele D. Facendola
 
 #pragma once
 
-#include "fx\fx_filter.h"
+#include "fx\fx_image.h"
 
 #include "..\dx11gpgpu.h"
-
-#include "..\..\tag.h"
 
 #include "instance_builder.h"
 
