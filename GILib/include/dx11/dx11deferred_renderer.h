@@ -15,8 +15,8 @@
 #include "dx11gpgpu.h"
 #include "buffer.h"
 
-#include "fx\dx11fx_filter.h"
-#include "fx\dx11fx_lighting.h"
+#include "fx\fx_filter.h"
+#include "fx\fx_lighting.h"
 
 namespace gi_lib{
 
@@ -292,21 +292,21 @@ namespace gi_lib{
 
 			// Post process
 
-			fx::DX11FxLuminance fx_luminance_;									///<\ brief Used to calculate the luminance of the image.
+			ObjectPtr<gi_lib::fx::FxLuminance> fx_luminance_;					///<\ brief Used to calculate the luminance of the image.
 
 			float average_luminance_;											///< \brief Current average luminance.
 
-			fx::DX11FxBloom fx_bloom_;											///< \brief Performs the bloom filter of the image.
+			ObjectPtr<gi_lib::fx::FxBloom> fx_bloom_;							///< \brief Performs the bloom filter of the image.
 
 			ObjectPtr<IRenderTarget> bloom_output_;								///< \brief Contains the result of the bloom filter.
 
-			fx::DX11FxTonemap fx_tonemap_;										///< \brief Performs the tonemapping of the image.
+			ObjectPtr<gi_lib::fx::FxTonemap> fx_tonemap_;						///< \brief Performs the tonemapping of the image.
 
 			ObjectPtr<IGPTexture2D> tonemap_output_;							///< \brief Contains the result of the tonemapping.
 			
 		};
 
-		/////////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////////
+		///////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////
 
 		INSTANTIABLE(DeferredRendererMaterial, DX11DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile);
 
@@ -333,8 +333,8 @@ namespace gi_lib{
 			return material_->GetSize();
 
 		}
-
-		///////////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////
+		
+		///////////////////////////////// DX11 DEFERRED RENDERER //////////////////////////////////
 
 		INSTANTIABLE(DeferredRenderer, DX11DeferredRenderer, RendererConstructionArgs);
 

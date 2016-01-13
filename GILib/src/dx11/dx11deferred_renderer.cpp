@@ -16,11 +16,15 @@
 #include "light_component.h"
 #include "dx11/dx11buffer.h"
 
+#include "dx11/fx/dx11fx_lighting.h"
+#include "dx11/fx/dx11fx_scaler.h"
+#include "dx11/fx/dx11fx_blur.h"
+#include "dx11/fx/dx11fx_filter.h"
+
 using namespace ::std;
 using namespace ::gi_lib;
 using namespace ::gi_lib::fx;
 using namespace ::gi_lib::dx11;
-using namespace ::gi_lib::dx11::fx;
 using namespace ::gi_lib::windows;
 
 namespace{
@@ -62,7 +66,7 @@ namespace{
 
 	}
 
-	/// \brief Compute the visible nodes inside a given hierachy given the camera and the aspect ratio of the target.
+	/// \brief Compute the visible nodes inside a given hierarchy given the camera and the aspect ratio of the target.
 	vector<VolumeComponent*> ComputeVisibleNodes(const IVolumeHierarchy& volume_hierarchy, const CameraComponent& camera, float aspect_ratio){
 
 		// Basic frustum culling
@@ -125,7 +129,7 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix
 	
 }
 
-///////////////////////////////// DX11 TILED DEFERRED RENDERER //////////////////////////////////
+///////////////////////////////// DX11 DEFERRED RENDERER //////////////////////////////////
 
 const Tag DX11DeferredRenderer::kAlbedoEmissivityTag = "gAlbedoEmissivity";
 const Tag DX11DeferredRenderer::kNormalShininessTag = "gNormalSpecularShininess";
@@ -140,10 +144,7 @@ const Tag DX11DeferredRenderer::kPointShadowsTag = "gPointShadows";
 const Tag DX11DeferredRenderer::kDirectionalShadowsTag = "gDirectionalShadows";
 
 DX11DeferredRenderer::DX11DeferredRenderer(const RendererConstructionArgs& arguments) :
-DeferredRenderer(arguments.scene),
-fx_luminance_(kMinLuminance, kMaxLuminance, kLuminanceLowPercentage, kLuminanceHighPercentage),
-fx_bloom_(kBloomExposure, kBloomStrength, kBloomBlurSigma),
-fx_tonemap_(kVignette, kKeyValue){
+DeferredRenderer(arguments.scene){
 
 	auto&& device = *DX11Graphics::GetInstance().GetDevice();
 
@@ -239,9 +240,11 @@ fx_tonemap_(kVignette, kKeyValue){
 
 	auto&& app = Application::GetInstance();
 
+	auto&& resources = DX11Resources::GetInstance();
+
 	// Light accumulation setup
 
-	light_shader_ = DX11Resources::GetInstance().Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
+	light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
 
 	shadow_atlas_ = make_unique<DX11VSMAtlas>(2048, 1, true);
 
@@ -281,6 +284,12 @@ fx_tonemap_(kVignette, kKeyValue){
 									ObjectPtr<ITexture2DArray>(shadow_atlas_->GetAtlas()));
 	
 	// Post process setup
+
+	fx_luminance_ = resources.Load<FxLuminance, FxLuminance::Parameters>({ kMinLuminance, kMaxLuminance, kLuminanceLowPercentage, kLuminanceHighPercentage });
+
+	fx_bloom_ = resources.Load<FxBloom, FxBloom::Parameters>({ kBloomExposure, kBloomBlurSigma, kKeyValue, 0.f, kBloomStrength });
+
+	fx_tonemap_ = resources.Load<FxTonemap, FxTonemap::Parameters>({ kVignette, kKeyValue, 0.f });
 
 	average_luminance_ = 0.f;
 	
@@ -612,28 +621,24 @@ void DX11DeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
 
 	// Average linear luminance used for eye adaptation. Smoothly interpolate between the last luminance and the current one.
 	
-	auto current_luminance = std::fmaxf(kMinAdaptLuminance, std::fminf(kMaxAdaptLuminance, fx_luminance_.ComputeAverageLuminance(light_buffer_->GetTexture())));
+	auto current_luminance = fx_luminance_->ComputeAverageLuminance(light_buffer_->GetTexture());
+
+	current_luminance = std::fmaxf(kMinAdaptLuminance, std::fminf(kMaxAdaptLuminance, current_luminance));
 
 	average_luminance_ = average_luminance_ + (current_luminance - average_luminance_) * (1.f - std::expf(-frame_info.time_delta * kLuminanceAdaptationRate));
 
 	// Bloom
 
-	fx_bloom_.SetAverageLuminance(average_luminance_);
-
-	fx_bloom_.SetKeyValue(kKeyValue);
-
-	fx_bloom_.SetThreshold(1.0f);
-
-	fx_bloom_.Process(light_buffer_->GetTexture(),
-					  bloom_output_);
+	fx_bloom_->SetAverageLuminance(average_luminance_);
+	
+	fx_bloom_->Process(light_buffer_->GetTexture(),
+					   bloom_output_);
 		
 	// Tonemap
 
-	fx_tonemap_.SetAverageLuminance(average_luminance_);
+	fx_tonemap_->SetAverageLuminance(average_luminance_);
 
-	fx_tonemap_.SetKeyValue(kKeyValue);
-
-	fx_tonemap_.Process((*bloom_output_)[0],
-						tonemap_output_);
+	fx_tonemap_->Process((*bloom_output_)[0],
+						 tonemap_output_);
 	
 }

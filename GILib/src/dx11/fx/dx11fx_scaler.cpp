@@ -3,10 +3,10 @@
 #include "core.h"
 
 #include "dx11/dx11graphics.h"
+#include "dx11/dx11render_target.h"
 
 using namespace gi_lib;
 using namespace gi_lib::dx11;
-using namespace gi_lib::dx11::fx;
 
 /////////////////////////// DX11 FX SCALER ///////////////////////////////////
 
@@ -14,7 +14,7 @@ const Tag DX11FxScaler::kSourceTexture = "gSource";
 
 const Tag DX11FxScaler::kSampler = "gSampler";
 
-DX11FxScaler::DX11FxScaler(){
+DX11FxScaler::DX11FxScaler(const Parameters&){
 		
 	scaling_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\common\\passthrough_ps.hlsl" });
 
@@ -31,7 +31,7 @@ void DX11FxScaler::Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRe
 
  	auto device_context = DX11Graphics::GetInstance().GetImmediateContext();
  
- 	auto dx_destination = resource_cast(destination);
+	ObjectPtr<DX11RenderTarget> dx_destination = ::resource_cast(destination);
  
  	// Shader setup
  
@@ -53,5 +53,11 @@ void DX11FxScaler::Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRe
  	// Unbind the material from the context
  
  	dx_destination->Unbind(*device_context);
+
+}
+
+size_t DX11FxScaler::GetSize() const{
+
+	return 0;
 
 }

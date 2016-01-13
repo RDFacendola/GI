@@ -3,61 +3,62 @@
 #include "core.h"
 
 #include "dx11/dx11graphics.h"
+#include "dx11/dx11render_target.h"
 
 using namespace gi_lib;
 using namespace gi_lib::dx11;
-using namespace gi_lib::dx11::fx;
 
-
-////////////////////////////////// DX11 FX HIGH PASS ////////////////////////////////
+////////////////////////////////// DX11 FX BRIGHT PASS ////////////////////////////////
 
 const Tag DX11FxBrightPass::kSourceTexture = "gSource";
 
 const Tag DX11FxBrightPass::kSampler = "gSourceSampler";
 
-const Tag DX11FxBrightPass::kParameters = "Parameters";
+const Tag DX11FxBrightPass::kShaderParameters = "Parameters";
 
-DX11FxBrightPass::DX11FxBrightPass(float threshold) {
+DX11FxBrightPass::DX11FxBrightPass(const Parameters& parameters) {
 
 	filter_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\bright_pass.hlsl" });
 
 	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
 
-	parameters_ = new DX11StructuredBuffer(sizeof(Parameters));
+	shader_parameters_ = new DX11StructuredBuffer(sizeof(ShaderParameters));
 
 	//One-time setup
 
 	filter_shader_->SetInput(kSampler,
 							 ObjectPtr<ISampler>(sampler_));
 
-	filter_shader_->SetInput(kParameters,
-							 ObjectPtr<IStructuredBuffer>(parameters_));
+	filter_shader_->SetInput(kShaderParameters,
+							 ObjectPtr<IStructuredBuffer>(shader_parameters_));
 
-	SetThreshold(threshold);
+	SetThreshold(parameters.threshold_);
+	SetKeyValue(parameters.key_value_);
+	SetAverageLuminance(parameters.average_luminance_);
 
 }
 
 void DX11FxBrightPass::SetThreshold(float threshold) {
 
-	parameters_->Lock<Parameters>()->gThreshold = threshold;
+	shader_parameters_->Lock<ShaderParameters>()->gThreshold = threshold;
 	
-	parameters_->Unlock();
+	shader_parameters_->Unlock();
 
 }
 
 void DX11FxBrightPass::SetKeyValue(float key_value){
 
-	parameters_->Lock<Parameters>()->gKeyValue = key_value;
+	shader_parameters_->Lock<ShaderParameters>()->gKeyValue = key_value;
 
-	parameters_->Unlock();
+	shader_parameters_->Unlock();
 
 }
 
 void DX11FxBrightPass::SetAverageLuminance(float average_luminance){
 
-	parameters_->Lock<Parameters>()->gAverageLuminance = average_luminance;
+	shader_parameters_->Lock<ShaderParameters>()->gAverageLuminance = average_luminance;
 
-	parameters_->Unlock();
+	shader_parameters_->Unlock();
 
 }
 
@@ -65,7 +66,7 @@ void DX11FxBrightPass::Filter(const ObjectPtr<ITexture2D>& source, const ObjectP
 
 	auto device_context = DX11Graphics::GetInstance().GetImmediateContext();
  
- 	auto dx_destination = resource_cast(destination);
+ 	auto dx_destination = ::resource_cast(destination);
  
  	// Shader setup
  
@@ -95,20 +96,19 @@ void DX11FxBrightPass::Filter(const ObjectPtr<ITexture2D>& source, const ObjectP
 
 //////////////////////////////////// DX11 FX BLOOM ////////////////////////////////////
 
-
 const Tag DX11FxBloom::kBase = "gBase";
 const Tag DX11FxBloom::kBloom = "gBloom";
 const Tag DX11FxBloom::kDownscaled = "gDownscaled";
 const Tag DX11FxBloom::kUpscaled = "gUpscaled";
-const Tag DX11FxBloom::kParameters = "Parameters";
 const Tag DX11FxBloom::kSampler = "gSampler";
-const Tag DX11FxBloom::kBloomCompositeParameters = "Parameters";
+const Tag DX11FxBloom::kShaderParameters = "Parameters";
 
 const size_t DX11FxBloom::kDownscaledSurfaces = 6;
 
-DX11FxBloom::DX11FxBloom(float exposure_offset, float bloom_strength, float sigma) :
-	fx_blur_(sigma),
-	fx_bright_pass_(exposure_offset){
+DX11FxBloom::DX11FxBloom(const Parameters& parameters) :
+	fx_downscale_(gi_lib::fx::FxScaler::Parameters{}),
+	fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ parameters.sigma_}),
+	fx_bright_pass_(gi_lib::fx::FxBrightPass::Parameters{ parameters.threshold_, parameters.key_value_, parameters.average_luminance_}) {
 	
 	composite_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\bloom_composite.hlsl" });
 
@@ -116,20 +116,20 @@ DX11FxBloom::DX11FxBloom(float exposure_offset, float bloom_strength, float sigm
 
 	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
 
-	bloom_composite_parameters_ = new DX11StructuredBuffer(sizeof(BloomCompositeParameters));
-
-	SetBloomStrength(bloom_strength);
-
+	shader_parameters_ = new DX11StructuredBuffer(sizeof(ShaderParameters));
+	
 	//One-time setup
 
 	composite_shader_->SetInput(kSampler,
 								ObjectPtr<ISampler>(sampler_));
 
-	composite_shader_->SetInput(kBloomCompositeParameters,
-								ObjectPtr<IStructuredBuffer>(bloom_composite_parameters_));
+	composite_shader_->SetInput(kShaderParameters,
+								ObjectPtr<IStructuredBuffer>(shader_parameters_));
 
 	upscale_shader_->SetInput(kSampler,
 							  ObjectPtr<ISampler>(sampler_));
+
+	SetBloomStrength(parameters.strength_);
 
 }
 
@@ -205,7 +205,7 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 
 	// Bloom compositing
 
-	auto dx_destination = resource_cast(destination);
+	auto dx_destination = ::resource_cast(destination);
 
 	dx_destination->ClearDepth(*device_context);												// Clear the existing depth
 
@@ -298,53 +298,63 @@ void DX11FxBloom::SetBloomStrength(float strength) {
 
 	// Since each downscaled version of the bloom adds color, we just scale down the strength accordingly (such that it is not anymore a sum but an average)
 
-	bloom_composite_parameters_->Lock<BloomCompositeParameters>()->gBloomStrength= strength * 1.0f / kDownscaledSurfaces;
+	shader_parameters_->Lock<ShaderParameters>()->gBloomStrength= strength * 1.0f / kDownscaledSurfaces;
 
-	bloom_composite_parameters_->Unlock();
+	shader_parameters_->Unlock();
 
 }
 
 /////////////////////////////////// DX11 FX TONEMAPPING ////////////////////////////////////
 
-const Tag DX11FxTonemap::kParameters = "TonemapParams";
+const Tag DX11FxTonemap::kShaderParameters = "TonemapParams";
 const Tag DX11FxTonemap::kSource = "gUnexposed";
 const Tag DX11FxTonemap::kDestination = "gExposed";
 
-DX11FxTonemap::DX11FxTonemap(float vignette, float key_value) {
-
-	SetVignette(vignette);
-	SetKeyValue(key_value);
+DX11FxTonemap::DX11FxTonemap(const Parameters& parameters) {
 
 	// Tonemap setup
 
 	tonemap_shader_ = DX11Resources::GetInstance().Load<IComputation, IComputation::CompileFromFile>({ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\tonemap.hlsl" });
 
-	tonemap_params_ = new DX11StructuredBuffer(sizeof(Parameters));
+	shader_parameters_ = new DX11StructuredBuffer(sizeof(ShaderParameters));
 
 	// One-time setup
 
-	tonemap_shader_->SetInput(kParameters,
-							  ObjectPtr<IStructuredBuffer>(tonemap_params_));
+	tonemap_shader_->SetInput(kShaderParameters,
+							  ObjectPtr<IStructuredBuffer>(shader_parameters_));
+	
+	SetVignette(parameters.vignette_);
+	SetKeyValue(parameters.key_value_);
+	SetAverageLuminance(parameters.average_luminance_);
+
+}
+
+void DX11FxTonemap::SetVignette(float vignette) {
+
+	shader_parameters_->Lock<ShaderParameters>()->gVignette = vignette;
+
+	shader_parameters_->Unlock();
+	
+}
+
+void DX11FxTonemap::SetKeyValue(float key_value) {
+
+	shader_parameters_->Lock<ShaderParameters>()->gKeyValue = key_value;
+
+	shader_parameters_->Unlock();
+
+}
+
+void DX11FxTonemap::SetAverageLuminance(float average_luminance) {
+
+	shader_parameters_->Lock<ShaderParameters>()->gAverageLuminance = average_luminance;
+
+	shader_parameters_->Unlock();
 
 }
 
 void DX11FxTonemap::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination){
 	
-	// Update shader parameters
-
-	if (dirty_) {
-		
-		memcpy_s(tonemap_params_->Lock(),
-				 tonemap_params_->GetSize(),
-				 &parameters_,
-				 sizeof(parameters_));
-
-		tonemap_params_->Unlock();
-
-		dirty_ = false;
-
-	}
-
 	// Shader setup
 
 	tonemap_shader_->SetInput(kSource,

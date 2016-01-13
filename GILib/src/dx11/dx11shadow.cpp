@@ -303,7 +303,7 @@ const Tag DX11VSMAtlas::kPerObject = "PerObject";
 const Tag DX11VSMAtlas::kPerLight = "PerLight";
 
 DX11VSMAtlas::DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_precision) :
-	fx_blur_(1.67f){
+	fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ 1.67f }) {
 
 	auto&& device = *DX11Graphics::GetInstance().GetDevice();
 

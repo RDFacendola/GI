@@ -15,6 +15,8 @@ namespace{
 
 }
 
+///////////////////////////////// DX11 COMPUTATION ///////////////////////////////////
+
 DX11Computation::DX11Computation(const CompileFromFile& arguments) :
 shader_composite_(std::make_unique<ShaderStateComposite>()){
 

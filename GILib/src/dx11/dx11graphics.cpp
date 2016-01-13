@@ -342,7 +342,7 @@ DX11Output::DX11Output(windows::Window & window, const VideoMode& video_mode) :
 	});
 
 	// Scaler
-	scaler_ = make_unique<fx::DX11FxScaler>();
+	scaler_ = make_unique<DX11FxScaler>(DX11FxScaler::Parameters{});
 
 }
 

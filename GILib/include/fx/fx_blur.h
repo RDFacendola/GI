@@ -9,6 +9,7 @@
 
 #include "texture.h"
 #include "render_target.h"
+#include "resources.h"
 
 namespace gi_lib {
 
@@ -16,13 +17,22 @@ namespace gi_lib {
 
 		/// \brief This class is used to perform a Gaussian blur to a texture using the GPU.
 		/// \author Raffaele D. Facendola
-		class FxGaussianBlur {
+		class FxGaussianBlur : public IResource {
 
 		public:
 
 			static const int kKernelSize = 11;			///< \brief Size of the kernel.
 
 			static const int kBlurRadius = 5;			///< \brief Blur radius.
+
+			/// \brief Parameters needed by the post processing shader.
+			struct Parameters {
+
+				NO_CACHE;
+
+				float sigma_;				///< \brief Sigma used to compute the Gaussian kernel
+
+			};
 
 			/// \brief Get the sigma used to compute the blur kernel.
 			virtual float GetSigma() const = 0;
@@ -41,7 +51,7 @@ namespace gi_lib {
 			virtual void Blur(const ObjectPtr<ITexture2DArray>& source, const ObjectPtr<IGPTexture2DArray>& destination) = 0;
 
 		};
-		
+	
 	}
 
 }

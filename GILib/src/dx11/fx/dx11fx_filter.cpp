@@ -6,7 +6,8 @@
 
 using namespace gi_lib;
 using namespace gi_lib::dx11;
-using namespace gi_lib::dx11::fx;
+
+/////////////////////////////////////// DX11 FX LUMINANCE /////////////////////////////////////// 
 
 const Tag DX11FxLuminance::kSourceTexture = "gSource";
 const Tag DX11FxLuminance::kHistogram = "gHistogram";
@@ -14,9 +15,7 @@ const Tag DX11FxLuminance::kParameters = "Parameters";
 
 const unsigned int DX11FxLuminance::kBinCount = 64;
 
-DX11FxLuminance::DX11FxLuminance(float min_luminance, float max_luminance, float low_percentage, float high_percentage) :
-	low_percentage_(low_percentage),
-	high_percentage_(high_percentage){
+DX11FxLuminance::DX11FxLuminance(const Parameters& parameters){
 
 	auto directory = Application::GetInstance().GetDirectory();
 
@@ -32,7 +31,7 @@ DX11FxLuminance::DX11FxLuminance(float min_luminance, float max_luminance, float
 	clear_shader_->SetOutput(Tag("gBuffer"),
 							 ObjectPtr<IScratchStructuredArray>(log_luminance_histogram_));
 
-	luminance_parameters_ = new DX11StructuredBuffer(sizeof(LuminanceHistogramParameters));
+	luminance_parameters_ = new DX11StructuredBuffer(sizeof(ShaderParameters));
 
 	luminance_shader_->SetInput(kParameters,
 								ObjectPtr<IStructuredBuffer>(luminance_parameters_));
@@ -40,8 +39,10 @@ DX11FxLuminance::DX11FxLuminance(float min_luminance, float max_luminance, float
 	luminance_shader_->SetOutput(kHistogram,
 								 ObjectPtr<IScratchStructuredArray>(log_luminance_histogram_));
 
-	SetMinLuminance(min_luminance);
-	SetMaxLuminance(max_luminance);
+	SetMinLuminance(parameters.min_luminance_);
+	SetMaxLuminance(parameters.max_luminance_);
+	SetLowPercentage(parameters.low_percentage_);
+	SetHighPercentage(parameters.high_percentage_);
 
 }
 
@@ -114,7 +115,7 @@ void DX11FxLuminance::SetMinLuminance(float min_luminance) {
 
 	min_log_luminance_ = min_log_luminance;
 
-	luminance_parameters_->Lock<LuminanceHistogramParameters>()->gLogMinimum = min_log_luminance;
+	luminance_parameters_->Lock<ShaderParameters>()->gLogMinimum = min_log_luminance;
 
 	luminance_parameters_->Unlock();
 
@@ -126,7 +127,7 @@ void DX11FxLuminance::SetMaxLuminance(float max_luminance) {
 
 	max_log_luminance_ = max_log_luminance;
 
-	luminance_parameters_->Lock<LuminanceHistogramParameters>()->gLogMaximum = max_log_luminance;
+	luminance_parameters_->Lock<ShaderParameters>()->gLogMaximum = max_log_luminance;
 
 	luminance_parameters_->Unlock();
 
@@ -141,5 +142,11 @@ void DX11FxLuminance::SetLowPercentage(float low_percentage) {
 void DX11FxLuminance::SetHighPercentage(float high_percentage) {
 
 	high_percentage_ = high_percentage;
+
+}
+
+size_t DX11FxLuminance::GetSize() const{
+	
+	return 0;
 
 }

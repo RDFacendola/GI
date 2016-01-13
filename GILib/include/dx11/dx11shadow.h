@@ -130,7 +130,7 @@ namespace gi_lib {
 
 			ObjectPtr<DX11StructuredBuffer> per_light_;				///< \brief Per-light constant buffer.
 			
-			fx::DX11FxGaussianBlur fx_blur_;						///< \brief Used to blur the shadowmap.
+			DX11FxGaussianBlur fx_blur_;							///< \brief Used to blur the shadowmap.
 			
 		};
 

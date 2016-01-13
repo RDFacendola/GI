@@ -16,34 +16,45 @@ namespace gi_lib {
 
 	namespace dx11 {
 
-		namespace fx {
+		/// \brief Shader used to scale a source texture onto a render target.
+		class DX11FxScaler : public fx::FxScaler{
 
-			/// \brief Shader used to scale a source texture onto a render target.
-			class DX11FxScaler : public gi_lib::fx::FxScaler{
+		public:
 
-			public:
+			DX11FxScaler(const Parameters& parameters);
 
-				DX11FxScaler();
+			virtual void Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) override;
 
-				virtual void Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) override;
-				
-			private:
+			virtual size_t GetSize() const override;
 
-				// Tonemapping
 
-				static const Tag kSourceTexture;							///< \brief Tag of the source texture to scale.
+		private:
 
-				static const Tag kSampler;									///< \brief Tag of sampler used to sample the source texture.
+			// Tonemapping
 
- 				ObjectPtr<DX11Material> scaling_shader_;					///< \brief Shader performing the scaling.
+			static const Tag kSourceTexture;							///< \brief Tag of the source texture to scale.
+
+			static const Tag kSampler;									///< \brief Tag of sampler used to sample the source texture.
+
+ 			ObjectPtr<DX11Material> scaling_shader_;					///< \brief Shader performing the scaling.
  
- 				ObjectPtr<DX11Sampler> sampler_;							///< \brief Sampler used to sample the source texture.
+ 			ObjectPtr<DX11Sampler> sampler_;							///< \brief Sampler used to sample the source texture.
  				
 		
-			};
+		};
+
+		/////////////////////////// DX11 FX SCALER ///////////////////////////////////
+
+		INSTANTIABLE(fx::FxScaler, DX11FxScaler, fx::FxScaler::Parameters);
+
+		/////////////////////////////////////// RESOURCE CAST ///////////////////////////////////////
+
+		inline ObjectPtr<DX11FxScaler> resource_cast(const ObjectPtr<fx::FxScaler>& resource) {
+
+			return ObjectPtr<DX11FxScaler>(resource.Get());
 
 		}
-
+		
 	}
 
 }

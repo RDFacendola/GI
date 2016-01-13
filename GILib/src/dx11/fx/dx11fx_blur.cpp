@@ -5,7 +5,8 @@
 
 using namespace gi_lib;
 using namespace gi_lib::dx11;
-using namespace gi_lib::dx11::fx;
+
+///////////////////////////// DX11 GAUSSIAN BLUR /////////////////////////////
 
 const Tag DX11FxGaussianBlur::kSourceTexture = "gSource";
 
@@ -13,7 +14,7 @@ const Tag DX11FxGaussianBlur::kDestinationTexture = "gBlurred";
 
 const Tag DX11FxGaussianBlur::kBlurKernel = "gBlurKernel";
 
-DX11FxGaussianBlur::DX11FxGaussianBlur(float sigma) {
+DX11FxGaussianBlur::DX11FxGaussianBlur(const Parameters& parameters) {
 
 	auto directory = Application::GetInstance().GetDirectory();
 
@@ -41,7 +42,7 @@ DX11FxGaussianBlur::DX11FxGaussianBlur(float sigma) {
 	vblur_array_shader_->SetInput(kBlurKernel,
 								  ObjectPtr<IStructuredArray>(kernel_));
 
-	SetSigma(sigma);
+	SetSigma(parameters.sigma_);
 
 }
 
