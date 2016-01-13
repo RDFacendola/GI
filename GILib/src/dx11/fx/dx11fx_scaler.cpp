@@ -54,6 +54,8 @@ void DX11FxScaler::Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRe
  
  	dx_destination->Unbind(*device_context);
 
+	scaling_shader_->Unbind(*device_context);
+
 }
 
 size_t DX11FxScaler::GetSize() const{
