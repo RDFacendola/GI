@@ -19,10 +19,10 @@ using ::std::function;
 using ::std::pair;
 
 #define INSTANTIABLE_2(ClassName, Arguments) \
-	static InstanceRegisterer<ClassName, ClassName, Arguments> ANONYMOUS;
+	static InstanceRegisterer<ClassName, ClassName, Arguments> CONCATENATE(registerer_, __LINE__)
 
 #define INSTANTIABLE_3(ClassName, ClassType, Arguments) \
-	static InstanceRegisterer<ClassName, ClassType, Arguments> ANONYMOUS;
+	static InstanceRegisterer<ClassName, ClassType, Arguments> CONCATENATE(registerer_, __LINE__)
 
 /// \brief Macro selector. If the provided expression fails the caller returns either the failure value or a specified value.
 #define INSTANTIABLE(...) EXPAND( SELECT_4TH(__VA_ARGS__ , INSTANTIABLE_3, INSTANTIABLE_2)(__VA_ARGS__ ) )
@@ -76,7 +76,7 @@ namespace gi_lib{
 
 		/// \brief Instantiate a new object.
 		InstanceRegisterer();
-
+		
 	};
 
 	//////////////////////// INSTANCE BUILDER ///////////////////////
