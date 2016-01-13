@@ -9,7 +9,7 @@
 
 #include "tag.h"
 
-#include "dx11fx_blur.h"
+#include "dx11fx_filter.h"
 #include "dx11fx_image.h"
 #include "dx11fx_transform.h"
 

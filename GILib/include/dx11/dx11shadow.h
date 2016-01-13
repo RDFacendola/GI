@@ -11,7 +11,7 @@
 #include "dx11render_target.h"
 #include "dx11material.h"
 
-#include "fx\dx11fx_blur.h"
+#include "fx\dx11fx_filter.h"
 
 namespace gi_lib {
 

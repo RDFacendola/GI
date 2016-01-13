@@ -1,11 +1,11 @@
-/// \file dx11fx_blur.h
-/// \brief This file contains classes used to blur a texture using the GPU.
+/// \file dx11fx_filter.h
+/// \brief This file contains classes used to filter a texture using the GPU.
 ///
 /// \author Raffaele D. Facendola
 
 #pragma once
 
-#include "fx\fx_blur.h"
+#include "fx\fx_filter.h"
 
 #include "..\dx11gpgpu.h"
 

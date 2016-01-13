@@ -18,7 +18,7 @@
 
 #include "dx11/fx/dx11fx_postprocess.h"
 #include "dx11/fx/dx11fx_transform.h"
-#include "dx11/fx/dx11fx_blur.h"
+#include "dx11/fx/dx11fx_filter.h"
 #include "dx11/fx/dx11fx_image.h"
 
 using namespace ::std;

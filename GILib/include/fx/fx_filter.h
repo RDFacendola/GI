@@ -1,5 +1,5 @@
-/// \file fx_blur.h
-/// \brief This file contains classes used to blur a texture using the GPU.
+/// \file fx_filter.h
+/// \brief This file contains classes used to filter a texture using the GPU.
 ///
 /// \author Raffaele D. Facendola
 

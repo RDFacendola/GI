@@ -160,12 +160,6 @@
     <ClInclude Include="include\dx11\dx11commitable.h">
       <Filter>DirectX 11\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="include\fx\fx_blur.h">
-      <Filter>FX</Filter>
-    </ClInclude>
-    <ClInclude Include="include\dx11\fx\dx11fx_blur.h">
-      <Filter>DirectX 11\FX</Filter>
-    </ClInclude>
     <ClInclude Include="include\wavefront\wavefront_obj.h">
       <Filter>Wavefront OBJ</Filter>
     </ClInclude>
@@ -189,6 +183,12 @@
     </ClInclude>
     <ClInclude Include="include\fx\fx_image.h">
       <Filter>FX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\fx\fx_filter.h">
+      <Filter>FX</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\fx\dx11fx_filter.h">
+      <Filter>DirectX 11\FX</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -279,9 +279,6 @@
     <ClCompile Include="src\instance_builder.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\dx11\fx\dx11fx_blur.cpp">
-      <Filter>DirectX 11\FX</Filter>
-    </ClCompile>
     <ClCompile Include="src\wavefront\wavefront_obj.cpp">
       <Filter>Wavefront OBJ</Filter>
     </ClCompile>
@@ -298,6 +295,9 @@
       <Filter>DirectX 11\FX</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\fx\dx11fx_image.cpp">
+      <Filter>DirectX 11\FX</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\fx\dx11fx_filter.cpp">
       <Filter>DirectX 11\FX</Filter>
     </ClCompile>
   </ItemGroup>
