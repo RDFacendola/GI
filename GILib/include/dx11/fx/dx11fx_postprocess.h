@@ -123,7 +123,7 @@ namespace gi_lib {
 
 			DX11FxBrightPass fx_bright_pass_;								///< \brief Filter used to perform a Bright-pass process.
 
-			DX11FxScaler fx_downscale_;										///< \brief Used to perform down scaling.
+			DX11FxScale fx_downscale_;										///< \brief Used to perform down scaling.
 					
 			ObjectPtr<DX11Material> upscale_shader_;						///< \brief Used to add blurred surfaces while upscaling.
 

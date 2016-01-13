@@ -106,7 +106,7 @@ const Tag DX11FxBloom::kShaderParameters = "Parameters";
 const size_t DX11FxBloom::kDownscaledSurfaces = 6;
 
 DX11FxBloom::DX11FxBloom(const Parameters& parameters) :
-	fx_downscale_(gi_lib::fx::FxScaler::Parameters{}),
+	fx_downscale_(gi_lib::fx::FxScale::Parameters{}),
 	fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ parameters.sigma_}),
 	fx_bright_pass_(gi_lib::fx::FxBrightPass::Parameters{ parameters.threshold_, parameters.key_value_, parameters.average_luminance_}) {
 	

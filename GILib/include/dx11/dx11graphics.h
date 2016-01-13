@@ -100,7 +100,7 @@ namespace gi_lib{
 
 			ObjectPtr<IRenderTarget> render_target_;				///< \brief Render target wrapped around the backbuffer. Only one render target is defined.
 
-			unique_ptr<DX11FxScaler> scaler_;						///< \brief Used to scale the image onto the backbuffer.
+			unique_ptr<DX11FxScale> scaler_;						///< \brief Used to scale the image onto the backbuffer.
 
 		};
 

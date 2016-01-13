@@ -17,7 +17,7 @@ namespace gi_lib {
 
 		/// \brief This class is used to scale a texture using the GPU.
 		/// You may use this class both to copy a texture or to scale it to another size. The destination texture must be a valid render target.
-		class FxScaler : public IResource {
+		class FxScale : public IResource {
 
 		public:
 
@@ -43,7 +43,7 @@ namespace gi_lib {
 
 		/////////////////////////////////// FX SCALER :: PARAMETERS ///////////////////////////////////
 
-		inline size_t FxScaler::Parameters::GetCacheKey() const {
+		inline size_t FxScale::Parameters::GetCacheKey() const {
 
 			return 1;	// Any key will do
 

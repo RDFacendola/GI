@@ -17,11 +17,11 @@ namespace gi_lib {
 	namespace dx11 {
 
 		/// \brief Shader used to scale a source texture onto a render target.
-		class DX11FxScaler : public fx::FxScaler{
+		class DX11FxScale : public fx::FxScale{
 
 		public:
 
-			DX11FxScaler(const Parameters& parameters);
+			DX11FxScale(const Parameters& parameters);
 
 			virtual void Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) override;
 
@@ -45,13 +45,13 @@ namespace gi_lib {
 
 		/////////////////////////// DX11 FX SCALER ///////////////////////////////////
 
-		INSTANTIABLE(fx::FxScaler, DX11FxScaler, fx::FxScaler::Parameters);
+		INSTANTIABLE(fx::FxScale, DX11FxScale, fx::FxScale::Parameters);
 
 		/////////////////////////////////////// RESOURCE CAST ///////////////////////////////////////
 
-		inline ObjectPtr<DX11FxScaler> resource_cast(const ObjectPtr<fx::FxScaler>& resource) {
+		inline ObjectPtr<DX11FxScale> resource_cast(const ObjectPtr<fx::FxScale>& resource) {
 
-			return ObjectPtr<DX11FxScaler>(resource.Get());
+			return ObjectPtr<DX11FxScale>(resource.Get());
 
 		}
 		
