@@ -1,4 +1,4 @@
-#include "dx11/fx/dx11fx_lighting.h"
+#include "dx11/fx/dx11fx_postprocess.h"
 
 #include "core.h"
 

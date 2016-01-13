@@ -1,11 +1,11 @@
-/// \file dx11fx_lighting.h
+/// \file dx11fx_postprocess.h
 /// \brief This file contains post process effects that affects lighting such as bloom, glow and color grading.
 ///
 /// \author Raffaele D. Facendola
 
 #pragma once
 
-#include "fx\fx_lighting.h"
+#include "fx\fx_postprocess.h"
 
 #include "tag.h"
 

@@ -16,7 +16,7 @@
 #include "buffer.h"
 
 #include "fx\fx_filter.h"
-#include "fx\fx_lighting.h"
+#include "fx\fx_postprocess.h"
 
 namespace gi_lib{
 

@@ -34,12 +34,12 @@
     <ClInclude Include="include\dx11\dx11texture.h" />
     <ClInclude Include="include\dx11\fx\dx11fx_blur.h" />
     <ClInclude Include="include\dx11\fx\dx11fx_filter.h" />
-    <ClInclude Include="include\dx11\fx\dx11fx_lighting.h" />
+    <ClInclude Include="include\dx11\fx\dx11fx_postprocess.h" />
     <ClInclude Include="include\dx11\fx\dx11fx_scaler.h" />
     <ClInclude Include="include\eigen.h" />
     <ClInclude Include="include\fnv1.h" />
     <ClInclude Include="include\fly_camera_component.h" />
-    <ClInclude Include="include\fx\fx_lighting.h" />
+    <ClInclude Include="include\fx\fx_postprocess.h" />
     <ClInclude Include="include\fx\fx_blur.h" />
     <ClInclude Include="include\fx\fx_filter.h" />
     <ClInclude Include="include\fx\fx_scaler.h" />
@@ -96,7 +96,7 @@
     <ClCompile Include="src\dx11\dx11texture.cpp" />
     <ClCompile Include="src\dx11\fx\dx11fx_blur.cpp" />
     <ClCompile Include="src\dx11\fx\dx11fx_filter.cpp" />
-    <ClCompile Include="src\dx11\fx\dx11fx_lighting.cpp" />
+    <ClCompile Include="src\dx11\fx\dx11fx_postprocess.cpp" />
     <ClCompile Include="src\dx11\fx\dx11fx_scaler.cpp" />
     <ClCompile Include="src\fly_camera_component.cpp" />
     <ClCompile Include="src\gilib.cpp" />

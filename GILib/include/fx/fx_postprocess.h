@@ -1,4 +1,4 @@
-/// \file fx_lighting.h
+/// \file fx_postprocess.h
 /// \brief This file contains post process effects that affects lighting such as bloom, glow and color grading.
 ///
 /// \author Raffaele D. Facendola
