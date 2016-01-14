@@ -282,17 +282,7 @@ DeferredRenderer(arguments.scene){
 
 	check = light_shader_->SetInput(kVSMShadowAtlasTag,
 									ObjectPtr<ITexture2DArray>(shadow_atlas_->GetAtlas()));
-	
-	// Post process setup
-
-	fx_luminance_ = resources.Load<FxLuminance, FxLuminance::Parameters>({ kMinLuminance, kMaxLuminance, kLuminanceLowPercentage, kLuminanceHighPercentage });
-
-	fx_bloom_ = resources.Load<FxBloom, FxBloom::Parameters>({ kBloomExposure, kBloomBlurSigma, kKeyValue, 0.f, kBloomStrength });
-
-	fx_tonemap_ = resources.Load<FxTonemap, FxTonemap::Parameters>({ kVignette, kKeyValue, 0.f });
-
-	average_luminance_ = 0.f;
-	
+		
 }
 
 DX11DeferredRenderer::~DX11DeferredRenderer(){
@@ -327,15 +317,13 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 		
 		ComputeLighting(frame_info);						// Scene, GBuffer, DepthBuffer -> LightBuffer
 
-		ComputePostProcess(frame_info);						// LightBuffer -> Output
-
 	}
 
 	// Cleanup
 	immediate_context_->ClearState();
 	
 	// Return the unexposed buffer
-	return tonemap_output_->GetTexture();
+	return light_buffer_->GetTexture();
 
 }
 
@@ -593,52 +581,4 @@ void DX11DeferredRenderer::UpdateLight(const DirectionalLightComponent& directio
 									shadow,
 									aspect_ratio);
 
-}
-
-// Post processing
-
-void DX11DeferredRenderer::ComputePostProcess(const FrameInfo& frame_info){
-		
-	// LightBuffer == [Bloom] ==> Unexposed ==> [Tonemap] ==> Output
-
-	// Lazy initialization and resize of the bloom and tonemap surfaces
-
-	if (!bloom_output_ ||
-		 bloom_output_->GetWidth() != frame_info.width ||
-		 bloom_output_->GetHeight() != frame_info.height) {
-
-		bloom_output_ = new DX11RenderTarget(IRenderTarget::FromDescription{ frame_info.width,
-																			 frame_info.height,
-																			 { TextureFormat::RGB_FLOAT },
-																			 false });
-
-		tonemap_output_ = new DX11GPTexture2D(IGPTexture2D::FromDescription{ frame_info.width,
-																			 frame_info.height,
-																			 1,
-																			 TextureFormat::RGBA_HALF_UNORM });
-
-	}
-
-	// Average linear luminance used for eye adaptation. Smoothly interpolate between the last luminance and the current one.
-	
-	auto current_luminance = fx_luminance_->ComputeAverageLuminance(light_buffer_->GetTexture());
-
-	current_luminance = std::fmaxf(kMinAdaptLuminance, std::fminf(kMaxAdaptLuminance, current_luminance));
-
-	average_luminance_ = average_luminance_ + (current_luminance - average_luminance_) * (1.f - std::expf(-frame_info.time_delta * kLuminanceAdaptationRate));
-
-	// Bloom
-
-	fx_bloom_->SetAverageLuminance(average_luminance_);
-	
-	fx_bloom_->Process(light_buffer_->GetTexture(),
-					   bloom_output_);
-		
-	// Tonemap
-
-	fx_tonemap_->SetAverageLuminance(average_luminance_);
-
-	fx_tonemap_->Process((*bloom_output_)[0],
-						 tonemap_output_);
-	
 }

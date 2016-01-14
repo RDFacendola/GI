@@ -5,6 +5,7 @@
 #include "core.h"
 #include "graphics.h"
 #include "scene.h"
+#include "postprocess.h"
 
 using namespace gi_lib;
 using namespace std;
@@ -48,10 +49,14 @@ namespace gi{
 		unique_ptr<DeferredRenderer> deferred_renderer_;
 
 		unique_ptr<Scene> scene_;
+
+		unique_ptr<Postprocess> postprocess_;
 		
 		const IInput* input_;
 
 		bool paused_;
+
+		bool enable_postprocess_;				///< \brief Whether the post processing is enabled.
 
 	};
 

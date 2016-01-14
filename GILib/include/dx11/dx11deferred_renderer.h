@@ -30,30 +30,6 @@ namespace gi_lib{
 
 		class DX11VSMAtlas;
 		
-		// Tonemapping
-
-		const float kVignette = 0.5f;
-
-		// Bloom
-
-		const float kBloomExposure = 1.0f;
-		const float kBloomStrength = 0.33f;
-		const float kBloomBlurSigma = 1.67f;
-
-		// Auto exposure
-
-		const float kKeyValue = 0.4f;
-		const float kMinLuminance = 0.0156f;
-		const float kMaxLuminance = 64.0f;
-		const float kLuminanceLowPercentage = 0.85f;
-		const float kLuminanceHighPercentage = 0.95f;
-
-		// Eye adaptation
-
-		const float kMinAdaptLuminance = 0.2f;
-		const float kMaxAdaptLuminance = 1.0f;
-		const float kLuminanceAdaptationRate = 0.75f;
-
 		/// \brief Structure of the per-object constant buffer.
 		struct VSPerObjectBuffer {
 
@@ -229,9 +205,6 @@ namespace gi_lib{
 			/// \param shadow Contains the informations of the directional shadow. Output.
 			void UpdateLight(const DirectionalLightComponent& directional_light, float aspect_ratio, DirectionalLight& light, DirectionalShadow& shadow);
 			
-			/// \param dimensions Dimensions of the Exposed buffer in pixels.
-			void ComputePostProcess(const FrameInfo& frame_info);
-
 			// Render context
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;						///< \brief Immediate rendering context.
@@ -289,20 +262,6 @@ namespace gi_lib{
 			ObjectPtr<DX11StructuredArray> point_shadows_;						///< \brief Array containing the point lights.
 
 			ObjectPtr<DX11StructuredArray> directional_shadows_;				///< \brief Array containing the directional lights.
-
-			// Post process
-
-			ObjectPtr<gi_lib::fx::FxLuminance> fx_luminance_;					///<\ brief Used to calculate the luminance of the image.
-
-			float average_luminance_;											///< \brief Current average luminance.
-
-			ObjectPtr<gi_lib::fx::FxBloom> fx_bloom_;							///< \brief Performs the bloom filter of the image.
-
-			ObjectPtr<IRenderTarget> bloom_output_;								///< \brief Contains the result of the bloom filter.
-
-			ObjectPtr<gi_lib::fx::FxTonemap> fx_tonemap_;						///< \brief Performs the tonemapping of the image.
-
-			ObjectPtr<IGPTexture2D> tonemap_output_;							///< \brief Contains the result of the tonemapping.
 			
 		};
 

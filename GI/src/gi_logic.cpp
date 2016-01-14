@@ -146,6 +146,12 @@ void GILogic::Initialize(Window& window){
 	SetupLights(*scene_, 
 				obj_importer.ImportMesh(app.GetDirectory() + L"Data\\assets\\Light\\Sphere.obj", "Icosphere"));
 	
+	// Post process setup
+
+	postprocess_ = make_unique<Postprocess>(resources);
+
+	enable_postprocess_ = true;
+
 }
 
 void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh) {
@@ -241,9 +247,19 @@ void GILogic::Update(const Time & time){
 
 	fly_camera->Update(time);
 	
-	if (input_->GetKeyboardStatus().IsPressed((25))){		// "P"
+	// "P": toggle pause
+
+	if (input_->GetKeyboardStatus().IsPressed((25))){		
 
 		paused_ = !paused_;
+
+	}
+
+	// "F": toggle post processing
+
+	if (input_->GetKeyboardStatus().IsPressed((33))) {
+
+		enable_postprocess_ = !enable_postprocess_;
 
 	}
 
@@ -298,6 +314,16 @@ void GILogic::Update(const Time & time){
 											   output_->GetVideoMode().horizontal_resolution * 1.0f,
 											   output_->GetVideoMode().vertical_resolution * 1.0f);
 
-	output_->Display(next_frame);
+	if (enable_postprocess_) {
+
+		output_->Display(postprocess_->Execute(next_frame, 
+											   time));
+
+	}
+	else {
+	
+		output_->Display(next_frame);
+
+	}
 
 }
