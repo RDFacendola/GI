@@ -339,8 +339,9 @@ DX11Output::DX11Output(windows::Window & window, const VideoMode& video_mode) :
 		UpdateBackbuffer();
 
 		// Delete temporary resources
-		DX11GPTexture2D::PurgeCache();
-		DX11RenderTarget::PurgeCache();
+
+		DX11GPTexture2DCache::PurgeCache();
+		DX11RenderTargetCache::PurgeCache();
 
 	});
 
@@ -449,7 +450,7 @@ void DX11Output::UpdateBackbuffer(){
 
 }
 
-void DX11Output::Display(ObjectPtr<ITexture2D>& image){
+void DX11Output::Display(const ObjectPtr<ITexture2D>& image){
 
 	// Copy and scale the content of the image to the actual backbuffer
 
@@ -577,8 +578,8 @@ void DX11Graphics::FlushAll() {
 
 	// Clear any temporary cache
 
-	DX11GPTexture2D::PurgeCache();
-	DX11RenderTarget::PurgeCache();
+	DX11GPTexture2DCache::PurgeCache();
+	DX11RenderTargetCache::PurgeCache();
 
 	// Remove any pending reference
 

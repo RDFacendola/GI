@@ -143,22 +143,6 @@ namespace gi_lib{
 			/// \brief Unbind the render target from the given render context.
 			void Unbind(ID3D11DeviceContext& context);
 
-			/// \brief Push the specified texture inside the cache and clears out the pointer.
-			static void PushToCache(ObjectPtr<DX11RenderTarget>& texture);
-
-			/// \brief Pops a texture matching the specified values from the cache.
-			/// \param width Width of the requested texture.
-			/// \param height Height of the requested texture.
-			/// \param format Format of the requested texture.
-			/// \param has_depth Whether the render target should have a depth.
-			/// \param generate Whether to generate a brand new texture if none can be found.
-			/// \return Returns a pointer to a cached texture meeting the specified requirements if any.
-			/// \remarks If generate is set to "true" this method is guaranteed to return a texture.
-			static ObjectPtr<DX11RenderTarget> PopFromCache(unsigned int width, unsigned int height, vector<TextureFormat> format, bool has_depth, bool generate = true);
-
-			/// \brief Clear all the cached textures.
-			static void PurgeCache();
-
 		private:
 
 			/// \brief Create the render target surfaces.
@@ -174,10 +158,30 @@ namespace gi_lib{
 
 			D3D11_VIEWPORT viewport_;											///< \brief Render target viewport.
 
+		};
+		
+		/// \brief Render-target cache under DirectX11.
+		/// \author Raffaele D. Facendola.
+		class DX11RenderTargetCache : public IRenderTargetCache {
+
+		public:
+
+			DX11RenderTargetCache(const Singleton&);
+
+			virtual void PushToCache(ObjectPtr<IRenderTarget>& texture) override;
+
+			virtual ObjectPtr<IRenderTarget> PopFromCache(unsigned int width, unsigned int height, std::vector<TextureFormat> format, bool has_depth, bool generate = true) override;
+
+			virtual size_t GetSize() const override;
+
+			static void PurgeCache();
+
+		private:
+			
 			static std::vector<ObjectPtr<DX11RenderTarget>> cache_;				///<\ brief Orphaned resource cache.
 
 		};
-		
+
 		/// \brief DirectX11 render target array.
 		/// \author Raffaele D. Facendola
 		class DX11RenderTargetArray : public IRenderTargetArray {
@@ -310,6 +314,10 @@ namespace gi_lib{
 			return render_target_[0]->GetHeight();
 
 		}
+
+		///////////////////////////// DX11 RENDER TARGET CACHE //////////////////////////////
+
+		INSTANTIABLE(IRenderTargetCache, DX11RenderTargetCache, IRenderTargetCache::Singleton);
 
 		/////////////////////////////// DX11 RENDER TARGET ARRAY //////////////////////////////////////
 

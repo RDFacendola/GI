@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "fx\fx_postprocess.h"
 
 #include "tag.h"
@@ -129,13 +131,17 @@ namespace gi_lib {
 
 			ObjectPtr<DX11Material> composite_shader_;						///< \brief Shader used to accumulate the various buffers.
 				
-			vector<ObjectPtr<DX11RenderTarget>> bright_surfaces_;			///< \brief Surface containing the "glowing" pixels. Only one surface.
+			vector<ObjectPtr<IRenderTarget>> bright_surfaces_;				///< \brief Surface containing the "glowing" pixels. Only one surface.
 
-			vector<ObjectPtr<DX11GPTexture2D>> blur_surfaces_;				///< \brief Surfaces containing the Gaussian blur result at half resolution per iteration.
+			vector<ObjectPtr<IGPTexture2D>> blur_surfaces_;					///< \brief Surfaces containing the Gaussian blur result at half resolution per iteration.
 				
 			ObjectPtr<DX11Sampler> sampler_;								///< \brief Sampler used to sample the source texture.
 
 			ObjectPtr<DX11StructuredBuffer> shader_parameters_;				///< \brief Parameters used to perform the filtering.
+
+			std::unique_ptr<IGPTexture2DCache> gp_cache_;					///< \brief Pointer to the general-purpose texture cache.
+
+			std::unique_ptr<IRenderTargetCache> rt_cache_;					///< \brief Pointer to the render-target texture cache.
 
 		};
 

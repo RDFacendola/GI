@@ -89,6 +89,39 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Base interface for render-target cache.
+	/// \author Raffaele D. Facendola.
+	class IRenderTargetCache : public IResource {
+
+	public:
+
+		/// \brief Singleton
+		/// \author Raffaele D. Facendola.
+		struct Singleton {
+
+			USE_CACHE;
+
+			/// \brief Get the cache key associated to the structure.
+			/// \return Returns the cache key associated to the structure.
+			size_t GetCacheKey() const;
+
+		};
+
+		/// \brief Push the specified texture inside the cache and clears out the pointer.
+		virtual void PushToCache(ObjectPtr<IRenderTarget>& texture) = 0;
+
+		/// \brief Pops a texture matching the specified values from the cache.
+		/// \param width Width of the requested texture.
+		/// \param height Height of the requested texture.
+		/// \param format Format of the requested texture.
+		/// \param has_depth Whether the render target should have a depth.
+		/// \param generate Whether to generate a brand new texture if none can be found.
+		/// \return Returns a pointer to a cached texture meeting the specified requirements if any.
+		/// \remarks If generate is set to "true" this method is guaranteed to return a texture.
+		virtual ObjectPtr<IRenderTarget> PopFromCache(unsigned int width, unsigned int height, std::vector<TextureFormat> format, bool has_depth, bool generate = true) = 0;
+
+	};
+
 	/// \brief Base interface for render target arrays.
 	/// A render target array is an array of textures, each of which can be drawn upon.
 	/// Elements in the array are guaranteed to have the same dimensions.
@@ -147,6 +180,14 @@ namespace gi_lib{
 		virtual unsigned int GetHeight() const = 0;
 
 	};
+
+	////////////////////////////// RENDER TARGET CACHE :: SINGLETON ///////////////////////////////
+
+	inline size_t IRenderTargetCache::Singleton::GetCacheKey() const {
+
+		return gi_lib::Tag("Singleton");
+
+	}
 
 }
 

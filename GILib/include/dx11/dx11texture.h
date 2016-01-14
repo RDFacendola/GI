@@ -100,26 +100,31 @@ namespace gi_lib{
 			/// \brief Get the unordered access view used to bind this texture to the pipeline.
 			UnorderedAccessView GetUnorderedAccessView();
 
-			/// \brief Push the specified texture inside the cache and clears out the pointer.
-			static void PushToCache(ObjectPtr<DX11GPTexture2D>& texture);
-
-			/// \brief Pops a texture matching the specified values from the cache.
-			/// \param width Width of the requested texture.
-			/// \param height Height of the requested texture.
-			/// \param format Format of the requested texture.
-			/// \param generate Whether to generate a brand new texture if none can be found.
-			/// \return Returns a pointer to a cached texture meeting the specified requirements if any.
-			/// \remarks If generate is set to "true" this method is guaranteed to return a texture.
-			static ObjectPtr<DX11GPTexture2D> PopFromCache(unsigned int width, unsigned int height, TextureFormat format, bool generate = true);
-
-			/// \brief Clear all the cached textures.
-			static void PurgeCache();
-
 		private:
 
 			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;		///< \brief Pointer to the unordered access view of the texture.
 
 			ObjectPtr<DX11Texture2D> texture_;								///< \brief Underlying texture.
+			
+		};
+
+		/// \brief Base interface for general-purpose textures cache under DirectX11.
+		/// \author Raffaele D. Facendola.
+		class DX11GPTexture2DCache : public IGPTexture2DCache {
+
+		public:
+
+			DX11GPTexture2DCache(const Singleton&);
+
+			virtual void PushToCache(ObjectPtr<IGPTexture2D>& texture) override;
+
+			virtual ObjectPtr<IGPTexture2D> PopFromCache(unsigned int width, unsigned int height, TextureFormat format, bool generate = true) override;
+
+			virtual size_t GetSize() const override;
+
+			static void PurgeCache();
+			
+		private:
 
 			static std::vector<ObjectPtr<DX11GPTexture2D>> cache_;			///<\ brief Orphaned resource cache.
 
@@ -330,6 +335,10 @@ namespace gi_lib{
 									   unordered_access_view_);
 
 		}
+
+		///////////////////////////// DX11 GP TEXTURE2D CACHE //////////////////////////////
+
+		INSTANTIABLE(IGPTexture2DCache, DX11GPTexture2DCache, IGPTexture2DCache::Singleton);
 
 		///////////////////////////// DX11 TEXTURE 2D ARRAY //////////////////////////////
 

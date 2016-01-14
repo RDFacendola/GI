@@ -30,6 +30,8 @@ DX11FxGaussianBlur::DX11FxGaussianBlur(const Parameters& parameters) {
 
 	// One-time setup
 
+	gp_cache_ = std::make_unique<DX11GPTexture2DCache>(IGPTexture2DCache::Singleton{});
+
 	hblur_shader_->SetInput(kBlurKernel,
 							ObjectPtr<IStructuredArray>(kernel_));
 
@@ -90,7 +92,7 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectP
 
 	// Lazy initialization of the working texture
 
-	temp_texture_ = DX11GPTexture2D::PopFromCache(width, height, format, true);
+	auto temp_texture_ = gp_cache_->PopFromCache(width, height, format, true);
 	
 	// Horizontal blur - Source => Temp
 
@@ -98,7 +100,7 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectP
 							source);
 
 	hblur_shader_->SetOutput(kDestinationTexture,
-							 ObjectPtr<IGPTexture2D>(temp_texture_));
+							 temp_texture_);
 
 	hblur_shader_->Dispatch(*context,
 							width,
@@ -119,7 +121,7 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectP
 							1);
 
 	// Not needed anymore
-	DX11GPTexture2D::PushToCache(temp_texture_);
+	gp_cache_->PushToCache(temp_texture_);
 
 }
 

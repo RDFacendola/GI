@@ -127,6 +127,38 @@ namespace gi_lib{
 
 	};
 
+	/// \brief Base interface for general-purpose textures cache.
+	/// \author Raffaele D. Facendola.
+	class IGPTexture2DCache : public IResource {
+		
+	public:
+
+		/// \brief Singleton
+		/// \author Raffaele D. Facendola.
+		struct Singleton {
+
+			USE_CACHE;
+
+			/// \brief Get the cache key associated to the structure.
+			/// \return Returns the cache key associated to the structure.
+			size_t GetCacheKey() const;
+
+		};
+
+		/// \brief Push the specified texture inside the cache and clears out the pointer.
+		virtual void PushToCache(ObjectPtr<IGPTexture2D>& texture) = 0;
+
+		/// \brief Pops a texture matching the specified values from the cache.
+		/// \param width Width of the requested texture.
+		/// \param height Height of the requested texture.
+		/// \param format Format of the requested texture.
+		/// \param generate Whether to generate a brand new texture if none can be found.
+		/// \return Returns a pointer to a cached texture meeting the specified requirements if any.
+		/// \remarks If generate is set to "true" this method is guaranteed to return a texture.
+		virtual ObjectPtr<IGPTexture2D> PopFromCache(unsigned int width, unsigned int height, TextureFormat format, bool generate = true) = 0;
+
+	};
+
 	/// \brief Base interface for plain texture arrays.
 	/// \author Raffaele D. Facendola.
 	class ITexture2DArray : public IResource {
@@ -220,5 +252,13 @@ namespace gi_lib{
 inline size_t gi_lib::ITexture2D::FromFile::GetCacheKey() const{
 
 	return gi_lib::Tag(file_name);
+
+}
+
+////////////////////////////// GP TEXTURE2D CACHE :: SINGLETON ///////////////////////////////
+
+inline size_t gi_lib::IGPTexture2DCache::Singleton::GetCacheKey() const {
+
+	return gi_lib::Tag("Singleton");
 
 }

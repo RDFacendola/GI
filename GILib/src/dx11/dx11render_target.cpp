@@ -133,8 +133,6 @@ void DX11RenderTexture2D::Clear(ID3D11DeviceContext& context, Color color){
 
 ///////////////////////////// RENDER TARGET ///////////////////////////////////////
 
-std::vector<ObjectPtr<DX11RenderTarget>> DX11RenderTarget::cache_;
-
 DX11RenderTarget::DX11RenderTarget(const IRenderTarget::FromDescription& args){
 	
 	CreateSurfaces(args.width,
@@ -289,7 +287,7 @@ void DX11RenderTarget::Unbind(ID3D11DeviceContext& context){
 
 }
 
-void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, const std::vector<TextureFormat>& target_format, bool depth){
+void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, const vector<TextureFormat>& target_format, bool depth){
 
 	// If the method throws ensures that the resource is left in a clean state.
 
@@ -337,13 +335,19 @@ void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, c
 
 }
 
-void DX11RenderTarget::PushToCache(ObjectPtr<DX11RenderTarget>& texture) {
+///////////////////////////// RENDER TARGET CACHE ///////////////////////////////////////
 
-	cache_.push_back(texture);
+std::vector<ObjectPtr<DX11RenderTarget>> DX11RenderTargetCache::cache_;
+
+DX11RenderTargetCache::DX11RenderTargetCache(const Singleton&) {}
+
+void DX11RenderTargetCache::PushToCache(ObjectPtr<IRenderTarget>& texture) {
+
+	cache_.push_back(resource_cast(texture));
 
 }
 
-ObjectPtr<DX11RenderTarget> DX11RenderTarget::PopFromCache(unsigned int width, unsigned int height, vector<TextureFormat> format, bool has_depth, bool generate) {
+ObjectPtr<IRenderTarget> DX11RenderTargetCache::PopFromCache(unsigned int width, unsigned int height, vector<TextureFormat> format, bool has_depth, bool generate) {
 
 	auto it = std::find_if(cache_.begin(),
 						   cache_.end(),
@@ -351,7 +355,7 @@ ObjectPtr<DX11RenderTarget> DX11RenderTarget::PopFromCache(unsigned int width, u
 
 								return width == cached_texture->GetWidth() &&
 									   height == cached_texture->GetHeight() &&
-									   (has_depth ^ (cached_texture->depth_stencil_ != nullptr)) &&
+									   (has_depth ^ (cached_texture->GetDepthBuffer() != nullptr)) &&
 									   format == cached_texture->GetFormat();
 
 						   });
@@ -362,12 +366,12 @@ ObjectPtr<DX11RenderTarget> DX11RenderTarget::PopFromCache(unsigned int width, u
 
 		cache_.erase(it);
 
-		return ptr;
+		return ObjectPtr<IRenderTarget>(ptr);
 		
 	}
 	else if (generate) {
 
-		return new DX11RenderTarget(FromDescription{ width, height, format, has_depth });
+		return new DX11RenderTarget(IRenderTarget::FromDescription{ width, height, format, has_depth });
 
 	}
 	else {
@@ -378,9 +382,23 @@ ObjectPtr<DX11RenderTarget> DX11RenderTarget::PopFromCache(unsigned int width, u
 
 }
 
-void DX11RenderTarget::PurgeCache() {
+void DX11RenderTargetCache::PurgeCache() {
 
 	cache_.clear();
+
+}
+
+size_t DX11RenderTargetCache::GetSize() const {
+
+	size_t size = 0;
+
+	for (auto&& cached_texture : cache_) {
+
+		size += cached_texture->GetSize();
+
+	}
+
+	return size;
 
 }
 

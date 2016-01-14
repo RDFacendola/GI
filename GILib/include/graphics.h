@@ -197,7 +197,7 @@ namespace gi_lib{
 
 		/// \brief Display the given image onto this output.
 		/// \param image Image to display.
-		virtual void Display(ObjectPtr<ITexture2D>& image) = 0;
+		virtual void Display(const ObjectPtr<ITexture2D>& image) = 0;
 		
 	};
 

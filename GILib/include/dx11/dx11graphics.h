@@ -70,7 +70,7 @@ namespace gi_lib{
 
 			virtual AntialiasingMode GetAntialiasing() const override;
 	
-			virtual void Display(ObjectPtr<ITexture2D>& image) override;
+			virtual void Display(const ObjectPtr<ITexture2D>& image) override;
 			
 		private:
 

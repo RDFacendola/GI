@@ -4,6 +4,7 @@
 
 #include "dx11/dx11graphics.h"
 #include "dx11/dx11render_target.h"
+#include "dx11/dx11texture.h"
 
 using namespace gi_lib;
 using namespace gi_lib::dx11;
@@ -120,6 +121,10 @@ DX11FxBloom::DX11FxBloom(const Parameters& parameters) :
 	
 	//One-time setup
 
+	gp_cache_ = std::make_unique<DX11GPTexture2DCache>(IGPTexture2DCache::Singleton{});
+
+	rt_cache_ = std::make_unique<DX11RenderTargetCache>(IRenderTargetCache::Singleton{});
+
 	composite_shader_->SetInput(kSampler,
 								ObjectPtr<ISampler>(sampler_));
 
@@ -157,14 +162,14 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 	for (size_t index = 0; index < bright_surfaces_.size(); ++index) {
 
 		fx_blur_.Blur((*bright_surfaces_[index])[0],
-					  ObjectPtr<IGPTexture2D>(blur_surfaces_[index]));
+					  blur_surfaces_[index]);
 						
 		// Additional blur passes to smooth out the jagginess of lower-resolution surfaces.
 
 		for (size_t passes = 0; passes < index; ++passes) {
 
 			fx_blur_.Blur(blur_surfaces_[index]->GetTexture(),
-						  ObjectPtr<IGPTexture2D>(blur_surfaces_[index]));
+						  blur_surfaces_[index]);
 		
 		}
 
@@ -181,6 +186,7 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 
 	ObjectPtr<ITexture2D> downscaled = blur_surfaces_.back()->GetTexture();
 
+	
 	for (size_t index = bright_surfaces_.size() - 1; index > 0; --index) {
 
 		upscale_shader_->SetInput(kDownscaled,
@@ -189,9 +195,9 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 		upscale_shader_->SetInput(kUpscaled,
 								  blur_surfaces_[index - 1]->GetTexture());
 
-		bright_surfaces_[index - 1]->ClearDepth(*device_context);
+		resource_cast(bright_surfaces_[index - 1])->ClearDepth(*device_context);
 
-		bright_surfaces_[index - 1]->Bind(*device_context);		// Output
+		resource_cast(bright_surfaces_[index - 1])->Bind(*device_context);			// Output
 
 		upscale_shader_->Bind(*device_context);
 				
@@ -248,13 +254,13 @@ void DX11FxBloom::InitializeSurfaces(const ObjectPtr<ITexture2D>& source) {
 
 		for (auto&& surface : blur_surfaces_) {
 
-			DX11GPTexture2D::PushToCache(surface);
+			gp_cache_->PushToCache(surface);
 
 		}
 
 		for (auto&& surface : bright_surfaces_) {
 
-			DX11RenderTarget::PushToCache(surface);
+			rt_cache_->PushToCache(surface);
 
 		}
 
@@ -265,16 +271,16 @@ void DX11FxBloom::InitializeSurfaces(const ObjectPtr<ITexture2D>& source) {
 
 		for (size_t index = 1; index < kDownscaledSurfaces && width >> index > 0 && height >> index > 0; ++index) {
 
-			bright_surfaces_.push_back(DX11RenderTarget::PopFromCache(width >> index,
-																	  height >> index,
-																	  { format },
-																	  false,
-																	  true));
+			bright_surfaces_.push_back(rt_cache_->PopFromCache(width >> index,
+															   height >> index,
+															   { format },
+															   false,
+															   true));
 
-			blur_surfaces_.push_back(DX11GPTexture2D::PopFromCache(width >> index, 
-																   height >> index, 
-																   format, 
-																   true));
+			blur_surfaces_.push_back(gp_cache_->PopFromCache(width >> index, 
+															 height >> index, 
+															 format, 
+															 true));
 
 		}
 

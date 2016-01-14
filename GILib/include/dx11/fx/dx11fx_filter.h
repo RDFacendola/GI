@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "fx\fx_filter.h"
 
 #include "..\dx11gpgpu.h"
@@ -53,9 +55,9 @@ namespace gi_lib {
 
 			ObjectPtr<DX11Computation> vblur_array_shader_;				///< \brief Used to perform the vertical blur pass for texture arrays.
 
-			ObjectPtr<DX11GPTexture2D> temp_texture_;					///< \brief Temporary texture containing the first pass of the Gaussian blur.
-
 			ObjectPtr<DX11GPTexture2DArray> temp_texture_array_;		///< \brief Temporary texture array containing the first pass of the Gaussian blur.
+
+			std::unique_ptr<IGPTexture2DCache> gp_cache_;				///< \brief Pointer to the general-purpose texture cache.
 
 			float sigma_;												///< \brief Variance of the Gaussian function.
 

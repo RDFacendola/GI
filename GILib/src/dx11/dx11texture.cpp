@@ -99,8 +99,6 @@ void DX11Texture2D::UpdateDescription(const D3D11_TEXTURE2D_DESC& description){
 
 ////////////////////////////// DX11 GP TEXTURE 2D ////////////////////////////////////////
 
-std::vector<ObjectPtr<DX11GPTexture2D>> DX11GPTexture2D::cache_;
-
 DX11GPTexture2D::DX11GPTexture2D(const IGPTexture2D::FromDescription& args){
 
 	ID3D11UnorderedAccessView* uav;
@@ -122,13 +120,19 @@ DX11GPTexture2D::DX11GPTexture2D(const IGPTexture2D::FromDescription& args){
 	
 }
 
-void DX11GPTexture2D::PushToCache(ObjectPtr<DX11GPTexture2D>& texture) {
+////////////////////////////// DX11 GP TEXTURE 2D CACHE ////////////////////////////////////////
 
-	cache_.push_back(texture);
+std::vector<ObjectPtr<DX11GPTexture2D>> DX11GPTexture2DCache::cache_;
+
+DX11GPTexture2DCache::DX11GPTexture2DCache(const Singleton&) {}
+
+void DX11GPTexture2DCache::PushToCache(ObjectPtr<IGPTexture2D>& texture) {
+
+	cache_.push_back(resource_cast(texture));
 
 }
 
-ObjectPtr<DX11GPTexture2D> DX11GPTexture2D::PopFromCache(unsigned int width, unsigned int height, TextureFormat format, bool generate) {
+ObjectPtr<IGPTexture2D> DX11GPTexture2DCache::PopFromCache(unsigned int width, unsigned int height, TextureFormat format, bool generate) {
 
 	auto it = std::find_if(cache_.begin(),
 						   cache_.end(),
@@ -147,12 +151,12 @@ ObjectPtr<DX11GPTexture2D> DX11GPTexture2D::PopFromCache(unsigned int width, uns
 
 		cache_.erase(it);
 
-		return ptr;
+		return ObjectPtr<IGPTexture2D>(ptr);
 		
 	}
 	else if (generate) {
 
-		return new DX11GPTexture2D(FromDescription{ width, height, 1, format });
+		return new DX11GPTexture2D(IGPTexture2D::FromDescription{ width, height, 1, format });
 
 	}
 	else {
@@ -163,9 +167,23 @@ ObjectPtr<DX11GPTexture2D> DX11GPTexture2D::PopFromCache(unsigned int width, uns
 
 }
 
-void DX11GPTexture2D::PurgeCache() {
+void DX11GPTexture2DCache::PurgeCache() {
 
 	cache_.clear();
+
+}
+
+size_t DX11GPTexture2DCache::GetSize() const{
+
+	size_t size = 0;
+
+	for (auto&& cached_texture : cache_) {
+
+		size += cached_texture->GetSize();
+
+	}
+
+	return size;
 
 }
 
