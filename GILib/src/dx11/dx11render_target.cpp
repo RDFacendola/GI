@@ -355,7 +355,7 @@ ObjectPtr<IRenderTarget> DX11RenderTargetCache::PopFromCache(unsigned int width,
 
 								return width == cached_texture->GetWidth() &&
 									   height == cached_texture->GetHeight() &&
-									   (has_depth ^ (cached_texture->GetDepthBuffer() != nullptr)) &&
+									   (has_depth ^ (cached_texture->GetDepthBuffer() == nullptr)) &&
 									   format == cached_texture->GetFormat();
 
 						   });

@@ -70,6 +70,8 @@ ObjectPtr<ITexture2D> Postprocess::Execute(ObjectPtr<gi_lib::ITexture2D> image, 
 
 	// Done
 
+	render_target_cache_->PushToCache(bloom_output);
+
 	return output_->GetTexture();
 
 }
