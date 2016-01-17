@@ -126,18 +126,6 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix
 
 ///////////////////////////////// DX11 DEFERRED RENDERER //////////////////////////////////
 
-const Tag DX11DeferredRenderer::kAlbedoEmissivityTag = "gAlbedoEmissivity";
-const Tag DX11DeferredRenderer::kNormalShininessTag = "gNormalSpecularShininess";
-const Tag DX11DeferredRenderer::kDepthStencilTag = "gDepthStencil";
-const Tag DX11DeferredRenderer::kPointLightsTag = "gPointLights";
-const Tag DX11DeferredRenderer::kDirectionalLightsTag = "gDirectionalLights";
-const Tag DX11DeferredRenderer::kLightBufferTag = "gLightAccumulation";
-const Tag DX11DeferredRenderer::kLightParametersTag = "gParameters";
-const Tag DX11DeferredRenderer::kVSMShadowAtlasTag = "gVSMShadowAtlas";
-const Tag DX11DeferredRenderer::kVSMSamplerTag = "gVSMSampler";
-const Tag DX11DeferredRenderer::kPointShadowsTag = "gPointShadows";
-const Tag DX11DeferredRenderer::kDirectionalShadowsTag = "gDirectionalShadows";
-
 DX11DeferredRenderer::DX11DeferredRenderer(const RendererConstructionArgs& arguments) :
 DeferredRenderer(arguments.scene){
 
@@ -179,13 +167,6 @@ DeferredRenderer(arguments.scene){
 
 	depth_state_ << &depth_state;
 
-	ZeroMemory(&depth_state_desc, sizeof(D3D11_DEPTH_STENCIL_DESC));
-
-	device.CreateDepthStencilState(&depth_state_desc,
-								   &depth_state);
-
-	disable_depth_test_ << &depth_state;
-
 	// Create the blend state
 
 	D3D11_BLEND_DESC blend_state_desc;
@@ -196,12 +177,6 @@ DeferredRenderer(arguments.scene){
 	blend_state_desc.IndependentBlendEnable = false;
 
 	blend_state_desc.RenderTarget[0].BlendEnable = false;
-	blend_state_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
-	blend_state_desc.RenderTarget[0].DestBlend = D3D11_BLEND_ZERO;
-	blend_state_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-	blend_state_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-	blend_state_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
-	blend_state_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
 	blend_state_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	device.CreateBlendState(&blend_state_desc,
@@ -231,55 +206,16 @@ DeferredRenderer(arguments.scene){
 
 	rasterizer_state_ << &rasterizer_state;
 	
-	// Move the stuffs below somewhere else
-
-	auto&& app = Application::GetInstance();
+	// GBuffer setup
 
 	auto&& resources = DX11Resources::GetInstance();
 
 	rt_cache_ = resources.Load <IRenderTargetCache, IRenderTargetCache::Singleton>({});
 
-	// Light accumulation setup
+	// Lighting setup
 
-	light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
+	lighting_ = std::make_unique<DX11DeferredRendererLighting>();
 
-	shadow_atlas_ = make_unique<DX11VSMAtlas>(2048, 1, true);
-
-	point_lights_ = new DX11StructuredArray(32, sizeof(PointLight));
-
-	point_shadows_ = new DX11StructuredArray(32, sizeof(PointShadow));
-	
-	directional_lights_ = new DX11StructuredArray(32, sizeof(DirectionalLight));
-
-	directional_shadows_ = new DX11StructuredArray(32, sizeof(DirectionalShadow));
-
-	light_accumulation_parameters_ = new DX11StructuredBuffer(sizeof(LightAccumulationParameters));
-		
-	// One-time setup
-
-	bool check;
-
-	check = light_shader_->SetInput(kLightParametersTag,
-									ObjectPtr<IStructuredBuffer>(light_accumulation_parameters_));
-
-	check = light_shader_->SetInput(kPointLightsTag,
-									ObjectPtr<IStructuredArray>(point_lights_));
-
-	check = light_shader_->SetInput(kPointShadowsTag,
-									ObjectPtr<IStructuredArray>(point_shadows_));
-
-	check = light_shader_->SetInput(kDirectionalLightsTag,
-									ObjectPtr<IStructuredArray>(directional_lights_));
-
-	check = light_shader_->SetInput(kDirectionalShadowsTag,
-									ObjectPtr<IStructuredArray>(directional_shadows_));
-
-	check = light_shader_->SetInput(kVSMSamplerTag,
-									ObjectPtr<ISampler>(shadow_atlas_->GetSampler()));
-
-	check = light_shader_->SetInput(kVSMShadowAtlasTag,
-									ObjectPtr<ITexture2DArray>(shadow_atlas_->GetAtlas()));
-		
 }
 
 DX11DeferredRenderer::~DX11DeferredRenderer(){
@@ -288,13 +224,26 @@ DX11DeferredRenderer::~DX11DeferredRenderer(){
 	depth_state_ = nullptr;
 	blend_state_ = nullptr;
 	rasterizer_state_ = nullptr;
-	disable_depth_test_ = nullptr;
+	lighting_ = nullptr;
 	
 }
 
 ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int width, unsigned int height){
 	
+	// Context setup - The depth and the blend state should be defined per render section, however we support only opaque geometry without any fancy stuffs
+
+	immediate_context_->RSSetState(rasterizer_state_.Get());
+
+	immediate_context_->OMSetDepthStencilState(depth_state_.Get(),
+											   0);
+
+	immediate_context_->OMSetBlendState(blend_state_.Get(),
+										0,	
+										0xFFFFFFFF);
+
 	// Draws only if there's a camera
+
+	ObjectPtr<ITexture2D> output = nullptr;
 
 	auto main_camera = GetScene().GetMainCamera();
 
@@ -318,15 +267,17 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 
 		}
 
-		ComputeLighting(frame_info);						// Scene, GBuffer, DepthBuffer -> LightBuffer
+		output = ComputeLighting(frame_info);				// Scene, GBuffer, DepthBuffer -> LightBuffer
 
 	}
 
-	// Cleanup
+	// Context cleanup
+
 	immediate_context_->ClearState();
 	
-	// Return the unexposed buffer
-	return light_buffer_->GetTexture();
+	// Done
+
+	return output;
 
 }
 
@@ -334,13 +285,26 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 
 void DX11DeferredRenderer::DrawGBuffer(const FrameInfo& frame_info){
 
-	// Setup the GBuffer and bind it to the immediate context.
-	
-	BindGBuffer(frame_info);
+	// GBuffer initialization
+
+	rt_cache_->PushToCache(ObjectPtr<IRenderTarget>(gbuffer_));			// Release the previous GBuffer, in case the resolution changed
+
+	gbuffer_ = rt_cache_->PopFromCache(frame_info.width,				// Grab a new GBuffer from the cache
+									   frame_info.height,
+									   { TextureFormat::RGBA_HALF, TextureFormat::RGBA_HALF },
+									   true);
+
+	// Bind the GBuffer to the immediate context
+
+	gbuffer_->ClearDepth(*immediate_context_);
+
+	gbuffer_->Bind(*immediate_context_);
 
 	// Draw the visible nodes
 
-	DrawNodes(ComputeVisibleNodes(frame_info.scene->GetMeshHierarchy(), *frame_info.camera, frame_info.aspect_ratio), 
+	DrawNodes(ComputeVisibleNodes(frame_info.scene->GetMeshHierarchy(), 
+								  *frame_info.camera, 
+								  frame_info.aspect_ratio), 
 			  frame_info);
 	
 	// Cleanup
@@ -349,55 +313,10 @@ void DX11DeferredRenderer::DrawGBuffer(const FrameInfo& frame_info){
 
 }
 
-void DX11DeferredRenderer::BindGBuffer(const FrameInfo& frame_info){
-
-	// Rasterizer state setup
-
-	immediate_context_->RSSetState(rasterizer_state_.Get());
-
-	// Setup of the output merger - This should be defined per render section actually but for now only opaque geometry with no fancy stencil effects is supported.
-
-	immediate_context_->OMSetDepthStencilState(depth_state_.Get(),
-											   0);
-
-	immediate_context_->OMSetBlendState(blend_state_.Get(),
-										0,
-										0xFFFFFFFF);
-
-	// GBuffer update
-
-	if (gbuffer_) {
-
-		// Release the old GBuffer
-
-		rt_cache_->PushToCache(ObjectPtr<IRenderTarget>(gbuffer_));
-
-
-	}
-
-	gbuffer_ = rt_cache_->PopFromCache(frame_info.width, 
-									   frame_info.height, 
-									   { TextureFormat::RGBA_HALF, TextureFormat::RGBA_HALF }, 
-									   true);
-
-	static const Color kSkyColor = Color{ 0.66f, 2.05f, 3.96f, 1.0f };
-
-	gbuffer_->ClearTargets(*immediate_context_, kSkyColor);
-	
-	gbuffer_->ClearDepth(*immediate_context_);
-
-	// Bind the GBuffer to the immediate context
-
-	gbuffer_->Bind(*immediate_context_);
-
-}
-
 void DX11DeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes, const FrameInfo& frame_info){
 
 	ObjectPtr<DX11Mesh> mesh;
 	ObjectPtr<DX11DeferredRendererMaterial> material;
-
-	// Trivial solution: cycle through each node and for each drawable component draws the subsets.
 
 	// TODO: Implement some batching strategy here!
 
@@ -425,6 +344,7 @@ void DX11DeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes, con
 				material->Bind(*immediate_context_);
 
 				// Draw	the subset
+
 				mesh->DrawSubset(*immediate_context_, 
 								 subset_index);
 
@@ -438,143 +358,16 @@ void DX11DeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes, con
 
 // Lighting
 
-void DX11DeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
-
-	// Lazy setup and resize of the light accumulation buffer
-
-	if (!light_buffer_ ||
-		light_buffer_->GetWidth() != frame_info.width ||
-		light_buffer_->GetHeight() != frame_info.height){
-
-		light_buffer_ = new DX11GPTexture2D(IGPTexture2D::FromDescription{ frame_info.width,
-																		   frame_info.height,
-																		   1,
-																		   TextureFormat::RGB_FLOAT });
-		
-	}
+ObjectPtr<ITexture2D> DX11DeferredRenderer::ComputeLighting(const FrameInfo& frame_info){
 
 	// Accumulate the visible lights
-	auto&& visible_lights = ComputeVisibleNodes(frame_info.scene->GetLightHierarchy(), *frame_info.camera, frame_info.aspect_ratio);
 
+	auto&& visible_lights = ComputeVisibleNodes(frame_info.scene->GetLightHierarchy(), 
+												*frame_info.camera, 
+												frame_info.aspect_ratio);
 
-	AccumulateLight(visible_lights,
-					frame_info);
-
-}
-
-void DX11DeferredRenderer::AccumulateLight(const vector<VolumeComponent*>& lights, const FrameInfo& frame_info) {
-	
-	// Clear the shadow atlas from any existing shadowmap
-	shadow_atlas_->Begin();
-
-	auto point_lights = point_lights_->Lock<PointLight>();
-	
-	auto point_shadows = point_shadows_->Lock<PointShadow>();
-
-	auto directional_lights = directional_lights_->Lock<DirectionalLight>();
-	
-	auto directional_shadows = directional_shadows_->Lock<DirectionalShadow>();
-
-	auto light_accumulation_parameters = light_accumulation_parameters_->Lock<LightAccumulationParameters>();
-
-	unsigned int point_light_index = 0;
-	unsigned int directional_light_index = 0;
-
-	for (auto&& node : lights) {
-
-		for (auto&& point_light : node->GetComponents<PointLightComponent>()) {
-
-			UpdateLight(point_light, 
-						point_lights[point_light_index], 
-						point_shadows[point_light_index]);
-
-			++point_light_index;
-
-		}
-
-		for (auto&& directional_light : node->GetComponents<DirectionalLightComponent>()) {
-
-			UpdateLight(directional_light,
-						frame_info.aspect_ratio,
-						directional_lights[directional_light_index],
-						directional_shadows[directional_light_index]);
-
-			++directional_light_index;
-
-		}
-
-	}
-
-	light_accumulation_parameters->camera_position = frame_info.camera->GetTransformComponent().GetPosition();
-	light_accumulation_parameters->inv_view_proj_matrix = frame_info.view_proj_matrix.inverse();
-	light_accumulation_parameters->point_lights = point_light_index;
-	light_accumulation_parameters->directional_lights = directional_light_index;
-
-	point_lights_->Unlock();
-	point_shadows_->Unlock();
-	directional_lights_->Unlock();
-	directional_shadows_->Unlock();
-	light_accumulation_parameters_->Unlock();
-	
-	// Finalize the shadows
-	
-	shadow_atlas_->Commit();
-
-	// These entities may change from frame to frame
-	
-	bool check;
-
-	check = light_shader_->SetInput(kAlbedoEmissivityTag,
-									(*gbuffer_)[0]);
-
-	check = light_shader_->SetInput(kNormalShininessTag,
-									(*gbuffer_)[1]);
-	
-	check = light_shader_->SetInput(kDepthStencilTag,
-									gbuffer_->GetDepthBuffer());
-	
-	check = light_shader_->SetOutput(kLightBufferTag,
-									 ObjectPtr<IGPTexture2D>(light_buffer_));
-
-	// Actual light computation
-
-	light_shader_->Dispatch(*immediate_context_,			// Dispatch one thread for each GBuffer's pixel
-							light_buffer_->GetWidth(),
-							light_buffer_->GetHeight(),
-							1);
-
-}
-
-void DX11DeferredRenderer::UpdateLight(const PointLightComponent& point_light, PointLight& light, PointShadow& shadow) {
-
-	// Light
-
-	light.position = Math::ToVector4(point_light.GetPosition(), 1.0f);
-	light.color = point_light.GetColor().ToVector4f();
-	light.kc = point_light.GetConstantFactor();
-	light.kl = point_light.GetLinearFactor();
-	light.kq = point_light.GetQuadraticFactor();
-	light.cutoff = point_light.GetCutoff();
-
-	// Shadow map calculation
-
-	shadow_atlas_->ComputeShadowmap(point_light, 
-									GetScene(), 
-									shadow);
-	
-}
-
-void DX11DeferredRenderer::UpdateLight(const DirectionalLightComponent& directional_light, float aspect_ratio, DirectionalLight& light, DirectionalShadow& shadow) {
-
-	// Light
-
-	light.direction = Math::ToVector4(directional_light.GetDirection(), 1.0f);
-	light.color = directional_light.GetColor().ToVector4f();
-
-	// Shadow
-	shadow_atlas_->ComputeShadowmap(directional_light,
-									GetScene(),
-									shadow,
-									aspect_ratio);
+	return lighting_->AccumulateLight(ObjectPtr<IRenderTarget>(gbuffer_), 
+									  visible_lights,
+									  frame_info);
 
 }

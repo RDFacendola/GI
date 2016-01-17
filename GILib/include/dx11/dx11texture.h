@@ -116,7 +116,7 @@ namespace gi_lib{
 
 			DX11GPTexture2DCache(const Singleton&);
 
-			virtual void PushToCache(ObjectPtr<IGPTexture2D>& texture) override;
+			virtual void PushToCache(const ObjectPtr<IGPTexture2D>& texture) override;
 
 			virtual ObjectPtr<IGPTexture2D> PopFromCache(unsigned int width, unsigned int height, TextureFormat format, bool generate = true) override;
 

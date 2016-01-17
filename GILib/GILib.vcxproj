@@ -23,6 +23,8 @@
     <ClInclude Include="include\debug.h" />
     <ClInclude Include="include\dx11\dx11buffer.h" />
     <ClInclude Include="include\dx11\dx11commitable.h" />
+    <ClInclude Include="include\dx11\dx11deferred_renderer_lighting.h" />
+    <ClInclude Include="include\dx11\dx11deferred_renderer_shared.h" />
     <ClInclude Include="include\dx11\dx11gpgpu.h" />
     <ClInclude Include="include\dx11\dx11material.h" />
     <ClInclude Include="include\dx11\dx11mesh.h" />
@@ -85,6 +87,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11buffer.cpp" />
+    <ClCompile Include="src\dx11\dx11deferred_renderer_lighting.cpp" />
     <ClCompile Include="src\dx11\dx11gpgpu.cpp" />
     <ClCompile Include="src\dx11\dx11material.cpp" />
     <ClCompile Include="src\dx11\dx11mesh.cpp" />

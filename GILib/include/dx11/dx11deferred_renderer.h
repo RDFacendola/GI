@@ -7,6 +7,8 @@
 
 #include "deferred_renderer.h"
 
+#include <memory>
+
 #include "instance_builder.h"
 #include "dx11renderer.h"
 #include "dx11graphics.h"
@@ -15,63 +17,12 @@
 #include "dx11gpgpu.h"
 #include "buffer.h"
 
-#include "fx\fx_image.h"
-#include "fx\fx_postprocess.h"
+#include "dx11deferred_renderer_shared.h"
+#include "dx11deferred_renderer_lighting.h"
 
 namespace gi_lib{
 
-	class PointLightComponent;
-	class DirectionalLightComponent;
-
 	namespace dx11{
-
-		struct PointShadow;
-		struct DirectionalShadow;
-
-		class DX11VSMAtlas;
-
-		/// \brief Constant buffer used to pass parameters to the light accumulation shader.
-		struct LightAccumulationParameters{
-
-			Matrix4f inv_view_proj_matrix;			///< \brief Inverse view-projection matrix.
-
-			Vector3f camera_position;				///< \brief Camera position in world space.
-
-			float reserved;
-			
-			unsigned int point_lights;				///< \brief Amount of point lights.
-
-			unsigned int directional_lights;		///< \brief Amount of directional lights.
-
-		};
-
-		/// \brief Describes a single point light.
-		/// \remarks See "light_def.hlsl"
-		struct PointLight {
-
-			Vector4f position;			///< \brief Position of the light in world space.
-
-			Vector4f color;				///< \brief Color of the light.
-
-			float kc;					///< \brief Constant attenuation factor.
-
-			float kl;					///< \brief Linear attenuation factor.
-
-			float kq;					///< \brief Quadratic attenuation factor.
-			
-			float cutoff;				///< \brief Light minimum influence.
-
-		};
-
-		/// \brief Describes a single directional light.
-		/// \remarks See "light_def.hlsl"
-		struct DirectionalLight {
-
-			Vector4f direction;			///< \brief Normal of the light in world space.
-
-			Vector4f color;				///< \brief Color of the light.
-
-		};
 
 		/// \brief Material for a DirectX11 deferred renderer.
 		/// A custom material should not be compiled from code directly since there's no way of knowing whether the code is compatible with the custom renderer.
@@ -144,32 +95,9 @@ namespace gi_lib{
 
 		private:
 
-			/// \brief Information about the frame being rendered.
-			struct FrameInfo {
-
-				Scene* scene;
-
-				CameraComponent* camera;
-
-				Matrix4f view_proj_matrix;
-
-				unsigned int width;
-
-				unsigned int height;
-
-				float aspect_ratio;
-
-				float time_delta;				///< \brief Time passed since the last frame, in seconds.
-				
-			};
-
 			/// \brief Draw the current scene on the GBuffer.
 			/// \param dimensions Dimensions of the GBuffer in pixels.
 			void DrawGBuffer(const FrameInfo& frame_info);
-
-			/// \brief Setup the GBuffer and bind it to the pipeline.
-			/// \param dimensions Dimensions of the GBuffer in pixels.
-			void BindGBuffer(const FrameInfo& frame_info);
 
 			/// \brief Draws the specified nodes on the GBuffer.
 			/// \param nodes Nodes to draw.
@@ -178,26 +106,8 @@ namespace gi_lib{
 			
 			/// \param dimensions Dimensions of the LightBuffer in pixels.
 			/// \param frame_info Information about the frame being rendered.
-			void ComputeLighting(const FrameInfo& frame_info);
+			ObjectPtr<ITexture2D> ComputeLighting(const FrameInfo& frame_info);
 
-			/// \brief Accumulate the light from the specified light sources inside the light accumulation buffer.
-			/// \param lights Lights whose contribution needs to be accumulated.
-			/// \param frame_info Information about the frame being rendered.
-			void AccumulateLight(const vector<VolumeComponent*>& lights, const FrameInfo& frame_info);
-
-			/// \brief Write the informations about a point light and its shadow.
-			/// \param point_light Source light.
-			/// \param light Contains the informations of the point light. Output.
-			/// \param shadow Contains the informations of the point shadow. Output.
-			void UpdateLight(const PointLightComponent& point_light, PointLight& light, PointShadow& shadow);
-
-			/// \brief Write the informations about a directional light and its shadow.
-			/// \param directional_light Source light.
-			/// \param aspect_ratio Aspect ratio of the client viewport.
-			/// \param light Contains the informations of the directional light. Output.
-			/// \param shadow Contains the informations of the directional shadow. Output.
-			void UpdateLight(const DirectionalLightComponent& directional_light, float aspect_ratio, DirectionalLight& light, DirectionalShadow& shadow);
-			
 			// Render context
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;						///< \brief Immediate rendering context.
@@ -208,8 +118,6 @@ namespace gi_lib{
 
 			COMPtr<ID3D11RasterizerState> rasterizer_state_;					///< \brief Rasterizer state.
 
-			COMPtr<ID3D11DepthStencilState> disable_depth_test_;
-
 			// GBuffer
 			
 			ObjectPtr<IRenderTargetCache> rt_cache_;							///< \brief Cache of render targets.
@@ -218,50 +126,12 @@ namespace gi_lib{
 
 			// Light accumulation
 
-			static const Tag kAlbedoEmissivityTag;								///< \brief Tag of the surface containing the albedo of the scene.
-
-			static const Tag kNormalShininessTag;								///< \brief Tag of the surface containing the normal and the shininess of the scene.
-
-			static const Tag kDepthStencilTag;									///< \brief Tag of the surface containing the depth stencil.
-
-			static const Tag kPointLightsTag;									///< \brief Tag used to identify the array containing the point lights.
-
-			static const Tag kDirectionalLightsTag;								///< \brief Tag used to identify the array containing the directional lights.
-
-			static const Tag kLightBufferTag;									///< \brief Tag of the buffer used to accumulate light onto.
-
-			static const Tag kLightParametersTag;								///< \brief Tag of the constant buffer used to pass light accumulation parameters.
-
-			ObjectPtr<IGPTexture2D> light_buffer_;								///< \brief Light buffer.
-
-			ObjectPtr<DX11StructuredArray> point_lights_;						///< \brief Array containing the point lights.
-
-			ObjectPtr<DX11StructuredArray> directional_lights_;					///< \brief Array containing the directional lights.
-
-			ObjectPtr<DX11StructuredBuffer> light_accumulation_parameters_;		///< \brief Constant buffer used to send light accumulation parameters to the shader.
-
-			ObjectPtr<DX11Computation> light_shader_;							///< \brief Shader performing the light accumulation stage.
+			std::unique_ptr<DX11DeferredRendererLighting> lighting_;			///< \brief Object used to calculate scene lighting.
 
 			// Global illumination
 
 			bool enable_global_illumination_;									///< \brief Whether to enable the global illumination.
 
-			// Shadows
-
-			static const Tag kVSMShadowAtlasTag;								///< \brief Tag of the atlas containing the shadowmaps
-
-			static const Tag kVSMSamplerTag;									///< \brief Tag of the sampler used to sample the VSM.
-
-			static const Tag kPointShadowsTag;									///< \brief Tag used to identify the array containing the point shadows.
-
-			static const Tag kDirectionalShadowsTag;							///< \brief Tag used to identify the array containing the directional shadows.
-
-			unique_ptr<DX11VSMAtlas> shadow_atlas_;								///< \brief Contains the variance shadow maps.
-
-			ObjectPtr<DX11StructuredArray> point_shadows_;						///< \brief Array containing the point lights.
-
-			ObjectPtr<DX11StructuredArray> directional_shadows_;				///< \brief Array containing the directional lights.
-			
 		};
 
 		///////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////

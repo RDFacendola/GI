@@ -4,13 +4,7 @@
     <ClInclude Include="include\dx11\dx11.h">
       <Filter>DirectX 11</Filter>
     </ClInclude>
-    <ClInclude Include="include\dx11\dx11deferred_renderer.h">
-      <Filter>DirectX 11</Filter>
-    </ClInclude>
     <ClInclude Include="include\dx11\dx11graphics.h">
-      <Filter>DirectX 11</Filter>
-    </ClInclude>
-    <ClInclude Include="include\dx11\dx11renderer.h">
       <Filter>DirectX 11</Filter>
     </ClInclude>
     <ClInclude Include="include\fbx\fbx.h">
@@ -190,12 +184,21 @@
     <ClInclude Include="include\dx11\fx\dx11fx_filter.h">
       <Filter>DirectX 11\FX</Filter>
     </ClInclude>
+    <ClInclude Include="include\dx11\dx11deferred_renderer.h">
+      <Filter>DirectX 11\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11renderer.h">
+      <Filter>DirectX 11\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11deferred_renderer_lighting.h">
+      <Filter>DirectX 11\Renderers</Filter>
+    </ClInclude>
+    <ClInclude Include="include\dx11\dx11deferred_renderer_shared.h">
+      <Filter>DirectX 11\Renderers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11.cpp">
-      <Filter>DirectX 11</Filter>
-    </ClCompile>
-    <ClCompile Include="src\dx11\dx11deferred_renderer.cpp">
       <Filter>DirectX 11</Filter>
     </ClCompile>
     <ClCompile Include="src\dx11\dx11graphics.cpp">
@@ -300,6 +303,12 @@
     <ClCompile Include="src\dx11\fx\dx11fx_filter.cpp">
       <Filter>DirectX 11\FX</Filter>
     </ClCompile>
+    <ClCompile Include="src\dx11\dx11deferred_renderer.cpp">
+      <Filter>DirectX 11\Renderers</Filter>
+    </ClCompile>
+    <ClCompile Include="src\dx11\dx11deferred_renderer_lighting.cpp">
+      <Filter>DirectX 11\Renderers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectX 11">
@@ -346,6 +355,9 @@
     </Filter>
     <Filter Include="Wavefront OBJ">
       <UniqueIdentifier>{81f374b5-b81d-4a52-abac-cfabaffb0534}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectX 11\Renderers">
+      <UniqueIdentifier>{baee95c0-e818-4613-a68f-e7afff9ec319}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -343,7 +343,11 @@ DX11RenderTargetCache::DX11RenderTargetCache(const Singleton&) {}
 
 void DX11RenderTargetCache::PushToCache(const ObjectPtr<IRenderTarget>& texture) {
 
-	cache_.push_back(resource_cast(texture));
+	if (texture != nullptr) {
+	
+		cache_.push_back(resource_cast(texture));
+
+	}
 
 }
 

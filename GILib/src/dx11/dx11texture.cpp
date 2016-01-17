@@ -126,9 +126,13 @@ std::vector<ObjectPtr<DX11GPTexture2D>> DX11GPTexture2DCache::cache_;
 
 DX11GPTexture2DCache::DX11GPTexture2DCache(const Singleton&) {}
 
-void DX11GPTexture2DCache::PushToCache(ObjectPtr<IGPTexture2D>& texture) {
+void DX11GPTexture2DCache::PushToCache(const ObjectPtr<IGPTexture2D>& texture) {
 
-	cache_.push_back(resource_cast(texture));
+	if (texture != nullptr) {
+		
+		cache_.push_back(resource_cast(texture));
+
+	}
 
 }
 
