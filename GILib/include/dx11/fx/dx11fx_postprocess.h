@@ -47,7 +47,7 @@ namespace gi_lib {
 
 		private:
 
-			/// \brief Constant buffer used to pass the parameters to the filtering shader.
+			/// \brief Constant buffer used to pass the parameters to the shader.
 			struct ShaderParameters {
 
 				float gThreshold;										///< \brief Offset used to shift the exposure value of the scene.

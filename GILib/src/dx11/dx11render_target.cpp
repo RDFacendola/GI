@@ -341,7 +341,7 @@ std::vector<ObjectPtr<DX11RenderTarget>> DX11RenderTargetCache::cache_;
 
 DX11RenderTargetCache::DX11RenderTargetCache(const Singleton&) {}
 
-void DX11RenderTargetCache::PushToCache(ObjectPtr<IRenderTarget>& texture) {
+void DX11RenderTargetCache::PushToCache(const ObjectPtr<IRenderTarget>& texture) {
 
 	cache_.push_back(resource_cast(texture));
 

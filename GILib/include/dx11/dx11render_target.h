@@ -168,7 +168,7 @@ namespace gi_lib{
 
 			DX11RenderTargetCache(const Singleton&);
 
-			virtual void PushToCache(ObjectPtr<IRenderTarget>& texture) override;
+			virtual void PushToCache(const ObjectPtr<IRenderTarget>& texture) override;
 
 			virtual ObjectPtr<IRenderTarget> PopFromCache(unsigned int width, unsigned int height, std::vector<TextureFormat> format, bool has_depth, bool generate = true) override;
 

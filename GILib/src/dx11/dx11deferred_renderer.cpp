@@ -37,7 +37,7 @@ namespace{
 		Matrix4f projection_matrix;
 
 		// Hey this method should totally become a member method of the camera component!
-		// NOPE! DirectX and OpenGL calculate the projection differently (mostly because of the near plane which, in the first, case goes from 0 to 1, in the latter goes from -1 to 1).
+		// NOPE! DirectX and OpenGL calculate the projection differently (mostly because of the near plane which, in the first case, goes from 0 to 1, in the latter goes from -1 to 1).
 		// TODO: Actually we may just keep the OGL notation and let Z(dx) = Z(gl)/2 + 0.5 while working on DX
 		
 		if (camera.GetProjectionType() == ProjectionType::Perspective){
@@ -81,18 +81,16 @@ namespace{
 
 ///////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////
 
-const Tag DX11DeferredRendererMaterial::kDiffuseMapTag = "gDiffuseMap";
-const Tag DX11DeferredRendererMaterial::kDiffuseSampler = "gDiffuseSampler";
-const Tag DX11DeferredRendererMaterial::kPerObjectTag = "PerObject";
+const Tag DX11DeferredRendererMaterial::kShaderParameters = "PerObject";
 
 DX11DeferredRendererMaterial::DX11DeferredRendererMaterial(const CompileFromFile& args) :
 material_(new DX11Material(args)){
 
 	auto& resources = DX11Graphics::GetInstance().GetResources();
 
-	per_object_cbuffer_ = resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(VSPerObjectBuffer) });
+	shader_parameters_ = resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(ShaderParameters) });
 
-	material_->SetInput(kPerObjectTag, ObjectPtr<IStructuredBuffer>(per_object_cbuffer_));
+	material_->SetInput(kShaderParameters, ObjectPtr<IStructuredBuffer>(shader_parameters_));
 
 }
 
@@ -101,9 +99,9 @@ material_(base_material->Instantiate()){
 
 	auto& resources = DX11Graphics::GetInstance().GetResources();
 
-	per_object_cbuffer_ = resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(VSPerObjectBuffer) });
+	shader_parameters_ = resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(ShaderParameters) });
 
-	material_->SetInput(kPerObjectTag, ObjectPtr<IStructuredBuffer>(per_object_cbuffer_));
+	material_->SetInput(kShaderParameters, ObjectPtr<IStructuredBuffer>(shader_parameters_));
 
 }
 
@@ -115,17 +113,14 @@ ObjectPtr<DeferredRendererMaterial> DX11DeferredRendererMaterial::Instantiate() 
 
 void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix4f& view_projection){
 
-	// Lock
-	auto& buffer = *per_object_cbuffer_->Lock<VSPerObjectBuffer>();
+	auto& buffer = *shader_parameters_->Lock<ShaderParameters>();
 
 	// Update
 
 	buffer.world = world.matrix();
 	buffer.world_view_proj = (view_projection * world).matrix();
 
-	// Unlock
-
-	per_object_cbuffer_->Unlock();
+	shader_parameters_->Unlock();
 	
 }
 
@@ -242,6 +237,8 @@ DeferredRenderer(arguments.scene){
 
 	auto&& resources = DX11Resources::GetInstance();
 
+	rt_cache_ = resources.Load <IRenderTargetCache, IRenderTargetCache::Singleton>({});
+
 	// Light accumulation setup
 
 	light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
@@ -315,6 +312,12 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 
 		DrawGBuffer(frame_info);							// Scene -> GBuffer
 		
+		if (enable_global_illumination_) {
+
+			// TODO: Dynamic voxelization
+
+		}
+
 		ComputeLighting(frame_info);						// Scene, GBuffer, DepthBuffer -> LightBuffer
 
 	}
@@ -361,28 +364,21 @@ void DX11DeferredRenderer::BindGBuffer(const FrameInfo& frame_info){
 										0,
 										0xFFFFFFFF);
 
+	// GBuffer update
 
-	// Setup of the render target surface (GBuffer)
+	if (gbuffer_) {
 
-	if (!gbuffer_){
+		// Release the old GBuffer
 
-		// Lazy initialization
+		rt_cache_->PushToCache(ObjectPtr<IRenderTarget>(gbuffer_));
 
-		gbuffer_ = new DX11RenderTarget(IRenderTarget::FromDescription{ frame_info.width,
-																		frame_info.height,
-																		{ TextureFormat::RGBA_HALF,
-																		  TextureFormat::RGBA_HALF },
-																		true } );
 
 	}
-	else{
 
-		// GBuffer resize (will actually resize the target only if the size has been changed since the last frame)
-
-		gbuffer_->Resize(frame_info.width,
-						 frame_info.height);
-
-	}
+	gbuffer_ = rt_cache_->PopFromCache(frame_info.width, 
+									   frame_info.height, 
+									   { TextureFormat::RGBA_HALF, TextureFormat::RGBA_HALF }, 
+									   true);
 
 	static const Color kSkyColor = Color{ 0.66f, 2.05f, 3.96f, 1.0f };
 
@@ -390,7 +386,7 @@ void DX11DeferredRenderer::BindGBuffer(const FrameInfo& frame_info){
 	
 	gbuffer_->ClearDepth(*immediate_context_);
 
-	// Bind the gbuffer to the immediate context
+	// Bind the GBuffer to the immediate context
 
 	gbuffer_->Bind(*immediate_context_);
 

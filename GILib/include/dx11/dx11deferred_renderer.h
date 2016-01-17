@@ -29,15 +29,6 @@ namespace gi_lib{
 		struct DirectionalShadow;
 
 		class DX11VSMAtlas;
-		
-		/// \brief Structure of the per-object constant buffer.
-		struct VSPerObjectBuffer {
-
-			Matrix4f world_view_proj;		///< \brief World * View * Projection matrix.
-
-			Matrix4f world;					///< \brief World matrix.
-
-		};
 
 		/// \brief Constant buffer used to pass parameters to the light accumulation shader.
 		struct LightAccumulationParameters{
@@ -101,31 +92,33 @@ namespace gi_lib{
 
 			ObjectPtr<DeferredRendererMaterial> Instantiate() const override;
 
+			virtual size_t GetSize() const override;
+
 			/// \brief Set the matrices needed to transform the object.
 			void SetMatrix(const Affine3f& world, const Matrix4f& view_projection);
 
 			/// \brief Bind the material to the pipeline.
 			void Bind(ID3D11DeviceContext& context);
-
-			virtual size_t GetSize() const override;
-
+			
 		private:
+			
+			/// \brief Constant buffer used to pass the parameters to the shader.
+			struct ShaderParameters {
+
+				Matrix4f world_view_proj;		///< \brief World * View * Projection matrix.
+
+				Matrix4f world;					///< \brief World matrix.
+
+			};
 
 			DX11DeferredRendererMaterial(const ObjectPtr<DX11Material>& base_material);
 
-			static const Tag kDiffuseMapTag;									///< \brief Tag associated to the diffuse map.
+			static const Tag kShaderParameters;									///< \brief Tag associated to the per-object constant buffer.
 
-			static const Tag kDiffuseSampler;									///< \brief Tag associated to the sampler used to sample from the diffuse map.
+			ObjectPtr<DX11Material> material_;									///< \brief Underlying DirectX11 material.
 
-			static const Tag kPerObjectTag;										///< \brief Tag associated to the per-object constant buffer.
-
-			ObjectPtr<DX11StructuredBuffer> per_object_cbuffer_;				///< \brief Constant buffer containing the per-object constants used by the vertex shader.
-
-			/// \brief Setup the material variables and resources.
-			void Setup();
-
-			ObjectPtr<DX11Material> material_;							///< \brief DirectX11 material.
-
+			ObjectPtr<DX11StructuredBuffer> shader_parameters_;					///< \brief Constant buffer containing the per-object constants used by the material shader.
+			
 		};
 
 		/// \brief Deferred renderer with tiled lighting computation for DirectX11.
@@ -219,11 +212,13 @@ namespace gi_lib{
 
 			// GBuffer
 			
+			ObjectPtr<IRenderTargetCache> rt_cache_;							///< \brief Cache of render targets.
+
 			ObjectPtr<DX11RenderTarget> gbuffer_;								///< \brief GBuffer.
 
 			// Light accumulation
 
-			static const Tag kAlbedoEmissivityTag;										///< \brief Tag of the surface containing the albedo of the scene.
+			static const Tag kAlbedoEmissivityTag;								///< \brief Tag of the surface containing the albedo of the scene.
 
 			static const Tag kNormalShininessTag;								///< \brief Tag of the surface containing the normal and the shininess of the scene.
 
@@ -246,6 +241,10 @@ namespace gi_lib{
 			ObjectPtr<DX11StructuredBuffer> light_accumulation_parameters_;		///< \brief Constant buffer used to send light accumulation parameters to the shader.
 
 			ObjectPtr<DX11Computation> light_shader_;							///< \brief Shader performing the light accumulation stage.
+
+			// Global illumination
+
+			bool enable_global_illumination_;									///< \brief Whether to enable the global illumination.
 
 			// Shadows
 

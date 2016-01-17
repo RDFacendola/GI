@@ -108,7 +108,7 @@ namespace gi_lib{
 		};
 
 		/// \brief Push the specified texture inside the cache and clears out the pointer.
-		virtual void PushToCache(ObjectPtr<IRenderTarget>& texture) = 0;
+		virtual void PushToCache(const ObjectPtr<IRenderTarget>& texture) = 0;
 
 		/// \brief Pops a texture matching the specified values from the cache.
 		/// \param width Width of the requested texture.
