@@ -209,6 +209,90 @@ namespace gi_lib{
 
 		};
 
+		/// \brief DirectX11 3D texture.
+		/// \author Raffaele D. Facendola.
+		class DX11Texture3D : public ITexture3D {
+
+		public:
+
+			/// \brief Create a texture from a shader resource view.
+			DX11Texture3D(const COMPtr<ID3D11ShaderResourceView>& shader_resource_view);
+
+			virtual ~DX11Texture3D() {}
+
+			virtual size_t GetSize() const override;
+
+			virtual unsigned int GetWidth() const override;
+
+			virtual unsigned int GetHeight() const override;
+
+			virtual unsigned int GetDepth() const override;
+
+			virtual unsigned int GetMIPCount() const override;
+
+			virtual TextureFormat GetFormat() const override;
+
+			/// \brief Get the shader resource view used to bind this texture to the pipeline.
+			ShaderResourceView GetShaderResourceView();
+
+			/// \brief Get a pointer to the hardware texture
+			COMPtr<ID3D11Texture3D> GetTexture();
+
+		private:
+
+			COMPtr<ID3D11ShaderResourceView> shader_resource_view_;		///< \brief Pointer to the shader resource view of the texture.
+
+			unsigned int width_;										///< \brief Width of the texture, in pixels.
+
+			unsigned int height_;										///< \brief Height of the texture, in pixels.
+
+			unsigned int depth_;										///< \brief Depth of the texture, in pixels.
+
+			unsigned int bits_per_pixel_;								///< \brief Bits per pixel.
+
+			unsigned int mip_levels_;									///< \brief MIP levels.
+
+			TextureFormat format_;										///< \brief Surface format.
+
+		};
+
+		/// \brief DirectX11 general-purpose 3D texture.
+		/// This texture can be used as a regular texture but can also be bound as unordered access resource to a compute or pixel shader.
+		class DX11GPTexture3D : public IGPTexture3D {
+
+		public:
+
+			/// \brief Create a new general-purpose 2D texture from an explicit description.
+			DX11GPTexture3D(const DX11GPTexture3D::FromDescription& args);
+
+			virtual ObjectPtr<ITexture3D> GetTexture() override;
+
+			virtual unsigned int GetWidth() const override;
+
+			virtual unsigned int GetHeight() const override;
+
+			virtual unsigned int GetDepth() const override;
+
+			virtual unsigned int GetMIPCount() const override;
+
+			virtual TextureFormat GetFormat() const override;
+
+			virtual size_t GetSize() const override;
+
+			/// \brief Get the shader resource view used to bind this texture to the pipeline.
+			ShaderResourceView GetShaderResourceView();
+
+			/// \brief Get the unordered access view used to bind this texture to the pipeline.
+			UnorderedAccessView GetUnorderedAccessView();
+
+		private:
+
+			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;		///< \brief Pointer to the unordered access view of the texture.
+
+			ObjectPtr<DX11Texture3D> texture_;								///< \brief Underlying texture.
+
+		};
+
 		/// \brief Downcasts an ITexture2D to the proper concrete type.
 		ObjectPtr<DX11Texture2D> resource_cast(const ObjectPtr<ITexture2D>& resource);
 
@@ -220,6 +304,12 @@ namespace gi_lib{
 		
 		/// \brief Downcasts an IGPTexture2DArray to the proper concrete type.
 		ObjectPtr<DX11GPTexture2DArray> resource_cast(const ObjectPtr<IGPTexture2DArray>& resource);
+
+		/// \brief Downcasts an ITexture3D to the proper concrete type.
+		ObjectPtr<DX11Texture3D> resource_cast(const ObjectPtr<ITexture3D>& resource);
+
+		/// \brief Downcasts an IGPTexture3D to the proper concrete type.
+		ObjectPtr<DX11GPTexture3D> resource_cast(const ObjectPtr<IGPTexture3D>& resource);
 
 		/// \brief Convert a texture format to a DXGI format used by DirectX11.
 		/// \param texture_format Texture format to convert.
@@ -452,6 +542,122 @@ namespace gi_lib{
 
 		}
 
+		/////////////////////////////// DX11 TEXTURE3D ///////////////////////////////
+
+		inline unsigned int DX11Texture3D::GetWidth() const {
+
+			return width_;
+
+		}
+
+		inline unsigned int DX11Texture3D::GetHeight() const {
+
+			return height_;
+
+		}
+
+		inline unsigned int DX11Texture3D::GetDepth() const {
+
+			return depth_;
+
+		}
+
+		inline unsigned int DX11Texture3D::GetMIPCount() const {
+
+			return mip_levels_;
+
+		}
+
+		inline TextureFormat DX11Texture3D::GetFormat() const {
+
+			return format_;
+
+		}
+
+		inline ShaderResourceView DX11Texture3D::GetShaderResourceView() {
+
+			return ShaderResourceView(this,
+									  shader_resource_view_);
+
+		}
+
+		inline COMPtr<ID3D11Texture3D> DX11Texture3D::GetTexture() {
+
+			ID3D11Resource* resource;
+
+			shader_resource_view_->GetResource(&resource);
+
+			ID3D11Texture3D* texture = static_cast<ID3D11Texture3D*>(resource);
+
+			return windows::COMMove(&texture);
+
+		}
+
+		///////////////////////////// DX11 GP TEXTURE3D //////////////////////////////
+
+		INSTANTIABLE(IGPTexture3D, DX11GPTexture3D, IGPTexture3D::FromDescription);
+
+		inline ObjectPtr<ITexture3D> DX11GPTexture3D::GetTexture()
+		{
+
+			return ObjectPtr<ITexture3D>(texture_);
+
+		}
+
+		inline unsigned int DX11GPTexture3D::GetWidth() const
+		{
+
+			return texture_->GetWidth();
+
+		}
+
+		inline unsigned int DX11GPTexture3D::GetHeight() const
+		{
+
+			return texture_->GetHeight();
+
+		}
+
+		inline unsigned int DX11GPTexture3D::GetDepth() const
+		{
+
+			return texture_->GetDepth();
+
+		}
+
+		inline unsigned int DX11GPTexture3D::GetMIPCount() const
+		{
+
+			return texture_->GetMIPCount();
+
+		}
+
+		inline TextureFormat DX11GPTexture3D::GetFormat() const {
+
+			return texture_->GetFormat();
+
+		}
+
+		inline size_t DX11GPTexture3D::GetSize() const
+		{
+
+			return texture_->GetSize();
+
+		}
+
+		inline ShaderResourceView DX11GPTexture3D::GetShaderResourceView() {
+
+			return texture_->GetShaderResourceView();
+
+		}
+
+		inline UnorderedAccessView DX11GPTexture3D::GetUnorderedAccessView() {
+
+			return UnorderedAccessView(this,
+									   unordered_access_view_);
+
+		}
+		
 		///////////////////////////// RESOURCE CAST ////////////////////////////////
 
 		inline ObjectPtr<DX11Texture2D> resource_cast(const ObjectPtr<ITexture2D>& resource){
@@ -475,6 +681,18 @@ namespace gi_lib{
 		inline ObjectPtr<DX11GPTexture2DArray> resource_cast(const ObjectPtr<IGPTexture2DArray>& resource) {
 
 			return ObjectPtr<DX11GPTexture2DArray>(resource.Get());
+
+		}
+
+		inline ObjectPtr<DX11Texture3D> resource_cast(const ObjectPtr<ITexture3D>& resource) {
+
+			return ObjectPtr<DX11Texture3D>(resource.Get());
+
+		}
+
+		inline ObjectPtr<DX11GPTexture3D> resource_cast(const ObjectPtr<IGPTexture3D>& resource) {
+
+			return ObjectPtr<DX11GPTexture3D>(resource.Get());
 
 		}
 

@@ -20,8 +20,11 @@ namespace{
 	/// \brief Ratio between a Bit and a Byte size.
 	const float kBitOverByte = 0.125f;
 
-	/// \brief Size ration between two consecutive MIP levels of a texture 2D.
+	/// \brief Size ratio between two consecutive MIP levels of a texture 2D.
 	const float kMIPRatio2D = 0.25f;
+
+	/// \brief Size ratio between two consecutive MIP levels of a texture 3D.
+	const float kMIPRatio3D = 0.125f;
 	
 }
 
@@ -248,6 +251,64 @@ DX11GPTexture2DArray::DX11GPTexture2DArray(const ITexture2DArray::FromDescriptio
 											  args.mips));
 
 	texture_array_ = new DX11Texture2DArray(COMMove(&srv));
+
+	unordered_access_view_ << &uav;
+
+}
+
+////////////////////////////// DX11 TEXTURE 3D //////////////////////////////////////////
+
+DX11Texture3D::DX11Texture3D(const COMPtr<ID3D11ShaderResourceView>& shader_resource_view) :
+	shader_resource_view_(shader_resource_view) {
+
+	ID3D11Resource* texture;
+
+	shader_resource_view_->GetResource(&texture);
+
+	COM_GUARD(texture);
+
+	D3D11_TEXTURE3D_DESC description;
+
+	static_cast<ID3D11Texture3D*>(texture)->GetDesc(&description);
+
+	width_ = description.Width;
+	height_ = description.Height;
+	depth_ = description.Depth;
+	mip_levels_ = description.MipLevels;
+	bits_per_pixel_ = static_cast<unsigned int>(BitsPerPixel(description.Format));
+	format_ = DXGIFormatToTextureFormat(description.Format);
+
+}
+
+size_t DX11Texture3D::GetSize() const {
+
+	auto level_size = width_ * height_ * depth_ * bits_per_pixel_ * kBitOverByte;		//Size of the most detailed level.
+
+	// MIP map footprint -> Sum of a geometrical serie...
+
+	return static_cast<size_t>(level_size * ((1.0f - std::powf(kMIPRatio3D, static_cast<float>(mip_levels_))) / (1.0f - kMIPRatio3D)));
+
+}
+
+////////////////////////////// DX11 GP TEXTURE 3D ////////////////////////////////////////
+
+DX11GPTexture3D::DX11GPTexture3D(const IGPTexture3D::FromDescription& args) {
+
+	ID3D11UnorderedAccessView* uav;
+	ID3D11ShaderResourceView* srv;
+
+	auto&& device = *DX11Graphics::GetInstance().GetDevice();
+
+	THROW_ON_FAIL(::MakeUnorderedTexture(device,
+										 args.width,
+										 args.height,
+										 args.depth,
+										 TextureFormatToDXGIFormat(args.format),
+										 &uav,
+										 &srv,
+										 args.mips));
+
+	texture_ = new DX11Texture3D(COMMove(&srv));
 
 	unordered_access_view_ << &uav;
 

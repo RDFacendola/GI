@@ -366,6 +366,85 @@ HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int wi
 
 }
 
+HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int width, unsigned int height, unsigned int depth, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, unsigned int mips){
+
+	ID3D11Texture3D* texture = nullptr;
+	ID3D11UnorderedAccessView* uav = nullptr;
+	ID3D11ShaderResourceView* srv = nullptr;
+
+	auto cleanup = make_scope_guard([&texture, &uav, &srv](){
+
+		if (uav)		uav->Release();
+		if (srv)		srv->Release();
+
+	});
+
+	D3D11_TEXTURE3D_DESC desc;
+
+	ZeroMemory(&desc, sizeof(D3D11_TEXTURE3D_DESC));
+
+	desc.Width = width;
+	desc.Height = height;
+	desc.Depth = depth;
+	desc.MipLevels = mips;
+	desc.Format = format;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	desc.CPUAccessFlags = 0;
+	desc.MiscFlags = 0;
+
+	RETURN_ON_FAIL(device.CreateTexture3D(&desc,
+										  nullptr,
+										  &texture));
+
+	COM_GUARD(texture);
+
+	if (unordered_access_view){
+		
+		RETURN_ON_FAIL(MakeUnorderedAccessView(device,
+											   *texture,
+											   &uav));
+
+	}
+	
+	if (shader_resource_view){
+
+		RETURN_ON_FAIL(device.CreateShaderResourceView(texture,
+													   nullptr,
+													   &srv));
+
+	}
+		
+	// Output
+
+	if (unordered_access_view){
+
+		*unordered_access_view = uav;
+
+	}
+	
+	if (shader_resource_view){
+
+		*shader_resource_view = srv;
+
+	}
+
+#ifdef _DEBUG
+
+	const char c_szName[] = "Unordered texture!";
+
+	texture->SetPrivateData(WKPDID_D3DDebugObjectName, sizeof(c_szName) - 1, c_szName);
+
+#endif
+
+	// Cleanup
+
+	cleanup.Dismiss();
+
+	return S_OK;
+
+}
+
 HRESULT gi_lib::dx11::MakeUnorderedTextureArray(ID3D11Device& device, unsigned int width, unsigned int height, unsigned int count, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, unsigned int mips){
 
 	ID3D11Texture2D* texture = nullptr;

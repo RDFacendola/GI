@@ -27,7 +27,7 @@ namespace gi_lib{
 		RGBA_HALF_UNORM,	///< \brief 64-bit format with 4 16-bit channels. Each channel stores a number in the range [0;1]
 		BGRA_HALF_UNORM,
 
-		RGB_FLOAT,			///< \brief 64-bit format with 2 11-bit red/green channels and 1 10-bit blue channel.
+		RGB_FLOAT,			///< \brief 32-bit format with 2 11-bit red/green channels and 1 10-bit blue channel.
 
 		RG_HALF,			///< \brief 32-bit format with 2 16-bit channels. Each channel stores a half-precision floating point number.
 		RG_FLOAT,			///< \brief 64-bit format with 2 32-bit channels. Each channel stores a single-precision floating point number.
@@ -243,8 +243,92 @@ namespace gi_lib{
 		virtual TextureFormat GetFormat() const = 0;
 
 	};
+	
+	/// \brief Base interface for 3D textures.
+	/// \author Raffaele D. Facendola.
+	class ITexture3D : public IResource {
 
+	public:
 
+		/// \brief Interface destructor.
+		virtual ~ITexture3D() {}
+
+		/// \brief Get the width of the texture.
+		/// \return Returns the width of the texture, in pixel.
+		virtual unsigned int GetWidth() const = 0;
+
+		/// \brief Get the height of the texture.
+		/// \return Returns the height of the texture, in pixel.
+		virtual unsigned int GetHeight() const = 0;
+
+		/// \brief Get the depth of the texture.
+		/// \return Returns the height of the texture, in pixel.
+		virtual unsigned int GetDepth() const = 0;
+
+		/// \brief Get the MIP map level count.
+		/// \return Returns the MIP map level count.
+		virtual unsigned int GetMIPCount() const = 0;
+
+		/// \brief Get the texture format.
+		/// \return Returns the texture format.
+		virtual TextureFormat GetFormat() const = 0;
+
+	};
+
+	/// \brief Base interface for general-purpose 3D textures.
+	/// A general-purpose resource can be accessed by the GPU for both reading and writing purposes.
+	/// \author Raffaele D. Facendola.
+	class IGPTexture3D : public IResource {
+
+	public:
+
+		/// \brief Structure used to create an empty general-purpose texture 2D from an explicit description.
+		/// \author Raffaele D. Facendola.
+		struct FromDescription {
+
+			NO_CACHE;
+
+			unsigned int width;			///< \brief Width of the most detailed level of the texture.
+
+			unsigned int height;		///< \brief Height of the most detailed level of the texture.
+
+			unsigned int depth;			///< \brief Depth of the most detailed level of the texture.
+
+			unsigned int mips;			///< \brief Total number of MIP levels.
+
+			TextureFormat format;		///< \brief Format of the texture.
+
+		};
+
+		/// \brief Abstract destructor.
+		virtual ~IGPTexture3D() = 0 {}
+
+		/// \brief Get the underlying texture.
+		/// \return Returns a pointer to the underlying texture.
+		virtual ObjectPtr<ITexture3D> GetTexture() = 0;
+
+		/// \brief Get the width of the texture.
+		/// \return Returns the width of the texture, in pixel.
+		virtual unsigned int GetWidth() const = 0;
+
+		/// \brief Get the height of the texture.
+		/// \return Returns the height of the texture, in pixel.
+		virtual unsigned int GetHeight() const = 0;
+
+		/// \brief Get the depth of the texture.
+		/// \return Returns the height of the texture, in pixel.
+		virtual unsigned int GetDepth() const = 0;
+
+		/// \brief Get the MIP map level count.
+		/// \return Returns the MIP map level count.
+		virtual unsigned int GetMIPCount() const = 0;
+
+		/// \brief Get the texture format.
+		/// \return Returns the texture format.
+		virtual TextureFormat GetFormat() const = 0;
+
+	};
+	
 }
 
 ////////////////////////////// TEXTURE 2D :: FROM FILE ///////////////////////////////
