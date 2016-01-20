@@ -72,6 +72,34 @@ element_size_(element_size){
 	
 }
 
+///////////////////////////////// DX11 GP STRUCTURED ARRAY /////////////////////////////////////////
+
+DX11GPStructuredArray::DX11GPStructuredArray(const IGPStructuredArray::FromElementSize& arguments):
+	element_count_(arguments.element_count),
+	element_size_(arguments.element_size) {
+
+	ID3D11Buffer* buffer;
+
+	ID3D11ShaderResourceView* srv;
+	ID3D11UnorderedAccessView* uav;
+
+	auto& device = *DX11Graphics::GetInstance().GetDevice();
+
+	THROW_ON_FAIL(::MakeStructuredBuffer(device,
+										 static_cast<unsigned int>(element_count_),
+										 static_cast<unsigned int>(element_size_),
+										 false,
+										 &buffer,
+										 &srv,
+										 &uav));
+
+	COM_GUARD(buffer);
+
+	shader_resource_view_ = COMMove(&srv);
+	unordered_access_view_ = COMMove(&uav);
+	
+}
+
 ///////////////////////////////// DX11 SCRATCH STRUCTURED ARRAY ////////////////////////////////////
 
 DX11ScratchStructuredArray::DX11ScratchStructuredArray(const FromElementSize& arguments):

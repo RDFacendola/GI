@@ -67,9 +67,13 @@ namespace gi_lib{
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) override;
 
+			virtual bool SetInput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) override;
+
 			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D) override;
 
 			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2DArray>& gp_texture_2D_array) override;
+
+			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) override;
 
 			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IScratchStructuredArray>& scratch_structured_array) override;
 			
@@ -125,6 +129,13 @@ namespace gi_lib{
 
 		}
 
+		inline bool DX11Computation::SetInput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) {
+
+			return shader_composite_->SetShaderResource(tag,
+														resource_cast(gp_structured_array));
+
+		}
+
 		inline bool DX11Computation::SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2D>& gp_texture_2D){
 
 			return shader_composite_->SetUnorderedAccess(tag,
@@ -136,6 +147,13 @@ namespace gi_lib{
 
 			return shader_composite_->SetUnorderedAccess(tag,
 														 resource_cast(gp_texture_2D_array));
+
+		}
+
+		inline bool DX11Computation::SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) {
+
+			return shader_composite_->SetUnorderedAccess(tag,
+														 resource_cast(gp_structured_array));
 
 		}
 

@@ -31,6 +31,7 @@ namespace gi_lib{
 		class DX11GPTexture2D;
 		class DX11GPTexture2DArray;
 		class DX11Sampler;
+		class DX11GPStructuredArray;
 		class DX11ScratchStructuredArray;
 
 		using windows::COMPtr;
@@ -291,6 +292,10 @@ namespace gi_lib{
 			/// \return Returns true if a shader resource view matching the specified tag was found, returns false otherwise.
 			bool SetShaderResource(const Tag& tag, const ObjectPtr<DX11StructuredArray>& structured_array);
 			
+			/// \brief Set the value of a named shader resource view.
+			/// \return Returns true if an shader resource view matching the specified tag was found, returns false otherwise.
+			bool SetShaderResource(const Tag& tag, const ObjectPtr<DX11GPStructuredArray>& gp_structured_array);
+
 			/// \brief Set the value of a named unordered access view.
 			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
 			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2D>& gp_texture_2D);
@@ -298,6 +303,10 @@ namespace gi_lib{
 			/// \brief Set the value of a named unordered access view.
 			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
 			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2DArray>& gp_texture_2D_array);
+		
+			/// \brief Set the value of a named unordered access view.
+			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
+			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPStructuredArray>& gp_structured_array);
 
 			/// \brief Set the value of a named unordered access view.
 			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.

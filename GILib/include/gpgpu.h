@@ -55,10 +55,17 @@ namespace gi_lib{
 
 		/// \brief Set a sampler state as an input for the current computation.
 		/// The GPU may only read from the specified sampler state.
-		/// \param tag Tag of the input texture to set.
+		/// \param tag Tag of the input sampler to set.
 		/// \param sampler Pointer to the sampler state to bind.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state) = 0;
+	
+		/// \brief Set a general-purpose structured array as input for the current computation.
+		/// The GPU may only read from the specified general purpose structured array.
+		/// \param tag Tag of the input general purpose structured array to set.
+		/// \param gp_structured_array Pointer to the general purpose structured array to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetInput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) = 0;
 
 		/// \brief Set a texture resource as an input/output for the current computation.
 		/// The GPU has both read and write permissions.
@@ -73,6 +80,13 @@ namespace gi_lib{
 		/// \param gp_texture_2D_array Pointer to the general-purpose 2D texture array to bind.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2DArray>& gp_texture_2D_array) = 0;
+		
+		/// \brief Set a general-purpose structured array as input/output for the current computation.
+		/// The GPU has both read and write permissions.
+		/// \param tag Tag of the input/output general-purpose structured array to set.
+		/// \param scratch_structured_array Pointer to the scratch structured array to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) = 0;
 
 		/// \brief Set a scratch structured array as input/output for the current computation.
 		/// The GPU has both read and write permissions.

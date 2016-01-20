@@ -189,6 +189,41 @@ namespace gi_lib{
 
 		};
 		
+		/// \brief Represents a low-level buffer that behaves like a strongly-typed array of elements and can be used for general-purposes computations under DirectX11.
+		/// This array can be written and read by a GPU only.
+		/// \author Raffaele D. Facendola
+		class DX11GPStructuredArray : public IGPStructuredArray {
+
+		public:
+			
+			/// \brief Create a new general-purpose structured array.
+			/// \param args Contains explicit information about the structured array to create.
+			DX11GPStructuredArray(const IGPStructuredArray::FromElementSize& args);
+			
+			virtual size_t GetCount() const override;
+
+			virtual size_t GetElementSize() const override;
+
+			virtual size_t GetSize() const override;
+
+			/// \brief Get the shader resource view used to bind this buffer to the pipeline.
+			ShaderResourceView GetShaderResourceView();
+
+			/// \brief Get the unordered access view used to bind this buffer as output of a computation.
+			UnorderedAccessView GetUnorderedAccessView();
+
+		private:
+
+			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;		///< \brief Pointer to the unordered access view of the structured array.
+
+			COMPtr<ID3D11ShaderResourceView> shader_resource_view_;			///< \brief Pointer to the shader resource view of the array.
+
+			size_t element_size_;											///< \brief Size of each element in bytes.
+
+			size_t element_count_;											///< \brief Number of elements inside the array.
+
+		};
+
 		/// \brief Represents a low-level buffer that behaves like a strongly-typed array of elements under DirectX11.
 		/// This array can be written by the GPU and read by the CPU.
 		/// \author Raffaele D. Facendola
@@ -241,6 +276,9 @@ namespace gi_lib{
 
 		/// \brief Downcasts an IStructuredArray to the proper concrete type.
 		ObjectPtr<DX11StructuredArray> resource_cast(const ObjectPtr<IStructuredArray>& resource);
+		
+		/// \brief Downcasts an IGPStructuredArray to the proper concrete type.
+		ObjectPtr<DX11GPStructuredArray> resource_cast(const ObjectPtr<IGPStructuredArray>& resource);
 
 		/// \brief Downcasts an IScratchStructuredArray to the proper concrete type.
 		ObjectPtr<DX11ScratchStructuredArray> resource_cast(const ObjectPtr<IScratchStructuredArray>& resource);
@@ -433,6 +471,42 @@ namespace gi_lib{
 
 		}
 
+		//////////////////////////////// DIRECTX11 GP STRUCTURED ARRAY ///////////////////////////////
+
+		INSTANTIABLE(IGPStructuredArray, DX11GPStructuredArray, IGPStructuredArray::FromElementSize);
+
+		inline size_t DX11GPStructuredArray::GetCount() const {
+
+			return element_count_;
+
+		}
+
+		inline size_t DX11GPStructuredArray::GetElementSize() const {
+
+			return element_size_;
+
+		}
+
+		inline size_t DX11GPStructuredArray::GetSize() const {
+
+			return element_count_ * element_size_;
+
+		}
+
+		inline ShaderResourceView DX11GPStructuredArray::GetShaderResourceView() {
+			
+			return ShaderResourceView(this,
+									  shader_resource_view_);
+
+		}
+
+		inline UnorderedAccessView DX11GPStructuredArray::GetUnorderedAccessView() {
+			
+			return UnorderedAccessView(this,
+									   unordered_access_view_);
+
+		}
+
 		//////////////////////////////// DIRECTX11 SCRATCH STRUCTURED ARRAY //////////////////////////
 		
 		INSTANTIABLE(IScratchStructuredArray, DX11ScratchStructuredArray, IScratchStructuredArray::FromElementSize);
@@ -496,6 +570,12 @@ namespace gi_lib{
 		inline ObjectPtr<DX11StructuredArray> resource_cast(const ObjectPtr<IStructuredArray>& resource){
 
 			return ObjectPtr<DX11StructuredArray>(resource.Get());
+
+		}
+
+		inline ObjectPtr<DX11GPStructuredArray> resource_cast(const ObjectPtr<IGPStructuredArray>& resource) {
+
+			return ObjectPtr<DX11GPStructuredArray>(resource.Get());
 
 		}
 

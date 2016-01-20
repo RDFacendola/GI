@@ -77,6 +77,35 @@ namespace gi_lib {
 
 	};
 
+	/// \brief Represents a low-level buffer that behaves like a strongly-typed array of elements and can be used for general-purposes computations.
+	/// This array can be written and read by a GPU only.
+	/// \author Raffaele D. Facendola
+	class IGPStructuredArray : public IResource {
+
+	public:
+
+		/// \brief Structure used to create a scratch structured array from an explicit element size.
+		struct FromElementSize {
+
+			NO_CACHE;
+
+			size_t element_count;			///< \brief Number of element inside the buffer.
+
+			size_t element_size;			///< \brief Size of each element in bytes.
+
+		};
+
+		/// \brief Virtual destructor.
+		virtual ~IGPStructuredArray() {}
+
+		/// \brief Get the number of elements in the array.
+		virtual size_t GetCount() const = 0;
+
+		/// \brief Get the size of each element in bytes.
+		virtual size_t GetElementSize() const = 0;
+
+	};
+
 	/// \brief Represents a low-level buffer that behaves like a strongly-typed array of elements.
 	/// This array can be written by the GPU and read by the CPU.
 	/// \author Raffaele D. Facendola

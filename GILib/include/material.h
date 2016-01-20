@@ -77,6 +77,13 @@ namespace gi_lib{
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetInput(const Tag& tag, const ObjectPtr<IStructuredArray>& structured_array) = 0;
 		
+		/// \brief Set a general-purpose structured array as input/output for the current computation.
+		/// The GPU has both read and write permissions.
+		/// \param tag Tag of the input/output scratch structured array to set.
+		/// \param scratch_structured_array Pointer to the scratch structured array to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) = 0;
+
 		/// \brief Create a new copy of this material.
 		/// Use this material to create a new material instance which shares common states with other instances.
 		/// \return Returns a pointer to the new material instance.

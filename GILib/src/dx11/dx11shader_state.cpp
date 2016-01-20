@@ -104,6 +104,14 @@ bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX1
 
 }
 
+bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX11GPStructuredArray>& gp_structured_array) {
+	
+	return SetShaderMember(tag,
+						   gp_structured_array->GetShaderResourceView(),
+						   srv_table_);
+
+}
+
 bool ShaderStateComposite::SetSampler(const Tag& tag, const ObjectPtr<DX11Sampler>& sampler){
 	
 	return SetShaderMember(tag,
@@ -144,6 +152,14 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX
 
 }
 
+bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPStructuredArray>& gp_structured_array) {
+
+	return SetShaderMember(tag,
+						   gp_structured_array->GetUnorderedAccessView(),
+						   uav_table_);
+	
+}
+
 bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11ScratchStructuredArray>& scratch_structured_array) {
 
 	return SetShaderMember(tag,
@@ -151,7 +167,6 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX
 						   uav_table_);
 	
 }
-
 
 void ShaderStateComposite::AddShaderBindings(BaseShaderState& shader_state){
 
