@@ -46,6 +46,11 @@ namespace gi_lib{
 		/// \return Returns the list of all the volumes who intersect the specified sphere.
 		virtual vector<VolumeComponent*> GetIntersections(const Sphere& sphere) const = 0;
 
+		/// \brief Get all the volume component who intersects with the given axis-aligned bounding box.
+		/// \param aabb Axis-aligned bounding box to test against.
+		/// \return Returns the list of all the volumes who intersect the specified box.
+		virtual vector<VolumeComponent*> GetIntersections(const AABB& aabb) const = 0;
+
 	};
 
 }

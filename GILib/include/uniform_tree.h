@@ -36,6 +36,8 @@ namespace gi_lib{
 
 		virtual vector<VolumeComponent*> GetIntersections(const Sphere& sphere) const override;
 
+		virtual vector<VolumeComponent*> GetIntersections(const AABB& aabb) const override;
+
 	private:
 
 		struct Impl;

@@ -199,7 +199,9 @@ struct UniformTree::Impl{
 
 	static void GetIntersections(const UniformTree* tree, const Frustum& frustum, vector<VolumeComponent*>& intersections);
 
-	static void GetIntersections(const UniformTree* tree, const Sphere& frustum, vector<VolumeComponent*>& intersections);
+	static void GetIntersections(const UniformTree* tree, const Sphere& sphere, vector<VolumeComponent*>& intersections);
+	
+	static void GetIntersections(const UniformTree* tree, const AABB& aabb, vector<VolumeComponent*>& intersections);
 
 private:
 
@@ -281,10 +283,37 @@ void UniformTree::Impl::GetIntersections(const UniformTree* tree, const Sphere& 
 
 }
 
+void UniformTree::Impl::GetIntersections(const UniformTree* tree, const AABB& aabb, vector<VolumeComponent*>& intersections) {
+
+	// Stop the recursion if this space doesn't intersect or if the subspace has no volumes inside.
+
+	if (tree->volume_count_ > 0 &&
+		(aabb.Intersect(tree->bounding_box_) && IntersectionType::kIntersect)) {
+
+		// Test against volumes
+
+		GetIntersections(tree->nodes_,
+						 aabb,
+						 intersections);
+
+		// Recursion
+
+		for (auto child : tree->children_) {
+
+			GetIntersections(child,
+							 aabb,
+							 intersections);
+
+		}
+
+	}
+
+}
+
 template <typename TVolume>
 void UniformTree::Impl::GetIntersections(const vector<UniformTree::Node*>& nodes, const TVolume& volume, vector<VolumeComponent*>& intersections){
 
-	// Test each volume inside this node against the frustum
+	// Test each volume inside this node against the specified volume
 
 	auto size = intersections.size();
 
@@ -403,6 +432,20 @@ vector<VolumeComponent*> UniformTree::GetIntersections(const Sphere& sphere) con
 	intersections.reserve(volume_count_);	// Theoretical maximum number of volumes
 
 	Impl::GetIntersections(this, sphere, intersections);
+
+	intersections.shrink_to_fit();			// Shrink to the actual value
+
+	return intersections;
+
+}
+
+vector<VolumeComponent*> UniformTree::GetIntersections(const AABB& aabb) const {
+
+	vector<VolumeComponent*> intersections;
+
+	intersections.reserve(volume_count_);	// Theoretical maximum number of volumes
+
+	Impl::GetIntersections(this, aabb, intersections);
 
 	intersections.shrink_to_fit();			// Shrink to the actual value
 
