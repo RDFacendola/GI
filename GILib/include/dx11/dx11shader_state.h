@@ -18,6 +18,7 @@
 
 #include "windows/win_os.h"
 
+
 #ifdef _WIN32
 
 namespace gi_lib{
@@ -33,6 +34,7 @@ namespace gi_lib{
 		class DX11Sampler;
 		class DX11GPStructuredArray;
 		class DX11ScratchStructuredArray;
+		class DX11RenderTarget;
 
 		using windows::COMPtr;
 
@@ -79,6 +81,15 @@ namespace gi_lib{
 			/// \param slot Index of the slot where the sampler will be bound.
 			/// \param sampler_state The sampler to bind.
 			void SetSamplerStateView(unsigned int slot, const SamplerStateView& sampler_state);
+
+			/// \brief Get the list of unordered access views currently bound to this shader state.
+			std::vector<ID3D11UnorderedAccessView*> GetUnorderedAccessViews() const;
+
+			/// \brief Bind the shader and a render target to the given device context.
+			void Bind(ID3D11DeviceContext& context, const ObjectPtr<DX11RenderTarget>& render_target);
+
+			/// \brief Unbind the shader from the given device context.
+			void Unbind(ID3D11DeviceContext& context, const ObjectPtr<DX11RenderTarget>& render_target);
 
 			/// \brief Bind the shader to the given device context.
 			virtual void Bind(ID3D11DeviceContext& context) = 0;
@@ -270,8 +281,14 @@ namespace gi_lib{
 			/// \brief Bind the shaders to the given device context.
 			virtual void Bind(ID3D11DeviceContext& context);
 
+			/// \brief Bind the shader and a render target to the given device context.
+			virtual void Bind(ID3D11DeviceContext& context, const ObjectPtr<DX11RenderTarget>& render_targets);
+
 			/// \brief Unbind the shaders from the given device context.
 			virtual void Unbind(ID3D11DeviceContext& context);
+			
+			/// \brief Unbind the shaders from the given device context.
+			virtual void Unbind(ID3D11DeviceContext& context, const ObjectPtr<DX11RenderTarget>& render_target);
 
 			/// \brief Commit the "dirty" resources to the shader.
 			virtual void Commit(ID3D11DeviceContext& context);
@@ -633,49 +650,6 @@ namespace gi_lib{
 
 		}
 
-		inline void ShaderStateComposite::Clear(){
-
-			shaders_.clear();
-
-		}
-
-		inline void ShaderStateComposite::Bind(ID3D11DeviceContext& context){
-
-			Commit(context);
-
-			// Bind the shaders to the graphic pipeline
-
-			for (auto&& shader : shaders_){
-
-				shader->Bind(context);
-
-			}
-
-		}
-
-		inline void ShaderStateComposite::Commit(ID3D11DeviceContext& context) {
-	
-			// Commit pending constant buffers and structured buffers
-
-			for (auto&& committer : committer_table_) {
-
-				(*committer.second)(context);
-
-			}
-			
-
-		}
-
-		inline void ShaderStateComposite::Unbind(ID3D11DeviceContext& context){
-
-			for (auto&& shader : shaders_){
-
-				shader->Unbind(context);
-
-			}
-
-		}
-
 		inline size_t ShaderStateComposite::GetShaderCount() const{
 
 			return shaders_.size();
@@ -1027,7 +1001,13 @@ namespace gi_lib{
 		}
 
 		template <typename TShader>
-		inline void SetUnorderedAccess<TShader>(ID3D11DeviceContext&, size_t, const std::vector<COMPtr<ID3D11UnorderedAccessView>>&, size_t){}
+		inline void SetUnorderedAccess<TShader>(ID3D11DeviceContext&, size_t, const std::vector<COMPtr<ID3D11UnorderedAccessView>>&, size_t){
+		
+			// Shaders other than ComputeShader have a shared UAV pool that must be bound at the same time as the render target. 
+			
+			// Nothing to do here
+
+		}
 		
 		template <>
 		inline void SetUnorderedAccess<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, size_t count){

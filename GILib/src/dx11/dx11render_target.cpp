@@ -243,13 +243,12 @@ void DX11RenderTarget::ClearTargets(ID3D11DeviceContext& context, Color color){
 void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
 
 	vector<ID3D11UnorderedAccessView*> uav_list;
-	vector<unsigned int> initial_count;
 	
-	Bind(context, uav_list, initial_count);
+	Bind(context, uav_list);
 
 }
 
-void DX11RenderTarget::Bind(ID3D11DeviceContext& context, const vector<ID3D11UnorderedAccessView*>& uav_list, const vector<unsigned int>& initial_count) {
+void DX11RenderTarget::Bind(ID3D11DeviceContext& context, const vector<ID3D11UnorderedAccessView*>& uav_list) {
 
 	vector<ID3D11RenderTargetView*> rtv_list(render_target_.size());
 
@@ -272,7 +271,7 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context, const vector<ID3D11Uno
 														  static_cast<unsigned int>(rtv_list.size()),
 														  static_cast<unsigned int>(uav_list.size()),
 														  &uav_list[0],
-														  &initial_count[0]);
+														  nullptr);
 		
 	}
 	else {
@@ -304,15 +303,14 @@ void DX11RenderTarget::Unbind(ID3D11DeviceContext& context, const vector<ID3D11U
 
 	vector<ID3D11RenderTargetView*> rtv_null_list(render_target_.size(), nullptr);
 	vector<ID3D11UnorderedAccessView*> null_uav(uav_list.size(), nullptr);
-	vector<unsigned int> null_initial_count(uav_list.size(), 0);
-	
+
 	context.OMSetRenderTargetsAndUnorderedAccessViews(static_cast<unsigned int>(rtv_null_list.size()),
 													  &rtv_null_list[0],
 													  nullptr,
 													  0,
 													  static_cast<unsigned int>(null_uav.size()),
 													  &null_uav[0],
-													  &null_initial_count[0]);
+													  nullptr);
 	
 }
 

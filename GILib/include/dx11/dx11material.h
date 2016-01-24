@@ -45,8 +45,14 @@ namespace gi_lib{
 			/// \brief Bind the material to the pipeline.
 			void Bind(ID3D11DeviceContext& context);
 
+			/// \brief Bind both the material and render targets to the pipeline.
+			void Bind(ID3D11DeviceContext& context, const ObjectPtr<DX11RenderTarget>& render_target);
+
 			/// \brief Unbind the material from the pipeline.
 			void Unbind(ID3D11DeviceContext& context);
+			
+			/// \brief Unbind the material from the pipeline.
+			void Unbind(ID3D11DeviceContext& context, const ObjectPtr<DX11RenderTarget>& render_target);
 
 			/// \brief Commit the pending resources to the shader.
 			void Commit(ID3D11DeviceContext& context);
@@ -99,9 +105,25 @@ namespace gi_lib{
 
 		}
 
+		inline void DX11Material::Bind(ID3D11DeviceContext& context, const ObjectPtr<DX11RenderTarget>& render_target) {
+
+			shader_composite_->Bind(context, render_target);
+
+			context.IASetInputLayout(input_layout_.Get());
+
+		}
+
 		inline void DX11Material::Unbind(ID3D11DeviceContext& context){
 
 			shader_composite_->Unbind(context);
+
+			context.IASetInputLayout(nullptr);
+
+		}
+
+		inline void DX11Material::Unbind(ID3D11DeviceContext& context, const ObjectPtr<DX11RenderTarget>& render_target) {
+
+			shader_composite_->Unbind(context, render_target);
 
 			context.IASetInputLayout(nullptr);
 

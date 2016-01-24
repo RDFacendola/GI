@@ -4,6 +4,7 @@
 #include "dx11/dx11gpgpu.h"
 #include "dx11/dx11texture.h"
 #include "dx11/dx11sampler.h"
+#include "dx11/dx11render_target.h"
 
 using namespace gi_lib;
 using namespace gi_lib::dx11;
@@ -51,6 +52,25 @@ namespace{
 
 	}
 
+}
+
+//////////////////////////////// BASE SHADER STATE //////////////////////////////////////////
+
+vector<ID3D11UnorderedAccessView*> BaseShaderState::GetUnorderedAccessViews() const {
+
+	vector<ID3D11UnorderedAccessView*> uav_list(unordered_access_views_.size());
+
+	std::transform(unordered_access_views_.begin(),
+				   unordered_access_views_.end(),
+				   uav_list.begin(),
+				   [](const COMPtr<ID3D11UnorderedAccessView> uav_ptr) {
+
+						return uav_ptr.Get();
+	
+				   });
+	
+	return uav_list;
+	
 }
 
 //////////////////////////////// SHADER STATE COMPOSITE //////////////////////////////////////
@@ -199,5 +219,112 @@ void ShaderStateComposite::AddShaderBindings(BaseShaderState& shader_state){
 								   reflection.unordered_access_views,
 								   uav_table_,
 								   -render_targets);
+
+}
+
+void ShaderStateComposite::Clear() {
+
+	shaders_.clear();
+
+}
+
+void ShaderStateComposite::Bind(ID3D11DeviceContext& context) {
+
+	Commit(context);
+
+	// Bind the shaders to the graphic pipeline
+
+	for (auto&& shader : shaders_) {
+
+		shader->Bind(context);
+
+	}
+
+}
+
+void ShaderStateComposite::Commit(ID3D11DeviceContext& context) {
+
+	// Commit pending constant buffers and structured buffers
+
+	for (auto&& committer : committer_table_) {
+
+		(*committer.second)(context);
+
+	}
+
+
+}
+
+void ShaderStateComposite::Unbind(ID3D11DeviceContext& context) {
+
+	for (auto&& shader : shaders_) {
+
+		shader->Unbind(context);
+
+	}
+
+}
+
+void ShaderStateComposite::Bind(ID3D11DeviceContext& context, const ObjectPtr<DX11RenderTarget>& render_target) {
+
+	Bind(context);
+
+	// Only pixel shader's UAV are supported
+
+	auto it = std::find_if(shaders_.begin(),
+						   shaders_.end(),
+						   [](const unique_ptr<BaseShaderState>& shader_state) {
+
+								return shader_state->GetReflection().shader_type == ShaderType::PIXEL_SHADER;
+
+						   });
+
+	if (it != shaders_.end()) {
+
+		// Bind the render target as well as the provided UAVs
+
+		render_target->Bind(context,
+							(*it)->GetUnorderedAccessViews());
+
+	}
+	else {
+
+		// No UAV to set, bind the render target to avoid unexpected behaviors client-side
+
+		render_target->Bind(context);
+
+	}
+
+}
+
+void ShaderStateComposite::Unbind(ID3D11DeviceContext& context, const ObjectPtr<DX11RenderTarget>& render_target) {
+
+	Unbind(context);
+
+	// Only pixel shader's UAV are supported
+
+	auto it = std::find_if(shaders_.begin(),
+						   shaders_.end(),
+						   [](const unique_ptr<BaseShaderState>& shader_state) {
+
+								return shader_state->GetReflection().shader_type == ShaderType::PIXEL_SHADER;
+
+						   });
+
+	if (it != shaders_.end()) {
+
+		// Unbind the render target as well as the provided UAVs
+
+		render_target->Unbind(context,
+							  (*it)->GetUnorderedAccessViews());
+
+	}
+	else {
+
+		// No UAV to remove, unbind the render target to avoid unexpected behaviors client-side
+
+		render_target->Unbind(context);
+
+	}
 
 }
