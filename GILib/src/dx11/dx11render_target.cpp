@@ -242,6 +242,15 @@ void DX11RenderTarget::ClearTargets(ID3D11DeviceContext& context, Color color){
 
 void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
 
+	vector<ID3D11UnorderedAccessView*> uav_list;
+	vector<unsigned int> initial_count;
+	
+	Bind(context, uav_list, initial_count);
+
+}
+
+void DX11RenderTarget::Bind(ID3D11DeviceContext& context, const vector<ID3D11UnorderedAccessView*>& uav_list, const vector<unsigned int>& initial_count) {
+
 	vector<ID3D11RenderTargetView*> rtv_list(render_target_.size());
 
 	std::transform(render_target_.begin(),
@@ -253,28 +262,32 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
 
 				   });
 
-	if (depth_stencil_) {
+	if (uav_list.size() > 0) {
 
-		// Depth stencil
+		// Bind both the render target and the UAVs
 
-		context.OMSetRenderTargets(static_cast<unsigned int>(rtv_list.size()),
-								   &rtv_list[0],
-								   depth_stencil_->GetDepthStencilView().Get());
-
+		context.OMSetRenderTargetsAndUnorderedAccessViews(static_cast<unsigned int>(rtv_list.size()),
+														  &rtv_list[0],
+														  depth_stencil_ ? depth_stencil_->GetDepthStencilView().Get() : nullptr,
+														  static_cast<unsigned int>(rtv_list.size()),
+														  static_cast<unsigned int>(uav_list.size()),
+														  &uav_list[0],
+														  &initial_count[0]);
+		
 	}
 	else {
 
-		// No depth stencil here
+		// Bind the render targets only
 
 		context.OMSetRenderTargets(static_cast<unsigned int>(rtv_list.size()),
 								   &rtv_list[0],
-								   nullptr);
+								   depth_stencil_ ? depth_stencil_->GetDepthStencilView().Get() : nullptr);
 
 	}
-	
+
 	context.RSSetViewports(1,
 						   &viewport_);
-	
+
 }
 
 void DX11RenderTarget::Unbind(ID3D11DeviceContext& context){
@@ -285,6 +298,22 @@ void DX11RenderTarget::Unbind(ID3D11DeviceContext& context){
 							   &rtv_null_list[0],
 							   nullptr);
 
+}
+
+void DX11RenderTarget::Unbind(ID3D11DeviceContext& context, const vector<ID3D11UnorderedAccessView*>& uav_list){
+
+	vector<ID3D11RenderTargetView*> rtv_null_list(render_target_.size(), nullptr);
+	vector<ID3D11UnorderedAccessView*> null_uav(uav_list.size(), nullptr);
+	vector<unsigned int> null_initial_count(uav_list.size(), 0);
+	
+	context.OMSetRenderTargetsAndUnorderedAccessViews(static_cast<unsigned int>(rtv_null_list.size()),
+													  &rtv_null_list[0],
+													  nullptr,
+													  0,
+													  static_cast<unsigned int>(null_uav.size()),
+													  &null_uav[0],
+													  &null_initial_count[0]);
+	
 }
 
 void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, const vector<TextureFormat>& target_format, bool depth){

@@ -140,8 +140,14 @@ namespace gi_lib{
 			/// \brief Bind the render target to the given render context.
 			void Bind(ID3D11DeviceContext& context);
 
+			/// \brief Bind the render target and the given unordered access view to a render context.
+			void Bind(ID3D11DeviceContext& context, const vector<ID3D11UnorderedAccessView*>& uav_list, const vector<unsigned int>& initial_count);
+			
 			/// \brief Unbind the render target from the given render context.
 			void Unbind(ID3D11DeviceContext& context);
+			
+			/// \brief Unbind the render target from the given render context.
+			void Unbind(ID3D11DeviceContext& context, const vector<ID3D11UnorderedAccessView*>& uav_list);
 
 		private:
 
