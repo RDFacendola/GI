@@ -142,21 +142,21 @@ SpotLightComponent::TypeSet SpotLightComponent::GetTypes() const {
 
 }
 
-IntersectionType SpotLightComponent::TestAgainst(const Frustum& frustum) const {
+IntersectionType SpotLightComponent::TestAgainst(const Frustum&) const {
 
 	THROW(L"NOT YET IMPLEMENTED");
 	return IntersectionType::kIntersect;
 
 }
 
-IntersectionType SpotLightComponent::TestAgainst(const AABB& box) const {
+IntersectionType SpotLightComponent::TestAgainst(const AABB&) const {
 
 	THROW(L"NOT YET IMPLEMENTED");
 	return IntersectionType::kIntersect;
 
 }
 
-IntersectionType SpotLightComponent::TestAgainst(const Sphere& sphere) const {
+IntersectionType SpotLightComponent::TestAgainst(const Sphere&) const {
 
 	THROW(L"NOT YET IMPLEMENTED");
 	return IntersectionType::kIntersect;
