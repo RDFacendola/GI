@@ -328,11 +328,11 @@ DXGI_FORMAT gi_lib::dx11::TextureFormatToDXGIFormat(const TextureFormat& texture
 
 		return DXGI_FORMAT_R32G32B32A32_FLOAT;
 
-	case TextureFormat::RGBA_HALF_UNORM:
+	case TextureFormat::RGBA_BYTE_UNORM:
 
 		return DXGI_FORMAT_R8G8B8A8_UNORM;
 
-	case TextureFormat::BGRA_HALF_UNORM:
+	case TextureFormat::BGRA_BYTE_UNORM:
 
 		return DXGI_FORMAT_B8G8R8A8_UNORM;
 
@@ -382,11 +382,11 @@ TextureFormat gi_lib::dx11::DXGIFormatToTextureFormat(const DXGI_FORMAT& texture
 
 	case DXGI_FORMAT_R8G8B8A8_UNORM:
 
-		return TextureFormat::RGBA_HALF_UNORM;
+		return TextureFormat::RGBA_BYTE_UNORM;
 
 	case DXGI_FORMAT_B8G8R8A8_UNORM:
 
-		return TextureFormat::BGRA_HALF_UNORM;
+		return TextureFormat::BGRA_BYTE_UNORM;
 
 	case DXGI_FORMAT_R11G11B10_FLOAT:
 

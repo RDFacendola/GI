@@ -43,7 +43,7 @@ ObjectPtr<ITexture2D> Postprocess::Execute(ObjectPtr<gi_lib::ITexture2D> image, 
 
 	output_ = gp_texture_cache_->PopFromCache(image->GetWidth(),
 											  image->GetHeight(),
-											  TextureFormat::RGBA_HALF_UNORM);
+											  TextureFormat::RGBA_BYTE_UNORM);
 
 	auto bloom_output = render_target_cache_->PopFromCache(image->GetWidth(),
 														   image->GetHeight(),
