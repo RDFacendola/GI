@@ -14,14 +14,15 @@ namespace{
 	/// \param shader_state Shader state associated to the setters.
 	/// \param collection Collection of shader members to enumerate.
 	/// \param table Destination unordered map containing the setters.
+	/// \param offset Additional offset to the resource slot index.
 	template <typename TSetter, typename TCollection>
-	void AddShaderBindings(BaseShaderState& shader_state, const TCollection& collection, std::unordered_multimap<size_t, TSetter>& table){
+	void AddShaderBindings(BaseShaderState& shader_state, const TCollection& collection, std::unordered_multimap<size_t, TSetter>& table, int offset = 0){
 
 		for (auto&& item : collection){
 
 			table.insert(std::make_pair(Tag(item.name),
 										TSetter(shader_state,
-												item.slot)));
+												item.slot + offset)));
 			
 		}
 
@@ -179,13 +180,24 @@ void ShaderStateComposite::AddShaderBindings(BaseShaderState& shader_state){
 	::AddShaderBindings<SRVSetter>(shader_state,
 								   reflection.shader_resource_views,
 								   srv_table_);
-
-	::AddShaderBindings<UAVSetter>(shader_state,
-								   reflection.unordered_access_views,
-								   uav_table_);
-
+	
 	::AddShaderBindings<SamplerSetter>(shader_state,
 									   reflection.samplers,
 									   sampler_table_);
+
+	// If the shader composite is used to bind UAVs inside a pixel shader, their slot must have an offset in order to compensate for the additional render targets
+	// being bound as output of the pixel shader.
+	int render_targets = 0;
+
+	if (reflection.shader_type == ShaderType::PIXEL_SHADER) {
+
+		render_targets = reflection.pixel_shader.render_targets_;
+
+	}
+
+	::AddShaderBindings<UAVSetter>(shader_state,
+								   reflection.unordered_access_views,
+								   uav_table_,
+								   -render_targets);
 
 }

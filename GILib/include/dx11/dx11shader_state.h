@@ -1027,12 +1027,8 @@ namespace gi_lib{
 		}
 
 		template <typename TShader>
-		inline void SetUnorderedAccess<TShader>(ID3D11DeviceContext&, size_t, const std::vector<COMPtr<ID3D11UnorderedAccessView>>&, size_t){
-
-			// Do nothing, for now
-
-		}
-
+		inline void SetUnorderedAccess<TShader>(ID3D11DeviceContext&, size_t, const std::vector<COMPtr<ID3D11UnorderedAccessView>>&, size_t){}
+		
 		template <>
 		inline void SetUnorderedAccess<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, size_t count){
 

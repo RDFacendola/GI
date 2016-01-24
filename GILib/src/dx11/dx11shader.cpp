@@ -129,6 +129,14 @@ namespace{
 	/// \brief Reflect a shader description.
 	template <typename TShader>
 	void ReflectShader(ID3D11ShaderReflection&, const D3D11_SHADER_DESC&, ShaderReflection&){}
+	
+	/// \brief Reflect a pixel shader description.
+	template<>
+	void ReflectShader<ID3D11PixelShader>(ID3D11ShaderReflection&, const D3D11_SHADER_DESC& desc, ShaderReflection& reflection) {
+
+		reflection.pixel_shader.render_targets_ = desc.OutputParameters;
+
+	}
 
 	/// \brief Reflect a compute shader description.
 	template<>

@@ -99,7 +99,14 @@ namespace gi_lib{
 
 		};
 
-		/// \b Additional description of a compute shader.
+		/// \brief Additional description of a pixel shader.
+		struct PixelShaderReflection {
+
+			unsigned int render_targets_;	///< \brief Expected number of output render targets.
+
+		};
+
+		/// \bief Additional description of a compute shader.
 		struct ComputeShaderReflection{
 
 			unsigned int thread_group_x;	///< \brief Number of threads along the X axis.
@@ -123,7 +130,9 @@ namespace gi_lib{
 
 			union{
 
-				ComputeShaderReflection compute_shader;				///< \brief Compute-shader specific reflection. Valid only if shader_type is "COMPUTE_SHADER"
+				PixelShaderReflection pixel_shader;					///< \brief Pixel-shader specific reflection. Valid only if shader_type is "PIXEL_SHADER".
+
+				ComputeShaderReflection compute_shader;				///< \brief Compute-shader specific reflection. Valid only if shader_type is "COMPUTE_SHADER".
 				
 			};
 			
