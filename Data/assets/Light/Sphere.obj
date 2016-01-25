@@ -487,7 +487,10 @@ vn 0.615300 -0.554500 0.560300
 
 vt 0 0 0
 
+g Icosphere
+
 usemtl LightSphere
+
 s off
 f 1/1/1 16/1/1 15/1/1
 f 2/1/2 18/1/2 24/1/2

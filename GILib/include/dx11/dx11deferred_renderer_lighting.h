@@ -31,6 +31,7 @@ namespace gi_lib {
 		struct PointShadow;
 		struct DirectionalShadow;
 
+		class DX11Graphics;
 		class DX11StructuredArray;
 		class DX11StructuredBuffer;
 		class DX11VSMAtlas;
@@ -101,7 +102,7 @@ namespace gi_lib {
 			/// \param lights Lights whose contribution needs to be accumulated.
 			/// \param frame_info Information about the frame being rendered.
 			ObjectPtr<ITexture2D> AccumulateLight(const ObjectPtr<IRenderTarget>& gbuffer, const std::vector<VolumeComponent*>& lights, const FrameInfo& frame_info);
-
+			
 		private:
 
 			/// \brief Write the informations about a point light and its shadow.
@@ -118,6 +119,10 @@ namespace gi_lib {
 			void UpdateLight(const Scene& scene, const DirectionalLightComponent& directional_light, float aspect_ratio, DirectionalLight& light, DirectionalShadow& shadow);
 
 			windows::COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
+
+			DX11Graphics& graphics_;
+
+			// Lights
 
 			static const Tag kAlbedoEmissivityTag;								///< \brief Tag of the surface containing the albedo of the scene.
 
@@ -144,10 +149,6 @@ namespace gi_lib {
 			ObjectPtr<DX11StructuredBuffer> light_accumulation_parameters_;		///< \brief Constant buffer used to send light accumulation parameters to the shader.
 
 			ObjectPtr<DX11Computation> light_shader_;							///< \brief Shader performing the light accumulation stage.
-
-			// Global illumination
-
-			bool enable_global_illumination_;									///< \brief Whether to enable the global illumination.
 
 			// Shadows
 

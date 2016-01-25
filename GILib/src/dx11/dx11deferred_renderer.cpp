@@ -127,7 +127,8 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix
 ///////////////////////////////// DX11 DEFERRED RENDERER //////////////////////////////////
 
 DX11DeferredRenderer::DX11DeferredRenderer(const RendererConstructionArgs& arguments) :
-DeferredRenderer(arguments.scene){
+DeferredRenderer(arguments.scene),
+graphics_(DX11Graphics::GetInstance()){
 
 	auto&& device = *DX11Graphics::GetInstance().GetDevice();
 
@@ -230,6 +231,8 @@ DX11DeferredRenderer::~DX11DeferredRenderer(){
 
 ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int width, unsigned int height){
 	
+	graphics_.PushEvent(L"Frame");
+
 	// Context setup - The depth and the blend state should be defined per render section, however we support only opaque geometry without any fancy stuffs
 
 	immediate_context_->RSSetState(rasterizer_state_.Get());
@@ -277,6 +280,8 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 	
 	// Done
 
+	graphics_.PopEvent();
+
 	return output;
 
 }
@@ -284,6 +289,8 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 // GBuffer
 
 void DX11DeferredRenderer::DrawGBuffer(const FrameInfo& frame_info){
+
+	graphics_.PushEvent(L"GBuffer");
 
 	// GBuffer initialization
 
@@ -311,9 +318,13 @@ void DX11DeferredRenderer::DrawGBuffer(const FrameInfo& frame_info){
 
 	gbuffer_->Unbind(*immediate_context_);
 
+	graphics_.PopEvent();
+
 }
 
 void DX11DeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes, const FrameInfo& frame_info){
+
+	graphics_.PushEvent(L"Geometry");
 
 	ObjectPtr<DX11Mesh> mesh;
 	ObjectPtr<DX11DeferredRendererMaterial> material;
@@ -328,12 +339,16 @@ void DX11DeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes, con
 
 			mesh = drawable.GetMesh();
 
+			graphics_.PushEvent(mesh->GetName());
+
 			mesh->Bind(*immediate_context_);
 
 			// For each subset
 
 			for (unsigned int subset_index = 0; subset_index < mesh->GetSubsetCount(); ++subset_index){
 				
+				graphics_.PushEvent(mesh->GetSubsetName(subset_index));
+
 				// Bind the subset material
 
 				material = drawable.GetMaterial(subset_index);
@@ -348,11 +363,17 @@ void DX11DeferredRenderer::DrawNodes(const vector<VolumeComponent*>& meshes, con
 				mesh->DrawSubset(*immediate_context_, 
 								 subset_index);
 
+				graphics_.PopEvent();
+
 			}
+
+			graphics_.PopEvent();
 
 		}
 
 	}
+
+	graphics_.PopEvent();
 
 }
 

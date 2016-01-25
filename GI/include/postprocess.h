@@ -44,7 +44,7 @@ namespace gi {
 
 	public:
 
-		Postprocess(Resources& resources);
+		Postprocess(Resources& resources, Graphics& graphics);
 		
 		ObjectPtr<ITexture2D> Execute(ObjectPtr<ITexture2D> image, const Time& time);
 
@@ -53,6 +53,8 @@ namespace gi {
 		float UpdateLuminance(const ObjectPtr<ITexture2D>& image, const Time& time);
 
 		float current_luminance_;										///< \brief Average luminance of the last processed image.
+
+		Graphics& graphics_;
 
 		ObjectPtr<fx::FxLuminance> fx_luminance_;						///<\ brief Used to calculate the luminance of the image.
 

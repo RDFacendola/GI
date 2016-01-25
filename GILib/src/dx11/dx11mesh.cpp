@@ -56,6 +56,9 @@ namespace{
 
 DX11Mesh::DX11Mesh(const FromVertices<VertexFormatNormalTextured>& bundle){
 
+	name_ = L"Mesh";
+	subset_names_.resize(bundle.subsets.size());
+
 	auto& device = *DX11Graphics::GetInstance().GetDevice();
 
 	// Normal, textured mesh.

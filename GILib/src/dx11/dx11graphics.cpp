@@ -500,6 +500,7 @@ DX11Graphics::DX11Graphics(): Graphics(){
 	IDXGIAdapter* adapter = nullptr;
 	ID3D11Device* device = nullptr;
 	ID3D11DeviceContext* context = nullptr;
+	ID3DUserDefinedAnnotation* events = nullptr;
 
 	auto&& guard = make_scope_guard([&factory, &adapter, &device, &context](){
 
@@ -549,13 +550,18 @@ DX11Graphics::DX11Graphics(): Graphics(){
 	// Context
 	device->GetImmediateContext(&context);
 
+	// Events
+
+	auto hr = context->QueryInterface(__uuidof(events), reinterpret_cast<void**>(&events));
+
 	// Move the ownership
 	
 	factory_ << &factory;
 	adapter_ << &adapter;
 	device_ << &device;
 	immediate_context_ << &context;
-	
+	device_events_ << &events;
+
 	// Cleanup
 
 	guard.Dismiss();
@@ -677,4 +683,27 @@ IRenderer* DX11Graphics::CreateRenderer(const type_index& renderer_type, Scene& 
 														  type_index(typeid(RendererConstructionArgs)),
 														  &construction_args));
 	
+}
+
+void DX11Graphics::PushEvent(const std::wstring& event_name) {
+
+	if (device_events_ &&
+		device_events_->GetStatus()) {
+
+		device_events_->BeginEvent(event_name.c_str());
+
+	}
+
+}
+
+void DX11Graphics::PopEvent() {
+
+	if (device_events_ &&
+		device_events_->GetStatus()) {
+
+		device_events_->EndEvent();
+
+	}
+
+
 }

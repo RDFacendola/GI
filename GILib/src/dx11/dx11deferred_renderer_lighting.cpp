@@ -26,9 +26,10 @@ const Tag DX11DeferredRendererLighting::kVSMSamplerTag = "gVSMSampler";
 const Tag DX11DeferredRendererLighting::kPointShadowsTag = "gPointShadows";
 const Tag DX11DeferredRendererLighting::kDirectionalShadowsTag = "gDirectionalShadows";
 
-DX11DeferredRendererLighting::DX11DeferredRendererLighting(){
+DX11DeferredRendererLighting::DX11DeferredRendererLighting() :
+graphics_(DX11Graphics::GetInstance()){
 
-	auto&& device = *DX11Graphics::GetInstance().GetDevice();
+	auto&& device = *graphics_.GetDevice();
 
 	// Get the immediate rendering context.
 
@@ -84,7 +85,7 @@ DX11DeferredRendererLighting::DX11DeferredRendererLighting(){
 
 	check = light_shader_->SetInput(kVSMShadowAtlasTag,
 									ObjectPtr<ITexture2DArray>(shadow_atlas_->GetAtlas()));
-		
+	
 }
 
 DX11DeferredRendererLighting::~DX11DeferredRendererLighting(){
@@ -104,6 +105,8 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 											TextureFormat::RGB_FLOAT);
 		
 	// Clear the shadow atlas from any existing shadowmap
+
+	graphics_.PushEvent(L"Shadowmap");
 
 	shadow_atlas_->Begin();
 
@@ -162,8 +165,12 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 	
 	shadow_atlas_->Commit();
 
+	graphics_.PopEvent();
+
 	// These entities may change from frame to frame
 	
+	graphics_.PushEvent(L"Light accumulation");
+
 	bool check;
 
 	check = light_shader_->SetInput(kAlbedoEmissivityTag,
@@ -184,6 +191,8 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 							light_buffer_->GetWidth(),
 							light_buffer_->GetHeight(),
 							1);
+
+	graphics_.PopEvent();
 
 	return light_buffer_->GetTexture();
 

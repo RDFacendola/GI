@@ -407,8 +407,14 @@ void DX11VSMAtlas::Commit() {
 
 	// Blur the shadowmaps contained inside the atlas and store the result inside the blurred version of the atlas.
 
+	auto& graphics_ = DX11Graphics::GetInstance();
+
+	graphics_.PushEvent(L"Soft shadows blur");
+
 	fx_blur_.Blur(atlas_->GetRenderTargets(),
 				  ObjectPtr<IGPTexture2DArray>(blur_atlas_));
+
+	graphics_.PopEvent();
 	
 }
 
@@ -568,7 +574,11 @@ void DX11VSMAtlas::DrawShadowmap(const DirectionalShadow& shadow, const vector<V
 }
 
 void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable) {
-	
+
+	auto& graphics_ = DX11Graphics::GetInstance();
+
+	graphics_.PushEvent(L"Shadowmap");
+
 	ObjectPtr<DX11Mesh> mesh;
 	
 	shadow_material->Bind(*immediate_context_);
@@ -581,6 +591,8 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Obj
 
 			mesh = mesh_component.GetMesh();
 
+			graphics_.PushEvent(mesh->GetName());
+
 			mesh->Bind(*immediate_context_,
 					   tessellable);
 
@@ -591,6 +603,8 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Obj
 			per_object_->Unlock();
 
 			for (unsigned int subset_index = 0; subset_index < mesh->GetSubsetCount(); ++subset_index) {
+
+				graphics_.PushEvent(L"Subset");
 
 				if (mesh->GetFlags(subset_index) && MeshFlags::kShadowcaster) {
 					
@@ -603,13 +617,19 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Obj
 
 				}
 
+				graphics_.PopEvent();
+
 			}
+
+			graphics_.PopEvent();
 
 		}
 
 	}
 
 	shadow_material->Unbind(*immediate_context_);
+
+	graphics_.PopEvent();
 
 }
 

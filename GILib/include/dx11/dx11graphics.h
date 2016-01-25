@@ -7,6 +7,7 @@
 
 #include <dxgi.h>
 #include <d3d11.h>
+#include <d3d11_1.h>
 #include <memory>
 
 #include "dx11render_target.h"
@@ -149,6 +150,10 @@ namespace gi_lib{
 
 			virtual DX11Resources& GetResources() override;
 
+			virtual void PushEvent(const std::wstring& event_name) override;
+
+			virtual void PopEvent() override;
+
 			COMPtr<ID3D11Device> GetDevice();
 
 			COMPtr<IDXGIFactory> GetFactory();
@@ -173,11 +178,13 @@ namespace gi_lib{
 
 			COMPtr<ID3D11Device> device_;
 
-			COMPtr<IDXGIFactory> factory_;
+			COMPtr<IDXGIFactory> factory_;									
 
-			COMPtr<IDXGIAdapter> adapter_;
+			COMPtr<IDXGIAdapter> adapter_;									///< \brief Represents the current adapter (ie Video Card)
 
-			COMPtr<ID3D11DeviceContext> immediate_context_;
+			COMPtr<ID3D11DeviceContext> immediate_context_;					///< \brief Immediate context used to issue commands to the graphic pipeline.
+
+			COMPtr<ID3DUserDefinedAnnotation> device_events_;				///< \brief Used to push and pop markers that are useful to track the application behaviour under profiling tools.
 
 		};
 

@@ -14,7 +14,8 @@ using namespace gi_lib::dx11;
 
 //////////////////////////////// POSTPROCESS ///////////////////////////////
 
-Postprocess::Postprocess(Resources& resources) {
+Postprocess::Postprocess(Resources& resources, Graphics& graphics) :
+graphics_(graphics){
 
 	fx_luminance_ = resources.Load<FxLuminance, FxLuminance::Parameters>({ kMinLuminance, kMaxLuminance, kLuminanceLowPercentage, kLuminanceHighPercentage });
 
@@ -50,6 +51,8 @@ ObjectPtr<ITexture2D> Postprocess::Execute(ObjectPtr<gi_lib::ITexture2D> image, 
 														   { TextureFormat::RGB_FLOAT },
 														   false);
 	
+	graphics_.PushEvent(L"Post processing");
+
 	// Image >> Bloom >> Tonemap
 
 	UpdateLuminance(image, time);
@@ -71,6 +74,8 @@ ObjectPtr<ITexture2D> Postprocess::Execute(ObjectPtr<gi_lib::ITexture2D> image, 
 	// Done
 
 	render_target_cache_->PushToCache(bloom_output);
+
+	graphics_.PopEvent();
 
 	return output_->GetTexture();
 

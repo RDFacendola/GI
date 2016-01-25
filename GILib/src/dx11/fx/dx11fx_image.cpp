@@ -48,6 +48,10 @@ DX11FxLuminance::DX11FxLuminance(const Parameters& parameters){
 
 float DX11FxLuminance::ComputeAverageLuminance(const ObjectPtr<ITexture2D>& source) const {
 
+	auto& graphics_ = DX11Graphics::GetInstance();
+
+	graphics_.PushEvent(L"Average luminance");
+
 	auto context = DX11Graphics::GetInstance().GetImmediateContext();
 
 	auto width = source->GetWidth();
@@ -55,10 +59,14 @@ float DX11FxLuminance::ComputeAverageLuminance(const ObjectPtr<ITexture2D>& sour
 
 	// Clear the histogram first
 
+	graphics_.PushEvent(L"Clear");
+
 	clear_shader_->Dispatch(*context, 
 							kBinCount, 
 							1, 
 							1);
+
+	graphics_.PopEvent();
 
 	// Compute the image histogram
 
@@ -69,6 +77,8 @@ float DX11FxLuminance::ComputeAverageLuminance(const ObjectPtr<ITexture2D>& sour
 								width,
 								height,
 								1);
+	
+	graphics_.PopEvent();
 
 	// Process the luminance histogram to find the average luminance of the image
 

@@ -290,6 +290,12 @@ namespace gi_lib{
 		/// \brief Get the resource manager.
 		/// \return Returns the resource manager.
 		virtual Resources & GetResources() = 0;
+		
+		/// \brief Push an event that can be used to track the application flow under a performance tool.
+		virtual void PushEvent(const std::wstring& event_name) = 0;
+
+		/// \brief Pop the last event pushed.
+		virtual void PopEvent() = 0;
 
 	protected:
 

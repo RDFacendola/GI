@@ -64,6 +64,10 @@ void DX11FxBrightPass::SetAverageLuminance(float average_luminance){
 }
 
 void DX11FxBrightPass::Filter(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) {
+	
+	auto& graphics_ = DX11Graphics::GetInstance();
+
+	graphics_.PushEvent(L"Bright pass");
 
 	auto device_context = DX11Graphics::GetInstance().GetImmediateContext();
  
@@ -92,6 +96,8 @@ void DX11FxBrightPass::Filter(const ObjectPtr<ITexture2D>& source, const ObjectP
 	filter_shader_->Unbind(*device_context);
 
  	dx_destination->Unbind(*device_context);
+
+	graphics_.PopEvent();
 
 }
 
@@ -139,6 +145,10 @@ DX11FxBloom::DX11FxBloom(const Parameters& parameters) :
 }
 
 void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) {
+	
+	auto& graphics_ = DX11Graphics::GetInstance();
+
+	graphics_.PushEvent(L"Bloom");
 
  	// Lazy initialization of the surfaces
  	InitializeSurfaces(source);
@@ -150,6 +160,8 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 
 	// Downscale recursively
 
+	graphics_.PushEvent(L"Downscaling");
+
 	for (size_t index = 1; index < bright_surfaces_.size(); ++index) {
 
 		fx_downscale_.Copy((*bright_surfaces_[index - 1])[0],
@@ -157,9 +169,15 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 
 	}
 
+	graphics_.PopEvent();
+
 	// Blur each downscaled surface
 
+	graphics_.PushEvent(L"Blur");
+
 	for (size_t index = 0; index < bright_surfaces_.size(); ++index) {
+
+		graphics_.PushEvent(L"1/2");
 
 		fx_blur_.Blur((*bright_surfaces_[index])[0],
 					  blur_surfaces_[index]);
@@ -173,7 +191,11 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 		
 		}
 
+		graphics_.PopEvent();
+
 	}
+
+	graphics_.PopEvent();
 
 	// We only draw GPU-generated quads
 			
@@ -186,7 +208,8 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 
 	ObjectPtr<ITexture2D> downscaled = blur_surfaces_.back()->GetTexture();
 
-	
+	graphics_.PushEvent(L"Upscaling");
+
 	for (size_t index = bright_surfaces_.size() - 1; index > 0; --index) {
 
 		upscale_shader_->SetInput(kDownscaled,
@@ -209,7 +232,11 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 		
 	upscale_shader_->Unbind(*device_context);
 
+	graphics_.PopEvent();
+
 	// Bloom compositing
+
+	graphics_.PushEvent(L"Compositing");
 
 	auto dx_destination = ::resource_cast(destination);
 
@@ -235,6 +262,10 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 
 	dx_destination->Unbind(*device_context);
 	
+	graphics_.PopEvent();
+
+	graphics_.PopEvent();
+
 }
 
 void DX11FxBloom::InitializeSurfaces(const ObjectPtr<ITexture2D>& source) {
@@ -361,6 +392,10 @@ void DX11FxTonemap::SetAverageLuminance(float average_luminance) {
 
 void DX11FxTonemap::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination){
 	
+	auto& graphics_ = DX11Graphics::GetInstance();
+
+	graphics_.PushEvent(L"Tone mapping");
+	
 	// Shader setup
 
 	tonemap_shader_->SetInput(kSource,
@@ -375,5 +410,7 @@ void DX11FxTonemap::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr
 							  source->GetWidth(),
 							  source->GetHeight(),
 							  1);
+
+	graphics_.PopEvent();
 
 }

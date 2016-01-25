@@ -112,6 +112,22 @@ namespace gi_lib{
 		/// \remarks This method will override each individual subset flags.
 		virtual void SetFlags(MeshFlags flags) = 0;
 
+		/// \brief Set the mesh name.
+		/// Used for debug purposes only.
+		virtual void SetName(const std::wstring& name) = 0;
+
+		/// \brief Get the mesh name.
+		/// Used for debug purposes only.
+		virtual const std::wstring& GetName() const = 0;
+		
+		/// \brief Set the mesh name.
+		/// Used for debug purposes only.
+		virtual void SetSubsetName(size_t subset_index, const std::wstring& name) = 0;
+
+		/// \brief Get the mesh name.
+		/// Used for debug purposes only.
+		virtual const std::wstring& GetSubsetName(size_t subset_index) const = 0;
+
 	};
 
 

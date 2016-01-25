@@ -253,7 +253,8 @@ namespace {
 		
 		for (auto&& subset : mesh_definition.subsets_) {
 
-			bundle.subsets.push_back(MeshSubset{ bundle.vertices.size(), subset.vertices_.size() / 3 });
+			bundle.subsets.push_back(MeshSubset{ bundle.vertices.size(), 
+												 subset.vertices_.size() / 3 });
 
 			bundle.vertices.insert(bundle.vertices.end(),
 								   subset.vertices_.begin(),
@@ -261,7 +262,18 @@ namespace {
 			
 		}
 
-		return resources.Load<IStaticMesh, IStaticMesh::FromVertices<VertexFormatNormalTextured>>(bundle);
+		auto static_mesh = resources.Load<IStaticMesh, IStaticMesh::FromVertices<VertexFormatNormalTextured>>(bundle);
+
+		static_mesh->SetName(gi_lib::to_wstring(mesh_definition.name_));
+		
+		for (size_t subset_index = 0; subset_index < mesh_definition.subsets_.size(); ++subset_index) {
+
+			static_mesh->SetSubsetName(subset_index, 
+									   gi_lib::to_wstring(mesh_definition.subsets_[subset_index].subset_name_));
+
+		}
+		
+		return static_mesh;
 				
 	}
 
@@ -876,6 +888,14 @@ bool ObjImporter::ImportScene(const wstring& file_name, TransformComponent& root
 
 		auto mesh_component = node->AddComponent<MeshComponent>(ImportStaticMesh(mesh, resources_));
 
+		// Use the file name if the mesh didn't have any attached name to it
+
+		if (mesh_component->GetMesh()->GetName().length() == 0) {
+
+			mesh_component->GetMesh()->SetName(file_name);
+
+		}
+		
 		// Material collection import
 
 		material_collection.reserve(mesh.subsets_.size());

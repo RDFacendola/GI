@@ -108,6 +108,8 @@ namespace gi_lib{
 			/// \param frame_info Information about the frame being rendered.
 			ObjectPtr<ITexture2D> ComputeLighting(const FrameInfo& frame_info);
 
+			DX11Graphics& graphics_;
+
 			// Render context
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;						///< \brief Immediate rendering context.
@@ -144,19 +146,19 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<const IMaterial> gi_lib::dx11::DX11DeferredRendererMaterial::GetMaterial() const{
+		inline ObjectPtr<const IMaterial> DX11DeferredRendererMaterial::GetMaterial() const{
 
 			return ObjectPtr<const IMaterial>(material_);
 
 		}
 
-		inline void gi_lib::dx11::DX11DeferredRendererMaterial::Bind(ID3D11DeviceContext& context){
+		inline void DX11DeferredRendererMaterial::Bind(ID3D11DeviceContext& context){
 
 			material_->Bind(context);
 
 		}
 
-		inline size_t gi_lib::dx11::DX11DeferredRendererMaterial::GetSize() const{
+		inline size_t DX11DeferredRendererMaterial::GetSize() const{
 
 			return material_->GetSize();
 

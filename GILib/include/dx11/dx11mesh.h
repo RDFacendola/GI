@@ -60,6 +60,14 @@ namespace gi_lib{
 
 			virtual void SetFlags(MeshFlags flags) override;
 
+			virtual void SetName(const std::wstring& name) override;
+
+			virtual const std::wstring& GetName() const override;
+
+			virtual void SetSubsetName(size_t subset_index, const std::wstring& name) override;
+
+			virtual const std::wstring& GetSubsetName(size_t subset_index) const override;
+
 		private:
 
 			COMPtr<ID3D11Buffer> vertex_buffer_;
@@ -69,7 +77,6 @@ namespace gi_lib{
 			vector<MeshSubset> subsets_;
 
 			vector<MeshFlags> flags_;										///< \brief Flags for each subset.
-
 			size_t vertex_count_;
 
 			size_t polygon_count_;
@@ -81,6 +88,10 @@ namespace gi_lib{
 			size_t vertex_stride_;											///< \brief Size of each vertex in bytes
 
 			AABB bounding_box_;
+			
+			vector<std::wstring> subset_names_;
+
+			std::wstring name_;												///< \brief Mesh name
 
 		};
 
@@ -88,45 +99,71 @@ namespace gi_lib{
 
 		INSTANTIABLE(IStaticMesh, DX11Mesh, IStaticMesh::FromVertices<VertexFormatNormalTextured>);
 
-		inline size_t dx11::DX11Mesh::GetVertexCount() const{
+		inline size_t DX11Mesh::GetVertexCount() const{
 
 			return vertex_count_;
 
 		}
 
-		inline size_t dx11::DX11Mesh::GetPolygonCount() const{
+		inline size_t DX11Mesh::GetPolygonCount() const{
 
 			return polygon_count_;
 
 		}
 
-		inline size_t dx11::DX11Mesh::GetLODCount() const{
+		inline size_t DX11Mesh::GetLODCount() const{
 
 			return LOD_count_;
 
 		}
 
-		inline size_t dx11::DX11Mesh::GetSize() const{
+		inline size_t DX11Mesh::GetSize() const{
 
 			return size_;
 
 		}
 
-		inline const AABB& gi_lib::dx11::DX11Mesh::GetBoundingBox() const{
+		inline const AABB& DX11Mesh::GetBoundingBox() const{
 
 			return bounding_box_;
 
 		}
 
-		inline size_t dx11::DX11Mesh::GetSubsetCount() const{
+		inline size_t DX11Mesh::GetSubsetCount() const{
 
 			return subsets_.size();
 
 		}
 
-		inline const MeshSubset& dx11::DX11Mesh::GetSubset(unsigned int subset_index) const{
+		inline const MeshSubset& DX11Mesh::GetSubset(unsigned int subset_index) const{
 
 			return subsets_[subset_index];
+
+		}
+
+		inline void DX11Mesh::SetName(const std::wstring& name) {
+
+			name_ = name;
+			
+		}
+
+		inline const std::wstring& DX11Mesh::GetName() const {
+
+			return name_;
+
+		}
+
+		inline void DX11Mesh::SetSubsetName(size_t subset_index, const std::wstring& name) {
+
+			subset_names_[subset_index] = name;
+
+		}
+
+		inline const std::wstring& DX11Mesh::GetSubsetName(size_t subset_index) const {
+
+			auto& subset_name = subset_names_[subset_index];
+
+			return subset_name;
 
 		}
 

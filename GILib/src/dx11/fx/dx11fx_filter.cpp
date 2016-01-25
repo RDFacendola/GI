@@ -84,6 +84,10 @@ void DX11FxGaussianBlur::SetSigma(float sigma){
 
 void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination) {
 
+	auto& graphics_ = DX11Graphics::GetInstance();
+
+	graphics_.PushEvent(L"Gaussian Blur");
+
 	auto context = DX11Graphics::GetInstance().GetImmediateContext();
 
 	auto width = source->GetWidth();
@@ -123,9 +127,15 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectP
 	// Not needed anymore
 	gp_cache_->PushToCache(temp_texture_);
 
+	graphics_.PopEvent();
+
 }
 
 void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2DArray>& source, const ObjectPtr<IGPTexture2DArray>& destination){
+
+	auto& graphics_ = DX11Graphics::GetInstance();
+
+	graphics_.PushEvent(L"Gaussian Blur");
 
 	auto context = DX11Graphics::GetInstance().GetImmediateContext();
 
@@ -175,5 +185,7 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2DArray>& source, const Ob
 								  width,
 								  height, 
 								  depth);
+
+	graphics_.PopEvent();
 
 }
