@@ -273,8 +273,11 @@
       <AdditionalIncludeDirectories>$(SolutionDir)GILib\include;$(SolutionDir)Libs\stack_walker\include;$(SolutionDir)Libs\DirectXTK\Inc;$(SolutionDir)Libs\DirectXTex\DirectXTex;$(SolutionDir)Libs\FBX SDK\2015.1\include;$(SolutionDir)Libs\Eigen;$(SolutionDir)Libs\rapidjson-0.11\rapidjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <OpenMPSupport>true</OpenMPSupport>
+      <MinimalRebuild>true</MinimalRebuild>
+      <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
