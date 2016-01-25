@@ -58,6 +58,8 @@ namespace gi{
 
 		bool enable_postprocess_;				///< \brief Whether the post processing is enabled.
 
+		bool enable_global_illumination_;		///< \brief Whether the global illumination is enabled.
+
 	};
 
 }

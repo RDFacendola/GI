@@ -217,6 +217,10 @@ graphics_(DX11Graphics::GetInstance()){
 
 	lighting_ = std::make_unique<DX11DeferredRendererLighting>();
 
+	// Voxel setup
+
+	voxelization_ = std::make_unique<DX11Voxelization>(50.f, 64, 4);
+
 }
 
 DX11DeferredRenderer::~DX11DeferredRenderer(){
@@ -266,7 +270,7 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 		
 		if (enable_global_illumination_) {
 
-			// TODO: Dynamic voxelization
+			voxelization_->Update(frame_info);				// Dynamic voxelization of the scene
 
 		}
 

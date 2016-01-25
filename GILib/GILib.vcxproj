@@ -25,6 +25,7 @@
     <ClInclude Include="include\dx11\dx11commitable.h" />
     <ClInclude Include="include\dx11\dx11deferred_renderer_lighting.h" />
     <ClInclude Include="include\dx11\dx11deferred_renderer_shared.h" />
+    <ClInclude Include="include\dx11\dx11voxelization.h" />
     <ClInclude Include="include\dx11\dx11gpgpu.h" />
     <ClInclude Include="include\dx11\dx11material.h" />
     <ClInclude Include="include\dx11\dx11mesh.h" />
@@ -97,6 +98,7 @@
     <ClCompile Include="src\dx11\dx11shader_state.cpp" />
     <ClCompile Include="src\dx11\dx11shadow.cpp" />
     <ClCompile Include="src\dx11\dx11texture.cpp" />
+    <ClCompile Include="src\dx11\dx11voxelization.cpp" />
     <ClCompile Include="src\dx11\fx\dx11fx_filter.cpp" />
     <ClCompile Include="src\dx11\fx\dx11fx_image.cpp" />
     <ClCompile Include="src\dx11\fx\dx11fx_postprocess.cpp" />

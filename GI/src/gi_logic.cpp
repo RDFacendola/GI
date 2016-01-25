@@ -146,9 +146,14 @@ void GILogic::Initialize(Window& window){
 	SetupLights(*scene_, 
 				obj_importer.ImportMesh(app.GetDirectory() + L"Data\\assets\\Light\\Sphere.obj", "Icosphere"));
 	
+	// GI setup
+	enable_global_illumination_ = true;
+
+	deferred_renderer_->EnableGlobalIllumination(enable_global_illumination_);
+
 	// Post process setup
 
-	postprocess_ = make_unique<Postprocess>(resources);
+	postprocess_ = make_unique<Postprocess>(resources, graphics_);
 
 	enable_postprocess_ = true;
 
@@ -249,7 +254,7 @@ void GILogic::Update(const Time & time){
 	
 	// "P": toggle pause
 
-	if (input_->GetKeyboardStatus().IsPressed((25))){		
+	if (input_->GetKeyboardStatus().IsPressed(25)){		
 
 		paused_ = !paused_;
 
@@ -257,12 +262,22 @@ void GILogic::Update(const Time & time){
 
 	// "F": toggle post processing
 
-	if (input_->GetKeyboardStatus().IsPressed((33))) {
+	if (input_->GetKeyboardStatus().IsPressed(33)) {
 
 		enable_postprocess_ = !enable_postprocess_;
 
 	}
 
+	// "I": toggle GI
+
+	if (input_->GetKeyboardStatus().IsPressed(23)) {
+
+		enable_global_illumination_ = !enable_global_illumination_;
+
+		deferred_renderer_->EnableGlobalIllumination(enable_global_illumination_);
+
+	}
+	
 	if (!paused_) {
 
 		static const float xRadius = 2000.0f;

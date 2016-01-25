@@ -196,6 +196,9 @@
     <ClInclude Include="include\dx11\dx11deferred_renderer_shared.h">
       <Filter>DirectX 11\Renderers</Filter>
     </ClInclude>
+    <ClInclude Include="include\dx11\dx11voxelization.h">
+      <Filter>DirectX 11\Renderers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\dx11\dx11.cpp">
@@ -309,6 +312,9 @@
     <ClCompile Include="src\dx11\dx11deferred_renderer_lighting.cpp">
       <Filter>DirectX 11\Renderers</Filter>
     </ClCompile>
+    <ClCompile Include="src\dx11\dx11voxelization.cpp">
+      <Filter>DirectX 11\Renderers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectX 11">
@@ -358,6 +364,9 @@
     </Filter>
     <Filter Include="DirectX 11\Renderers">
       <UniqueIdentifier>{baee95c0-e818-4613-a68f-e7afff9ec319}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectX 11\Voxelization">
+      <UniqueIdentifier>{b4569247-d51e-4c94-9d0c-79d1d004203d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

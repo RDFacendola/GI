@@ -20,7 +20,7 @@ void CopyToClipboard(const wstring &);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd){
 
-//#define CATCH_EXCEPTIONS
+#define CATCH_EXCEPTIONS
 
 #ifdef CATCH_EXCEPTIONS
 	try{

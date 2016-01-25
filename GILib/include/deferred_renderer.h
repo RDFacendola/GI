@@ -72,6 +72,9 @@ namespace gi_lib{
 		/// \return Returns the scene this renderer is assigned to.
 		virtual const Scene& GetScene() const override;
 
+		/// \brief Enable or disable the global illumination.
+		virtual void EnableGlobalIllumination(bool enable = true) = 0;
+
 	private:
 
 		Scene& scene_;		///< \brief Scene this render refers to.

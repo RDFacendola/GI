@@ -19,6 +19,7 @@
 
 #include "dx11deferred_renderer_shared.h"
 #include "dx11deferred_renderer_lighting.h"
+#include "dx11voxelization.h"
 
 namespace gi_lib{
 
@@ -93,6 +94,8 @@ namespace gi_lib{
 
 			virtual ObjectPtr<ITexture2D> Draw(const Time& time, unsigned int width, unsigned int height) override;
 
+			virtual void EnableGlobalIllumination(bool enable /* = true */) override;
+
 		private:
 
 			/// \brief Draw the current scene on the GBuffer.
@@ -134,6 +137,8 @@ namespace gi_lib{
 
 			bool enable_global_illumination_;									///< \brief Whether to enable the global illumination.
 
+			std::unique_ptr<DX11Voxelization> voxelization_;					///< \brief Used to calculate the dynamic voxelization of the scene.
+
 		};
 
 		///////////////////////////////// DX11 DEFERRED RENDERER MATERIAL ///////////////////////////////
@@ -168,6 +173,11 @@ namespace gi_lib{
 
 		INSTANTIABLE(DeferredRenderer, DX11DeferredRenderer, RendererConstructionArgs);
 
+		inline void DX11DeferredRenderer::EnableGlobalIllumination(bool enable) {
+
+			enable_global_illumination_ = enable;
+
+		}
 	}
 
 }
