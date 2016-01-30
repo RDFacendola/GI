@@ -65,6 +65,10 @@ namespace gi_lib {
 			ObjectPtr<DX11Material> voxel_material_;							///< \brief Material used to voxelize the scene.
 
 			ObjectPtr<DX11RenderTarget> voxel_render_target_;					///< \brief Render target used during the voxelization. This technically is not needed at all.
+		
+			COMPtr<ID3D11DepthStencilState> depth_stencil_state_;				///< \brief Depth-stencil state used to disable Z testing.
+
+			COMPtr<ID3D11RasterizerState> rasterizer_state_;					///< \brief Rasterizer state.
 
 			float voxel_size_;													///< \brief Size of each voxel in world units.
 

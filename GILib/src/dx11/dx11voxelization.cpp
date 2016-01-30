@@ -67,24 +67,7 @@ DX11Voxelization::DX11Voxelization(float voxel_size, unsigned int voxel_resoluti
 												 &depth_state));
 
 	depth_stencil_state_ << &depth_state;
-
-	// Create the blend state - No alpha-blending
-
-	D3D11_BLEND_DESC blend_state_desc;
-
-	ID3D11BlendState* blend_state;
 	
-	blend_state_desc.AlphaToCoverageEnable = false;
-	blend_state_desc.IndependentBlendEnable = false;
-
-	blend_state_desc.RenderTarget[0].BlendEnable = false;
-	blend_state_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-	THROW_ON_FAIL(device.CreateBlendState(&blend_state_desc,
-										  &blend_state));
-
-	blend_state_ << &blend_state;
-
 	// Create the raster state - No back-face culling
 
 	D3D11_RASTERIZER_DESC rasterizer_state_desc;
@@ -185,16 +168,15 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 	// Setup - The material is shared among all the objects
 		
+	auto& dx_utils = DX11Utils::GetInstance();
+
 	voxel_render_target_->ClearTargets(device_context);
 	
 	voxel_material_->Bind(device_context, voxel_render_target_);	
 	
-	// Rasterizer state and Output merger setup
+	dx_utils.PushDepthStencilState(device_context, *depth_stencil_state_);
 
-	device_context.RSSetState(rasterizer_state_.Get());
-
-	device_context.OMSetDepthStencilState(depth_stencil_state_.Get(), 0);
-	device_context.OMSetBlendState(blend_state_.Get(), 0, 0xFFFFFFFF);
+	dx_utils.PushRasterizerState(device_context, *rasterizer_state_);
 
 	// Voxelize the nodes inside the voxelization domain grid
 	
@@ -256,6 +238,10 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 	// Cleanup
 
+	dx_utils.PopRasterizerState(device_context);
+	
+	dx_utils.PopDepthStencilState(device_context);
+	
 	voxel_material_->Unbind(device_context, voxel_render_target_);
 
 	graphics.PopEvent();
