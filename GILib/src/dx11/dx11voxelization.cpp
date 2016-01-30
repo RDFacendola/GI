@@ -17,18 +17,20 @@ namespace {
 	/// \brief Vertex shader constant buffer.
 	struct VSPerObject {
 
-		Matrix4f world_;								///< \brief World matrix of the object to voxelize.
+		Matrix4f world_;							///< \brief World matrix of the object to voxelize.
 
 	};
 
 	struct VoxelParameters {
 
-		unsigned int voxel_resolution_;				// Resolution of each cascade in voxels for each dimension
-
-		unsigned int cascades_;						// Number of additional cascades inside the clipmap
+		Vector3f center_;							// Center of the voxelization.
 
 		float voxel_size_;							// Size of each voxel in world units.
 
+		unsigned int voxel_resolution_;				// Resolution of each cascade in voxels for each dimension
+
+		unsigned int cascades_;						// Number of additional cascades inside the clipmap
+		
 	};
 
 }
@@ -48,6 +50,63 @@ DX11Voxelization::DX11Voxelization(float voxel_size, unsigned int voxel_resoluti
 	SetVoxelResolution(voxel_resolution,
 					   cascades);
 	
+	auto&& device = *DX11Graphics::GetInstance().GetDevice();
+
+	// Create the depth stencil state - No depth test
+
+	D3D11_DEPTH_STENCIL_DESC depth_state_desc;
+
+	ID3D11DepthStencilState* depth_state;
+	
+	depth_state_desc.DepthEnable = false;
+	depth_state_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	depth_state_desc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+	depth_state_desc.StencilEnable = false;
+	
+	THROW_ON_FAIL(device.CreateDepthStencilState(&depth_state_desc,
+												 &depth_state));
+
+	depth_stencil_state_ << &depth_state;
+
+	// Create the blend state - No alpha-blending
+
+	D3D11_BLEND_DESC blend_state_desc;
+
+	ID3D11BlendState* blend_state;
+	
+	blend_state_desc.AlphaToCoverageEnable = false;
+	blend_state_desc.IndependentBlendEnable = false;
+
+	blend_state_desc.RenderTarget[0].BlendEnable = false;
+	blend_state_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	THROW_ON_FAIL(device.CreateBlendState(&blend_state_desc,
+										  &blend_state));
+
+	blend_state_ << &blend_state;
+
+	// Create the raster state - No back-face culling
+
+	D3D11_RASTERIZER_DESC rasterizer_state_desc;
+
+	ID3D11RasterizerState* rasterizer_state;
+
+	rasterizer_state_desc.FillMode = D3D11_FILL_SOLID;
+	rasterizer_state_desc.CullMode = D3D11_CULL_NONE;
+	rasterizer_state_desc.FrontCounterClockwise = false;
+	rasterizer_state_desc.DepthBias = 0;
+	rasterizer_state_desc.SlopeScaledDepthBias = 0.0f;
+	rasterizer_state_desc.DepthBiasClamp = 0.0f;
+	rasterizer_state_desc.DepthClipEnable = true;
+	rasterizer_state_desc.ScissorEnable = false;
+	rasterizer_state_desc.MultisampleEnable = false;
+	rasterizer_state_desc.AntialiasedLineEnable = false;
+
+	THROW_ON_FAIL(device.CreateRasterizerState(&rasterizer_state_desc,
+											   &rasterizer_state));
+
+	rasterizer_state_ << &rasterizer_state;
+
 	// One-time setup
 	
 	bool check;
@@ -81,12 +140,6 @@ void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigne
 																				voxel_resolution, 
 																				{ TextureFormat::RGBA_BYTE_UNORM },
 																				false});
-
-	// One-time setup 
-
-	// TODO: This must be set via OMSetRenderTargetsAndUnorderedAccessViews not using the shader composite!!!!!!
-	//		 The slot of the UAV contains the number of the expected render targets as well.
-	//		 Also we don't have the PSSetUnorderAccessView method!
 
 	bool check;
 
@@ -136,6 +189,13 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 	
 	voxel_material_->Bind(device_context, voxel_render_target_);	
 	
+	// Rasterizer state and Output merger setup
+
+	device_context.RSSetState(rasterizer_state_.Get());
+
+	device_context.OMSetDepthStencilState(depth_stencil_state_.Get(), 0);
+	device_context.OMSetBlendState(blend_state_.Get(), 0, 0xFFFFFFFF);
+
 	// Voxelize the nodes inside the voxelization domain grid
 	
 	Vector3f grid_center = frame_info.camera->GetTransformComponent().GetPosition();		// Center of the voxelization, snapped at voxel boundaries to prevent flickering
@@ -144,11 +204,15 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 						   std::floorf(grid_center(1) / voxel_size_) * voxel_size_,
 						   std::floorf(grid_center(2) / voxel_size_) * voxel_size_);
 
+	voxel_parameters_->Lock<VoxelParameters>()->center_ = grid_center;
+
+	voxel_parameters_->Unlock();
+
 	AABB grid_domain{ grid_center, 
 					  Vector3f::Ones() * GetGridSize() * 0.5f };
 	
 	vector<VolumeComponent*> nodes = frame_info.scene->GetMeshHierarchy().GetIntersections(grid_domain);
-
+	
 	graphics.PushEvent(L"Geometry");
 
 	for (auto&& node : nodes) {
