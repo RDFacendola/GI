@@ -17,8 +17,63 @@ using namespace gi_lib;
 using namespace gi_lib::dx11;
 using namespace gi_lib::windows;
 
-namespace{
+//////////////////////////////////// GRAPHICS ////////////////////////////////////
+
+DX11Utils & DX11Utils::GetInstance() {
+
+	static DX11Utils utils;
+
+	return utils;
+
 }
+
+DX11Utils::DX11Utils() {}
+
+DX11Utils::~DX11Utils() {}
+
+void DX11Utils::PushDepthStencilState(ID3D11DeviceContext& device_context, ID3D11DepthStencilState& depth_stencil_state) {
+
+	ID3D11DepthStencilState* current_state;
+
+	device_context.OMGetDepthStencilState(&current_state, nullptr);		// Increase the ref count!
+
+	depth_stencil_state_.push_back(current_state);
+
+	device_context.OMSetDepthStencilState(&depth_stencil_state, 0);
+	
+}
+
+void DX11Utils::PushRasterizerState(ID3D11DeviceContext& device_context, ID3D11RasterizerState& rasterizer_state) {
+
+	ID3D11RasterizerState* current_state;
+
+	device_context.RSGetState(&current_state);							// Increase the ref count!
+
+	rasterizer_state_.push_back(current_state);
+
+	device_context.RSSetState(&rasterizer_state);
+
+}
+
+void DX11Utils::PopDepthStencilState(ID3D11DeviceContext& device_context) {
+
+	ID3D11DepthStencilState* state = depth_stencil_state_.back();
+
+	device_context.OMSetDepthStencilState(state, 0);
+
+	state->Release();													// Decrease the ref count!
+
+}
+
+void DX11Utils::PopRasterizerState(ID3D11DeviceContext& device_context) {
+
+	ID3D11RasterizerState* state = rasterizer_state_.back();
+
+	device_context.RSSetState(state);									
+	
+	state->Release();													// Decrease the ref count!
+	
+}	
 
 /////////////////// METHODS ///////////////////////////
 
@@ -533,7 +588,6 @@ HRESULT gi_lib::dx11::MakeUnorderedTextureArray(ID3D11Device& device, unsigned i
 	return S_OK;
 
 }
-
 
 HRESULT gi_lib::dx11::MakeVertexBuffer(ID3D11Device& device, const void* vertices, size_t size, ID3D11Buffer** buffer){
 

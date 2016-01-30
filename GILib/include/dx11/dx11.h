@@ -124,6 +124,40 @@ namespace gi_lib{
 			
 		};
 
+		/// \brief Wraps utility calls to the DirectX11 API.
+		/// \author Raffaele D. Facendola.
+		class DX11Utils {
+
+		public:
+
+			static DX11Utils& GetInstance();
+
+			/// \brief Activate a new depth stencil state, saving the current one onto the stack.
+			/// \param depth_stencil_state New depth stencil state to enable.
+			void PushDepthStencilState(ID3D11DeviceContext& device_context, ID3D11DepthStencilState& depth_stencil_state);
+
+			/// \brief Activate a new rasterizer state, saving the current one onto the stack.
+			/// \param rasterizer_state New rasterizer state to enable.
+			void PushRasterizerState(ID3D11DeviceContext& device_context, ID3D11RasterizerState& rasterizer_state);
+
+			/// \brief Pop and activate the depth stencil state on the top of the stack, disabling the current one.
+			void PopDepthStencilState(ID3D11DeviceContext& device_context);
+
+			/// \brief Pop and activate the rasterizer state on top of the stack, disabling the current one.
+			void PopRasterizerState(ID3D11DeviceContext& device_context);
+
+		private:
+
+			DX11Utils();
+
+			~DX11Utils();
+			
+			std::vector<ID3D11DepthStencilState*> depth_stencil_state_;					/// <\brief Depth stencil state stack.
+
+			std::vector<ID3D11RasterizerState*> rasterizer_state_;						///< \brief Rasterizer state stack.
+
+		};
+
 		/// \brief Create a depth stencil suitable for the provided target.
 		/// \param device Device used to create the texture.
 		/// \param width The width of the depth stencil texture in pixels.
