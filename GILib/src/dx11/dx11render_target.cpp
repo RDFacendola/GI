@@ -305,11 +305,11 @@ void DX11RenderTarget::Unbind(ID3D11DeviceContext& context, const vector<ID3D11U
 	vector<ID3D11UnorderedAccessView*> null_uav(uav_list.size(), nullptr);
 
 	context.OMSetRenderTargetsAndUnorderedAccessViews(static_cast<unsigned int>(rtv_null_list.size()),
-													  &rtv_null_list[0],
+													  rtv_null_list.size() > 0 ? &rtv_null_list[0] : nullptr,
 													  nullptr,
 													  static_cast<unsigned int>(render_target_.size()),
 													  static_cast<unsigned int>(null_uav.size()),
-													  &null_uav[0],
+													  null_uav.size() > 0 ? &null_uav[0] : nullptr,
 													  nullptr);
 	
 }
