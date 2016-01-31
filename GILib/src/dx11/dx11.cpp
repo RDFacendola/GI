@@ -589,6 +589,66 @@ HRESULT gi_lib::dx11::MakeUnorderedTextureArray(ID3D11Device& device, unsigned i
 
 }
 
+HRESULT gi_lib::dx11::MakeRawVertexBuffer(ID3D11Device& device, unsigned int element_count, ID3D11Buffer** buffer, ID3D11UnorderedAccessView** unordered_access_view) {
+
+	static unsigned int kElementSize = 4;		// Raw buffer must have 32 bit elements only!
+
+	D3D11_BUFFER_DESC buffer_desc;
+
+	buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+	buffer_desc.ByteWidth = kElementSize * element_count;
+	buffer_desc.BindFlags = (unordered_access_view ? D3D11_BIND_UNORDERED_ACCESS : 0) | D3D11_BIND_VERTEX_BUFFER;
+	buffer_desc.CPUAccessFlags = 0;
+	buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS;
+
+	// Transaction: either all the resources are created, or none.
+
+	ID3D11Buffer* vertex_buffer = nullptr;
+	ID3D11UnorderedAccessView* uav = nullptr;
+
+	auto guard = make_scope_guard([&vertex_buffer, &uav]{
+
+		if (vertex_buffer)		vertex_buffer->Release();
+		if (uav)				uav->Release();
+
+	});
+
+	RETURN_ON_FAIL(device.CreateBuffer(&buffer_desc,
+									   nullptr,
+									   &vertex_buffer));
+
+	if (unordered_access_view){
+
+		D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
+
+		desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+		desc.Format = DXGI_FORMAT_R32_TYPELESS;					// Raw buffers contains 32 bit elements only
+		desc.Buffer.FirstElement = 0;
+		desc.Buffer.NumElements = element_count;
+		desc.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;			// Raw buffer
+
+		RETURN_ON_FAIL(device.CreateUnorderedAccessView(vertex_buffer,
+														&desc,
+														&uav));
+		
+	}
+
+	// Commit
+
+	*buffer = vertex_buffer;
+
+	if (unordered_access_view){
+
+		*unordered_access_view = uav;
+
+	}
+
+	guard.Dismiss();
+
+	return S_OK;
+
+}
+
 HRESULT gi_lib::dx11::MakeVertexBuffer(ID3D11Device& device, const void* vertices, size_t size, ID3D11Buffer** buffer){
 
 	// Fill in a buffer description.

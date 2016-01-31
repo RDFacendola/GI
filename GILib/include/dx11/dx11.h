@@ -227,6 +227,15 @@ namespace gi_lib{
 		/// \param buffer Pointer to the object that will hold the buffer.
 		HRESULT MakeVertexBuffer(ID3D11Device& device, const void* vertices, size_t size, ID3D11Buffer** buffer);
 
+		/// \brief Create an raw vertex buffer.
+		/// Note that raw vertex buffer may only contain 4-bytes elements!
+		/// This buffer can be written via raw UAV and read as vertex buffer.
+		/// \param device Device used to create the vertex buffer.
+		/// \param element_count Elements inside the vertex buffer.
+		/// \param buffer Pointer to the object that will hold the buffer.
+		/// \param unordered_access_view Pointer to the unordered access view.
+		HRESULT MakeRawVertexBuffer(ID3D11Device& device, unsigned int element_count, ID3D11Buffer** buffer, ID3D11UnorderedAccessView** unordered_access_view);
+
 		/// \brief Create an index buffer.
 		/// \param device Device used to create the index buffer.
 		/// \param indices Pointer to the first index.
