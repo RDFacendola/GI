@@ -93,11 +93,57 @@ DX11GPStructuredArray::DX11GPStructuredArray(const IGPStructuredArray::FromEleme
 										 &srv,
 										 &uav));
 
-	COM_GUARD(buffer);
+	COM_GUARD(buffer);	// Not needed anymore
 
 	shader_resource_view_ = COMMove(&srv);
 	unordered_access_view_ = COMMove(&uav);
 	
+}
+
+DX11GPStructuredArray::DX11GPStructuredArray(const IGPStructuredArray::CreateAppendBuffer& arguments):
+	element_count_(arguments.max_count),
+	element_size_(arguments.element_size) {
+
+	ID3D11Buffer* buffer;
+
+	ID3D11ShaderResourceView* srv;
+	ID3D11UnorderedAccessView* uav;
+
+	auto& device = *DX11Graphics::GetInstance().GetDevice();
+
+	THROW_ON_FAIL(::MakeAppendBuffer(device,
+									 static_cast<unsigned int>(element_count_),
+									 static_cast<unsigned int>(element_size_),
+									 &buffer,
+									 &srv,
+									 &uav));
+	
+	COM_GUARD(buffer);	// Not needed anymore
+
+	shader_resource_view_ = COMMove(&srv);
+	unordered_access_view_ = COMMove(&uav);
+
+}
+
+DX11GPStructuredArray::DX11GPStructuredArray(const CreateDrawIndirectArguments& args):
+	element_count_(args.argument_count),
+	element_size_(sizeof(unsigned int)) {		// The argument size is fixed!
+
+	ID3D11Buffer* buffer;
+
+	ID3D11UnorderedAccessView* uav;
+
+	auto& device = *DX11Graphics::GetInstance().GetDevice();
+
+	THROW_ON_FAIL(::MakeIndirectArgBuffer(device, 
+										  static_cast<unsigned int>(args.argument_count), 
+										  &buffer, 
+										  &uav));
+
+	COM_GUARD(buffer);	// Not needed anymore
+
+	unordered_access_view_ = COMMove(&uav);
+
 }
 
 ///////////////////////////////// DX11 SCRATCH STRUCTURED ARRAY ////////////////////////////////////

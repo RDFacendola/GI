@@ -791,6 +791,100 @@ HRESULT gi_lib::dx11::MakeStructuredBuffer(ID3D11Device& device, unsigned int el
 
 }
 
+HRESULT gi_lib::dx11::MakeAppendBuffer(ID3D11Device & device, unsigned int element_count, unsigned int element_size, ID3D11Buffer ** buffer, ID3D11ShaderResourceView ** shader_resource_view, ID3D11UnorderedAccessView ** unordered_access_view){
+
+	D3D11_BUFFER_DESC buffer_desc;
+
+	buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+
+	buffer_desc.ByteWidth = element_size * element_count;
+
+	buffer_desc.BindFlags = (shader_resource_view ? D3D11_BIND_SHADER_RESOURCE : 0) |
+							(unordered_access_view ? D3D11_BIND_UNORDERED_ACCESS : 0);
+
+	buffer_desc.CPUAccessFlags = 0;
+
+	buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+
+	buffer_desc.StructureByteStride = element_size;
+
+	// Transaction: either all the resources are created, or none.
+
+	ID3D11Buffer* structured = nullptr;
+	ID3D11ShaderResourceView* srv = nullptr;
+	ID3D11UnorderedAccessView* uav = nullptr;
+
+	auto guard = make_scope_guard([&structured, &srv, &uav]{
+
+		if (structured)		structured->Release();
+		if (srv)			srv->Release();
+		if (uav)			uav->Release();
+
+	});
+
+	RETURN_ON_FAIL(device.CreateBuffer(&buffer_desc,
+									   nullptr,
+									   &structured));
+
+	if (shader_resource_view){
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC desc;
+
+		ZeroMemory(&desc, sizeof(desc));
+
+		desc.Format = DXGI_FORMAT_UNKNOWN;
+		desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+
+		desc.Buffer.FirstElement = 0;
+		desc.Buffer.NumElements = element_count;
+		
+		RETURN_ON_FAIL(device.CreateShaderResourceView(structured,
+													   &desc,
+													   &srv));
+
+	}
+
+	if (unordered_access_view){
+
+		D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
+	
+		ZeroMemory(&desc, sizeof(desc));
+
+		desc.Format = DXGI_FORMAT_UNKNOWN;
+		desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+
+		desc.Buffer.FirstElement = 0;
+		desc.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_APPEND;
+		desc.Buffer.NumElements = element_count;
+
+		RETURN_ON_FAIL(device.CreateUnorderedAccessView(structured,
+														&desc,
+														&uav));
+		
+	}
+
+	// Commit
+
+	*buffer = structured;
+
+	if (shader_resource_view){
+
+		*shader_resource_view = srv;
+
+	}
+
+	if (unordered_access_view){
+
+		*unordered_access_view = uav;
+
+	}
+
+	guard.Dismiss();
+
+	return S_OK;
+
+}
+
 HRESULT gi_lib::dx11::MakeStagingBuffer(ID3D11Device& device, unsigned int element_count, unsigned int element_size, bool read_only, ID3D11Buffer** buffer) {
 
 	D3D11_BUFFER_DESC buffer_desc;
@@ -813,6 +907,65 @@ HRESULT gi_lib::dx11::MakeStagingBuffer(ID3D11Device& device, unsigned int eleme
 		
 	return S_OK;
 
+}
+
+HRESULT gi_lib::dx11::MakeIndirectArgBuffer(ID3D11Device& device, unsigned int arguments, ID3D11Buffer** buffer, ID3D11UnorderedAccessView** unordered_access_view) {
+
+	D3D11_BUFFER_DESC buffer_desc;
+
+	buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+	buffer_desc.ByteWidth = sizeof(unsigned int) * arguments;
+	buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS ;
+	buffer_desc.CPUAccessFlags = 0;
+	buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS;
+	buffer_desc.StructureByteStride = sizeof(unsigned int);					// Should be useless anyway
+
+	// Transaction: either all the resources are created, or none.
+
+	ID3D11Buffer* buff = nullptr;
+	ID3D11UnorderedAccessView* uav = nullptr;
+
+	auto guard = make_scope_guard([&buff, &uav]{
+
+		if (buff)		buff->Release();
+		if (uav)		uav->Release();
+
+	});
+
+	RETURN_ON_FAIL(device.CreateBuffer(&buffer_desc,
+									   nullptr,
+									   &buff));
+
+	if (unordered_access_view){
+
+		D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
+
+		desc.Format = DXGI_FORMAT_R32_UINT;
+		desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+		desc.Buffer.FirstElement = 0;
+		desc.Buffer.Flags = 0;
+		desc.Buffer.NumElements = arguments;
+
+		RETURN_ON_FAIL(device.CreateUnorderedAccessView(buff,
+														&desc,
+														&uav));
+		
+	}
+
+	// Commit
+
+	*buffer = buff;
+
+	if (unordered_access_view){
+
+		*unordered_access_view = uav;
+
+	}
+
+	guard.Dismiss();
+
+	return S_OK;
+	
 }
 
 HRESULT gi_lib::dx11::MakeSampler(ID3D11Device& device, D3D11_TEXTURE_ADDRESS_MODE address_mode, D3D11_FILTER texture_filtering, unsigned int anisotropy_level, Vector4f border_color, ID3D11SamplerState** sampler){

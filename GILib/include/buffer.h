@@ -89,7 +89,17 @@ namespace gi_lib {
 
 			NO_CACHE;
 
-			size_t element_count;			///< \brief Number of element inside the buffer.
+			size_t element_count;			///< \brief Number of elements inside the buffer.
+
+			size_t element_size;			///< \brief Size of each element in bytes.
+
+		};
+
+		struct CreateAppendBuffer {
+
+			NO_CACHE;
+
+			size_t max_count;				///< \brief Maximum number of elements inside the buffer.
 
 			size_t element_size;			///< \brief Size of each element in bytes.
 

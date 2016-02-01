@@ -196,10 +196,25 @@ namespace gi_lib{
 
 		public:
 			
+			/// \brief Describes a structured buffer that can be used to dispatch Indirect DirectX11 calls.
+			struct CreateDrawIndirectArguments {
+
+				size_t argument_count;		///< \brief Number of arguments inside the buffer.
+
+			};
+
 			/// \brief Create a new general-purpose structured array.
 			/// \param args Contains explicit information about the structured array to create.
 			DX11GPStructuredArray(const IGPStructuredArray::FromElementSize& args);
 			
+			/// \brief Create a new general-purpose structured append/consume array.
+			/// \param args Contains explicit information about the structured array to create.
+			DX11GPStructuredArray(const IGPStructuredArray::CreateAppendBuffer& args);
+
+			/// \brief Create a new general-purpose structured buffer that can be used to dispatch Indirect DirectX11 calls.
+			/// \param args Contains explicit information about the structured array to create.
+			DX11GPStructuredArray(const CreateDrawIndirectArguments& args);
+
 			virtual size_t GetCount() const override;
 
 			virtual size_t GetElementSize() const override;
@@ -474,6 +489,8 @@ namespace gi_lib{
 		//////////////////////////////// DIRECTX11 GP STRUCTURED ARRAY ///////////////////////////////
 
 		INSTANTIABLE(IGPStructuredArray, DX11GPStructuredArray, IGPStructuredArray::FromElementSize);
+
+		INSTANTIABLE(IGPStructuredArray, DX11GPStructuredArray, IGPStructuredArray::CreateAppendBuffer);
 
 		inline size_t DX11GPStructuredArray::GetCount() const {
 
