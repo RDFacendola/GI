@@ -17,7 +17,9 @@
 #include "windows\win_os.h"
 
 namespace gi_lib {
-	
+
+	class ITexture2D;
+
 	namespace dx11 {
 
 		class DX11Computation;
@@ -48,6 +50,10 @@ namespace gi_lib {
 			/// \brief Update the voxel structure.
 			void Update(const FrameInfo& frame_info);
 
+			/// \brief Draw the voxel structure. Debug function.
+			/// \param output Surface the structure will be drawn onto.
+			ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image);
+
 			/// \brief Get the total grid size.
 			float GetGridSize() const;
 
@@ -75,6 +81,16 @@ namespace gi_lib {
 			unsigned int voxel_resolution_;										///< \brief Amount of voxels along each axis for each cascade. Must be a power of 2.
 
 			unsigned int cascades_;												///< \brief Number of cascades inside the voxel clipmap 3D.
+
+			// Debug stuff for voxel drawing - We don't care about performances here, it's debug stuff :)
+
+			ObjectPtr<DX11GPStructuredArray> voxel_draw_indirect_args_;			///< \brief Buffer containing the argument buffer used to dispatch the DrawInstancedIndirect call
+																				///			Used to dispatch a DrawIndexedInstancedIndirect
+
+			ObjectPtr<DX11GPStructuredArray> voxel_append_buffer_;				///< \brief Append buffer containing the debug voxel info (namely their center and their size).
+
+			ObjectPtr<DX11Computation> append_voxel_info_;						///< \brief Compute shader used to append voxel info inside the voxel append buffer.
+
 
 		};
 

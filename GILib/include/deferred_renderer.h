@@ -75,6 +75,9 @@ namespace gi_lib{
 		/// \brief Enable or disable the global illumination.
 		virtual void EnableGlobalIllumination(bool enable = true) = 0;
 
+		/// \brief Overlay the voxel structure on top of a given image.
+		virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image) = 0;
+
 	private:
 
 		Scene& scene_;		///< \brief Scene this render refers to.

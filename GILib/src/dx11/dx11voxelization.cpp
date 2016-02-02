@@ -5,6 +5,8 @@
 #include "dx11/dx11graphics.h"
 #include "dx11/dx11gpgpu.h"
 #include "dx11/dx11mesh.h"
+#include "dx11/dx11texture.h"
+
 #include "scene.h"
 
 using namespace ::std;
@@ -39,20 +41,50 @@ namespace {
 
 DX11Voxelization::DX11Voxelization(float voxel_size, unsigned int voxel_resolution, unsigned int cascades) {
 
+	bool check;
+	
+	auto&& app = Application::GetInstance();
+
+	auto&& resources = DX11Resources::GetInstance();
+
+	auto&& device = *DX11Graphics::GetInstance().GetDevice();
+	
+	// Shared
+
+	voxel_parameters_ = new DX11StructuredBuffer(sizeof(VoxelParameters));
+
+	// Voxel drawing
+
+	static const size_t kDrawIndexedInstancedArguments = 5;
+
+	voxel_draw_indirect_args_ = new DX11GPStructuredArray(DX11GPStructuredArray::CreateDrawIndirectArguments{ kDrawIndexedInstancedArguments });
+	
+	append_voxel_info_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\append_voxels.hlsl" });
+
+	check = append_voxel_info_->SetOutput("gIndirectArguments",
+										  ObjectPtr<IGPStructuredArray>(voxel_draw_indirect_args_));
+	
+	check = append_voxel_info_->SetInput("Parameters",
+										 ObjectPtr<IStructuredBuffer>(voxel_parameters_));
+
+	// Voxelization
+
 	voxel_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\voxel.hlsl" });
 
 	per_object_ = new DX11StructuredBuffer(sizeof(VSPerObject));
-
-	voxel_parameters_ = new DX11StructuredBuffer(sizeof(VoxelParameters));
 
 	SetVoxelSize(voxel_size);
 
 	SetVoxelResolution(voxel_resolution,
 					   cascades);
 	
-	auto&& device = *DX11Graphics::GetInstance().GetDevice();
+	check = voxel_material_->SetInput("PerObject",
+									  ObjectPtr<IStructuredBuffer>(per_object_));
 
-	// Create the depth stencil state - No depth test
+	check = voxel_material_->SetInput("Parameters",
+									  ObjectPtr<IStructuredBuffer>(voxel_parameters_));
+	
+	// Depth stencil state - No depth test
 
 	D3D11_DEPTH_STENCIL_DESC depth_state_desc;
 
@@ -68,7 +100,7 @@ DX11Voxelization::DX11Voxelization(float voxel_size, unsigned int voxel_resoluti
 
 	depth_stencil_state_ << &depth_state;
 	
-	// Create the raster state - No back-face culling
+	// Rasterizer state - No back-face culling
 
 	D3D11_RASTERIZER_DESC rasterizer_state_desc;
 
@@ -89,17 +121,7 @@ DX11Voxelization::DX11Voxelization(float voxel_size, unsigned int voxel_resoluti
 											   &rasterizer_state));
 
 	rasterizer_state_ << &rasterizer_state;
-
-	// One-time setup
 	
-	bool check;
-
-	check = voxel_material_->SetInput("PerObject",
-									  ObjectPtr<IStructuredBuffer>(per_object_));
-
-	check = voxel_material_->SetInput("Parameters",
-									  ObjectPtr<IStructuredBuffer>(voxel_parameters_));
-
 }
 
 void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigned int cascades) {
@@ -117,6 +139,18 @@ void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigne
 
 	voxel_address_table_ = new DX11GPStructuredArray(IGPStructuredArray::FromElementSize{ static_cast<unsigned int>(voxel_count), sizeof(unsigned int)});
 
+	// Resize the debug append buffer
+
+	static const unsigned int kVoxelInfoSize = 12 + 4;		// 3 floats for the center and 1 for the size.
+
+	// voxel_resolution_ * voxel_resolution_ * (1 + cascades_);	// Directly proportional to the surface of the scene, which is voxel resolution square (for each cascade). It's just an heuristic. Some cases may need more voxels than this...
+
+	// Consider that bigger cascades have a greater chance of containing voxels.
+
+	unsigned int voxel_info_count = voxel_count;			// Theoretical maximum
+
+	voxel_append_buffer_ = new DX11GPStructuredArray(IGPStructuredArray::CreateAppendBuffer{ voxel_info_count, kVoxelInfoSize });
+
 	// Create the proper render target 
 
 	voxel_render_target_ = new DX11RenderTarget(IRenderTarget::FromDescription{ voxel_resolution, 
@@ -129,6 +163,13 @@ void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigne
 	check = voxel_material_->SetOutput("gVoxelAddressTable",
 									   ObjectPtr<IGPStructuredArray>(voxel_address_table_));
 
+	check = append_voxel_info_->SetInput("gVoxelAddressTable",
+										  ObjectPtr<IGPStructuredArray>(voxel_address_table_));
+
+	check = append_voxel_info_->SetOutput("gVoxelAppendBuffer",
+										  ObjectPtr<IGPStructuredArray>(voxel_append_buffer_),
+										  false);														// Reset the initial count whenever the UAV is bound
+	
 	auto parameters = voxel_parameters_->Lock<VoxelParameters>();
 	
 	parameters->cascades_ = cascades_;
@@ -247,5 +288,27 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 	voxel_material_->Unbind(device_context, voxel_render_target_);
 
 	graphics.PopEvent();
+
+}
+
+ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& image) {
+	
+
+	auto& graphics = DX11Graphics::GetInstance();
+
+	auto& device_context = *graphics.GetImmediateContext();
+
+	// Accumulate from the voxel address table inside the append buffer
+
+	graphics.PushEvent(L"Voxel overlay");
+
+	append_voxel_info_->Dispatch(device_context, 
+								 static_cast<unsigned int>(voxel_address_table_->GetCount()), 
+								 1, 
+								 1);
+
+	graphics.PopEvent();
+
+	return image;
 
 }

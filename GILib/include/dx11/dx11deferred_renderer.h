@@ -95,6 +95,8 @@ namespace gi_lib{
 			virtual ObjectPtr<ITexture2D> Draw(const Time& time, unsigned int width, unsigned int height) override;
 
 			virtual void EnableGlobalIllumination(bool enable /* = true */) override;
+			
+			virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image) override;
 
 		private:
 
@@ -178,6 +180,13 @@ namespace gi_lib{
 			enable_global_illumination_ = enable;
 
 		}
+
+		inline ObjectPtr<ITexture2D> DX11DeferredRenderer::DrawVoxels(const ObjectPtr<ITexture2D>& image) {
+
+			return voxelization_->DrawVoxels(image);
+
+		}
+
 	}
 
 }

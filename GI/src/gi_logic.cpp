@@ -325,20 +325,30 @@ void GILogic::Update(const Time & time){
 
 	}
 
+	// Render the next frame
+
 	auto next_frame = deferred_renderer_->Draw(time,
 											   output_->GetVideoMode().horizontal_resolution * 1.0f,
 											   output_->GetVideoMode().vertical_resolution * 1.0f);
 
+	// Post processing
+
 	if (enable_postprocess_) {
 
-		output_->Display(postprocess_->Execute(next_frame, 
-											   time));
+		next_frame = postprocess_->Execute(next_frame, time);
 
 	}
-	else {
+
+	// Debug draw after post processing. We don't want to tonemap the debug info, don't we?
+
+	if (enable_global_illumination_) {
+
+		next_frame = deferred_renderer_->DrawVoxels(next_frame);
+
+	}
 	
-		output_->Display(next_frame);
+	// Display the image at last
 
-	}
+	output_->Display(next_frame);
 
 }
