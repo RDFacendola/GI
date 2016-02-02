@@ -71,6 +71,8 @@ DX11Voxelization::DX11Voxelization(float voxel_size, unsigned int voxel_resoluti
 
 	voxel_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\voxel.hlsl" });
 
+	clear_voxel_address_table_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\common\\clear_uint.hlsl" });
+
 	per_object_ = new DX11StructuredBuffer(sizeof(VSPerObject));
 
 	SetVoxelSize(voxel_size);
@@ -143,11 +145,9 @@ void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigne
 
 	static const unsigned int kVoxelInfoSize = 12 + 4;		// 3 floats for the center and 1 for the size.
 
-	// voxel_resolution_ * voxel_resolution_ * (1 + cascades_);	// Directly proportional to the surface of the scene, which is voxel resolution square (for each cascade). It's just an heuristic. Some cases may need more voxels than this...
-
 	// Consider that bigger cascades have a greater chance of containing voxels.
 
-	unsigned int voxel_info_count = voxel_count;			// Theoretical maximum
+	unsigned int voxel_info_count = voxel_resolution_ * voxel_resolution_ * (1 + cascades_ * 10);		// Random heuristic
 
 	voxel_append_buffer_ = new DX11GPStructuredArray(IGPStructuredArray::CreateAppendBuffer{ voxel_info_count, kVoxelInfoSize });
 
@@ -170,6 +170,9 @@ void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigne
 										  ObjectPtr<IGPStructuredArray>(voxel_append_buffer_),
 										  false);														// Reset the initial count whenever the UAV is bound
 	
+	check = clear_voxel_address_table_->SetOutput("gBuffer",
+												  ObjectPtr<IGPStructuredArray>(voxel_address_table_));
+
 	auto parameters = voxel_parameters_->Lock<VoxelParameters>();
 	
 	parameters->cascades_ = cascades_;
@@ -206,8 +209,17 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 	auto& device_context = *graphics.GetImmediateContext();
 
 	graphics.PushEvent(L"Dynamic Voxelization");
+		
+	// Clear the voxel address table first
 
-	// TODO: Clear the Voxel Address Table!!!
+	graphics.PushEvent(L"Clear");
+
+	clear_voxel_address_table_->Dispatch(device_context,
+										 static_cast<unsigned int>(voxel_address_table_->GetCount()),
+										 1,
+										 1);
+	
+	graphics.PopEvent();
 
 	// Setup - The material is shared among all the objects
 		

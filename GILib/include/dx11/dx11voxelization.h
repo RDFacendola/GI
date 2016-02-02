@@ -64,6 +64,8 @@ namespace gi_lib {
 			ObjectPtr<DX11GPStructuredArray> voxel_address_table_;				///< \brief This structure contains the address of each voxel inside the 3D texture. 
 																				///			An address equal to 0 means that the voxel is not present at the specified location.
 			
+			ObjectPtr<DX11Computation> clear_voxel_address_table_;				///< \brief Compute shader used to clear the voxel address table.
+
 			ObjectPtr<DX11StructuredBuffer> per_object_;						///< \brief Per-object constant buffer.
 
 			ObjectPtr<DX11StructuredBuffer> voxel_parameters_;					///< \brief Constant parameters for voxelization.

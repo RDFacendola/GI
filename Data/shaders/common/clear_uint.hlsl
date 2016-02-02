@@ -2,7 +2,7 @@
 
 #include "color.hlsl"
 
-#define N 16
+#define N 256
 #define TOTAL_THREADS (N)
 
 RWStructuredBuffer<uint> gBuffer;			///< \brief Buffer to clear
