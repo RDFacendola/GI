@@ -56,6 +56,8 @@ namespace{
 
 DX11Mesh::DX11Mesh(const FromVertices<VertexFormatNormalTextured>& bundle){
 
+	// TODO: Remove duplicate code
+
 	name_ = L"Mesh";
 	subset_names_.resize(bundle.subsets.size());
 
@@ -111,6 +113,67 @@ DX11Mesh::DX11Mesh(const FromVertices<VertexFormatNormalTextured>& bundle){
 	bounding_box_ = VerticesToBounds(bundle.vertices);
 
 }
+
+DX11Mesh::DX11Mesh(const FromVertices<VertexFormatPosition>& bundle) {
+
+	// TODO: Remove duplicate code
+
+	name_ = L"Mesh";
+	subset_names_.resize(bundle.subsets.size());
+
+	auto& device = *DX11Graphics::GetInstance().GetDevice();
+
+	// Normal, textured mesh.
+
+	size_t vb_size = bundle.vertices.size() * sizeof(VertexFormatPosition);
+	size_t ib_size = bundle.indices.size() * sizeof(unsigned int);
+	
+	ID3D11Buffer* buffer;
+	
+	// Vertices
+
+	THROW_ON_FAIL(MakeVertexBuffer(device,
+								   &(bundle.vertices[0]),
+								   vb_size,
+								   &buffer));
+
+	vertex_buffer_ << &buffer;
+
+	// Indices
+
+	if (bundle.indices.size() > 0){
+
+		THROW_ON_FAIL(MakeIndexBuffer(device, 
+									  &(bundle.indices[0]), 
+									  ib_size,
+									  &buffer));
+	
+		index_buffer_ << &buffer;
+
+		polygon_count_ = bundle.indices.size() / 3;
+
+	}
+	else{
+
+		polygon_count_ = bundle.vertices.size() / 3;
+
+	}
+
+	subsets_ = bundle.subsets;
+
+	flags_.resize(subsets_.size());
+
+	std::fill(flags_.begin(), flags_.end(), MeshFlags::kNone);
+
+	vertex_count_ = bundle.vertices.size();
+	LOD_count_ = 1;
+	size_ = vb_size + ib_size;
+	vertex_stride_ = sizeof(VertexFormatPosition);
+
+	bounding_box_ = VerticesToBounds(bundle.vertices);
+
+}
+
 
 void DX11Mesh::Bind(ID3D11DeviceContext& context, bool tessellable){
 

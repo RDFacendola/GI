@@ -33,6 +33,13 @@ namespace gi_lib{
 
 	};
 
+	/// \brief The vertex declares the position only
+	struct VertexFormatPosition {
+
+		Vector3f position;			///< \brief Position of the vertex
+
+	};
+
 	/// \brief Subset of a mesh.
 	struct MeshSubset{
 

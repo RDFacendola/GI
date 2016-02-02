@@ -32,6 +32,11 @@ namespace gi_lib{
 			/// \param bundle Bundle used to create the mesh.
 			DX11Mesh(const FromVertices<VertexFormatNormalTextured>& args);
 
+			/// \brief Create a new DirectX11 mesh.
+			/// \param device The device used to load the graphical resources.
+			/// \param bundle Bundle used to create the mesh.
+			DX11Mesh(const FromVertices<VertexFormatPosition>& args);
+
 			virtual size_t GetSize() const override;
 
 			virtual size_t GetVertexCount() const override;
