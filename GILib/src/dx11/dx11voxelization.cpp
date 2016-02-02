@@ -166,6 +166,8 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 	graphics.PushEvent(L"Dynamic Voxelization");
 
+	// TODO: Clear the Voxel Address Table!!!
+
 	// Setup - The material is shared among all the objects
 		
 	auto& dx_utils = DX11Utils::GetInstance();

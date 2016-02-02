@@ -39,7 +39,7 @@ struct GSOut {
 
 	unsigned int projection_plane : ProjectionPlane;	// Projection plane. 0: (Right) ZY(-X), 1: (Above) XZ(-Y), 2: (Front) XY(Z)
 
-	unsigned int cascade : Cascade;						// Cascade the voxel is into.
+	unsigned int cascade : Cascade;						// Voxel cascade index.
 
 };
 
@@ -158,7 +158,7 @@ float4 PSMain(GSOut input) : SV_Target0{
 
 	}
 	
-	input.position_ps.xyz *= pow(2.0f, input.cascade);				// Scale up the primitive
+	input.position_ps.xyz *= (1 << input.cascade);					// Scale up the primitive
 
 	input.position_ps.xy = input.position_ps.xy * 0.5f + 0.5f;		// Coordinates in the range [0;1]
 
