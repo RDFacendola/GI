@@ -73,7 +73,7 @@ namespace gi_lib{
 
 			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture2DArray>& gp_texture_2D_array) override;
 
-			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) override;
+			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array, bool keep_initial_count = true) override;
 
 			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IScratchStructuredArray>& scratch_structured_array) override;
 			
@@ -150,10 +150,11 @@ namespace gi_lib{
 
 		}
 
-		inline bool DX11Computation::SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) {
+		inline bool DX11Computation::SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array, bool keep_initial_count) {
 
 			return shader_composite_->SetUnorderedAccess(tag,
-														 resource_cast(gp_structured_array));
+														 resource_cast(gp_structured_array),
+														 keep_initial_count);
 
 		}
 

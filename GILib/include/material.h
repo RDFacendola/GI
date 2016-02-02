@@ -81,8 +81,9 @@ namespace gi_lib{
 		/// The GPU has both read and write permissions.
 		/// \param tag Tag of the input/output scratch structured array to set.
 		/// \param scratch_structured_array Pointer to the scratch structured array to bind.
+		/// \param keep_initial_count Whether the initial count of the buffer should be kept. This has a meaning only if the structured array is an Append/Consume buffer.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) = 0;
+		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array, bool keep_initial_count = true) = 0;
 
 		/// \brief Create a new copy of this material.
 		/// Use this material to create a new material instance which shares common states with other instances.

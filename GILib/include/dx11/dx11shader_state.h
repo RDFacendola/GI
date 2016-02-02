@@ -70,7 +70,7 @@ namespace gi_lib{
 			/// \brief Set an unordered access view for this shader.
 			/// \param slot Index of the slot where the view will be bound.
 			/// \param unordered_access_view The view to bind.
-			void SetUnorderedAccessView(unsigned int slot, const UnorderedAccessView& unordered_access_view);
+			void SetUnorderedAccessView(unsigned int slot, const UnorderedAccessView& unordered_access_view, bool keep_initial_count);
 
 			/// \brief Set a constant buffer for this shader.
 			/// \param slot Index of the slot where the buffer will be bound.
@@ -105,6 +105,8 @@ namespace gi_lib{
 			std::vector<COMPtr<ID3D11ShaderResourceView>> shader_resource_views_;		///< \brief List of shader resource views.
 
 			std::vector<COMPtr<ID3D11UnorderedAccessView>> unordered_access_views_;		///< \brief List of unordered access views.
+
+			std::vector<unsigned int> uav_initial_counts_;								///< \brief Initial count of the UAV. Used for Append/Consume buffers.
 
 			std::vector<COMPtr<ID3D11Buffer>> constant_buffers_;						///< \brief List of constant buffers.
 
@@ -193,6 +195,11 @@ namespace gi_lib{
 			/// \brief Set an unordered access view for this shader.
 			/// \param unordered_access_view The view to bind.
 			void operator()(const TValue& unordered_access_view);
+
+			/// \brief Set an unordered access view for this shader.
+			/// \param unordered_access_view The view to bind.
+			/// \param keep_initial_count Whether the initial count of an Append/Consume buffer should be preserved or not.
+			void operator()(const TValue& unordered_access_view, bool keep_initial_count);
 
 		private:
 
@@ -323,7 +330,7 @@ namespace gi_lib{
 		
 			/// \brief Set the value of a named unordered access view.
 			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
-			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPStructuredArray>& gp_structured_array);
+			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPStructuredArray>& gp_structured_array, bool keep_initial_count);
 
 			/// \brief Set the value of a named unordered access view.
 			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
@@ -407,7 +414,7 @@ namespace gi_lib{
 		/// \param context Context the UAVs will be bound to.
 		/// \param UAVs Array containing the unordered access views.
 		template <typename TShader>
-		void SetUnorderedAccess(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs);
+		void SetUnorderedAccess(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, const std::vector<unsigned int>& initial_count);
 
 		/// \brief Bind some unordered access views to a render context.
 		/// \param start_slot Slot where the first UAV will be bound to.
@@ -415,7 +422,7 @@ namespace gi_lib{
 		/// \param UAVs Array containing the unordered access views.
 		/// \param count Number of resources.
 		template <typename TShader>
-		void SetUnorderedAccess(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, size_t count);
+		void SetUnorderedAccess(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, const std::vector<unsigned int>& initial_count, size_t count);
 				
 		//////////////////////////////// BASE SHADER STATE ///////////////////////////////////////
 
@@ -426,6 +433,8 @@ namespace gi_lib{
 			unordered_access_views_.resize(reflection->unordered_access_views.size());
 			constant_buffers_.resize(reflection->buffers.size());
 			samplers_.resize(reflection->samplers.size());
+
+			uav_initial_counts_.resize(unordered_access_views_.size());
 
 			srv_resources_.resize(shader_resource_views_.size());
 			uav_resources_.resize(unordered_access_views_.size());
@@ -454,9 +463,11 @@ namespace gi_lib{
 
 		}
 
-		inline void BaseShaderState::SetUnorderedAccessView(unsigned int slot, const UnorderedAccessView& unordered_access_view){
+		inline void BaseShaderState::SetUnorderedAccessView(unsigned int slot, const UnorderedAccessView& unordered_access_view, bool keep_initial_count){
 
 			unordered_access_views_[slot] = unordered_access_view.GetUnorderedAccessView();
+
+			uav_initial_counts_[slot] = keep_initial_count ? -1 : 0;	// -1 stands for "keep the current count".
 
 			uav_resources_[slot] = unordered_access_view;
 
@@ -502,7 +513,8 @@ namespace gi_lib{
 
 			SetUnorderedAccess<TShader>(context,
 										0,
-										unordered_access_views_);
+										unordered_access_views_,
+										uav_initial_counts_);
 
 			SetConstantBuffers<TShader>(context,
 										0,
@@ -522,6 +534,8 @@ namespace gi_lib{
 			static vector<COMPtr<ID3D11Buffer>> null_buffers(D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT);
 			static vector<COMPtr<ID3D11SamplerState>> null_samplers(D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT);
 
+			static vector<unsigned int> null_initial_count(D3D11_1_UAV_SLOT_COUNT);
+
 			SetShader<TShader>(context,
 							   nullptr);
 	
@@ -533,6 +547,7 @@ namespace gi_lib{
 			SetUnorderedAccess<TShader>(context,
 										0,
 										null_uav,
+										null_initial_count,
 										unordered_access_views_.size());
 
 			SetConstantBuffers<TShader>(context,
@@ -576,7 +591,16 @@ namespace gi_lib{
 		inline void UAVSetter::operator()(const TValue& unordered_access_view){
 
 			shader_state_->SetUnorderedAccessView(slot_,
-												  unordered_access_view);
+												  unordered_access_view,
+												  true);						// Whatever
+
+		}
+
+		inline void UAVSetter::operator()(const TValue& unordered_access_view, bool keep_initial_count){
+
+			shader_state_->SetUnorderedAccessView(slot_,
+												  unordered_access_view,
+												  keep_initial_count);
 
 		}
 
@@ -991,17 +1015,18 @@ namespace gi_lib{
 		//////////////////////////////// SET SHADER UAV ///////////////////////////////////////
 
 		template <typename TShader>
-		inline void SetUnorderedAccess(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs){
+		inline void SetUnorderedAccess(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, const std::vector<unsigned int>& initial_count){
 
 			SetUnorderedAccess<TShader>(context,
 										start_slot,
 										UAVs,
+										initial_count,
 										UAVs.size());
 
 		}
 
 		template <typename TShader>
-		inline void SetUnorderedAccess<TShader>(ID3D11DeviceContext&, size_t, const std::vector<COMPtr<ID3D11UnorderedAccessView>>&, size_t){
+		inline void SetUnorderedAccess<TShader>(ID3D11DeviceContext&, size_t, const std::vector<COMPtr<ID3D11UnorderedAccessView>>&, const std::vector<unsigned int>&, size_t){
 		
 			// Shaders other than ComputeShader have a shared UAV pool that must be bound at the same time as the render target. 
 			
@@ -1010,14 +1035,16 @@ namespace gi_lib{
 		}
 		
 		template <>
-		inline void SetUnorderedAccess<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, size_t count){
+		inline void SetUnorderedAccess<ID3D11ComputeShader>(ID3D11DeviceContext& context, size_t start_slot, const std::vector<COMPtr<ID3D11UnorderedAccessView>>& UAVs, const std::vector<unsigned int>& initial_count, size_t count){
 
 			if (count > 0){
+
+				assert(UAVs.size() == initial_count.size());
 
 				context.CSSetUnorderedAccessViews(static_cast<UINT>(start_slot),
 												  static_cast<UINT>(count),
 												  reinterpret_cast<ID3D11UnorderedAccessView* const*>(std::addressof(UAVs[0])),
-												  nullptr);
+												  &initial_count[0]);
 
 			}
 			

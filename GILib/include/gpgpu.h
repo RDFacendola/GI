@@ -86,7 +86,7 @@ namespace gi_lib{
 		/// \param tag Tag of the input/output general-purpose structured array to set.
 		/// \param scratch_structured_array Pointer to the scratch structured array to bind.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
-		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) = 0;
+		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array, bool keep_initial_count = true) = 0;
 
 		/// \brief Set a scratch structured array as input/output for the current computation.
 		/// The GPU has both read and write permissions.

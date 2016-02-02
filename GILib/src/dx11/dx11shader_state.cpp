@@ -173,11 +173,21 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX
 
 }
 
-bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPStructuredArray>& gp_structured_array) {
+bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPStructuredArray>& gp_structured_array, bool keep_initial_count) {
 
-	return SetShaderMember(tag,
-						   gp_structured_array->GetUnorderedAccessView(),
-						   uav_table_);
+	auto&& range = uav_table_.equal_range(tag);
+
+	auto it = range.first;
+
+	while (it != range.second) {
+
+		it->second(gp_structured_array->GetUnorderedAccessView(), keep_initial_count);
+
+		++it;
+
+	}
+
+	return range.first != range.second;
 	
 }
 
