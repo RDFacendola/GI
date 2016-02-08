@@ -55,6 +55,22 @@ namespace {
 
 		}
 		
+		if (input_elements.size() == 0) {
+
+			// Create a dummy layout as 0 element layouts are not supported
+
+			input_element_desc.SemanticName = "ID";
+			input_element_desc.SemanticIndex = 0;
+			input_element_desc.Format = DXGI_FORMAT_R32G32_UINT;
+			input_element_desc.InputSlot = 0;
+			input_element_desc.AlignedByteOffset = 0;
+			input_element_desc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+			input_element_desc.InstanceDataStepRate = 0;
+
+			input_elements.push_back(input_element_desc);
+
+		}
+
 		THROW_ON_FAIL(device.CreateInputLayout(&input_elements[0],
 											   static_cast<unsigned int>(input_elements.size()),
 											   bytecode->GetBufferPointer(),

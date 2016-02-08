@@ -144,9 +144,18 @@ namespace{
 
 		element_reflection.offset = 0;
 
-		for (unsigned int element_index = 0 ; element_index < desc.InputParameters; element_index++){
+		for (unsigned int element_index = 0 ; element_index < desc.InputParameters; ++element_index){
 
 			reflector.GetInputParameterDesc(element_index, &parameter_desc);
+
+			// Ignore generated semantics that could not possibly exist inside the vertex buffer (such as the id of the vertex or the instance)
+
+			if (parameter_desc.SystemValueType == D3D_NAME_VERTEX_ID ||
+				parameter_desc.SystemValueType == D3D_NAME_INSTANCE_ID) {
+
+				continue;
+
+			}
 
 			element_reflection.semantic = parameter_desc.SemanticName;
 			element_reflection.index = parameter_desc.SemanticIndex;
