@@ -96,6 +96,8 @@ namespace gi_lib{
 
 			virtual void EnableGlobalIllumination(bool enable /* = true */) override;
 			
+			Matrix4f GetViewProjectionMatrix(float aspect_ratio) const;
+
 			virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image) override;
 
 		private:

@@ -219,7 +219,7 @@ graphics_(DX11Graphics::GetInstance()){
 
 	// Voxel setup
 
-	voxelization_ = std::make_unique<DX11Voxelization>(50.f, 64, 4);
+	voxelization_ = std::make_unique<DX11Voxelization>(*this, 50.f, 64, 4);
 
 }
 
@@ -231,6 +231,23 @@ DX11DeferredRenderer::~DX11DeferredRenderer(){
 	rasterizer_state_ = nullptr;
 	lighting_ = nullptr;
 	
+}
+
+Matrix4f DX11DeferredRenderer::GetViewProjectionMatrix(float aspect_ratio) const {
+
+	auto main_camera = GetScene().GetMainCamera();
+
+	if (main_camera) {
+
+		return ComputeViewProjectionMatrix(*main_camera, aspect_ratio);
+
+	}
+	else {
+
+		return Matrix4f::Identity();
+
+	}
+
 }
 
 ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int width, unsigned int height){
@@ -263,7 +280,7 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 		frame_info.aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 		frame_info.width = width;
 		frame_info.height = height;
-		frame_info.view_proj_matrix = ComputeViewProjectionMatrix(*main_camera, frame_info.aspect_ratio);
+		frame_info.view_proj_matrix = GetViewProjectionMatrix(frame_info.aspect_ratio);
 		frame_info.time_delta = time.GetDeltaSeconds();
 
 		DrawGBuffer(frame_info);							// Scene -> GBuffer

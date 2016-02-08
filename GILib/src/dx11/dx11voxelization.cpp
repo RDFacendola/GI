@@ -6,8 +6,12 @@
 #include "dx11/dx11gpgpu.h"
 #include "dx11/dx11mesh.h"
 #include "dx11/dx11texture.h"
+#include "dx11/dx11render_target.h"
+
+#include "dx11/fx/dx11fx_transform.h"
 
 #include "scene.h"
+#include "dx11/dx11deferred_renderer.h"
 
 using namespace ::std;
 using namespace ::gi_lib;
@@ -20,6 +24,12 @@ namespace {
 	struct VSPerObject {
 
 		Matrix4f world_;							///< \brief World matrix of the object to voxelize.
+
+	};
+
+	struct VSPerFrame{
+
+		Matrix4f view_projection;							///< \brief View-projection matrix.
 
 	};
 
@@ -39,7 +49,10 @@ namespace {
 
 /////////////////////////////////// DX11 VOXELIZATION ///////////////////////////////////
 
-DX11Voxelization::DX11Voxelization(float voxel_size, unsigned int voxel_resolution, unsigned int cascades) {
+DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_size, unsigned int voxel_resolution, unsigned int cascades) :
+	renderer_(renderer){
+
+	cascades = 0;	// TODO: Remove this
 
 	bool check;
 	
@@ -61,12 +74,25 @@ DX11Voxelization::DX11Voxelization(float voxel_size, unsigned int voxel_resoluti
 	
 	append_voxel_info_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\append_voxels.hlsl" });
 
+	wireframe_voxel_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\draw_voxel.hlsl" });
+
+	per_frame_ = new DX11StructuredBuffer(sizeof(VSPerFrame));
+
+	scaler_ = make_unique<DX11FxScale>(DX11FxScale::Parameters{});
+
 	check = append_voxel_info_->SetOutput("gIndirectArguments",
 										  ObjectPtr<IGPStructuredArray>(voxel_draw_indirect_args_));
 	
 	check = append_voxel_info_->SetInput("Parameters",
 										 ObjectPtr<IStructuredBuffer>(voxel_parameters_));
 
+	check = wireframe_voxel_material_->SetInput("PerFrame",
+												ObjectPtr<IStructuredBuffer>(per_frame_));
+
+	render_target_cache_ = resources.Load<IRenderTargetCache, IRenderTargetCache::Singleton>({});
+
+	BuildVoxelMesh();
+	
 	// Voxelization
 
 	voxel_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\voxel.hlsl" });
@@ -124,6 +150,15 @@ DX11Voxelization::DX11Voxelization(float voxel_size, unsigned int voxel_resoluti
 
 	rasterizer_state_ << &rasterizer_state;
 	
+	// Rasterizer state - Wireframe
+
+	rasterizer_state_desc.FillMode = D3D11_FILL_WIREFRAME;
+	
+	THROW_ON_FAIL(device.CreateRasterizerState(&rasterizer_state_desc,
+											   &rasterizer_state));
+
+	wireframe_rasterizer_state_ << &rasterizer_state;
+
 }
 
 void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigned int cascades) {
@@ -159,6 +194,9 @@ void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigne
 																				false});
 
 	bool check;
+
+	check = wireframe_voxel_material_->SetInput("gVoxelAppendBuffer",
+												ObjectPtr<IGPStructuredArray>(voxel_append_buffer_));
 
 	check = voxel_material_->SetOutput("gVoxelAddressTable",
 									   ObjectPtr<IGPStructuredArray>(voxel_address_table_));
@@ -197,6 +235,45 @@ float DX11Voxelization::GetGridSize() const {
 	float cascade_size = voxel_size_ * voxel_resolution_;			// Size of a single cascade
 
 	return cascade_size * (1 << cascades_);							// Each additional cascade doubles the size of the grid.
+
+}
+
+void DX11Voxelization::BuildVoxelMesh() {
+
+	IStaticMesh::FromVertices<VertexFormatPosition> args;
+
+	// Vertices
+
+	args.vertices.push_back({ Vector3f(-0.5f,  0.5f, -0.5f) });
+	args.vertices.push_back({ Vector3f( 0.5f,  0.5f, -0.5f) });
+	args.vertices.push_back({ Vector3f( 0.5f,  0.5f,  0.5f) });
+	args.vertices.push_back({ Vector3f(-0.5f,  0.5f,  0.5f) });
+
+	args.vertices.push_back({ Vector3f(-0.5f, -0.5f, -0.5f) });
+	args.vertices.push_back({ Vector3f( 0.5f, -0.5f, -0.5f) });
+	args.vertices.push_back({ Vector3f( 0.5f, -0.5f,  0.5f) });
+	args.vertices.push_back({ Vector3f(-0.5f, -0.5f,  0.5f) });
+
+	// Indices
+
+	args.indices.push_back(3);	args.indices.push_back(1);	args.indices.push_back(0);
+	args.indices.push_back(2);	args.indices.push_back(1);	args.indices.push_back(3);
+	args.indices.push_back(6);	args.indices.push_back(4);	args.indices.push_back(5);
+	args.indices.push_back(7);	args.indices.push_back(4);	args.indices.push_back(6);
+	args.indices.push_back(3);	args.indices.push_back(4);	args.indices.push_back(7);
+	args.indices.push_back(0);	args.indices.push_back(4);	args.indices.push_back(3);
+	args.indices.push_back(1);	args.indices.push_back(6);	args.indices.push_back(5);
+	args.indices.push_back(2);	args.indices.push_back(6);	args.indices.push_back(1);
+	args.indices.push_back(0);	args.indices.push_back(5);	args.indices.push_back(4);
+	args.indices.push_back(1);	args.indices.push_back(5);	args.indices.push_back(0);
+	args.indices.push_back(2);	args.indices.push_back(7);	args.indices.push_back(6);
+	args.indices.push_back(3);	args.indices.push_back(7);	args.indices.push_back(2);
+
+	// Subset
+
+	args.subsets.push_back({0, args.indices.size()});
+
+	voxel_mesh_ = new DX11Mesh(args);
 
 }
 
@@ -241,7 +318,7 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 						   std::floorf(grid_center(1) / voxel_size_) * voxel_size_,
 						   std::floorf(grid_center(2) / voxel_size_) * voxel_size_);
 
-	voxel_parameters_->Lock<VoxelParameters>()->center_ = grid_center;
+	voxel_parameters_->Lock<VoxelParameters>()->center_ = Vector3f::Zero(); // grid_center;
 
 	voxel_parameters_->Unlock();
 
@@ -305,22 +382,78 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& image) {
 	
-
 	auto& graphics = DX11Graphics::GetInstance();
 
 	auto& device_context = *graphics.GetImmediateContext();
 
-	// Accumulate from the voxel address table inside the append buffer
+	auto& dx_utils = DX11Utils::GetInstance();
+
+	if (output_) {
+
+		// Discard the previous image.
+		render_target_cache_->PushToCache(ObjectPtr<IRenderTarget>(output_));
+
+	}
+
+	output_ = render_target_cache_->PopFromCache(image->GetWidth(),
+												 image->GetHeight(),
+												 { image->GetFormat() },
+												 false);
 
 	graphics.PushEvent(L"Voxel overlay");
+
+	// Accumulate from the voxel address table inside the append buffer
+
+	graphics.PushEvent(L"Append");
 
 	append_voxel_info_->Dispatch(device_context, 
 								 static_cast<unsigned int>(voxel_address_table_->GetCount()), 
 								 1, 
 								 1);
+	
+	graphics.PopEvent();
+
+	// Dispatch the draw call of the voxelsO
+
+	graphics.PushEvent(L"Draw");
+
+	scaler_->Copy(image,
+				  ObjectPtr<IRenderTarget>(output_));
+
+	dx_utils.PushRasterizerState(device_context, *wireframe_rasterizer_state_);
+
+	dx_utils.PushDepthStencilState(device_context, *depth_stencil_state_);
+
+	per_frame_->Lock<VSPerFrame>()->view_projection = renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight()));
+
+	per_frame_->Unlock();
+
+	wireframe_voxel_material_->Bind(device_context);
+
+	output_->Bind(device_context);
+
+	
+		
+	voxel_mesh_->Bind(device_context);
+
+	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
+												0);
+
+	output_->Unbind(device_context);
+
+	wireframe_voxel_material_->Unbind(device_context);
+
+	dx_utils.PopRasterizerState(device_context);
+
+	dx_utils.PopDepthStencilState(device_context);
 
 	graphics.PopEvent();
 
-	return image;
+	// Done
+
+	graphics.PopEvent();
+	
+	return (*output_)[0];
 
 }
+
