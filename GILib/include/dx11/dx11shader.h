@@ -99,6 +99,19 @@ namespace gi_lib{
 
 		};
 
+		/// \brief Represents a single element of a vertex.
+		struct InputElementReflection {
+
+			std::string semantic;			///< \brief Semantic of the input element.
+
+			unsigned int offset;			///< \brief Offset of the element from the beginning of the vertex, in bytes.
+
+			unsigned int index;				///< \brief Progressive indec, in case the semantic refers to an array of elements.
+			
+			DXGI_FORMAT format;							///< \brief Format of the element.
+
+		};
+
 		/// \brief Additional description of a pixel shader.
 		struct PixelShaderReflection {
 
@@ -115,6 +128,12 @@ namespace gi_lib{
 
 		};
 
+		struct VertexShaderReflection {
+
+			std::vector<InputElementReflection> vertex_input;		///< \brief Elements expected as input of the vertex shader.
+
+		};
+
 		/// \brief Description of a shader.
 		struct ShaderReflection{
 
@@ -128,14 +147,19 @@ namespace gi_lib{
 
 			std::vector<ShaderUAVDesc> unordered_access_views;		///< \brief List of UAV descriptions.
 
+			// Shader-specific reflection
+
 			union{
 
 				PixelShaderReflection pixel_shader;					///< \brief Pixel-shader specific reflection. Valid only if shader_type is "PIXEL_SHADER".
 
 				ComputeShaderReflection compute_shader;				///< \brief Compute-shader specific reflection. Valid only if shader_type is "COMPUTE_SHADER".
 				
+
 			};
 			
+			VertexShaderReflection vertex_shader;				///< \brief Vertex-shader specific reflection. Valid only if shader_type is "VERTEX_SHADER".
+
 		};
 
 		/// \brief Shader type traits.
@@ -276,15 +300,16 @@ namespace gi_lib{
 		/// \param bytecode If the method succeeds, it will contain the compiled bytecode.
 		/// \param error_string If the method fails, it will contain the error string. Optional.
 		template <typename TShader>
-		HRESULT CompileHLSL(const std::string& HLSL, const std::string& source_file, ID3DBlob** bytecode, std::wstring* error_string = nullptr);
+		HRESULT CompileHLSL(const std::string& HLSL, const std::string& source_file, ID3DBlob** bytecode, ShaderReflection* reflection = nullptr, std::wstring* error_string = nullptr);
 
 		/// \brief Compile an HLSL code returning a bytecode.
 		/// \param HLSL HLSL code.
 		/// \param source_file File containing the HLSL code, used to resolve the #include directives.
 		/// \param bytecode If the method succeeds, it will contain the compiled bytecode.
+		/// \param reflection If the method succeeds, it will containg the reflection of the HLSL code.
 		/// \param error_string If the method fails, it will contain the error string. Optional.
-		HRESULT CompileHLSL(const std::string& HLSL, const std::string& source_file, const std::string& entry_point, const std::string& profile, ID3DBlob** bytecode, std::wstring* error_string = nullptr); 
-
+		HRESULT CompileHLSL(const std::string& HLSL, const std::string& source_file, const std::string& entry_point, const std::string& profile, ID3DBlob** bytecode, ShaderReflection* reflection = nullptr, std::wstring* error_string = nullptr);
+				
 	}
 
 }
@@ -292,13 +317,14 @@ namespace gi_lib{
 //////////////////////////////// COMPILE HLSL ///////////////////////////////////////////
 
 template <typename TShader>
-HRESULT gi_lib::dx11::CompileHLSL(const std::string& HLSL, const std::string& source_file, ID3DBlob** bytecode, std::wstring* error_string){
+HRESULT gi_lib::dx11::CompileHLSL(const std::string& HLSL, const std::string& source_file, ID3DBlob** bytecode, ShaderReflection* reflection, std::wstring* error_string){
 
 	return CompileHLSL(HLSL,
 					   source_file,
 					   ShaderTraits<TShader>::entry_point,
 					   ShaderTraits<TShader>::profile,
 					   bytecode,
+					   reflection,
 					   error_string);
 
 }

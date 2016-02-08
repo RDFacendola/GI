@@ -130,6 +130,73 @@ namespace{
 	template <typename TShader>
 	void ReflectShader(ID3D11ShaderReflection&, const D3D11_SHADER_DESC&, ShaderReflection&){}
 	
+	/// \brief Reflect a vertex shader description.
+	template<>
+	void ReflectShader<ID3D11VertexShader>(ID3D11ShaderReflection& reflector, const D3D11_SHADER_DESC& desc, ShaderReflection& reflection) {
+
+		// https://takinginitiative.wordpress.com/2011/12/11/directx-1011-basic-shader-reflection-automatic-input-layout-creation/
+
+		InputElementReflection element_reflection;
+
+		D3D11_SIGNATURE_PARAMETER_DESC parameter_desc;
+		
+		unsigned int previous_size = 0;
+
+		element_reflection.offset = 0;
+
+		for (unsigned int element_index = 0 ; element_index < desc.InputParameters; element_index++){
+
+			reflector.GetInputParameterDesc(element_index, &parameter_desc);
+
+			element_reflection.semantic = parameter_desc.SemanticName;
+			element_reflection.index = parameter_desc.SemanticIndex;
+			element_reflection.offset += previous_size;
+						
+			if (parameter_desc.Mask == 1){			// 0001 - 1 element
+			
+					 if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)		element_reflection.format = DXGI_FORMAT_R32_UINT;
+				else if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)		element_reflection.format = DXGI_FORMAT_R32_SINT;
+				else if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)	element_reflection.format = DXGI_FORMAT_R32_FLOAT;
+
+				previous_size = 4;
+
+			}
+			else if (parameter_desc.Mask <= 3){		// 0011 - 2 elements
+			
+					 if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)		element_reflection.format = DXGI_FORMAT_R32G32_UINT;
+				else if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)		element_reflection.format = DXGI_FORMAT_R32G32_SINT;
+				else if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)	element_reflection.format = DXGI_FORMAT_R32G32_FLOAT;
+
+				previous_size = 8;
+
+			}
+			else if (parameter_desc.Mask <= 7){		// 0111 - 3 elements
+			
+					 if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)		element_reflection.format = DXGI_FORMAT_R32G32B32_UINT;
+				else if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)		element_reflection.format = DXGI_FORMAT_R32G32B32_SINT;
+				else if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)	element_reflection.format = DXGI_FORMAT_R32G32B32_FLOAT;
+
+				previous_size = 12;
+
+			}
+			else if (parameter_desc.Mask <= 15){	// 1111 - 4 elements
+			
+					 if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)		element_reflection.format = DXGI_FORMAT_R32G32B32A32_UINT;
+				else if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)		element_reflection.format = DXGI_FORMAT_R32G32B32A32_SINT;
+				else if (parameter_desc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)	element_reflection.format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+				previous_size = 12;
+
+			}
+
+			// Insert the element inside the layout	
+
+			reflection.vertex_shader.vertex_input.push_back(element_reflection);
+
+		}
+
+	}
+
 	/// \brief Reflect a pixel shader description.
 	template<>
 	void ReflectShader<ID3D11PixelShader>(ID3D11ShaderReflection&, const D3D11_SHADER_DESC& desc, ShaderReflection& reflection) {
@@ -151,7 +218,6 @@ namespace{
 	/// \brief Reflect a shader resources via reflector.
 	/// \param reflector Reflector used to access the description of the shader.
 	/// \param reflection Actual shader reflection to fill. Out.
-	template <typename TShader>
 	void ReflectShaderResources(ID3D11ShaderReflection& reflector, const D3D11_SHADER_DESC& shader_desc, ShaderReflection& reflection){
 
 		D3D11_SHADER_INPUT_BIND_DESC resource_desc;
@@ -234,17 +300,16 @@ namespace{
 		D3D11_SHADER_DESC shader_desc;
 
 		reflector->GetDesc(&shader_desc);
-
-
+		
 		reflection.shader_type = ShaderTraits<TShader>::flag;
 
 		ReflectShader<TShader>(*reflector,
 							   shader_desc,
 							   reflection);
 		
-		ReflectShaderResources<TShader>(*reflector,
-										shader_desc,
-										reflection);
+		ReflectShaderResources(*reflector,
+							   shader_desc,
+							   reflection);
 
 		return S_OK;
 
@@ -258,6 +323,7 @@ namespace{
 		RETURN_ON_FAIL(CompileHLSL<TShader>(HLSL, 
 											source_file, 
 											&bytecode, 
+											reflection,
 											error_string));
 
 		COM_GUARD(bytecode);
@@ -277,13 +343,6 @@ namespace{
 
 		}
 
-		if (reflection){
-
-			RETURN_ON_FAIL(::ReflectShader<TShader>(*bytecode,
-													*reflection));
-
-		}
-
 		if (shader){
 
 			*shader = shader_ptr;
@@ -300,7 +359,7 @@ namespace{
 
 /////////////////// COMPILE HLSL ///////////////////////////
 
-HRESULT gi_lib::dx11::CompileHLSL(const string& HLSL, const string& source_file, const string& entry_point, const string& profile, ID3DBlob** bytecode, wstring* error_string){
+HRESULT gi_lib::dx11::CompileHLSL(const string& HLSL, const string& source_file, const string& entry_point, const string& profile, ID3DBlob** bytecode, ShaderReflection* reflection, wstring* error_string){
 
 #ifdef _DEBUG
 
@@ -319,16 +378,16 @@ HRESULT gi_lib::dx11::CompileHLSL(const string& HLSL, const string& source_file,
 	ID3DBlob * errors;
 
 	auto hr = D3DCompile(HLSL.c_str(),
-							HLSL.length(),
-							source_file.c_str(),
-							shader_macros,
-							D3D_COMPILE_STANDARD_FILE_INCLUDE,
-							entry_point.c_str(),
-							profile.c_str(),
-							compilation_flags,
-							0,
-							bytecode,
-							&errors);
+						 HLSL.length(),
+						 source_file.c_str(),
+						 shader_macros,
+						 D3D_COMPILE_STANDARD_FILE_INCLUDE,
+						 entry_point.c_str(),
+						 profile.c_str(),
+						 compilation_flags,
+						 0,
+						 bytecode,
+						 &errors);
 
 	if (FAILED(hr) &&
 		error_string){
@@ -339,8 +398,54 @@ HRESULT gi_lib::dx11::CompileHLSL(const string& HLSL, const string& source_file,
 
 		*error_string = wstring(err_string.begin(), err_string.end());
 
-	}
+		return hr;
 
+	}
+	
+	if (reflection) {
+
+		// TODO: Not the most clever solution ever.
+
+		auto prefix = profile.substr(0, 2);
+
+		if (prefix == "vs") {
+			
+			RETURN_ON_FAIL(::ReflectShader<ID3D11VertexShader>(**bytecode, *reflection));
+
+		}
+		else if (prefix == "hs") {
+
+			RETURN_ON_FAIL(::ReflectShader<ID3D11PixelShader>(**bytecode, *reflection));
+
+		}
+		else if (prefix == "ds") {
+
+			RETURN_ON_FAIL(::ReflectShader<ID3D11DomainShader>(**bytecode, *reflection));
+
+		}
+		else if (prefix == "gs") {
+
+			RETURN_ON_FAIL(::ReflectShader<ID3D11GeometryShader>(**bytecode, *reflection));
+
+		}
+		else if (prefix == "ps") {
+
+			RETURN_ON_FAIL(::ReflectShader<ID3D11PixelShader>(**bytecode, *reflection));
+
+		}
+		else if (prefix == "cs") {
+
+			RETURN_ON_FAIL(::ReflectShader<ID3D11ComputeShader>(**bytecode, *reflection));
+
+		}
+		else {
+
+			THROW(L"Unsupported profile.");
+
+		}
+
+	}
+	
 	return hr;
 
 }
