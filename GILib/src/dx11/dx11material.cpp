@@ -7,11 +7,65 @@
 #include "windows/win_os.h"
 
 #include "dx11/dx11graphics.h"
+#include "dx11/dx11shader.h"
 
 using namespace ::std;
 using namespace ::gi_lib;
-using namespace ::dx11;
+using namespace ::gi_lib::dx11;
 using namespace ::windows;
+
+namespace {
+
+	COMPtr<ID3D11InputLayout> CreateInputLayout(const string& hlsl, const string& file_name) {
+
+		// Input layout
+
+		ID3D11InputLayout* input_layout;
+		ShaderReflection reflection;
+
+		// The bytecode is needed to validate the input layout. Genius idea... - TODO: Remove this from here
+
+		ID3DBlob* blob;
+		auto&& device = *DX11Graphics::GetInstance().GetDevice();
+
+		CompileHLSL<ID3D11VertexShader>(hlsl,
+										file_name,
+										&blob,
+										&reflection);
+				
+		auto bytecode = COMMove(&blob);
+
+		// Create the input layout
+
+		vector<D3D11_INPUT_ELEMENT_DESC> input_elements;
+		
+		D3D11_INPUT_ELEMENT_DESC input_element_desc;
+
+		for (auto& element : reflection.vertex_shader.vertex_input) {
+
+			input_element_desc.SemanticName = element.semantic.c_str();
+			input_element_desc.SemanticIndex = element.index;
+			input_element_desc.Format = element.format;
+			input_element_desc.InputSlot = 0;
+			input_element_desc.AlignedByteOffset = element.offset;
+			input_element_desc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+			input_element_desc.InstanceDataStepRate = 0;
+
+			input_elements.push_back(input_element_desc);
+
+		}
+		
+		THROW_ON_FAIL(device.CreateInputLayout(&input_elements[0],
+											   static_cast<unsigned int>(input_elements.size()),
+											   bytecode->GetBufferPointer(),
+											   bytecode->GetBufferSize(),
+											   &input_layout));
+
+		return COMMove(&input_layout);
+
+	}
+
+}
 
 //////////////////////////////  MATERIAL //////////////////////////////
 
@@ -41,73 +95,10 @@ shader_composite_(make_unique<ShaderStateComposite>()){
 	shader_composite_->AddShader<ID3D11HullShader>(code, file_name);
 	shader_composite_->AddShader<ID3D11DomainShader>(code, file_name);
 	shader_composite_->AddShader<ID3D11GeometryShader>(code, file_name);
+	
+	// Create the proper input layout
 
-	// Input layout
-
-	ID3D11InputLayout* input_layout;
-
-	// The bytecode is needed to validate the input layout. Genius idea... - TODO: Remove this from here
-
-	ID3DBlob* blob;
-	auto&& device = *DX11Graphics::GetInstance().GetDevice();
-
-	CompileHLSL<ID3D11VertexShader>(code,
-									file_name,
-									&blob);
-
-	auto bytecode = COMMove(&blob);
-
-	static const size_t kInputElements = 5;
-
-	D3D11_INPUT_ELEMENT_DESC input_elements[kInputElements];
-
-	input_elements[0].SemanticName = "SV_Position";
-	input_elements[0].SemanticIndex = 0;
-	input_elements[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	input_elements[0].InputSlot = 0;
-	input_elements[0].AlignedByteOffset = 0;
-	input_elements[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	input_elements[0].InstanceDataStepRate = 0;
-
-	input_elements[1].SemanticName = "NORMAL";
-	input_elements[1].SemanticIndex = 0;
-	input_elements[1].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	input_elements[1].InputSlot = 0;
-	input_elements[1].AlignedByteOffset = 12;
-	input_elements[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	input_elements[1].InstanceDataStepRate = 0;
-
-	input_elements[2].SemanticName = "TEXCOORD";
-	input_elements[2].SemanticIndex = 0;
-	input_elements[2].Format = DXGI_FORMAT_R32G32_FLOAT;
-	input_elements[2].InputSlot = 0;
-	input_elements[2].AlignedByteOffset = 24;
-	input_elements[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	input_elements[2].InstanceDataStepRate = 0;
-
-	input_elements[3].SemanticName = "TANGENT";
-	input_elements[3].SemanticIndex = 0;
-	input_elements[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	input_elements[3].InputSlot = 0;
-	input_elements[3].AlignedByteOffset = 32;
-	input_elements[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	input_elements[3].InstanceDataStepRate = 0;
-
-	input_elements[4].SemanticName = "BINORMAL";
-	input_elements[4].SemanticIndex = 0;
-	input_elements[4].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	input_elements[4].InputSlot = 0;
-	input_elements[4].AlignedByteOffset = 44;
-	input_elements[4].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	input_elements[4].InstanceDataStepRate = 0;
-
-	THROW_ON_FAIL(device.CreateInputLayout(input_elements,
-										   kInputElements,
-										   bytecode->GetBufferPointer(),
-										   bytecode->GetBufferSize(),
-										   &input_layout));
-
-	input_layout_ << &input_layout;
+	input_layout_ = CreateInputLayout(code, file_name);
 
 	// Dismiss
 	rollback.Dismiss();

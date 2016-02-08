@@ -9,9 +9,9 @@ cbuffer PerObject{
 
 };
 
-float4 VSMain(float4 input : SV_Position) : SV_Position{
+float4 VSMain(float3 input : SV_Position) : SV_Position{
 
-	return mul(gWorldViewProj, input);
+	return mul(gWorldViewProj, float4(input, 1));
 
 }
 

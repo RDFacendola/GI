@@ -9,9 +9,9 @@ cbuffer PerObject{
 
 };
 
-float4 VSMain(float4 position : SV_Position) : SV_Position{
+float4 VSMain(float3 position : SV_Position) : SV_Position{
 
-	return mul(gWorldLight, position);
+	return mul(gWorldLight, float4(position, 1));
 
 }
 

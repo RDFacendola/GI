@@ -2,7 +2,7 @@
 
 struct VSIn {
 
-	float4 position : SV_Position;				// Vertex position.
+	float3 position : SV_Position;				// Vertex position.
 
 };
 
@@ -24,7 +24,7 @@ VSOut VSMain(VSIn input){
 
 	VSOut output;
 
-	output.position_ps = mul(gWorldLightProj, input.position);
+	output.position_ps = mul(gWorldLightProj, float4(input.position, 1));
 
 	return output;
 

@@ -4,7 +4,7 @@
 
 struct VSIn{
 
-	float4 position : SV_Position;
+	float3 position : SV_Position;
 	float3 normal : NORMAL;
 	float2 uv: TEXCOORD;
 	float3 tangent  : TANGENT;
@@ -32,7 +32,7 @@ cbuffer PerObject{
 
 void VSMain(VSIn input, out VSOut output){
 
-	output.position_ps = mul(gWorldViewProj, input.position);
+	output.position_ps = mul(gWorldViewProj, float4(input.position, 1));
 
 	output.normal_ws = mul((float3x3)gWorld, (float3)input.normal);
 	output.tangent_ws = mul((float3x3)gWorld, (float3)input.tangent);
