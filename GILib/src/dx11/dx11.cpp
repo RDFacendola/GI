@@ -61,7 +61,13 @@ void DX11Utils::PopDepthStencilState(ID3D11DeviceContext& device_context) {
 
 	device_context.OMSetDepthStencilState(state, 0);
 
-	state->Release();													// Decrease the ref count!
+	if (state) {
+
+		state->Release();													// Decrease the ref count!
+
+	}
+
+	depth_stencil_state_.pop_back();
 
 }
 
@@ -71,8 +77,14 @@ void DX11Utils::PopRasterizerState(ID3D11DeviceContext& device_context) {
 
 	device_context.RSSetState(state);									
 	
-	state->Release();													// Decrease the ref count!
+	if (state) {
+		
+		state->Release();													// Decrease the ref count!
+
+	}
 	
+	rasterizer_state_.pop_back();
+
 }	
 
 /////////////////// METHODS ///////////////////////////
