@@ -93,10 +93,9 @@ DX11GPStructuredArray::DX11GPStructuredArray(const IGPStructuredArray::FromEleme
 										 &srv,
 										 &uav));
 
-	COM_GUARD(buffer);	// Not needed anymore
-
-	shader_resource_view_ = COMMove(&srv);
-	unordered_access_view_ = COMMove(&uav);
+	buffer_ << &buffer;
+	shader_resource_view_ << &srv;
+	unordered_access_view_ << &uav;
 	
 }
 
@@ -118,10 +117,9 @@ DX11GPStructuredArray::DX11GPStructuredArray(const IGPStructuredArray::CreateApp
 									 &srv,
 									 &uav));
 	
-	COM_GUARD(buffer);	// Not needed anymore
-
-	shader_resource_view_ = COMMove(&srv);
-	unordered_access_view_ = COMMove(&uav);
+	buffer_ << &buffer;
+	shader_resource_view_ << &srv;
+	unordered_access_view_ << &uav;
 
 }
 
@@ -140,9 +138,9 @@ DX11GPStructuredArray::DX11GPStructuredArray(const CreateDrawIndirectArguments& 
 										  &buffer, 
 										  &uav));
 
-	COM_GUARD(buffer);	// Not needed anymore
-
-	unordered_access_view_ = COMMove(&uav);
+	buffer_ << &buffer;
+	shader_resource_view_ = nullptr;
+	unordered_access_view_ << &uav;
 
 }
 

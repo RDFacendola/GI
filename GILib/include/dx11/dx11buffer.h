@@ -221,6 +221,9 @@ namespace gi_lib{
 
 			virtual size_t GetSize() const override;
 
+			/// \brief Get the buffer.
+			COMPtr<ID3D11Buffer> GetBuffer();
+
 			/// \brief Get the shader resource view used to bind this buffer to the pipeline.
 			ShaderResourceView GetShaderResourceView();
 
@@ -229,10 +232,12 @@ namespace gi_lib{
 
 		private:
 
+			COMPtr<ID3D11Buffer> buffer_;									///< \brief Pointer to the actual buffer.
+
 			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;		///< \brief Pointer to the unordered access view of the structured array.
 
 			COMPtr<ID3D11ShaderResourceView> shader_resource_view_;			///< \brief Pointer to the shader resource view of the array.
-
+			
 			size_t element_size_;											///< \brief Size of each element in bytes.
 
 			size_t element_count_;											///< \brief Number of elements inside the array.
@@ -507,6 +512,12 @@ namespace gi_lib{
 		inline size_t DX11GPStructuredArray::GetSize() const {
 
 			return element_count_ * element_size_;
+
+		}
+
+		inline COMPtr<ID3D11Buffer> DX11GPStructuredArray::GetBuffer() {
+
+			return buffer_;
 
 		}
 
