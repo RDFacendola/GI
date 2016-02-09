@@ -40,7 +40,7 @@ struct VSIn {
 float4 VSMain(VSIn input) : SV_Position{
 	
 	VoxelInfo info = gVoxelAppendBuffer[input.instance_id];
-
+	
 	return mul(gViewProjection, float4((input.position.xyz * info.size) + info.center, 1));
 	
 }

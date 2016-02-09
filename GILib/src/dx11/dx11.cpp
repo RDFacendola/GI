@@ -930,7 +930,7 @@ HRESULT gi_lib::dx11::MakeIndirectArgBuffer(ID3D11Device& device, unsigned int a
 	buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS ;
 	buffer_desc.CPUAccessFlags = 0;
 	buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS;
-	buffer_desc.StructureByteStride = sizeof(unsigned int);					// Should be useless anyway
+	buffer_desc.StructureByteStride = sizeof(float);					// Should be useless anyway
 
 	// Transaction: either all the resources are created, or none.
 
@@ -951,6 +951,8 @@ HRESULT gi_lib::dx11::MakeIndirectArgBuffer(ID3D11Device& device, unsigned int a
 	if (unordered_access_view){
 
 		D3D11_UNORDERED_ACCESS_VIEW_DESC desc;
+
+		ZeroMemory(&desc, sizeof(desc));
 
 		desc.Format = DXGI_FORMAT_R32_UINT;
 		desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;

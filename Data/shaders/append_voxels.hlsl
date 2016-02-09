@@ -10,8 +10,10 @@ struct VoxelInfo {
 
 };
 
-StructuredBuffer<uint> gVoxelAddressTable;
 RWBuffer<uint> gIndirectArguments;
+
+StructuredBuffer<uint> gVoxelAddressTable;
+
 AppendStructuredBuffer<VoxelInfo> gVoxelAppendBuffer;		//<T>: VoxelInfo
 
 cbuffer Parameters {
@@ -26,111 +28,78 @@ cbuffer Parameters {
 
 };
 
-[numthreads(N, 1, 1)]
-void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
+void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 
-	// The very first thread will initialize the indirect arguments
+	// Update the instances count
+	if (cascade != 0) {
 
-	if (dispatch_thread_id.x == 0){
-
-		// DrawIndexedInstanced call
-
-		gIndirectArguments[0] = 36;				// IndexCountPerInstance
-		gIndirectArguments[1] = 0;				// InstanceCount***
-		gIndirectArguments[2] = 0;				// StartIndexLocation
-		gIndirectArguments[3] = 0;				// BaseVertexLocation
-		gIndirectArguments[4] = 0;				// StartInstanceLocation
+		return;
 
 	}
 
-	GroupMemoryBarrier();
+	uint dummy;
 
-	// If the address of the VAT is valid there's a voxel there!
+	InterlockedAdd(gIndirectArguments[1], 1, dummy);	
+
+	// Fill out the voxel info
 
 	VoxelInfo voxel_info;
 
+	voxel_info.size = gVoxelSize * (1 << cascade);
+
+	// Voxel space
+
+	voxel_info.center.x = linear_coordinates % gVoxelResolution;
+	voxel_info.center.y = (linear_coordinates / gVoxelResolution) % gVoxelResolution;
+	voxel_info.center.z = (linear_coordinates / (gVoxelResolution * gVoxelResolution)) % gVoxelResolution;
+
+	voxel_info.center -= (gVoxelResolution >> 1);
+
+	// Local space
+
+	voxel_info.center = (voxel_info.center + 0.5f) * gVoxelSize;
+
+	// World space
+	
+	voxel_info.center += gCenter;
+
+	gVoxelAppendBuffer.Append(voxel_info);
+
+}
+
+[numthreads(N, 1, 1)]
+void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
+
 	static const uint gSize = 8;
 
-	if (dispatch_thread_id.x < (gSize * gSize * gSize)) {
+	// If the address of the VAT is valid there's a voxel there!
+		
+	// Layout of the VAT
+	// Pyramid + Cascade 0 | Cascade 1 | Cascade 2 | ...
 
+	if (gVoxelAddressTable[dispatch_thread_id.x] != 0) {
+
+		uint VAT_elements;
 		uint dummy;
 
-		InterlockedAdd(gIndirectArguments[1], 1, dummy);	// Update the instances count
+		gVoxelAddressTable.GetDimensions(VAT_elements, dummy);
 
-		voxel_info.size = gVoxelSize;
+		uint cascade_size = gVoxelResolution * gVoxelResolution * gVoxelResolution;		// Size of each cascade, in voxels
 
-		voxel_info.center.x = dispatch_thread_id.x % gSize;
-		voxel_info.center.y = (dispatch_thread_id.x / gSize) % gSize;
-		voxel_info.center.z = (dispatch_thread_id.x / (gSize * gSize)) % gSize;
+		uint pyramid_size = VAT_elements - cascade_size * (gCascades + 1);				// Size of the pyramid, without its last level. Elements inside the pyramid are always ignored.
 
-		voxel_info.center -= 8;
+		if (dispatch_thread_id.x >= pyramid_size) {
 
-		voxel_info.center = (voxel_info.center + 0.5f) * voxel_info.size;
+			uint linear_coordinate = dispatch_thread_id.x - pyramid_size;
 
-		voxel_info.center += gCenter;
+			uint cascade_index = linear_coordinate / cascade_size;
 
-		gVoxelAppendBuffer.Append(voxel_info);
-		
+			linear_coordinate %= cascade_size;
+
+			AppendVoxelInfo(linear_coordinate, cascade_index);
+
+		}
+
 	}
 	
-
 }
-
-
-/*
-
-
-// whatever
-
-if (gVoxelAddressTable[dispatch_thread_id.x] != 0){
-
-uint dummy;
-
-InterlockedAdd(gIndirectArguments[1], 1, dummy);	// Update the instances count
-
-// Append the voxel info to the append buffer
-
-// Layout of the VAT
-// Pyramid | Cascade 0 | Cascade 1 | Cascade 2 | ...
-
-uint vat_elements;
-
-gVoxelAddressTable.GetDimensions(vat_elements, dummy);
-
-uint cascade_size = gVoxelResolution * gVoxelResolution * gVoxelResolution;		// Size of each cascade, in voxels
-
-uint pyramid_size = vat_elements - cascade_size * gCascades;
-
-if (dispatch_thread_id.x >= pyramid_size - cascade_size) {
-
-uint linear_coord = dispatch_thread_id.x - pyramid_size + cascade_size;
-
-uint cascade_index = (uint) floor(linear_coord / cascade_size);
-
-linear_coord -= cascade_index * cascade_size;
-
-voxel_info.size = gVoxelSize * (1 << cascade_index);
-
-voxel_info.center = 0;
-
-voxel_info.center.x = linear_coord % gVoxelResolution;
-voxel_info.center.y = (linear_coord / gVoxelResolution) % gVoxelResolution;
-voxel_info.center.z = (linear_coord / (gVoxelResolution * gVoxelResolution)) % gVoxelResolution;
-
-voxel_info.center -= gVoxelResolution / 2.0f;
-
-voxel_info.center = (voxel_info.center + 0.5f) * voxel_info.size;
-
-voxel_info.center += gCenter;
-
-if (cascade_index == 0) {
-
-gVoxelAppendBuffer.Append(voxel_info);
-
-}
-
-}
-
-}
-
-*/

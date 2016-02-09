@@ -74,6 +74,10 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 		input[1] = input[1].zyxw;
 		input[2] = input[2].zyxw;
 
+		input[0].z *= -1.0f;
+		input[1].z *= -1.0f;
+		input[2].z *= -1.0f;
+
 	}
 	else if (abs_normal.y > abs_normal.z) {
 
@@ -83,6 +87,10 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 		input[0] = input[0].xzyw;
 		input[1] = input[1].xzyw;
 		input[2] = input[2].xzyw;
+
+		input[0].z *= -1.0f;
+		input[1].z *= -1.0f;
+		input[2].z *= -1.0f;
 
 	}
 	else {
@@ -94,12 +102,14 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 		//input[1] = input[1].xyzw;
 		//input[2] = input[2].xyzw;
 
+		//input[0].z *= 1.0f;
+		//input[1].z *= 1.0f;
+		//input[2].z *= 1.0f;
+
 	}
 
 	// Output one primitive per cascade.
 	// In each cascade the primitive is shrunk by a factor of 2 with respect to the last iteration
-
-	unsigned int cascade_factor = 1;
 
 	for (unsigned int cascade_index = 0; cascade_index <= gCascades; ++cascade_index) {
 
@@ -111,7 +121,7 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 										input[vertex_index].z * 0.5f + 0.5f,		// [ 0;+1]. Will kill geometry outside the Z boundaries
 										1.0f);
 
-			output.position_ps.xyz /= cascade_factor;
+			output.position_ps.xyz /= (1 << cascade_index);
 
 			output.cascade = cascade_index;
 
@@ -120,9 +130,7 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 		}
 
 		output_stream.RestartStrip();
-
-		cascade_factor <<= 1;	// Double the cascade factor
-
+		
 	}
 
 }
@@ -133,17 +141,14 @@ RWStructuredBuffer<uint> gVoxelAddressTable;			///< \brief Clipmap containing th
 
 float4 PSMain(GSOut input) : SV_Target0{
 
-	uint dummy;				// Not used
-
-	uint VAT_offset;		// Linear coordinate of the voxel within the voxel address table
-	uint VAT_size;			// Number of elements inside the voxel address table
-	uint cascade_size;		// Voxels per cascade
-	uint voxel_offset;		// Linear coordinate of the voxel within its cascade.
+	uint linear_coordinate;		// Linear coordinate of the voxel within its cascade.
 
 	// Restore the unshuffled coordinates from the GS
-	
-	if (input.projection_plane == 0) {
 
+	input.position_ps.z *= (gVoxelResolution - 1);
+
+	if (input.projection_plane == 0) {
+		
 		input.position_ps = input.position_ps.zyxw;
 
 	}
@@ -158,27 +163,32 @@ float4 PSMain(GSOut input) : SV_Target0{
 
 	}
 	
-	input.position_ps.xyz *= (1 << input.cascade);					// Scale up the primitive
-
-	input.position_ps.xy = input.position_ps.xy * 0.5f + 0.5f;		// Coordinates in the range [0;1]
-
-	input.position_ps.xyz *= gVoxelResolution - 1.0f;				// Location of the voxel inside the cascade.
-			
-	voxel_offset = input.position_ps.z * gVoxelResolution * gVoxelResolution +
-				   input.position_ps.y * gVoxelResolution +
-				   input.position_ps.x;
-
+	linear_coordinate = floor(input.position_ps.x) +
+						floor(input.position_ps.y) * gVoxelResolution +
+						floor(input.position_ps.z) * gVoxelResolution * gVoxelResolution;
+						
 	// The cascades are stored at the end of the structure, so we can just start from the back
 
-	gVoxelAddressTable.GetDimensions(VAT_size, dummy);
+	uint VAT_elements;
+	uint dummy;
 
-	cascade_size = gVoxelResolution * gVoxelResolution * gVoxelResolution;
+	gVoxelAddressTable.GetDimensions(VAT_elements, dummy);
 
-	VAT_offset = (VAT_size - 1) - (gCascades - input.cascade + 1) * cascade_size + voxel_offset;
+	uint cascade_size = gVoxelResolution * gVoxelResolution * gVoxelResolution;		// Size of each cascade, in voxels
+
+	uint pyramid_size = VAT_elements - cascade_size * (gCascades + 1);				// Size of the pyramid, without its last level. Elements inside the pyramid are always ignored.
+		
+	linear_coordinate += pyramid_size + (cascade_size * input.cascade);
 
 	// Reserve the next free address from the address table
 
-	gVoxelAddressTable[VAT_offset] = 1;		// TODO: Put the actual address here
+	InterlockedAdd(gVoxelAddressTable[linear_coordinate], 1, dummy);		// TODO: Put the actual address here
+	
+	//InterlockedAdd(gVoxelAddressTable[0], 1, dummy);		// TODO: Put the actual address here
+
+	//gVoxelAddressTable[1] = pyramid_size;
+	
+	//gVoxelAddressTable[dummy + 2] = linear_coordinate;
 
 	return 1.0f;		// Not needed!
 

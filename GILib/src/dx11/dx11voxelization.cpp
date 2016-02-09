@@ -52,8 +52,6 @@ namespace {
 DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_size, unsigned int voxel_resolution, unsigned int cascades) :
 	renderer_(renderer){
 
-	cascades = 0;	// TODO: Remove this
-
 	bool check;
 	
 	auto&& app = Application::GetInstance();
@@ -76,6 +74,8 @@ DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_s
 
 	wireframe_voxel_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\draw_voxel.hlsl" });
 
+	clear_voxel_draw_indirect_args_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\voxel_indirect_args.hlsl" });
+
 	per_frame_ = new DX11StructuredBuffer(sizeof(VSPerFrame));
 
 	scaler_ = make_unique<DX11FxScale>(DX11FxScale::Parameters{});
@@ -83,6 +83,9 @@ DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_s
 	check = append_voxel_info_->SetOutput("gIndirectArguments",
 										  ObjectPtr<IGPStructuredArray>(voxel_draw_indirect_args_));
 	
+	check = clear_voxel_draw_indirect_args_->SetOutput("gIndirectArguments",
+													   ObjectPtr<IGPStructuredArray>(voxel_draw_indirect_args_));
+
 	check = append_voxel_info_->SetInput("Parameters",
 										 ObjectPtr<IStructuredBuffer>(voxel_parameters_));
 
@@ -182,7 +185,7 @@ void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigne
 
 	// Consider that bigger cascades have a greater chance of containing voxels.
 
-	unsigned int voxel_info_count = voxel_resolution_ * voxel_resolution_ * (1 + cascades_ * 10);		// Random heuristic
+	unsigned int voxel_info_count = voxel_count; // voxel_resolution_ * voxel_resolution_ * (1 + cascades_ * 10);		// Random heuristic
 
 	voxel_append_buffer_ = new DX11GPStructuredArray(IGPStructuredArray::CreateAppendBuffer{ voxel_info_count, kVoxelInfoSize });
 
@@ -318,7 +321,7 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 						   std::floorf(grid_center(1) / voxel_size_) * voxel_size_,
 						   std::floorf(grid_center(2) / voxel_size_) * voxel_size_);
 
-	voxel_parameters_->Lock<VoxelParameters>()->center_ = Vector3f::Zero(); // grid_center;
+	voxel_parameters_->Lock<VoxelParameters>()->center_ = grid_center;
 
 	voxel_parameters_->Unlock();
 
@@ -405,6 +408,8 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 	// Accumulate from the voxel address table inside the append buffer
 
 	graphics.PushEvent(L"Append");
+
+	clear_voxel_draw_indirect_args_->Dispatch(device_context, 1, 1, 1);
 
 	append_voxel_info_->Dispatch(device_context, 
 								 static_cast<unsigned int>(voxel_address_table_->GetCount()), 

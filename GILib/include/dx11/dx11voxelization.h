@@ -101,6 +101,8 @@ namespace gi_lib {
 
 			ObjectPtr<IRenderTargetCache> render_target_cache_;					///< \brief Cache of render-target textures.
 
+			ObjectPtr<DX11Computation> clear_voxel_draw_indirect_args_;			///< \brief Compute shader used to clear the voxel draw indirect arguments.
+
 			ObjectPtr<DX11GPStructuredArray> voxel_draw_indirect_args_;			///< \brief Buffer containing the argument buffer used to dispatch the DrawInstancedIndirect call
 																				///			Used to dispatch a DrawIndexedInstancedIndirect
 
