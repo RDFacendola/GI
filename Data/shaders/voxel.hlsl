@@ -21,9 +21,9 @@ cbuffer PerObject {
 
 };
 
-float4 VSMain(float4 position : SV_Position) : SV_Position{
+float4 VSMain(float3 position : SV_Position) : SV_Position{
 	
-	float4 pos = mul(gWorld, position);									// World space
+	float4 pos = mul(gWorld, float4(position,1));									// World space
 	
 	float grid_size = gVoxelSize * gVoxelResolution;
 
