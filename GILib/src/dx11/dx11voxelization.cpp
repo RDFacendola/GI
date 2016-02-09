@@ -91,6 +91,9 @@ DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_s
 
 	check = wireframe_voxel_material_->SetInput("PerFrame",
 												ObjectPtr<IStructuredBuffer>(per_frame_));
+	
+	check = wireframe_voxel_material_->SetInput("Parameters",
+										 ObjectPtr<IStructuredBuffer>(voxel_parameters_));
 
 	render_target_cache_ = resources.Load<IRenderTargetCache, IRenderTargetCache::Singleton>({});
 
