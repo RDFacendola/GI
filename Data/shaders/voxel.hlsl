@@ -74,10 +74,6 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 		input[1] = input[1].zyxw;
 		input[2] = input[2].zyxw;
 
-		input[0].z *= -1.0f;
-		input[1].z *= -1.0f;
-		input[2].z *= -1.0f;
-
 	}
 	else if (abs_normal.y > abs_normal.z) {
 
@@ -88,10 +84,6 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 		input[1] = input[1].xzyw;
 		input[2] = input[2].xzyw;
 
-		input[0].z *= -1.0f;
-		input[1].z *= -1.0f;
-		input[2].z *= -1.0f;
-
 	}
 	else {
 		
@@ -101,10 +93,6 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 		//input[0] = input[0].xyzw;
 		//input[1] = input[1].xyzw;
 		//input[2] = input[2].xyzw;
-
-		//input[0].z *= 1.0f;
-		//input[1].z *= 1.0f;
-		//input[2].z *= 1.0f;
 
 	}
 
@@ -117,7 +105,7 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 		for (unsigned int vertex_index = 0; vertex_index < 3; ++vertex_index) {
 
 			output.position_ps = float4(input[vertex_index].x,						// [-1;+1]
-										input[vertex_index].y,						// [-1;+1]
+										input[vertex_index].y * -1.0f,				// [+1;-1]. Compensate for the V axis which grows downwards.
 										input[vertex_index].z * 0.5f + 0.5f,		// [ 0;+1]. Will kill geometry outside the Z boundaries
 										1.0f);
 
@@ -160,7 +148,7 @@ float4 PSMain(GSOut input) : SV_Target0{
 	else {
 				
 		input.position_ps = input.position_ps.xyzw;
-
+		
 	}
 	
 	linear_coordinate = floor(input.position_ps.x) +
@@ -184,12 +172,6 @@ float4 PSMain(GSOut input) : SV_Target0{
 
 	InterlockedAdd(gVoxelAddressTable[linear_coordinate], 1, dummy);		// TODO: Put the actual address here
 	
-	//InterlockedAdd(gVoxelAddressTable[0], 1, dummy);		// TODO: Put the actual address here
-
-	//gVoxelAddressTable[1] = pyramid_size;
-	
-	//gVoxelAddressTable[dummy + 2] = linear_coordinate;
-
 	return 1.0f;		// Not needed!
 
 }
