@@ -259,18 +259,22 @@ void DX11Voxelization::BuildVoxelMesh() {
 
 	// Indices
 
-	args.indices.push_back(3);	args.indices.push_back(1);	args.indices.push_back(0);
-	args.indices.push_back(2);	args.indices.push_back(1);	args.indices.push_back(3);
-	args.indices.push_back(6);	args.indices.push_back(4);	args.indices.push_back(5);
-	args.indices.push_back(7);	args.indices.push_back(4);	args.indices.push_back(6);
-	args.indices.push_back(3);	args.indices.push_back(4);	args.indices.push_back(7);
-	args.indices.push_back(0);	args.indices.push_back(4);	args.indices.push_back(3);
-	args.indices.push_back(1);	args.indices.push_back(6);	args.indices.push_back(5);
-	args.indices.push_back(2);	args.indices.push_back(6);	args.indices.push_back(1);
-	args.indices.push_back(0);	args.indices.push_back(5);	args.indices.push_back(4);
-	args.indices.push_back(1);	args.indices.push_back(5);	args.indices.push_back(0);
-	args.indices.push_back(2);	args.indices.push_back(7);	args.indices.push_back(6);
-	args.indices.push_back(3);	args.indices.push_back(7);	args.indices.push_back(2);
+	// Edges only
+
+	args.indices.push_back(0);	args.indices.push_back(1);
+	args.indices.push_back(1);	args.indices.push_back(2);
+	args.indices.push_back(2);	args.indices.push_back(3);
+	args.indices.push_back(3);	args.indices.push_back(0);
+
+	args.indices.push_back(4);	args.indices.push_back(5);
+	args.indices.push_back(5);	args.indices.push_back(6);
+	args.indices.push_back(6);	args.indices.push_back(7);
+	args.indices.push_back(7);	args.indices.push_back(4);
+
+	args.indices.push_back(0);	args.indices.push_back(4);
+	args.indices.push_back(1);	args.indices.push_back(5);
+	args.indices.push_back(2);	args.indices.push_back(6);
+	args.indices.push_back(3);	args.indices.push_back(7);
 
 	// Subset
 
@@ -440,6 +444,8 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 	
 		
 	voxel_mesh_->Bind(device_context);
+
+	device_context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);			// We need only the 12 edges of the cube
 
 	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
 												0);
