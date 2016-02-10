@@ -106,10 +106,12 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 
 			output.position_ps = float4(input[vertex_index].x,						// [-1;+1]
 										input[vertex_index].y * -1.0f,				// [+1;-1]. Compensate for the V axis which grows downwards.
-										input[vertex_index].z * 0.5f + 0.5f,		// [ 0;+1]. Will kill geometry outside the Z boundaries
+										input[vertex_index].z,
 										1.0f);
 
-			output.position_ps.xyz /= (1 << cascade_index);
+			output.position_ps.xyz /= (1 << cascade_index);							// Shrink the primitive according to the cascade it should be written to.
+
+			output.position_ps.z = output.position_ps.z * 0.5f + 0.5f,				// [ 0;+1]. Will kill geometry outside the Z boundaries
 
 			output.cascade = cascade_index;
 

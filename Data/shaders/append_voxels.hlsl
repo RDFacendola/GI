@@ -29,13 +29,14 @@ cbuffer Parameters {
 };
 
 void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
-
-	// Update the instances count
+		
 	if (cascade != 0) {
 
 		return;
 
 	}
+
+	// Update the instances count
 
 	uint dummy;
 
@@ -57,7 +58,7 @@ void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 
 	// Local space
 
-	voxel_info.center = (voxel_info.center + 0.5f) * gVoxelSize;
+	voxel_info.center = (voxel_info.center + 0.5f) * voxel_info.size;
 
 	// World space
 	
@@ -69,8 +70,6 @@ void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 
 [numthreads(N, 1, 1)]
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
-
-	static const uint gSize = 8;
 
 	// If the address of the VAT is valid there's a voxel there!
 		
