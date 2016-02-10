@@ -134,6 +134,63 @@ DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_s
 
 	depth_stencil_state_ << &depth_state;
 	
+	// Wireframe ZPrepass
+
+	depth_state_desc.DepthEnable = true;
+	depth_state_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depth_state_desc.DepthFunc = D3D11_COMPARISON_LESS;
+	depth_state_desc.StencilEnable = false;
+	depth_state_desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
+	depth_state_desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
+
+	depth_state_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+	depth_state_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	depth_state_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	depth_state_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+
+	depth_state_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+	depth_state_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	depth_state_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	depth_state_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
+
+	THROW_ON_FAIL(device.CreateDepthStencilState(&depth_state_desc,
+												 &depth_state));
+
+	wireframe_zprepass_depth_state_ << &depth_state;
+
+	// Wireframe ZEqual
+
+	depth_state_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	depth_state_desc.DepthFunc = D3D11_COMPARISON_EQUAL;
+	
+	wireframe_zequal_depth_state_ << &depth_state;
+
+	// Wireframe - Color enable
+
+	D3D11_BLEND_DESC blend_state_desc;
+
+	ID3D11BlendState* blend_state;
+
+	blend_state_desc.AlphaToCoverageEnable = false;
+	blend_state_desc.IndependentBlendEnable = false;
+
+	blend_state_desc.RenderTarget[0].BlendEnable = false;
+	blend_state_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	device.CreateBlendState(&blend_state_desc,
+							&blend_state);
+
+	wireframe_enable_color_ << &blend_state;
+
+	// Wireframe - Color disable
+
+	blend_state_desc.RenderTarget[0].RenderTargetWriteMask = 0;
+
+	device.CreateBlendState(&blend_state_desc,
+							&blend_state);
+
+	wireframe_disable_color_ << &blend_state;
+
 	// Rasterizer state - No back-face culling
 
 	D3D11_RASTERIZER_DESC rasterizer_state_desc;
@@ -156,14 +213,24 @@ DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_s
 
 	rasterizer_state_ << &rasterizer_state;
 	
-	// Rasterizer state - Wireframe
+	// Wireframe - Depth bias
 
-	rasterizer_state_desc.FillMode = D3D11_FILL_WIREFRAME;
-	
+	rasterizer_state_desc.CullMode = D3D11_CULL_BACK;
+	rasterizer_state_desc.DepthBias = 100.0f;
+
 	THROW_ON_FAIL(device.CreateRasterizerState(&rasterizer_state_desc,
 											   &rasterizer_state));
 
-	wireframe_rasterizer_state_ << &rasterizer_state;
+	wireframe_depth_bias_enable_ << &rasterizer_state;
+
+	// Wireframe - No depth bias
+
+	rasterizer_state_desc.DepthBias = 0.0f;
+
+	THROW_ON_FAIL(device.CreateRasterizerState(&rasterizer_state_desc,
+											   &rasterizer_state));
+
+	wireframe_depth_bias_disable_ << &rasterizer_state;
 
 }
 
@@ -248,7 +315,7 @@ void DX11Voxelization::BuildVoxelMesh() {
 
 	IStaticMesh::FromVertices<VertexFormatPosition> args;
 
-	// Vertices
+	// Vertices - Shared for both the edge version and the cube one
 
 	args.vertices.push_back({ Vector3f(-0.5f,  0.5f, -0.5f) });
 	args.vertices.push_back({ Vector3f( 0.5f,  0.5f, -0.5f) });
@@ -260,9 +327,7 @@ void DX11Voxelization::BuildVoxelMesh() {
 	args.vertices.push_back({ Vector3f( 0.5f, -0.5f,  0.5f) });
 	args.vertices.push_back({ Vector3f(-0.5f, -0.5f,  0.5f) });
 
-	// Indices
-
-	// Edges only
+	// Indices - Edges only
 
 	args.indices.push_back(0);	args.indices.push_back(1);
 	args.indices.push_back(1);	args.indices.push_back(2);
@@ -279,11 +344,34 @@ void DX11Voxelization::BuildVoxelMesh() {
 	args.indices.push_back(2);	args.indices.push_back(6);
 	args.indices.push_back(3);	args.indices.push_back(7);
 
-	// Subset
+	// Subset - Edges only
 
-	args.subsets.push_back({0, args.indices.size()});
+	args.subsets.push_back({ 0, args.indices.size() });
 
-	voxel_mesh_ = new DX11Mesh(args);
+	voxel_edges_ = new DX11Mesh(args);
+
+	// Indices - Cube faces
+
+	args.indices.clear();
+
+	args.indices.push_back(3);    args.indices.push_back(1);    args.indices.push_back(0);
+	args.indices.push_back(2);    args.indices.push_back(1);    args.indices.push_back(3);
+	args.indices.push_back(6);    args.indices.push_back(4);    args.indices.push_back(5);
+	args.indices.push_back(7);    args.indices.push_back(4);    args.indices.push_back(6);
+	args.indices.push_back(3);    args.indices.push_back(4);    args.indices.push_back(7);
+	args.indices.push_back(0);    args.indices.push_back(4);    args.indices.push_back(3);
+	args.indices.push_back(1);    args.indices.push_back(6);    args.indices.push_back(5);
+	args.indices.push_back(2);    args.indices.push_back(6);    args.indices.push_back(1);
+	args.indices.push_back(0);    args.indices.push_back(5);    args.indices.push_back(4);
+	args.indices.push_back(1);    args.indices.push_back(5);    args.indices.push_back(0);
+	args.indices.push_back(2);    args.indices.push_back(7);    args.indices.push_back(6);
+	args.indices.push_back(3);    args.indices.push_back(7);    args.indices.push_back(2);
+
+	// Subset - Cube faces
+
+	args.subsets.push_back({ 0, args.indices.size() });
+
+	voxel_cube_ = new DX11Mesh(args);
 
 }
 
@@ -408,7 +496,7 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 	output_ = render_target_cache_->PopFromCache(image->GetWidth(),
 												 image->GetHeight(),
 												 { image->GetFormat() },
-												 false);
+												 true);
 
 	graphics.PushEvent(L"Voxel overlay");
 
@@ -427,43 +515,78 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 
 	// Dispatch the draw call of the voxelsO
 
-	graphics.PushEvent(L"Draw");
+	graphics.PushEvent(L"Setup");
 
 	scaler_->Copy(image,
 				  ObjectPtr<IRenderTarget>(output_));
 
-	dx_utils.PushRasterizerState(device_context, *wireframe_rasterizer_state_);
-
-	dx_utils.PushDepthStencilState(device_context, *depth_stencil_state_);
+	// Setup
 
 	per_frame_->Lock<VSPerFrame>()->view_projection = renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight()));
 
 	per_frame_->Unlock();
 
+	graphics.PopEvent();
+
 	wireframe_voxel_material_->Bind(device_context);
 
 	output_->Bind(device_context);
 
-	
-		
-	voxel_mesh_->Bind(device_context);
+	output_->ClearDepth(device_context);
 
-	device_context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);			// We need only the 12 edges of the cube
+	// Z prepass - Depth write only
+	
+	graphics.PushEvent(L"ZPrepass");
+
+	dx_utils.PushRasterizerState(device_context, *wireframe_depth_bias_enable_);
+
+	dx_utils.PushDepthStencilState(device_context, *wireframe_zprepass_depth_state_);
+
+	dx_utils.PushBlendState(device_context, *wireframe_disable_color_);
+
+	voxel_cube_->Bind(device_context);
 
 	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
 												0);
 
-	output_->Unbind(device_context);
-
-	wireframe_voxel_material_->Unbind(device_context);
-
-	dx_utils.PopRasterizerState(device_context);
+	dx_utils.PopBlendState(device_context);
 
 	dx_utils.PopDepthStencilState(device_context);
+
+	dx_utils.PopRasterizerState(device_context);
+	
+	graphics.PopEvent();
+
+	// Edge drawing - Depth equal only
+
+	graphics.PushEvent(L"Edge drawing");
+
+	dx_utils.PushRasterizerState(device_context, *wireframe_depth_bias_disable_);
+
+	dx_utils.PushDepthStencilState(device_context, *wireframe_zequal_depth_state_);
+
+	dx_utils.PushBlendState(device_context, *wireframe_enable_color_);
+
+	voxel_edges_->Bind(device_context);
+
+	device_context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);			// Override primitive type
+
+	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
+												0);
+
+	dx_utils.PopBlendState(device_context);
+
+	dx_utils.PopDepthStencilState(device_context);
+
+	dx_utils.PopRasterizerState(device_context);
 
 	graphics.PopEvent();
 
 	// Done
+	
+	output_->Unbind(device_context);
+
+	wireframe_voxel_material_->Unbind(device_context);
 
 	graphics.PopEvent();
 	

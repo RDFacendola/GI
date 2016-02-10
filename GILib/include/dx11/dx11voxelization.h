@@ -112,14 +112,26 @@ namespace gi_lib {
 
 			ObjectPtr<DX11StructuredBuffer> per_frame_;							///< \brief Per-frame constant buffer used during voxel draw.
 
-			COMPtr<ID3D11RasterizerState> wireframe_rasterizer_state_;			///< \brief Rasterizer state for wireframe visualization of the voxels.
+			COMPtr<ID3D11RasterizerState> wireframe_depth_bias_enable_;
+
+			COMPtr<ID3D11RasterizerState> wireframe_depth_bias_disable_;			
+
+			COMPtr<ID3D11BlendState> wireframe_disable_color_;
+
+			COMPtr<ID3D11BlendState> wireframe_enable_color_;
+
+			COMPtr<ID3D11DepthStencilState> wireframe_zprepass_depth_state_;	///< \brief Depth-stencil state used to enable Z testing.
+
+			COMPtr<ID3D11DepthStencilState> wireframe_zequal_depth_state_;		///< \brief Depth-stencil state used to enable Z testing.
 
 			ObjectPtr<DX11Material> wireframe_voxel_material_;					///< \brief Material used to draw the wireframe voxels.
 
 			std::unique_ptr<DX11FxScale> scaler_;								///< \brief Used to copy the input image.
 
-			ObjectPtr<DX11Mesh> voxel_mesh_;									///< \brief Voxel mesh.
+			ObjectPtr<DX11Mesh> voxel_cube_;									///< \brief Voxel mesh.
 			
+			ObjectPtr<DX11Mesh> voxel_edges_;									///< \brief Edges of the voxel.
+
 		};
 
 	}
