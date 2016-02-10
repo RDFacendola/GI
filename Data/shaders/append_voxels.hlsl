@@ -28,25 +28,17 @@ cbuffer Parameters {
 
 };
 
+float max3(float a, float b, float c) {
+
+	return max(max(a, b), c);
+
+}
+
 void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 		
-	if (cascade != 0) {
-
-		return;
-
-	}
-
-	// Update the instances count
-
-	uint dummy;
-
-	InterlockedAdd(gIndirectArguments[1], 1, dummy);	
-
 	// Fill out the voxel info
 
 	VoxelInfo voxel_info;
-
-	voxel_info.size = gVoxelSize * (1 << cascade);
 
 	// Voxel space
 
@@ -56,13 +48,30 @@ void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 
 	voxel_info.center -= (gVoxelResolution >> 1);
 
+	// Suppress the voxel if there's a more precise version of it
+
+	if (cascade > 0 &&
+		max3(abs(voxel_info.center.x), abs(voxel_info.center.y), abs(voxel_info.center.z)) <= (gVoxelResolution >> 2)){
+
+		return;
+
+	}
+
 	// Local space
+
+	voxel_info.size = gVoxelSize * (1 << cascade);
 
 	voxel_info.center = (voxel_info.center + 0.5f) * voxel_info.size;
 
 	// World space
 	
 	voxel_info.center += gCenter;
+
+	// Update the instances count
+
+	uint dummy;
+
+	InterlockedAdd(gIndirectArguments[1], 1, dummy);
 
 	gVoxelAppendBuffer.Append(voxel_info);
 
