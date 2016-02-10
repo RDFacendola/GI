@@ -31,6 +31,18 @@ DX11Utils::DX11Utils() {}
 
 DX11Utils::~DX11Utils() {}
 
+void DX11Utils::PushBlendState(ID3D11DeviceContext& device_context, ID3D11BlendState& blend_state) {
+
+	BlendState current_state;
+
+	device_context.OMGetBlendState(&current_state.blend_state_, &(current_state.blend_factor[0]), &current_state.sample_mask);
+
+	blend_state_.push_back(current_state);
+
+	device_context.OMSetBlendState(&blend_state, 0, 0xFFFFFFFF);
+
+}
+
 void DX11Utils::PushDepthStencilState(ID3D11DeviceContext& device_context, ID3D11DepthStencilState& depth_stencil_state) {
 
 	ID3D11DepthStencilState* current_state;
@@ -52,6 +64,22 @@ void DX11Utils::PushRasterizerState(ID3D11DeviceContext& device_context, ID3D11R
 	rasterizer_state_.push_back(current_state);
 
 	device_context.RSSetState(&rasterizer_state);
+
+}
+
+void DX11Utils::PopBlendState(ID3D11DeviceContext& device_context) {
+
+	BlendState state = blend_state_.back();
+
+	device_context.OMSetBlendState(state.blend_state_, &state.blend_factor[0], state.sample_mask);
+
+	if (state.blend_state_) {
+
+		state.blend_state_->Release();								// Decrease the ref count!
+
+	}
+
+	blend_state_.pop_back();
 
 }
 

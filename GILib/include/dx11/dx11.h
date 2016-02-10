@@ -132,6 +132,10 @@ namespace gi_lib{
 
 			static DX11Utils& GetInstance();
 
+			/// \brief Activate a new blend state, saving the current one onto the stack.
+			/// \param rasterizer_state New blend state to enable.
+			void PushBlendState(ID3D11DeviceContext& device_context, ID3D11BlendState& blend_state);
+
 			/// \brief Activate a new depth stencil state, saving the current one onto the stack.
 			/// \param depth_stencil_state New depth stencil state to enable.
 			void PushDepthStencilState(ID3D11DeviceContext& device_context, ID3D11DepthStencilState& depth_stencil_state);
@@ -139,6 +143,9 @@ namespace gi_lib{
 			/// \brief Activate a new rasterizer state, saving the current one onto the stack.
 			/// \param rasterizer_state New rasterizer state to enable.
 			void PushRasterizerState(ID3D11DeviceContext& device_context, ID3D11RasterizerState& rasterizer_state);
+
+			/// \brief Pop and activate the blend state on top of the stack, disabling the current one.
+			void PopBlendState(ID3D11DeviceContext& device_context);
 
 			/// \brief Pop and activate the depth stencil state on the top of the stack, disabling the current one.
 			void PopDepthStencilState(ID3D11DeviceContext& device_context);
@@ -152,6 +159,17 @@ namespace gi_lib{
 
 			~DX11Utils();
 			
+			struct BlendState {
+
+				ID3D11BlendState* blend_state_;
+
+				float blend_factor[4];
+
+				unsigned int sample_mask;
+
+			};
+			std::vector<BlendState> blend_state_;										///< \brief Blend state stack.
+
 			std::vector<ID3D11DepthStencilState*> depth_stencil_state_;					/// <\brief Depth stencil state stack.
 
 			std::vector<ID3D11RasterizerState*> rasterizer_state_;						///< \brief Rasterizer state stack.
