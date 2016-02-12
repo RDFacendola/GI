@@ -52,13 +52,11 @@ VSOut VSMain(VSIn input){
 
 	float3 position = (input.position.xyz * info.size) + info.center;
 
-	//float factor = saturate(length(gCenter - position) / pow((3.0f * pow(info.size * gVoxelResolution * 0.5f, 2.0f)), 0.5f));
-
 	output.position_ps = mul(gViewProjection, float4(position, 1));
 
-	float factor = log2(info.size / gVoxelSize) / gCascades;
+	float factor = log2(gVoxelSize / info.size) / gCascades;
 
-	output.color = lerp(float4(0.75f, 0, 0, 1), float4(0, 0, 0.75f, 1), factor);
+	output.color = lerp(float4(0, 0, 0.75f, 1), float4(0.75f, 0, 0, 1), factor);
 
 	return output;
 

@@ -219,7 +219,7 @@ graphics_(DX11Graphics::GetInstance()){
 
 	// Voxel setup
 
-	voxelization_ = std::make_unique<DX11Voxelization>(*this, 50.f, 64, 4);
+	voxelization_ = std::make_unique<DX11Voxelization>(*this, 800.f, 64, 4);
 
 }
 

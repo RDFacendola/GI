@@ -216,7 +216,7 @@ DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_s
 	// Wireframe - Depth bias
 
 	rasterizer_state_desc.CullMode = D3D11_CULL_BACK;
-	rasterizer_state_desc.DepthBias = 100.0f;
+	rasterizer_state_desc.DepthBias = 100;
 
 	THROW_ON_FAIL(device.CreateRasterizerState(&rasterizer_state_desc,
 											   &rasterizer_state));
@@ -225,7 +225,7 @@ DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_s
 
 	// Wireframe - No depth bias
 
-	rasterizer_state_desc.DepthBias = 0.0f;
+	rasterizer_state_desc.DepthBias = 0;
 
 	THROW_ON_FAIL(device.CreateRasterizerState(&rasterizer_state_desc,
 											   &rasterizer_state));
@@ -412,9 +412,11 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 	
 	Vector3f grid_center = frame_info.camera->GetTransformComponent().GetPosition();		// Center of the voxelization, snapped at voxel boundaries to prevent flickering
 
-	grid_center = Vector3f(std::floorf(grid_center(0) / voxel_size_) * voxel_size_,
-						   std::floorf(grid_center(1) / voxel_size_) * voxel_size_,
-						   std::floorf(grid_center(2) / voxel_size_) * voxel_size_);
+	float snap = voxel_size_ / (1 << cascades_);
+
+	grid_center = Vector3f(std::floorf(grid_center(0) / snap) * snap,
+						   std::floorf(grid_center(1) / snap) * snap,
+						   std::floorf(grid_center(2) / snap) * snap);
 
 	voxel_parameters_->Lock<VoxelParameters>()->center_ = grid_center;
 

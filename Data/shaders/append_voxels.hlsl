@@ -50,7 +50,7 @@ void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 
 	// Suppress the voxel if there's a more precise version of it
 
-	if (cascade > 0 &&
+	if (cascade < gCascades &&
 		max3(abs(voxel_info.center.x), abs(voxel_info.center.y), abs(voxel_info.center.z)) <= (gVoxelResolution >> 2)){
 
 		return;
@@ -59,7 +59,7 @@ void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 
 	// Local space
 
-	voxel_info.size = gVoxelSize * (1 << cascade);
+	voxel_info.size = gVoxelSize / (1 << cascade);
 
 	voxel_info.center = (voxel_info.center + 0.5f) * voxel_info.size;
 
