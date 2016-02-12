@@ -55,7 +55,7 @@ namespace gi_lib{
 			void Bind(ID3D11DeviceContext& context, bool tessellable = false);
 
 			/// \brief Draws the specified subset.
-			void DrawSubset(ID3D11DeviceContext& context, unsigned int subset_index) const;
+			void DrawSubset(ID3D11DeviceContext& context, unsigned int subset_index, unsigned int instances = 1) const;
 
 			virtual MeshFlags GetFlags(unsigned int subset_index) const override;
 

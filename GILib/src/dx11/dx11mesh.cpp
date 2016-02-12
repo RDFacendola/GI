@@ -219,20 +219,45 @@ void DX11Mesh::Bind(ID3D11DeviceContext& context, bool tessellable){
 
 }
 
-void DX11Mesh::DrawSubset(ID3D11DeviceContext& context, unsigned int subset_index) const {
+void DX11Mesh::DrawSubset(ID3D11DeviceContext& context, unsigned int subset_index, unsigned int instances) const {
 
-	if (index_buffer_) {
+	if (instances == 1) {
 
-		context.DrawIndexed(static_cast<unsigned int>(subsets_[subset_index].count),			// One per index
-							static_cast<unsigned int>(subsets_[subset_index].start_index),
-							0);
+		if (index_buffer_) {
+
+			context.DrawIndexed(static_cast<unsigned int>(subsets_[subset_index].count),			// One per index
+								static_cast<unsigned int>(subsets_[subset_index].start_index),
+								0);
+
+		}
+		else {
+
+			context.Draw(static_cast<unsigned int>(subsets_[subset_index].count * 3),				// One per vertex
+						 static_cast<unsigned int>(subsets_[subset_index].start_index));
+
+		}
 
 	}
 	else {
+	
+		if (index_buffer_) {
 
-		context.Draw(static_cast<unsigned int>(subsets_[subset_index].count * 3),				// One per vertex
-					 static_cast<unsigned int>(subsets_[subset_index].start_index));
+			context.DrawIndexedInstanced(static_cast<unsigned int>(subsets_[subset_index].count),
+										 instances,
+										 static_cast<unsigned int>(subsets_[subset_index].start_index),
+										 0,
+										 0);
+			
+		}
+		else {
 
+			context.DrawInstanced(static_cast<unsigned int>(subsets_[subset_index].count * 3),
+								  instances,
+								  static_cast<unsigned int>(subsets_[subset_index].start_index),
+								  0);
+
+		}
+		
 	}
 	
 

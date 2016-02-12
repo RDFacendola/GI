@@ -454,7 +454,8 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 				voxel_material_->Commit(device_context);
 
 				mesh->DrawSubset(device_context,
-								 subset_index);
+								 subset_index,
+								 cascades_ + 1);
 				
 				graphics.PopEvent();
 

@@ -21,13 +21,35 @@ cbuffer PerObject {
 
 };
 
-float4 VSMain(float3 position : SV_Position) : SV_Position{
+struct VSIn {
+
+	float3 position : SV_Position;
+
+	uint instance_id : SV_InstanceID;
+
+};
+
+struct VSOut {
+
+	float4 position : SV_Position;
+
+	uint cascade : Cascade;
+
+};
+
+VSOut VSMain(VSIn input){
 	
-	float4 pos = mul(gWorld, float4(position,1));									// World space
+	VSOut output;
+
+	float4 pos = mul(gWorld, float4(input.position,1));									// World space
 	
 	float grid_size = gVoxelSize * gVoxelResolution;
 
-	return (pos - float4(gCenter, 0.0f)) * (2.f / grid_size);			// Voxel space [-1;+1]
+	output.position = (pos - float4(gCenter, 0.0f)) * (2.f / grid_size);			// Voxel space [-1;+1]
+
+	output.cascade = input.instance_id;
+
+	return output;
 
 }
 
@@ -43,9 +65,8 @@ struct GSOut {
 
 };
 
-// 5 Cascades maximum (3*5 vertices)
-[maxvertexcount(15)]
-void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> output_stream) {
+[maxvertexcount(3)]
+void GSMain(triangle VSOut input[3], inout TriangleStream<GSOut> output_stream) {
 	
 	// TODO: Optimize the branchiness here
 
@@ -60,8 +81,8 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 	//
 	// Which d in {<1;0;0>, <0;1;0>, <0;0;1>} maximizes |d dot N| ? i.e. i | N[i] >= N[j] forall J in [0;2]
 
-	float3 abs_normal = abs(cross(input[1].xyz - input[0].xyz,
-								  input[2].xyz - input[0].xyz));
+	float3 abs_normal = abs(cross(input[1].position.xyz - input[0].position.xyz,
+								  input[2].position.xyz - input[0].position.xyz));
 
 	// Determine which axis maximizes the rasterized area and shuffle the polygon coordinates accordingly
 
@@ -70,9 +91,9 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 		// From the right: -X is the depth
 		output.projection_plane = 0;
 
-		input[0] = input[0].zyxw;
-		input[1] = input[1].zyxw;
-		input[2] = input[2].zyxw;
+		input[0].position = input[0].position.zyxw;
+		input[1].position = input[1].position.zyxw;
+		input[2].position = input[2].position.zyxw;
 
 	}
 	else if (abs_normal.y > abs_normal.z) {
@@ -80,9 +101,9 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 		// From the above: -Y is the depth
 		output.projection_plane = 1;
 
-		input[0] = input[0].xzyw;
-		input[1] = input[1].xzyw;
-		input[2] = input[2].xzyw;
+		input[0].position = input[0].position.xzyw;
+		input[1].position = input[1].position.xzyw;
+		input[2].position = input[2].position.xzyw;
 
 	}
 	else {
@@ -99,28 +120,22 @@ void GSMain(triangle float4 input[3] : SV_Position, inout TriangleStream<GSOut> 
 	// Output one primitive per cascade.
 	// In each cascade the primitive is shrunk by a factor of 2 with respect to the last iteration
 
-	for (unsigned int cascade_index = 0; cascade_index <= gCascades; ++cascade_index) {
+	[unroll]
+	for (unsigned int vertex_index = 0; vertex_index < 3; ++vertex_index) {
 
-		[unroll]
-		for (unsigned int vertex_index = 0; vertex_index < 3; ++vertex_index) {
+		output.position_ps = float4(input[vertex_index].position.x,						// [-1;+1]
+									input[vertex_index].position.y * -1.0f,				// [+1;-1]. Compensate for the V axis which grows downwards.
+									input[vertex_index].position.z,
+									1.0f);
 
-			output.position_ps = float4(input[vertex_index].x,						// [-1;+1]
-										input[vertex_index].y * -1.0f,				// [+1;-1]. Compensate for the V axis which grows downwards.
-										input[vertex_index].z,
-										1.0f);
+		output.cascade = input[vertex_index].cascade;
 
-			output.position_ps.xyz /= (1 << cascade_index);							// Shrink the primitive according to the cascade it should be written to.
+		output.position_ps.xyz *= (1 << output.cascade);								// Enlarge the primitive according to the cascade it should be written to.
 
-			output.position_ps.z = output.position_ps.z * 0.5f + 0.5f,				// [ 0;+1]. Will kill geometry outside the Z boundaries
+		output.position_ps.z = output.position_ps.z * 0.5f + 0.5f,						// [ 0;+1]. Will kill geometry outside the Z boundaries
+			
+		output_stream.Append(output);
 
-			output.cascade = cascade_index;
-
-			output_stream.Append(output);
-
-		}
-
-		output_stream.RestartStrip();
-		
 	}
 
 }
