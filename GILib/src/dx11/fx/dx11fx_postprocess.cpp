@@ -114,7 +114,7 @@ const size_t DX11FxBloom::kDownscaledSurfaces = 6;
 
 DX11FxBloom::DX11FxBloom(const Parameters& parameters) :
 	fx_downscale_(gi_lib::fx::FxScale::Parameters{}),
-	fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ parameters.sigma_}),
+	fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ parameters.sigma_, 5 }),
 	fx_bright_pass_(gi_lib::fx::FxBrightPass::Parameters{ parameters.threshold_, parameters.key_value_, parameters.average_luminance_}) {
 	
 	composite_shader_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\bloom_composite.hlsl" });
@@ -180,14 +180,16 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 		graphics_.PushEvent(L"1/2");
 
 		fx_blur_.Blur((*bright_surfaces_[index])[0],
-					  blur_surfaces_[index]);
+					  blur_surfaces_[index],
+					  Vector2i::Zero());
 						
 		// Additional blur passes to smooth out the jagginess of lower-resolution surfaces.
 
 		for (size_t passes = 0; passes < index; ++passes) {
 
 			fx_blur_.Blur(blur_surfaces_[index]->GetTexture(),
-						  blur_surfaces_[index]);
+						  blur_surfaces_[index],
+						  Vector2i::Zero());
 		
 		}
 

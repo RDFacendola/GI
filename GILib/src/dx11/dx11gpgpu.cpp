@@ -24,8 +24,18 @@ shader_composite_(std::make_unique<ShaderStateComposite>()){
 
 	std::string file_name = to_string(arguments.file_name);
 	
+	vector<D3D_SHADER_MACRO> macros;
+
+	for (auto& macro : arguments.macros) {
+
+		macros.push_back({ macro.macro.c_str(),
+						   macro.value.c_str() });
+
+	}
+
 	if(!shader_composite_->AddShader<ID3D11ComputeShader>(hlsl,
-														  file_name)){
+														  file_name,
+														  macros)){
 
 		// The function returns false only if the entry point couldn't be found.
 		THROW(L"Invalid compute shader code.");

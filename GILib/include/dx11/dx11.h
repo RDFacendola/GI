@@ -168,6 +168,7 @@ namespace gi_lib{
 				unsigned int sample_mask;
 
 			};
+
 			std::vector<BlendState> blend_state_;										///< \brief Blend state stack.
 
 			std::vector<ID3D11DepthStencilState*> depth_stencil_state_;					/// <\brief Depth stencil state stack.

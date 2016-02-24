@@ -7,6 +7,9 @@
 
 #include <typeindex>
 #include <string>
+#include <sstream>
+
+#include "gilib.h"
 #include "resources.h"
 #include "tag.h"
 #include "object.h"
@@ -23,12 +26,22 @@ namespace gi_lib{
 
 	public:
 
+		struct MacroDefinition {
+
+			std::string macro;			///< \brief Name of the macro.
+
+			std::string value;			///< \brief Value of the macro.
+
+		};
+
 		/// \brief Structure used to compile a compute shader from a file.
 		struct CompileFromFile{
 
 			USE_CACHE;
 
-			std::wstring file_name;			///< \brief Name of the file containing the compute shader code.
+			std::wstring file_name;					///< \brief Name of the file containing the compute shader code.
+
+			std::vector<MacroDefinition> macros;	///< \brief Macro array.
 
 			/// \brief Get the cache key associated to the structure.
 			/// \return Returns the cache key associated to the structure.
@@ -117,7 +130,17 @@ namespace gi_lib{
 
 	inline size_t IComputation::CompileFromFile::GetCacheKey() const{
 
-		return gi_lib::Tag(file_name);
+		std::stringstream ss;
+
+		ss << gi_lib::to_string(file_name);
+
+		for (auto&& macro_definition : macros) {
+
+			ss << macro_definition.macro << ";" << macro_definition.value;
+
+		}
+
+		return gi_lib::Tag(ss.str());
 
 	}	
 

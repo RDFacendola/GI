@@ -182,7 +182,7 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, ID3D11VertexShader** shader, ShaderReflection* reflection, std::wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11VertexShader** shader, ShaderReflection* reflection, std::wstring* errors);
 
 		};
 
@@ -202,7 +202,7 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, ID3D11HullShader** shader, ShaderReflection* reflection, std::wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11HullShader** shader, ShaderReflection* reflection, std::wstring* errors);
 
 		};
 
@@ -222,7 +222,7 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, ID3D11DomainShader** shader, ShaderReflection* reflection, std::wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11DomainShader** shader, ShaderReflection* reflection, std::wstring* errors);
 
 		};
 
@@ -242,7 +242,7 @@ namespace gi_lib{
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
 			/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
-			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, ID3D11GeometryShader** shader, ShaderReflection* reflection, std::wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11GeometryShader** shader, ShaderReflection* reflection, std::wstring* errors);
 
 		};
 
@@ -261,7 +261,7 @@ namespace gi_lib{
 			/// \param source_file Used to resolve #include directives.
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a pre-filled shader reflection. Set to null to ignore the reflection.
-			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, ID3D11PixelShader** shader, ShaderReflection* reflection, std::wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11PixelShader** shader, ShaderReflection* reflection, std::wstring* errors);
 
 		};
 
@@ -280,7 +280,7 @@ namespace gi_lib{
 			/// \param source_file Used to resolve #include directives.
 			/// \param shader Pointer to the shader that will contain the result. Set to null to ignore the object.
 			/// \param reflection Pointer to a shader reflection. Set to null to ignore the reflection.
-			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, ID3D11ComputeShader** shader, ShaderReflection* reflection, std::wstring* errors);
+			static HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11ComputeShader** shader, ShaderReflection* reflection, std::wstring* errors);
 
 		};
 
@@ -292,7 +292,7 @@ namespace gi_lib{
 		/// \param reflection Pointer to the object that will contain the reflection. Set to null to ignore the reflection.
 		/// \param errors Pointer to a string that will contain the compilation errors if the the method fails. Set to null to ignore.
 		template <typename TShader>
-		HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, TShader** shader, ShaderReflection* reflection = nullptr, std::wstring* errors = nullptr);
+		HRESULT MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, TShader** shader, ShaderReflection* reflection = nullptr, std::wstring* errors = nullptr);
 	
 		/// \brief Compile an HLSL code returning a bytecode.
 		/// \param HLSL HLSL code.
@@ -300,7 +300,7 @@ namespace gi_lib{
 		/// \param bytecode If the method succeeds, it will contain the compiled bytecode.
 		/// \param error_string If the method fails, it will contain the error string. Optional.
 		template <typename TShader>
-		HRESULT CompileHLSL(const std::string& HLSL, const std::string& source_file, ID3DBlob** bytecode, ShaderReflection* reflection = nullptr, std::wstring* error_string = nullptr);
+		HRESULT CompileHLSL(const std::string& HLSL, const std::string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3DBlob** bytecode, ShaderReflection* reflection = nullptr, std::wstring* error_string = nullptr);
 
 		/// \brief Compile an HLSL code returning a bytecode.
 		/// \param HLSL HLSL code.
@@ -308,7 +308,7 @@ namespace gi_lib{
 		/// \param bytecode If the method succeeds, it will contain the compiled bytecode.
 		/// \param reflection If the method succeeds, it will containg the reflection of the HLSL code.
 		/// \param error_string If the method fails, it will contain the error string. Optional.
-		HRESULT CompileHLSL(const std::string& HLSL, const std::string& source_file, const std::string& entry_point, const std::string& profile, ID3DBlob** bytecode, ShaderReflection* reflection = nullptr, std::wstring* error_string = nullptr);
+		HRESULT CompileHLSL(const std::string& HLSL, const std::string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, const std::string& entry_point, const std::string& profile, ID3DBlob** bytecode, ShaderReflection* reflection = nullptr, std::wstring* error_string = nullptr);
 				
 	}
 
@@ -317,10 +317,11 @@ namespace gi_lib{
 //////////////////////////////// COMPILE HLSL ///////////////////////////////////////////
 
 template <typename TShader>
-HRESULT gi_lib::dx11::CompileHLSL(const std::string& HLSL, const std::string& source_file, ID3DBlob** bytecode, ShaderReflection* reflection, std::wstring* error_string){
+HRESULT gi_lib::dx11::CompileHLSL(const std::string& HLSL, const std::string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3DBlob** bytecode, ShaderReflection* reflection, std::wstring* error_string){
 
 	return CompileHLSL(HLSL,
 					   source_file,
+					   macros,
 					   ShaderTraits<TShader>::entry_point,
 					   ShaderTraits<TShader>::profile,
 					   bytecode,
@@ -332,11 +333,12 @@ HRESULT gi_lib::dx11::CompileHLSL(const std::string& HLSL, const std::string& so
 //////////////////////////////// MAKE SHADER ///////////////////////////////////////
 
 template <typename TShader>
-inline HRESULT gi_lib::dx11::MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, TShader** shader, ShaderReflection* reflection, std::wstring* errors){
+inline HRESULT gi_lib::dx11::MakeShader(ID3D11Device& device, const std::string& HLSL, const std::string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, TShader** shader, ShaderReflection* reflection, std::wstring* errors){
 
 	return ShaderTraits<TShader>::MakeShader(device, 
 											 HLSL, 
 											 source_file, 
+											 macros,
 											 shader, 
 											 reflection, 
 											 errors);

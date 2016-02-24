@@ -10,6 +10,7 @@
 #include "texture.h"
 #include "render_target.h"
 #include "resources.h"
+#include "gimath.h"
 
 namespace gi_lib {
 
@@ -21,16 +22,14 @@ namespace gi_lib {
 
 		public:
 
-			static const int kKernelSize = 11;			///< \brief Size of the kernel.
-
-			static const int kBlurRadius = 5;			///< \brief Blur radius.
-
 			/// \brief Parameters needed by the post processing shader.
 			struct Parameters {
 
 				NO_CACHE;
 
-				float sigma_;				///< \brief Sigma used to compute the Gaussian kernel
+				float sigma_;					///< \brief Sigma used to compute the Gaussian kernel.
+
+				unsigned int kernel_radius_;	///< \brief Half size of the Gaussian kernel.
 
 			};
 
@@ -43,13 +42,9 @@ namespace gi_lib {
 			/// \brief Performs a Gaussian blur of the specified texture.
 			/// \param source Texture to blur.
 			/// \param destination Destination texture containing the result.
-			virtual void Blur(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination) = 0;
-
-			/// \brief Performs a Gaussian blur of the specified texture array.
-			/// \param source Texture array to blur.
-			/// \param destination Destination texture containing the result.
-			virtual void Blur(const ObjectPtr<ITexture2DArray>& source, const ObjectPtr<IGPTexture2DArray>& destination) = 0;
-
+			/// \param offset Top-left corner inside the destination texture where the result will be stored.
+			virtual void Blur(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination, const Vector2i& offset) = 0;
+			
 		};
 	
 	}

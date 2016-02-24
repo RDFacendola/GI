@@ -28,8 +28,11 @@ namespace {
 		ID3DBlob* blob;
 		auto&& device = *DX11Graphics::GetInstance().GetDevice();
 
+		vector<D3D_SHADER_MACRO> macros;
+
 		CompileHLSL<ID3D11VertexShader>(hlsl,
 										file_name,
+										macros,
 										&blob,
 										&reflection);
 				
@@ -98,9 +101,10 @@ shader_composite_(make_unique<ShaderStateComposite>()){
 
 	});
 
+	vector<D3D_SHADER_MACRO> macros;	// No macros, yet
 
-	if (!shader_composite_->AddShader<ID3D11VertexShader>(code, file_name) ||
-		!shader_composite_->AddShader<ID3D11PixelShader>(code, file_name)){
+	if (!shader_composite_->AddShader<ID3D11VertexShader>(code, file_name, macros) ||
+		!shader_composite_->AddShader<ID3D11PixelShader>(code, file_name, macros)){
 
 		THROW(L"A material must declare both a vertex shader and a pixel shader");
 
@@ -108,9 +112,9 @@ shader_composite_(make_unique<ShaderStateComposite>()){
 
 	// Optional shaders. The method will do nothing if the entry point couldn't be found.
 
-	shader_composite_->AddShader<ID3D11HullShader>(code, file_name);
-	shader_composite_->AddShader<ID3D11DomainShader>(code, file_name);
-	shader_composite_->AddShader<ID3D11GeometryShader>(code, file_name);
+	shader_composite_->AddShader<ID3D11HullShader>(code, file_name, macros);
+	shader_composite_->AddShader<ID3D11DomainShader>(code, file_name, macros);
+	shader_composite_->AddShader<ID3D11GeometryShader>(code, file_name, macros);
 	
 	// Create the proper input layout
 

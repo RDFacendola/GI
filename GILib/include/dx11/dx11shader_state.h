@@ -274,7 +274,7 @@ namespace gi_lib{
 			ShaderStateComposite(const ShaderStateComposite& other);
 
 			template <typename TShader>
-			bool AddShader(const std::string hlsl, const std::string file_name);
+			bool AddShader(const std::string hlsl, const std::string file_name, const std::vector<D3D_SHADER_MACRO>& macros);
 
 			/// \brief Get the amount of shader inside the composite.
 			size_t GetShaderCount() const;
@@ -633,7 +633,7 @@ namespace gi_lib{
 		//////////////////////////////// SHADER STATE COMPOSITE ////////////////////////////////////
 
 		template <typename TShader>
-		bool ShaderStateComposite::AddShader(const std::string hlsl, const std::string file_name){
+		bool ShaderStateComposite::AddShader(const std::string hlsl, const std::string file_name, const std::vector<D3D_SHADER_MACRO>& macros){
 			
 			const std::wstring entry_point_exception_code = L"X3501";	// Error code returned if the entry point couldn't be found.
 
@@ -646,6 +646,7 @@ namespace gi_lib{
 			if (FAILED(::MakeShader(*DX11Graphics::GetInstance().GetDevice(),
 									hlsl,
 									file_name,
+									macros,
 									&shader,
 									&reflection,
 									&errors))){

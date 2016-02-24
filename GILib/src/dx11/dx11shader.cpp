@@ -3,6 +3,7 @@
 #pragma comment(lib, "d3dcompiler.lib")
 
 #include <d3dcompiler.h>
+#include <memory>
 
 #include "scope_guard.h"
 
@@ -325,12 +326,13 @@ namespace{
 	}
 
 	template <typename TShader, typename TCreateShader>
-	HRESULT MakeShader(const string& HLSL, const string& source_file, TCreateShader CreateShader, TShader** shader, ShaderReflection* reflection, wstring* error_string){
+	HRESULT MakeShader(const string& HLSL, const string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, TCreateShader CreateShader, TShader** shader, ShaderReflection* reflection, wstring* error_string){
 
 		ID3DBlob* bytecode = nullptr;
 
 		RETURN_ON_FAIL(CompileHLSL<TShader>(HLSL, 
 											source_file, 
+											macros,
 											&bytecode, 
 											reflection,
 											error_string));
@@ -368,28 +370,32 @@ namespace{
 
 /////////////////// COMPILE HLSL ///////////////////////////
 
-HRESULT gi_lib::dx11::CompileHLSL(const string& HLSL, const string& source_file, const string& entry_point, const string& profile, ID3DBlob** bytecode, ShaderReflection* reflection, wstring* error_string){
+HRESULT gi_lib::dx11::CompileHLSL(const string& HLSL, const string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, const string& entry_point, const string& profile, ID3DBlob** bytecode, ShaderReflection* reflection, wstring* error_string){
+		
+	auto shader_macros = macros;		// Copy
 
 #ifdef _DEBUG
 
 	UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_SKIP_OPTIMIZATION;
 
-	D3D_SHADER_MACRO shader_macros[2] = { { "_DEBUG", "" }, { nullptr, nullptr } };
+	shader_macros.push_back({ "_DEBUG", "" });
 
 #else
 
 	UINT compilation_flags = D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR | D3DCOMPILE_OPTIMIZATION_LEVEL3;
 
-	const D3D_SHADER_MACRO* shader_macros = nullptr;
-
 #endif
+
+	// The shader macro array must be terminated with a nullptr element
+
+	shader_macros.push_back({ nullptr, nullptr });
 
 	ID3DBlob * errors;
 
 	auto hr = D3DCompile(HLSL.c_str(),
 						 HLSL.length(),
 						 source_file.c_str(),
-						 shader_macros,
+						 macros.size() > 0 ? &shader_macros[0]: nullptr,
 						 D3D_COMPILE_STANDARD_FILE_INCLUDE,
 						 entry_point.c_str(),
 						 profile.c_str(),
@@ -397,7 +403,7 @@ HRESULT gi_lib::dx11::CompileHLSL(const string& HLSL, const string& source_file,
 						 0,
 						 bytecode,
 						 &errors);
-
+		
 	if (FAILED(hr) &&
 		error_string){
 
@@ -467,7 +473,7 @@ const char* ShaderTraits < ID3D11VertexShader >::entry_point = "VSMain";
 
 const char* ShaderTraits < ID3D11VertexShader >::profile = "vs_5_0";
 
-HRESULT ShaderTraits < ID3D11VertexShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11VertexShader** shader, ShaderReflection* reflection, wstring* errors){
+HRESULT ShaderTraits < ID3D11VertexShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11VertexShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	auto make_vertex_shader = [&device](ID3DBlob& bytecode, ID3D11VertexShader** shader_ptr)
 	{
@@ -481,6 +487,7 @@ HRESULT ShaderTraits < ID3D11VertexShader >::MakeShader(ID3D11Device& device, co
 
 	return ::MakeShader<ID3D11VertexShader>(HLSL,
 											source_file,
+											macros,
 											make_vertex_shader,
 											shader,
 											reflection,
@@ -496,7 +503,7 @@ const char* ShaderTraits < ID3D11HullShader >::entry_point = "HSMain";
 
 const char* ShaderTraits < ID3D11HullShader >::profile = "hs_5_0";
 
-HRESULT ShaderTraits < ID3D11HullShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11HullShader** shader, ShaderReflection* reflection, wstring* errors){
+HRESULT ShaderTraits < ID3D11HullShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11HullShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	auto make_vertex_shader = [&device](ID3DBlob& bytecode, ID3D11HullShader** shader_ptr)
 	{
@@ -510,6 +517,7 @@ HRESULT ShaderTraits < ID3D11HullShader >::MakeShader(ID3D11Device& device, cons
 
 	return ::MakeShader<ID3D11HullShader>(HLSL,
 										  source_file,
+										  macros,
 										  make_vertex_shader,
 										  shader,
 										  reflection,
@@ -525,7 +533,7 @@ const char* ShaderTraits < ID3D11DomainShader >::entry_point = "DSMain";
 
 const char* ShaderTraits < ID3D11DomainShader >::profile = "ds_5_0";
 
-HRESULT ShaderTraits < ID3D11DomainShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11DomainShader** shader, ShaderReflection* reflection, wstring* errors){
+HRESULT ShaderTraits < ID3D11DomainShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11DomainShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	auto make_vertex_shader = [&device](ID3DBlob& bytecode, ID3D11DomainShader** shader_ptr)
 	{
@@ -539,6 +547,7 @@ HRESULT ShaderTraits < ID3D11DomainShader >::MakeShader(ID3D11Device& device, co
 
 	return ::MakeShader<ID3D11DomainShader>(HLSL,
 											source_file,
+											macros,
 											make_vertex_shader,
 											shader,
 											reflection,
@@ -554,7 +563,7 @@ const char* ShaderTraits < ID3D11GeometryShader >::entry_point = "GSMain";
 
 const char* ShaderTraits < ID3D11GeometryShader >::profile = "gs_5_0";
 
-HRESULT ShaderTraits < ID3D11GeometryShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11GeometryShader** shader, ShaderReflection* reflection, wstring* errors){
+HRESULT ShaderTraits < ID3D11GeometryShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11GeometryShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	auto make_vertex_shader = [&device](ID3DBlob& bytecode, ID3D11GeometryShader** shader_ptr)
 	{
@@ -568,6 +577,7 @@ HRESULT ShaderTraits < ID3D11GeometryShader >::MakeShader(ID3D11Device& device, 
 
 	return ::MakeShader<ID3D11GeometryShader>(HLSL,
 											  source_file,
+											  macros,
 											  make_vertex_shader,
 											  shader,
 											  reflection,
@@ -583,7 +593,7 @@ const char* ShaderTraits < ID3D11PixelShader >::entry_point = "PSMain";
 
 const char* ShaderTraits < ID3D11PixelShader >::profile = "ps_5_0";
 
-HRESULT ShaderTraits < ID3D11PixelShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11PixelShader** shader, ShaderReflection* reflection, wstring* errors){
+HRESULT ShaderTraits < ID3D11PixelShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11PixelShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	auto make_vertex_shader = [&device](ID3DBlob& bytecode, ID3D11PixelShader** shader_ptr)
 	{
@@ -597,6 +607,7 @@ HRESULT ShaderTraits < ID3D11PixelShader >::MakeShader(ID3D11Device& device, con
 
 	return ::MakeShader<ID3D11PixelShader>(HLSL,
 										   source_file,
+										   macros,
 										   make_vertex_shader,
 										   shader,
 										   reflection,
@@ -612,7 +623,7 @@ const char* ShaderTraits < ID3D11ComputeShader >::entry_point = "CSMain";
 
 const char* ShaderTraits < ID3D11ComputeShader >::profile = "cs_5_0";
 
-HRESULT ShaderTraits < ID3D11ComputeShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, ID3D11ComputeShader** shader, ShaderReflection* reflection, wstring* errors){
+HRESULT ShaderTraits < ID3D11ComputeShader >::MakeShader(ID3D11Device& device, const string& HLSL, const string& source_file, const std::vector<D3D_SHADER_MACRO>& macros, ID3D11ComputeShader** shader, ShaderReflection* reflection, wstring* errors){
 
 	auto make_compute_shader = [&device](ID3DBlob& bytecode, ID3D11ComputeShader** shader_ptr)
 	{
@@ -626,6 +637,7 @@ HRESULT ShaderTraits < ID3D11ComputeShader >::MakeShader(ID3D11Device& device, c
 
 	return ::MakeShader<ID3D11ComputeShader>(HLSL,
 											 source_file,
+											 macros,
 											 make_compute_shader,
 											 shader,
 											 reflection,

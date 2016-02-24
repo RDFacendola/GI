@@ -29,10 +29,8 @@ namespace gi_lib {
 
 			virtual void SetSigma(float sigma) override;
 
-			virtual void Blur(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination) override;
-
-			virtual void Blur(const ObjectPtr<ITexture2DArray>& source, const ObjectPtr<IGPTexture2DArray>& destination) override;
-
+			virtual void Blur(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IGPTexture2D>& destination, const Vector2i& offset) override;
+			
 			virtual size_t GetSize() const override;
 
 		private:
@@ -43,23 +41,19 @@ namespace gi_lib {
 
 			static const Tag kDestinationTexture;						///< \brief Tag of the destination texture to write.
 
-			static const Tag kBlurKernel;								///< \brief Tag of the kernel used for weighting.
-
 			ObjectPtr<DX11StructuredArray> kernel_;						///< \brief Contains the actual values of the kernel.
 
-			ObjectPtr<DX11Computation> hblur_shader_;					///< \brief Used to perform the horizontal blur pass.
+			ObjectPtr<DX11StructuredBuffer> parameters_;				///< \brief Contains the parameters for the gaussian blur.
 
-			ObjectPtr<DX11Computation> vblur_shader_;					///< \brief Used to perform the vertical blur pass.
+			ObjectPtr<DX11Computation> hblur_shader_;					///< \brief Used to perform a horizontal blur pass.
 
-			ObjectPtr<DX11Computation> hblur_array_shader_;				///< \brief Used to perform the horizontal blur pass for texture arrays.
-
-			ObjectPtr<DX11Computation> vblur_array_shader_;				///< \brief Used to perform the vertical blur pass for texture arrays.
-
-			ObjectPtr<DX11GPTexture2DArray> temp_texture_array_;		///< \brief Temporary texture array containing the first pass of the Gaussian blur.
+			ObjectPtr<DX11Computation> vblur_shader_;					///< \brief Used to perform a vertical blur pass.
 
 			std::unique_ptr<IGPTexture2DCache> gp_cache_;				///< \brief Pointer to the general-purpose texture cache.
 
 			float sigma_;												///< \brief Variance of the Gaussian function.
+
+			int radius_;												///< \brief Kernel radius.
 
 		};
 			
