@@ -68,28 +68,22 @@ namespace gi_lib {
 			/// \brief Create a new VSM shadow atlas.
 			DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_precision = false);
 
-			/// \brief Clear the atlas from any existing shadowmap and reinitializes the shadowmap.
-			void Begin();
-
-			/// \brief Finalize the shadows and commit the result to the final atlas.
-			void Commit();
+			/// \brief Reset the current status of the shadowmap atlas.
+			void Reset();
 
 			/// \brief Computes a variance shadowmap.
 			/// \param point_light Point light casting the shadow.
 			/// \param scene Scene containing the caster geometry.
 			/// \param shadow Structure containing the data used to access the shadowmap for the HLSL code.
-			/// \param near_plane Geometry nearer than this threshold is considered fully lit.
-			/// \param far_plane Geometry farthest than this threshold is considered fully shadowed.
 			/// \return Returns true if the shadowmap was calculated correctly, returns false otherwise.
-			bool ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow, float near_plane = 1.0f, float far_plane = std::numeric_limits<float>::infinity());
+			bool ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow);
 			
 			/// \brief Computes a variance shadowmap.
 			/// \param directional_light Point light casting the shadow.
 			/// \param scene Scene containing the caster geometry.
 			/// \param shadow Structure containing the data used to access the shadowmap for the HLSL code.
-			/// \param far_plane Geometry farthest than this threshold is considered fully shadowed.
 			/// \return Returns true if the shadowmap was calculated correctly, returns false otherwise.
-			bool ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow, float aspect_ratio, float far_plane = std::numeric_limits<float>::infinity());
+			bool ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow);
 			
 			/// \brief Get the shadow atlas.
 			ObjectPtr<ITexture2DArray> GetAtlas();
@@ -99,37 +93,33 @@ namespace gi_lib {
 
 		private:
 						
-			static const Tag kPerObject;							///< \brief Tag of the per-object constant buffer.
-
-			static const Tag kPerLight;								///< \brief Tag of the per-light constant buffer.
-
 			void DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_view_transform);
 
 			void DrawShadowmap(const DirectionalShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_proj_transform);
 
-			void DrawShadowmap(const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable = false);
+			void DrawShadowmap(const AlignedBox2i& boundaries, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable = false);
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
 
-			COMPtr<ID3D11RasterizerState> rasterizer_state_;		///< \brief Rasterizer state.
+			COMPtr<ID3D11RasterizerState> rs_depth_bias_;			///< \brief Depth biased rasterizer state.
 
 			vector<vector<AlignedBox2i>> chunks_;					///< \brief Contains the free chunks for each atlas page.
 																	///			A chunk is a free region of space within the atlas.
 
-			ObjectPtr<DX11RenderTargetArray> atlas_;				///< \brief Array of render targets used as shadow atlas.
-
-			ObjectPtr<DX11GPTexture2DArray> blur_atlas_;			///< \brief Contains the blurred version of the shadows stored inside the atlas.
+			ObjectPtr<DX11GPTexture2DArray> atlas_;					///< \brief Array containing the packed shadowmaps to be used on the next frame.
 
 			ObjectPtr<DX11Sampler> sampler_;						///<\ brief Sampler used to sample the VSM.
 
-			ObjectPtr<DX11Material> dpvsm_material_;				///< \brief Material used to write the Dual-paraboloid VSM. (Point lights)
+			ObjectPtr<DX11Material> point_shadow_material_;			///< \brief Material used for point light shadows.
 
-			ObjectPtr<DX11Material> vsm_material_;					///< \brief Material used to write the VSM. (Directional lights)
+			ObjectPtr<DX11Material> directional_shadow_material_;	///< \brief Material used for directional light shadows.
 
 			ObjectPtr<DX11StructuredBuffer> per_object_;			///< \brief Per-object constant buffer.
 
 			ObjectPtr<DX11StructuredBuffer> per_light_;				///< \brief Per-light constant buffer.
 			
+			std::unique_ptr<DX11RenderTargetCache> rt_cache_;		///< \brief Pointer to the render-target texture cache.
+
 			DX11FxGaussianBlur fx_blur_;							///< \brief Used to blur the shadowmap.
 			
 		};
@@ -138,7 +128,7 @@ namespace gi_lib {
 
 		inline ObjectPtr<ITexture2DArray> DX11VSMAtlas::GetAtlas() {
 
-			return blur_atlas_->GetTextureArray();
+			return atlas_->GetTextureArray();
 
 		}
 				

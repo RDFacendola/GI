@@ -107,8 +107,6 @@ namespace {
 
 		page_index = 0;
 
-		// A directional shadow requires only one chunk in any atlas page
-
 		for (auto&& page_chunks : chunks) {
 
 			auto it = GetBestChunk(size, 
@@ -299,23 +297,22 @@ namespace {
 
 ///////////////////////////////////// DX11 VSM ATLAS /////////////////////////////////////////
 
-const Tag DX11VSMAtlas::kPerObject = "PerObject";
-const Tag DX11VSMAtlas::kPerLight = "PerLight";
-
 DX11VSMAtlas::DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_precision) :
-	fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ 1.67f }) {
+	fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ 1.67f, 5 }) {
 
-	auto&& device = *DX11Graphics::GetInstance().GetDevice();
+	auto device = DX11Graphics::GetInstance().GetDevice();
+
+	COM_GUARD(device);
 
 	// Get the immediate rendering context.
 
 	ID3D11DeviceContext* context;
 
-	device.GetImmediateContext(&context);
+	device->GetImmediateContext(&context);
 
 	immediate_context_ << &context;
 
-	// 
+	//  Create the rasterizer state
 
 	D3D11_RASTERIZER_DESC rasterizer_state_desc;
 
@@ -332,59 +329,51 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_prec
 	rasterizer_state_desc.MultisampleEnable = false;
 	rasterizer_state_desc.AntialiasedLineEnable = false;
 
-	device.CreateRasterizerState(&rasterizer_state_desc,
+	device->CreateRasterizerState(&rasterizer_state_desc,
 								 &rasterizer_state);
 
-	rasterizer_state_ << &rasterizer_state;
+	rs_depth_bias_ << &rasterizer_state;
 
 	// Create the shadow resources
 
 	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::ANISOTROPIC, 4 });
 
 	auto format = full_precision ? TextureFormat::RG_FLOAT : TextureFormat::RG_HALF;
-
-	atlas_ = new DX11RenderTargetArray(IRenderTargetArray::FromDescription{ size,
-																		    size, 
-																		    pages,
-																		    format } );
 	
-	blur_atlas_ = new DX11GPTexture2DArray(ITexture2DArray::FromDescription{ size,
-																			 size, 
-																			 pages,
-																			 1, 
-																			 format } );
+	atlas_ = new DX11GPTexture2DArray(ITexture2DArray::FromDescription{ size,
+																		size, 
+																		pages,
+																		1, 
+																		format } );
 
-	dpvsm_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\octahedron_vsm.hlsl" });
+	point_shadow_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\octahedron_vsm.hlsl" });
 
-	vsm_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\vsm.hlsl" });
+	directional_shadow_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\vsm.hlsl" });
 
 	per_object_ = new DX11StructuredBuffer(sizeof(VSMPerObjectCBuffer));
 
 	per_light_ = new DX11StructuredBuffer(sizeof(VSMPerLightCBuffer));
 
+	rt_cache_ = std::make_unique<DX11RenderTargetCache>(IRenderTargetCache::Singleton{});
+
 	// One-time setup
 
-	dpvsm_material_->SetInput(kPerObject,
-							  ObjectPtr<IStructuredBuffer>(per_object_));
+	bool check;
 
-	dpvsm_material_->SetInput(kPerLight,
-							  ObjectPtr<IStructuredBuffer>(per_light_));
+	check = point_shadow_material_->SetInput("PerObject",
+											 ObjectPtr<IStructuredBuffer>(per_object_));
 
-	vsm_material_->SetInput(kPerObject,
-							ObjectPtr<IStructuredBuffer>(per_object_));
+	check = point_shadow_material_->SetInput("PerLight",
+											 ObjectPtr<IStructuredBuffer>(per_light_));
+
+	check = directional_shadow_material_->SetInput("PerObject",
+												   ObjectPtr<IStructuredBuffer>(per_object_));
 	
 }
 
-void DX11VSMAtlas::Begin() {
-
-	// Clear the atlas pages - TODO: Clear by need
-
-	atlas_->ClearDepth(*immediate_context_);
-	atlas_->ClearTargets(*immediate_context_, kOpaqueWhite);
+void DX11VSMAtlas::Reset() {
 	
-	immediate_context_->RSSetState(rasterizer_state_.Get());
-
-	// Clear any existing chunk and starts over (basically we restore one big chunk for each atlas page)
+	// Clear any existing chunk and starts over again (Restore one big chunk for each atlas page)
 
 	chunks_.resize(atlas_->GetCount());
 
@@ -399,26 +388,7 @@ void DX11VSMAtlas::Begin() {
 
 }
 
-void DX11VSMAtlas::Commit() {
-
-	// Unbind the previously bound atlas
-
-	atlas_->Unbind(*immediate_context_);
-
-	// Blur the shadowmaps contained inside the atlas and store the result inside the blurred version of the atlas.
-
-	auto& graphics_ = DX11Graphics::GetInstance();
-
-	graphics_.PushEvent(L"Soft shadows blur");
-
-	fx_blur_.Blur(atlas_->GetRenderTargets(),
-				  ObjectPtr<IGPTexture2DArray>(blur_atlas_));
-
-	graphics_.PopEvent();
-	
-}
-
-bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow, float near_plane, float far_plane) {
+bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow) {
 
 	if (!point_light.IsShadowEnabled() ||
 		!ReserveChunk(point_light.GetShadowMapSize(),
@@ -446,15 +416,15 @@ bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, cons
 
 	// Fill the remaining shadow infos
 
-	shadow.near_plane = std::max(0.0f, near_plane);
-	shadow.far_plane = std::min(point_light.GetBoundingSphere().radius, far_plane);
+	shadow.near_plane = 0.0f;
+	shadow.far_plane = point_light.GetBoundingSphere().radius;
 	shadow.light_view_matrix = light_transform.matrix();
 
 	shadow.enabled = 1;
 
 	// Draw the actual shadowmap
 
-	DrawShadowmap(shadow, 
+	DrawShadowmap(shadow,
 				  scene.GetMeshHierarchy().GetIntersections(point_light.GetBoundingSphere()),
 				  light_transform);
 		
@@ -462,7 +432,7 @@ bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, cons
 
 }
 
-bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow, float aspect_ratio, float far_plane) {
+bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow) {
 		
 	if (!directional_light.IsShadowEnabled() ||
 		!ReserveChunk(directional_light.GetShadowMapSize(),
@@ -488,8 +458,6 @@ bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional
 	
 	auto z_range = GetZRange(lit_geometry,
 							 directional_light.GetDirection());
-
-	z_range(1) = std::min(z_range(1), z_range(0) + far_plane);		// Clamp the maximum depth wrt the minimum depth found.
 
 	auto light_world_transform = directional_light.GetWorldTransform().matrix();
 
@@ -520,15 +488,6 @@ bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional
 
 void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_view_transform){
 
-	D3D11_VIEWPORT view_port;
-
-	view_port.TopLeftX = shadow.min_uv(0) * atlas_->GetWidth();
-	view_port.TopLeftY = shadow.min_uv(1) * atlas_->GetHeight();
-	view_port.MinDepth = 0.0f;
-	view_port.MaxDepth = 1.0f;
-	view_port.Width = (shadow.max_uv(0) - shadow.min_uv(0)) * atlas_->GetWidth();
-	view_port.Height = (shadow.max_uv(1) - shadow.min_uv(1)) * atlas_->GetHeight();
-
 	// Per-light setup
 
 	auto& per_light_front = *per_light_->Lock<VSMPerLightCBuffer>();
@@ -538,49 +497,55 @@ void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeC
 
 	per_light_->Unlock();
 
-	atlas_->Bind(*immediate_context_, 
-				 shadow.atlas_page, 
-				 &view_port);
-
 	// Draw the geometry to the shadowmap
 
-	DrawShadowmap(nodes, 
-				  dpvsm_material_,
+	auto atlas_size = Vector2f(atlas_->GetWidth(), atlas_->GetHeight());
+
+	AlignedBox2i boundaries(shadow.min_uv.cwiseProduct(atlas_size).cast<int>(),
+							shadow.max_uv.cwiseProduct(atlas_size).cast<int>());
+
+	DrawShadowmap(boundaries,
+				  nodes,
+				  point_shadow_material_,
 				  light_view_transform.matrix());
 	
 }
 
 void DX11VSMAtlas::DrawShadowmap(const DirectionalShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_proj_transform) {
 	
-	D3D11_VIEWPORT view_port;
-
-	view_port.TopLeftX = shadow.min_uv(0) * atlas_->GetWidth();
-	view_port.TopLeftY = shadow.min_uv(1) * atlas_->GetHeight();
-	view_port.MinDepth = 0.0f;
-	view_port.MaxDepth = 1.0f;
-	view_port.Width = (shadow.max_uv(0) - shadow.min_uv(0)) * atlas_->GetWidth();
-	view_port.Height = (shadow.max_uv(1) - shadow.min_uv(1)) * atlas_->GetHeight();
-
-	atlas_->Bind(*immediate_context_,
-				 shadow.atlas_page,
-				 &view_port);
-
 	// Draw the geometry to the shadowmap
 
-	DrawShadowmap(nodes,
-				  vsm_material_,
+	auto atlas_size = Vector2f(atlas_->GetWidth(), atlas_->GetHeight());
+
+	AlignedBox2i boundaries(shadow.min_uv.cwiseProduct(atlas_size).cast<int>(),
+							shadow.max_uv.cwiseProduct(atlas_size).cast<int>());
+
+	DrawShadowmap(boundaries,
+				  nodes,
+				  directional_shadow_material_,
 				  light_proj_transform);
 
 }
 
-void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable) {
+void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable) {
 
 	auto& graphics_ = DX11Graphics::GetInstance();
 
 	graphics_.PushEvent(L"Shadowmap");
 
+	// Bind a new shadowmap to the output
+
+	auto shadow_map = rt_cache_->PopFromCache(boundaries.sizes()(0) + 1,
+											  boundaries.sizes()(1) + 1,
+											  { atlas_->GetFormat() },
+											   true);
+
 	ObjectPtr<DX11Mesh> mesh;
 	
+	DX11Utils::GetInstance().PushRasterizerState(*immediate_context_, *rs_depth_bias_);
+
+	resource_cast(shadow_map)->Bind(*immediate_context_);
+
 	shadow_material->Bind(*immediate_context_);
 
 	for (auto&& node : nodes) {
@@ -629,7 +594,26 @@ void DX11VSMAtlas::DrawShadowmap(const vector<VolumeComponent*> nodes, const Obj
 
 	shadow_material->Unbind(*immediate_context_);
 
+	resource_cast(shadow_map)->Unbind(*immediate_context_);
+
+	DX11Utils::GetInstance().PopRasterizerState(*immediate_context_);
+	
+	// Blur the shadow map on top of the atlas
+
+	graphics_.PushEvent(L"VSM Blur");
+
+/*
+	fx_blur_.Blur((*shadow_map)[0],
+			      (*atlas_)[0],
+				  boundaries.TopLeft);*/
+
 	graphics_.PopEvent();
 
+	// Cleanup
+	
+	rt_cache_->PushToCache(shadow_map);
+	
+	graphics_.PopEvent();
+	
 }
 

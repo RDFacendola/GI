@@ -54,7 +54,7 @@ VSOut VSMain(VSIn input){
 
 	output.position_ps = mul(gViewProjection, float4(position, 1));
 
-	float factor = log2(gVoxelSize / info.size) / gCascades;
+	float factor = log2(gVoxelSize / info.size) / (gCascades + 1);
 
 	output.color = lerp(float4(0, 0, 0.75f, 1), float4(0.75f, 0, 0, 1), factor);
 

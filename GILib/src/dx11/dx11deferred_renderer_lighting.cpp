@@ -108,7 +108,7 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 	graphics_.PushEvent(L"Shadowmap");
 
-	shadow_atlas_->Begin();
+	shadow_atlas_->Reset();
 
 	auto point_lights = point_lights_->Lock<PointLight>();
 	
@@ -161,10 +161,6 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 	directional_shadows_->Unlock();
 	light_accumulation_parameters_->Unlock();
 	
-	// Finalize the shadows
-	
-	shadow_atlas_->Commit();
-
 	graphics_.PopEvent();
 
 	// These entities may change from frame to frame
@@ -227,7 +223,6 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const Directi
 	// Shadow
 	shadow_atlas_->ComputeShadowmap(directional_light,
 									scene,
-									shadow,
-									aspect_ratio);
+									shadow);
 
 }
