@@ -49,7 +49,7 @@ graphics_(DX11Graphics::GetInstance()){
 
 	light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
 
-	shadow_atlas_ = make_unique<DX11VSMAtlas>(2048, 1, true);
+	shadow_atlas_ = make_unique<DX11VSMAtlas>(2048/*, 1*/, true);
 
 	point_lights_ = new DX11StructuredArray(32, sizeof(PointLight));
 
@@ -84,7 +84,7 @@ graphics_(DX11Graphics::GetInstance()){
 									ObjectPtr<ISampler>(shadow_atlas_->GetSampler()));
 
 	check = light_shader_->SetInput(kVSMShadowAtlasTag,
-									ObjectPtr<ITexture2DArray>(shadow_atlas_->GetAtlas()));
+									ObjectPtr<ITexture2D>(shadow_atlas_->GetAtlas()));
 	
 }
 

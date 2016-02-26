@@ -224,6 +224,11 @@ namespace gi_lib{
 		/// \return Returns a pointer to the underlying texture array.
 		virtual ObjectPtr<ITexture2DArray> GetTextureArray() = 0;
 
+		/// \brief Get a single element of the texture array.
+		/// \param index Index of the texture inside the array.
+		/// \return Returns a pointer to the specified element of the texture array.
+		virtual ObjectPtr<IGPTexture2D> GetTexture(unsigned int index) = 0;
+		
 		/// \brief Get the width of the texture.
 		/// \return Returns the width of the texture, in pixel.
 		virtual unsigned int GetWidth() const = 0;

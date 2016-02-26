@@ -123,6 +123,14 @@ DX11GPTexture2D::DX11GPTexture2D(const IGPTexture2D::FromDescription& args){
 	
 }
 
+DX11GPTexture2D::DX11GPTexture2D(const COMPtr<ID3D11ShaderResourceView>& shader_resource_view, const COMPtr<ID3D11UnorderedAccessView>& unordered_access_view){
+
+	texture_ = new DX11Texture2D(shader_resource_view);
+
+	unordered_access_view_ = unordered_access_view;
+
+}
+
 ////////////////////////////// DX11 GP TEXTURE 2D CACHE ////////////////////////////////////////
 
 std::vector<ObjectPtr<DX11GPTexture2D>> DX11GPTexture2DCache::cache_;
@@ -250,9 +258,33 @@ DX11GPTexture2DArray::DX11GPTexture2DArray(const ITexture2DArray::FromDescriptio
 											  &srv,
 											  args.mips));
 
+
+	ID3D11Resource* resource;
+
+	srv->GetResource(&resource);
+
+	COM_GUARD(resource);
+
 	texture_array_ = new DX11Texture2DArray(COMMove(&srv));
 
 	unordered_access_view_ << &uav;
+
+	// Generate the single array elements starting from the UAV of the single elements
+	
+	array_elements_.reserve(args.count);
+
+	for (unsigned int element_index = 0; element_index < args.count; ++element_index) {
+
+		THROW_ON_FAIL(::MakeArraySliceViews(device,
+											*static_cast<ID3D11Texture2D*>(resource),
+										    element_index,
+										    &srv,
+										    &uav));
+
+		array_elements_.push_back(new DX11GPTexture2D(COMMove(&srv),
+													  COMMove(&uav)));
+
+	}
 
 }
 

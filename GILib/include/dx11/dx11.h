@@ -6,6 +6,7 @@
 #pragma once
 
 #include <d3d11.h>
+
 #include <vector>
 
 #include "eigen.h"
@@ -237,7 +238,15 @@ namespace gi_lib{
 		/// \param shader_resource_view Pointer to the shader resource view. Optional.
 		/// \param mips Number of mip maps to generate. If 0 is passed, the full chain is created.
 		HRESULT MakeUnorderedTextureArray(ID3D11Device& device, unsigned int width, unsigned int height, unsigned int count, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, unsigned int mips = 1);
-		
+
+		/// \brief Get the shader resource view and the unordered access view of a texture array element.
+		/// \param device Device used to create the views.
+		/// \param texture_array Source texture array.
+		/// \param slice_index Index of the slice to get the views of.
+		/// \param shader_resource_view If the method succeeds, this parameter points to the shader resource view of the slice. Optional, Output.
+		/// \param unordered_access_view If the method succeeds, this parameter points to the unordered access view of the slice. Optional, Output.
+		HRESULT MakeArraySliceViews(ID3D11Device& device, ID3D11Texture2D& texture_array, unsigned int slice_index, ID3D11ShaderResourceView** shader_resource_view, ID3D11UnorderedAccessView** unordered_access_view);
+
 		/// \brief Create a vertex buffer.
 		/// \tparam TVertexFormat Format of the vertex.
 		/// \param device Device used to create the vertex buffer.

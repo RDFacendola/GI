@@ -66,7 +66,7 @@ namespace gi_lib {
 		public:
 
 			/// \brief Create a new VSM shadow atlas.
-			DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_precision = false);
+			DX11VSMAtlas(unsigned int size/*, unsigned int pages*/, bool full_precision = false);
 
 			/// \brief Reset the current status of the shadowmap atlas.
 			void Reset();
@@ -86,7 +86,7 @@ namespace gi_lib {
 			bool ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow);
 			
 			/// \brief Get the shadow atlas.
-			ObjectPtr<ITexture2DArray> GetAtlas();
+			ObjectPtr<ITexture2D> GetAtlas();
 
 			/// \brief Get the default sampler used to sample the atlas.
 			ObjectPtr<DX11Sampler> GetSampler();
@@ -97,7 +97,7 @@ namespace gi_lib {
 
 			void DrawShadowmap(const DirectionalShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_proj_transform);
 
-			void DrawShadowmap(const AlignedBox2i& boundaries, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable = false);
+			void DrawShadowmap(const AlignedBox2i& boundaries, unsigned int atlas_page, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable = false);
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
 
@@ -106,7 +106,7 @@ namespace gi_lib {
 			vector<vector<AlignedBox2i>> chunks_;					///< \brief Contains the free chunks for each atlas page.
 																	///			A chunk is a free region of space within the atlas.
 
-			ObjectPtr<DX11GPTexture2DArray> atlas_;					///< \brief Array containing the packed shadowmaps to be used on the next frame.
+			ObjectPtr<DX11GPTexture2D> atlas_;						///< \brief Contains the packed shadowmaps to be used on the next frame.
 
 			ObjectPtr<DX11Sampler> sampler_;						///<\ brief Sampler used to sample the VSM.
 
@@ -126,9 +126,9 @@ namespace gi_lib {
 
 		/////////////////////////////////////// DX11 VSM SHADOW ATLAS ///////////////////////////////////////
 
-		inline ObjectPtr<ITexture2DArray> DX11VSMAtlas::GetAtlas() {
+		inline ObjectPtr<ITexture2D> DX11VSMAtlas::GetAtlas() {
 
-			return atlas_->GetTextureArray();
+			return atlas_->GetTexture();
 
 		}
 				

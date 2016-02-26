@@ -629,6 +629,81 @@ HRESULT gi_lib::dx11::MakeUnorderedTextureArray(ID3D11Device& device, unsigned i
 
 }
 
+HRESULT gi_lib::dx11::MakeArraySliceViews(ID3D11Device& device, ID3D11Texture2D& texture_array, unsigned int slice_index, ID3D11ShaderResourceView** shader_resource_view, ID3D11UnorderedAccessView** unordered_access_view) {
+	
+	THROW(L"Not implemented! Requires DirectX 11.3");
+
+	(device);
+	(texture_array);
+	(slice_index);
+	(shader_resource_view);
+	(unordered_access_view);
+
+	/*ID3D11UnorderedAccessView* uav = nullptr;
+	ID3D11ShaderResourceView* srv = nullptr;
+
+	auto cleanup = make_scope_guard([&uav, &srv]() {
+
+		if (uav)		uav->Release();
+		if (srv)		srv->Release();
+
+	});
+
+	D3D11_TEXTURE2D_DESC texture_array_desc;
+
+	texture_array.GetDesc(&texture_array_desc);
+
+	if (unordered_access_view) {
+
+		D3D11_UNORDERED_ACCESS_VIEW_DESC  uav_desc;
+
+		uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+		uav_desc.Format = texture_array_desc.Format;
+
+		uav_desc.Texture2D.MipSlice = 0;
+
+		RETURN_ON_FAIL(device.CreateUnorderedAccessView(&texture_array,
+														&uav_desc,
+														&uav));
+
+	}
+
+	if (shader_resource_view) {
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
+
+		srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		srv_desc.Format = texture_array_desc.Format;
+
+		srv_desc.Texture2D.MipLevels = static_cast<unsigned int>(-1);
+		srv_desc.Texture2D.MostDetailedMip = 0;
+
+		RETURN_ON_FAIL(device.CreateShaderResourceView(&texture_array,
+													   &srv_desc,
+													   &srv));
+
+	}
+
+	if (unordered_access_view) {
+
+		*unordered_access_view = uav;
+
+	}
+
+	if (shader_resource_view) {
+
+		*shader_resource_view = srv;
+
+	}
+
+	// Cleanup
+
+	cleanup.Dismiss();
+
+	return S_OK;*/
+
+}
+
 HRESULT gi_lib::dx11::MakeRawVertexBuffer(ID3D11Device& device, unsigned int element_count, ID3D11Buffer** buffer, ID3D11UnorderedAccessView** unordered_access_view) {
 
 	static unsigned int kElementSize = 4;		// Raw buffer must have 32 bit elements only!

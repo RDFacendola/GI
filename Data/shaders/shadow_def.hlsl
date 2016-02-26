@@ -48,7 +48,7 @@ struct DirectionalShadow {
 
 };
 	
-Texture2DArray gVSMShadowAtlas;									// Contains the variance shadow mapping atlas. Expected format R32G32 or R16G16.
+Texture2D gVSMShadowAtlas;										// Contains the variance shadow mapping atlas. Expected format R32G32 or R16G16.
 
 SamplerState gVSMSampler;										// Sampler used to sample the variance shadow mapping.
 
@@ -68,9 +68,9 @@ float2 SampleVSMShadowAtlas(int atlas_page, float2 min_uv, float2 max_uv, float2
 
 	float2 shadowmap_uv = saturate(uv) * (max_uv - min_uv) + min_uv;		// UVs in shadowmap space.
 
-	float3 uvw = float3(shadowmap_uv, float(atlas_page));
+	//float3 uvw = float3(shadowmap_uv, float(atlas_page));
 
-	return gVSMShadowAtlas.SampleLevel(gVSMSampler, uvw, 0).xy;
+	return gVSMShadowAtlas.SampleLevel(gVSMSampler, shadowmap_uv, 0).xy;
 		
 }
 

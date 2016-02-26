@@ -297,7 +297,7 @@ namespace {
 
 ///////////////////////////////////// DX11 VSM ATLAS /////////////////////////////////////////
 
-DX11VSMAtlas::DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_precision) :
+DX11VSMAtlas::DX11VSMAtlas(unsigned int size/*, unsigned int pages*/, bool full_precision) :
 	fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ 1.67f, 5 }) {
 
 	auto device = DX11Graphics::GetInstance().GetDevice();
@@ -340,11 +340,10 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int size, unsigned int pages, bool full_prec
 
 	auto format = full_precision ? TextureFormat::RG_FLOAT : TextureFormat::RG_HALF;
 	
-	atlas_ = new DX11GPTexture2DArray(ITexture2DArray::FromDescription{ size,
-																		size, 
-																		pages,
-																		1, 
-																		format } );
+	atlas_ = new DX11GPTexture2D(IGPTexture2D::FromDescription{ size,
+																size, 
+																1, 
+																format } );
 
 	point_shadow_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\octahedron_vsm.hlsl" });
 
@@ -375,7 +374,7 @@ void DX11VSMAtlas::Reset() {
 	
 	// Clear any existing chunk and starts over again (Restore one big chunk for each atlas page)
 
-	chunks_.resize(atlas_->GetCount());
+	chunks_.resize(1/*atlas_->GetCount()*/);
 
 	for (auto&& page_chunk : chunks_) {
 
@@ -505,6 +504,7 @@ void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeC
 							shadow.max_uv.cwiseProduct(atlas_size).cast<int>());
 
 	DrawShadowmap(boundaries,
+				  shadow.atlas_page,
 				  nodes,
 				  point_shadow_material_,
 				  light_view_transform.matrix());
@@ -521,13 +521,14 @@ void DX11VSMAtlas::DrawShadowmap(const DirectionalShadow& shadow, const vector<V
 							shadow.max_uv.cwiseProduct(atlas_size).cast<int>());
 
 	DrawShadowmap(boundaries,
+				  shadow.atlas_page,
 				  nodes,
 				  directional_shadow_material_,
 				  light_proj_transform);
 
 }
 
-void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable) {
+void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int atlas_page, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable) {
 
 	auto& graphics_ = DX11Graphics::GetInstance();
 
@@ -543,6 +544,9 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, const vector<Vo
 	ObjectPtr<DX11Mesh> mesh;
 	
 	DX11Utils::GetInstance().PushRasterizerState(*immediate_context_, *rs_depth_bias_);
+
+	resource_cast(shadow_map)->ClearTargets(*immediate_context_);
+	resource_cast(shadow_map)->ClearDepth(*immediate_context_);
 
 	resource_cast(shadow_map)->Bind(*immediate_context_);
 
@@ -602,10 +606,9 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, const vector<Vo
 
 	graphics_.PushEvent(L"VSM Blur");
 
-/*
 	fx_blur_.Blur((*shadow_map)[0],
-			      (*atlas_)[0],
-				  boundaries.TopLeft);*/
+			      ObjectPtr<IGPTexture2D>(atlas_),
+				  boundaries.corner(AlignedBox2i::BottomLeft));
 
 	graphics_.PopEvent();
 

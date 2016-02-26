@@ -82,6 +82,9 @@ namespace gi_lib{
 			/// \brief Create a new general-purpose 2D texture from an explicit description.
 			DX11GPTexture2D(const IGPTexture2D::FromDescription& args);
 
+			/// \brief Create a general-purpose 2D texture from an existing unordered access view.
+			DX11GPTexture2D(const COMPtr<ID3D11ShaderResourceView>& shader_resource_view, const COMPtr<ID3D11UnorderedAccessView>& unordered_access_view);
+
 			virtual ObjectPtr<ITexture2D> GetTexture() override;
 
 			virtual unsigned int GetWidth() const override;
@@ -183,6 +186,8 @@ namespace gi_lib{
 
 			virtual ObjectPtr<ITexture2DArray> GetTextureArray() override;
 
+			virtual ObjectPtr<IGPTexture2D> GetTexture(unsigned int index) override;
+
 			virtual unsigned int GetWidth() const override;
 
 			virtual unsigned int GetHeight() const override;
@@ -200,12 +205,14 @@ namespace gi_lib{
 
 			/// \brief Get the unordered access view used to bind this texture to the pipeline.
 			UnorderedAccessView GetUnorderedAccessView();
-
+			
 		private:
 
 			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;		///< \brief Pointer to the unordered access view of the texture array.
-
+			
 			ObjectPtr<DX11Texture2DArray> texture_array_;					///< \brief Underlying texture array.
+			
+			std::vector<ObjectPtr<DX11GPTexture2D>> array_elements_;		///< \brief Elements inside the array as single resources.
 
 		};
 
@@ -481,6 +488,12 @@ namespace gi_lib{
 
 		}
 		
+		inline ObjectPtr<IGPTexture2D> DX11GPTexture2DArray::GetTexture(unsigned int index) {
+
+			return ObjectPtr<IGPTexture2D>(array_elements_[index]);
+
+		}
+
 		///////////////////////////// DX11 GP TEXTURE 2D ARRAY //////////////////////////////
 
 		INSTANTIABLE(IGPTexture2DArray, DX11GPTexture2DArray, ITexture2DArray::FromDescription);
