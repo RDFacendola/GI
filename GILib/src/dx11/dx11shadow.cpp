@@ -387,7 +387,7 @@ void DX11VSMAtlas::Reset() {
 
 }
 
-bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow) {
+bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow, ObjectPtr<IRenderTarget>* shadow_map) {
 
 	if (!point_light.IsShadowEnabled() ||
 		!ReserveChunk(point_light.GetShadowMapSize(),
@@ -425,13 +425,14 @@ bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, cons
 
 	DrawShadowmap(shadow,
 				  scene.GetMeshHierarchy().GetIntersections(point_light.GetBoundingSphere()),
-				  light_transform);
+				  light_transform,
+				  shadow_map);
 		
 	return true;
 
 }
 
-bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow) {
+bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow, ObjectPtr<IRenderTarget>* shadow_map) {
 		
 	if (!directional_light.IsShadowEnabled() ||
 		!ReserveChunk(directional_light.GetShadowMapSize(),
@@ -479,13 +480,14 @@ bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional
 
 	DrawShadowmap(shadow,
 				  lit_geometry,
-				  light_transform);
+				  light_transform,
+				  shadow_map);
 
 	return true;
 
 }
 
-void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_view_transform){
+void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_view_transform, ObjectPtr<IRenderTarget>* shadow_map){
 
 	// Per-light setup
 
@@ -507,11 +509,12 @@ void DX11VSMAtlas::DrawShadowmap(const PointShadow& shadow, const vector<VolumeC
 				  shadow.atlas_page,
 				  nodes,
 				  point_shadow_material_,
-				  light_view_transform.matrix());
+				  light_view_transform.matrix(),
+				  shadow_map);
 	
 }
 
-void DX11VSMAtlas::DrawShadowmap(const DirectionalShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_proj_transform) {
+void DX11VSMAtlas::DrawShadowmap(const DirectionalShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_proj_transform, ObjectPtr<IRenderTarget>* shadow_map) {
 	
 	// Draw the geometry to the shadowmap
 
@@ -524,11 +527,12 @@ void DX11VSMAtlas::DrawShadowmap(const DirectionalShadow& shadow, const vector<V
 				  shadow.atlas_page,
 				  nodes,
 				  directional_shadow_material_,
-				  light_proj_transform);
+				  light_proj_transform,
+				  shadow_map);
 
 }
 
-void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int atlas_page, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable) {
+void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int atlas_page, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, ObjectPtr<IRenderTarget>* out_shadow_map, bool tessellable) {
 
 	auto& graphics_ = DX11Graphics::GetInstance();
 
@@ -614,7 +618,17 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int at
 
 	// Cleanup
 	
-	rt_cache_->PushToCache(shadow_map);
+	if (!out_shadow_map) {
+		
+		rt_cache_->PushToCache(shadow_map);		// Not needed anymore
+	
+	}
+	else {
+
+		*out_shadow_map = shadow_map;			// Return the texture to the output
+
+	}
+
 	
 	graphics_.PopEvent();
 	

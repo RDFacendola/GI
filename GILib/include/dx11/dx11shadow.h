@@ -75,15 +75,17 @@ namespace gi_lib {
 			/// \param point_light Point light casting the shadow.
 			/// \param scene Scene containing the caster geometry.
 			/// \param shadow Structure containing the data used to access the shadowmap for the HLSL code.
+			/// \param shadow_map If the method succeeds, it contains the computed VSM prior to the soft shadows stage. Optional.
 			/// \return Returns true if the shadowmap was calculated correctly, returns false otherwise.
-			bool ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow);
+			bool ComputeShadowmap(const PointLightComponent& point_light, const Scene& scene, PointShadow& shadow, ObjectPtr<IRenderTarget>* shadow_map = nullptr);
 			
 			/// \brief Computes a variance shadowmap.
 			/// \param directional_light Point light casting the shadow.
 			/// \param scene Scene containing the caster geometry.
 			/// \param shadow Structure containing the data used to access the shadowmap for the HLSL code.
+			/// \param shadow_map If the method succeeds, it contains the computed VSM prior to the soft shadows stage. Optional.
 			/// \return Returns true if the shadowmap was calculated correctly, returns false otherwise.
-			bool ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow);
+			bool ComputeShadowmap(const DirectionalLightComponent& directional_light, const Scene& scene, DirectionalShadow& shadow, ObjectPtr<IRenderTarget>* shadow_map = nullptr);
 			
 			/// \brief Get the shadow atlas.
 			ObjectPtr<ITexture2D> GetAtlas();
@@ -93,11 +95,11 @@ namespace gi_lib {
 
 		private:
 						
-			void DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_view_transform);
+			void DrawShadowmap(const PointShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_view_transform, ObjectPtr<IRenderTarget>* shadow_map);
 
-			void DrawShadowmap(const DirectionalShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_proj_transform);
+			void DrawShadowmap(const DirectionalShadow& shadow, const vector<VolumeComponent*>& nodes, const Matrix4f& light_proj_transform, ObjectPtr<IRenderTarget>* shadow_map);
 
-			void DrawShadowmap(const AlignedBox2i& boundaries, unsigned int atlas_page, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, bool tessellable = false);
+			void DrawShadowmap(const AlignedBox2i& boundaries, unsigned int atlas_page, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, ObjectPtr<IRenderTarget>* shadow_map, bool tessellable = false);
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
 
