@@ -300,15 +300,13 @@ namespace {
 DX11VSMAtlas::DX11VSMAtlas(unsigned int size/*, unsigned int pages*/, bool full_precision) :
 	fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ 1.67f, 5 }) {
 
-	auto device = DX11Graphics::GetInstance().GetDevice();
-
-	COM_GUARD(device);
-
+	auto&& device = *DX11Graphics::GetInstance().GetDevice();
+	
 	// Get the immediate rendering context.
 
 	ID3D11DeviceContext* context;
 
-	device->GetImmediateContext(&context);
+	device.GetImmediateContext(&context);
 
 	immediate_context_ << &context;
 
@@ -329,7 +327,7 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int size/*, unsigned int pages*/, bool full_
 	rasterizer_state_desc.MultisampleEnable = false;
 	rasterizer_state_desc.AntialiasedLineEnable = false;
 
-	device->CreateRasterizerState(&rasterizer_state_desc,
+	device.CreateRasterizerState(&rasterizer_state_desc,
 								 &rasterizer_state);
 
 	rs_depth_bias_ << &rasterizer_state;
