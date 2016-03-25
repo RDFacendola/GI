@@ -59,6 +59,8 @@ namespace gi_lib{
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D) override;
 
+			virtual bool GetInput(const Tag& tag, ObjectPtr<ITexture2D>& texture_2D) const override;
+
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2DArray>& texture_2D_array) override;
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ISampler>& sampler_state) override;
@@ -79,9 +81,11 @@ namespace gi_lib{
 
 		private:
 
-			unique_ptr<ShaderStateComposite> shader_composite_;		///< \brief Collection of shaders. Vertex and pixel shaders are compulsory.
+			unique_ptr<ShaderStateComposite> shader_composite_;			///< \brief Collection of shaders. Vertex and pixel shaders are compulsory.
 
-			COMPtr<ID3D11InputLayout> input_layout_;				///< \brief Vertex input layout, defined per material.
+			std::map<Tag, ObjectPtr<ITexture2D>> texture_2D_inputs_;	///< \brief Collection of input 2D Textures.
+
+			COMPtr<ID3D11InputLayout> input_layout_;					///< \brief Vertex input layout, defined per material.
 
 		};
 		
@@ -139,8 +143,16 @@ namespace gi_lib{
 
 		inline bool DX11Material::SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D){
 
-			return shader_composite_->SetShaderResource(tag,
-														resource_cast(texture_2D));
+			if(shader_composite_->SetShaderResource(tag,
+													resource_cast(texture_2D))){
+
+				texture_2D_inputs_[tag] = texture_2D;
+
+				return true;
+
+			}
+
+			return false;
 
 		}
 
@@ -172,6 +184,21 @@ namespace gi_lib{
 
 		}
 
+		inline bool DX11Material::GetInput(const Tag& tag, ObjectPtr<ITexture2D>& texture_2D) const {
+
+			auto it = texture_2D_inputs_.find(tag);
+
+			if (it != texture_2D_inputs_.end()) {
+
+				texture_2D = it->second;
+
+				return true;
+
+			}
+
+			return false;
+
+		}
 
 		inline bool DX11Material::SetInput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array) {
 			
