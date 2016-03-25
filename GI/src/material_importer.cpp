@@ -47,20 +47,17 @@ namespace{
 
 	/// \brief Instantiate a concrete material.
 	ObjectPtr<DeferredRendererMaterial> InstantiateMaterial(Resources& resources, ObjectPtr<DeferredRendererMaterial> base_material, IFbxMaterial& fbx_material, const wstring& base_directory) {
-
-		static const Tag kDiffuseMapTag = "gDiffuseMap";
-		static const Tag kNormalMapTag = "gNormalMap";
-		
+				
 		auto material_instance = base_material->Instantiate();
 
 		// Diffuse map
 
-		//gisponza: Use this when importing model from 3ds max: fbx_material["3dsMax|Parameters|diff_color_map"]
-		//oldsponza: fbx_material["DiffuseColor"]
+		//3D studio max convention: fbx_material["3dsMax|Parameters|diff_color_map"]
+		//Blender convention: fbx_material["DiffuseColor"]
 
 		BindTexture2D(resources,
 					  fbx_material["DiffuseColor"],
-					  kDiffuseMapTag,
+					  IMaterial::kDiffuseMap,
 					  *material_instance->GetMaterial(),
 					  base_directory);
 		
@@ -104,9 +101,9 @@ void MtlMaterialImporter::OnImportMaterial(const wstring& base_directory, const 
 		
 		auto& material = *material_collection[material_index];
 
-		BindTexture(base_directory, material, "map_Kd", "gDiffuseMap", *material_instance->GetMaterial());
-		BindTexture(base_directory, material, "map_bump", "gNormalMap", *material_instance->GetMaterial());
-		BindTexture(base_directory, material, "map_Ks", "gSpecularMap", *material_instance->GetMaterial());
+		BindTexture(base_directory, material, "map_Kd", IMaterial::kDiffuseMap, *material_instance->GetMaterial());
+		BindTexture(base_directory, material, "map_bump", IMaterial::kNormalMap, *material_instance->GetMaterial());
+		BindTexture(base_directory, material, "map_Ks", IMaterial::kSpecularMap, *material_instance->GetMaterial());
 
 		BindProperty(material, "Ns", 5.0f, buffer.gShininess);
 		BindProperty(material, "Ke", 0.0f, buffer.gEmissivity);

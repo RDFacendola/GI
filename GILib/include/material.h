@@ -24,6 +24,12 @@ namespace gi_lib{
 
 	public:
 
+		static const Tag kDiffuseMap;			///< \brief Generic tag used to identify a diffuse map inside a shader. This may not be the actual name!
+
+		static const Tag kSpecularMap;			///< \brief Generic tag used to identify a specular map inside a shader. This may not be the actual name!
+
+		static const Tag kNormalMap;			///< \brief Generic tag used to identify a normal map inside a shader. This may not be the actual name!
+
 		/// \brief Structure used to compile a material from a file.
 		struct CompileFromFile{
 
@@ -104,7 +110,7 @@ namespace gi_lib{
 		virtual ObjectPtr<IMaterial> Instantiate() = 0;
 
 	};
-
+	
 	////////////////////////////// MATERIAL :: COMPILE FROM FILE ///////////////////////////////
 
 	inline size_t IMaterial::CompileFromFile::GetCacheKey() const{

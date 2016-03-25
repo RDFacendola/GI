@@ -315,6 +315,7 @@
     <ClCompile Include="src\dx11\dx11voxelization.cpp">
       <Filter>DirectX 11\Renderers</Filter>
     </ClCompile>
+    <ClCompile Include="src\material.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="DirectX 11">
