@@ -34,7 +34,7 @@ namespace{
 	/// \param value Actual value to pass to the setter.
 	/// \param table Map containing the definition of the shader setters.
 	template <typename TSetter, typename TValue>
-	bool SetShaderMember(const Tag& tag, TValue&& value, std::unordered_multimap < size_t, TSetter >& table){
+	bool SetShaderMember(const Tag& tag, const TValue& value, std::unordered_multimap < size_t, TSetter >& table){
 
 		auto&& range = table.equal_range(tag);
 
@@ -42,7 +42,7 @@ namespace{
 
 		while (it != range.second){
 
-			it->second(std::forward<TValue>(value));
+			it->second(value);
 
 			++it;
 
@@ -96,7 +96,7 @@ ShaderStateComposite::ShaderStateComposite(const ShaderStateComposite& other){
 bool ShaderStateComposite::SetConstantBuffer(const Tag& tag, const ObjectPtr<DX11StructuredBuffer>& constant_buffer){
 	
 	auto result = SetShaderMember(tag,
-								  constant_buffer->GetConstantBuffer(),
+								  constant_buffer ? constant_buffer->GetConstantBuffer() : ConstantBufferView::kEmpty,
 								  cbuffer_table_);
 
 	if (result){
@@ -112,7 +112,7 @@ bool ShaderStateComposite::SetConstantBuffer(const Tag& tag, const ObjectPtr<DX1
 bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX11Texture2D>& texture_2D){
 	
 	return SetShaderMember(tag,
-						   texture_2D->GetShaderResourceView(),
+						   texture_2D ? texture_2D->GetShaderResourceView() : ShaderResourceView::kEmpty,
 						   srv_table_);
 
 }
@@ -120,7 +120,7 @@ bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX1
 bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX11Texture2DArray>& texture_2D_array){
 	
 	return SetShaderMember(tag,
-						   texture_2D_array->GetShaderResourceView(),
+						   texture_2D_array ? texture_2D_array->GetShaderResourceView() : ShaderResourceView::kEmpty,
 						   srv_table_);
 
 }
@@ -128,7 +128,7 @@ bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX1
 bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX11GPStructuredArray>& gp_structured_array) {
 	
 	return SetShaderMember(tag,
-						   gp_structured_array->GetShaderResourceView(),
+						   gp_structured_array ? gp_structured_array->GetShaderResourceView() : ShaderResourceView::kEmpty,
 						   srv_table_);
 
 }
@@ -136,7 +136,7 @@ bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX1
 bool ShaderStateComposite::SetSampler(const Tag& tag, const ObjectPtr<DX11Sampler>& sampler){
 	
 	return SetShaderMember(tag,
-						   sampler->GetSamplerStateView(),
+						   sampler ? sampler->GetSamplerStateView() : SamplerStateView::kEmpty,
 						   sampler_table_);
 
 }
@@ -144,7 +144,7 @@ bool ShaderStateComposite::SetSampler(const Tag& tag, const ObjectPtr<DX11Sample
 bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX11StructuredArray>& structured_array){
 
 	auto result = SetShaderMember(tag,
-								  structured_array->GetShaderResourceView(),
+								  structured_array ? structured_array->GetShaderResourceView() : ShaderResourceView::kEmpty,
 								  srv_table_);
 
 	if (result){
@@ -160,7 +160,7 @@ bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX1
 bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2D>& gp_texture_2D){
 	
 	return SetShaderMember(tag,
-						   gp_texture_2D->GetUnorderedAccessView(),
+						   gp_texture_2D ? gp_texture_2D->GetUnorderedAccessView() : UnorderedAccessView::kEmpty,
 						   uav_table_);
 
 }
@@ -168,7 +168,7 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX
 bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2DArray>& gp_texture_2D_array){
 	
 	return SetShaderMember(tag,
-						   gp_texture_2D_array->GetUnorderedAccessView(),
+						   gp_texture_2D_array ? gp_texture_2D_array->GetUnorderedAccessView() : UnorderedAccessView::kEmpty,
 						   uav_table_);
 
 }
@@ -181,7 +181,8 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX
 
 	while (it != range.second) {
 
-		it->second(gp_structured_array->GetUnorderedAccessView(), keep_initial_count);
+		it->second(gp_structured_array ? gp_structured_array->GetUnorderedAccessView() : UnorderedAccessView::kEmpty, 
+				   keep_initial_count);
 
 		++it;
 
@@ -194,7 +195,7 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX
 bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11ScratchStructuredArray>& scratch_structured_array) {
 
 	return SetShaderMember(tag,
-						   scratch_structured_array->GetUnorderedAccessView(),
+						   scratch_structured_array ? scratch_structured_array->GetUnorderedAccessView() : UnorderedAccessView::kEmpty,
 						   uav_table_);
 	
 }

@@ -27,6 +27,8 @@ namespace gi_lib{
 
 		public:
 
+			static const ConstantBufferView kEmpty;		///< \brief Empty constant buffer view.
+
 			/// \brief Create an empty constant buffer view.
 			ConstantBufferView();
 
@@ -52,6 +54,8 @@ namespace gi_lib{
 		class ShaderResourceView{
 
 		public:
+
+			static const ShaderResourceView kEmpty;		///< \brief Empty shader resource view.
 
 			/// \brief Create an empty shader resource view.
 			ShaderResourceView();
@@ -79,6 +83,8 @@ namespace gi_lib{
 
 		public:
 
+			static const UnorderedAccessView kEmpty;		///< \brief Empty unordered access view.
+
 			/// \brief Create an empty unordered access view.
 			UnorderedAccessView();
 
@@ -104,6 +110,8 @@ namespace gi_lib{
 		class SamplerStateView{
 
 		public:
+
+			static const SamplerStateView kEmpty;		///< \brief Empty sampler state view.
 
 			/// \brief Create an empty sampler view.
 			SamplerStateView();
