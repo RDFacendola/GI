@@ -9,12 +9,16 @@ Tag::Tag(const std::string& string){
 
 	tag_ = hash::fnv_1{}(string);
 
+	DEBUG_ONLY(name_ = string;)
+
 }
 
 
 Tag::Tag(const char* string){
 
 	tag_ = hash::fnv_1{}(string);
+
+	DEBUG_ONLY(name_ = string;)
 
 }
 
