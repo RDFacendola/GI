@@ -22,6 +22,16 @@ while(0)
 
 #endif
 
+#if defined(_MSC_VER) && defined(_DEBUG)
+
+#define DEBUG_ONLY(x) x
+
+#else
+
+#define DEBUG_ONLY(x)
+
+#endif
+
 /// \brief Expand the given token.
 #define EXPAND(x) x
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <string>
+#include "macros.h"
 
 namespace gi_lib{
 
@@ -64,6 +65,8 @@ namespace gi_lib{
 	private:
 
 		size_t tag_;	///< \brief The actual tag.
+
+		DEBUG_ONLY(std::string name_;)		///< \brief Name which generated the given tag.
 		
 	};
 
