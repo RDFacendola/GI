@@ -112,6 +112,8 @@ namespace gi_lib {
 
 			ObjectPtr<DX11Sampler> sampler_;						///<\ brief Sampler used to sample the VSM.
 
+			ObjectPtr<DX11Sampler> diffuse_sampler_;				///<\ brief Sampler used to sample the diffuse map.
+
 			ObjectPtr<DX11Material> point_shadow_material_;			///< \brief Material used for point light shadows.
 
 			ObjectPtr<DX11Material> directional_shadow_material_;	///< \brief Material used for directional light shadows.

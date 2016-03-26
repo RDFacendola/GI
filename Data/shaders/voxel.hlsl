@@ -1,4 +1,3 @@
-#include "common/hlsl_def.hlsl"
 #include "projection_def.hlsl"
 
 cbuffer Parameters {

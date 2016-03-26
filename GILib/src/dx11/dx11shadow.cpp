@@ -7,6 +7,7 @@
 
 #include "core.h"
 #include "light_component.h"
+#include "deferred_renderer.h"
 
 using namespace ::std;
 using namespace ::gi_lib;
@@ -22,6 +23,8 @@ namespace {
 
 		Matrix4f world_light;								///< \brief World * Light-view matrix for point lights,
 															///			World * Light-view * Light-proj matrix for directional lights
+
+		Matrix4f world;										/// <\brief World matrix of the object
 
 	};
 
@@ -335,6 +338,7 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int size/*, unsigned int pages*/, bool full_
 	// Create the shadow resources
 
 	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::ANISOTROPIC, 4 });
+	diffuse_sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::WRAP, TextureFiltering::ANISOTROPIC, 4 });
 
 	auto format = full_precision ? TextureFormat::RG_FLOAT : TextureFormat::RG_HALF;
 	
@@ -363,9 +367,15 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int size/*, unsigned int pages*/, bool full_
 	check = point_shadow_material_->SetInput("PerLight",
 											 ObjectPtr<IStructuredBuffer>(per_light_));
 
+	check = point_shadow_material_->SetInput("gDiffuseSampler",
+											 ObjectPtr<ISampler>(diffuse_sampler_));
+
 	check = directional_shadow_material_->SetInput("PerObject",
 												   ObjectPtr<IStructuredBuffer>(per_object_));
-	
+
+	check = directional_shadow_material_->SetInput("gDiffuseSampler",
+												   ObjectPtr<ISampler>(diffuse_sampler_));
+
 }
 
 void DX11VSMAtlas::Reset() {
@@ -540,10 +550,12 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int at
 
 	auto shadow_map = rt_cache_->PopFromCache(boundaries.sizes()(0) + 1,
 											  boundaries.sizes()(1) + 1,
-											  { atlas_->GetFormat() },
+											  { atlas_->GetFormat(),
+												TextureFormat::RGBA_BYTE_UNORM },
 											   true);
 
 	ObjectPtr<DX11Mesh> mesh;
+	ObjectPtr<ITexture2D> diffuse_map;
 	
 	DX11Utils::GetInstance().PushRasterizerState(*immediate_context_, *rs_depth_bias_);
 
@@ -552,15 +564,13 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int at
 
 	resource_cast(shadow_map)->Bind(*immediate_context_);
 
-	shadow_material->Bind(*immediate_context_);
-
 	for (auto&& node : nodes) {
 
-		for (auto&& mesh_component : node->GetComponents<MeshComponent>()) {
+		for (auto&& drawable : node->GetComponents<AspectComponent<DeferredRendererMaterial>>()) {
 
 			// Per-object setup
 
-			mesh = mesh_component.GetMesh();
+			mesh = drawable.GetMesh();
 
 			graphics_.PushEvent(mesh->GetName());
 
@@ -569,17 +579,31 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int at
 
 			auto& per_object = *per_object_->Lock<VSMPerObjectCBuffer>();
 
-			per_object.world_light = (light_transform * mesh_component.GetWorldTransform()).matrix();
+			per_object.world_light = (light_transform * drawable.GetWorldTransform()).matrix();
+			per_object.world = drawable.GetWorldTransform().matrix();
 
 			per_object_->Unlock();
 
 			for (unsigned int subset_index = 0; subset_index < mesh->GetSubsetCount(); ++subset_index) {
 
-				graphics_.PushEvent(L"Subset");
+				graphics_.PushEvent(mesh->GetSubsetName(subset_index));
 
 				if (mesh->GetFlags(subset_index) && MeshFlags::kShadowcaster) {
 					
-					shadow_material->Commit(*immediate_context_);
+					auto&& mesh_material = drawable.GetMaterial(subset_index)->GetMaterial();
+
+					if (mesh_material->GetInput(IMaterial::kDiffuseMap, diffuse_map)) {
+
+						shadow_material->SetInput(IMaterial::kDiffuseMap, diffuse_map);
+
+					}
+					else {
+
+						shadow_material->SetInput(IMaterial::kDiffuseMap, ObjectPtr<ITexture2D>());
+
+					}
+
+					shadow_material->Bind(*immediate_context_);
 
 					// Draw	the subset
 
