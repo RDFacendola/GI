@@ -37,7 +37,7 @@ namespace gi_lib {
 			/// \param source The source texture to copy.
 			/// \param destination The destination render target.
 			/// \remarks The source image will be pasted only on the first surface of the render target.
-			virtual void Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) = 0;
+			virtual void Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) const = 0;
 			
 		};
 

@@ -27,7 +27,7 @@ DX11FxScale::DX11FxScale(const Parameters&){
 
 }
 
-void DX11FxScale::Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination){
+void DX11FxScale::Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) const {
 
  	auto device_context = DX11Graphics::GetInstance().GetImmediateContext();
  

@@ -23,7 +23,7 @@ namespace gi_lib {
 
 			DX11FxScale(const Parameters& parameters);
 
-			virtual void Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) override;
+			virtual void Copy(const ObjectPtr<ITexture2D>& source, const ObjectPtr<IRenderTarget>& destination) const override;
 
 			virtual size_t GetSize() const override;
 
