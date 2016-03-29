@@ -82,26 +82,31 @@ float DX11FxLuminance::ComputeAverageLuminance(const ObjectPtr<ITexture2D>& sour
     
     graphics_.PushEvent(L"Downscaling");
 
-    auto downscaled_source = rt_cache_->PopFromCache(width, height, { source->GetFormat() }, false);
+    ObjectPtr<ITexture2D> source_texture = source;   // Texture whose average luminance needs to be computed
 
-    ObjectPtr<IRenderTarget> downscaled_destination = nullptr;
-
-    fx_downscale_.Copy(source, downscaled_source);
+    ObjectPtr<IRenderTarget> downscaled_texture = nullptr;
+    ObjectPtr<IRenderTarget> temp;
 
     for (unsigned int index = 0; index < downscale_; ++index){
 
         width = std::max(width >> 1, 2u);
         height = std::max(height >> 1, 2u);
 
-        downscaled_destination = rt_cache_->PopFromCache(width, height, { source->GetFormat() }, false);
+        temp = downscaled_texture;
+                
+        downscaled_texture = rt_cache_->PopFromCache(width, height, { source->GetFormat() }, false);
 
-        fx_downscale_.Copy((*downscaled_source)[0], 
-                           downscaled_destination);
+        fx_downscale_.Copy(source_texture,
+                           downscaled_texture);
 
-        rt_cache_->PushToCache(downscaled_source);
+        source_texture = (*downscaled_texture)[0];
+        
+        if (temp){
 
-        downscaled_source = downscaled_destination;     // Flip
+            rt_cache_->PushToCache(temp);
 
+        }
+        
     }
 
     graphics_.PopEvent();
@@ -109,7 +114,7 @@ float DX11FxLuminance::ComputeAverageLuminance(const ObjectPtr<ITexture2D>& sour
 	// Compute the image histogram on the downscaled surface
 
 	luminance_shader_->SetInput(kSourceTexture,
-								(*downscaled_source)[0]);
+								source_texture);
 
 	luminance_shader_->Dispatch(*context,
 								width,
@@ -118,7 +123,13 @@ float DX11FxLuminance::ComputeAverageLuminance(const ObjectPtr<ITexture2D>& sour
 	
 	graphics_.PopEvent();
     
-    rt_cache_->PushToCache(downscaled_source);        // Not needed anymore
+    // Cleanup
+
+    if (downscaled_texture){
+
+        rt_cache_->PushToCache(downscaled_texture);
+
+    }
 
 	// Process the luminance histogram to find the average luminance of the image
 
