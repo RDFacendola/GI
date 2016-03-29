@@ -1,0 +1,1116 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 3cm
+\topmargin 3cm
+\rightmargin 3cm
+\bottommargin 3cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Section
+Radiometry
+\end_layout
+
+\begin_layout Subsection
+Radiance
+\end_layout
+
+\begin_layout Standard
+The radiance 
+\begin_inset Formula $L$
+\end_inset
+
+ expressed how much power arrives at or leaves from a certain point of a
+ surface, per unit solid angle and per unit projected area.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+L=\frac{d^{2}\Phi}{d\omega dA_{\bot}}=\frac{d^{2}\Phi}{d\omega dAcos\theta}=\frac{W}{srad\cdot m^{2}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename img/radiance.PNG
+	scale 33
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The term 
+\begin_inset Formula $dA_{\bot}=dAcos\theta$
+\end_inset
+
+ account for the fact that power arriving at a grazing angle is spread out
+ over a larger surface (dA).
+ This term is used to compensate the angle 
+\begin_inset Formula $\theta$
+\end_inset
+
+between the beam and the surface.
+\end_layout
+
+\begin_layout Standard
+The following notations are used:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\Omega$
+\end_inset
+
+ is the total solid angle at each point of surface.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $L(x\rightarrow\Theta)$
+\end_inset
+
+ is the radiance leaving point x in direction 
+\begin_inset Formula $\Theta$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $L(x\leftarrow\Theta)$
+\end_inset
+
+ is the radiance arriving at point x from direction 
+\begin_inset Formula $\Theta$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Radiance is invariant along straight paths:
+\begin_inset Formula $L(x\rightarrow y)=L(y\leftarrow x)$
+\end_inset
+
+, where x and y are two generic points.
+ This assumption is only valid if the light is traveling through a vacuum.
+\end_layout
+
+\begin_layout Subsection
+Radiant Power / Flux
+\end_layout
+
+\begin_layout Standard
+The radiant power 
+\begin_inset Formula $\Phi$
+\end_inset
+
+ expresses the total energy that flows from/to/through a surface per unit
+ time.
+ It is measured in 
+\begin_inset Formula $W$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\Phi=\int_{A}\int_{\Omega}L(x\rightarrow\Theta)cos\theta d\omega_{\Theta}dA_{x}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Irradiance
+\end_layout
+
+\begin_layout Standard
+The irradiance 
+\begin_inset Formula $E$
+\end_inset
+
+ is the incident radiant power on a surface, per unit surface area.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+E=\frac{d\Phi}{dA}=\frac{W}{m^{2}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+E(x)=\int_{\Omega}L(x\rightarrow\Theta)cos\theta d\omega_{\Theta}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Radiant exitance / Radiosity
+\end_layout
+
+\begin_layout Standard
+The radiosity 
+\begin_inset Formula $M$
+\end_inset
+
+ or 
+\begin_inset Formula $B$
+\end_inset
+
+ is the exitant flux per unit surface area.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+M=B=\frac{d\Phi}{dA}=\frac{W}{m^{2}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+M(x)=B(x)=\int_{\Omega}L(x\rightarrow\Theta)cos\theta d\omega_{\Theta}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Bidirectional reflectance distribution function - BRDF
+\end_layout
+
+\begin_layout Standard
+A BRDF 
+\begin_inset Formula $f_{r}(\cdot)$
+\end_inset
+
+ describes the relation betweem the incident and the reflected radiance
+ for any pair of incident and reflected directions:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f_{r}(x,\Psi\rightarrow\Theta)=\frac{dL(x\rightarrow\Theta)}{dE(x\leftarrow\Psi)}=\frac{dL(x\rightarrow\Theta)}{L(x\leftarrow\Psi)cos(N_{x},\Psi)d\omega_{\Psi}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $cos(N_{x},\Psi)$
+\end_inset
+
+ is the cosine of the angle between the normal vector at the point x and
+ the incident direction vector 
+\begin_inset Formula $\Psi$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+In general the BRDF is defined over the entire sphere (surface 
+\begin_inset Formula $4\pi$
+\end_inset
+
+ srad) to handle both opaque and transparent materials.
+\end_layout
+
+\begin_layout Standard
+The BRDF guarantees 
+\series bold
+reciprocity
+\series default
+, that is 
+\begin_inset Formula $f_{r}(x,\Psi\rightarrow\Theta)=f_{r}(x,\Theta\rightarrow\Psi)$
+\end_inset
+
+ for any pair of direction and 
+\series bold
+energy conservation.
+\end_layout
+
+\begin_layout Subsubsection
+Lambertian shading model
+\end_layout
+
+\begin_layout Standard
+The lambertian shading model works for diffusive surfaces.
+ Those surfaces reflect light unoformly over the entire reflecting hemisphere:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f_{r}(x,\Psi\leftrightarrow\Theta)=\frac{\rho_{d}}{\pi}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\rho_{d}$
+\end_inset
+
+represents the fraction of incident energy that is reflected at a surface.
+ For physically-based materials, 
+\begin_inset Formula $\rho_{d}\in[0;1]$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Phong shading shading model
+\end_layout
+
+\begin_layout Standard
+The phong shading model describes glossy surfaces, that is surfaces with
+ both diffuse and specular behaviours:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f_{r}(x,\Psi\leftrightarrow\Theta)=k_{s}\frac{(R\cdot\Theta)^{n}}{N\cdot\Psi}+k_{d}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Blinn-Phong shading model
+\end_layout
+
+\begin_layout Standard
+Lighter variation of the Phong shading model:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f_{r}(x,\Psi\leftrightarrow\Theta)=k_{s}\frac{(R\cdot H)^{n}}{N\cdot\Psi}+k_{d}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where H is the half-vector between 
+\begin_inset Formula $\Psi$
+\end_inset
+
+ and 
+\begin_inset Formula $\Theta$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Modified Blinn-Phong shading model
+\end_layout
+
+\begin_layout Standard
+This variation addresses some of the limitations of the previous approach.
+ This BRDF guarantees both 
+\emph on
+reciprocity 
+\emph default
+and 
+\emph on
+energy conservation
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f_{r}(x,\Psi\leftrightarrow\Theta)=k_{s}(R\cdot H)^{n}+k_{d}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Cook-Torrance shadingmodel
+\end_layout
+
+\begin_layout Standard
+This is a physically-based shading model where the basic assumption is that
+ a surface is made of a random collection of small smooth planar facets:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f_{r}(x,\Psi\leftrightarrow\Theta)=\frac{F(\beta)}{\pi}\frac{D(\theta_{h})G}{(N\cdot\Psi)(N\cdot\Theta)}+k_{d}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where F is the Fresnel reflectance, D is the microfacet distribution and
+ G is a geometric shadowing term.
+\end_layout
+
+\begin_layout Subsubsection
+Ward shading model
+\end_layout
+
+\begin_layout Standard
+Physically-based shading mmdeol based on empirical data:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f_{r}(x,\Psi\leftrightarrow\Theta)=\frac{\rho_{d}}{\pi}+\rho_{s}\frac{e^{\frac{-tan^{2}(\Theta_{h})}{\alpha^{2}}}}{4\pi\alpha^{2}\sqrt{(N\cdot\Psi)(N\cdot\Theta)}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\theta_{h}$
+\end_inset
+
+ is the angle between the half-vector and the surface normal, 
+\begin_inset Formula $\rho_{d}$
+\end_inset
+
+ is the 
+\emph on
+diffuse reflectance
+\emph default
+, 
+\begin_inset Formula $\rho_{s}$
+\end_inset
+
+is the 
+\emph on
+specular reflectance
+\emph default
+ and 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ is the surface 
+\emph on
+roughness
+\emph default
+.
+\end_layout
+
+\begin_layout Standard
+This shading model is definitely energy conserving.
+\end_layout
+
+\begin_layout Section
+Rendering equation
+\end_layout
+
+\begin_layout Standard
+Using the hemispherical formulation, the rendering equation (Fredholm equation)
+ is the following:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+L(x\rightarrow\Theta)=L_{e}(x\rightarrow\Theta)+\int_{\Omega_{x}}f_{r}(x,\Psi\rightarrow\Theta)L(x\leftarrow\Psi)cos(N_{x},\Psi)d\omega_{\Psi}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Or, using the area formulation:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+L(x\rightarrow\Theta)=L_{e}(x\rightarrow\Theta)+\int_{A}f_{r}(x,\Psi\rightarrow\Theta)L(y\rightarrow-\Psi)V(x,y)G(x,y)dA_{y}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where:
+\end_layout
+
+\begin_layout Itemize
+The 
+\series bold
+visibility function
+\series default
+ 
+\begin_inset Formula $V(x,y)=\begin{cases}
+1 & \text{If x and y are mutually visible}\\
+0 & \text{otherwise}
+\end{cases}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+The 
+\series bold
+geometry term 
+\series default
+
+\begin_inset Formula $G(x,y)=\frac{cos(N_{x},\Psi)cos(N_{y},-\Psi)}{r_{xy}^{2}}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Probability basics
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Random variable
+\series default
+: value that lies within a specific domain with some distribution of values.
+ Each value has a probability 
+\begin_inset Formula $p_{i}$
+\end_inset
+
+ of occuring.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Cumulative distribution function: 
+\begin_inset Formula $P(x)$
+\end_inset
+
+ 
+\series default
+probability that a random variabile is less than x.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Probability density function (PDF)
+\series default
+: 
+\begin_inset Formula $p(x)$
+\end_inset
+
+ probability that a variable will take a specific value.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+It is defined as derivative of the cumulative distribution function.
+ 
+\begin_inset Formula $p(x)=dP(x)/dx$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Itemize
+It must integrate to 1: 
+\begin_inset Formula $\int_{-\infty}^{+\infty}p(x)dx=1$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Random variable are said to be distributed according to a particular PDF
+ 
+\begin_inset Formula $f(x)\sim p(x)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Probability that a variable x will take a value in the range 
+\begin_inset Formula $[a,b]$
+\end_inset
+
+ is 
+\begin_inset Formula $P(x\in[a,b])=\int_{b}^{a}p(x)dx$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+
+\series bold
+Expected value
+\series default
+: 
+\begin_inset Formula $E[f(x)]=\int f(x)p(x)dx$
+\end_inset
+
+.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+
+\series bold
+Law of large numbers
+\series default
+: 
+\begin_inset Formula $E[f(x)]\thickapprox\frac{1}{N}\sum_{i=1}^{N}f(x_{i})$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+
+\series bold
+Monte Carlo estimator: 
+\begin_inset Formula $\int f(x)dx=\int\frac{f(x)}{p(x)}p(x)dx\thickapprox\frac{1}{N}\sum_{i=1}^{N}\frac{f(x_{i})}{p(x_{i})}=\frac{1}{N}\sum_{i=1}^{N}f(x_{i})w(x_{i})$
+\end_inset
+
+ 
+\series default
+where 
+\begin_inset Formula $w(x_{i})=\nicefrac{1}{f(x_{i})}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Canonical random variable
+\series default
+: 
+\begin_inset Formula $\xi$
+\end_inset
+
+, uniform random variable defined in the range [0;1)
+\end_layout
+
+\begin_layout Section
+Monte Carlo integration over a sphere
+\end_layout
+
+\begin_layout Standard
+We want to integrate over the the surface of a unit sphere using the Monte
+ Carlo estimator.
+\end_layout
+
+\begin_layout Standard
+The samples we want to use are generate as such:
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+Unbiased random samples
+\series bold
+: 
+\begin_inset Formula $(2arccos(\sqrt{1-\xi_{x}}),2\pi\xi_{y})\rightarrow(\theta,\phi)$
+\end_inset
+
+ 
+\series default
+\emph default
+where 
+\begin_inset Formula $\xi_{x}\bot\xi_{y}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $(\theta,\phi)\rightarrow(sin(\theta)cos(\phi),sin(\theta)sin(\phi),cos(\theta))$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename img/sphere_samples.PNG
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The probability of sampling any point on the surface of the unit sphere
+ is the same for all the samples:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $p(x_{i})=\overline{p}=\frac{1}{A}=\frac{1}{4\pi}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $w(x_{i})=\overline{w}=\frac{1}{\overline{p}}=4\pi$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We can lower the variance of the sampling scheme via 
+\emph on
+jittered 
+\emph default
+samples, using the techinque of 
+\series bold
+stratified sampling:
+\end_layout
+
+\begin_layout Itemize
+We want to generate 
+\begin_inset Formula $N\times N$
+\end_inset
+
+ samples out of the square above and jitter the sample randomly inside each
+ patch.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\forall x,y\in[0,N-1]:\,\xi_{xy}=\{(x+\xi_{x})/N,(y+\xi_{y})/N\}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Use 
+\begin_inset Formula $\xi_{xy}$
+\end_inset
+
+ inside the 
+\emph on
+unbiased random sample 
+\emph default
+formula to get a sample inside the unit sphere.
+\end_layout
+
+\begin_layout Section
+Orthogonal basis functions
+\end_layout
+
+\begin_layout Standard
+Given any number of 
+\emph on
+basis functions 
+\series bold
+
+\begin_inset Formula $B_{i}(x)$
+\end_inset
+
+ 
+\series default
+\emph default
+we can project any function 
+\begin_inset Formula $f(x)$
+\end_inset
+
+ using the following:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+c_{i}=\int B_{i}(x)f(x)dx
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename img/basis_project.PNG
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We obtain the approximated function 
+\begin_inset Formula $\widetilde{f}(x)$
+\end_inset
+
+ using the following:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\widetilde{f}(x)=\sum c_{i}B_{i}(x)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename img/basis_unproject.PNG
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+
+\emph on
+Orthonormal basis functions
+\series bold
+: 
+\begin_inset Formula $F_{m}(x)$
+\end_inset
+
+, 
+\begin_inset Formula $F_{n}(x)$
+\end_inset
+
+ 
+\series default
+\emph default
+such that 
+\begin_inset Formula $\int F_{m}(x)F_{n}(x)=\begin{cases}
+0 & n\ne m\\
+1 & n=m
+\end{cases}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Spherical harmonics
+\end_layout
+
+\begin_layout Itemize
+
+\series bold
+Associated Legendre polynomials
+\series default
+: 
+\begin_inset Formula $P_{l}^{m}(x):[-1;1]\rightarrow\mathbb{R}$
+\end_inset
+
+, 
+\series bold
+
+\begin_inset Formula $l\in\{0,1,2,...\}$
+\end_inset
+
+
+\series default
+,
+\begin_inset Formula $m\in[0,l]$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The spherical harmonics are the equivalent associated Legendre polynomials
+ for spherical functions:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+y_{l}^{m}(\theta,\phi)=\begin{cases}
+\sqrt{2}K_{l}^{m}cos(m\phi)P_{l}^{m}(cos(\theta)) & m>0\\
+\sqrt{2}K_{l}^{m}sin(-m\phi)P_{l}^{-m}(cos(\theta)) & m<0\\
+K_{l}^{0}P_{l}^{0}(cos(\theta)) & m=0
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+K_{l}^{m}=\sqrt{\frac{(2l+1)}{4\pi}\frac{(l-|m|)!}{(l+|m|)!}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $m\in[-l;l]$
+\end_inset
+
+ and K is a 
+\emph on
+normalizing 
+\emph default
+factor\SpecialChar \@.
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename img/sh.PNG
+	scale 50
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We can flatten the spherical harmonics into a 1D vector:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+y_{l}^{m}(\theta,\phi)=y_{i}(\theta,\phi)
+\]
+
+\end_inset
+
+ where 
+\begin_inset Formula $i=l(l+1)+m.$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+To project a function into SH coefficient:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+c_{i}=\int_{S}f(s)y_{i}(s)dx
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+To unproject it:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\widetilde{f}(s)=\sum_{i=0}^{n^{2}}c_{i}y_{i}(s)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Monte Carlo integration
+\end_layout
+
+\begin_layout Itemize
+Integrate a spherical function: 
+\begin_inset Formula $\int_{0}^{2\pi}\int_{0}^{2\pi}f(\theta,\phi)sin(\theta)d\theta d\phi$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Project a function into SH coefficients: 
+\begin_inset Formula $c_{i}=\int_{0}^{2\pi}\int_{0}^{2\pi}f(\theta,\phi)y_{i}(\theta,\phi)sin(\theta)d\theta d\phi$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Approximate via Monte Carlo estimator
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+c_{i}=\frac{1}{N}\sum_{j=1}^{N}f(x_{j})y_{j}(x_{j})4\pi=\frac{4\pi}{N}\sum_{j=0}^{N}f(x_{j})y_{i}(x_{j})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Opacity evaluation
+\end_layout
+
+\begin_layout Standard
+asd
+\end_layout
+
+\end_body
+\end_document
