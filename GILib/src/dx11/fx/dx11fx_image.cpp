@@ -3,6 +3,9 @@
 #include "core.h"
 
 #include "dx11/dx11graphics.h"
+#include <algorithm>
+
+#undef max
 
 using namespace gi_lib;
 using namespace gi_lib::dx11;
@@ -15,16 +18,19 @@ const Tag DX11FxLuminance::kParameters = "Parameters";
 
 const unsigned int DX11FxLuminance::kBinCount = 64;
 
-DX11FxLuminance::DX11FxLuminance(const Parameters& parameters){
+DX11FxLuminance::DX11FxLuminance(const Parameters& parameters) : 
+    fx_downscale_(gi_lib::fx::FxScale::Parameters{}){
 
 	auto directory = Application::GetInstance().GetDirectory();
-
+    
 	clear_shader_ = new DX11Computation(IComputation::CompileFromFile{ directory + L"Data\\shaders\\common\\clear_uint.hlsl" });
 
 	luminance_shader_ = new DX11Computation(IComputation::CompileFromFile{ directory + L"Data\\Shaders\\luminance_histogram.hlsl" });
 
 	log_luminance_histogram_ = new DX11ScratchStructuredArray(IScratchStructuredArray::FromElementSize{ kBinCount, 
 																										sizeof(unsigned int) });
+
+    rt_cache_ = std::make_unique<DX11RenderTargetCache>(IRenderTargetCache::Singleton{});
 
 	// One-time setup
 
@@ -43,6 +49,8 @@ DX11FxLuminance::DX11FxLuminance(const Parameters& parameters){
 	SetMaxLuminance(parameters.max_luminance_);
 	SetLowPercentage(parameters.low_percentage_);
 	SetHighPercentage(parameters.high_percentage_);
+
+    downscale_ = parameters.downscale_;
 
 }
 
@@ -68,10 +76,40 @@ float DX11FxLuminance::ComputeAverageLuminance(const ObjectPtr<ITexture2D>& sour
 
 	graphics_.PopEvent();
 
-	// Compute the image histogram
+
+
+    // Downscaling
+    
+    graphics_.PushEvent(L"Downscaling");
+
+    auto downscaled_source = rt_cache_->PopFromCache(width, height, { source->GetFormat() }, false);
+
+    ObjectPtr<IRenderTarget> downscaled_destination = nullptr;
+
+    fx_downscale_.Copy(source, downscaled_source);
+
+    for (unsigned int index = 0; index < downscale_; ++index){
+
+        width = std::max(width >> 1, 2u);
+        height = std::max(height >> 1, 2u);
+
+        downscaled_destination = rt_cache_->PopFromCache(width, height, { source->GetFormat() }, false);
+
+        fx_downscale_.Copy((*downscaled_source)[0], 
+                           downscaled_destination);
+
+        rt_cache_->PushToCache(downscaled_source);
+
+        downscaled_source = downscaled_destination;     // Flip
+
+    }
+
+    graphics_.PopEvent();
+    
+	// Compute the image histogram on the downscaled surface
 
 	luminance_shader_->SetInput(kSourceTexture,
-								source);
+								(*downscaled_source)[0]);
 
 	luminance_shader_->Dispatch(*context,
 								width,
@@ -79,6 +117,8 @@ float DX11FxLuminance::ComputeAverageLuminance(const ObjectPtr<ITexture2D>& sour
 								1);
 	
 	graphics_.PopEvent();
+    
+    rt_cache_->PushToCache(downscaled_source);        // Not needed anymore
 
 	// Process the luminance histogram to find the average luminance of the image
 
@@ -114,7 +154,7 @@ float DX11FxLuminance::ComputeAverageLuminance(const ObjectPtr<ITexture2D>& sour
 	// Convert to logarithmic luminance
 	low_luminance = std::exp2f(low_luminance);
 	high_luminance = std::exp2f(high_luminance);
-
+        
 	return (low_luminance + high_luminance) * 0.5f;
 
 }

@@ -17,7 +17,7 @@ using namespace gi_lib::dx11;
 Postprocess::Postprocess(Resources& resources, Graphics& graphics) :
 graphics_(graphics){
 
-	fx_luminance_ = resources.Load<FxLuminance, FxLuminance::Parameters>({ kMinLuminance, kMaxLuminance, kLuminanceLowPercentage, kLuminanceHighPercentage });
+	fx_luminance_ = resources.Load<FxLuminance, FxLuminance::Parameters>({ 3, kMinLuminance, kMaxLuminance, kLuminanceLowPercentage, kLuminanceHighPercentage });
 
 	fx_bloom_ = resources.Load<FxBloom, FxBloom::Parameters>({ kBloomExposure, kBloomBlurSigma, kKeyValue, 0.f, kBloomStrength });
 

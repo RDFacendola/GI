@@ -28,6 +28,8 @@ namespace gi_lib {
 
 				NO_CACHE;
 
+                unsigned int downscale_;            ///< \brief Number of times the image is downscaled before computing the average luminance. Higher number will yield significantly higher performances.
+
 				float min_luminance_;				///< \brief Threshold below of which the luminance is clamped to.
 
 				float max_luminance_;				///< \brief Threshold above of which the luminance is clamped to.

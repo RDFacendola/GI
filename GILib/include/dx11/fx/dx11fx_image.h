@@ -10,6 +10,7 @@
 #include "..\dx11gpgpu.h"
 
 #include "instance_builder.h"
+#include "dx11fx_transform.h"
 
 namespace gi_lib {
 
@@ -54,6 +55,8 @@ namespace gi_lib {
 
 			static const Tag kParameters;										///< \brief Tag of the shader parameters.
 
+            unsigned int downscale_;                                            ///< \brief Number of time the source image is downscaled before computing its average luminance.
+
 			float low_percentage_;												///< \brief Percentage of samples whose luminance is below the calculated average.
 						
 			float high_percentage_;												///< \brief Percentage of samples whose luminance is above the calculated average.
@@ -62,6 +65,10 @@ namespace gi_lib {
 
 			float max_log_luminance_;
 
+            DX11FxScale fx_downscale_;								    		///< \brief Used to perform down scaling.
+
+            std::unique_ptr<IRenderTargetCache> rt_cache_;					///< \brief Pointer to the render-target texture cache.
+            
 			ObjectPtr<DX11Computation> clear_shader_;							///< \brief Used to clear the histogram.
 
 			ObjectPtr<DX11Computation> luminance_shader_;						///< \brief Used to calculate the luminance of the image.
