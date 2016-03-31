@@ -49,6 +49,10 @@ namespace {
 
 /////////////////////////////////// DX11 VOXELIZATION ///////////////////////////////////
 
+const Tag DX11Voxelization::kRedSH01Tag = "gRSH01";
+const Tag DX11Voxelization::kGreenSH01Tag = "gGSH01";
+const Tag DX11Voxelization::kBlueSH01Tag = "gBSH01";
+
 DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_size, unsigned int voxel_resolution, unsigned int cascades) :
 	renderer_(renderer){
 
@@ -104,6 +108,8 @@ DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_s
 	voxel_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\voxel.hlsl" });
 
 	clear_voxel_address_table_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\common\\clear_uint.hlsl" });
+
+	clear_sh_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\clear_sh.hlsl" });
 
 	per_object_ = new DX11StructuredBuffer(sizeof(VSPerObject));
 
@@ -245,9 +251,27 @@ void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigne
 
 	auto voxel_count = cascades_ * cascade_size + pyramid * cascade_size;														// This should be an integer number, otherwise we have a problem!
 
-	// Resize the voxel address table
+	// Resize the voxel address table and the SH structure
 
 	voxel_address_table_ = new DX11GPStructuredArray(IGPStructuredArray::FromElementSize{ static_cast<unsigned int>(voxel_count), sizeof(unsigned int)});
+
+	voxel_red_sh_01_ = new DX11GPTexture3D(IGPTexture3D::FromDescription{ voxel_resolution_,
+																		  voxel_resolution_,
+																		  voxel_resolution_ * (1 + cascades),
+																		  1,
+																		  TextureFormat::RGBA_HALF });
+
+	voxel_green_sh_01_ = new DX11GPTexture3D(IGPTexture3D::FromDescription{ voxel_resolution_,
+																		    voxel_resolution_,
+																		    voxel_resolution_ * (1 + cascades),
+																		    1,
+																			TextureFormat::RGBA_HALF });
+
+	voxel_blue_sh_01_ = new DX11GPTexture3D(IGPTexture3D::FromDescription{ voxel_resolution_,
+																		   voxel_resolution_,
+																		   voxel_resolution_ * (1 + cascades),
+																		   1,
+																		   TextureFormat::RGBA_HALF });
 
 	// Resize the debug append buffer
 
@@ -280,6 +304,15 @@ void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigne
 	
 	check = clear_voxel_address_table_->SetOutput("gBuffer",
 												  ObjectPtr<IGPStructuredArray>(voxel_address_table_));
+
+	check = clear_sh_->SetOutput(DX11Voxelization::kRedSH01Tag,
+								 ObjectPtr<IGPTexture3D>(voxel_red_sh_01_));
+
+	check = clear_sh_->SetOutput(DX11Voxelization::kGreenSH01Tag,
+								 ObjectPtr<IGPTexture3D>(voxel_green_sh_01_));
+
+	check = clear_sh_->SetOutput(DX11Voxelization::kBlueSH01Tag,
+								 ObjectPtr<IGPTexture3D>(voxel_blue_sh_01_));
 
 	auto parameters = voxel_parameters_->Lock<VoxelParameters>();
 	
@@ -473,6 +506,23 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 	dx_utils.PopDepthStencilState(device_context);
 	
 	voxel_material_->Unbind(device_context, voxel_render_target_);
+
+	graphics.PopEvent();
+
+}
+
+void DX11Voxelization::ClearSH() {
+
+	auto& graphics = DX11Graphics::GetInstance();
+
+	auto& device_context = *graphics.GetImmediateContext();
+
+	graphics.PushEvent(L"Clear SH");
+
+	clear_sh_->Dispatch(device_context,
+						static_cast<unsigned int>(voxel_red_sh_01_->GetWidth()),
+						static_cast<unsigned int>(voxel_red_sh_01_->GetHeight()),
+						static_cast<unsigned int>(voxel_red_sh_01_->GetDepth()));
 
 	graphics.PopEvent();
 

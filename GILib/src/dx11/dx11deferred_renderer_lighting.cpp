@@ -25,9 +25,12 @@ const Tag DX11DeferredRendererLighting::kVSMShadowAtlasTag = "gVSMShadowAtlas";
 const Tag DX11DeferredRendererLighting::kVSMSamplerTag = "gVSMSampler";
 const Tag DX11DeferredRendererLighting::kPointShadowsTag = "gPointShadows";
 const Tag DX11DeferredRendererLighting::kDirectionalShadowsTag = "gDirectionalShadows";
+const Tag DX11DeferredRendererLighting::kReflectiveShadowMapTag = "gRSM";
+const Tag DX11DeferredRendererLighting::kVarianceShadowMapTag = "gVSM";
 
-DX11DeferredRendererLighting::DX11DeferredRendererLighting() :
-graphics_(DX11Graphics::GetInstance()){
+DX11DeferredRendererLighting::DX11DeferredRendererLighting(DX11Voxelization& voxelization) :
+graphics_(DX11Graphics::GetInstance()),
+voxelization_(voxelization){
 
 	auto&& device = *graphics_.GetDevice();
 
@@ -47,8 +50,10 @@ graphics_(DX11Graphics::GetInstance()){
 
 	gp_cache_ = resources.Load <IGPTexture2DCache, IGPTexture2DCache::Singleton>({});
 
-	light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
+	rt_cache_ = resources.Load<IRenderTargetCache, IRenderTargetCache::Singleton>({});
 
+	light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
+	
 	shadow_atlas_ = make_unique<DX11VSMAtlas>(2048/*, 1*/, true);
 
 	point_lights_ = new DX11StructuredArray(32, sizeof(PointLight));
@@ -61,6 +66,8 @@ graphics_(DX11Graphics::GetInstance()){
 
 	light_accumulation_parameters_ = new DX11StructuredBuffer(sizeof(LightAccumulationParameters));
 		
+	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\inject_light.hlsl" });
+
 	// One-time setup
 
 	bool check;
@@ -103,10 +110,23 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 	light_buffer_ = gp_cache_->PopFromCache(frame_info.width,				// Grab a new light accumulation buffer from the cache.
 											frame_info.height,
 											TextureFormat::RGB_FLOAT);
-		
+	
+	// SH setup
+
+	voxelization_.ClearSH();	// Clear last frame SH infos
+
+	light_injection_->SetOutput("gRSH01",
+								voxelization_.GetRedSH());
+
+	light_injection_->SetOutput("gGSH01",
+								voxelization_.GetBlueSH());
+
+	light_injection_->SetOutput("gBSH01",
+								voxelization_.GetGreenSH());
+
 	// Clear the shadow atlas from any existing shadowmap
 
-	graphics_.PushEvent(L"Shadowmap");
+	graphics_.PushEvent(L"Shadowmap + Light Injection");
 
 	shadow_atlas_->Reset();
 
@@ -196,6 +216,10 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLightComponent& point_light, PointLight& light, PointShadow& shadow) {
 
+	auto& graphics = DX11Graphics::GetInstance();
+
+	auto& device_context = *graphics.GetImmediateContext();
+
 	// Light
 
 	light.position = Math::ToVector4(point_light.GetPosition(), 1.0f);
@@ -207,22 +231,76 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLi
 
 	// Shadow map calculation
 
+	ObjectPtr<IRenderTarget> shadow_map;
+
 	shadow_atlas_->ComputeShadowmap(point_light, 
 									scene, 
-									shadow);
+									shadow,
+									&shadow_map);
 	
+	// Light injection
+
+	graphics_.PushEvent(L"Light injection");
+
+	light_injection_->SetInput(kVarianceShadowMapTag,
+							   (*shadow_map)[0]);
+
+	light_injection_->SetInput(kReflectiveShadowMapTag,
+							   (*shadow_map)[1]);
+
+	light_injection_->Dispatch(device_context,
+							   shadow_map->GetWidth(),
+							   shadow_map->GetHeight(),
+							   1);
+
+	graphics_.PopEvent();
+
+	// Cleanup
+
+	rt_cache_->PushToCache(shadow_map);		// Save the texture for the next frame
+	
+
 }
 
 void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const DirectionalLightComponent& directional_light, float aspect_ratio, DirectionalLight& light, DirectionalShadow& shadow) {
+
+	auto& graphics = DX11Graphics::GetInstance();
+
+	auto& device_context = *graphics.GetImmediateContext();
 
 	// Light
 
 	light.direction = Math::ToVector4(directional_light.GetDirection(), 1.0f);
 	light.color = directional_light.GetColor().ToVector4f();
 
-	// Shadow
+	// Shadow map calculation
+	
+	ObjectPtr<IRenderTarget> shadow_map;
+
 	shadow_atlas_->ComputeShadowmap(directional_light,
 									scene,
-									shadow);
+									shadow,
+									&shadow_map);
+
+	// Light injection
+
+	graphics_.PushEvent(L"Light injection");
+
+	light_injection_->SetInput(kVarianceShadowMapTag,
+							   (*shadow_map)[0]);
+
+	light_injection_->SetInput(kReflectiveShadowMapTag,
+							   (*shadow_map)[1]);
+
+	light_injection_->Dispatch(device_context,
+							   shadow_map->GetWidth(),
+							   shadow_map->GetHeight(),
+							   1);
+
+	graphics_.PopEvent();
+
+	// Cleanup
+
+	rt_cache_->PushToCache(shadow_map);		// Save the texture for the next frame
 
 }

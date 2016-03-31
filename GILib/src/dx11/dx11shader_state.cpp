@@ -165,6 +165,14 @@ bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX
 
 }
 
+bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture3D>& gp_texture_3D){
+	
+	return SetShaderMember(tag,
+						   gp_texture_3D ? gp_texture_3D->GetUnorderedAccessView() : UnorderedAccessView::kEmpty,
+						   uav_table_);
+
+}
+
 bool ShaderStateComposite::SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2DArray>& gp_texture_2D_array){
 	
 	return SetShaderMember(tag,

@@ -30,6 +30,7 @@ namespace gi_lib{
 		class DX11Texture2D;
 		class DX11Texture2DArray;
 		class DX11GPTexture2D;
+		class DX11GPTexture3D;
 		class DX11GPTexture2DArray;
 		class DX11Sampler;
 		class DX11GPStructuredArray;
@@ -323,6 +324,10 @@ namespace gi_lib{
 			/// \brief Set the value of a named unordered access view.
 			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
 			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture2D>& gp_texture_2D);
+
+			/// \brief Set the value of a named unordered access view.
+			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.
+			bool SetUnorderedAccess(const Tag& tag, const ObjectPtr<DX11GPTexture3D>& gp_texture_3D);
 
 			/// \brief Set the value of a named unordered access view.
 			/// \return Returns true if an unordered access view matching the specified tag was found, returns false otherwise.

@@ -19,6 +19,7 @@
 namespace gi_lib {
 
 	class ITexture2D;
+	class IGPTexture3D;
 	class IRenderTargetCache;
 
 	namespace dx11 {
@@ -28,7 +29,8 @@ namespace gi_lib {
 		class DX11GPStructuredArray;
 		class DX11RenderTarget;
 		class DX11StructuredBuffer;
-		class DX11Mesh;
+		class DX11Mesh;	
+		class DX11GPTexture3D;
 
 		class DX11FxScale;
 
@@ -38,6 +40,12 @@ namespace gi_lib {
 
 		public:
 			
+			static const Tag kRedSH01Tag;			///< \brief Tag associated to the 3D texture containing informations about the first and the second SH coefficients of the red channel.
+
+			static const Tag kGreenSH01Tag;			///< \brief Tag associated to the 3D texture containing informations about the first and the second SH coefficients of the green channel.
+
+			static const Tag kBlueSH01Tag;			///< \brief Tag associated to the 3D texture containing informations about the first and the second SH coefficients of the blue channel.
+
 			/// \brief Create a new voxel processor.
 			/// \param voxel_size Size of each voxel in world units.
 			/// \param voxel_resolution Amount of voxels along each axis for each cascade. Will be approximated to the next power of 2.
@@ -60,6 +68,18 @@ namespace gi_lib {
 			/// \param output Surface the structure will be drawn onto.
 			ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image);
 
+			/// \brief Clear the current content of the spherical harmonics structure.
+			void ClearSH();
+
+			/// \brief Get the structure containing the first and the second SH coefficients of the red channel.
+			ObjectPtr<IGPTexture3D> GetRedSH() const;
+
+			/// \brief Get the structure containing the first and the second SH coefficients of the green channel.
+			ObjectPtr<IGPTexture3D> GetGreenSH() const;
+
+			/// \brief Get the structure containing the first and the second SH coefficients of the blue channel.
+			ObjectPtr<IGPTexture3D> GetBlueSH() const;
+
 			/// \brief Get the total grid size.
 			float GetGridSize() const;
 
@@ -70,7 +90,7 @@ namespace gi_lib {
 
 			ObjectPtr<DX11Computation> voxel_shader_;							///< \brief Shader performing the dynamic voxelization.
 
-			ObjectPtr<DX11GPStructuredArray> voxel_address_table_;				///< \brief This structure contains the address of each voxel inside the 3D texture. 
+			ObjectPtr<DX11GPStructuredArray> voxel_address_table_;				///< \brief This structure contains the address of each voxel inside the 3D texture of the spherical harmonics. 
 																				///			An address equal to 0 means that the voxel is not present at the specified location.
 			
 			ObjectPtr<DX11Computation> clear_voxel_address_table_;				///< \brief Compute shader used to clear the voxel address table.
@@ -92,6 +112,16 @@ namespace gi_lib {
 			unsigned int voxel_resolution_;										///< \brief Amount of voxels along each axis for each cascade. Must be a power of 2.
 
 			unsigned int cascades_;												///< \brief Number of cascades inside the voxel clipmap 3D.
+
+			// Spherical harmonics
+
+			ObjectPtr<DX11Computation> clear_sh_;								///< \brief Compute shader used to clear the spherical harmonics structure
+
+			ObjectPtr<DX11GPTexture3D> voxel_red_sh_01_;						///< \brief Contains the first and the second SH for the red channel. The pyramid is not stored here. Consecutive cascades are stored contiguously along the Z axis.
+
+			ObjectPtr<DX11GPTexture3D> voxel_green_sh_01_;						///< \brief Contains the first and the second SH for the green channel. The pyramid is not stored here. Consecutive cascades are stored contiguously along the Z axis.
+
+			ObjectPtr<DX11GPTexture3D> voxel_blue_sh_01_;						///< \brief Contains the first and the second SH for the blue channel. The pyramid is not stored here. Consecutive cascades are stored contiguously along the Z axis.
 
 			// Debug stuff for voxel drawing - We don't care about performances here, it's debug stuff :)
 
@@ -133,6 +163,26 @@ namespace gi_lib {
 			ObjectPtr<DX11Mesh> voxel_edges_;									///< \brief Edges of the voxel.
 
 		};
+
+		////////////////////////////////////////////// DX11 VOXELIZATION //////////////////////////////////////////////
+
+		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetRedSH() const {
+
+			return ObjectPtr<IGPTexture3D>(voxel_red_sh_01_);
+
+		}
+				
+		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetGreenSH() const {
+
+			return ObjectPtr<IGPTexture3D>(voxel_green_sh_01_);
+
+		}
+
+		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetBlueSH() const {
+
+			return ObjectPtr<IGPTexture3D>(voxel_blue_sh_01_);
+
+		}
 
 	}
 

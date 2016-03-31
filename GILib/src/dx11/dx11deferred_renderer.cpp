@@ -212,14 +212,14 @@ graphics_(DX11Graphics::GetInstance()){
 	auto&& resources = DX11Resources::GetInstance();
 
 	rt_cache_ = resources.Load <IRenderTargetCache, IRenderTargetCache::Singleton>({});
-
-	// Lighting setup
-
-	lighting_ = std::make_unique<DX11DeferredRendererLighting>();
-
+	
 	// Voxel setup
 
 	voxelization_ = std::make_unique<DX11Voxelization>(*this, 800.f, 64, 4);
+
+	// Lighting setup
+
+	lighting_ = std::make_unique<DX11DeferredRendererLighting>(*voxelization_);
 
 }
 
@@ -230,6 +230,7 @@ DX11DeferredRenderer::~DX11DeferredRenderer(){
 	blend_state_ = nullptr;
 	rasterizer_state_ = nullptr;
 	lighting_ = nullptr;
+	voxelization_ = nullptr;
 	
 }
 

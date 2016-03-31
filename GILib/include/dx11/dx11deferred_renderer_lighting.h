@@ -14,12 +14,14 @@
 
 #include "dx11\dx11.h"
 #include "windows\win_os.h"
+#include "dx11voxelization.h"
 
 namespace gi_lib {
 
 	class IRenderTarget;
 	class ITexture2D;
 	class IGPTexture2DCache;
+	class IRenderTargetCache;
 	class IGPTexture2D;
 
 	class PointLightComponent;
@@ -86,7 +88,7 @@ namespace gi_lib {
 
 		public:
 
-			DX11DeferredRendererLighting();
+			DX11DeferredRendererLighting(DX11Voxelization& voxelization);
 
 			/// \brief No copy constructor.
 			DX11DeferredRendererLighting(const DX11DeferredRendererLighting&) = delete;
@@ -140,6 +142,8 @@ namespace gi_lib {
 
 			ObjectPtr<IGPTexture2DCache> gp_cache_;								///< \brief Cache of general purpose textures.
 
+			ObjectPtr<IRenderTargetCache> rt_cache_;							///< \brief Cache of the render targets.
+
 			ObjectPtr<IGPTexture2D> light_buffer_;								///< \brief Light buffer.
 
 			ObjectPtr<DX11StructuredArray> point_lights_;						///< \brief Array containing the point lights.
@@ -165,6 +169,18 @@ namespace gi_lib {
 			ObjectPtr<DX11StructuredArray> point_shadows_;						///< \brief Array containing the point lights.
 
 			ObjectPtr<DX11StructuredArray> directional_shadows_;				///< \brief Array containing the directional lights.
+
+			// Indirect lighting
+
+			static const Tag kReflectiveShadowMapTag;							///< \brief Tag associated to the texture containing the albedo and the normal of the reflective shadow map.
+
+			static const Tag kVarianceShadowMapTag;								///< \brief Tag associated to the texture containing the depth informations of the shadow map.
+
+			DX11Voxelization& voxelization_;									///< \brief Used to perform scene voxelization, hold the lighting acceleration structure.
+
+			ObjectPtr<DX11Computation> light_injection_;						///< \brief Shader performing the dynamic voxelization.
+
+			ObjectPtr<DX11StructuredBuffer> per_light_;							///< \brief Per-light constant buffer using during light injection.
 
 		};
 
