@@ -261,10 +261,7 @@ void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigne
 
 	// Create the proper render target 
 
-	voxel_render_target_ = new DX11RenderTarget(IRenderTarget::FromDescription{ voxel_resolution, 
-																				voxel_resolution, 
-																				{ TextureFormat::RGBA_BYTE_UNORM },
-																				false});
+	voxel_render_target_ = new DX11RenderTarget(IRenderTarget::FromDescription{ voxel_resolution_, voxel_resolution_, {}, false });	// Empty render target view
 
 	bool check;
 

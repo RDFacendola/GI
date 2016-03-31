@@ -143,7 +143,7 @@ void GSMain(triangle VSOut input[3], inout TriangleStream<GSOut> output_stream) 
 
 RWStructuredBuffer<uint> gVoxelAddressTable;			///< \brief Clipmap containing the address of the data stored for each voxel.
 
-float4 PSMain(GSOut input) : SV_Target0{
+void PSMain(GSOut input){
 
 	uint linear_coordinate;		// Linear coordinate of the voxel within its cascade.
 
@@ -188,6 +188,4 @@ float4 PSMain(GSOut input) : SV_Target0{
 
 	InterlockedAdd(gVoxelAddressTable[linear_coordinate], 1, dummy);		// TODO: Put the actual address here
 	
-	return 1.0f;		// Not needed!
-
 }

@@ -261,13 +261,16 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context, const vector<ID3D11Uno
 
 				   });
 
+	ID3D11RenderTargetView** rtv = (rtv_list.size() == 0) ? nullptr : &rtv_list[0];
+	ID3D11DepthStencilView* dsv = (depth_stencil_) ? depth_stencil_->GetDepthStencilView().Get() : nullptr;
+
 	if (uav_list.size() > 0) {
 
 		// Bind both the render target and the UAVs
 
 		context.OMSetRenderTargetsAndUnorderedAccessViews(static_cast<unsigned int>(rtv_list.size()),
-														  &rtv_list[0],
-														  depth_stencil_ ? depth_stencil_->GetDepthStencilView().Get() : nullptr,
+														  rtv,
+														  dsv,
 														  static_cast<unsigned int>(rtv_list.size()),
 														  static_cast<unsigned int>(uav_list.size()),
 														  &uav_list[0],
@@ -279,13 +282,12 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context, const vector<ID3D11Uno
 		// Bind the render targets only
 
 		context.OMSetRenderTargets(static_cast<unsigned int>(rtv_list.size()),
-								   &rtv_list[0],
-								   depth_stencil_ ? depth_stencil_->GetDepthStencilView().Get() : nullptr);
+								   rtv,
+								   dsv);
 
 	}
 
-	context.RSSetViewports(1,
-						   &viewport_);
+	context.RSSetViewports(1, &viewport_);
 
 }
 
@@ -347,7 +349,7 @@ void DX11RenderTarget::CreateSurfaces(unsigned int width, unsigned int height, c
 	}
 	else {
 
-		nullptr;
+		depth_stencil_ = nullptr;
 
 	}
 	
