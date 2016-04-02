@@ -103,7 +103,7 @@ namespace gi_lib {
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
 
-			COMPtr<ID3D11RasterizerState> rs_depth_bias_;			///< \brief Depth biased rasterizer state.
+			DX11PipelineState shadow_state_;						///< \brief Pipeline state used while drawing shadows.
 
 			vector<vector<AlignedBox2i>> chunks_;					///< \brief Contains the free chunks for each atlas page.
 																	///			A chunk is a free region of space within the atlas.

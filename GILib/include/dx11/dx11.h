@@ -229,7 +229,7 @@ namespace gi_lib{
 
 			D3D11_BLEND_DESC blend_state_desc_;								///< \brief Current description of the blend state.
 
-			D3D11_DEPTH_STENCIL_DESC depth_state_desc_;					///< \brief Current description of the depth stencil desc.
+			D3D11_DEPTH_STENCIL_DESC depth_state_desc_;						///< \brief Current description of the depth stencil desc.
 
 			COMPtr<ID3D11RasterizerState> rasterizer_state_;				///< \brief Rasterizer state used to control fill mode, cull mode and depth bias.
 

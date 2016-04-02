@@ -313,28 +313,8 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int size/*, unsigned int pages*/, bool full_
 
 	immediate_context_ << &context;
 
-	//  Create the rasterizer state
-
-	D3D11_RASTERIZER_DESC rasterizer_state_desc;
-
-	ID3D11RasterizerState* rasterizer_state;
-
-	rasterizer_state_desc.FillMode = D3D11_FILL_SOLID;
-	rasterizer_state_desc.CullMode = D3D11_CULL_BACK;
-	rasterizer_state_desc.FrontCounterClockwise = false;
-	rasterizer_state_desc.DepthBias = 10000;
-	rasterizer_state_desc.SlopeScaledDepthBias = 0.1f;
-	rasterizer_state_desc.DepthBiasClamp = 0.0f;
-	rasterizer_state_desc.DepthClipEnable = true;
-	rasterizer_state_desc.ScissorEnable = false;
-	rasterizer_state_desc.MultisampleEnable = false;
-	rasterizer_state_desc.AntialiasedLineEnable = false;
-
-	device.CreateRasterizerState(&rasterizer_state_desc,
-								 &rasterizer_state);
-
-	rs_depth_bias_ << &rasterizer_state;
-
+	shadow_state_.SetDepthBias(10000, 0.1f, 10.0f);
+	
 	// Create the shadow resources
 
 	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::ANISOTROPIC, 4 });
@@ -557,7 +537,7 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int at
 	ObjectPtr<DX11Mesh> mesh;
 	ObjectPtr<ITexture2D> diffuse_map;
 	
-	DX11Utils::GetInstance().PushRasterizerState(*immediate_context_, *rs_depth_bias_);
+	shadow_state_.Push(*immediate_context_);
 
 	resource_cast(shadow_map)->ClearTargets(*immediate_context_);
 	resource_cast(shadow_map)->ClearDepth(*immediate_context_);
@@ -626,7 +606,7 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int at
 
 	resource_cast(shadow_map)->Unbind(*immediate_context_);
 
-	DX11Utils::GetInstance().PopRasterizerState(*immediate_context_);
+	shadow_state_.Pop(*immediate_context_);
 	
 	// Blur the shadow map on top of the atlas
 

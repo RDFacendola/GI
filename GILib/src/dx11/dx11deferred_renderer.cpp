@@ -140,73 +140,6 @@ graphics_(DX11Graphics::GetInstance()){
 
 	immediate_context_ << &context;
 
-	// Create the depth stencil state
-
-	D3D11_DEPTH_STENCIL_DESC depth_state_desc;
-
-	ID3D11DepthStencilState* depth_state;
-	
-	depth_state_desc.DepthEnable = true;
-	depth_state_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depth_state_desc.DepthFunc = D3D11_COMPARISON_LESS;
-	depth_state_desc.StencilEnable = false;
-	depth_state_desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
-	depth_state_desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
-	
-	depth_state_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-	depth_state_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	depth_state_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	depth_state_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-
-	depth_state_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-	depth_state_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	depth_state_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	depth_state_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-
-	device.CreateDepthStencilState(&depth_state_desc,
-								   &depth_state);
-
-	depth_state_ << &depth_state;
-
-	// Create the blend state
-
-	D3D11_BLEND_DESC blend_state_desc;
-
-	ID3D11BlendState* blend_state;
-	
-	blend_state_desc.AlphaToCoverageEnable = false;
-	blend_state_desc.IndependentBlendEnable = false;
-
-	blend_state_desc.RenderTarget[0].BlendEnable = false;
-	blend_state_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-	device.CreateBlendState(&blend_state_desc,
-							&blend_state);
-
-	blend_state_ << &blend_state;
-
-	// Create the raster state.
-
-	D3D11_RASTERIZER_DESC rasterizer_state_desc;
-
-	ID3D11RasterizerState* rasterizer_state;
-
-	rasterizer_state_desc.FillMode = D3D11_FILL_SOLID;
-	rasterizer_state_desc.CullMode = D3D11_CULL_BACK;
-	rasterizer_state_desc.FrontCounterClockwise = false;
-	rasterizer_state_desc.DepthBias = 0;
-	rasterizer_state_desc.SlopeScaledDepthBias = 0.0f;
-	rasterizer_state_desc.DepthBiasClamp = 0.0f;
-	rasterizer_state_desc.DepthClipEnable = true;
-	rasterizer_state_desc.ScissorEnable = false;
-	rasterizer_state_desc.MultisampleEnable = false;
-	rasterizer_state_desc.AntialiasedLineEnable = false;
-
-	device.CreateRasterizerState(&rasterizer_state_desc,
-								 &rasterizer_state);
-
-	rasterizer_state_ << &rasterizer_state;
-	
 	// GBuffer setup
 
 	auto&& resources = DX11Resources::GetInstance();
@@ -226,9 +159,6 @@ graphics_(DX11Graphics::GetInstance()){
 DX11DeferredRenderer::~DX11DeferredRenderer(){
 	
 	immediate_context_ = nullptr;
-	depth_state_ = nullptr;
-	blend_state_ = nullptr;
-	rasterizer_state_ = nullptr;
 	lighting_ = nullptr;
 	voxelization_ = nullptr;
 	
@@ -257,15 +187,8 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 
 	// Context setup - The depth and the blend state should be defined per render section, however we support only opaque geometry without any fancy stuffs
 
-	immediate_context_->RSSetState(rasterizer_state_.Get());
-
-	immediate_context_->OMSetDepthStencilState(depth_state_.Get(),
-											   0);
-
-	immediate_context_->OMSetBlendState(blend_state_.Get(),
-										0,	
-										0xFFFFFFFF);
-
+	pipeline_state_.Push(*immediate_context_);
+	
 	// Draws only if there's a camera
 
 	ObjectPtr<ITexture2D> output = nullptr;
@@ -296,7 +219,9 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 
 	}
 
-	// Context cleanup
+	// Cleanup
+
+	pipeline_state_.Pop(*immediate_context_);
 
 	immediate_context_->ClearState();
 	

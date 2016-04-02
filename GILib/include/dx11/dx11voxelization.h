@@ -103,9 +103,7 @@ namespace gi_lib {
 
 			ObjectPtr<DX11RenderTarget> voxel_render_target_;					///< \brief Render target used during the voxelization. This technically is not needed at all.
 		
-			COMPtr<ID3D11DepthStencilState> depth_stencil_state_;				///< \brief Depth-stencil state used to disable Z testing.
-
-			COMPtr<ID3D11RasterizerState> rasterizer_state_;					///< \brief Rasterizer state.
+			DX11PipelineState voxelization_state_;								///< \brief Pipeline state for voxelization stage.
 
 			float voxel_size_;													///< \brief Size of each voxel in world units.
 
@@ -142,18 +140,14 @@ namespace gi_lib {
 
 			ObjectPtr<DX11StructuredBuffer> per_frame_;							///< \brief Per-frame constant buffer used during voxel draw.
 
-			COMPtr<ID3D11RasterizerState> wireframe_depth_bias_enable_;
+			DX11PipelineState sh_prepass_state_;								///< \brief Pipeline state for spherical harmonic prepass stage.
 
-			COMPtr<ID3D11RasterizerState> wireframe_depth_bias_disable_;			
+			DX11PipelineState sh_draw_state_;									///< \brief Pipeline state for spherical harmonic draw stage.
 
-			COMPtr<ID3D11BlendState> wireframe_disable_color_;
+			DX11PipelineState voxel_prepass_state_;								///< \brief Pipeline state for voxel prepass stage.
 
-			COMPtr<ID3D11BlendState> wireframe_enable_color_;
-
-			COMPtr<ID3D11DepthStencilState> wireframe_zprepass_depth_state_;	///< \brief Depth-stencil state used to enable Z testing.
-
-			COMPtr<ID3D11DepthStencilState> wireframe_zequal_depth_state_;		///< \brief Depth-stencil state used to enable Z testing.
-
+			DX11PipelineState voxel_draw_state_;								///< \brief Pipeline state for voxel draw stage.
+						
 			ObjectPtr<DX11Material> wireframe_voxel_material_;					///< \brief Material used to draw the wireframe voxels.
 
 			std::unique_ptr<DX11FxScale> scaler_;								///< \brief Used to copy the input image.

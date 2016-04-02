@@ -121,11 +121,7 @@ namespace gi_lib{
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;						///< \brief Immediate rendering context.
 
-			COMPtr<ID3D11DepthStencilState> depth_state_;						///< \brief Depth-stencil buffer state.
-
-			COMPtr<ID3D11BlendState> blend_state_;								///< \brief Output merger blending state.
-
-			COMPtr<ID3D11RasterizerState> rasterizer_state_;					///< \brief Rasterizer state.
+			DX11PipelineState pipeline_state_;									///< \brief Pipeline state used during GBuffer stage
 
 			// GBuffer
 			

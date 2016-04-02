@@ -62,8 +62,6 @@ DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_s
 
 	auto&& resources = DX11Resources::GetInstance();
 
-	auto&& device = *DX11Graphics::GetInstance().GetDevice();
-	
 	// Shared
 
 	voxel_parameters_ = new DX11StructuredBuffer(sizeof(VoxelParameters));
@@ -124,119 +122,16 @@ DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_s
 	check = voxel_material_->SetInput("Parameters",
 									  ObjectPtr<IStructuredBuffer>(voxel_parameters_));
 	
-	// Depth stencil state - No depth test
+	// Pipeline states
 
-	D3D11_DEPTH_STENCIL_DESC depth_state_desc;
-
-	ID3D11DepthStencilState* depth_state;
+	voxelization_state_.SetWriteMode(false, false, D3D11_COMPARISON_ALWAYS)		// Disable both color and depth write.
+					   .SetRasterMode(D3D11_FILL_SOLID, D3D11_CULL_NONE);		// Disable culling
 	
-	depth_state_desc.DepthEnable = false;
-	depth_state_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	depth_state_desc.DepthFunc = D3D11_COMPARISON_ALWAYS;
-	depth_state_desc.StencilEnable = false;
-	
-	THROW_ON_FAIL(device.CreateDepthStencilState(&depth_state_desc,
-												 &depth_state));
+	sh_prepass_state_.SetWriteMode(false, true, D3D11_COMPARISON_LESS)			// Disable color write.
+					 .SetRasterMode(D3D11_FILL_SOLID, D3D11_CULL_FRONT);		// Reverse culling
 
-	depth_stencil_state_ << &depth_state;
-	
-	// Wireframe ZPrepass
-
-	depth_state_desc.DepthEnable = true;
-	depth_state_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depth_state_desc.DepthFunc = D3D11_COMPARISON_LESS;
-	depth_state_desc.StencilEnable = false;
-	depth_state_desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK;
-	depth_state_desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK;
-
-	depth_state_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-	depth_state_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	depth_state_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	depth_state_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-
-	depth_state_desc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-	depth_state_desc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-	depth_state_desc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-	depth_state_desc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_KEEP;
-
-	THROW_ON_FAIL(device.CreateDepthStencilState(&depth_state_desc,
-												 &depth_state));
-
-	wireframe_zprepass_depth_state_ << &depth_state;
-
-	// Wireframe ZEqual
-
-	depth_state_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
-	depth_state_desc.DepthFunc = D3D11_COMPARISON_EQUAL;
-	
-	wireframe_zequal_depth_state_ << &depth_state;
-
-	// Wireframe - Color enable
-
-	D3D11_BLEND_DESC blend_state_desc;
-
-	ID3D11BlendState* blend_state;
-
-	blend_state_desc.AlphaToCoverageEnable = false;
-	blend_state_desc.IndependentBlendEnable = false;
-
-	blend_state_desc.RenderTarget[0].BlendEnable = false;
-	blend_state_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
-	device.CreateBlendState(&blend_state_desc,
-							&blend_state);
-
-	wireframe_enable_color_ << &blend_state;
-
-	// Wireframe - Color disable
-
-	blend_state_desc.RenderTarget[0].RenderTargetWriteMask = 0;
-
-	device.CreateBlendState(&blend_state_desc,
-							&blend_state);
-
-	wireframe_disable_color_ << &blend_state;
-
-	// Rasterizer state - No back-face culling
-
-	D3D11_RASTERIZER_DESC rasterizer_state_desc;
-
-	ID3D11RasterizerState* rasterizer_state;
-
-	rasterizer_state_desc.FillMode = D3D11_FILL_SOLID;
-	rasterizer_state_desc.CullMode = D3D11_CULL_NONE;
-	rasterizer_state_desc.FrontCounterClockwise = false;
-	rasterizer_state_desc.DepthBias = 0;
-	rasterizer_state_desc.SlopeScaledDepthBias = 0.0f;
-	rasterizer_state_desc.DepthBiasClamp = 0.0f;
-	rasterizer_state_desc.DepthClipEnable = true;
-	rasterizer_state_desc.ScissorEnable = false;
-	rasterizer_state_desc.MultisampleEnable = false;
-	rasterizer_state_desc.AntialiasedLineEnable = false;
-
-	THROW_ON_FAIL(device.CreateRasterizerState(&rasterizer_state_desc,
-											   &rasterizer_state));
-
-	rasterizer_state_ << &rasterizer_state;
-	
-	// Wireframe - Depth bias
-
-	rasterizer_state_desc.CullMode = D3D11_CULL_BACK;
-	rasterizer_state_desc.DepthBias = 100;
-
-	THROW_ON_FAIL(device.CreateRasterizerState(&rasterizer_state_desc,
-											   &rasterizer_state));
-
-	wireframe_depth_bias_enable_ << &rasterizer_state;
-
-	// Wireframe - No depth bias
-
-	rasterizer_state_desc.DepthBias = 0;
-
-	THROW_ON_FAIL(device.CreateRasterizerState(&rasterizer_state_desc,
-											   &rasterizer_state));
-
-	wireframe_depth_bias_disable_ << &rasterizer_state;
+	voxel_prepass_state_.SetWriteMode(false, true, D3D11_COMPARISON_LESS)		// Disable color write.
+						.SetDepthBias(100, 0.0f, 0.0f);							// Depth is biased to reduce artifact while drawing voxel edges.
 
 }
 
@@ -427,16 +322,12 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 	graphics.PopEvent();
 
 	// Setup - The material is shared among all the objects
-		
-	auto& dx_utils = DX11Utils::GetInstance();
 
 	voxel_render_target_->ClearTargets(device_context);
 	
 	voxel_material_->Bind(device_context, voxel_render_target_);	
 	
-	dx_utils.PushDepthStencilState(device_context, *depth_stencil_state_);
-
-	dx_utils.PushRasterizerState(device_context, *rasterizer_state_);
+	voxelization_state_.Push(device_context);
 
 	// Voxelize the nodes inside the voxelization domain grid
 	
@@ -501,10 +392,8 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 	// Cleanup
 
-	dx_utils.PopRasterizerState(device_context);
-	
-	dx_utils.PopDepthStencilState(device_context);
-	
+	voxelization_state_.Pop(device_context);
+
 	voxel_material_->Unbind(device_context, voxel_render_target_);
 
 	graphics.PopEvent();
@@ -530,11 +419,15 @@ void DX11Voxelization::ClearSH() {
 
 ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& image) {
 	
+	// SH Z prepass: voxel, front culling, depth write, no color write
+	// SH draw: sphere, back culling, depth write, color write
+
+	// Voxel Z prepass: voxel, back culling + depth bias, depth write, no color write
+	// Voxel draw: voxel, back culling, depth write, color write
+
 	auto& graphics = DX11Graphics::GetInstance();
 
 	auto& device_context = *graphics.GetImmediateContext();
-
-	auto& dx_utils = DX11Utils::GetInstance();
 
 	if (output_) {
 
@@ -584,51 +477,58 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 
 	output_->ClearDepth(device_context);
 
-	// Z prepass - Depth write only
+	// SH Z prepass - Depth write only
 	
-	graphics.PushEvent(L"ZPrepass");
+	graphics.PushEvent(L"SH : Z-prepass");
 
-	dx_utils.PushRasterizerState(device_context, *wireframe_depth_bias_enable_);
-
-	dx_utils.PushDepthStencilState(device_context, *wireframe_zprepass_depth_state_);
-
-	dx_utils.PushBlendState(device_context, *wireframe_disable_color_);
+	sh_prepass_state_.Push(device_context);
 
 	voxel_cube_->Bind(device_context);
 
 	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
 												0);
 
-	dx_utils.PopBlendState(device_context);
+	sh_prepass_state_.Pop(device_context);
 
-	dx_utils.PopDepthStencilState(device_context);
+	graphics.PopEvent();
 
-	dx_utils.PopRasterizerState(device_context);
+	// SH draw
+
+	graphics.PushEvent(L"SH : Draw");
+
+	graphics.PopEvent();
+
+	output_->ClearDepth(device_context);
+
+	// Voxel Z prepass - Depth write only
+	
+	graphics.PushEvent(L"Voxel: Z-prepass");
+
+	voxel_prepass_state_.Push(device_context);
+	
+	voxel_cube_->Bind(device_context);
+
+	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
+												0);
+
+	voxel_prepass_state_.Pop(device_context);
 	
 	graphics.PopEvent();
 
-	// Edge drawing - Depth equal only
+	// Voxel draw
 
-	graphics.PushEvent(L"Edge drawing");
+	graphics.PushEvent(L"Voxel: Edge drawing");
 
-	dx_utils.PushRasterizerState(device_context, *wireframe_depth_bias_disable_);
-
-	dx_utils.PushDepthStencilState(device_context, *wireframe_zequal_depth_state_);
-
-	dx_utils.PushBlendState(device_context, *wireframe_enable_color_);
-
+	voxel_draw_state_.Push(device_context);
+	
 	voxel_edges_->Bind(device_context);
 
 	device_context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);			// Override primitive type
 
 	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
 												0);
-
-	dx_utils.PopBlendState(device_context);
-
-	dx_utils.PopDepthStencilState(device_context);
-
-	dx_utils.PopRasterizerState(device_context);
+	
+	voxel_draw_state_.Pop(device_context);
 
 	graphics.PopEvent();
 
