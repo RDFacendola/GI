@@ -60,7 +60,7 @@ float DX11FxLuminance::ComputeAverageLuminance(const ObjectPtr<ITexture2D>& sour
 
 	graphics_.PushEvent(L"Average luminance");
 
-	auto context = DX11Graphics::GetInstance().GetImmediateContext();
+	auto context = DX11Graphics::GetInstance().GetContext().GetImmediateContext();
 
 	auto width = source->GetWidth();
 	auto height = source->GetHeight();

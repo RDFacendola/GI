@@ -306,7 +306,9 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 	auto& graphics = DX11Graphics::GetInstance();
 
-	auto& device_context = *graphics.GetImmediateContext();
+	auto& context = graphics.GetContext();
+
+	auto& device_context = *context.GetImmediateContext();
 
 	graphics.PushEvent(L"Dynamic Voxelization");
 		
@@ -327,7 +329,7 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 	
 	voxel_material_->Bind(device_context, voxel_render_target_);	
 	
-	voxelization_state_.Push(device_context);
+	context.PushPipelineState(voxelization_state_);
 
 	// Voxelize the nodes inside the voxelization domain grid
 	
@@ -392,7 +394,7 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 	// Cleanup
 
-	voxelization_state_.Pop(device_context);
+	context.PopPipelineState();
 
 	voxel_material_->Unbind(device_context, voxel_render_target_);
 
@@ -404,7 +406,7 @@ void DX11Voxelization::ClearSH() {
 
 	auto& graphics = DX11Graphics::GetInstance();
 
-	auto& device_context = *graphics.GetImmediateContext();
+	auto& device_context = *graphics.GetContext().GetImmediateContext();
 
 	graphics.PushEvent(L"Clear SH");
 
@@ -427,7 +429,9 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 
 	auto& graphics = DX11Graphics::GetInstance();
 
-	auto& device_context = *graphics.GetImmediateContext();
+	auto& context = graphics.GetContext();
+
+	auto& device_context = *context.GetImmediateContext();
 
 	if (output_) {
 
@@ -481,14 +485,14 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 	
 	graphics.PushEvent(L"SH : Z-prepass");
 
-	sh_prepass_state_.Push(device_context);
+	context.PushPipelineState(sh_prepass_state_);
 
 	voxel_cube_->Bind(device_context);
 
 	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
 												0);
 
-	sh_prepass_state_.Pop(device_context);
+	context.PopPipelineState();
 
 	graphics.PopEvent();
 
@@ -504,14 +508,14 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 	
 	graphics.PushEvent(L"Voxel: Z-prepass");
 
-	voxel_prepass_state_.Push(device_context);
+	context.PushPipelineState(voxel_prepass_state_);
 	
 	voxel_cube_->Bind(device_context);
 
 	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
 												0);
 
-	voxel_prepass_state_.Pop(device_context);
+	context.PopPipelineState();
 	
 	graphics.PopEvent();
 
@@ -519,7 +523,7 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 
 	graphics.PushEvent(L"Voxel: Edge drawing");
 
-	voxel_draw_state_.Push(device_context);
+	context.PushPipelineState(voxel_draw_state_);
 	
 	voxel_edges_->Bind(device_context);
 
@@ -528,7 +532,7 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
 												0);
 	
-	voxel_draw_state_.Pop(device_context);
+	context.PopPipelineState();
 
 	graphics.PopEvent();
 

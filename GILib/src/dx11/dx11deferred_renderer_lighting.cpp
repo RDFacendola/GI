@@ -218,7 +218,7 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLi
 
 	auto& graphics = DX11Graphics::GetInstance();
 
-	auto& device_context = *graphics.GetImmediateContext();
+	auto& device_context = *graphics.GetContext().GetImmediateContext();
 
 	// Light
 
@@ -266,7 +266,7 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const Directi
 
 	auto& graphics = DX11Graphics::GetInstance();
 
-	auto& device_context = *graphics.GetImmediateContext();
+	auto& device_context = *graphics.GetContext().GetImmediateContext();
 
 	// Light
 

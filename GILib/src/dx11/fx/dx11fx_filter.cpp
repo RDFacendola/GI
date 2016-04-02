@@ -101,7 +101,7 @@ void DX11FxGaussianBlur::Blur(const ObjectPtr<ITexture2D>& source, const ObjectP
 
 	graphics_.PushEvent(L"Gaussian Blur");
 
-	auto context = DX11Graphics::GetInstance().GetImmediateContext();
+	auto context = DX11Graphics::GetInstance().GetContext().GetImmediateContext();
 
 	auto width = source->GetWidth();
 	auto height = source->GetHeight();

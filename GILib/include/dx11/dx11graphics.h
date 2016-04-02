@@ -134,6 +134,87 @@ namespace gi_lib{
 
 		};
 
+		/// \brief Represents a compound pipeline state consisting of a blend state, a depth stencil state and a rasterizer state.
+		/// \author Raffaele D. Facendola
+		class DX11PipelineState {
+
+		public:
+
+			DX11PipelineState();
+
+			/// \brief Set the raster mode.
+			/// \param fill_mode Fill mode used during primitive rasterization.
+			/// \param cull_mode Cull mode used during primitive rasterization.
+			/// \return Returns itself.
+			DX11PipelineState& SetRasterMode(D3D11_FILL_MODE fill_mode, D3D11_CULL_MODE cull_mode);
+
+			/// \brief Set depth bias-related parameters.
+			/// \param depth_bias Depth value added to a given pixel
+			/// \param slope_depth_bias Scalar on a given pixel's slope.
+			/// \param max_depth_bias Maximum depth bias of a pixel.
+			/// \return Returns itself.
+			DX11PipelineState& SetDepthBias(int depth_bias, float slope_depth_bias, float max_depth_bias);
+
+			/// \brief Enable or disable color and depth write.
+			/// \param enable_color_write Set this to true to enable color write, set this to false to disable it.
+			/// \param enable_depth_write Set this to true to enable depth write, set this to false to disable it.
+			/// \param depth_comparison Depth comparison function to use during a depth test.
+			/// \return Returns itself.
+			DX11PipelineState& SetWriteMode(bool enable_color_write, bool enable_depth_write, D3D11_COMPARISON_FUNC depth_comparison);
+
+			/// \brief Bind the pipeline state to the given context.
+			void Bind(ID3D11DeviceContext& context);
+
+		private:
+
+			/// \brief Regenerate the pipeline states if necessary.
+			void RegenerateStates(ID3D11DeviceContext& context);
+
+			D3D11_RASTERIZER_DESC rasterizer_state_desc_;					///< \brief Current description of the rasterizer state.
+
+			D3D11_BLEND_DESC blend_state_desc_;								///< \brief Current description of the blend state.
+
+			D3D11_DEPTH_STENCIL_DESC depth_state_desc_;						///< \brief Current description of the depth stencil desc.
+
+			COMPtr<ID3D11RasterizerState> rasterizer_state_;				///< \brief Rasterizer state used to control fill mode, cull mode and depth bias.
+
+			COMPtr<ID3D11DepthStencilState> depth_stencil_state_;			///< \brief Depth stencil state used to control depth mode and function as well as stencil ops.
+
+			COMPtr<ID3D11BlendState> blend_state_;							///< \brief Blend state used to control blend mode and color write masks.
+
+		};
+
+		/// \brief DirectX11 context used to issue commands to the adapter.
+		/// \author Raffaele D. Facendola
+		class DX11Context {
+
+		public:
+			
+			DX11Context(COMPtr<ID3D11DeviceContext> immediate_context);
+
+			~DX11Context();
+
+			/// \brief Push a pipeline state on top of the stack activating it.
+			void PushPipelineState(DX11PipelineState& pipeline_state);
+
+			/// \brief Pop a the pipeline state from the top of the stack, activating the state below.
+			void PopPipelineState();
+
+			/// \brief Flush any pending command.
+			void Flush(ID3D11Device& device);
+
+			COMPtr<ID3D11DeviceContext> GetImmediateContext();
+
+		private:
+
+			DX11PipelineState default_pipeline_state_;
+
+			std::vector<DX11PipelineState*> pipeline_state_stack_;
+
+			COMPtr<ID3D11DeviceContext> immediate_context_;					///< \brief Immediate context used to issue commands to the graphic pipeline.
+
+		};
+
 		/// \brief DirectX11 graphics class.
 		/// \author Raffaele D. Facendola
 		class DX11Graphics : public Graphics{
@@ -160,7 +241,9 @@ namespace gi_lib{
 
 			COMPtr<IDXGIAdapter> GetAdapter();
 
-			COMPtr<ID3D11DeviceContext> GetImmediateContext();
+			/// \brief Get the graphic context.
+			/// \return Returns the graphic context.
+			DX11Context& GetContext();
 
 		protected:
 
@@ -182,9 +265,9 @@ namespace gi_lib{
 
 			COMPtr<IDXGIAdapter> adapter_;									///< \brief Represents the current adapter (ie Video Card)
 
-			COMPtr<ID3D11DeviceContext> immediate_context_;					///< \brief Immediate context used to issue commands to the graphic pipeline.
-
 			COMPtr<ID3DUserDefinedAnnotation> device_events_;				///< \brief Used to push and pop markers that are useful to track the application behaviour under profiling tools.
+
+			std::unique_ptr<DX11Context> context_;							///< \brief Graphic context used to issue commands to the GPU.
 
 		};
 
@@ -220,7 +303,15 @@ namespace gi_lib{
 
 		}
 
-		/////////////////////// DX11GRAPHICS ///////////////////
+		/////////////////////// DX11 CONTEXT ///////////////////////
+		
+		inline COMPtr<ID3D11DeviceContext> DX11Context::GetImmediateContext() {
+
+			return immediate_context_;
+
+		}
+
+		/////////////////////// DX11 GRAPHICS ///////////////////////
 
 		inline COMPtr<ID3D11Device> DX11Graphics::GetDevice(){
 
@@ -240,9 +331,9 @@ namespace gi_lib{
 
 		}
 
-		inline COMPtr<ID3D11DeviceContext> DX11Graphics::GetImmediateContext(){
+		inline DX11Context& DX11Graphics::GetContext() {
 
-			return immediate_context_;
+			return *context_;
 
 		}
 

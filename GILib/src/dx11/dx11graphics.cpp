@@ -484,6 +484,195 @@ ObjectPtr<IResource> DX11Resources::Load(const type_index& resource_type, const 
 	
 }
 
+//////////////////////////////////// DX11 PIPELINE STATE //////////////////////////////////
+
+DX11PipelineState::DX11PipelineState() {
+
+	rasterizer_state_desc_.FillMode = D3D11_FILL_SOLID;
+	rasterizer_state_desc_.CullMode = D3D11_CULL_BACK;
+	rasterizer_state_desc_.FrontCounterClockwise = false;
+	rasterizer_state_desc_.DepthBias = 0;
+	rasterizer_state_desc_.SlopeScaledDepthBias = 0.0f;
+	rasterizer_state_desc_.DepthBiasClamp = 0.0f;
+	rasterizer_state_desc_.DepthClipEnable = true;
+	rasterizer_state_desc_.ScissorEnable = false;
+	rasterizer_state_desc_.MultisampleEnable = false;
+	rasterizer_state_desc_.AntialiasedLineEnable = false;
+
+	blend_state_desc_.AlphaToCoverageEnable = false;
+	blend_state_desc_.IndependentBlendEnable = false;
+	blend_state_desc_.RenderTarget[0].BlendEnable = false;
+	blend_state_desc_.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	depth_state_desc_.DepthEnable = true;
+	depth_state_desc_.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depth_state_desc_.DepthFunc = D3D11_COMPARISON_LESS;
+	depth_state_desc_.StencilEnable = false;
+	
+}
+
+DX11PipelineState& DX11PipelineState::SetRasterMode(D3D11_FILL_MODE fill_mode, D3D11_CULL_MODE cull_mode) {
+
+	rasterizer_state_desc_.FillMode = fill_mode;
+	rasterizer_state_desc_.CullMode = cull_mode;
+	
+	rasterizer_state_ = nullptr;	// Invalidate the rasterizer state
+
+	return *this;
+
+}
+
+DX11PipelineState& DX11PipelineState::SetDepthBias(int depth_bias, float slope_depth_bias, float max_depth_bias) {
+
+	rasterizer_state_desc_.DepthBias = depth_bias;
+	rasterizer_state_desc_.SlopeScaledDepthBias = slope_depth_bias;
+	rasterizer_state_desc_.DepthBiasClamp = max_depth_bias;
+
+	rasterizer_state_ = nullptr;	// Invalidate the rasterizer state
+
+	return *this;
+
+}
+
+DX11PipelineState& DX11PipelineState::SetWriteMode(bool enable_color_write, bool enable_depth_write, D3D11_COMPARISON_FUNC depth_comparison) {
+	
+	depth_state_desc_.DepthFunc = depth_comparison;
+	depth_state_desc_.DepthEnable = (depth_comparison != D3D11_COMPARISON_ALWAYS);
+
+	depth_state_desc_.DepthWriteMask = (enable_depth_write ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO);
+
+	blend_state_desc_.RenderTarget[0].RenderTargetWriteMask = enable_color_write ? D3D11_COLOR_WRITE_ENABLE_ALL : 0;
+
+	rasterizer_state_ = nullptr;		// Invalidate the rasterizer state.
+	depth_stencil_state_ = nullptr;		// Invalidate the depth stencil state
+	blend_state_ = nullptr;				// Invalidate the blend state
+
+	return *this;
+
+}
+
+void DX11PipelineState::RegenerateStates(ID3D11DeviceContext& context) {
+
+	if (rasterizer_state_ && depth_stencil_state_ && blend_state_) {
+
+		return;
+
+	}
+
+	ID3D11Device* device;
+
+	context.GetDevice(&device);
+
+	COM_GUARD(device);
+
+	if (!rasterizer_state_) {
+
+		ID3D11RasterizerState* rasterizer_state;
+		
+		THROW_ON_FAIL(device->CreateRasterizerState(&rasterizer_state_desc_,
+													&rasterizer_state));
+
+		rasterizer_state_ << &rasterizer_state;
+
+	}
+
+	if (!depth_stencil_state_) {
+
+		ID3D11DepthStencilState* depth_state;
+		
+		THROW_ON_FAIL(device->CreateDepthStencilState(&depth_state_desc_,
+													  &depth_state));
+
+		depth_stencil_state_ << &depth_state;
+
+	}
+
+	if (!blend_state_) {
+
+		ID3D11BlendState* blend_state;
+		
+		THROW_ON_FAIL(device->CreateBlendState(&blend_state_desc_,
+											   &blend_state));
+
+		blend_state_ << &blend_state;
+
+	}
+	
+}
+
+void DX11PipelineState::Bind(ID3D11DeviceContext& context) {
+
+	RegenerateStates(context);
+
+	context.RSSetState(rasterizer_state_.Get());
+
+	context.OMSetDepthStencilState(depth_stencil_state_.Get(), 0);
+
+	context.OMSetBlendState(blend_state_.Get(), nullptr, 0xFFFFFFFF);
+	
+}
+
+//////////////////////////////////// DX11 CONTEXT /////////////////////////////////
+
+DX11Context::DX11Context(COMPtr<ID3D11DeviceContext> immediate_context) :
+	immediate_context_(immediate_context) {}
+
+DX11Context::~DX11Context() {
+
+	immediate_context_->ClearState();
+
+}
+
+void DX11Context::PushPipelineState(DX11PipelineState& pipeline_state) {
+
+	pipeline_state.Bind(*immediate_context_);
+
+	pipeline_state_stack_.push_back(std::addressof(pipeline_state));
+
+}
+
+void DX11Context::PopPipelineState() {
+
+	pipeline_state_stack_.pop_back();
+
+	if (pipeline_state_stack_.size() > 0) {
+
+		pipeline_state_stack_.back()->Bind(*immediate_context_);
+
+	}
+	else {
+
+		default_pipeline_state_.Bind(*immediate_context_);
+
+	}
+
+}
+
+void DX11Context::Flush(ID3D11Device& device) {
+
+	D3D11_QUERY_DESC query_desc;
+	ID3D11Query* query;
+
+	query_desc.Query = D3D11_QUERY_EVENT;
+	query_desc.MiscFlags = 0;
+
+	// Flush the command queue and synchronously wait until it becomes empty
+
+	if (SUCCEEDED(device.CreateQuery(&query_desc,
+									 &query))) {
+
+		immediate_context_->Flush();
+
+		immediate_context_->End(query);
+
+		while (!SUCCEEDED(immediate_context_->GetData(query, nullptr, 0, 0))) {}	// Spin, spin!
+
+		query->Release();
+
+	}
+
+}
+
 //////////////////////////////////// GRAPHICS ////////////////////////////////////
 
 DX11Graphics & DX11Graphics::GetInstance(){
@@ -559,8 +748,9 @@ DX11Graphics::DX11Graphics(): Graphics(){
 	factory_ << &factory;
 	adapter_ << &adapter;
 	device_ << &device;
-	immediate_context_ << &context;
 	device_events_ << &events;
+
+	context_ = std::make_unique<DX11Context>(COMMove(&context));
 
 	// Cleanup
 
@@ -572,7 +762,7 @@ DX11Graphics::~DX11Graphics(){
 
 	FlushAll();			// Clear the context and flush remaining commands.
 
-	immediate_context_ = nullptr;
+	context_ = nullptr;
 	factory_ = nullptr;
 
 	// Only the device is allowed here!
@@ -587,33 +777,10 @@ void DX11Graphics::FlushAll() {
 	DX11GPTexture2DCache::PurgeCache();
 	DX11RenderTargetCache::PurgeCache();
 
-	// Remove any pending reference
+	// Flush the device context
 
-	immediate_context_->ClearState();
-
-	// Flush any pending command
-
-	D3D11_QUERY_DESC query_desc;
-	ID3D11Query* query;
-
-	query_desc.Query = D3D11_QUERY_EVENT;
-	query_desc.MiscFlags = 0;
-
-	// Flush the command queue and synchronously wait until it becomes empty
-
-	if (SUCCEEDED(device_->CreateQuery(&query_desc,
-									   &query))) {
-
-		immediate_context_->Flush();
-
-		immediate_context_->End(query);
-
-		while (!SUCCEEDED(immediate_context_->GetData(query, nullptr, 0, 0))) {}	// Spin, spin!
-
-		query->Release();
-
-	}
-
+	context_->Flush(*device_);
+	
 }
 
 void DX11Graphics::DebugReport() {

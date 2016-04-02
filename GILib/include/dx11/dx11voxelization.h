@@ -12,6 +12,7 @@
 #include "tag.h"
 
 #include "dx11\dx11.h"
+#include "dx11\dx11graphics.h"
 #include "dx11\dx11deferred_renderer_shared.h"
 
 #include "windows\win_os.h"

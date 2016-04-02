@@ -69,7 +69,7 @@ void DX11FxBrightPass::Filter(const ObjectPtr<ITexture2D>& source, const ObjectP
 
 	graphics_.PushEvent(L"Bright pass");
 
-	auto device_context = DX11Graphics::GetInstance().GetImmediateContext();
+	auto device_context = DX11Graphics::GetInstance().GetContext().GetImmediateContext();
  
  	auto dx_destination = ::resource_cast(destination);
  
@@ -201,7 +201,7 @@ void DX11FxBloom::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr<I
 
 	// We only draw GPU-generated quads
 			
-	auto device_context = DX11Graphics::GetInstance().GetImmediateContext();
+	auto device_context = DX11Graphics::GetInstance().GetContext().GetImmediateContext();
 
 	device_context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
 	device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -408,7 +408,7 @@ void DX11FxTonemap::Process(const ObjectPtr<ITexture2D>& source, const ObjectPtr
 	
 	// Dispatch one thread for each source's pixel
 
-	tonemap_shader_->Dispatch(*DX11Graphics::GetInstance().GetImmediateContext(),			
+	tonemap_shader_->Dispatch(*DX11Graphics::GetInstance().GetContext().GetImmediateContext(),
 							  source->GetWidth(),
 							  source->GetHeight(),
 							  1);

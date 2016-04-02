@@ -7,6 +7,7 @@
 
 #include "object.h"
 
+#include "dx11graphics.h"
 #include "dx11sampler.h"
 #include "dx11render_target.h"
 #include "dx11material.h"

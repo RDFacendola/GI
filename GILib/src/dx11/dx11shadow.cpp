@@ -524,6 +524,8 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int at
 
 	auto& graphics_ = DX11Graphics::GetInstance();
 
+	auto& context = graphics_.GetContext();
+
 	graphics_.PushEvent(L"Shadowmap");
 
 	// Bind a new shadowmap to the output
@@ -537,7 +539,7 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int at
 	ObjectPtr<DX11Mesh> mesh;
 	ObjectPtr<ITexture2D> diffuse_map;
 	
-	shadow_state_.Push(*immediate_context_);
+	context.PushPipelineState(shadow_state_);
 
 	resource_cast(shadow_map)->ClearTargets(*immediate_context_);
 	resource_cast(shadow_map)->ClearDepth(*immediate_context_);
@@ -606,7 +608,7 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int at
 
 	resource_cast(shadow_map)->Unbind(*immediate_context_);
 
-	shadow_state_.Pop(*immediate_context_);
+	context.PopPipelineState();
 	
 	// Blur the shadow map on top of the atlas
 
