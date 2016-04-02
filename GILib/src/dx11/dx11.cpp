@@ -33,7 +33,8 @@ const UnorderedAccessView UnorderedAccessView::kEmpty;
 
 const SamplerStateView SamplerStateView::kEmpty;
 
-//////////////////////////////////// GRAPHICS ////////////////////////////////////
+
+//////////////////////////////////// DX11 UTILS ////////////////////////////////////
 
 DX11Utils & DX11Utils::GetInstance() {
 
@@ -130,6 +131,144 @@ void DX11Utils::PopRasterizerState(ID3D11DeviceContext& device_context) {
 	rasterizer_state_.pop_back();
 
 }	
+
+//////////////////////////////////// DX11 PIPELINE STATE //////////////////////////////////
+
+DX11PipelineState::DX11PipelineState() {
+
+	rasterizer_state_desc_.FillMode = D3D11_FILL_SOLID;
+	rasterizer_state_desc_.CullMode = D3D11_CULL_BACK;
+	rasterizer_state_desc_.FrontCounterClockwise = false;
+	rasterizer_state_desc_.DepthBias = 0;
+	rasterizer_state_desc_.SlopeScaledDepthBias = 0.0f;
+	rasterizer_state_desc_.DepthBiasClamp = 0.0f;
+	rasterizer_state_desc_.DepthClipEnable = true;
+	rasterizer_state_desc_.ScissorEnable = false;
+	rasterizer_state_desc_.MultisampleEnable = false;
+	rasterizer_state_desc_.AntialiasedLineEnable = false;
+
+	blend_state_desc_.AlphaToCoverageEnable = false;
+	blend_state_desc_.IndependentBlendEnable = false;
+	blend_state_desc_.RenderTarget[0].BlendEnable = false;
+	blend_state_desc_.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	depth_state_desc_.DepthEnable = true;
+	depth_state_desc_.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depth_state_desc_.DepthFunc = D3D11_COMPARISON_LESS;
+	depth_state_desc_.StencilEnable = false;
+	
+}
+
+DX11PipelineState& DX11PipelineState::SetRasterMode(D3D11_FILL_MODE fill_mode, D3D11_CULL_MODE cull_mode) {
+
+	rasterizer_state_desc_.FillMode = fill_mode;
+	rasterizer_state_desc_.CullMode = cull_mode;
+	
+	rasterizer_state_ = nullptr;	// Invalidate the rasterizer state
+
+	return *this;
+
+}
+
+DX11PipelineState& DX11PipelineState::SetDepthBias(int depth_bias, float slope_depth_bias, float max_depth_bias) {
+
+	rasterizer_state_desc_.DepthBias = depth_bias;
+	rasterizer_state_desc_.SlopeScaledDepthBias = slope_depth_bias;
+	rasterizer_state_desc_.DepthBiasClamp = max_depth_bias;
+
+	rasterizer_state_ = nullptr;	// Invalidate the rasterizer state
+
+	return *this;
+
+}
+
+DX11PipelineState& DX11PipelineState::SetWriteMode(bool enable_color_write, bool enable_depth_write, D3D11_COMPARISON_FUNC depth_comparison) {
+	
+	blend_state_desc_.RenderTarget[0].RenderTargetWriteMask = enable_color_write ? D3D11_COLOR_WRITE_ENABLE_ALL : 0;
+
+	depth_state_desc_.DepthFunc = depth_comparison;
+	depth_state_desc_.DepthEnable = (depth_comparison != D3D11_COMPARISON_ALWAYS);
+
+	depth_state_desc_.DepthWriteMask = (enable_depth_write ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO);
+
+	blend_state_ = nullptr;				// Invalidate the blend state
+	depth_stencil_state_ = nullptr;		// Invalidate the depth stencil state
+	rasterizer_state_ = nullptr;		// Invalidate the rasterizer state.
+
+	return *this;
+
+}
+
+void DX11PipelineState::RegenerateStates(ID3D11DeviceContext& context) {
+
+	if (rasterizer_state_ && blend_state_ && depth_stencil_state_) {
+
+		return;
+
+	}
+
+	ID3D11Device* device;
+
+	context.GetDevice(&device);
+
+	COM_GUARD(device);
+
+	if (!rasterizer_state_) {
+
+		ID3D11RasterizerState* rasterizer_state;
+		
+		THROW_ON_FAIL(device->CreateRasterizerState(&rasterizer_state_desc_,
+													&rasterizer_state));
+
+		rasterizer_state_ << &rasterizer_state;
+
+	}
+
+	if (!blend_state_) {
+
+		ID3D11BlendState* blend_state;
+		
+		THROW_ON_FAIL(device->CreateBlendState(&blend_state_desc_,
+											   &blend_state));
+
+		blend_state_ << &blend_state;
+
+	}
+
+	if (!depth_stencil_state_) {
+
+		ID3D11DepthStencilState* depth_state;
+		
+		THROW_ON_FAIL(device->CreateDepthStencilState(&depth_state_desc_,
+													  &depth_state));
+
+		depth_stencil_state_ << &depth_state;
+
+	}
+	
+}
+
+void DX11PipelineState::Push(ID3D11DeviceContext& context) {
+	
+	RegenerateStates(context);
+	
+	auto& dx_utils = DX11Utils::GetInstance();
+		
+	dx_utils.PushRasterizerState(context, *rasterizer_state_);
+	dx_utils.PushBlendState(context, *blend_state_);
+	dx_utils.PushDepthStencilState(context, *depth_stencil_state_);
+
+}
+
+void DX11PipelineState::Pop(ID3D11DeviceContext& context) {
+
+	auto& dx_utils = DX11Utils::GetInstance();
+	
+	dx_utils.PopDepthStencilState(context);
+	dx_utils.PopBlendState(context);
+	dx_utils.PopRasterizerState(context);
+	
+}
 
 /////////////////// METHODS ///////////////////////////
 
