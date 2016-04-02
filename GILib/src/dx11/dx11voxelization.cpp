@@ -523,7 +523,7 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 
 	graphics.PushEvent(L"Voxel: Edge drawing");
 
-	context.PushPipelineState(voxel_draw_state_);
+	context.PushPipelineState(DX11PipelineState::kDefault);
 	
 	voxel_edges_->Bind(device_context);
 

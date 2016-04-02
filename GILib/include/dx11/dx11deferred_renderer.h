@@ -121,8 +121,6 @@ namespace gi_lib{
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;						///< \brief Immediate rendering context.
 
-			DX11PipelineState pipeline_state_;									///< \brief Pipeline state used during GBuffer stage
-
 			// GBuffer
 			
 			ObjectPtr<IRenderTargetCache> rt_cache_;							///< \brief Cache of render targets.

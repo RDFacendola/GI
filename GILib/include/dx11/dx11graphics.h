@@ -140,6 +140,8 @@ namespace gi_lib{
 
 		public:
 
+			static const DX11PipelineState kDefault;		///< \brief Default pipeline state.
+
 			DX11PipelineState();
 
 			/// \brief Set the raster mode.
@@ -163,12 +165,12 @@ namespace gi_lib{
 			DX11PipelineState& SetWriteMode(bool enable_color_write, bool enable_depth_write, D3D11_COMPARISON_FUNC depth_comparison);
 
 			/// \brief Bind the pipeline state to the given context.
-			void Bind(ID3D11DeviceContext& context);
+			void Bind(ID3D11DeviceContext& context) const;
 
 		private:
 
 			/// \brief Regenerate the pipeline states if necessary.
-			void RegenerateStates(ID3D11DeviceContext& context);
+			void RegenerateStates(ID3D11DeviceContext& context) const;
 
 			D3D11_RASTERIZER_DESC rasterizer_state_desc_;					///< \brief Current description of the rasterizer state.
 
@@ -176,11 +178,11 @@ namespace gi_lib{
 
 			D3D11_DEPTH_STENCIL_DESC depth_state_desc_;						///< \brief Current description of the depth stencil desc.
 
-			COMPtr<ID3D11RasterizerState> rasterizer_state_;				///< \brief Rasterizer state used to control fill mode, cull mode and depth bias.
+			mutable COMPtr<ID3D11RasterizerState> rasterizer_state_;		///< \brief Rasterizer state used to control fill mode, cull mode and depth bias.
 
-			COMPtr<ID3D11DepthStencilState> depth_stencil_state_;			///< \brief Depth stencil state used to control depth mode and function as well as stencil ops.
+			mutable COMPtr<ID3D11DepthStencilState> depth_stencil_state_;	///< \brief Depth stencil state used to control depth mode and function as well as stencil ops.
 
-			COMPtr<ID3D11BlendState> blend_state_;							///< \brief Blend state used to control blend mode and color write masks.
+			mutable COMPtr<ID3D11BlendState> blend_state_;					///< \brief Blend state used to control blend mode and color write masks.
 
 		};
 
@@ -195,11 +197,11 @@ namespace gi_lib{
 			~DX11Context();
 
 			/// \brief Push a pipeline state on top of the stack activating it.
-			void PushPipelineState(DX11PipelineState& pipeline_state);
+			void PushPipelineState(const DX11PipelineState& pipeline_state);
 
 			/// \brief Pop a the pipeline state from the top of the stack, activating the state below.
 			void PopPipelineState();
-
+			
 			/// \brief Flush any pending command.
 			void Flush(ID3D11Device& device);
 
@@ -207,9 +209,7 @@ namespace gi_lib{
 
 		private:
 
-			DX11PipelineState default_pipeline_state_;
-
-			std::vector<DX11PipelineState*> pipeline_state_stack_;
+			std::vector<const DX11PipelineState*> pipeline_state_stack_;
 
 			COMPtr<ID3D11DeviceContext> immediate_context_;					///< \brief Immediate context used to issue commands to the graphic pipeline.
 

@@ -143,12 +143,8 @@ namespace gi_lib {
 
 			DX11PipelineState sh_prepass_state_;								///< \brief Pipeline state for spherical harmonic prepass stage.
 
-			DX11PipelineState sh_draw_state_;									///< \brief Pipeline state for spherical harmonic draw stage.
-
 			DX11PipelineState voxel_prepass_state_;								///< \brief Pipeline state for voxel prepass stage.
 
-			DX11PipelineState voxel_draw_state_;								///< \brief Pipeline state for voxel draw stage.
-						
 			ObjectPtr<DX11Material> wireframe_voxel_material_;					///< \brief Material used to draw the wireframe voxels.
 
 			std::unique_ptr<DX11FxScale> scaler_;								///< \brief Used to copy the input image.

@@ -189,7 +189,7 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 
 	// Context setup - The depth and the blend state should be defined per render section, however we support only opaque geometry without any fancy stuffs
 
-	context.PushPipelineState(pipeline_state_);
+	context.PushPipelineState(DX11PipelineState::kDefault);
 	
 	// Draws only if there's a camera
 

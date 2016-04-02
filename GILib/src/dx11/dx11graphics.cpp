@@ -486,6 +486,8 @@ ObjectPtr<IResource> DX11Resources::Load(const type_index& resource_type, const 
 
 //////////////////////////////////// DX11 PIPELINE STATE //////////////////////////////////
 
+const DX11PipelineState DX11PipelineState::kDefault;
+
 DX11PipelineState::DX11PipelineState() {
 
 	rasterizer_state_desc_.FillMode = D3D11_FILL_SOLID;
@@ -551,7 +553,7 @@ DX11PipelineState& DX11PipelineState::SetWriteMode(bool enable_color_write, bool
 
 }
 
-void DX11PipelineState::RegenerateStates(ID3D11DeviceContext& context) {
+void DX11PipelineState::RegenerateStates(ID3D11DeviceContext& context) const{
 
 	if (rasterizer_state_ && depth_stencil_state_ && blend_state_) {
 
@@ -600,7 +602,7 @@ void DX11PipelineState::RegenerateStates(ID3D11DeviceContext& context) {
 	
 }
 
-void DX11PipelineState::Bind(ID3D11DeviceContext& context) {
+void DX11PipelineState::Bind(ID3D11DeviceContext& context) const {
 
 	RegenerateStates(context);
 
@@ -623,7 +625,7 @@ DX11Context::~DX11Context() {
 
 }
 
-void DX11Context::PushPipelineState(DX11PipelineState& pipeline_state) {
+void DX11Context::PushPipelineState(const DX11PipelineState& pipeline_state) {
 
 	pipeline_state.Bind(*immediate_context_);
 
@@ -642,7 +644,7 @@ void DX11Context::PopPipelineState() {
 	}
 	else {
 
-		default_pipeline_state_.Bind(*immediate_context_);
+		DX11PipelineState::kDefault.Bind(*immediate_context_);
 
 	}
 
