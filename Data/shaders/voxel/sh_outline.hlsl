@@ -1,25 +1,7 @@
-#include "projection_def.hlsl"
 
-cbuffer Parameters {
+#include "voxel_def.hlsl"
 
-	float3 gCenter;								// Center of the voxelization. It is always a corner shared among 8 different voxels.
-
-	float gVoxelSize;							// Size of each voxel in world units for each dimension.
-
-	unsigned int gVoxelResolution;				// Resolution of each cascade in voxels for each dimension.
-
-	unsigned int gCascades;						// Number of additional cascades inside the clipmap.
-			
-};
-
-struct VoxelInfo {
-
-	float3 center;			// Center of the voxel, in world space
-	float size;				// Size of the voxel in world units
-
-};
-
-StructuredBuffer<VoxelInfo> gVoxelAppendBuffer;		//<T>: VoxelInfo
+StructuredBuffer<VoxelInfo> gVoxelAppendBuffer;				// Append buffer containing the list of voxels in the current frame. (Read Only)
 
 /////////////////////////////////// VERTEX SHADER ///////////////////////////////////////
 

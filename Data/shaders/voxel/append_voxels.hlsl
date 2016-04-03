@@ -1,32 +1,15 @@
 /// \brief Appends the voxel stored inside a voxel address table inside an append buffer.
 
+#include "voxel_def.hlsl"
+
 #define N 256
 #define TOTAL_THREADS (N)
-
-struct VoxelInfo {
-
-	float3 center;			// Center of the voxel, in world space
-	float size;				// Size of the voxel in world units
-
-};
 
 RWBuffer<uint> gIndirectArguments;
 
 StructuredBuffer<uint> gVoxelAddressTable;
 
-AppendStructuredBuffer<VoxelInfo> gVoxelAppendBuffer;		//<T>: VoxelInfo
-
-cbuffer Parameters {
-
-	float3 gCenter;						// Center of the voxelization. It is always a corner shared among 8 different voxels.
-
-	float gVoxelSize;					// Size of each voxel in world units for each dimension.
-
-	uint gVoxelResolution;				// Resolution of each cascade in voxels for each dimension.
-
-	uint gCascades;						// Number of additional cascades inside the clipmap.
-
-};
+AppendStructuredBuffer<VoxelInfo> gVoxelAppendBuffer;		// Append buffer containing the list of voxels in the current frame. (Read/Write)
 
 float max3(float a, float b, float c) {
 
@@ -51,7 +34,7 @@ void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 	// Suppress the voxel if there's a more precise version of it
 
 	if (cascade < gCascades &&
-		max3(abs(voxel_info.center.x), abs(voxel_info.center.y), abs(voxel_info.center.z)) <= (gVoxelResolution >> 2)){
+		(uint)(max3(abs(voxel_info.center.x), abs(voxel_info.center.y), abs(voxel_info.center.z))) <= (gVoxelResolution >> 2)){
 
 		return;
 

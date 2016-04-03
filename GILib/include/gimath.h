@@ -128,6 +128,12 @@ namespace gi_lib{
 		/// \return Return the angle in radians.
 		static float DegToRad(float degrees);
 
+		/// \brief Get the sum of a geometric series of the form s = a * ar * ar^2 * ... * ar^(n-1).
+		/// \param a First term of the serie.
+		/// \param r Common ratio between two consecutive terms.
+		/// \param n Number of terms to sum.
+		static float SumGeometricSeries(float a, float r, float n);
+
 		/// \brief Check whether two numbers are essentially equal.
 		/// \param a The first number to test.
 		/// \param b The second number to test.

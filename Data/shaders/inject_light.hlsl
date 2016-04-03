@@ -14,7 +14,7 @@ RWTexture3D<float4> gBSH01;		// First and second SH coefficients for the blue ch
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	float4 p = gRSM.Load(int3(dispatch_thread_id.xy, 0));
-	float2 q = gVSM.Load(int3(dispatch_thread_id.xy, 0));
+	float2 q = gVSM.Load(int3(dispatch_thread_id.xy, 0)).xy;
 
 	// Using the light position, the uv coordinate and the depth compute the world position of the sample
 
@@ -26,8 +26,8 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	// Profit!
 
-	gRSH01[dispatch_thread_id.xyz] = p.xyzw;
-	gGSH01[dispatch_thread_id.xyz] = q.xyzw;
-	gBSH01[dispatch_thread_id.xyz] = 1.0f;
+	gRSH01[dispatch_thread_id.xyz] = float4(0, 1, 0, 0);
+	gGSH01[dispatch_thread_id.xyz] = float4(0, 0, 1, 0);
+	gBSH01[dispatch_thread_id.xyz] = float4(0, 0, 0, 1);
 
 }

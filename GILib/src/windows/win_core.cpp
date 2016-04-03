@@ -290,6 +290,15 @@ wstring FileSystem::Read(const wstring& file_name) const{
 						std::istreambuf_iterator<wchar_t>());
 
 	}
+	else {
+
+		wstringstream stream;
+		
+		stream << L"The file '" << file_name << "' does not exist!" << std::endl;
+			   
+		THROW(stream.str());
+
+	}
 		
 	return content;
 

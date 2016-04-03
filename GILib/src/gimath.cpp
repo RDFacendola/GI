@@ -242,3 +242,14 @@ IntersectionType Frustum::Intersect(const Sphere& sphere) const{
 	return IntersectionType::kIntersect;
 
 }
+
+//////////////////////////// MATH //////////////////////////////
+
+float Math::SumGeometricSeries(float a, float r, float n){
+
+	auto factor = (1.f - std::powf(r, n)) / (1.f - r);
+	
+	return a * factor;
+
+
+}

@@ -20,20 +20,32 @@ using namespace ::gi_lib::dx11;
 
 namespace {
 
-	/// \brief Vertex shader constant buffer.
-	struct VSPerObject {
+	/// \brief Info about a single voxel.
+	/// \see See voxel_def.hlsl
+	struct VoxelInfo {
+
+		Vector3f center;					// Center of the voxel, in world space
+
+		float size;							// Size of the voxel in world units
+
+	};
+
+	/// \brief Constant buffer containing the per-object constants.
+	struct CBObject {
 
 		Matrix4f world_;							///< \brief World matrix of the object to voxelize.
 
 	};
 
-	struct VSPerFrame{
+	/// \brief Constant buffer containing the per-frame constants.
+	struct CBFrame{
 
 		Matrix4f view_projection;							///< \brief View-projection matrix.
 
 	};
 
-	struct VoxelParameters {
+	/// \brief Constant buffer containing voxelization parameters
+	struct CBVoxelization {
 
 		Vector3f center_;							// Center of the voxelization.
 
@@ -47,209 +59,360 @@ namespace {
 
 }
 
-/////////////////////////////////// DX11 VOXELIZATION ///////////////////////////////////
+/////////////////////////////////// DX11 VOXELIZATION :: DEBUG DRAWER ///////////////////////////////////
 
-const Tag DX11Voxelization::kRedSH01Tag = "gRSH01";
-const Tag DX11Voxelization::kGreenSH01Tag = "gGSH01";
-const Tag DX11Voxelization::kBlueSH01Tag = "gBSH01";
+class DX11Voxelization::DebugDrawer {
 
-DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_size, unsigned int voxel_resolution, unsigned int cascades) :
-	renderer_(renderer){
+public:
 
-	bool check;
+	static const Tag kVoxelAppendBuffer;			///< \brief Tag associated to the append buffer used while gathering voxels for debug draw.
+
+	static const Tag kVoxelDrawIndirectArgs;		///< \brief Tag associated to the buffer containing the arguments used to draw the voxels.
+
+	static const Tag kPerFrameTag;					///< \brief Tag associated to the buffer containing the arguments used to draw the voxels.
+
+	DebugDrawer(DX11Voxelization& voxelization);
+
+	ObjectPtr<ITexture2D> DrawDebugOverlay(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection) const;
+
+private:
+
+	/// \brief Draw the voxel outline on top of the provided output surface.
+	/// \param output Surface where the voxel should be drawn onto.
+	void DrawVoxels(const ObjectPtr<DX11RenderTarget>& output) const;
+
+	/// \brief Draw the spherical harmonics outline on top of the provided output surface.
+	/// \param output Surface where the spherical harmonics should be drawn onto.
+	void DrawSphericalHarmonics(const ObjectPtr<DX11RenderTarget>& output) const;
+
+	/// \brief Draw the voxel depth on top of the provided output surface.
+	/// \param pipeline_state Pipeline state to use while drawing the voxel depth.
+	void DrawVoxelDepth(const ObjectPtr<DX11RenderTarget>& output, const DX11PipelineState& pipeline_state) const;
+
+	/// \brief Create the debug meshes.
+	void BuildMeshes();
+
+	/// \brief Initialize the shader resources.
+	void InitResources();
+
+	/// \brief Initialize the shaders.
+	void InitShaders();
+
+	DX11Voxelization& subject_;											///< \brief Parent class holding voxelization structures.
+
+	DX11Graphics& graphics_;											///< \brief Graphics instance.
 	
-	auto&& app = Application::GetInstance();
+	DX11Context& context_;												///< \brief Graphics context.
 
-	auto&& resources = DX11Resources::GetInstance();
+	// Shader resources
 
-	// Shared
+	mutable ObjectPtr<DX11RenderTarget> output_;						///< \brief Surface where the debug infos are being rendered to.
 
-	voxel_parameters_ = new DX11StructuredBuffer(sizeof(VoxelParameters));
+	ObjectPtr<IRenderTargetCache> render_target_cache_;					///< \brief Cache of render-target textures.
 
-	// Voxel drawing
+	ObjectPtr<DX11GPStructuredArray> voxel_draw_indirect_args_;			///< \brief Buffer containing the argument buffer used to dispatch the DrawInstancedIndirect call
+
+	ObjectPtr<DX11GPStructuredArray> voxel_append_buffer_;				///< \brief Append buffer containing the debug voxel info (namely their center and their size).
+
+	ObjectPtr<DX11StructuredBuffer> cb_frame_;							///< \brief Per-frame constant buffer used during voxel draw.
+
+	DX11PipelineState voxel_prepass_state_;								///< \brief Pipeline state for voxel prepass stage.
+
+	DX11PipelineState sh_prepass_state_;								///< \brief Pipeline state for spherical harmonic prepass stage.
+	
+	// Shader
+
+	ObjectPtr<DX11Material> voxel_depth_only_material_;					///< \brief Used to draw instanced voxels on the depth buffer.
+
+	ObjectPtr<DX11Material> voxel_outline_material_;					///< \brief Material used to draw instanced voxels outline.
+
+	ObjectPtr<DX11Material> sh_outline_material_;						///< \brief Material used to draw instanced spherical harmonics.
+	
+	ObjectPtr<DX11Computation> clear_voxel_draw_indirect_args_;			///< \brief Compute shader used to clear the voxel draw indirect arguments.
+
+	ObjectPtr<DX11Computation> append_voxel_info_;						///< \brief Compute shader used to append voxel info inside the voxel append buffer.
+	
+	std::unique_ptr<DX11FxScale> scaler_;								///< \brief Used to copy the input image.
+
+	// Meshes
+
+	ObjectPtr<DX11Mesh> cube_edges_mesh_;								///< \brief Edges of a cube, used to outline a voxel.
+
+	ObjectPtr<DX11Mesh> cube_mesh_;										///< \brief Solid cube used for debug voxel prepass.
+
+	ObjectPtr<DX11Mesh> sphere_mesh_;									///< \brief Sphere mesh used to draw spherical harmonics
+
+};
+
+const Tag DX11Voxelization::DebugDrawer::kVoxelAppendBuffer= "gVoxelAppendBuffer";
+const Tag DX11Voxelization::DebugDrawer::kVoxelDrawIndirectArgs = "gIndirectArguments";
+const Tag DX11Voxelization::DebugDrawer::kPerFrameTag = "PerFrame";
+
+DX11Voxelization::DebugDrawer::DebugDrawer(DX11Voxelization& voxelization) :
+subject_(voxelization),
+graphics_(DX11Graphics::GetInstance()),
+context_(graphics_.GetContext()){
+	
+	InitResources();
+	InitShaders();	
+
+}
+
+void DX11Voxelization::DebugDrawer::InitResources() {
+
+	auto& resources = DX11Resources::GetInstance();
 
 	static const size_t kDrawIndexedInstancedArguments = 5;
 
 	voxel_draw_indirect_args_ = new DX11GPStructuredArray(DX11GPStructuredArray::CreateDrawIndirectArguments{ kDrawIndexedInstancedArguments });
 	
-	append_voxel_info_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\append_voxels.hlsl" });
+	voxel_append_buffer_ = new DX11GPStructuredArray(IGPStructuredArray::CreateAppendBuffer{ std::powf(subject_.GetVoxelCount(), 0.85f), sizeof(VoxelInfo) });		// 0.85f is just an heuristic...
 
-	wireframe_voxel_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\draw_voxel.hlsl" });
-
-	clear_voxel_draw_indirect_args_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\voxel_indirect_args.hlsl" });
-
-	per_frame_ = new DX11StructuredBuffer(sizeof(VSPerFrame));
-
-	scaler_ = make_unique<DX11FxScale>(DX11FxScale::Parameters{});
-
-	check = append_voxel_info_->SetOutput("gIndirectArguments",
-										  ObjectPtr<IGPStructuredArray>(voxel_draw_indirect_args_));
+	cb_frame_ = new DX11StructuredBuffer(sizeof(CBFrame));
 	
-	check = clear_voxel_draw_indirect_args_->SetOutput("gIndirectArguments",
-													   ObjectPtr<IGPStructuredArray>(voxel_draw_indirect_args_));
-
-	check = append_voxel_info_->SetInput("Parameters",
-										 ObjectPtr<IStructuredBuffer>(voxel_parameters_));
-
-	check = wireframe_voxel_material_->SetInput("PerFrame",
-												ObjectPtr<IStructuredBuffer>(per_frame_));
-	
-	check = wireframe_voxel_material_->SetInput("Parameters",
-										 ObjectPtr<IStructuredBuffer>(voxel_parameters_));
-
 	render_target_cache_ = resources.Load<IRenderTargetCache, IRenderTargetCache::Singleton>({});
 
-	BuildVoxelMesh();
-	
-	// Voxelization
-
-	voxel_material_ = new DX11Material(IMaterial::CompileFromFile{ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\voxel.hlsl" });
-
-	clear_voxel_address_table_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\common\\clear_uint.hlsl" });
-
-	clear_sh_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\clear_sh.hlsl" });
-
-	per_object_ = new DX11StructuredBuffer(sizeof(VSPerObject));
-
-	SetVoxelSize(voxel_size);
-
-	SetVoxelResolution(voxel_resolution,
-					   cascades);
-	
-	check = voxel_material_->SetInput("PerObject",
-									  ObjectPtr<IStructuredBuffer>(per_object_));
-
-	check = voxel_material_->SetInput("Parameters",
-									  ObjectPtr<IStructuredBuffer>(voxel_parameters_));
-	
 	// Pipeline states
 
-	voxelization_state_.SetWriteMode(false, false, D3D11_COMPARISON_ALWAYS)		// Disable both color and depth write.
-					   .SetRasterMode(D3D11_FILL_SOLID, D3D11_CULL_NONE);		// Disable culling
-	
 	sh_prepass_state_.SetWriteMode(false, true, D3D11_COMPARISON_LESS)			// Disable color write.
 					 .SetRasterMode(D3D11_FILL_SOLID, D3D11_CULL_FRONT);		// Reverse culling
 
 	voxel_prepass_state_.SetWriteMode(false, true, D3D11_COMPARISON_LESS)		// Disable color write.
 						.SetDepthBias(100, 0.0f, 0.0f);							// Depth is biased to reduce artifact while drawing voxel edges.
 
+	// Meshes
+
+	BuildMeshes();
+
 }
 
-void DX11Voxelization::SetVoxelResolution(unsigned int voxel_resolution, unsigned int cascades) {
+void DX11Voxelization::DebugDrawer::InitShaders() {
 
-	voxel_resolution_ = voxel_resolution;
-	cascades_ = cascades;
+	auto& resources = DX11Resources::GetInstance();
 
-	auto cascade_size = voxel_resolution_ * voxel_resolution_ * voxel_resolution_;												// Amount of voxels in each cascade
+	// Shader loading
 
-	auto pyramid = (1.0f - std::powf(0.125f, std::log2f(static_cast<float>(voxel_resolution_)) + 1.0f)) / (1.0f - 0.125f);		// Size of the clipmap pyramid
+	append_voxel_info_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\append_voxels.hlsl" });
+	
+	clear_voxel_draw_indirect_args_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\voxel_indirect_args.hlsl" });
+		
+	voxel_outline_material_ = new DX11Material(IMaterial::CompileFromFile{ L"Data\\Shaders\\voxel\\voxel_outline.hlsl" });
 
-	auto voxel_count = cascades_ * cascade_size + pyramid * cascade_size;														// This should be an integer number, otherwise we have a problem!
+	voxel_depth_only_material_ = new DX11Material(IMaterial::CompileFromFile{ L"Data\\Shaders\\voxel\\voxel_depth_only.hlsl" });
 
-	// Resize the voxel address table and the SH structure
+	sh_outline_material_ = new DX11Material(IMaterial::CompileFromFile{ L"Data\\Shaders\\voxel\\sh_outline.hlsl" });
 
-	voxel_address_table_ = new DX11GPStructuredArray(IGPStructuredArray::FromElementSize{ static_cast<unsigned int>(voxel_count), sizeof(unsigned int)});
-
-	voxel_red_sh_01_ = new DX11GPTexture3D(IGPTexture3D::FromDescription{ voxel_resolution_,
-																		  voxel_resolution_,
-																		  voxel_resolution_ * (1 + cascades),
-																		  1,
-																		  TextureFormat::RGBA_HALF });
-
-	voxel_green_sh_01_ = new DX11GPTexture3D(IGPTexture3D::FromDescription{ voxel_resolution_,
-																		    voxel_resolution_,
-																		    voxel_resolution_ * (1 + cascades),
-																		    1,
-																			TextureFormat::RGBA_HALF });
-
-	voxel_blue_sh_01_ = new DX11GPTexture3D(IGPTexture3D::FromDescription{ voxel_resolution_,
-																		   voxel_resolution_,
-																		   voxel_resolution_ * (1 + cascades),
-																		   1,
-																		   TextureFormat::RGBA_HALF });
-
-	// Resize the debug append buffer
-
-	static const unsigned int kVoxelInfoSize = 12 + 4;		// 3 floats for the center and 1 for the size.
-
-	// Consider that bigger cascades have a greater chance of containing voxels.
-
-	unsigned int voxel_info_count = voxel_count; // voxel_resolution_ * voxel_resolution_ * (1 + cascades_ * 10);		// Random heuristic
-
-	voxel_append_buffer_ = new DX11GPStructuredArray(IGPStructuredArray::CreateAppendBuffer{ voxel_info_count, kVoxelInfoSize });
-
-	// Create the proper render target 
-
-	voxel_render_target_ = new DX11RenderTarget(IRenderTarget::FromDescription{ voxel_resolution_, voxel_resolution_, {}, false });	// Empty render target view
+	scaler_ = make_unique<DX11FxScale>(DX11FxScale::Parameters{});
+	
+	// Shader setup
 
 	bool check;
+	
+	check = append_voxel_info_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
+										 ObjectPtr<IGPStructuredArray>(subject_.voxel_address_table_));
 
-	check = wireframe_voxel_material_->SetInput("gVoxelAppendBuffer",
-												ObjectPtr<IGPStructuredArray>(voxel_append_buffer_));
-
-	check = voxel_material_->SetOutput("gVoxelAddressTable",
-									   ObjectPtr<IGPStructuredArray>(voxel_address_table_));
-
-	check = append_voxel_info_->SetInput("gVoxelAddressTable",
-										  ObjectPtr<IGPStructuredArray>(voxel_address_table_));
-
-	check = append_voxel_info_->SetOutput("gVoxelAppendBuffer",
+	check = append_voxel_info_->SetOutput(DebugDrawer::kVoxelAppendBuffer,
 										  ObjectPtr<IGPStructuredArray>(voxel_append_buffer_),
 										  false);														// Reset the initial count whenever the UAV is bound
+
+	check = append_voxel_info_->SetOutput(kVoxelDrawIndirectArgs,
+										  ObjectPtr<IGPStructuredArray>(voxel_draw_indirect_args_));
 	
-	check = clear_voxel_address_table_->SetOutput("gBuffer",
-												  ObjectPtr<IGPStructuredArray>(voxel_address_table_));
+	check = append_voxel_info_->SetInput(DX11Voxelization::kVoxelizationTag,
+										 ObjectPtr<IStructuredBuffer>(subject_.cb_voxelization_));
 
-	check = clear_sh_->SetOutput(DX11Voxelization::kRedSH01Tag,
-								 ObjectPtr<IGPTexture3D>(voxel_red_sh_01_));
+	//
 
-	check = clear_sh_->SetOutput(DX11Voxelization::kGreenSH01Tag,
-								 ObjectPtr<IGPTexture3D>(voxel_green_sh_01_));
+	check = clear_voxel_draw_indirect_args_->SetOutput(kVoxelDrawIndirectArgs,
+													   ObjectPtr<IGPStructuredArray>(voxel_draw_indirect_args_));
 
-	check = clear_sh_->SetOutput(DX11Voxelization::kBlueSH01Tag,
-								 ObjectPtr<IGPTexture3D>(voxel_blue_sh_01_));
+	//
 
-	auto parameters = voxel_parameters_->Lock<VoxelParameters>();
+	check = voxel_depth_only_material_->SetInput(DebugDrawer::kVoxelAppendBuffer,
+												 ObjectPtr<IGPStructuredArray>(voxel_append_buffer_));
 	
-	parameters->cascades_ = cascades_;
-	parameters->voxel_resolution_ = voxel_resolution_;
+	check = voxel_depth_only_material_->SetInput(DebugDrawer::kPerFrameTag,
+												 ObjectPtr<IStructuredBuffer>(cb_frame_));
+	
+	check = voxel_depth_only_material_->SetInput(DX11Voxelization::kVoxelizationTag,
+												 ObjectPtr<IStructuredBuffer>(subject_.cb_voxelization_));
+	
+	//
 
-	voxel_parameters_->Unlock();
+	check = voxel_outline_material_->SetInput(DebugDrawer::kVoxelAppendBuffer,
+											  ObjectPtr<IGPStructuredArray>(voxel_append_buffer_));
+	
+	check = voxel_outline_material_->SetInput(DebugDrawer::kPerFrameTag,
+											  ObjectPtr<IStructuredBuffer>(cb_frame_));
+	
+	check = voxel_outline_material_->SetInput(DX11Voxelization::kVoxelizationTag,
+										 ObjectPtr<IStructuredBuffer>(subject_.cb_voxelization_));
+
+	//
+
+	check = sh_outline_material_->SetInput(DebugDrawer::kVoxelAppendBuffer,
+										   ObjectPtr<IGPStructuredArray>(voxel_append_buffer_));
+	
+	check = sh_outline_material_->SetInput(DebugDrawer::kPerFrameTag,
+										   ObjectPtr<IStructuredBuffer>(cb_frame_));
+	
+	check = sh_outline_material_->SetInput(DX11Voxelization::kVoxelizationTag,
+										   ObjectPtr<IStructuredBuffer>(subject_.cb_voxelization_));
 
 }
 
-void DX11Voxelization::SetVoxelSize(float voxel_size) {
+ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawDebugOverlay(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection) const {
 
-	voxel_size_ = voxel_size;
+	if (output_) {
 
-	voxel_parameters_->Lock<VoxelParameters>()->voxel_size_ = voxel_size_;
+		// Discard the previous image.
+		render_target_cache_->PushToCache(ObjectPtr<IRenderTarget>(output_));
 
-	voxel_parameters_->Unlock();
+	}
+
+	output_ = render_target_cache_->PopFromCache(image->GetWidth(),
+												 image->GetHeight(),
+												 { image->GetFormat() },
+												 true);
+
+	auto& device_context = *context_.GetImmediateContext();
+
+	graphics_.PushEvent(L"Voxel overlay");
+
+	// Accumulate from the voxel address table inside the append buffer
+
+	graphics_.PushEvent(L"Setup");
+
+	clear_voxel_draw_indirect_args_->Dispatch(device_context, 
+											  1, 
+											  1,
+											  1);
+
+	append_voxel_info_->Dispatch(device_context, 
+								 static_cast<unsigned int>(subject_.voxel_address_table_->GetCount()), 
+								 1, 
+								 1);
+	
+	scaler_->Copy(image,
+				  ObjectPtr<IRenderTarget>(output_));
+	
+	graphics_.PopEvent();	// Setup
+
+	// Dispatch the draw call of the voxels
+
+	cb_frame_->Lock<CBFrame>()->view_projection = view_projection;
+
+	cb_frame_->Unlock();
+		
+	output_->Bind(device_context);
+
+	DrawSphericalHarmonics(output_);
+
+	DrawVoxels(output_);
+
+	output_->Unbind(device_context);
+
+	// Done
+	
+	graphics_.PopEvent();	// Voxel overlay
+		
+	return (*output_)[0];
 
 }
 
-float DX11Voxelization::GetGridSize() const {
+void DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<DX11RenderTarget>& output) const{
 
-	float cascade_size = voxel_size_ * voxel_resolution_;			// Size of a single cascade
+	auto& context = graphics_.GetContext();
 
-	return cascade_size * (1 << cascades_);							// Each additional cascade doubles the size of the grid.
+	auto& device_context = *context.GetImmediateContext();
+
+	graphics_.PushEvent(L"Voxels");
+
+	DrawVoxelDepth(output, voxel_prepass_state_);
+
+	// Draw - Draw the actual voxels
+
+	context.PushPipelineState(DX11PipelineState::kDefault);
+
+	voxel_outline_material_->Bind(device_context);
+
+	cube_edges_mesh_->Bind(device_context);
+
+	device_context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);			// Override primitive type
+
+	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
+												0);
+
+	voxel_outline_material_->Unbind(device_context);
+
+	context.PopPipelineState();
+	
+	graphics_.PopEvent();
 
 }
 
-void DX11Voxelization::BuildVoxelMesh() {
+void DX11Voxelization::DebugDrawer::DrawSphericalHarmonics(const ObjectPtr<DX11RenderTarget>& output) const{
+
+	// Spherical harmonics
+
+	/*graphics.PushEvent(L"Spherical harmonics");
+
+	output_->Bind(device_context);
+
+	output_->ClearDepth(device_context);
+
+	// Prepass - Write depth only using reversed voxels
+
+	context.PushPipelineState(sh_prepass_state_);
+
+	cube_mesh_->Bind(device_context);
+
+	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
+	0);
+
+	context.PopPipelineState();
+
+	// Draw - Draw the actual spherical harmonics
+
+	graphics.PopEvent();*/
+
+}
+
+void DX11Voxelization::DebugDrawer::DrawVoxelDepth(const ObjectPtr<DX11RenderTarget>& output, const DX11PipelineState& pipeline_state) const {
+
+	auto& device_context = *context_.GetImmediateContext();
+
+	output->ClearDepth(device_context);
+
+	context_.PushPipelineState(pipeline_state);				// Pipeline state
+
+	voxel_depth_only_material_->Bind(device_context);		// Material
+
+	cube_mesh_->Bind(device_context);						// Mesh
+
+	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
+												0);
+
+	voxel_depth_only_material_->Unbind(device_context);
+
+	context_.PopPipelineState();
+
+}
+
+void DX11Voxelization::DebugDrawer::BuildMeshes() {
 
 	IStaticMesh::FromVertices<VertexFormatPosition> args;
 
 	// Vertices - Shared for both the edge version and the cube one
 
 	args.vertices.push_back({ Vector3f(-0.5f,  0.5f, -0.5f) });
-	args.vertices.push_back({ Vector3f( 0.5f,  0.5f, -0.5f) });
-	args.vertices.push_back({ Vector3f( 0.5f,  0.5f,  0.5f) });
+	args.vertices.push_back({ Vector3f(0.5f,  0.5f, -0.5f) });
+	args.vertices.push_back({ Vector3f(0.5f,  0.5f,  0.5f) });
 	args.vertices.push_back({ Vector3f(-0.5f,  0.5f,  0.5f) });
 
 	args.vertices.push_back({ Vector3f(-0.5f, -0.5f, -0.5f) });
-	args.vertices.push_back({ Vector3f( 0.5f, -0.5f, -0.5f) });
-	args.vertices.push_back({ Vector3f( 0.5f, -0.5f,  0.5f) });
+	args.vertices.push_back({ Vector3f(0.5f, -0.5f, -0.5f) });
+	args.vertices.push_back({ Vector3f(0.5f, -0.5f,  0.5f) });
 	args.vertices.push_back({ Vector3f(-0.5f, -0.5f,  0.5f) });
 
 	// Indices - Edges only
@@ -273,7 +436,7 @@ void DX11Voxelization::BuildVoxelMesh() {
 
 	args.subsets.push_back({ 0, args.indices.size() });
 
-	voxel_edges_ = new DX11Mesh(args);
+	cube_edges_mesh_ = new DX11Mesh(args);
 
 	// Indices - Cube faces
 
@@ -296,7 +459,118 @@ void DX11Voxelization::BuildVoxelMesh() {
 
 	args.subsets.push_back({ 0, args.indices.size() });
 
-	voxel_cube_ = new DX11Mesh(args);
+	cube_mesh_ = new DX11Mesh(args);
+
+}
+
+/////////////////////////////////// DX11 VOXELIZATION ///////////////////////////////////
+
+const Tag DX11Voxelization::kVoxelAddressTableTag = "gVoxelAddressTable";
+const Tag DX11Voxelization::kVoxelizationTag = "Voxelization";
+const Tag DX11Voxelization::kRedSH01Tag = "gRSH01";
+const Tag DX11Voxelization::kGreenSH01Tag = "gGSH01";
+const Tag DX11Voxelization::kBlueSH01Tag = "gBSH01";
+
+DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_size, unsigned int voxel_resolution, unsigned int cascades) :
+voxel_size_(voxel_size),
+voxel_resolution_(voxel_resolution),
+cascades_(cascades),
+renderer_(renderer){
+	
+	InitResources();
+	InitShaders();
+
+	debug_drawer_ = std::make_unique<DebugDrawer>(*this);
+
+}
+
+void DX11Voxelization::InitResources() {
+
+	cb_voxelization_ = new DX11StructuredBuffer(sizeof(CBVoxelization));
+
+	cb_object_ = new DX11StructuredBuffer(sizeof(CBObject));
+
+	voxel_address_table_ = new DX11GPStructuredArray(IGPStructuredArray::FromElementSize{ GetVoxelCount(), sizeof(unsigned int)});
+
+	for (size_t channel_index = 0; channel_index < 3; ++channel_index) {
+
+		voxel_sh_01_[channel_index] = new DX11GPTexture3D(IGPTexture3D::FromDescription{ voxel_resolution_,
+																						 voxel_resolution_,
+																						 voxel_resolution_ * (1 + cascades_),
+																						 1,
+																						 TextureFormat::RGBA_HALF });
+
+	}
+	
+	voxel_render_target_ = new DX11RenderTarget(IRenderTarget::FromDescription{ voxel_resolution_, 
+																				voxel_resolution_, 
+																				{}, 
+																				false });	// Empty render target view
+
+	voxelization_state_.SetWriteMode(false, false, D3D11_COMPARISON_ALWAYS)		// Disable both color and depth write.
+					   .SetRasterMode(D3D11_FILL_SOLID, D3D11_CULL_NONE);		// Disable culling
+
+	// Constants
+
+	auto parameters = cb_voxelization_->Lock<CBVoxelization>();
+
+	parameters->voxel_size_ = voxel_size_;
+	parameters->cascades_ = cascades_;
+	parameters->voxel_resolution_ = voxel_resolution_;
+
+	cb_voxelization_->Unlock();
+
+}
+
+void DX11Voxelization::InitShaders() {
+
+	auto& resources = DX11Resources::GetInstance();
+
+	// Shader loading
+
+	voxel_material_ = new DX11Material(IMaterial::CompileFromFile{ L"Data\\Shaders\\voxel\\voxel.hlsl" });
+
+	clear_voxel_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\voxel_clear.hlsl" });
+
+	clear_sh_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_clear.hlsl" });
+
+	// Shader setup
+
+	bool check;
+
+	check = voxel_material_->SetOutput(kVoxelAddressTableTag,
+									   ObjectPtr<IGPStructuredArray>(voxel_address_table_));
+	
+	check = voxel_material_->SetInput("PerObject",
+									  ObjectPtr<IStructuredBuffer>(cb_object_));
+
+	check = voxel_material_->SetInput(kVoxelizationTag,
+									  ObjectPtr<IStructuredBuffer>(cb_voxelization_));
+		
+
+	check = clear_voxel_->SetOutput(kVoxelAddressTableTag,
+									ObjectPtr<IGPStructuredArray>(voxel_address_table_));
+
+	check = clear_sh_->SetOutput(DX11Voxelization::kRedSH01Tag,
+								 ObjectPtr<IGPTexture3D>(voxel_sh_01_[0]));
+
+	check = clear_sh_->SetOutput(DX11Voxelization::kGreenSH01Tag,
+								 ObjectPtr<IGPTexture3D>(voxel_sh_01_[1]));
+
+	check = clear_sh_->SetOutput(DX11Voxelization::kBlueSH01Tag,
+								 ObjectPtr<IGPTexture3D>(voxel_sh_01_[2]));
+
+}
+
+DX11Voxelization::~DX11Voxelization() {
+
+}
+
+float DX11Voxelization::GetGridSize() const {
+
+	float cascade_size = voxel_size_ * voxel_resolution_;			// Size of a single cascade
+
+	return cascade_size * (1 << cascades_);							// Each additional cascade doubles the size of the grid.
 
 }
 
@@ -311,17 +585,8 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 	auto& device_context = *context.GetImmediateContext();
 
 	graphics.PushEvent(L"Dynamic Voxelization");
-		
-	// Clear the voxel address table first
 
-	graphics.PushEvent(L"Clear");
-
-	clear_voxel_address_table_->Dispatch(device_context,
-										 static_cast<unsigned int>(voxel_address_table_->GetCount()),
-										 1,
-										 1);
-	
-	graphics.PopEvent();
+	Clear();
 
 	// Setup - The material is shared among all the objects
 
@@ -341,9 +606,9 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 						   std::floorf(grid_center(1) / snap) * snap,
 						   std::floorf(grid_center(2) / snap) * snap);
 
-	voxel_parameters_->Lock<VoxelParameters>()->center_ = grid_center;
+	cb_voxelization_->Lock<CBVoxelization>()->center_ = grid_center;
 
-	voxel_parameters_->Unlock();
+	cb_voxelization_->Unlock();
 
 	AABB grid_domain{ grid_center, 
 					  Vector3f::Ones() * GetGridSize() * 0.5f };
@@ -364,9 +629,9 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 			// Constant buffer setup
 
-			per_object_->Lock<VSPerObject>()->world_ = mesh_component.GetWorldTransform().matrix();
+			cb_object_->Lock<CBObject>()->world_ = mesh_component.GetWorldTransform().matrix();
 
-			per_object_->Unlock();
+			cb_object_->Unlock();
 			
 			for (unsigned int subset_index = 0; subset_index < mesh->GetSubsetCount(); ++subset_index) {
 
@@ -402,18 +667,25 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 }
 
-void DX11Voxelization::ClearSH() {
+void DX11Voxelization::Clear() {
 
 	auto& graphics = DX11Graphics::GetInstance();
 
 	auto& device_context = *graphics.GetContext().GetImmediateContext();
 
-	graphics.PushEvent(L"Clear SH");
+	// Clear the voxel address table and the spherical harmonics
+
+	graphics.PushEvent(L"Clear");
+
+	clear_voxel_->Dispatch(device_context,
+						   static_cast<unsigned int>(voxel_address_table_->GetCount()),
+						   1,
+						   1);
 
 	clear_sh_->Dispatch(device_context,
-						static_cast<unsigned int>(voxel_red_sh_01_->GetWidth()),
-						static_cast<unsigned int>(voxel_red_sh_01_->GetHeight()),
-						static_cast<unsigned int>(voxel_red_sh_01_->GetDepth()));
+						static_cast<unsigned int>(voxel_sh_01_[0]->GetWidth()),
+						static_cast<unsigned int>(voxel_sh_01_[0]->GetHeight()),
+						static_cast<unsigned int>(voxel_sh_01_[0]->GetDepth()));
 
 	graphics.PopEvent();
 
@@ -421,130 +693,19 @@ void DX11Voxelization::ClearSH() {
 
 ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& image) {
 	
-	// SH Z prepass: voxel, front culling, depth write, no color write
-	// SH draw: sphere, back culling, depth write, color write
-
-	// Voxel Z prepass: voxel, back culling + depth bias, depth write, no color write
-	// Voxel draw: voxel, back culling, depth write, color write
-
-	auto& graphics = DX11Graphics::GetInstance();
-
-	auto& context = graphics.GetContext();
-
-	auto& device_context = *context.GetImmediateContext();
-
-	if (output_) {
-
-		// Discard the previous image.
-		render_target_cache_->PushToCache(ObjectPtr<IRenderTarget>(output_));
-
-	}
-
-	output_ = render_target_cache_->PopFromCache(image->GetWidth(),
-												 image->GetHeight(),
-												 { image->GetFormat() },
-												 true);
-
-	graphics.PushEvent(L"Voxel overlay");
-
-	// Accumulate from the voxel address table inside the append buffer
-
-	graphics.PushEvent(L"Append");
-
-	clear_voxel_draw_indirect_args_->Dispatch(device_context, 1, 1, 1);
-
-	append_voxel_info_->Dispatch(device_context, 
-								 static_cast<unsigned int>(voxel_address_table_->GetCount()), 
-								 1, 
-								 1);
-	
-	graphics.PopEvent();
-
-	// Dispatch the draw call of the voxelsO
-
-	graphics.PushEvent(L"Setup");
-
-	scaler_->Copy(image,
-				  ObjectPtr<IRenderTarget>(output_));
-
-	// Setup
-
-	per_frame_->Lock<VSPerFrame>()->view_projection = renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight()));
-
-	per_frame_->Unlock();
-
-	graphics.PopEvent();
-
-	wireframe_voxel_material_->Bind(device_context);
-
-	output_->Bind(device_context);
-
-	output_->ClearDepth(device_context);
-
-	// SH Z prepass - Depth write only
-	
-	graphics.PushEvent(L"SH : Z-prepass");
-
-	context.PushPipelineState(sh_prepass_state_);
-
-	voxel_cube_->Bind(device_context);
-
-	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
-												0);
-
-	context.PopPipelineState();
-
-	graphics.PopEvent();
-
-	// SH draw
-
-	graphics.PushEvent(L"SH : Draw");
-
-	graphics.PopEvent();
-
-	output_->ClearDepth(device_context);
-
-	// Voxel Z prepass - Depth write only
-	
-	graphics.PushEvent(L"Voxel: Z-prepass");
-
-	context.PushPipelineState(voxel_prepass_state_);
-	
-	voxel_cube_->Bind(device_context);
-
-	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
-												0);
-
-	context.PopPipelineState();
-	
-	graphics.PopEvent();
-
-	// Voxel draw
-
-	graphics.PushEvent(L"Voxel: Edge drawing");
-
-	context.PushPipelineState(DX11PipelineState::kDefault);
-	
-	voxel_edges_->Bind(device_context);
-
-	device_context.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);			// Override primitive type
-
-	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
-												0);
-	
-	context.PopPipelineState();
-
-	graphics.PopEvent();
-
-	// Done
-	
-	output_->Unbind(device_context);
-
-	wireframe_voxel_material_->Unbind(device_context);
-
-	graphics.PopEvent();
-	
-	return (*output_)[0];
+	return debug_drawer_->DrawDebugOverlay(image,
+										   renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())));
 
 }
 
+unsigned int DX11Voxelization::GetVoxelCount() const {
+
+	auto cascade_size = voxel_resolution_ * voxel_resolution_ * voxel_resolution_;		// Amount of voxels in each cascade
+
+	auto pyramid_size = static_cast<unsigned int>(Math::SumGeometricSeries(cascade_size, 
+																		   0.125f, 
+																		   std::log2f(static_cast<float>(voxel_resolution_)) + 1.f));
+
+	return cascades_ * cascade_size + pyramid_size;
+
+}

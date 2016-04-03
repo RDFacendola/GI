@@ -113,16 +113,10 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 	
 	// SH setup
 
-	voxelization_.ClearSH();	// Clear last frame SH infos
+	light_injection_->SetOutput(DX11Voxelization::kRedSH01Tag, voxelization_.GetSH(0));
+	light_injection_->SetOutput(DX11Voxelization::kGreenSH01Tag, voxelization_.GetSH(1));
+	light_injection_->SetOutput(DX11Voxelization::kBlueSH01Tag, voxelization_.GetSH(2));
 
-	light_injection_->SetOutput("gRSH01",
-								voxelization_.GetRedSH());
-
-	light_injection_->SetOutput("gGSH01",
-								voxelization_.GetBlueSH());
-
-	light_injection_->SetOutput("gBSH01",
-								voxelization_.GetGreenSH());
 
 	// Clear the shadow atlas from any existing shadowmap
 

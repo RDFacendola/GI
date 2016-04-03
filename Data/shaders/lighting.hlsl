@@ -4,6 +4,8 @@
 
 #include "shadow_def.hlsl"
 
+#define AMBIENT 0.f
+
 cbuffer gParameters {
 
 	float4x4 inv_view_proj_matrix;		///< \brief Inverse view-projection matrix.
@@ -44,6 +46,8 @@ void CSMain(int3 thread_id : SV_DispatchThreadID){
 							  ComputeShadow(surface, gDirectionalShadows[light_index]));
 
 	}
+
+	color += surface.albedo.rgb * AMBIENT;
 
 	// Done
 
