@@ -47,6 +47,6 @@ VSOut VSMain(VSIn input){
 
 float4 PSMain(VSOut input) : SV_Target0{
 
-	return input.color;
+	return float4(input.color.rgb, 0.75f);
 
 }

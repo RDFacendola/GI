@@ -5,7 +5,8 @@
 #define N 256
 #define TOTAL_THREADS (N)
 
-RWBuffer<uint> gIndirectArguments;
+RWBuffer<uint> gVoxelIndirectArguments;
+RWBuffer<uint> gSHIndirectArguments;
 
 StructuredBuffer<uint> gVoxelAddressTable;
 
@@ -54,7 +55,8 @@ void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 
 	uint dummy;
 
-	InterlockedAdd(gIndirectArguments[1], 1, dummy);
+	InterlockedAdd(gVoxelIndirectArguments[1], 1, dummy);
+	InterlockedAdd(gSHIndirectArguments[1], 1, dummy);
 
 	gVoxelAppendBuffer.Append(voxel_info);
 

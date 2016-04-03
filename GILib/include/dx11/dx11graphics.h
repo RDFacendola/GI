@@ -164,6 +164,11 @@ namespace gi_lib{
 			/// \return Returns itself.
 			DX11PipelineState& SetWriteMode(bool enable_color_write, bool enable_depth_write, D3D11_COMPARISON_FUNC depth_comparison);
 
+			/// \brief Enable or disable alphablenind.
+			/// \param enable_alpha_blend Set this to true to enable alpha blending, set this to false to disable it.
+			/// \return Returns itself.
+			DX11PipelineState& EnableAlphaBlend(bool enable_alpha_blend);
+
 			/// \brief Bind the pipeline state to the given context.
 			void Bind(ID3D11DeviceContext& context) const;
 

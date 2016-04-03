@@ -553,6 +553,24 @@ DX11PipelineState& DX11PipelineState::SetWriteMode(bool enable_color_write, bool
 
 }
 
+DX11PipelineState& DX11PipelineState::EnableAlphaBlend(bool enable_alpha_blend) {
+
+	blend_state_desc_.RenderTarget[0].BlendEnable = enable_alpha_blend;
+
+	blend_state_desc_.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	blend_state_desc_.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	blend_state_desc_.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+
+	blend_state_desc_.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blend_state_desc_.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	blend_state_desc_.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+
+	blend_state_ = nullptr;
+
+	return *this;
+
+}
+
 void DX11PipelineState::RegenerateStates(ID3D11DeviceContext& context) const{
 
 	if (rasterizer_state_ && depth_stencil_state_ && blend_state_) {

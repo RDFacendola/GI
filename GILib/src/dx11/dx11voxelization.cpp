@@ -13,6 +13,8 @@
 #include "scene.h"
 #include "dx11/dx11deferred_renderer.h"
 
+#include "wavefront/wavefront_obj.h"
+
 using namespace ::std;
 using namespace ::gi_lib;
 using namespace ::gi_lib::windows;
@@ -69,6 +71,8 @@ public:
 
 	static const Tag kVoxelDrawIndirectArgs;		///< \brief Tag associated to the buffer containing the arguments used to draw the voxels.
 
+	static const Tag kSHDrawIndirectArgs;			///< \brief Tag associated to the buffer containing the arguments used to draw the spherical harmonics.
+
 	static const Tag kPerFrameTag;					///< \brief Tag associated to the buffer containing the arguments used to draw the voxels.
 
 	DebugDrawer(DX11Voxelization& voxelization);
@@ -110,7 +114,9 @@ private:
 
 	ObjectPtr<IRenderTargetCache> render_target_cache_;					///< \brief Cache of render-target textures.
 
-	ObjectPtr<DX11GPStructuredArray> voxel_draw_indirect_args_;			///< \brief Buffer containing the argument buffer used to dispatch the DrawInstancedIndirect call
+	ObjectPtr<DX11GPStructuredArray> voxel_draw_indirect_args_;			///< \brief Buffer containing the argument buffer used to dispatch the DrawIndexedInstancedIndirect call
+
+	ObjectPtr<DX11GPStructuredArray> sh_draw_indirect_args_;			///< \brief Buffer containing the argument buffer used to dispatch the DrawInstancedIndirect call
 
 	ObjectPtr<DX11GPStructuredArray> voxel_append_buffer_;				///< \brief Append buffer containing the debug voxel info (namely their center and their size).
 
@@ -120,6 +126,8 @@ private:
 
 	DX11PipelineState sh_prepass_state_;								///< \brief Pipeline state for spherical harmonic prepass stage.
 	
+	DX11PipelineState sh_alphablend_state_;								///< \brief Pipeline state for spherical harmonic debug draw.
+
 	// Shader
 
 	ObjectPtr<DX11Material> voxel_depth_only_material_;					///< \brief Used to draw instanced voxels on the depth buffer.
@@ -145,7 +153,8 @@ private:
 };
 
 const Tag DX11Voxelization::DebugDrawer::kVoxelAppendBuffer= "gVoxelAppendBuffer";
-const Tag DX11Voxelization::DebugDrawer::kVoxelDrawIndirectArgs = "gIndirectArguments";
+const Tag DX11Voxelization::DebugDrawer::kVoxelDrawIndirectArgs = "gVoxelIndirectArguments";
+const Tag DX11Voxelization::DebugDrawer::kSHDrawIndirectArgs = "gSHIndirectArguments";
 const Tag DX11Voxelization::DebugDrawer::kPerFrameTag = "PerFrame";
 
 DX11Voxelization::DebugDrawer::DebugDrawer(DX11Voxelization& voxelization) :
@@ -162,10 +171,10 @@ void DX11Voxelization::DebugDrawer::InitResources() {
 
 	auto& resources = DX11Resources::GetInstance();
 
-	static const size_t kDrawIndexedInstancedArguments = 5;
-
-	voxel_draw_indirect_args_ = new DX11GPStructuredArray(DX11GPStructuredArray::CreateDrawIndirectArguments{ kDrawIndexedInstancedArguments });
+	voxel_draw_indirect_args_ = new DX11GPStructuredArray(DX11GPStructuredArray::CreateDrawIndirectArguments{ 5 });
 	
+	sh_draw_indirect_args_ = new DX11GPStructuredArray(DX11GPStructuredArray::CreateDrawIndirectArguments{ 4 });
+
 	voxel_append_buffer_ = new DX11GPStructuredArray(IGPStructuredArray::CreateAppendBuffer{ std::powf(subject_.GetVoxelCount(), 0.85f), sizeof(VoxelInfo) });		// 0.85f is just an heuristic...
 
 	cb_frame_ = new DX11StructuredBuffer(sizeof(CBFrame));
@@ -179,6 +188,8 @@ void DX11Voxelization::DebugDrawer::InitResources() {
 
 	voxel_prepass_state_.SetWriteMode(false, true, D3D11_COMPARISON_LESS)		// Disable color write.
 						.SetDepthBias(100, 0.0f, 0.0f);							// Depth is biased to reduce artifact while drawing voxel edges.
+
+	sh_alphablend_state_.EnableAlphaBlend(true);								// Alphablend enable.
 
 	// Meshes
 
@@ -217,7 +228,10 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 
 	check = append_voxel_info_->SetOutput(kVoxelDrawIndirectArgs,
 										  ObjectPtr<IGPStructuredArray>(voxel_draw_indirect_args_));
-	
+
+	check = append_voxel_info_->SetOutput(kSHDrawIndirectArgs,
+										  ObjectPtr<IGPStructuredArray>(sh_draw_indirect_args_));
+
 	check = append_voxel_info_->SetInput(DX11Voxelization::kVoxelizationTag,
 										 ObjectPtr<IStructuredBuffer>(subject_.cb_voxelization_));
 
@@ -225,7 +239,9 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 
 	check = clear_voxel_draw_indirect_args_->SetOutput(kVoxelDrawIndirectArgs,
 													   ObjectPtr<IGPStructuredArray>(voxel_draw_indirect_args_));
-
+	
+	check = clear_voxel_draw_indirect_args_->SetOutput(kSHDrawIndirectArgs,
+													   ObjectPtr<IGPStructuredArray>(sh_draw_indirect_args_));
 	//
 
 	check = voxel_depth_only_material_->SetInput(DebugDrawer::kVoxelAppendBuffer,
@@ -353,28 +369,30 @@ void DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<DX11RenderTarget>
 
 void DX11Voxelization::DebugDrawer::DrawSphericalHarmonics(const ObjectPtr<DX11RenderTarget>& output) const{
 
-	// Spherical harmonics
+	auto& context = graphics_.GetContext();
 
-	/*graphics.PushEvent(L"Spherical harmonics");
+	auto& device_context = *context.GetImmediateContext();
 
-	output_->Bind(device_context);
+	graphics_.PushEvent(L"Spherical harmonics");
 
-	output_->ClearDepth(device_context);
-
-	// Prepass - Write depth only using reversed voxels
-
-	context.PushPipelineState(sh_prepass_state_);
-
-	cube_mesh_->Bind(device_context);
-
-	device_context.DrawIndexedInstancedIndirect(voxel_draw_indirect_args_->GetBuffer().Get(),
-	0);
-
-	context.PopPipelineState();
+	DrawVoxelDepth(output, sh_prepass_state_);
 
 	// Draw - Draw the actual spherical harmonics
 
-	graphics.PopEvent();*/
+	context.PushPipelineState(sh_alphablend_state_);
+
+	sh_outline_material_->Bind(device_context);
+
+	sphere_mesh_->Bind(device_context);
+
+	device_context.DrawInstancedIndirect(sh_draw_indirect_args_->GetBuffer().Get(),
+										 0);
+
+	sh_outline_material_->Unbind(device_context);
+
+	context.PopPipelineState();
+
+	graphics_.PopEvent();
 
 }
 
@@ -460,6 +478,14 @@ void DX11Voxelization::DebugDrawer::BuildMeshes() {
 	args.subsets.push_back({ 0, args.indices.size() });
 
 	cube_mesh_ = new DX11Mesh(args);
+
+	// Sphere - Load from file
+
+	auto& resources = DX11Resources::GetInstance();
+
+	wavefront::ObjImporter obj_importer(resources);
+
+	sphere_mesh_ = obj_importer.ImportMesh(L"Data\\assets\\Light\\Sphere.obj", "Icosphere");
 
 }
 
