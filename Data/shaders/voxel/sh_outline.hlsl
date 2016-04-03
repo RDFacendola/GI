@@ -31,13 +31,17 @@ VSOut VSMain(VSIn input){
 	
 	VSOut output;
 
-	float3 position = (input.position.xyz * info.size) + info.center;
+	// Evaluate the color
 
+	float3 direction = normalize(input.position.xyz);
+
+	output.color = SampleSH(info, direction);
+
+	float magnitude = max(max(output.color.r, output.color.g), output.color.b);
+
+	float3 position = (input.position.xyz * info.size * magnitude) + info.center;
+	
 	output.position_ps = mul(gViewProjection, float4(position, 1));
-
-	float factor = log2(gVoxelSize / info.size) / (gCascades + 1);
-
-	output.color = lerp(info.red_sh01, info.green_sh01, factor);
 
 	return output;
 
@@ -47,6 +51,6 @@ VSOut VSMain(VSIn input){
 
 float4 PSMain(VSOut input) : SV_Target0{
 
-	return float4(input.color.rgb, 0.75f);
+	return input.color;
 
 }

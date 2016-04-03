@@ -26,8 +26,8 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	// Profit!
 
-	gRSH01[dispatch_thread_id.xyz] = float4(0, 1, 0, 0);
-	gGSH01[dispatch_thread_id.xyz] = float4(0, 0, 1, 0);
-	gBSH01[dispatch_thread_id.xyz] = float4(0, 0, 0, 1);
+	gRSH01[dispatch_thread_id.xyz] = float4(1, 1, 0, 0);
+	gGSH01[dispatch_thread_id.xyz] = float4(0, 0, 2, 0);
+	gBSH01[dispatch_thread_id.xyz] = float4(0, 0, 1.5f, 3);
 
 }
