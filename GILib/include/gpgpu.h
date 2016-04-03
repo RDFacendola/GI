@@ -59,6 +59,13 @@ namespace gi_lib{
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D) = 0;
 
+		/// \brief Set a texture resource as an input for the current computation.
+		/// The GPU may only read from the specified texture.
+		/// \param tag Tag of the input texture to set.
+		/// \param texture_3D Pointer to the 3D texture to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture3D>& texture_3D) = 0;
+
 		/// \brief Set a texture array resource as an input for the current computation.
 		/// The GPU may only read from the specified texture.
 		/// \param tag Tag of the input texture array to set.

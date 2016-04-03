@@ -28,6 +28,7 @@ namespace gi_lib{
 		class DX11StructuredBuffer;
 		class DX11StructuredArray;
 		class DX11Texture2D;
+		class DX11Texture3D;
 		class DX11Texture2DArray;
 		class DX11GPTexture2D;
 		class DX11GPTexture3D;
@@ -308,6 +309,10 @@ namespace gi_lib{
 			/// \brief Set the value of a named shader resource view.
 			/// \return Returns true if a shader resource view matching the specified tag was found, returns false otherwise.
 			bool SetShaderResource(const Tag& tag, const ObjectPtr<DX11Texture2D>& texture_2D);
+
+			/// \brief Set the value of a named shader resource view.
+			/// \return Returns true if a shader resource view matching the specified tag was found, returns false otherwise.
+			bool SetShaderResource(const Tag& tag, const ObjectPtr<DX11Texture3D>& texture_3D);
 
 			/// \brief Set the value of a named shader resource view.
 			/// \return Returns true if a shader resource view matching the specified tag was found, returns false otherwise.

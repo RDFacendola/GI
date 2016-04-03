@@ -117,6 +117,14 @@ bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX1
 
 }
 
+bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX11Texture3D>& texture_3D) {
+	
+	return SetShaderMember(tag,
+						   texture_3D ? texture_3D->GetShaderResourceView() : ShaderResourceView::kEmpty,
+						   srv_table_);
+
+}
+
 bool ShaderStateComposite::SetShaderResource(const Tag& tag, const ObjectPtr<DX11Texture2DArray>& texture_2D_array){
 	
 	return SetShaderMember(tag,
