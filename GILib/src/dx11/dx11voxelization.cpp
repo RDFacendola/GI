@@ -24,11 +24,17 @@ namespace {
 
 	/// \brief Info about a single voxel.
 	/// \see See voxel_def.hlsl
-	struct VoxelInfo {
+	struct VoxelInfo {	
 
 		Vector3f center;					// Center of the voxel, in world space
 
 		float size;							// Size of the voxel in world units
+
+		Vector4f red_sh01;					// First and second SH coefficients for the red channel.
+
+		Vector4f green_sh01;				// First and second SH coefficients for the green channel.
+
+		Vector4f blue_sh01;					// First and second SH coefficients for the blue channel.
 
 	};
 
@@ -234,6 +240,15 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 
 	check = append_voxel_info_->SetInput(DX11Voxelization::kVoxelizationTag,
 										 ObjectPtr<IStructuredBuffer>(subject_.cb_voxelization_));
+
+	check = append_voxel_info_->SetInput(DX11Voxelization::kRedSH01Tag, 
+										 subject_.GetSH(0)->GetTexture());
+
+	check = append_voxel_info_->SetInput(DX11Voxelization::kGreenSH01Tag, 
+										 subject_.GetSH(1)->GetTexture());
+
+	check = append_voxel_info_->SetInput(DX11Voxelization::kBlueSH01Tag, 
+										 subject_.GetSH(2)->GetTexture());
 
 	//
 

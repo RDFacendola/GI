@@ -37,7 +37,7 @@ VSOut VSMain(VSIn input){
 
 	float factor = log2(gVoxelSize / info.size) / (gCascades + 1);
 
-	output.color = lerp(float4(0, 0, 0.75f, 1), float4(0.75f, 0, 0, 1), factor);
+	output.color = lerp(info.red_sh01, info.green_sh01, factor);
 
 	return output;
 

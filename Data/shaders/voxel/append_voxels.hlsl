@@ -10,6 +10,10 @@ RWBuffer<uint> gSHIndirectArguments;
 
 StructuredBuffer<uint> gVoxelAddressTable;
 
+Texture3D<float4> gRSH01;		// First and second SH coefficients for the red channel
+Texture3D<float4> gGSH01;		// First and second SH coefficients for the green channel
+Texture3D<float4> gBSH01;		// First and second SH coefficients for the blue channel
+
 AppendStructuredBuffer<VoxelInfo> gVoxelAppendBuffer;		// Append buffer containing the list of voxels in the current frame. (Read/Write)
 
 float max3(float a, float b, float c) {
@@ -46,6 +50,10 @@ void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 	voxel_info.size = gVoxelSize / (1 << cascade);
 
 	voxel_info.center = (voxel_info.center + 0.5f) * voxel_info.size;
+
+	voxel_info.red_sh01 = gRSH01.Load(int4(0, 0, 0, 0));
+	voxel_info.green_sh01 = gGSH01.Load(int4(0, 0, 0, 0));
+	voxel_info.blue_sh01 = gBSH01.Load(int4(0, 0, 0, 0));
 
 	// World space
 	

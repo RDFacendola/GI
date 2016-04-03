@@ -66,7 +66,7 @@ voxelization_(voxelization){
 
 	light_accumulation_parameters_ = new DX11StructuredBuffer(sizeof(LightAccumulationParameters));
 		
-	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\inject_light.hlsl" });
+	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
 	// One-time setup
 
@@ -116,8 +116,7 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 	light_injection_->SetOutput(DX11Voxelization::kRedSH01Tag, voxelization_.GetSH(0));
 	light_injection_->SetOutput(DX11Voxelization::kGreenSH01Tag, voxelization_.GetSH(1));
 	light_injection_->SetOutput(DX11Voxelization::kBlueSH01Tag, voxelization_.GetSH(2));
-
-
+	
 	// Clear the shadow atlas from any existing shadowmap
 
 	graphics_.PushEvent(L"Shadowmap + Light Injection");

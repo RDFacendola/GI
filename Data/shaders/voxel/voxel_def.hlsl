@@ -22,8 +22,14 @@ cbuffer Voxelization {
 struct VoxelInfo {
 
 	float3 center;						// Center of the voxel, in world space
-	
+
 	float size;							// Size of the voxel in world units
+
+	float4 red_sh01;					// First and second SH coefficients for the red channel.
+
+	float4 green_sh01;					// First and second SH coefficients for the green channel.
+
+	float4 blue_sh01;					// First and second SH coefficients for the blue channel.
 
 };
 
