@@ -78,6 +78,47 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 
 }
 
+/// \brief Uproject a point from octahedrom space to world space.
+/// \param position_ts Position in texture space of the point. The z coordinate contains the depth in projection space.
+/// \param near_clipping Near clipping plane.
+/// \param far_plane Far clipping plane.
+/// \param flip Whether the coordinate needs to be flipped to fit the position inside the back pyramid
+float3 UnprojectFromOctahedronSpace(float3 position_ts, float near_plane, float far_plane, bool flip){
+
+    if (flip){
+
+        // Rear pyramid
+        position_ts.x = -2.0f * (position_ts.x - 0.5f);
+        
+    }
+    else{
+
+        // Front pyramid
+        position_ts.x = 2.0f * (position_ts.x + 0.5f);
+
+    }
+
+    // Rotate by -45 degrees on the Z axis
+
+    float cos_theta = cos(radians(-45));								// cos(-45deg) = -sin(-45deg)
+    float sin_theta = -cos_theta;
+
+    position_ts /= sqrt(2.f);
+
+    position_ts.xy = float2(position_ts.x * cos_theta - position_ts.y * sin_theta,
+                            position_ts.x * sin_theta + position_ts.y * cos_theta);
+
+    // Unproject from octahedron space
+
+    float3 position_ws = float3(position_ts.xy, 
+                                1 - position_ts.x - position_ts.y);     // The position is nomalized using Manhattan distance => X + Y + Z = 1
+
+    float length = (position_ts.z * (far_plane - near_plane)) + near_plane;
+
+    return position_ws * length;
+
+}
+
 /// \brief Project a point into paraboloid space.
 /// \param position Coordinates of the point to project.
 /// \param near_clipping Near clipping plane.
