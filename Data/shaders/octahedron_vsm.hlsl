@@ -12,14 +12,6 @@
 #define GSIn VSOut
 #define GSOut VSOut
 
-cbuffer PerLight {
-
-	float gNearPlane;							// Near clipping plane
-
-	float gFarPlane;							// Far clipping plane
-
-};
-
 /// Get the sign of the specified value as bit mask (100: negative, 010: zero, 001: positive)
 int GetSignMask(float value) {
 

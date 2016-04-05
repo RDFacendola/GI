@@ -1,5 +1,8 @@
 /// \brief Used to inject lighting inside the spherical harmonics structure starting from a RSM
 
+#include "..\projection_def.hlsl"
+#include "voxel_def.hlsl"
+
 #define N 16
 #define TOTAL_THREADS (N * N)
 
@@ -10,24 +13,67 @@ RWTexture3D<float4> gRSH01;		// First and second SH coefficients for the red cha
 RWTexture3D<float4> gGSH01;		// First and second SH coefficients for the green channel
 RWTexture3D<float4> gBSH01;		// First and second SH coefficients for the blue channel
 
+RWBuffer<uint> gMutex;
+
 [numthreads(N, N, 1)]
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
-
-	float4 p = gRSM.Load(int3(dispatch_thread_id.xy, 0));
-	float2 q = gVSM.Load(int3(dispatch_thread_id.xy, 0)).xy;
+		
+	float4 albedo = gRSM.Load(int3(dispatch_thread_id.xy, 0));
+	float depth = gVSM.Load(int3(dispatch_thread_id.xy, 0)).x;
 
 	// Using the light position, the uv coordinate and the depth compute the world position of the sample
 
+	uint2 dimensions;
+	uint dummy;
+
+	gVSM.GetDimensions(0, dimensions.x, dimensions.y, dummy);
+
+	float2 uv = dispatch_thread_id.xy / (float2)(dimensions);
+
+	float3 position_ls = UnprojectFromOctahedronSpace(float3(uv, 
+															 depth),
+													  gNearPlane,
+													  gFarPlane,
+													  uv.x > 0.5f);			// Position of the fragment from the light's perspective
+		
+	float3 gLightCenter = float3(0, 200, 0);
+
+	float3 position_ws = position_ls + gLightCenter;
+
 	// Using the world position of the sample, determine which voxel the sample falls in
 
-	// Using the direction of the light wrt the voxel center, determine the BRDF result and project the outgoing radiance into SH coefficient
+	uint3 position_sh;
+	
+	if (WorldSpaceToSHAddress(position_ws, position_sh)) {
 
-	// Atomically update the SH inside the voxel
+		// Using the direction of the light wrt the voxel center, determine the BRDF result and project the outgoing radiance into SH coefficient
 
-	// Profit!
+		float4 red_sh = float4(albedo.r * 1.0f, 0, 0, 0);
+		float4 green_sh = float4(albedo.g * 1.0f, 0, 0, 0);
+		float4 blue_sh = float4(albedo.b * 1.0f, 0, 0, 0);
 
-	gRSH01[dispatch_thread_id.xyz] = float4(1, 1, 0, 0);
-	gGSH01[dispatch_thread_id.xyz] = float4(0, 0, 2, 0);
-	gBSH01[dispatch_thread_id.xyz] = float4(0, 0, 1.5f, 3);
+		// Atomically update the SH inside the voxel
+
+		uint mutex;
+
+		[allow_uav_condition]
+		do {
+
+			InterlockedCompareExchange(gMutex[0], 0, 1, mutex);
+
+			if (mutex == 0) {
+
+				gRSH01[position_sh] += red_sh;
+				gGSH01[position_sh] += green_sh;
+				gBSH01[position_sh] += blue_sh;
+
+				InterlockedCompareExchange(gMutex[0], 1, 0, mutex);
+
+			}
+
+		} while (mutex);
+
+	}
+
 
 }

@@ -5,6 +5,14 @@
 #ifndef PROJECTION_DEF_HLSL_
 #define PROJECTION_DEF_HLSL_
 
+cbuffer PerLight {
+
+	float gNearPlane;				// Near clipping plane
+
+	float gFarPlane;				// Far clipping plane
+
+};
+
 /// \brief Convert a coordinate from projection space to texture space.
 /// \param position_ps Coordinates in projection space.
 /// \return Returns the associated coordinates in uv space.
@@ -39,6 +47,16 @@ float4 Unproject(float4x4 space, float4 position_ps) {
 
 }
 
+float2 Rotate(float2 p, float angle) {
+
+	float cos_angle = cos(angle);
+	float sin_angle = sin(angle);
+
+	return float2(p.x * cos_angle - p.y * sin_angle,
+				  p.x * sin_angle + p.y * cos_angle);
+	
+}
+
 /// \brief Project a point into octahedron space.
 /// \param position Coordinates of the point to project.
 /// \param near_clipping Near clipping plane.
@@ -57,8 +75,7 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 
 	float cos_theta = cos(radians(45));													// cos(45deg) = sin(45deg)
 	
-	I.xy = float2(I.x * cos_theta - I.y * cos_theta,
-			      I.x * cos_theta + I.y * cos_theta) * sqrt(2.f);
+	I.xy = Rotate(I.xy, radians(45)) * sqrt(2.f);
 
 	if (flip) {
 
@@ -76,6 +93,38 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 				  depth,
 				  1.0f);
 
+}
+
+/// \brief Unproject a point from octahedron space to world space
+float3 UnprojectFromOctahedronSpace(float3 position_ts, float near_plane, float far_plane, bool flip) {
+
+	float3 position_ps = TextureSpaceToProjectionSpace(position_ts.xy, position_ts.z).xyz;
+
+	if (flip) {
+
+		position_ps.x = -2.f * (position_ps.x - 0.5f);
+
+	}
+	else {
+
+		position_ps.x = 2.f * (position_ps.x + 0.5f);
+
+	}
+	
+	position_ps.xy = Rotate(position_ps.xy / sqrt(2.f), radians(-45));
+	
+	float length = position_ps.z * (far_plane - near_plane) + near_plane;
+
+	position_ps.z = 1 - abs(position_ps.x) - abs(position_ps.y);	// The position was normalized using Manhattan distance => |X| + |Y| + |Z| = 1
+
+	if (flip) {
+
+		position_ps.z *= -1;
+
+	}
+	
+	return normalize(position_ps) * length;
+	
 }
 
 /// \brief Project a point into paraboloid space.

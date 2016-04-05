@@ -4,7 +4,7 @@
 
 #include "shadow_def.hlsl"
 
-#define AMBIENT 0.f
+#define AMBIENT 0.0f
 
 cbuffer gParameters {
 

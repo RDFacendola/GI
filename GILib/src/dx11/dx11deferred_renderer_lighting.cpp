@@ -14,6 +14,15 @@ using namespace ::gi_lib::dx11;
 
 ///////////////////////////////// DX11 DEFERRED RENDERER //////////////////////////////////
 
+/// \brief Pixel shader constant buffer used to project the fragments to shadow space.
+struct VSMPerLightCBuffer {
+
+	float near_plane;									///< \brief Near clipping plane.
+
+	float far_plane;									///< \brief Far clipping plane.
+
+};
+
 const Tag DX11DeferredRendererLighting::kAlbedoEmissivityTag = "gAlbedoEmissivity";
 const Tag DX11DeferredRendererLighting::kNormalShininessTag = "gNormalSpecularShininess";
 const Tag DX11DeferredRendererLighting::kDepthStencilTag = "gDepthStencil";
@@ -65,7 +74,9 @@ voxelization_(voxelization){
 	directional_shadows_ = new DX11StructuredArray(32, sizeof(DirectionalShadow));
 
 	light_accumulation_parameters_ = new DX11StructuredBuffer(sizeof(LightAccumulationParameters));
-		
+	
+	per_light_ = new DX11StructuredBuffer(sizeof(VSMPerLightCBuffer));
+
 	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
 	// One-time setup
@@ -92,6 +103,19 @@ voxelization_(voxelization){
 
 	check = light_shader_->SetInput(kVSMShadowAtlasTag,
 									ObjectPtr<ITexture2D>(shadow_atlas_->GetAtlas()));
+
+	// SH setup
+
+	light_injection_->SetInput(DX11Voxelization::kVoxelizationTag, voxelization_.GetVoxelizationParams());
+
+	light_injection_->SetInput("PerLight",
+							   ObjectPtr<IStructuredBuffer>(per_light_));
+
+	light_injection_->SetOutput(DX11Voxelization::kRedSH01Tag, voxelization_.GetSH(0));
+
+	light_injection_->SetOutput(DX11Voxelization::kGreenSH01Tag, voxelization_.GetSH(1));
+
+	light_injection_->SetOutput(DX11Voxelization::kBlueSH01Tag, voxelization_.GetSH(2));
 	
 }
 
@@ -110,13 +134,7 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 	light_buffer_ = gp_cache_->PopFromCache(frame_info.width,				// Grab a new light accumulation buffer from the cache.
 											frame_info.height,
 											TextureFormat::RGB_FLOAT);
-	
-	// SH setup
-
-	light_injection_->SetOutput(DX11Voxelization::kRedSH01Tag, voxelization_.GetSH(0));
-	light_injection_->SetOutput(DX11Voxelization::kGreenSH01Tag, voxelization_.GetSH(1));
-	light_injection_->SetOutput(DX11Voxelization::kBlueSH01Tag, voxelization_.GetSH(2));
-	
+		
 	// Clear the shadow atlas from any existing shadowmap
 
 	graphics_.PushEvent(L"Shadowmap + Light Injection");
@@ -235,6 +253,13 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLi
 
 	graphics_.PushEvent(L"Light injection");
 
+	auto& per_light_front = *per_light_->Lock<VSMPerLightCBuffer>();
+
+	per_light_front.near_plane = 0.0f;
+	per_light_front.far_plane = point_light.GetBoundingSphere().radius;
+
+	per_light_->Unlock();
+
 	light_injection_->SetInput(kVarianceShadowMapTag,
 							   (*shadow_map)[0]);
 
@@ -285,10 +310,10 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const Directi
 	light_injection_->SetInput(kReflectiveShadowMapTag,
 							   (*shadow_map)[1]);
 
-	light_injection_->Dispatch(device_context,
-							   shadow_map->GetWidth(),
-							   shadow_map->GetHeight(),
-							   1);
+	//light_injection_->Dispatch(device_context,
+	//						   shadow_map->GetWidth(),
+	//						   shadow_map->GetHeight(),
+	//						   1);
 
 	graphics_.PopEvent();
 

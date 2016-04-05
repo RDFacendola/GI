@@ -30,9 +30,9 @@ void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 
 	// Voxel space
 
-	voxel_info.center.x = linear_coordinates % gVoxelResolution;
-	voxel_info.center.y = (linear_coordinates / gVoxelResolution) % gVoxelResolution;
-	voxel_info.center.z = (linear_coordinates / (gVoxelResolution * gVoxelResolution)) % gVoxelResolution;
+	uint3 voxel_coordinates = LinearAddressTo3D(linear_coordinates);
+
+	voxel_info.center.xyz = voxel_coordinates;
 
 	voxel_info.center -= (gVoxelResolution >> 1);
 
@@ -51,9 +51,13 @@ void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
 
 	voxel_info.center = (voxel_info.center + 0.5f) * voxel_info.size;
 
-	voxel_info.red_sh01 = gRSH01.Load(int4(0, 0, 0, 0));
-	voxel_info.green_sh01 = gGSH01.Load(int4(0, 0, 0, 0));
-	voxel_info.blue_sh01 = gBSH01.Load(int4(0, 0, 0, 0));
+	// SH coefficients
+
+	voxel_coordinates.z += cascade * gVoxelResolution * gVoxelResolution;
+
+	voxel_info.red_sh01 = gRSH01.Load(int4(voxel_coordinates, 0));
+	voxel_info.green_sh01 = gGSH01.Load(int4(voxel_coordinates, 0));
+	voxel_info.blue_sh01 = gBSH01.Load(int4(voxel_coordinates, 0));
 
 	// World space
 	
