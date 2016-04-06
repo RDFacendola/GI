@@ -37,7 +37,7 @@ VSOut VSMain(VSIn input){
 
 	output.color = SampleSH(info, direction);
 
-	float magnitude = max(max(output.color.r, output.color.g), output.color.b);
+	float magnitude = saturate(max(max(output.color.r, output.color.g), output.color.b));
 
 	float3 position = (input.position.xyz * info.size * magnitude) + info.center;
 	

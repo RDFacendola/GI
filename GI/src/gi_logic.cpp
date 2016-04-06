@@ -299,10 +299,14 @@ void GILogic::Update(const Time & time){
 			light_angle = light_index / point_lights.size();
 			light_angle *= Math::kPi * 2.0f;
 
+/*
  			point_light->SetTranslation(Translation3f(std::cosf(light_angle + game_time * angular_speed) * xRadius - 150.f,
  													  std::cosf(light_angle + game_time * oscillation_speed) * yRadius + 1000.f,
  													  std::sinf(light_angle + game_time * angular_speed) * zRadius - 150.f));
-
+*/
+			point_light->SetTranslation(Translation3f(0,
+ 													  200,
+ 													  0));
 			++light_index;
 
 		}

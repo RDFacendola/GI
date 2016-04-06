@@ -35,6 +35,45 @@ struct VoxelInfo {
 
 };
 
+/// \brief Converts a linear address to 3D voxel address.
+uint3 LinearAddressTo3D(uint address) {
+
+	uint3 coordinates = uint3(address,
+							  address / gVoxelResolution,
+							  address / (gVoxelResolution * gVoxelResolution));
+
+	return coordinates % gVoxelResolution;
+
+}
+
+bool WorldSpaceToSHAddress(float3 position, out uint3 sh_address) {
+
+	// Find which cascade the point falls in
+
+	position -= gCenter;		// Position of the fragment from the voxelization center's perspective.
+
+	//float max_distance = max(position.x, max(position.y, position.z));
+
+	//int cascade = max(0, gCascades - max_distance / (gVoxelSize * 0.5f * pow(2.0f, -(int)(gCascades))));
+
+	//float voxel_size = gVoxelSize * pow(2.0f, -cascade);
+
+	int3 voxel_position = position / gVoxelSize;	// [-Resolution/2; Resolution/2]
+
+	voxel_position += (gVoxelResolution >> 1);		// [0; Resolution]
+
+	sh_address = uint3(voxel_position.x,
+					   voxel_position.y,
+					   voxel_position.z);
+
+	return true;
+/*
+	return abs(voxel_position.x) < (int)(gVoxelResolution) &&
+		   abs(voxel_position.y) < (int)(gVoxelResolution) &&
+		   abs(voxel_position.z) < (int)(gVoxelResolution);
+	*/	
+}
+
 /// \brief Sample a spherical harmonic
 float SampleSH(float4 sh01, float3 direction){
 
@@ -59,13 +98,12 @@ float SampleSH(float4 sh01, float3 direction){
 
 }
 
-
 float4 SampleSH(VoxelInfo info, float3 direction) {
 
 	return float4(SampleSH(info.red_sh01, direction),
 			      SampleSH(info.green_sh01, direction),
 				  SampleSH(info.blue_sh01, direction),
-				  1.0f);
+				  0.75f);
 
 }
 

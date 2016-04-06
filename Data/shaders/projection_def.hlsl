@@ -5,6 +5,14 @@
 #ifndef PROJECTION_DEF_HLSL_
 #define PROJECTION_DEF_HLSL_
 
+cbuffer PerLight {
+
+	float gNearPlane;				// Near clipping plane
+
+	float gFarPlane;				// Far clipping plane
+
+};
+
 /// \brief Convert a coordinate from projection space to texture space.
 /// \param position_ps Coordinates in projection space.
 /// \return Returns the associated coordinates in uv space.
@@ -39,6 +47,16 @@ float4 Unproject(float4x4 space, float4 position_ps) {
 
 }
 
+float2 Rotate(float2 p, float angle) {
+
+	float cos_angle = cos(angle);
+	float sin_angle = sin(angle);
+
+	return float2(p.x * cos_angle - p.y * sin_angle,
+				  p.x * sin_angle + p.y * cos_angle);
+	
+}
+
 /// \brief Project a point into octahedron space.
 /// \param position Coordinates of the point to project.
 /// \param near_clipping Near clipping plane.
@@ -57,8 +75,7 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 
 	float cos_theta = cos(radians(45));													// cos(45deg) = sin(45deg)
 	
-	I.xy = float2(I.x * cos_theta - I.y * cos_theta,
-			      I.x * cos_theta + I.y * cos_theta) * sqrt(2.f);
+	I.xy = Rotate(I.xy, radians(45)) * sqrt(2.f);
 
 	if (flip) {
 
@@ -78,45 +95,36 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 
 }
 
-/// \brief Uproject a point from octahedrom space to world space.
-/// \param position_ts Position in texture space of the point. The z coordinate contains the depth in projection space.
-/// \param near_clipping Near clipping plane.
-/// \param far_plane Far clipping plane.
-/// \param flip Whether the coordinate needs to be flipped to fit the position inside the back pyramid
-float3 UnprojectFromOctahedronSpace(float3 position_ts, float near_plane, float far_plane, bool flip){
+/// \brief Unproject a point from octahedron space to world space
+float3 UnprojectFromOctahedronSpace(float3 position_ts, float near_plane, float far_plane, bool flip) {
 
-    if (flip){
+	float3 position_ps = TextureSpaceToProjectionSpace(position_ts.xy, position_ts.z).xyz;
 
-        // Rear pyramid
-        position_ts.x = -2.0f * (position_ts.x - 0.5f);
-        
-    }
-    else{
+	if (flip) {
 
-        // Front pyramid
-        position_ts.x = 2.0f * (position_ts.x + 0.5f);
+		position_ps.x = -2.f * (position_ps.x - 0.5f);
 
-    }
+	}
+	else {
 
-    // Rotate by -45 degrees on the Z axis
+		position_ps.x = 2.f * (position_ps.x + 0.5f);
 
-    float cos_theta = cos(radians(-45));								// cos(-45deg) = -sin(-45deg)
-    float sin_theta = -cos_theta;
+	}
+	
+	position_ps.xy = Rotate(position_ps.xy / sqrt(2.f), radians(-45));
+	
+	float length = position_ps.z * (far_plane - near_plane) + near_plane;
 
-    position_ts /= sqrt(2.f);
+	position_ps.z = 1 - abs(position_ps.x) - abs(position_ps.y);	// The position was normalized using Manhattan distance => |X| + |Y| + |Z| = 1
 
-    position_ts.xy = float2(position_ts.x * cos_theta - position_ts.y * sin_theta,
-                            position_ts.x * sin_theta + position_ts.y * cos_theta);
+	if (flip) {
 
-    // Unproject from octahedron space
+		position_ps.z *= -1;
 
-    float3 position_ws = float3(position_ts.xy, 
-                                1 - position_ts.x - position_ts.y);     // The position is nomalized using Manhattan distance => X + Y + Z = 1
-
-    float length = (position_ts.z * (far_plane - near_plane)) + near_plane;
-
-    return position_ws * length;
-
+	}
+	
+	return normalize(position_ps) * length;
+	
 }
 
 /// \brief Project a point into paraboloid space.

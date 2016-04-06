@@ -181,7 +181,7 @@ void DX11Voxelization::DebugDrawer::InitResources() {
 	
 	sh_draw_indirect_args_ = new DX11GPStructuredArray(DX11GPStructuredArray::CreateDrawIndirectArguments{ 4 });
 
-	voxel_append_buffer_ = new DX11GPStructuredArray(IGPStructuredArray::CreateAppendBuffer{ std::powf(subject_.GetVoxelCount(), 0.85f), sizeof(VoxelInfo) });		// 0.85f is just an heuristic...
+	voxel_append_buffer_ = new DX11GPStructuredArray(IGPStructuredArray::CreateAppendBuffer{ std::powf(subject_.GetVoxelCount(), 1.f), sizeof(VoxelInfo) });		// 0.85f is just an heuristic...
 
 	cb_frame_ = new DX11StructuredBuffer(sizeof(CBFrame));
 	

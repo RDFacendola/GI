@@ -72,6 +72,9 @@ namespace gi_lib {
 			/// \brief Get the structure containing the first and the second SH coefficients of the specified channel.
 			ObjectPtr<IGPTexture3D> GetSH(size_t channel_index) const;
 
+			/// \brief Get the constant buffer containing the voxelization parameters.
+			ObjectPtr<IStructuredBuffer> GetVoxelizationParams() const;
+
 			/// \brief Get the total grid size.
 			float GetGridSize() const;
 
@@ -131,6 +134,12 @@ namespace gi_lib {
 		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetSH(size_t channel_index) const {
 
 			return ObjectPtr<IGPTexture3D>(voxel_sh_01_[channel_index]);
+
+		}
+
+		inline ObjectPtr<IStructuredBuffer> DX11Voxelization::GetVoxelizationParams() const {
+
+			return ObjectPtr<IStructuredBuffer>(cb_voxelization_);
 
 		}
 
