@@ -26,12 +26,13 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 		
 		// Append only if the voxel is the most precise available
 
-		if(voxel_info.cascade == gCascades ||
+		if(voxel_info.cascade == (int)gCascades ||
 		   max(center.x, max(center.y, center.z)) > (gVoxelResolution >> (voxel_info.cascade + 2)) * gVoxelSize){
-
+			
+			// TODO: Reject if the bounding sphere of the voxel is not visible from the current camera
 
 			InterlockedAdd(gVoxelIndirectArguments[1], 1, dummy);
-			//InterlockedAdd(gSHIndirectArguments[1], 1, dummy);
+			InterlockedAdd(gSHIndirectArguments[1], 1, dummy);
 
 			gVoxelAppendBuffer.Append(voxel_info);
 

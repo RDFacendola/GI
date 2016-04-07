@@ -34,6 +34,10 @@ namespace {
 
 		unsigned int cascade;				// Cascade of the voxel
 
+		unsigned int sh_bands;				// Number of
+
+		Vector3i padding;					
+
 	};
 
 	/// \brief Constant buffer containing the per-object constants.
@@ -272,6 +276,8 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 										 ObjectPtr<IStructuredBuffer>(subject_.cb_voxelization_));
 
 	//
+	check = sh_outline_material_->SetInput(DX11Voxelization::kVoxelSHTag,
+										   subject_.GetVoxelSH()->GetTexture());
 
 	check = sh_outline_material_->SetInput(DebugDrawer::kVoxelAppendBuffer,
 										   ObjectPtr<IGPStructuredArray>(voxel_append_buffer_));

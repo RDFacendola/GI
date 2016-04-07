@@ -31,6 +31,10 @@ struct VoxelInfo {
 
 	int cascade;						// Cascade the voxel falls in. A negative number indicates a MIP map.
 
+	uint sh_bands;						// Number of bands used by the voxel.
+
+	uint3 padding;
+
 };
 
 /// \brief Get the total amount of voxels inside a cascade
@@ -49,7 +53,24 @@ uint GetClipmapPyramidSize() {
 
 }
 
-/// Create a new empty voxel
+/// \brief Converts a floating point SH coefficient to an integer number.
+int ToIntSHCoefficient(float sh_coefficient) {
+
+	return sh_coefficient * 100;
+
+}
+
+/// \brief Converts an integer SH coefficient to a float number.
+float ToFloatSHCoefficient(int sh_coefficient) {
+
+	return sh_coefficient / 100.f;
+
+}
+
+/// \brief Create a voxel.
+/// \param voxel_address_table Structure containing the pointers to the voxelized scene.
+/// \param voxel_coordinates Coordinates of the voxel to create relative to its own cascade.
+/// \param cascade Index of the cascade the voxel belongs to.
 void Voxelize(RWStructuredBuffer<uint> voxel_address_table, uint3 voxel_coordinates, uint cascade) {
 		
 	uint linear_coordinates = voxel_coordinates.x +
@@ -64,12 +85,15 @@ void Voxelize(RWStructuredBuffer<uint> voxel_address_table, uint3 voxel_coordina
 
 }
 
-/// VAT address to voxel info (Append)
+/// \brief Get the voxel info given a voxel pointer.
+/// \param voxel_address_table Linear array containing the voxel pointer structure.
+/// \param index Index of the pointer pointing to the voxel whose infos are requested.
+/// \param voxel_info If the method succeeds it contains the requested voxel informations.
+/// \return Returns true if the specified pointer was valid, returns false otherwise.
 bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out VoxelInfo voxel_info) {
 
 	// WORKAROUND (***) - Get and translate the actual address
-
-	int resolution = gVoxelResolution;
+	// TODO: manage the case where the index is negative!
 
 	if (index < GetClipmapPyramidSize() ||
 		voxel_address_table[index] == 0) {
@@ -78,23 +102,25 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out Vo
 
 	}
 
-	// TODO: manage the case where the index is negative!
-
 	index -= GetClipmapPyramidSize();
 
-	int3 voxel_ptr3 = int3(index,
-						   index / resolution,
-						   index / (resolution * resolution)) % resolution;
+	uint3 voxel_ptr3 = uint3(index,
+						     index / gVoxelResolution,
+						     index / (gVoxelResolution * gVoxelResolution)) % gVoxelResolution;
 	
 	// Fill out the voxel info
-
+	
 	voxel_info.cascade = index / GetCascadeSize();
 	
 	voxel_info.size = gVoxelSize / pow(2, voxel_info.cascade);
 	
-	voxel_info.center = ((voxel_ptr3 - (resolution >> 1)) + 0.5f) * voxel_info.size + gCenter;
+	voxel_info.center = (((int3)(voxel_ptr3) - (int)(gVoxelResolution >> 1)) + 0.5f) * voxel_info.size + gCenter;
 
-	voxel_info.sh_address = voxel_ptr3 % resolution;
+	voxel_info.sh_address = voxel_ptr3 % gVoxelResolution;
+
+	voxel_info.sh_bands = 2;		// 2 bands, for now
+
+	voxel_info.padding = 0;
 
 	return true;
 
@@ -108,79 +134,94 @@ bool GetVoxelInfo(float3 position_ws, out VoxelInfo voxel_info) {
 
 }
 
-/// Voxel info to voxel color (Outline)
-bool SampleVoxelColor(RWTexture3D<int> voxel_sh, VoxelInfo voxel_info, float3 direction, out float4 color) {
-
-	return false;
-
-}
-
 /// Interlocked add of SH coefficients
 void StoreSHCoefficients(RWTexture3D<int> voxel_sh, VoxelInfo voxel_info, float3 sh_coefficients) {
 
 
 }
 
-bool WorldSpaceToSHAddress(float3 position, out uint3 sh_address) {
+/// \brief Get the SH coefficients values of the given voxel.
+/// \param voxel_info Voxel to sample.
+/// \param sh_index Index of the spherical harmonics coefficients.
+/// \return Return the value of the specified spherical harmonic for each color channel.
+float4 GetSHCoefficients(Texture3D<int> voxel_sh, VoxelInfo voxel_info, uint sh_index) {
 
-	// Find which cascade the point falls in
+	// ISSUE: If we keep the SH coefficients together we have better cache locality but we lose hardware filtering among coefficients of adjacent voxels 
+	//		  If we spread out the SH coefficients we have hardware filtering of adjacent voxels but we lose cache locality.
 
-	position -= gCenter;		// Position of the fragment from the voxelization center's perspective.
+	// IDEA:
+	// We may store the texture as Texture3D<int4> for reading purposes but bind it with an UAV like RWTexture3D<int>.
+	// We have hardware filtering which is even faster as it operates on 4 channels at the same time while mantaining cache locality among them
+	// We waste one int. Maybe we can recycle it for the opacity?
 
-	//float max_distance = max(position.x, max(position.y, position.z));
+	// int are 32 bits which is way too much for a single SH coefficient. We may pack 2 coefficients for each int giving us the possibility of storing 8 of them.
+	// - R0 16 | R1 16 | G0 16 | G1 16 | B0 16 | B1 16 | <wasted> 32 ?
 
-	//int cascade = max(0, gCascades - max_distance / (gVoxelSize * 0.5f * pow(2.0f, -(int)(gCascades))));
+	float4 coefficients;
 
-	//float voxel_size = gVoxelSize * pow(2.0f, -cascade);
+	uint3 sh_address = voxel_info.sh_address;
 
-	int3 voxel_position = position / gVoxelSize;	// [-Resolution/2; Resolution/2]
+	sh_address.x += sh_index * gVoxelResolution;					// Move to the correct SH
+	sh_address.y += voxel_info.cascade * gVoxelResolution;			// Move to the correct cascade
+							
+	coefficients.r = ToFloatSHCoefficient(voxel_sh[sh_address]);	// Move to the red channel
+		
+	sh_address.z += gVoxelResolution;								// Move to the green channel
+	coefficients.g = ToFloatSHCoefficient(voxel_sh[sh_address]);
 
-	voxel_position += (gVoxelResolution >> 1);		// [0; Resolution]
+	sh_address.z += gVoxelResolution;								// Move to the blue channel
+	coefficients.b = ToFloatSHCoefficient(voxel_sh[sh_address]);
 
-	sh_address = uint3(voxel_position.x,
-					   voxel_position.y,
-					   voxel_position.z);
+	// Done
+	
+	coefficients.a = 0.f;
 
-	return true;
-/*
-	return abs(voxel_position.x) < (int)(gVoxelResolution) &&
-		   abs(voxel_position.y) < (int)(gVoxelResolution) &&
-		   abs(voxel_position.z) < (int)(gVoxelResolution);
-	*/	
-}
-
-/// \brief Sample a spherical harmonic
-float SampleSH(float4 sh01, float3 direction){
-
-	// see http://mathworld.wolfram.com/SphericalHarmonic.html
-	//	   https://ssl.cs.dartmouth.edu/~wjarosz/publications/dissertation/appendixB.pdf
-
-	float value = 0.f;
-
-	// SH0
-
-	value += sh01.x * sqrt(1.f / (4.f * PI));
-
-	// SH1
-
-	value += sh01.y * sqrt(3.f / (4.f * PI)) * direction.x;
-
-	value += sh01.z * sqrt(3.f / (4.f * PI)) * direction.y;
-
-	value += sh01.w * sqrt(3.f / (4.f * PI)) * direction.z;
-
-	return value;
+	return coefficients;
 
 }
 
-float4 SampleSH(VoxelInfo info, float3 direction) {
+/// \brief Get the SH contribution in a given direction for a particular SH band.
+/// \param voxel_sh Structure containing the SH coefficients.
+/// \param voxel_info Voxel to sample.
+/// \param sh_band Index of the SH band to calculate the contribution of.
+/// \param direction Direction of the sampling.
+float4 GetSHContribution(Texture3D<int> voxel_sh, VoxelInfo voxel_info, uint sh_band, float3 direction) {
 
-	//return float4(SampleSH(info.red_sh01, direction),
-	//		      SampleSH(info.green_sh01, direction),
-	//			  SampleSH(info.blue_sh01, direction),
-	//			  0.75f);
+	if (sh_band == 0) {
 
-	return 0;
+		return GetSHCoefficients(voxel_sh, voxel_info, 0) * sqrt(1.f / (4.f * PI));
+
+	}
+	else if (sh_band == 1) {
+
+		return (GetSHCoefficients(voxel_sh, voxel_info, 1) * direction.x +
+			    GetSHCoefficients(voxel_sh, voxel_info, 2) * direction.y +
+			    GetSHCoefficients(voxel_sh, voxel_info, 3) * direction.z) * sqrt(3.f / (4.f * PI));
+
+	}
+	else {
+
+		return 0;
+
+	}
+
+}
+
+/// \brief Sample the color of a voxel in the given direction.
+/// \param voxel_sh Structure containing the SH coefficients.
+/// \param voxel_info Voxel to sample.
+/// \param direction Direction of the sampling.
+float4 SampleVoxelColor(Texture3D<int> voxel_sh, VoxelInfo voxel_info, float3 direction) {
+
+	float4 color = 0.f;
+
+	for (uint sh_band = 0; sh_band < voxel_info.sh_bands; ++sh_band) {
+
+		color += GetSHContribution(voxel_sh, voxel_info, sh_band, direction);
+
+	}
+
+	return float4(color.rgb, 1.0f);
 
 }
 

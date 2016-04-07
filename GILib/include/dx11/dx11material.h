@@ -59,6 +59,8 @@ namespace gi_lib{
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2D>& texture_2D) override;
 
+			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture3D>& texture_3D) override;
+			
 			virtual bool GetInput(const Tag& tag, ObjectPtr<ITexture2D>& texture_2D) const override;
 
 			virtual bool SetInput(const Tag& tag, const ObjectPtr<ITexture2DArray>& texture_2D_array) override;
@@ -153,6 +155,13 @@ namespace gi_lib{
 			}
 
 			return false;
+
+		}
+
+		inline bool DX11Material::SetInput(const Tag& tag, const ObjectPtr<ITexture3D>& texture_3D) {
+
+			return shader_composite_->SetShaderResource(tag,
+														resource_cast(texture_3D));
 
 		}
 

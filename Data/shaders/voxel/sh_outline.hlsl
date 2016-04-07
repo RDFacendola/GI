@@ -3,6 +3,8 @@
 
 StructuredBuffer<VoxelInfo> gVoxelAppendBuffer;				// Append buffer containing the list of voxels in the current frame. (Read Only)
 
+Texture3D<int> gVoxelSH;									// Contains SH infos
+
 /////////////////////////////////// VERTEX SHADER ///////////////////////////////////////
 
 cbuffer PerFrame {
@@ -26,20 +28,18 @@ struct VSOut {
 };
 
 VSOut VSMain(VSIn input){
-	
-	VoxelInfo info = gVoxelAppendBuffer[input.instance_id];
+
+	VoxelInfo voxel_info = gVoxelAppendBuffer[input.instance_id];
 	
 	VSOut output;
 
-	// Evaluate the color
-
-	float3 direction = normalize(input.position.xyz);
-
-	output.color = SampleSH(info, direction);
+	output.color = SampleVoxelColor(gVoxelSH, voxel_info, normalize(input.position.xyz));		// Sampled color of the SH
+	
+	// Deformation of the SH mesh
 
 	float magnitude = saturate(max(max(output.color.r, output.color.g), output.color.b));
 
-	float3 position = (input.position.xyz * info.size * magnitude) + info.center;
+	float3 position = (input.position.xyz * voxel_info.size * magnitude) + voxel_info.center;
 	
 	output.position_ps = mul(gViewProjection, float4(position, 1));
 

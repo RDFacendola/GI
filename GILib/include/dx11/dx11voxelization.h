@@ -108,7 +108,7 @@ namespace gi_lib {
 			ObjectPtr<DX11GPTexture3D> voxel_sh_;								///< \brief Contains the spherical harmonics for each voxel.
 																				///			The coefficients increases along the X axis.
 																				///			The cascades increase along the Y axis.
-																				///			The coefficients increase along the Z axis.
+																				///			The channels increase along the Z axis.
 
 			ObjectPtr<DX11RenderTarget> voxel_render_target_;					///< \brief Render target used during the voxelization. This technically is not needed at all.
 			
