@@ -8,103 +8,35 @@
 RWBuffer<uint> gVoxelIndirectArguments;
 RWBuffer<uint> gSHIndirectArguments;
 
-StructuredBuffer<uint> gVoxelAddressTable;
-
-Texture3D<float4> gRSH01;		// First and second SH coefficients for the red channel
-Texture3D<float4> gGSH01;		// First and second SH coefficients for the green channel
-Texture3D<float4> gBSH01;		// First and second SH coefficients for the blue channel
+StructuredBuffer<uint> gVoxelAddressTable;					// Contains the "pointers" to the actual voxel infos.
 
 AppendStructuredBuffer<VoxelInfo> gVoxelAppendBuffer;		// Append buffer containing the list of voxels in the current frame. (Read/Write)
-
-float max3(float a, float b, float c) {
-
-	return max(max(a, b), c);
-
-}
-
-void AppendVoxelInfo(uint linear_coordinates, uint cascade) {
-		
-	// Fill out the voxel info
-
-	VoxelInfo voxel_info;
-
-	// Voxel space
-
-	uint3 voxel_coordinates = LinearAddressTo3D(linear_coordinates);
-
-	voxel_info.center.xyz = voxel_coordinates;
-
-	voxel_info.center -= (gVoxelResolution >> 1);
-
-	// Suppress the voxel if there's a more precise version of it
-
-	if (cascade < gCascades &&
-		(uint)(max3(abs(voxel_info.center.x), abs(voxel_info.center.y), abs(voxel_info.center.z))) <= (gVoxelResolution >> 2)){
-
-		return;
-
-	}
-
-	// Local space
-
-	voxel_info.size = gVoxelSize / (1 << cascade);
-
-	voxel_info.center = (voxel_info.center + 0.5f) * voxel_info.size;
-
-	// SH coefficients
-
-	voxel_coordinates.z += cascade * gVoxelResolution * gVoxelResolution;
-
-	voxel_info.red_sh01 = gRSH01.Load(int4(voxel_coordinates, 0));
-	voxel_info.green_sh01 = gGSH01.Load(int4(voxel_coordinates, 0));
-	voxel_info.blue_sh01 = gBSH01.Load(int4(voxel_coordinates, 0));
-
-	// World space
-	
-	voxel_info.center += gCenter;
-
-	// Update the instances count
-
-	uint dummy;
-
-	InterlockedAdd(gVoxelIndirectArguments[1], 1, dummy);
-	InterlockedAdd(gSHIndirectArguments[1], 1, dummy);
-
-	gVoxelAppendBuffer.Append(voxel_info);
-
-}
 
 [numthreads(N, 1, 1)]
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
-	// If the address of the VAT is valid there's a voxel there!
+	VoxelInfo voxel_info;
+
+	uint dummy;
+
+	if (GetVoxelInfo(gVoxelAddressTable, dispatch_thread_id.x, voxel_info) &&
+		voxel_info.cascade >= 0) {
+
+		float3 center = abs(voxel_info.center - gCenter);
 		
-	// Layout of the VAT
-	// Pyramid + Cascade 0 | Cascade 1 | Cascade 2 | ...
+		// Append only if the voxel is the most precise available
 
-	if (gVoxelAddressTable[dispatch_thread_id.x] != 0) {
+		if(voxel_info.cascade == gCascades ||
+		   max(center.x, max(center.y, center.z)) > (gVoxelResolution >> (voxel_info.cascade + 2)) * gVoxelSize){
 
-		uint VAT_elements;
-		uint dummy;
 
-		gVoxelAddressTable.GetDimensions(VAT_elements, dummy);
+			InterlockedAdd(gVoxelIndirectArguments[1], 1, dummy);
+			//InterlockedAdd(gSHIndirectArguments[1], 1, dummy);
 
-		uint cascade_size = gVoxelResolution * gVoxelResolution * gVoxelResolution;		// Size of each cascade, in voxels
-
-		uint pyramid_size = VAT_elements - cascade_size * (gCascades + 1);				// Size of the pyramid, without its last level. Elements inside the pyramid are always ignored.
-
-		if (dispatch_thread_id.x >= pyramid_size) {
-
-			uint linear_coordinate = dispatch_thread_id.x - pyramid_size;
-
-			uint cascade_index = linear_coordinate / cascade_size;
-
-			linear_coordinate %= cascade_size;
-
-			AppendVoxelInfo(linear_coordinate, cascade_index);
+			gVoxelAppendBuffer.Append(voxel_info);
 
 		}
-
+		
 	}
 	
 }

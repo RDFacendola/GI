@@ -34,6 +34,8 @@ namespace gi_lib{
 		RG_HALF,			///< \brief 32-bit format with 2 16-bit channels. Each channel stores a half-precision floating point number.
 		RG_FLOAT,			///< \brief 64-bit format with 2 32-bit channels. Each channel stores a single-precision floating point number.
 
+		R_INT,				///< \brief 32-bit format with 1 32-bit signed integer element.
+
 		DEPTH_STENCIL,		///< \brief 32-bit format with 1 24-bit depth channel and 1 8-bit typeless channel.
 
 		BC3_UNORM,			///< \brief Block-compressed texture with interpolated alpha. Also known as DXT4/DXT5.

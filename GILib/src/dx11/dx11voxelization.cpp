@@ -30,11 +30,9 @@ namespace {
 
 		float size;							// Size of the voxel in world units
 
-		Vector4f red_sh01;					// First and second SH coefficients for the red channel.
+		Vector3i voxel_sh_address;			// Voxel's spherical harmonics address
 
-		Vector4f green_sh01;				// First and second SH coefficients for the green channel.
-
-		Vector4f blue_sh01;					// First and second SH coefficients for the blue channel.
+		unsigned int cascade;				// Cascade of the voxel
 
 	};
 
@@ -241,14 +239,8 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 	check = append_voxel_info_->SetInput(DX11Voxelization::kVoxelizationTag,
 										 ObjectPtr<IStructuredBuffer>(subject_.cb_voxelization_));
 
-	check = append_voxel_info_->SetInput(DX11Voxelization::kRedSH01Tag, 
-										 subject_.GetSH(0)->GetTexture());
-
-	check = append_voxel_info_->SetInput(DX11Voxelization::kGreenSH01Tag, 
-										 subject_.GetSH(1)->GetTexture());
-
-	check = append_voxel_info_->SetInput(DX11Voxelization::kBlueSH01Tag, 
-										 subject_.GetSH(2)->GetTexture());
+	check = append_voxel_info_->SetInput(DX11Voxelization::kVoxelSHTag, 
+										 subject_.GetVoxelSH()->GetTexture());
 
 	//
 
@@ -508,9 +500,7 @@ void DX11Voxelization::DebugDrawer::BuildMeshes() {
 
 const Tag DX11Voxelization::kVoxelAddressTableTag = "gVoxelAddressTable";
 const Tag DX11Voxelization::kVoxelizationTag = "Voxelization";
-const Tag DX11Voxelization::kRedSH01Tag = "gRSH01";
-const Tag DX11Voxelization::kGreenSH01Tag = "gGSH01";
-const Tag DX11Voxelization::kBlueSH01Tag = "gBSH01";
+const Tag DX11Voxelization::kVoxelSHTag = "gVoxelSH";
 
 DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_size, unsigned int voxel_resolution, unsigned int cascades) :
 voxel_size_(voxel_size),
@@ -533,16 +523,12 @@ void DX11Voxelization::InitResources() {
 
 	voxel_address_table_ = new DX11GPStructuredArray(IGPStructuredArray::FromElementSize{ GetVoxelCount(), sizeof(unsigned int)});
 
-	for (size_t channel_index = 0; channel_index < 3; ++channel_index) {
+	voxel_sh_ = new DX11GPTexture3D(IGPTexture3D::FromDescription{ voxel_resolution_ * 3,								// 3 SH Coefficients
+																   voxel_resolution_ * (1+ cascades_),					// Cascades
+																   voxel_resolution_ * 3,								// 3 channels: red, green and blue
+																   1,
+																   TextureFormat::R_INT });								
 
-		voxel_sh_01_[channel_index] = new DX11GPTexture3D(IGPTexture3D::FromDescription{ voxel_resolution_,
-																						 voxel_resolution_,
-																						 voxel_resolution_ * (1 + cascades_),
-																						 1,
-																						 TextureFormat::RGBA_HALF });
-
-	}
-	
 	voxel_render_target_ = new DX11RenderTarget(IRenderTarget::FromDescription{ voxel_resolution_, 
 																				voxel_resolution_, 
 																				{}, 
@@ -592,14 +578,8 @@ void DX11Voxelization::InitShaders() {
 	check = clear_voxel_->SetOutput(kVoxelAddressTableTag,
 									ObjectPtr<IGPStructuredArray>(voxel_address_table_));
 
-	check = clear_sh_->SetOutput(DX11Voxelization::kRedSH01Tag,
-								 ObjectPtr<IGPTexture3D>(voxel_sh_01_[0]));
-
-	check = clear_sh_->SetOutput(DX11Voxelization::kGreenSH01Tag,
-								 ObjectPtr<IGPTexture3D>(voxel_sh_01_[1]));
-
-	check = clear_sh_->SetOutput(DX11Voxelization::kBlueSH01Tag,
-								 ObjectPtr<IGPTexture3D>(voxel_sh_01_[2]));
+	check = clear_sh_->SetOutput(DX11Voxelization::kVoxelSHTag,
+								 ObjectPtr<IGPTexture3D>(voxel_sh_));
 
 }
 
@@ -724,9 +704,9 @@ void DX11Voxelization::Clear() {
 						   1);
 
 	clear_sh_->Dispatch(device_context,
-						static_cast<unsigned int>(voxel_sh_01_[0]->GetWidth()),
-						static_cast<unsigned int>(voxel_sh_01_[0]->GetHeight()),
-						static_cast<unsigned int>(voxel_sh_01_[0]->GetDepth()));
+						static_cast<unsigned int>(voxel_sh_->GetWidth()),
+						static_cast<unsigned int>(voxel_sh_->GetHeight()),
+						static_cast<unsigned int>(voxel_sh_->GetDepth()));
 
 	graphics.PopEvent();
 

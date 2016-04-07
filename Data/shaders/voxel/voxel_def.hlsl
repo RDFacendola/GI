@@ -27,22 +27,97 @@ struct VoxelInfo {
 
 	float size;							// Size of the voxel in world units
 
-	float4 red_sh01;					// First and second SH coefficients for the red channel.
+	uint3 sh_address;					// Address of the SH coefficients.
 
-	float4 green_sh01;					// First and second SH coefficients for the green channel.
-
-	float4 blue_sh01;					// First and second SH coefficients for the blue channel.
+	int cascade;						// Cascade the voxel falls in. A negative number indicates a MIP map.
 
 };
 
-/// \brief Converts a linear address to 3D voxel address.
-uint3 LinearAddressTo3D(uint address) {
+/// \brief Get the total amount of voxels inside a cascade
+uint GetCascadeSize() {
 
-	uint3 coordinates = uint3(address,
-							  address / gVoxelResolution,
-							  address / (gVoxelResolution * gVoxelResolution));
+	return gVoxelResolution * gVoxelResolution * gVoxelResolution;
 
-	return coordinates % gVoxelResolution;
+}
+
+/// \brief Get the total amount of voxels inside the pyramid of the voxel clipmap, without the last level.
+uint GetClipmapPyramidSize() {
+
+	// Simplified form of a sum of a geometric series S = (1 - 8^log2(gVoxelResolution)) / (1 - 8)
+
+	return (GetCascadeSize() - 1) / 7;
+
+}
+
+/// Create a new empty voxel
+void Voxelize(RWStructuredBuffer<uint> voxel_address_table, uint3 voxel_coordinates, uint cascade) {
+		
+	uint linear_coordinates = voxel_coordinates.x +
+							  voxel_coordinates.y * gVoxelResolution +
+							  voxel_coordinates.z * gVoxelResolution * gVoxelResolution;
+
+	uint linear_address = linear_coordinates + GetClipmapPyramidSize() + GetCascadeSize() * cascade;
+
+	// WORKAROUND (***) - Fill with the actual address!
+	
+	voxel_address_table[linear_address] = 42;
+
+}
+
+/// VAT address to voxel info (Append)
+bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out VoxelInfo voxel_info) {
+
+	// WORKAROUND (***) - Get and translate the actual address
+
+	int resolution = gVoxelResolution;
+
+	if (index < GetClipmapPyramidSize() ||
+		voxel_address_table[index] == 0) {
+
+		return false;
+
+	}
+
+	// TODO: manage the case where the index is negative!
+
+	index -= GetClipmapPyramidSize();
+
+	int3 voxel_ptr3 = int3(index,
+						   index / resolution,
+						   index / (resolution * resolution)) % resolution;
+	
+	// Fill out the voxel info
+
+	voxel_info.cascade = index / GetCascadeSize();
+	
+	voxel_info.size = gVoxelSize / pow(2, voxel_info.cascade);
+	
+	voxel_info.center = ((voxel_ptr3 - (resolution >> 1)) + 0.5f) * voxel_info.size + gCenter;
+
+	voxel_info.sh_address = voxel_ptr3 % resolution;
+
+	return true;
+
+}
+
+/// World space to voxel info (Inject)
+bool GetVoxelInfo(float3 position_ws, out VoxelInfo voxel_info) {
+
+	// World space -> VAT -> voxel info
+	return false;
+
+}
+
+/// Voxel info to voxel color (Outline)
+bool SampleVoxelColor(RWTexture3D<int> voxel_sh, VoxelInfo voxel_info, float3 direction, out float4 color) {
+
+	return false;
+
+}
+
+/// Interlocked add of SH coefficients
+void StoreSHCoefficients(RWTexture3D<int> voxel_sh, VoxelInfo voxel_info, float3 sh_coefficients) {
+
 
 }
 
@@ -78,7 +153,7 @@ bool WorldSpaceToSHAddress(float3 position, out uint3 sh_address) {
 float SampleSH(float4 sh01, float3 direction){
 
 	// see http://mathworld.wolfram.com/SphericalHarmonic.html
-	//		https://ssl.cs.dartmouth.edu/~wjarosz/publications/dissertation/appendixB.pdf
+	//	   https://ssl.cs.dartmouth.edu/~wjarosz/publications/dissertation/appendixB.pdf
 
 	float value = 0.f;
 
@@ -100,10 +175,12 @@ float SampleSH(float4 sh01, float3 direction){
 
 float4 SampleSH(VoxelInfo info, float3 direction) {
 
-	return float4(SampleSH(info.red_sh01, direction),
-			      SampleSH(info.green_sh01, direction),
-				  SampleSH(info.blue_sh01, direction),
-				  0.75f);
+	//return float4(SampleSH(info.red_sh01, direction),
+	//		      SampleSH(info.green_sh01, direction),
+	//			  SampleSH(info.blue_sh01, direction),
+	//			  0.75f);
+
+	return 0;
 
 }
 

@@ -45,12 +45,8 @@ namespace gi_lib {
 
 			static const Tag kVoxelizationTag;		///< \brief Tag associated to the constant buffer containing the voxelization constants.
 
-			static const Tag kRedSH01Tag;			///< \brief Tag associated to the 3D texture containing informations about the first and the second SH coefficients of the red channel.
+			static const Tag kVoxelSHTag;			///< \brief Tag associated to the 3D texture containing informations about the spherical harmonics stored for each voxel.
 
-			static const Tag kGreenSH01Tag;			///< \brief Tag associated to the 3D texture containing informations about the first and the second SH coefficients of the green channel.
-
-			static const Tag kBlueSH01Tag;			///< \brief Tag associated to the 3D texture containing informations about the first and the second SH coefficients of the blue channel.
-			
 			/// \brief Create a new voxel processor.
 			/// \param voxel_size Size of each voxel in world units.
 			/// \param voxel_resolution Amount of voxels along each axis for each cascade. Will be approximated to the next power of 2.
@@ -69,8 +65,8 @@ namespace gi_lib {
 			/// \param output Surface the structure will be drawn onto.
 			ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image);
 
-			/// \brief Get the structure containing the first and the second SH coefficients of the specified channel.
-			ObjectPtr<IGPTexture3D> GetSH(size_t channel_index) const;
+			/// \brief Get the texture 3D containing the informations about the spherical harmonics stored for each voxel.
+			ObjectPtr<IGPTexture3D> GetVoxelSH() const;
 
 			/// \brief Get the constant buffer containing the voxelization parameters.
 			ObjectPtr<IStructuredBuffer> GetVoxelizationParams() const;
@@ -109,7 +105,10 @@ namespace gi_lib {
 			ObjectPtr<DX11GPStructuredArray> voxel_address_table_;				///< \brief This structure contains the address of each voxel inside the 3D texture of the spherical harmonics. 
 																				///			An address equal to 0 means that the voxel is not present at the specified location.
 
-			ObjectPtr<DX11GPTexture3D> voxel_sh_01_[3];							///< \brief Contains the first and the second SH for each channel. The pyramid is not stored here. Consecutive cascades are stored contiguously along the Z axis.
+			ObjectPtr<DX11GPTexture3D> voxel_sh_;								///< \brief Contains the spherical harmonics for each voxel.
+																				///			The coefficients increases along the X axis.
+																				///			The cascades increase along the Y axis.
+																				///			The coefficients increase along the Z axis.
 
 			ObjectPtr<DX11RenderTarget> voxel_render_target_;					///< \brief Render target used during the voxelization. This technically is not needed at all.
 			
@@ -131,9 +130,9 @@ namespace gi_lib {
 
 		////////////////////////////////////////////// DX11 VOXELIZATION //////////////////////////////////////////////
 		
-		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetSH(size_t channel_index) const {
+		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetVoxelSH() const {
 
-			return ObjectPtr<IGPTexture3D>(voxel_sh_01_[channel_index]);
+			return ObjectPtr<IGPTexture3D>(voxel_sh_);
 
 		}
 

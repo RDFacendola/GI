@@ -380,6 +380,10 @@ DXGI_FORMAT gi_lib::dx11::TextureFormatToDXGIFormat(const TextureFormat& texture
 
 		return DXGI_FORMAT_R32G32_FLOAT;
 
+	case TextureFormat::R_INT:
+
+		return DXGI_FORMAT_R32_SINT;
+
 	case TextureFormat::DEPTH_STENCIL:
 
 		return DXGI_FORMAT_R24G8_TYPELESS;
@@ -431,6 +435,10 @@ TextureFormat gi_lib::dx11::DXGIFormatToTextureFormat(const DXGI_FORMAT& texture
 	case DXGI_FORMAT_R32G32_FLOAT:
 
 		return TextureFormat::RG_FLOAT;
+
+	case DXGI_FORMAT_R32_SINT:
+
+		return TextureFormat::R_INT;
 
 	case DXGI_FORMAT_R24G8_TYPELESS:
 

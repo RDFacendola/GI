@@ -156,25 +156,8 @@ void PSMain(GSOut input){
 		
 	}
 	
-	linear_coordinate = floor(input.position_ps.x) +
-						floor(input.position_ps.y) * gVoxelResolution +
-						floor(input.position_ps.z) * gVoxelResolution * gVoxelResolution;
-						
-	// The cascades are stored at the end of the structure, so we can just start from the back
+	// Store a new empty voxel
 
-	uint VAT_elements;
-	uint dummy;
-
-	gVoxelAddressTable.GetDimensions(VAT_elements, dummy);
-
-	uint cascade_size = gVoxelResolution * gVoxelResolution * gVoxelResolution;		// Size of each cascade, in voxels
-
-	uint pyramid_size = VAT_elements - cascade_size * (gCascades + 1);				// Size of the pyramid, without its last level. Elements inside the pyramid are always ignored.
-		
-	linear_coordinate += pyramid_size + (cascade_size * input.cascade);
-
-	// Reserve the next free address from the address table
-
-	InterlockedAdd(gVoxelAddressTable[linear_coordinate], 1, dummy);		// TODO: Put the actual address here
+	Voxelize(gVoxelAddressTable, (uint3) input.position_ps, input.cascade);
 	
 }

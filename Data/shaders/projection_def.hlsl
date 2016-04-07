@@ -96,9 +96,7 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 }
 
 /// \brief Unproject a point from octahedron space to world space
-float3 UnprojectFromOctahedronSpace(float3 position_ts, float near_plane, float far_plane, bool flip) {
-
-	float3 position_ps = TextureSpaceToProjectionSpace(position_ts.xy, position_ts.z).xyz;
+float3 UnprojectFromOctahedronSpace(float4 position_ps, float near_plane, float far_plane, bool flip) {
 
 	if (flip) {
 
@@ -123,7 +121,7 @@ float3 UnprojectFromOctahedronSpace(float3 position_ts, float near_plane, float 
 
 	}
 	
-	return normalize(position_ps) * length;
+	return normalize(position_ps.xyz) * length;
 	
 }
 

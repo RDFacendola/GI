@@ -111,12 +111,8 @@ voxelization_(voxelization){
 	light_injection_->SetInput("PerLight",
 							   ObjectPtr<IStructuredBuffer>(per_light_));
 
-	light_injection_->SetOutput(DX11Voxelization::kRedSH01Tag, voxelization_.GetSH(0));
+	light_injection_->SetOutput(DX11Voxelization::kVoxelSHTag, voxelization_.GetVoxelSH());
 
-	light_injection_->SetOutput(DX11Voxelization::kGreenSH01Tag, voxelization_.GetSH(1));
-
-	light_injection_->SetOutput(DX11Voxelization::kBlueSH01Tag, voxelization_.GetSH(2));
-	
 }
 
 DX11DeferredRendererLighting::~DX11DeferredRendererLighting(){
