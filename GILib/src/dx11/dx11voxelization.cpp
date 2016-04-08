@@ -335,14 +335,10 @@ ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawDebugOverlay(const Obje
 	cb_frame_->Lock<CBFrame>()->view_projection = view_projection;
 
 	cb_frame_->Unlock();
-		
-	output_->Bind(device_context);
 
 	DrawSphericalHarmonics(output_);
 
 	DrawVoxels(output_);
-
-	output_->Unbind(device_context);
 
 	// Done
 	
@@ -364,6 +360,8 @@ void DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<DX11RenderTarget>
 
 	// Draw - Draw the actual voxels
 
+    output_->Bind(device_context);
+
 	context.PushPipelineState(DX11PipelineState::kDefault);
 
 	voxel_outline_material_->Bind(device_context);
@@ -379,6 +377,8 @@ void DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<DX11RenderTarget>
 
 	context.PopPipelineState();
 	
+    output_->Unbind(device_context);
+
 	graphics_.PopEvent();
 
 }
@@ -395,6 +395,8 @@ void DX11Voxelization::DebugDrawer::DrawSphericalHarmonics(const ObjectPtr<DX11R
 
 	// Draw - Draw the actual spherical harmonics
 
+    output_->Bind(device_context);
+
 	context.PushPipelineState(sh_alphablend_state_);
 
 	sh_outline_material_->Bind(device_context);
@@ -408,6 +410,8 @@ void DX11Voxelization::DebugDrawer::DrawSphericalHarmonics(const ObjectPtr<DX11R
 
 	context.PopPipelineState();
 
+    output_->Unbind(device_context);
+
 	graphics_.PopEvent();
 
 }
@@ -416,10 +420,12 @@ void DX11Voxelization::DebugDrawer::DrawVoxelDepth(const ObjectPtr<DX11RenderTar
 
 	auto& device_context = *context_.GetImmediateContext();
 
-	output->ClearDepth(device_context);
+    output_->Bind(device_context, true);    // ZOnly
+	
+    output->ClearDepth(device_context);
 
 	context_.PushPipelineState(pipeline_state);				// Pipeline state
-
+        
 	voxel_depth_only_material_->Bind(device_context);		// Material
 
 	cube_mesh_->Bind(device_context);						// Mesh
@@ -430,6 +436,8 @@ void DX11Voxelization::DebugDrawer::DrawVoxelDepth(const ObjectPtr<DX11RenderTar
 	voxel_depth_only_material_->Unbind(device_context);
 
 	context_.PopPipelineState();
+
+    output_->Unbind(device_context);
 
 }
 

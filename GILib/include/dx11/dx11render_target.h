@@ -138,10 +138,11 @@ namespace gi_lib{
 			void ClearTargets(ID3D11DeviceContext& context, Color color = kTransparentBlack);
 
 			/// \brief Bind the render target to the given render context.
-			void Bind(ID3D11DeviceContext& context);
+            /// \param depth_only Whether to bind the Z buffer only or not
+			void Bind(ID3D11DeviceContext& context, bool depth_only = false);
 
 			/// \brief Bind the render target and the given unordered access view to a render context.
-			void Bind(ID3D11DeviceContext& context, const vector<ID3D11UnorderedAccessView*>& uav_list);
+            void Bind(ID3D11DeviceContext& context, const vector<ID3D11UnorderedAccessView*>& uav_list, bool depth_only = false);
 			
 			/// \brief Unbind the render target from the given render context.
 			void Unbind(ID3D11DeviceContext& context);

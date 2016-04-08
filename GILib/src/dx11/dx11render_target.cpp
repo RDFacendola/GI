@@ -240,15 +240,15 @@ void DX11RenderTarget::ClearTargets(ID3D11DeviceContext& context, Color color){
 
 }
 
-void DX11RenderTarget::Bind(ID3D11DeviceContext& context){
+void DX11RenderTarget::Bind(ID3D11DeviceContext& context, bool depth_only){
 
 	vector<ID3D11UnorderedAccessView*> uav_list;
 	
-	Bind(context, uav_list);
+	Bind(context, uav_list, depth_only);
 
 }
 
-void DX11RenderTarget::Bind(ID3D11DeviceContext& context, const vector<ID3D11UnorderedAccessView*>& uav_list) {
+void DX11RenderTarget::Bind(ID3D11DeviceContext& context, const vector<ID3D11UnorderedAccessView*>& uav_list, bool depth_only) {
 
 	vector<ID3D11RenderTargetView*> rtv_list(render_target_.size());
 
@@ -261,14 +261,16 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context, const vector<ID3D11Uno
 
 				   });
 
-	ID3D11RenderTargetView** rtv = (rtv_list.size() == 0) ? nullptr : &rtv_list[0];
+	ID3D11RenderTargetView** rtv = (rtv_list.size() == 0 || depth_only) ? nullptr : &rtv_list[0];
 	ID3D11DepthStencilView* dsv = (depth_stencil_) ? depth_stencil_->GetDepthStencilView().Get() : nullptr;
+
+    unsigned int rtv_count = depth_only ? 0 : static_cast<unsigned int>(rtv_list.size());
 
 	if (uav_list.size() > 0) {
 
 		// Bind both the render target and the UAVs
 
-		context.OMSetRenderTargetsAndUnorderedAccessViews(static_cast<unsigned int>(rtv_list.size()),
+        context.OMSetRenderTargetsAndUnorderedAccessViews(rtv_count,
 														  rtv,
 														  dsv,
 														  static_cast<unsigned int>(rtv_list.size()),
@@ -281,7 +283,7 @@ void DX11RenderTarget::Bind(ID3D11DeviceContext& context, const vector<ID3D11Uno
 
 		// Bind the render targets only
 
-		context.OMSetRenderTargets(static_cast<unsigned int>(rtv_list.size()),
+        context.OMSetRenderTargets(rtv_count,
 								   rtv,
 								   dsv);
 
