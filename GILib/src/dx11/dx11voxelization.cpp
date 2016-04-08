@@ -34,7 +34,7 @@ namespace {
 
 		unsigned int cascade;				// Cascade of the voxel
 
-		unsigned int sh_bands;				// Number of
+		unsigned int sh_bands;				// Number of SH bands
 
 		Vector3i padding;					
 
@@ -245,6 +245,9 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 
 	check = append_voxel_info_->SetInput(DX11Voxelization::kVoxelSHTag, 
 										 subject_.GetVoxelSH()->GetTexture());
+
+    check = append_voxel_info_->SetInput(DebugDrawer::kPerFrameTag,
+										 ObjectPtr<IStructuredBuffer>(cb_frame_));
 
 	//
 

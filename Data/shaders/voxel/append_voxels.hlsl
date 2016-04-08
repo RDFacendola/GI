@@ -12,6 +12,12 @@ StructuredBuffer<uint> gVoxelAddressTable;					// Contains the "pointers" to the
 
 AppendStructuredBuffer<VoxelInfo> gVoxelAppendBuffer;		// Append buffer containing the list of voxels in the current frame. (Read/Write)
 
+cbuffer PerFrame {
+
+    float4x4 gViewProjection;				            	// View-projection matrix
+
+};
+
 [numthreads(N, 1, 1)]
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
@@ -29,12 +35,21 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 		if(voxel_info.cascade == (int)gCascades ||
 		   max(center.x, max(center.y, center.z)) > (gVoxelResolution >> (voxel_info.cascade + 2)) * gVoxelSize){
 			
-			// TODO: Reject if the bounding sphere of the voxel is not visible from the current camera
+			// Reject if the center of the voxel is not visible from the current camera
 
-			InterlockedAdd(gVoxelIndirectArguments[1], 1, dummy);
-			InterlockedAdd(gSHIndirectArguments[1], 1, dummy);
+            float4 transformed_center = mul(gViewProjection, float4(voxel_info.center, 1));
 
-			gVoxelAppendBuffer.Append(voxel_info);
+            if (abs(transformed_center.x) < transformed_center.w &&
+                abs(transformed_center.y) < transformed_center.w &&
+                transformed_center.z < transformed_center.w &&
+                transformed_center.z > 0){
+
+			    InterlockedAdd(gVoxelIndirectArguments[1], 1, dummy);
+			    InterlockedAdd(gSHIndirectArguments[1], 1, dummy);
+
+			    gVoxelAppendBuffer.Append(voxel_info);
+
+            }
 
 		}
 		
