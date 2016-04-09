@@ -65,6 +65,9 @@ namespace gi_lib {
 			/// \param output Surface the structure will be drawn onto.
 			ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image);
 
+			/// \brief Get the structure containing the pointers to the actual voxel informations.
+			ObjectPtr<IGPStructuredArray> GetVoxelAddressTable() const;
+
 			/// \brief Get the texture 3D containing the informations about the spherical harmonics stored for each voxel.
 			ObjectPtr<IGPTexture3D> GetVoxelSH() const;
 
@@ -133,6 +136,12 @@ namespace gi_lib {
 		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetVoxelSH() const {
 
 			return ObjectPtr<IGPTexture3D>(voxel_sh_);
+
+		}
+
+		inline ObjectPtr<IGPStructuredArray> DX11Voxelization::GetVoxelAddressTable() const {
+
+			return ObjectPtr<IGPStructuredArray>(voxel_address_table_);
 
 		}
 

@@ -27,7 +27,7 @@ struct VoxelInfo {
 
 	float size;							// Size of the voxel in world units
 
-	uint3 sh_address;					// Address of the SH coefficients.
+	uint3 sh_address;					// Address of the SH coefficients. Without the cascade!
 
 	int cascade;						// Cascade the voxel falls in. A negative number indicates a MIP map.
 
@@ -50,6 +50,36 @@ uint GetClipmapPyramidSize() {
 	// Simplified form of a sum of a geometric series S = (1 - 8^log2(gVoxelResolution)) / (1 - 8)
 
 	return (GetCascadeSize() - 1) / 7;
+
+}
+
+/// \brief Get the voxel size given its cascade.
+/// \param cascade Cascade the voxel belong to. Negative cascade are inside the clipmap pyramid.
+float GetVoxelSize(int cascade) {
+
+	return gVoxelSize * pow(2.0f, -cascade);
+
+}
+
+/// \brief Get the minimum size of a voxel inside the structure.
+float GetMinVoxelSize() {
+
+	return gVoxelSize / (float)(1 << gCascades);
+
+}
+
+/// \brief Get the cascade index of a point in world space.
+int GetCascade(float3 position_ws) {
+	
+	float3 abs_position = abs(position_ws);
+
+	float max_distance = max(abs_position.x, max(abs_position.y, abs_position.z));
+
+	float voxel_distance = max_distance * rcp(GetMinVoxelSize());			// Distance in "voxel" units
+
+	float cascade_distance = floor(voxel_distance * rcp(gVoxelResolution >> 1)) + 1;
+
+	return gCascades - (int)(log2(cascade_distance));
 
 }
 
@@ -126,17 +156,79 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out Vo
 
 }
 
-/// World space to voxel info (Inject)
-bool GetVoxelInfo(float3 position_ws, out VoxelInfo voxel_info) {
+/// \brief Get the info of a voxel in a given point in space.
+/// \param voxel_address_table Linear array containing the voxel pointer structure.
+/// \param position_ws Coordinates of the point, in world space.
+/// \param voxel_info If the method succeeds it contains the requested voxel informations.
+/// \return Returns true if the point was in the voxelized domain, returns false otherwise.
+bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, float3 position_ws, out VoxelInfo voxel_info) {
 
-	// World space -> VAT -> voxel info
-	return false;
+	position_ws -= gCenter;				// To voxel-grid space
+
+	voxel_info.cascade = GetCascade(position_ws);
+	
+	voxel_info.size = GetVoxelSize(voxel_info.cascade);
+
+	int3 voxel_coordinates = floor(position_ws * rcp(voxel_info.size));		//[-R/2; R/2)
+
+	voxel_info.center = (voxel_coordinates + 0.5f) * voxel_info.size + gCenter;
+
+	voxel_info.sh_address = voxel_coordinates + (gVoxelResolution >> 1);
+
+	voxel_info.sh_bands = 2;			// 2 bands, for now
+
+	voxel_info.padding = 0;
+
+	return voxel_info.cascade >= 0;		// A negative cascade means that the provided world position is beyond the voxelized scene
 
 }
 
-/// Interlocked add of SH coefficients
-void StoreSHCoefficients(RWTexture3D<int> voxel_sh, VoxelInfo voxel_info, float3 sh_coefficients) {
+/// \brief Store the first two band of SH coefficients
+void StoreSHCoefficients(RWTexture3D<int> voxel_sh, VoxelInfo voxel_info, float3 sh_coefficients[4]) {
 
+	uint3 sh_address = voxel_info.sh_address;
+
+	sh_address.y += voxel_info.cascade * gVoxelResolution;			// Move to the correct cascade
+
+	uint3 sh_r_address = sh_address + uint3(0, 0, 0 * gVoxelResolution);
+	uint3 sh_g_address = sh_address + uint3(0, 0, 1 * gVoxelResolution);
+	uint3 sh_b_address = sh_address + uint3(0, 0, 2 * gVoxelResolution);
+
+	// SH 0
+
+	InterlockedAdd(voxel_sh[sh_r_address], ToIntSHCoefficient(sh_coefficients[0].x));
+	InterlockedAdd(voxel_sh[sh_g_address], ToIntSHCoefficient(sh_coefficients[0].y));
+	InterlockedAdd(voxel_sh[sh_b_address], ToIntSHCoefficient(sh_coefficients[0].z));
+
+	// SH 1
+
+	sh_r_address.x += gVoxelResolution;	
+	sh_g_address.x += gVoxelResolution;
+	sh_b_address.x += gVoxelResolution;
+
+	InterlockedAdd(voxel_sh[sh_r_address], ToIntSHCoefficient(sh_coefficients[1].x));
+	InterlockedAdd(voxel_sh[sh_g_address], ToIntSHCoefficient(sh_coefficients[1].y));
+	InterlockedAdd(voxel_sh[sh_b_address], ToIntSHCoefficient(sh_coefficients[1].z));
+
+	// SH 2
+
+	sh_r_address.x += gVoxelResolution;
+	sh_g_address.x += gVoxelResolution;
+	sh_b_address.x += gVoxelResolution;
+
+	InterlockedAdd(voxel_sh[sh_r_address], ToIntSHCoefficient(sh_coefficients[2].x));
+	InterlockedAdd(voxel_sh[sh_g_address], ToIntSHCoefficient(sh_coefficients[2].y));
+	InterlockedAdd(voxel_sh[sh_b_address], ToIntSHCoefficient(sh_coefficients[2].z));
+
+	// SH 3
+
+	sh_r_address.x += gVoxelResolution;
+	sh_g_address.x += gVoxelResolution;
+	sh_b_address.x += gVoxelResolution;
+
+	InterlockedAdd(voxel_sh[sh_r_address], ToIntSHCoefficient(sh_coefficients[3].x));
+	InterlockedAdd(voxel_sh[sh_g_address], ToIntSHCoefficient(sh_coefficients[3].y));
+	InterlockedAdd(voxel_sh[sh_b_address], ToIntSHCoefficient(sh_coefficients[3].z));
 
 }
 
@@ -187,6 +279,7 @@ float4 GetSHCoefficients(Texture3D<int> voxel_sh, VoxelInfo voxel_info, uint sh_
 /// \param direction Direction of the sampling.
 float4 GetSHContribution(Texture3D<int> voxel_sh, VoxelInfo voxel_info, uint sh_band, float3 direction) {
 
+	[branch]
 	if (sh_band == 0) {
 
 		return GetSHCoefficients(voxel_sh, voxel_info, 0) * sqrt(1.f / (4.f * PI));
@@ -221,7 +314,7 @@ float4 SampleVoxelColor(Texture3D<int> voxel_sh, VoxelInfo voxel_info, float3 di
 
 	}
 
-	return float4(color.rgb, 1.0f);
+	return float4(max(0, color.rgb), 1.0f);
 
 }
 
