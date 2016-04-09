@@ -1,5 +1,6 @@
 /// \brief Used to inject lighting inside the spherical harmonics structure starting from a RSM
 
+#include "..\encode_def.hlsl"
 #include "..\projection_def.hlsl"
 #include "..\light_def.hlsl"
 
@@ -23,7 +24,7 @@ cbuffer CBPointLight {
 [numthreads(N, N, 1)]
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 		
-	float4 surface_albedo = gRSM.Load(int3(dispatch_thread_id.xy, 0));
+	float4 fragment_albedo = gRSM.Load(int3(dispatch_thread_id.xy, 0));
 	float depth = gVSM.Load(int3(dispatch_thread_id.xy, 0)).x;
 
 	// Unproject the sample position to world space
@@ -62,12 +63,13 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	float3 voxel_flux = gPointLight.color.rgb / 1000.f;		// voxel_flux = gPointLight.color.rgb * rcp(dimensions.x * dimensions.y) -> this leads to a massive loss of precision!
 
-	
+	float3 fragment_normals = DecodeNormalsCoarse(fragment_albedo.w);
+
 	// Compute photon contribution, project into SH coefficients and such
 
 	float3 sh_coefficients[4];		// Each float represents the coefficient of each of the 3 color channels.
 
-	voxel_flux *= surface_albedo.rgb;
+	voxel_flux *= fragment_albedo.rgb;
 
 	sh_coefficients[0] = float3(1, 1, 1) * voxel_flux * (4.f * 3.1416f);
 	sh_coefficients[1] = float3(0, 0, 0) * voxel_flux.rgb;

@@ -76,7 +76,7 @@ void PSMain(PSIn input, out RSMBuffer output) {
 
 	// Normal - Encoded as 2x4-bit values, we don't need good precision anyway
 
-	output.albedo_normal.w = EncodeNormals(input.normal_ws).x;		// TODO: Encode the normals using 8 bit (disco-ball tiling or something similar)
+	output.albedo_normal.w = EncodeNormalsCoarse(input.normal_ws);
 
 }
 
