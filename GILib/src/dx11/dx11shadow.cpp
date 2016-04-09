@@ -31,9 +31,13 @@ namespace {
 	/// \brief Pixel shader constant buffer used to project the fragments to shadow space.
 	struct VSMPerLightCBuffer {
 
+		Matrix4f light_matrix;								///< \brief Light world matrix used to transform from light space to world space.
+
 		float near_plane;									///< \brief Near clipping plane.
 
 		float far_plane;									///< \brief Far clipping plane.
+
+		Vector2i padding;
 
 	};
 		

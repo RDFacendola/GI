@@ -7,9 +7,13 @@
 
 cbuffer PerLight {
 
+	float4x4 gLightMatrix;			// Light world matrix
+
 	float gNearPlane;				// Near clipping plane
 
 	float gFarPlane;				// Far clipping plane
+
+	float2 padding;
 
 };
 

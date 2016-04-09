@@ -17,9 +17,13 @@ using namespace ::gi_lib::dx11;
 /// \brief Pixel shader constant buffer used to project the fragments to shadow space.
 struct VSMPerLightCBuffer {
 
+	Matrix4f light_matrix;								///< \brief Light world matrix used to transform from light space to world space.
+
 	float near_plane;									///< \brief Near clipping plane.
 
 	float far_plane;									///< \brief Far clipping plane.
+
+	Vector2i padding;
 
 };
 
@@ -106,13 +110,18 @@ voxelization_(voxelization){
 
 	// SH setup
 
-	light_injection_->SetInput(DX11Voxelization::kVoxelizationTag, voxelization_.GetVoxelizationParams());
+	light_injection_->SetInput(DX11Voxelization::kVoxelizationTag, 
+							   voxelization_.GetVoxelizationParams());
+
+	light_injection_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
+							   voxelization_.GetVoxelAddressTable());
+
+	light_injection_->SetOutput(DX11Voxelization::kVoxelSHTag, 
+								voxelization_.GetVoxelSH());
 
 	light_injection_->SetInput("PerLight",
 							   ObjectPtr<IStructuredBuffer>(per_light_));
-
-	light_injection_->SetOutput(DX11Voxelization::kVoxelSHTag, voxelization_.GetVoxelSH());
-
+		
 }
 
 DX11DeferredRendererLighting::~DX11DeferredRendererLighting(){
@@ -253,6 +262,7 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLi
 
 	per_light_front.near_plane = 0.0f;
 	per_light_front.far_plane = point_light.GetBoundingSphere().radius;
+	per_light_front.light_matrix = shadow.light_view_matrix.inverse();
 
 	per_light_->Unlock();
 
