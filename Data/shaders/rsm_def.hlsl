@@ -44,7 +44,9 @@ void VSMain(VSIn input, out VSOut output) {
 
 	output.position_ps = mul(gWorldLightProj, float4(input.position, 1));
 	output.normal_ws = mul((float3x3)gWorld, (float3)input.normal);
-	output.uv = input.uv;
+
+	output.uv = float2(input.uv.x,
+					   1.0 - input.uv.y);	// V coordinate is flipped because we are using ogl convention.
 
 }
 
