@@ -81,6 +81,8 @@ voxelization_(voxelization){
 	
 	per_light_ = new DX11StructuredBuffer(sizeof(VSMPerLightCBuffer));
 
+	cb_point_light_ = new DX11StructuredBuffer(sizeof(PointLight));
+
 	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
 	// One-time setup
@@ -121,7 +123,10 @@ voxelization_(voxelization){
 
 	light_injection_->SetInput("PerLight",
 							   ObjectPtr<IStructuredBuffer>(per_light_));
-		
+	
+	light_injection_->SetInput("CBPointLight",
+							   ObjectPtr<IStructuredBuffer>(cb_point_light_));
+
 }
 
 DX11DeferredRendererLighting::~DX11DeferredRendererLighting(){
@@ -265,6 +270,12 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLi
 	per_light_front.light_matrix = shadow.light_view_matrix.inverse();
 
 	per_light_->Unlock();
+
+	auto point_light_buffer = cb_point_light_->Lock<PointLight>();
+
+	*point_light_buffer = light;
+
+	cb_point_light_->Unlock();
 
 	light_injection_->SetInput(kVarianceShadowMapTag,
 							   (*shadow_map)[0]);

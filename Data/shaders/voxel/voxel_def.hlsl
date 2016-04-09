@@ -93,7 +93,7 @@ int ToIntSHCoefficient(float sh_coefficient) {
 /// \brief Converts an integer SH coefficient to a float number.
 float ToFloatSHCoefficient(int sh_coefficient) {
 
-	return sh_coefficient / 100.f;
+	return sh_coefficient / 100;
 
 }
 

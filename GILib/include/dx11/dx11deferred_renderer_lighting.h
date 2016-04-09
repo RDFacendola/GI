@@ -182,6 +182,8 @@ namespace gi_lib {
 
 			ObjectPtr<DX11StructuredBuffer> per_light_;							///< \brief Per-light constant buffer using during light injection.
 
+			ObjectPtr<DX11StructuredBuffer> cb_point_light_;					///< \brief Constant buffer containing a single point light.
+
 		};
 
 	}
