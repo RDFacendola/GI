@@ -178,8 +178,8 @@ void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh)
 	auto base_material = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\mat_emissive.hlsl" });
 
 	static std::vector<Color> kLightColors{ Color(5.f, 5.f, 5.f, 1.f),
-											/*Color(5.f, 2.5f, 2.5f, 1.f),
-											Color(2.5f, 5.f, 2.5f, 1.f),
+											Color(5.f, 2.5f, 2.5f, 1.f),
+											/*Color(2.5f, 5.f, 2.5f, 1.f),
 											Color(2.5f, 2.5f, 5.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),
 											Color(10.f, 25.f, 25.f, 1.f)*/};
@@ -299,14 +299,16 @@ void GILogic::Update(const Time & time){
 			light_angle = light_index / point_lights.size();
 			light_angle *= Math::kPi * 2.0f;
 
-/*
+
  			point_light->SetTranslation(Translation3f(std::cosf(light_angle + game_time * angular_speed) * xRadius - 150.f,
  													  std::cosf(light_angle + game_time * oscillation_speed) * yRadius + 1000.f,
  													  std::sinf(light_angle + game_time * angular_speed) * zRadius - 150.f));
-*/
+
+/*
 			point_light->SetTranslation(Translation3f(0,
  													  200,
- 													  0));
+ 													  0));*/
+
 			++light_index;
 
 		}

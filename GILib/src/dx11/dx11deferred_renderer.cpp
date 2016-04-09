@@ -148,7 +148,7 @@ graphics_(DX11Graphics::GetInstance()){
 	
 	// Voxel setup
 
-	voxelization_ = std::make_unique<DX11Voxelization>(*this, 400.0f, 64, 3);
+	voxelization_ = std::make_unique<DX11Voxelization>(*this, 800.0f, 64, 3);
 
 	// Lighting setup
 
