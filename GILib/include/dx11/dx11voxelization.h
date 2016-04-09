@@ -63,7 +63,13 @@ namespace gi_lib {
 
 			/// \brief Draw the voxel structure. Debug function.
 			/// \param output Surface the structure will be drawn onto.
-			ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image);
+			/// \param bool xray Whether to enable or disable the depth test
+			ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, bool xray);
+
+			/// \brief Draw the SH data. Debug function.
+			/// \param output Surface the SH will be drawn onto.
+			/// \param bool xray Whether to enable or disable the depth test
+			ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool xray);
 
 			/// \brief Get the structure containing the pointers to the actual voxel informations.
 			ObjectPtr<IGPStructuredArray> GetVoxelAddressTable() const;

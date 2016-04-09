@@ -147,7 +147,6 @@ void GILogic::Initialize(Window& window){
 				obj_importer.ImportMesh(app.GetDirectory() + L"Data\\assets\\Light\\Sphere.obj", "Icosphere"));
 	
 	// GI setup
-	enable_global_illumination_ = true;
 
 	deferred_renderer_->EnableGlobalIllumination(enable_global_illumination_);
 
@@ -155,7 +154,13 @@ void GILogic::Initialize(Window& window){
 
 	postprocess_ = make_unique<Postprocess>(resources, graphics_);
 
+	// Commad setup
+
+	enable_global_illumination_ = true;
 	enable_postprocess_ = true;
+	enable_voxel_draw_ = true;
+	enable_sh_draw_ = true;
+	enable_xray_ = false;
 
 }
 
@@ -178,8 +183,8 @@ void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh)
 	auto base_material = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\mat_emissive.hlsl" });
 
 	static std::vector<Color> kLightColors{ Color(5.f, 5.f, 5.f, 1.f),
-											Color(5.f, 2.5f, 2.5f, 1.f),
-											/*Color(2.5f, 5.f, 2.5f, 1.f),
+											/*Color(0.f, 5.f, 0.f, 1.f),
+											Color(2.5f, 5.f, 2.5f, 1.f),
 											Color(2.5f, 2.5f, 5.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),
 											Color(10.f, 25.f, 25.f, 1.f)*/};
@@ -274,7 +279,31 @@ void GILogic::Update(const Time & time){
 
 		enable_global_illumination_ = !enable_global_illumination_;
 
-		deferred_renderer_->EnableGlobalIllumination(enable_global_illumination_);
+	}
+		
+	deferred_renderer_->EnableGlobalIllumination(enable_global_illumination_);
+
+	// "V": toggle debug voxel drawing
+
+	if (input_->GetKeyboardStatus().IsPressed(47)) {
+
+		enable_voxel_draw_ = !enable_voxel_draw_;
+
+	}
+
+	// "H": toggle debug SH drawing
+
+	if (input_->GetKeyboardStatus().IsPressed(35)) {
+
+		enable_sh_draw_ = !enable_sh_draw_;
+
+	}
+
+	// "X": toggle xray
+
+	if (input_->GetKeyboardStatus().IsPressed(45)) {
+
+		enable_xray_ = !enable_xray_;
 
 	}
 	
@@ -347,12 +376,18 @@ void GILogic::Update(const Time & time){
 
 	// Debug draw after post processing. We don't want to tonemap the debug info, don't we?
 
-	if (enable_global_illumination_) {
+	if (enable_voxel_draw_ && enable_global_illumination_) {
 
-		next_frame = deferred_renderer_->DrawVoxels(next_frame);
+		next_frame = deferred_renderer_->DrawVoxels(next_frame, false);
 
 	}
 	
+	if (enable_sh_draw_ && enable_global_illumination_) {
+
+		next_frame = deferred_renderer_->DrawSH(next_frame, enable_xray_);
+
+	}
+
 	// Display the image at last
 
 	output_->Display(next_frame);

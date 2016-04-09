@@ -98,7 +98,9 @@ namespace gi_lib{
 			
 			Matrix4f GetViewProjectionMatrix(float aspect_ratio) const;
 
-			virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image) override;
+			virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, bool xray) override;
+
+			virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool xray) override;
 
 		private:
 
@@ -177,9 +179,15 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<ITexture2D> DX11DeferredRenderer::DrawVoxels(const ObjectPtr<ITexture2D>& image) {
+		inline ObjectPtr<ITexture2D> DX11DeferredRenderer::DrawVoxels(const ObjectPtr<ITexture2D>& image, bool xray) {
 
-			return voxelization_->DrawVoxels(image);
+			return voxelization_->DrawVoxels(image, xray);
+
+		}
+
+		inline ObjectPtr<ITexture2D> DX11DeferredRenderer::DrawSH(const ObjectPtr<ITexture2D>& image, bool xray) {
+
+			return voxelization_->DrawSH(image, xray);
 
 		}
 

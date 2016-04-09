@@ -60,6 +60,12 @@ namespace gi{
 
 		bool enable_global_illumination_;		///< \brief Whether the global illumination is enabled.
 
+		bool enable_voxel_draw_;				///< \brief Whether to draw voxels or not.
+
+		bool enable_sh_draw_;					///< \brief Whether to draw spherical harmonics or not.
+
+		bool enable_xray_;						///< \brief Whether to enable x-ray for debug draw.
+
 	};
 
 }

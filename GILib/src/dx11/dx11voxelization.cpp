@@ -85,21 +85,21 @@ public:
 
 	DebugDrawer(DX11Voxelization& voxelization);
 
-	ObjectPtr<ITexture2D> DrawDebugOverlay(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection) const;
+	/// \brief Invalidate the current debug infos.
+	void Invalidate();
+
+	ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool xray);
+
+	ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool xray);
 
 private:
 
-	/// \brief Draw the voxel outline on top of the provided output surface.
-	/// \param output Surface where the voxel should be drawn onto.
-	void DrawVoxels(const ObjectPtr<DX11RenderTarget>& output) const;
-
-	/// \brief Draw the spherical harmonics outline on top of the provided output surface.
-	/// \param output Surface where the spherical harmonics should be drawn onto.
-	void DrawSphericalHarmonics(const ObjectPtr<DX11RenderTarget>& output) const;
+	/// \brief Refresh the debug infos if dirty.
+	void Refresh(const Matrix4f& view_projection);
 
 	/// \brief Draw the voxel depth on top of the provided output surface.
 	/// \param pipeline_state Pipeline state to use while drawing the voxel depth.
-	void DrawVoxelDepth(const ObjectPtr<DX11RenderTarget>& output, const DX11PipelineState& pipeline_state) const;
+	void DrawVoxelDepth(const DX11PipelineState& pipeline_state);
 
 	/// \brief Create the debug meshes.
 	void BuildMeshes();
@@ -117,10 +117,6 @@ private:
 	DX11Context& context_;												///< \brief Graphics context.
 
 	// Shader resources
-
-	mutable ObjectPtr<DX11RenderTarget> output_;						///< \brief Surface where the debug infos are being rendered to.
-
-	ObjectPtr<IRenderTargetCache> render_target_cache_;					///< \brief Cache of render-target textures.
 
 	ObjectPtr<DX11GPStructuredArray> voxel_draw_indirect_args_;			///< \brief Buffer containing the argument buffer used to dispatch the DrawIndexedInstancedIndirect call
 
@@ -158,6 +154,16 @@ private:
 
 	ObjectPtr<DX11Mesh> sphere_mesh_;									///< \brief Sphere mesh used to draw spherical harmonics
 
+	// Misc
+
+	mutable bool dirty_;												///< \brief Whether the debug infos are dirty and needs to be redrawn.
+
+	mutable ObjectPtr<DX11RenderTarget> voxel_output_;					///< \brief Surface where the debug voxel infos are being rendered to.
+
+	mutable ObjectPtr<DX11RenderTarget> sh_output_;						///< \brief Surface where the debug SH infos are being rendered to.
+
+	ObjectPtr<IRenderTargetCache> render_target_cache_;					///< \brief Cache of render-target textures.
+
 };
 
 const Tag DX11Voxelization::DebugDrawer::kVoxelAppendBuffer= "gVoxelAppendBuffer";
@@ -172,6 +178,8 @@ context_(graphics_.GetContext()){
 	
 	InitResources();
 	InitShaders();	
+
+	dirty_ = true;
 
 }
 
@@ -293,74 +301,77 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawDebugOverlay(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection) const {
+void DX11Voxelization::DebugDrawer::Refresh(const Matrix4f& view_projection) {
 
-	if (output_) {
+	// Accumulate from the voxel address table inside the append buffer - Once per frame
 
-		// Discard the previous image.
-		render_target_cache_->PushToCache(ObjectPtr<IRenderTarget>(output_));
+	if (dirty_) {
+
+		dirty_ = false;
+
+		// Refresh per-frame parameters
+
+		cb_frame_->Lock<CBFrame>()->view_projection = view_projection;
+
+		cb_frame_->Unlock();
+
+		auto& device_context = *context_.GetImmediateContext();
+
+		graphics_.PushEvent(L"Setup");
+
+		clear_voxel_draw_indirect_args_->Dispatch(device_context, 
+												  1, 
+												  1,
+												  1);
+
+		append_voxel_info_->Dispatch(device_context, 
+									 static_cast<unsigned int>(subject_.voxel_address_table_->GetCount()), 
+									 1, 
+									 1);
+	
+		graphics_.PopEvent();	// Setup
 
 	}
 
-	output_ = render_target_cache_->PopFromCache(image->GetWidth(),
-												 image->GetHeight(),
-												 { image->GetFormat() },
-												 true);
+}
 
+ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool xray) {
+
+	Refresh(view_projection);
+
+	auto& context = graphics_.GetContext();
 	auto& device_context = *context_.GetImmediateContext();
+
+	if (voxel_output_) {
+
+		// Discard the previous image.
+		render_target_cache_->PushToCache(ObjectPtr<IRenderTarget>(voxel_output_));
+
+	}
+
+	voxel_output_ = render_target_cache_->PopFromCache(image->GetWidth(),
+													   image->GetHeight(),
+													   { image->GetFormat() },
+													   true);
 
 	graphics_.PushEvent(L"Voxel overlay");
 
-	// Accumulate from the voxel address table inside the append buffer
-
-	graphics_.PushEvent(L"Setup");
-
-	clear_voxel_draw_indirect_args_->Dispatch(device_context, 
-											  1, 
-											  1,
-											  1);
-
-	append_voxel_info_->Dispatch(device_context, 
-								 static_cast<unsigned int>(subject_.voxel_address_table_->GetCount()), 
-								 1, 
-								 1);
-	
-	scaler_->Copy(image,
-				  ObjectPtr<IRenderTarget>(output_));
-	
-	graphics_.PopEvent();	// Setup
-
 	// Dispatch the draw call of the voxels
 
-	cb_frame_->Lock<CBFrame>()->view_projection = view_projection;
-
-	cb_frame_->Unlock();
-
-	DrawSphericalHarmonics(output_);
-
-	DrawVoxels(output_);
-
-	// Done
-	
-	graphics_.PopEvent();	// Voxel overlay
+	scaler_->Copy(image,
+				  ObjectPtr<IRenderTarget>(voxel_output_));
 		
-	return (*output_)[0];
+	voxel_output_->Bind(device_context);
+	
+	voxel_output_->ClearDepth(device_context);
 
-}
+	if (!xray) {
+	
+		DrawVoxelDepth(voxel_prepass_state_);
 
-void DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<DX11RenderTarget>& output) const{
-
-	auto& context = graphics_.GetContext();
-
-	auto& device_context = *context.GetImmediateContext();
-
-	graphics_.PushEvent(L"Voxels");
-
-	DrawVoxelDepth(output, voxel_prepass_state_);
+	}
 
 	// Draw - Draw the actual voxels
-
-    output_->Bind(device_context);
 
 	context.PushPipelineState(DX11PipelineState::kDefault);
 
@@ -376,28 +387,56 @@ void DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<DX11RenderTarget>
 	voxel_outline_material_->Unbind(device_context);
 
 	context.PopPipelineState();
-	
-    output_->Unbind(device_context);
 
-	graphics_.PopEvent();
+	voxel_output_->Unbind(device_context);
+
+	// Done
+	
+	graphics_.PopEvent();	// Voxel overlay
+		
+	return (*voxel_output_)[0];
 
 }
 
-void DX11Voxelization::DebugDrawer::DrawSphericalHarmonics(const ObjectPtr<DX11RenderTarget>& output) const{
+ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool xray){
+
+	Refresh(view_projection);
 
 	auto& context = graphics_.GetContext();
-
 	auto& device_context = *context.GetImmediateContext();
 
-	graphics_.PushEvent(L"Spherical harmonics");
+	if (sh_output_) {
 
-	DrawVoxelDepth(output, sh_prepass_state_);
+		// Discard the previous image.
+		render_target_cache_->PushToCache(ObjectPtr<IRenderTarget>(sh_output_));
 
-	//output->ClearDepth(device_context);
+	}
+
+	sh_output_ = render_target_cache_->PopFromCache(image->GetWidth(),
+													image->GetHeight(),
+													{ image->GetFormat() },
+													true);
+
+	graphics_.PushEvent(L"Spherical harmonics overlay");
+
+	// Dispatch the draw call of the voxels
+
+	scaler_->Copy(image,
+				  ObjectPtr<IRenderTarget>(sh_output_));
+	
+	sh_output_->Bind(device_context);
+	
+	sh_output_->ClearDepth(device_context);
+
+	if (!xray) {
+	
+		DrawVoxelDepth(sh_prepass_state_);
+
+	}
 
 	// Draw - Draw the actual spherical harmonics
 
-    output_->Bind(device_context);
+	sh_output_->Bind(device_context);
 
 	context.PushPipelineState(sh_alphablend_state_);
 
@@ -412,19 +451,19 @@ void DX11Voxelization::DebugDrawer::DrawSphericalHarmonics(const ObjectPtr<DX11R
 
 	context.PopPipelineState();
 
-    output_->Unbind(device_context);
+	sh_output_->Unbind(device_context);
 
-	graphics_.PopEvent();
+	// Done
+
+	graphics_.PopEvent();	// Spherical harmonics overlay
+
+	return (*sh_output_)[0];
 
 }
 
-void DX11Voxelization::DebugDrawer::DrawVoxelDepth(const ObjectPtr<DX11RenderTarget>& output, const DX11PipelineState& pipeline_state) const {
+void DX11Voxelization::DebugDrawer::DrawVoxelDepth(const DX11PipelineState& pipeline_state) {
 
 	auto& device_context = *context_.GetImmediateContext();
-
-    output_->Bind(device_context, true);    // ZOnly
-	
-    output->ClearDepth(device_context);
 
 	context_.PushPipelineState(pipeline_state);				// Pipeline state
         
@@ -439,7 +478,11 @@ void DX11Voxelization::DebugDrawer::DrawVoxelDepth(const ObjectPtr<DX11RenderTar
 
 	context_.PopPipelineState();
 
-    output_->Unbind(device_context);
+}
+
+void DX11Voxelization::DebugDrawer::Invalidate() {
+
+	dirty_ = true;
 
 }
 
@@ -703,6 +746,8 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 	voxel_material_->Unbind(device_context, voxel_render_target_);
 
+	debug_drawer_->Invalidate();
+
 	graphics.PopEvent();
 
 }
@@ -731,10 +776,19 @@ void DX11Voxelization::Clear() {
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& image) {
+ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& image, bool xray) {
 	
-	return debug_drawer_->DrawDebugOverlay(image,
-										   renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())));
+	return debug_drawer_->DrawVoxels(image,
+									 renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())),
+									 xray);
+
+}
+
+ObjectPtr<ITexture2D> DX11Voxelization::DrawSH(const ObjectPtr<ITexture2D>& image, bool xray) {
+	
+	return debug_drawer_->DrawSH(image,
+							     renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())),
+								 xray);
 
 }
 
