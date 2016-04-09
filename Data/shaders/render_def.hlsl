@@ -6,6 +6,7 @@
 #define RENDER_DEF_HLSL_
 
 #include "projection_def.hlsl"
+#include "encode_def.hlsl"
 
 /// GBuffer definition
 struct GBuffer {
@@ -39,41 +40,6 @@ float3 ComputeSurfacePosition(float2 uv, float depth, float4x4 inv_view_proj_mat
 	return Unproject(inv_view_proj_matrix,
 					 TextureSpaceToProjectionSpace(uv, depth)).xyz;
 
-}
-
-/// \see http://jcgt.org/published/0003/02/01/paper.pdf
-float2 OctWrap(float2 v){
-
-	return (1.0 - abs(v.yx)) * (v.xy >= 0.f ? 1.f : -1.f);
-
-}
-
-/// \brief Encodes a 3-element vector to a 2-element octahedron-encoded vector.
-float2 EncodeNormals(float3 decoded) {
-
-	decoded /= (abs(decoded.x) + abs(decoded.y) + abs(decoded.z));
-
-	decoded.xy = (decoded.z >= 0.f) ? decoded.xy : OctWrap(decoded.xy);
-
-	decoded.xy = decoded.xy * 0.5f + 0.5f;
-
-	return decoded.xy;
-
-}
-
-/// \brief Decodes a 2-element octahedron-encoded vector to a 3-element vector.
-float3 DecodeNormals(float2 encoded) {
-
-	encoded = encoded * 2.f - 1.f;
-
-	float3 decoded;
-
-	decoded.z = 1.0 - abs(encoded.x) - abs(encoded.y);
-
-	decoded.xy = (decoded.z >= 0.f) ? encoded.xy : OctWrap(encoded.xy);
-	
-	return normalize(decoded);
-	
 }
 
 /// Gathers surface data from a sampling position inside the GBuffer surfaces
