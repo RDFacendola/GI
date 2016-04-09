@@ -21,6 +21,7 @@ namespace gi_lib{
 
 		HALF,				///< \brief 16-bit format with a single half-precision floating point number.
 
+		RGBA_BYTE_RAW,		///< \brief 32-bit format with 4 8-bit typeless channels.
 		RGBA_BYTE_UNORM,	///< \brief 32-bit format with 4 8-bit channels. Each channel stores a byte-sized number in the range [0;1]
 
 		RGBA_HALF,			///< \brief 64-bit format with 4 16-bit channels. Each channel stores a half-precision floating point number.
