@@ -393,6 +393,8 @@ void DX11Voxelization::DebugDrawer::DrawSphericalHarmonics(const ObjectPtr<DX11R
 
 	DrawVoxelDepth(output, sh_prepass_state_);
 
+	//output->ClearDepth(device_context);
+
 	// Draw - Draw the actual spherical harmonics
 
     output_->Bind(device_context);
@@ -540,7 +542,7 @@ void DX11Voxelization::InitResources() {
 
 	voxel_address_table_ = new DX11GPStructuredArray(IGPStructuredArray::FromElementSize{ GetVoxelCount(), sizeof(unsigned int)});
 
-	voxel_sh_ = new DX11GPTexture3D(IGPTexture3D::FromDescription{ voxel_resolution_ * 3,								// 3 SH Coefficients
+	voxel_sh_ = new DX11GPTexture3D(IGPTexture3D::FromDescription{ voxel_resolution_ * 4,								// 4 SH Coefficients
 																   voxel_resolution_ * (1+ cascades_),					// Cascades
 																   voxel_resolution_ * 3,								// 3 channels: red, green and blue
 																   1,
