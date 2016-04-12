@@ -54,27 +54,32 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	VoxelInfo voxel_info;
 
-	GetVoxelInfo(gVoxelAddressTable, position_ws, voxel_info);	// We skip the check since the voxel *should* exist
+	if (!GetVoxelInfo(gVoxelAddressTable, position_ws, voxel_info)) {
+
+		return;
+
+	}
 
 	// The shadowmaps contains all and only the fragments that receive energy from the pointlight. 
 	// Since the fragments are projected in light-view space, we don't need attenuation from depth as it is compensated by the smaller projected angle.
 
 	// Amount of energy received by the voxel
 
-	float3 voxel_flux = gPointLight.color.rgb / 1000.f;		// voxel_flux = gPointLight.color.rgb * rcp(dimensions.x * dimensions.y) -> this leads to a massive loss of precision!
+	float3 voxel_flux = gPointLight.color.rgb * rcp(1000.f);		// voxel_flux = gPointLight.color.rgb * rcp(dimensions.x * dimensions.y) -> this leads to a massive loss of precision!
 
 	float3 fragment_normals = DecodeNormalsCoarse(fragment_albedo.w);
 
-	// Compute photon contribution, project into SH coefficients and such
+	// Compute photon contribution, project into SH coefficients
 
 	float3 sh_coefficients[4];		// Each float represents the coefficient of each of the 3 color channels.
 
-	voxel_flux *= fragment_albedo.rgb;
+	//voxel_flux *= fragment_albedo.rgb * (4.f * 3.1416f);
+	voxel_flux *= fragment_albedo.rgb * 15.f;
 
-	sh_coefficients[0] = float3(1, 1, 1) * voxel_flux * (4.f * 3.1416f);
-	sh_coefficients[1] = float3(0, 0, 0) * voxel_flux.rgb;
-	sh_coefficients[2] = float3(0, 0, 0) * voxel_flux.rgb;
-	sh_coefficients[3] = float3(0, 0, 0) * voxel_flux.rgb;
+	sh_coefficients[0] = float3(1, 1, 1) * voxel_flux;
+	sh_coefficients[1] = float3(0, 0, 0) * voxel_flux;
+	sh_coefficients[2] = float3(0, 0, 0) * voxel_flux;
+	sh_coefficients[3] = float3(0, 0, 0) * voxel_flux;
 
 	// Store the SH contribution
 

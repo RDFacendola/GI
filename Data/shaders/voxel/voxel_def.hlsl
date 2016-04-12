@@ -125,10 +125,18 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out Vo
 	// WORKAROUND (***) - Get and translate the actual address
 	// TODO: manage the case where the index is negative!
 
-	if (index < GetClipmapPyramidSize() ||
-		voxel_address_table[index] == 0) {
+	bool is_inside_clipmap = index >= GetClipmapPyramidSize() && index < GetClipmapPyramidSize() + GetCascadeSize() * (1 + gCascades);
 
-		return false;
+// Define this MACRO if access of the whole SH structure is needed. This doesn't work if the structure is sparse! Default is NOT DEFINED.
+#ifndef DENSE_VOXEL_INFO
+
+	is_inside_clipmap = is_inside_clipmap && (voxel_address_table[index] != 0);
+
+#endif
+
+	if (!is_inside_clipmap) {
+
+		return false;		// The voxel is not present inside the hierarchy or it is outside its bounds
 
 	}
 
