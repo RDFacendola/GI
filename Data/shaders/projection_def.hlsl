@@ -68,12 +68,16 @@ float2 Rotate(float2 p, float angle) {
 /// \param flip Whether to flip the coordinates to fit the position inside the back pyramid
 float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_plane, bool flip) {
 
-	float depth = length(position);														// Depth of the point wrt the center of the octahedron projection (0;0;0)
+	near_plane = 50.f;
 
-	depth = saturate((length(position) - near_plane) / (far_plane - near_plane));		// Fragments closer than the near plane are fully lit, while fragments beyond the far plane are fully shadowed.
+	float3 abs_position = abs(position);
 
-	float3 I = position / dot(1, abs(position));										// // Normalize using Manhattan distance
+	float depth = dot(1, abs_position);																// Manhattan depth
+
+	float3 I = position / depth;																	// Normalize using Manhattan distance
 	
+	depth = (far_plane - (far_plane * near_plane * rcp(depth))) * rcp(far_plane - near_plane);		// Projection used for perspective projection correction
+
 	// The octahedron space maps to a square space rotated by 45 degress on the Z axis.
 	// If we compensate for this rotation and scale up the image we can double the actual shadowmap resolution for free.
 
@@ -102,6 +106,8 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 /// \brief Unproject a point from octahedron space to world space
 float3 UnprojectFromOctahedronSpace(float4 position_ps, float near_plane, float far_plane, bool flip) {
 
+	near_plane = 50.f;
+
 	if (flip) {
 
 		position_ps.x = -2.f * (position_ps.x - 0.5f);
@@ -115,17 +121,17 @@ float3 UnprojectFromOctahedronSpace(float4 position_ps, float near_plane, float 
 	
 	position_ps.xy = Rotate(position_ps.xy / sqrt(2.f), radians(-45));
 	
-	float length = position_ps.z * (far_plane - near_plane) + near_plane;
+	float depth = -(far_plane * near_plane) * rcp(position_ps.z * (far_plane - near_plane) - far_plane);	// Neutralize perspective projection
 
-	position_ps.z = 1 - abs(position_ps.x) - abs(position_ps.y);	// The position was normalized using Manhattan distance => |X| + |Y| + |Z| = 1
-
+	position_ps.z = 1 - abs(position_ps.x) - abs(position_ps.y);											// The position was normalized using Manhattan distance => |X| + |Y| + |Z| = 1
+	
 	if (flip) {
 
 		position_ps.z *= -1;
 
 	}
-	
-	return normalize(position_ps.xyz) * length;
+		
+	return position_ps.xyz * depth;
 	
 }
 
