@@ -545,7 +545,7 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int at
 	
 	context.PushPipelineState(shadow_state_);
 
-	resource_cast(shadow_map)->ClearTargets(*immediate_context_);
+	resource_cast(shadow_map)->ClearTargets(*immediate_context_, kOpaqueWhite);
 	resource_cast(shadow_map)->ClearDepth(*immediate_context_);
 
 	resource_cast(shadow_map)->Bind(*immediate_context_);

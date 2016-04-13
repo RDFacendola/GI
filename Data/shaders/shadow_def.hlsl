@@ -116,6 +116,8 @@ float ComputeShadow(SurfaceData surface, PointShadow shadow) {
 												 shadow.far_plane,
 												 surface_ls.z < 0.0f);							// Surface in paraboloid space. XY contains the uv coordinates, Z the depth of the point.
 
+	surface_ps /= surface_ps.w;		// Force homogeneous coordinates
+
 	float2 moments = SampleVSMShadowAtlas(shadow.atlas_page, 
 										  shadow.min_uv, 
 										  shadow.max_uv, 

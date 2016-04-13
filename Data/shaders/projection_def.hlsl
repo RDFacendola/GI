@@ -76,7 +76,7 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 
 	float3 I = position / depth;																	// Normalize using Manhattan distance
 	
-	depth = (far_plane - (far_plane * near_plane * rcp(depth))) * rcp(far_plane - near_plane);		// Projection used for perspective projection correction
+	I.z = (far_plane * depth - far_plane * near_plane) * rcp(far_plane - near_plane);				// Corrected using a perspective projection in order to have perspective-corrected interpolation.
 
 	// The octahedron space maps to a square space rotated by 45 degress on the Z axis.
 	// If we compensate for this rotation and scale up the image we can double the actual shadowmap resolution for free.
@@ -96,10 +96,10 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 
 	}
 
-	return float4(I.x,
-				  I.y,
-				  depth,
-				  1.0f);
+	return float4(I.x * depth,		// The depth value will be neutralized dividing the vector by W
+				  I.y * depth,		// the term W is explicitly used inside the perspective-corrected interpolation of the attributes (such as UVs)
+				  I.z,
+				  depth);
 
 }
 
