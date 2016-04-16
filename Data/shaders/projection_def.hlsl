@@ -68,8 +68,6 @@ float2 Rotate(float2 p, float angle) {
 /// \param flip Whether to flip the coordinates to fit the position inside the back pyramid
 float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_plane, bool flip) {
 
-	near_plane = 50.f;
-
 	float3 abs_position = abs(position);
 
 	float depth = dot(1, abs_position);																// Manhattan depth
@@ -105,8 +103,6 @@ float4 ProjectToOctahedronSpace(float3 position, float near_plane, float far_pla
 
 /// \brief Unproject a point from octahedron space to world space
 float3 UnprojectFromOctahedronSpace(float4 position_ps, float near_plane, float far_plane, bool flip) {
-
-	near_plane = 50.f;
 
 	if (flip) {
 

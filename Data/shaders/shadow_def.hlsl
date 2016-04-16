@@ -82,11 +82,11 @@ float ComputeVSMFactor(float2 moments, float depth) {
 
 	// http://developer.download.nvidia.com/SDK/10/direct3d/Source/VarianceShadowMapping/Doc/VarianceShadowMapping.pdf
 
-	if (depth < moments.x) {
+	if (depth > moments.x) {
 
 		return 1.f;
 
-	}
+    }
 
 	float variance = moments.y - moments.x * moments.x;							// E[x^2] - E[x]^2
 

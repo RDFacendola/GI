@@ -265,8 +265,8 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLi
 
 	auto& per_light_front = *per_light_->Lock<VSMPerLightCBuffer>();
 
-	per_light_front.near_plane = 0.0f;
-	per_light_front.far_plane = point_light.GetBoundingSphere().radius;
+    per_light_front.near_plane = shadow.near_plane;
+    per_light_front.far_plane = shadow.far_plane;
 	per_light_front.light_matrix = shadow.light_view_matrix.inverse();
 
 	per_light_->Unlock();

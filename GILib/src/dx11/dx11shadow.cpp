@@ -317,7 +317,8 @@ DX11VSMAtlas::DX11VSMAtlas(unsigned int size/*, unsigned int pages*/, bool full_
 
 	immediate_context_ << &context;
 
-	shadow_state_.SetDepthBias(10000, 0.1f, 10.0f);
+	shadow_state_.SetDepthBias(-10000, -0.1f, -10.0f)
+                 .SetWriteMode(true, true, D3D11_COMPARISON_GREATER);
 	
 	// Create the shadow resources
 
@@ -405,10 +406,10 @@ bool DX11VSMAtlas::ComputeShadowmap(const PointLightComponent& point_light, cons
 
 	light_transform = light_transform.inverse().eval();
 
-	// Fill the remaining shadow infos
+	// Fill the remaining shadow infos - Reverse depth
 
-	shadow.near_plane = 0.0f;
-	shadow.far_plane = point_light.GetBoundingSphere().radius;
+    shadow.near_plane = point_light.GetBoundingSphere().radius;
+	shadow.far_plane = 100.0f;
 	shadow.light_view_matrix = light_transform.matrix();
 
 	shadow.enabled = 1;
@@ -459,8 +460,8 @@ bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional
 
 	auto light_transform = ComputeOrthographicProjectionLH(ortho_size(0),
 														   ortho_size(1),
-														   z_range(0),
-										 				   z_range(1)) * light_world_transform.inverse();
+														   z_range(1),
+										 				   z_range(0)) * light_world_transform.inverse();
 	
 	// Fill the remaining shadow infos
 
@@ -546,7 +547,7 @@ void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int at
 	context.PushPipelineState(shadow_state_);
 
 	resource_cast(shadow_map)->ClearTargets(*immediate_context_, kOpaqueWhite);
-	resource_cast(shadow_map)->ClearDepth(*immediate_context_);
+	resource_cast(shadow_map)->ClearDepth(*immediate_context_, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.f);
 
 	resource_cast(shadow_map)->Bind(*immediate_context_);
 
