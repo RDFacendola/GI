@@ -65,21 +65,25 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	// Amount of energy received by the voxel
 
-	float3 voxel_flux = gPointLight.color.rgb * rcp(1000.f);		// voxel_flux = gPointLight.color.rgb * rcp(dimensions.x * dimensions.y) -> this leads to a massive loss of precision!
+	// energy = gPointLight.color.rgb * rcp(dimensions.x * dimensions.y) -> this leads to a massive loss of precision!
+	float3 energy = gPointLight.color.rgb; // *rcp(100.f);
 
-	float3 fragment_normals = DecodeNormalsCoarse(fragment_albedo.w);
+	// Project energy into SH coefficients.
 
-	// Compute photon contribution, project into SH coefficients
+	float3 sh_coefficients[4];		
 
-	float3 sh_coefficients[4];		// Each float represents the coefficient of each of the 3 color channels.
+	float3 fragment_normal = DecodeNormalsCoarse(fragment_albedo.w);
 
-	//voxel_flux *= fragment_albedo.rgb * (4.f * 3.1416f);
-	voxel_flux *= fragment_albedo.rgb * 15.f;
+	// Light is diffused in all direction around 90 degrees from surface normal.
 
-	sh_coefficients[0] = float3(1, 1, 1) * voxel_flux;
-	sh_coefficients[1] = float3(0, 0, 0) * voxel_flux;
-	sh_coefficients[2] = float3(0, 0, 0) * voxel_flux;
-	sh_coefficients[3] = float3(0, 0, 0) * voxel_flux;
+	float3 diffuse_energy = energy * fragment_albedo.rgb;
+
+	// Each float represents the coefficient of each of the 3 color channels.
+
+	sh_coefficients[0] = sqrt(1.f / (4.f * PI)) * diffuse_energy;
+	sh_coefficients[1] = fragment_normal.x * diffuse_energy;
+	sh_coefficients[2] = fragment_normal.y * diffuse_energy;
+	sh_coefficients[3] = fragment_normal.z * diffuse_energy;
 
 	// Store the SH contribution
 

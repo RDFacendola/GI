@@ -65,7 +65,7 @@ voxelization_(voxelization){
 
 	rt_cache_ = resources.Load<IRenderTargetCache, IRenderTargetCache::Singleton>({});
 
-	light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\lighting.hlsl" });
+	light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\lighting.hlsl" });
 	
 	shadow_atlas_ = make_unique<DX11VSMAtlas>(2048/*, 1*/, true);
 
@@ -83,11 +83,13 @@ voxelization_(voxelization){
 
 	cb_point_light_ = new DX11StructuredBuffer(sizeof(PointLight));
 
-	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ app.GetDirectory() + L"Data\\Shaders\\voxel\\inject_light.hlsl" });
+	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
 	// One-time setup
 
 	bool check;
+
+	// Light accumulation setup
 
 	check = light_shader_->SetInput(kLightParametersTag,
 									ObjectPtr<IStructuredBuffer>(light_accumulation_parameters_));
@@ -110,7 +112,7 @@ voxelization_(voxelization){
 	check = light_shader_->SetInput(kVSMShadowAtlasTag,
 									ObjectPtr<ITexture2D>(shadow_atlas_->GetAtlas()));
 
-	// SH setup
+	// Light injection
 
 	light_injection_->SetInput(DX11Voxelization::kVoxelizationTag, 
 							   voxelization_.GetVoxelizationParams());
@@ -152,14 +154,9 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 	shadow_atlas_->Reset();
 
 	auto point_lights = point_lights_->Lock<PointLight>();
-	
 	auto point_shadows = point_shadows_->Lock<PointShadow>();
-
 	auto directional_lights = directional_lights_->Lock<DirectionalLight>();
-	
 	auto directional_shadows = directional_shadows_->Lock<DirectionalShadow>();
-
-	auto light_accumulation_parameters = light_accumulation_parameters_->Lock<LightAccumulationParameters>();
 
 	unsigned int point_light_index = 0;
 	unsigned int directional_light_index = 0;
@@ -190,23 +187,27 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 		}
 
 	}
+	
+	point_lights_->Unlock();
+	point_shadows_->Unlock();
+	directional_lights_->Unlock();
+	directional_shadows_->Unlock();
+
+	graphics_.PopEvent();
+	graphics_.PopEvent();
+
+	// Light accumulation
+
+	graphics_.PushEvent(L"Light accumulation");
+
+	auto light_accumulation_parameters = light_accumulation_parameters_->Lock<LightAccumulationParameters>();
 
 	light_accumulation_parameters->camera_position = frame_info.camera->GetTransformComponent().GetPosition();
 	light_accumulation_parameters->inv_view_proj_matrix = frame_info.view_proj_matrix.inverse();
 	light_accumulation_parameters->point_lights = point_light_index;
 	light_accumulation_parameters->directional_lights = directional_light_index;
-
-	point_lights_->Unlock();
-	point_shadows_->Unlock();
-	directional_lights_->Unlock();
-	directional_shadows_->Unlock();
+	
 	light_accumulation_parameters_->Unlock();
-	
-	graphics_.PopEvent();
-
-	// These entities may change from frame to frame
-	
-	graphics_.PushEvent(L"Light accumulation");
 
 	bool check;
 
