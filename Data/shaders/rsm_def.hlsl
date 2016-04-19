@@ -74,7 +74,7 @@ void PSMain(PSIn input, out RSMBuffer output) {
 
 	output.albedo_normal.xyz = gDiffuseMap.Sample(gDiffuseSampler, input.uv).xyz;
 
-	// Normal - Encoded as 2x4-bit values, we don't need good precision anyway
+	// Normal - Encoded as 8-bit unorm, we don't need good precision anyway
 
 	output.albedo_normal.w = EncodeNormalsCoarse(input.normal_ws);
 

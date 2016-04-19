@@ -37,6 +37,13 @@ struct VoxelInfo {
 
 };
 
+/// \brief Get the number of SH bands stored for each voxel in a specified cascade.
+uint GetSHBandCount(uint cascade_index) {
+
+	return 2;		// 2 SH bands, for now
+
+}
+
 /// \brief Get the total amount of voxels inside a cascade
 uint GetCascadeSize() {
 
@@ -127,6 +134,8 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out Vo
 
 	bool is_inside_clipmap = index >= GetClipmapPyramidSize() && index < GetClipmapPyramidSize() + GetCascadeSize() * (1 + gCascades);
 
+//#define DENSE_VOXEL_INFO
+
 // Define this MACRO if access of the whole SH structure is needed. This doesn't work if the structure is sparse! Default is NOT DEFINED.
 #ifndef DENSE_VOXEL_INFO
 
@@ -183,7 +192,7 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, float3 position_ws
 
 	voxel_info.sh_address = voxel_coordinates + (gVoxelResolution >> 1);
 
-	voxel_info.sh_bands = 2;			// 2 bands, for now
+	voxel_info.sh_bands = GetSHBandCount(voxel_info.cascade);
 
 	voxel_info.padding = 0;
 

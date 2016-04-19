@@ -27,7 +27,7 @@ float3 ComputePhong(float3 light_direction, float3 camera_position, SurfaceData 
 
 	float3 diffuse = surface.albedo.rgb * saturate(dot(light_direction, surface.normal));							// Diffuse contribution
 
-	float3 specular = surface.specular * saturate(pow(saturate(dot(reflection_direction, view_direction)),										// Specular contribution
+	float3 specular = surface.specular * saturate(pow(saturate(dot(reflection_direction, view_direction)),			// Specular contribution
 													  surface.shininess));
 
 	float3 color = diffuse + specular;

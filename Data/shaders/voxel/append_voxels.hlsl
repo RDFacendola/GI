@@ -21,6 +21,8 @@ cbuffer PerFrame {
 [numthreads(N, 1, 1)]
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
+//#define SHOW_CASCADE 4
+
 	VoxelInfo voxel_info;
 
 	uint dummy;
@@ -30,11 +32,19 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 		float3 center = abs(voxel_info.center - gCenter);
 		
+#ifndef SHOW_CASCADE
+
 		// Append only if the voxel is the most precise available
 
 		if(voxel_info.cascade == (int)gCascades ||
 		   max(center.x, max(center.y, center.z)) > (gVoxelResolution >> (voxel_info.cascade + 2)) * gVoxelSize){
-			
+
+#else
+
+		if(SHOW_CASCADE == voxel_info.cascade){
+
+#endif
+
 			// Reject if the center of the voxel is not visible from the current camera
 
             float4 transformed_center = mul(gViewProjection, float4(voxel_info.center, 1));

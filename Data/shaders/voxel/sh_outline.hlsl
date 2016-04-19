@@ -44,7 +44,7 @@ VSOut VSMain(VSIn input){
 
 	// Deformation of the SH mesh
 
-	float magnitude = Luminance(output.color.rgb);
+	float magnitude = (max(output.color.r, max(output.color.g, output.color.b)) + min(output.color.r, min(output.color.g, output.color.b))) * 0.5f;
 	
 	float3 position = (input.position.xyz * voxel_info.size * magnitude) + voxel_info.center;
 	
