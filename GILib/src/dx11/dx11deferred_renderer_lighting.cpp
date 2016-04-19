@@ -85,7 +85,7 @@ voxelization_(voxelization){
 
 	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
-	// One-time setup
+	light_filtering_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\filter_light.hlsl" });
 
 	bool check;
 
@@ -128,6 +128,17 @@ voxelization_(voxelization){
 	
 	light_injection_->SetInput("CBPointLight",
 							   ObjectPtr<IStructuredBuffer>(cb_point_light_));
+
+	// Light filtering setup
+
+	light_filtering_->SetInput(DX11Voxelization::kVoxelizationTag,
+							   voxelization_.GetVoxelizationParams());
+
+	light_filtering_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
+							   voxelization_.GetVoxelAddressTable());
+
+	light_filtering_->SetOutput(DX11Voxelization::kVoxelSHTag,
+								voxelization_.GetVoxelSH());
 
 }
 
@@ -194,6 +205,20 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 	directional_shadows_->Unlock();
 
 	graphics_.PopEvent();
+
+	// Light filtering
+
+	graphics_.PushEvent(L"Light filtering");
+
+	// Each threads sample a 2x2x2 region and store the combined result in the upper cascade.
+
+	unsigned int dispatch_size = (voxelization_.GetVoxelResolution()) >> 1;
+
+	light_filtering_->Dispatch(*immediate_context_,
+							   dispatch_size,
+							   dispatch_size,
+							   dispatch_size);
+							   
 	graphics_.PopEvent();
 
 	// Light accumulation

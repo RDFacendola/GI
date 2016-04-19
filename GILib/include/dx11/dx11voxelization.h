@@ -83,6 +83,10 @@ namespace gi_lib {
 			/// \brief Get the total grid size.
 			float GetGridSize() const;
 
+			/// \brief Get the amount of voxel along each axis for each cascade.
+			/// It is a power of two
+			unsigned int GetVoxelResolution() const;
+
 		private:
 
 			/// \brief Initialize the shader resources required for voxelization.
@@ -154,6 +158,12 @@ namespace gi_lib {
 		inline ObjectPtr<IStructuredBuffer> DX11Voxelization::GetVoxelizationParams() const {
 
 			return ObjectPtr<IStructuredBuffer>(cb_voxelization_);
+
+		}
+
+		inline unsigned int DX11Voxelization::GetVoxelResolution() const {
+
+			return voxel_resolution_;
 
 		}
 
