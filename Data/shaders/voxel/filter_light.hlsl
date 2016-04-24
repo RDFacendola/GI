@@ -43,8 +43,6 @@ void Filter(uint3 dispatch_thread_id, uint coefficient, uint cascade, uint chann
 [numthreads(N, N, N)]
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	
-	return;
-
 	// Each thread accumulate the light from 2x2x2 area
 
 	// Spherical harmonics are linear, meaning that the sum of different SH is also the sum of their coefficients

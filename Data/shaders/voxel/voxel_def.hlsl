@@ -132,7 +132,8 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out Vo
 	// WORKAROUND (***) - Get and translate the actual address
 	// TODO: manage the case where the index is negative!
 
-	bool is_inside_clipmap = index >= GetClipmapPyramidSize() && index < GetClipmapPyramidSize() + GetCascadeSize() * (1 + gCascades);
+	bool is_inside_clipmap = index >= GetClipmapPyramidSize() && 
+							 index < GetClipmapPyramidSize() + GetCascadeSize() * (1 + gCascades);
 
 //#define DENSE_VOXEL_INFO
 

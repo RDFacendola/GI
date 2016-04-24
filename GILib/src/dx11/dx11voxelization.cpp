@@ -191,7 +191,7 @@ void DX11Voxelization::DebugDrawer::InitResources() {
 	
 	sh_draw_indirect_args_ = new DX11GPStructuredArray(DX11GPStructuredArray::CreateDrawIndirectArguments{ 4 });
 
-	voxel_append_buffer_ = new DX11GPStructuredArray(IGPStructuredArray::CreateAppendBuffer{ std::powf(subject_.GetVoxelCount(), 1.f), sizeof(VoxelInfo) });		// 0.85f is just an heuristic...
+	voxel_append_buffer_ = new DX11GPStructuredArray(IGPStructuredArray::CreateAppendBuffer{ subject_.GetVoxelCount(), sizeof(VoxelInfo) });		// 0.85f is just an heuristic...
 
 	cb_frame_ = new DX11StructuredBuffer(sizeof(CBFrame));
 	
@@ -718,17 +718,21 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 			
 			for (unsigned int subset_index = 0; subset_index < mesh->GetSubsetCount(); ++subset_index) {
 
-				// Voxelize the subset
+				if (mesh->GetFlags(subset_index) && MeshFlags::kShadowcaster) {
 
-				graphics.PushEvent(mesh->GetSubsetName(subset_index));
+					// Voxelize the subset
 
-				voxel_material_->Commit(device_context);
+					graphics.PushEvent(mesh->GetSubsetName(subset_index));
 
-				mesh->DrawSubset(device_context,
-								 subset_index,
-								 cascades_ + 1);
-				
-				graphics.PopEvent();
+					voxel_material_->Commit(device_context);
+
+					mesh->DrawSubset(device_context,
+						subset_index,
+						cascades_ + 1);
+
+					graphics.PopEvent();
+
+				}
 
 			}
 
@@ -796,10 +800,12 @@ unsigned int DX11Voxelization::GetVoxelCount() const {
 
 	auto cascade_size = voxel_resolution_ * voxel_resolution_ * voxel_resolution_;		// Amount of voxels in each cascade
 
-	auto pyramid_size = static_cast<unsigned int>(Math::SumGeometricSeries(cascade_size, 
-																		   0.125f, 
-																		   std::log2f(static_cast<float>(voxel_resolution_)) + 1.f));
+	//auto pyramid_size = static_cast<unsigned int>(Math::SumGeometricSeries(cascade_size, 
+	//																	   0.125f, 
+	//																	   std::log2f(static_cast<float>(voxel_resolution_)) + 1.f));
 
-	return cascades_ * cascade_size + pyramid_size;
+	auto pyramid_size = (cascade_size - 1) / 7;
+
+	return (1 + cascades_) * cascade_size + pyramid_size;
 
 }

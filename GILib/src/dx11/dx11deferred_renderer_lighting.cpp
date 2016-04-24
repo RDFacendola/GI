@@ -57,8 +57,6 @@ voxelization_(voxelization){
 	
 	// Light accumulation setup
 
-	auto&& app = Application::GetInstance();
-
 	auto&& resources = DX11Resources::GetInstance();
 
 	gp_cache_ = resources.Load <IGPTexture2DCache, IGPTexture2DCache::Singleton>({});
@@ -323,11 +321,11 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLi
 
 }
 
-void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const DirectionalLightComponent& directional_light, float aspect_ratio, DirectionalLight& light, DirectionalShadow& shadow) {
+void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const DirectionalLightComponent& directional_light, float /*aspect_ratio*/, DirectionalLight& light, DirectionalShadow& shadow) {
 
-	auto& graphics = DX11Graphics::GetInstance();
+	/*auto& graphics = DX11Graphics::GetInstance();*/
 
-	auto& device_context = *graphics.GetContext().GetImmediateContext();
+	/*auto& device_context = *graphics.GetContext().GetImmediateContext();*/
 
 	// Light
 

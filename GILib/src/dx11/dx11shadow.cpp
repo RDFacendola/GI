@@ -442,21 +442,14 @@ bool DX11VSMAtlas::ComputeShadowmap(const DirectionalLightComponent& directional
 
 	Vector2f ortho_size(10000.f, 10000.f);
 
-	auto& camera = *scene.GetMainCamera();
-
 	Sphere domain{ Vector3f::Zero(), 15000.f };
 
 	auto lit_geometry = scene.GetMeshHierarchy().GetIntersections(domain);
 
-	
 	auto z_range = GetZRange(lit_geometry,
 							 directional_light.GetDirection());
 
 	auto light_world_transform = directional_light.GetWorldTransform().matrix();
-
-/*
-	light_world_transform.col(3) = Math::ToVector4(camera.GetTransformComponent().GetPosition() + camera.GetTransformComponent().GetForward() * (camera.GetMaximumDistance() * 0.5f),
-												   1.0f);*/
 
 	auto light_transform = ComputeOrthographicProjectionLH(ortho_size(0),
 														   ortho_size(1),

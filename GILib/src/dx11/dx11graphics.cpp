@@ -639,8 +639,6 @@ DX11Context::DX11Context(COMPtr<ID3D11DeviceContext> immediate_context) :
 
 DX11Context::~DX11Context() {
 
-	immediate_context_->ClearState();
-
 }
 
 void DX11Context::PushPipelineState(const DX11PipelineState& pipeline_state) {
@@ -669,6 +667,8 @@ void DX11Context::PopPipelineState() {
 }
 
 void DX11Context::Flush(ID3D11Device& device) {
+
+	immediate_context_->ClearState();
 
 	D3D11_QUERY_DESC query_desc;
 	ID3D11Query* query;
@@ -761,7 +761,7 @@ DX11Graphics::DX11Graphics(): Graphics(){
 
 	// Events
 
-	auto hr = context->QueryInterface(__uuidof(events), reinterpret_cast<void**>(&events));
+	context->QueryInterface(__uuidof(events), reinterpret_cast<void**>(&events));
 
 	// Move the ownership
 	
