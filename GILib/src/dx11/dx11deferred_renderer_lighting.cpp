@@ -158,7 +158,7 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 		
 	// Clear the shadow atlas from any existing shadowmap
 
-	graphics_.PushEvent(L"Shadowmap + Light Injection");
+	graphics_.PushEvent(L"Shadowmaps");
 
 	shadow_atlas_->Reset();
 
@@ -177,7 +177,8 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 			UpdateLight(*frame_info.scene,
 						point_light,
 						point_lights[point_light_index], 
-						point_shadows[point_light_index]);
+						point_shadows[point_light_index],
+						frame_info.enable_global_illumination);
 
 			++point_light_index;
 
@@ -189,7 +190,8 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 						directional_light,
 						frame_info.aspect_ratio,
 						directional_lights[directional_light_index],
-						directional_shadows[directional_light_index]);
+						directional_shadows[directional_light_index],
+						frame_info.enable_global_illumination);
 
 			++directional_light_index;
 
@@ -204,20 +206,24 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 	graphics_.PopEvent();
 
-	// Light filtering
+	if (frame_info.enable_global_illumination) {
+		
+		// Light filtering
 
-	graphics_.PushEvent(L"Light filtering");
+		graphics_.PushEvent(L"Light filtering");
 
-	// Each threads sample a 2x2x2 region and store the combined result in the upper cascade.
+		// Each threads sample a 2x2x2 region and store the combined result in the upper cascade.
 
-	unsigned int dispatch_size = (voxelization_.GetVoxelResolution()) >> 1;
+		unsigned int dispatch_size = (voxelization_.GetVoxelResolution()) >> 1;
 
-	light_filtering_->Dispatch(*immediate_context_,
-							   dispatch_size,
-							   dispatch_size,
-							   dispatch_size);
+		light_filtering_->Dispatch(*immediate_context_,
+								   dispatch_size,
+								   dispatch_size,
+								   dispatch_size);
 							   
-	graphics_.PopEvent();
+		graphics_.PopEvent();
+
+	}
 
 	// Light accumulation
 
@@ -259,7 +265,7 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 }
 
-void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLightComponent& point_light, PointLight& light, PointShadow& shadow) {
+void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLightComponent& point_light, PointLight& light, PointShadow& shadow, bool light_injection) {
 
 	auto& graphics = DX11Graphics::GetInstance();
 
@@ -283,36 +289,40 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLi
 									shadow,
 									&shadow_map);
 	
-	// Light injection
+	if (light_injection) {
 
-	graphics_.PushEvent(L"Light injection");
+		// Light injection
 
-	auto& per_light_front = *per_light_->Lock<VSMPerLightCBuffer>();
+		graphics_.PushEvent(L"Light injection");
 
-    per_light_front.near_plane = shadow.near_plane;
-    per_light_front.far_plane = shadow.far_plane;
-	per_light_front.light_matrix = shadow.light_view_matrix.inverse();
+		auto& per_light_front = *per_light_->Lock<VSMPerLightCBuffer>();
 
-	per_light_->Unlock();
+		per_light_front.near_plane = shadow.near_plane;
+		per_light_front.far_plane = shadow.far_plane;
+		per_light_front.light_matrix = shadow.light_view_matrix.inverse();
 
-	auto point_light_buffer = cb_point_light_->Lock<PointLight>();
+		per_light_->Unlock();
 
-	*point_light_buffer = light;
+		auto point_light_buffer = cb_point_light_->Lock<PointLight>();
 
-	cb_point_light_->Unlock();
+		*point_light_buffer = light;
 
-	light_injection_->SetInput(kVarianceShadowMapTag,
-							   (*shadow_map)[0]);
+		cb_point_light_->Unlock();
 
-	light_injection_->SetInput(kReflectiveShadowMapTag,
-							   (*shadow_map)[1]);
+		light_injection_->SetInput(kVarianceShadowMapTag,
+								   (*shadow_map)[0]);
 
-	light_injection_->Dispatch(device_context,
-							   shadow_map->GetWidth(),
-							   shadow_map->GetHeight(),
-							   1);
+		light_injection_->SetInput(kReflectiveShadowMapTag,
+								   (*shadow_map)[1]);
 
-	graphics_.PopEvent();
+		light_injection_->Dispatch(device_context,
+								   shadow_map->GetWidth(),
+								   shadow_map->GetHeight(),
+								   1);
+
+		graphics_.PopEvent();
+
+	}
 
 	// Cleanup
 
@@ -321,7 +331,7 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLi
 
 }
 
-void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const DirectionalLightComponent& directional_light, float /*aspect_ratio*/, DirectionalLight& light, DirectionalShadow& shadow) {
+void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const DirectionalLightComponent& directional_light, float /*aspect_ratio*/, DirectionalLight& light, DirectionalShadow& shadow, bool light_injection) {
 
 	/*auto& graphics = DX11Graphics::GetInstance();*/
 
@@ -342,21 +352,24 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const Directi
 									&shadow_map);
 
 	// Light injection
+	if (light_injection) {
 
-	graphics_.PushEvent(L"Light injection");
+		graphics_.PushEvent(L"Light injection");
 
-	light_injection_->SetInput(kVarianceShadowMapTag,
-							   (*shadow_map)[0]);
+		light_injection_->SetInput(kVarianceShadowMapTag,
+								   (*shadow_map)[0]);
 
-	light_injection_->SetInput(kReflectiveShadowMapTag,
-							   (*shadow_map)[1]);
+		light_injection_->SetInput(kReflectiveShadowMapTag,
+								   (*shadow_map)[1]);
 
-	//light_injection_->Dispatch(device_context,
-	//						   shadow_map->GetWidth(),
-	//						   shadow_map->GetHeight(),
-	//						   1);
+		//light_injection_->Dispatch(device_context,
+		//						   shadow_map->GetWidth(),
+		//						   shadow_map->GetHeight(),
+		//						   1);
 
-	graphics_.PopEvent();
+		graphics_.PopEvent();
+
+	}
 
 	// Cleanup
 

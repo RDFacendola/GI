@@ -29,8 +29,9 @@ namespace gi_lib {
 
 			float aspect_ratio;
 
-			float time_delta;				///< \brief Time passed since the last frame, in seconds.
+			float time_delta;					///< \brief Time passed since the last frame, in seconds.
 
+			bool enable_global_illumination;	///< \brief Whether the global illumination is active or not.
 		};
 
 

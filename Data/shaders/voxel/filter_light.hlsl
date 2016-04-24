@@ -49,12 +49,9 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	for (uint cascade_index = gCascades - 1; cascade_index > 0; --cascade_index) {
 
-		uint coefficient_count = GetSHBandCount(cascade_index);	
+		uint band_count = GetSHBandCount(cascade_index);	// Some SH contribution are lost if the number of bands does not match
 
-		coefficient_count *= coefficient_count;		// The target cascade may have a higher number of bands, we cannot reconstruct those!
-
-		[flatten]
-		for (uint coefficient_index = 0; coefficient_index < coefficient_count; ++coefficient_index) {
+		for (uint coefficient_index = 0; coefficient_index < band_count * band_count; ++coefficient_index) {
 
 			Filter(dispatch_thread_id, coefficient_index, cascade_index, 0);	// Red
 			Filter(dispatch_thread_id, coefficient_index, cascade_index, 1);	// Green

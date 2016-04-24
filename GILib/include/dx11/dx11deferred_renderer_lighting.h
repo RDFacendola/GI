@@ -111,14 +111,14 @@ namespace gi_lib {
 			/// \param point_light Source light.
 			/// \param light Contains the informations of the point light. Output.
 			/// \param shadow Contains the informations of the point shadow. Output.
-			void UpdateLight(const Scene& scene, const PointLightComponent& point_light, PointLight& light, PointShadow& shadow);
+			void UpdateLight(const Scene& scene, const PointLightComponent& point_light, PointLight& light, PointShadow& shadow, bool light_injection);
 
 			/// \brief Write the informations about a directional light and its shadow.
 			/// \param directional_light Source light.
 			/// \param aspect_ratio Aspect ratio of the client viewport.
 			/// \param light Contains the informations of the directional light. Output.
 			/// \param shadow Contains the informations of the directional shadow. Output.
-			void UpdateLight(const Scene& scene, const DirectionalLightComponent& directional_light, float aspect_ratio, DirectionalLight& light, DirectionalShadow& shadow);
+			void UpdateLight(const Scene& scene, const DirectionalLightComponent& directional_light, float aspect_ratio, DirectionalLight& light, DirectionalShadow& shadow, bool light_injection);
 
 			windows::COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
 
