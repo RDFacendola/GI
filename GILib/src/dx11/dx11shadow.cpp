@@ -271,11 +271,12 @@ namespace {
 			}
 
 			// Create the frustum
-			auto& camera_transform = camera.GetTransformComponent();
+			auto& camera_transform = camera.GetWorldTransform();
+			auto camera_forward = Math::ToVector3(camera_transform.matrix().col(2)).normalized();
 
 			auto& light_transform = *directional_light.GetComponent<TransformComponent>();
 			
-			Vector3f frustum_center = camera_transform.GetPosition() + camera_transform.GetForward() * (camera.GetMinimumDistance() + camera.GetMaximumDistance()) * 0.5f;
+			Vector3f frustum_center = camera_transform.translation() + camera_forward * (camera.GetMinimumDistance() + camera.GetMaximumDistance()) * 0.5f;
 
 			Vector3f light_forward = light_transform.GetForward();
 			Vector3f light_right = light_transform.GetRight();

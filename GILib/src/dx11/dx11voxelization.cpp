@@ -681,7 +681,7 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 	// Voxelize the nodes inside the voxelization domain grid
 	
-	Vector3f grid_center = frame_info.camera->GetTransformComponent().GetPosition();		// Center of the voxelization, snapped at voxel boundaries to prevent flickering
+	Vector3f grid_center = frame_info.camera->GetWorldTransform().translation();		// Center of the voxelization, snapped at voxel boundaries to prevent flickering
 
 	float snap = voxel_size_ / (1 << cascades_);
 

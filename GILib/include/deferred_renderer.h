@@ -81,6 +81,11 @@ namespace gi_lib{
 		/// \brief Overlay the SH data on top of a given image.
 		virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool xray) = 0;
 
+		/// \brief Lock or unlock the camera. Debug method.
+		/// Locking a camera may be useful to analyze the behavior of camera-dependent aspect of the scene, such as frustum culling
+		/// LOD switching, multi-resolution voxelization and more.
+		virtual void LockCamera(bool lock) = 0;
+
 	private:
 
 		Scene& scene_;		///< \brief Scene this render refers to.

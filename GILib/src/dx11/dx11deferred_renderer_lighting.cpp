@@ -225,7 +225,7 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 	auto light_accumulation_parameters = light_accumulation_parameters_->Lock<LightAccumulationParameters>();
 
-	light_accumulation_parameters->camera_position = frame_info.camera->GetTransformComponent().GetPosition();
+	light_accumulation_parameters->camera_position = frame_info.camera->GetWorldTransform().translation();
 	light_accumulation_parameters->inv_view_proj_matrix = frame_info.view_proj_matrix.inverse();
 	light_accumulation_parameters->point_lights = point_light_index;
 	light_accumulation_parameters->directional_lights = directional_light_index;

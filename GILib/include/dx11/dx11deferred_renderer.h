@@ -102,6 +102,8 @@ namespace gi_lib{
 
 			virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool xray) override;
 
+			virtual void LockCamera(bool lock) override;
+
 		private:
 
 			/// \brief Draw the current scene on the GBuffer.
@@ -138,6 +140,12 @@ namespace gi_lib{
 			bool enable_global_illumination_;									///< \brief Whether to enable the global illumination.
 
 			std::unique_ptr<DX11Voxelization> voxelization_;					///< \brief Used to calculate the dynamic voxelization of the scene.
+
+			// Debug
+
+			bool lock_camera_;													///< \brief Whether the camera is locked or not.
+
+			CameraComponent* locked_camera_;									///< \brief The locked camera.
 
 		};
 
@@ -188,6 +196,12 @@ namespace gi_lib{
 		inline ObjectPtr<ITexture2D> DX11DeferredRenderer::DrawSH(const ObjectPtr<ITexture2D>& image, bool xray) {
 
 			return voxelization_->DrawSH(image, xray);
+
+		}
+
+		inline void DX11DeferredRenderer::LockCamera(bool lock) {
+
+			lock_camera_ = lock;
 
 		}
 

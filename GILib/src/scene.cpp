@@ -538,6 +538,8 @@ CameraComponent::CameraComponent(){
 	field_of_view_ = Math::DegToRad(45);
 	minimum_distance_ = 1.0f;
 	maximum_distance_ = 10000.f;
+	transform_component_ = nullptr;
+	transform_ = Affine3f::Identity();
 
 }
 
@@ -607,7 +609,7 @@ Frustum CameraComponent::GetViewFrustum(float aspect_ratio) const{
 
 	if (projection_type_ == ProjectionType::Perspective){
 
-		return ComputeProjectiveViewFrustum(transform_->GetWorldTransform(),
+		return ComputeProjectiveViewFrustum(GetWorldTransform(),
 											minimum_distance_,
 											maximum_distance_,
 											field_of_view_,
@@ -616,7 +618,7 @@ Frustum CameraComponent::GetViewFrustum(float aspect_ratio) const{
 	}
 	else if(projection_type_ == ProjectionType::Ortographic){
 
-		return ComputeOrthographicViewFrustum(transform_->GetWorldTransform(),
+		return ComputeOrthographicViewFrustum(GetWorldTransform(),
 											  minimum_distance_,
 											  maximum_distance_,
 											  ortho_size_,
@@ -645,8 +647,19 @@ void CameraComponent::Initialize(){
 
 	// Initialize the transform component
 
-	transform_ = GetComponent<TransformComponent>();
-
+	transform_component_ = GetComponent<TransformComponent>();
+	
 }
 
 void CameraComponent::Finalize(){}
+
+void CameraComponent::Clone(CameraComponent& target) const{
+
+	target.projection_type_ = projection_type_;
+	target.field_of_view_ = field_of_view_;
+	target.minimum_distance_ = minimum_distance_;
+	target.maximum_distance_ = maximum_distance_;
+	target.transform_component_ = nullptr;
+	target.transform_ = GetWorldTransform();
+	
+}

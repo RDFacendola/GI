@@ -161,6 +161,7 @@ void GILogic::Initialize(Window& window){
 	enable_voxel_draw_ = true;
 	enable_sh_draw_ = true;
 	enable_xray_ = false;
+	lock_camera_ = false;
 
 }
 
@@ -306,6 +307,15 @@ void GILogic::Update(const Time & time){
 		enable_xray_ = !enable_xray_;
 
 	}
+
+	// "C": toggle lock camera
+	if (input_->GetKeyboardStatus().IsPressed(46)) {
+
+		lock_camera_ = !lock_camera_;
+
+		deferred_renderer_->LockCamera(lock_camera_);
+
+	}
 	
 	if (!paused_) {
 
@@ -363,8 +373,8 @@ void GILogic::Update(const Time & time){
 	// Render the next frame
 
 	auto next_frame = deferred_renderer_->Draw(time,
-											   output_->GetVideoMode().horizontal_resolution * 1.0f,
-											   output_->GetVideoMode().vertical_resolution * 1.0f);
+											   output_->GetVideoMode().horizontal_resolution,
+											   output_->GetVideoMode().vertical_resolution);
 
 	// Post processing
 

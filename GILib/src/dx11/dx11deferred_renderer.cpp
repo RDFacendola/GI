@@ -128,7 +128,8 @@ void DX11DeferredRendererMaterial::SetMatrix(const Affine3f& world, const Matrix
 
 DX11DeferredRenderer::DX11DeferredRenderer(const RendererConstructionArgs& arguments) :
 DeferredRenderer(arguments.scene),
-graphics_(DX11Graphics::GetInstance()){
+graphics_(DX11Graphics::GetInstance()),
+lock_camera_(false){
 
 	auto&& device = *DX11Graphics::GetInstance().GetDevice();
 
@@ -154,6 +155,10 @@ graphics_(DX11Graphics::GetInstance()){
 
 	lighting_ = std::make_unique<DX11DeferredRendererLighting>(*voxelization_);
 
+	// Debug
+
+	locked_camera_ = Component::Create<CameraComponent>();
+
 }
 
 DX11DeferredRenderer::~DX11DeferredRenderer(){
@@ -161,7 +166,8 @@ DX11DeferredRenderer::~DX11DeferredRenderer(){
 	immediate_context_ = nullptr;
 	lighting_ = nullptr;
 	voxelization_ = nullptr;
-	
+	locked_camera_->Dispose();
+
 }
 
 Matrix4f DX11DeferredRenderer::GetViewProjectionMatrix(float aspect_ratio) const {
@@ -202,12 +208,24 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 		FrameInfo frame_info;
 
 		frame_info.scene = &GetScene();
-		frame_info.camera = main_camera;
 		frame_info.aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 		frame_info.width = width;
 		frame_info.height = height;
-		frame_info.view_proj_matrix = GetViewProjectionMatrix(frame_info.aspect_ratio);
+		frame_info.view_proj_matrix = GetViewProjectionMatrix(frame_info.aspect_ratio);		// This matrix must be the "real" view projection matrix, regardless of whether the camera is locked or not.
 		frame_info.time_delta = time.GetDeltaSeconds();
+
+		if (!lock_camera_) {
+
+			frame_info.camera = main_camera;
+			
+			main_camera->Clone(*locked_camera_);
+
+		}
+		else {
+
+			frame_info.camera = locked_camera_;
+
+		}
 
 		DrawGBuffer(frame_info);							// Scene -> GBuffer
 		

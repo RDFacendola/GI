@@ -560,15 +560,14 @@ namespace gi_lib{
 		/// \return Return the view-space matrix.
 		Affine3f GetViewTransform() const;
 
-		/// \brief Access the transform component of this camera.
-		/// \return Returns the transform component of this camera.
-		TransformComponent& GetTransformComponent();
-
-		/// \brief Access the transform component of this camera.
-		/// \return Returns the transform component of this camera.
-		const TransformComponent& GetTransformComponent() const;
+		/// \brief Get the world transform of the camera.
+		/// \return Returns the world transform of the camera.
+		const Affine3f& GetWorldTransform() const;
 
 		virtual TypeSet GetTypes() const override;
+
+		/// \brief Clone the component inside another one.
+		void Clone(CameraComponent& target) const;
 
 	protected:
 
@@ -578,22 +577,24 @@ namespace gi_lib{
 
 	private:
 
-		ProjectionType projection_type_;	///< \brief Projection type.
+		ProjectionType projection_type_;				///< \brief Projection type.
 
 		union {
 
-			float field_of_view_;			///< \brief Vertical field of view.
+			float field_of_view_;						///< \brief Vertical field of view.
 
-			float ortho_size_;				///<\ brief Vertical orthographic size.
+			float ortho_size_;							///<\ brief Vertical orthographic size.
 
 		};
 		
-		float minimum_distance_;			///< \brief Near clipping plane distance.
+		float minimum_distance_;						///< \brief Near clipping plane distance.
 
-		float maximum_distance_;			///< \brief Far clipping plane distance.
+		float maximum_distance_;						///< \brief Far clipping plane distance.
 
-		TransformComponent* transform_;		///< \brief Transform component needed to compute the view frustum.
+		Affine3f transform_;							///< \brief World transform matrix.
 
+		TransformComponent* transform_component_;		///< \brief Transform component needed to compute the view frustum.
+		
 	};
 
 	////////////////////////////////// SCENE //////////////////////////////
@@ -769,19 +770,15 @@ namespace gi_lib{
 
 	inline Affine3f CameraComponent::GetViewTransform() const{
 
-		return transform_->GetWorldTransform().inverse();
+		return GetWorldTransform().inverse();
 
 	}
 
-	inline TransformComponent& CameraComponent::GetTransformComponent() {
+	inline const Affine3f& CameraComponent::GetWorldTransform() const {
 
-		return *transform_;
-
-	}
-
-	inline const TransformComponent& CameraComponent::GetTransformComponent() const {
-
-		return *transform_;
+		return transform_component_ ?
+			   transform_component_->GetWorldTransform() :
+			   transform_;
 
 	}
 
