@@ -178,6 +178,8 @@ namespace gi_lib {
 
 			DX11Voxelization& voxelization_;									///< \brief Used to perform scene voxelization, hold the lighting acceleration structure.
 
+			ObjectPtr<DX11Computation> indirect_light_shader_;					///< \brief Shader performing the indirect light accumulation stage.
+
 			ObjectPtr<DX11Computation> light_injection_;						///< \brief Shader performing the dynamic voxelization.
 
 			ObjectPtr<DX11Computation> light_filtering_;						///< \brief Shader used to filter the light after photon injection.

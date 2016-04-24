@@ -66,7 +66,7 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	// Amount of energy received by the voxel
 
 	// energy = gPointLight.color.rgb * rcp(dimensions.x * dimensions.y) -> this leads to a massive loss of precision!
-	float3 energy = gPointLight.color.rgb; // *rcp(100.f);
+	float3 energy = gPointLight.color.rgb * rcp(100.f);
 
 	// Project energy into SH coefficients.
 

@@ -80,10 +80,12 @@ voxelization_(voxelization){
 	per_light_ = new DX11StructuredBuffer(sizeof(VSMPerLightCBuffer));
 
 	cb_point_light_ = new DX11StructuredBuffer(sizeof(PointLight));
-
+	
 	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
 	light_filtering_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\filter_light.hlsl" });
+
+	indirect_light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\cone_tracing.hlsl" });
 
 	bool check;
 
@@ -137,6 +139,22 @@ voxelization_(voxelization){
 
 	light_filtering_->SetOutput(DX11Voxelization::kVoxelSHTag,
 								voxelization_.GetVoxelSH());
+
+	// Indirect lighting
+
+	indirect_light_shader_->SetInput(DX11Voxelization::kVoxelizationTag, 
+									 voxelization_.GetVoxelizationParams());
+
+	indirect_light_shader_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
+									 voxelization_.GetVoxelAddressTable());
+
+	indirect_light_shader_->SetInput(DX11Voxelization::kVoxelSHTag,
+									 voxelization_.GetVoxelSH()->GetTexture());
+
+	indirect_light_shader_->SetInput(kLightParametersTag,
+									 ObjectPtr<IStructuredBuffer>(light_accumulation_parameters_));
+
+
 
 }
 
@@ -227,7 +245,7 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 	// Light accumulation
 
-	graphics_.PushEvent(L"Light accumulation");
+	graphics_.PushEvent(L"Direct light accumulation");
 
 	auto light_accumulation_parameters = light_accumulation_parameters_->Lock<LightAccumulationParameters>();
 
@@ -260,6 +278,33 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 							1);
 
 	graphics_.PopEvent();
+
+	// Indirect lighting
+
+	if (frame_info.enable_global_illumination) {
+
+		graphics_.PushEvent(L"Indirect light accumulation");
+
+		check = indirect_light_shader_->SetInput(kAlbedoEmissivityTag,
+												 (*gbuffer)[0]);
+
+		check = indirect_light_shader_->SetInput(kNormalShininessTag,
+												 (*gbuffer)[1]);
+	
+		check = indirect_light_shader_->SetInput(kDepthStencilTag,
+												 gbuffer->GetDepthBuffer());
+	
+		check = indirect_light_shader_->SetOutput(kLightBufferTag,
+												  ObjectPtr<IGPTexture2D>(light_buffer_));
+
+		indirect_light_shader_->Dispatch(*immediate_context_,
+										 light_buffer_->GetWidth(),
+										 light_buffer_->GetHeight(),
+										 1);
+
+		graphics_.PopEvent();
+
+	}
 
 	return light_buffer_->GetTexture();
 
