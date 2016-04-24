@@ -158,8 +158,8 @@ void GILogic::Initialize(Window& window){
 
 	enable_global_illumination_ = true;
 	enable_postprocess_ = true;
-	enable_voxel_draw_ = true;
-	enable_sh_draw_ = true;
+	enable_voxel_draw_ = false;
+	enable_sh_draw_ = false;
 	enable_xray_ = false;
 	lock_camera_ = false;
 
@@ -309,11 +309,15 @@ void GILogic::Update(const Time & time){
 	}
 
 	// "C": toggle lock camera
+
 	if (input_->GetKeyboardStatus().IsPressed(46)) {
 
 		lock_camera_ = !lock_camera_;
+		
+		paused_ = true;
 
 		deferred_renderer_->LockCamera(lock_camera_);
+
 
 	}
 	
