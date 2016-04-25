@@ -19,14 +19,12 @@ namespace gi_lib{
 	/// \brief Texture surface format.
 	enum class TextureFormat : unsigned int{
 
-		HALF,				///< \brief 16-bit format with a single half-precision floating point number.
 
 		RGBA_BYTE_RAW,		///< \brief 32-bit format with 4 8-bit typeless channels.
 		RGBA_BYTE_UNORM,	///< \brief 32-bit format with 4 8-bit channels. Each channel stores a byte-sized number in the range [0;1]
-
+		RGBA_SHORT,			///< \brief 64-bit format with 4 16-bit channels. Each channel stores a signed integer.
 		RGBA_HALF,			///< \brief 64-bit format with 4 16-bit channels. Each channel stores a half-precision floating point number.
 		RGBA_FLOAT,			///< \brief 128-bit format with 4 32-bit channels. Each channel stores a single-precision floating point number.
-		
 		
 		BGRA_BYTE_UNORM,
 
@@ -35,6 +33,7 @@ namespace gi_lib{
 		RG_HALF,			///< \brief 32-bit format with 2 16-bit channels. Each channel stores a half-precision floating point number.
 		RG_FLOAT,			///< \brief 64-bit format with 2 32-bit channels. Each channel stores a single-precision floating point number.
 
+		R_HALF,				///< \brief 16-bit format with a single half-precision floating point number.
 		R_INT,				///< \brief 32-bit format with 1 32-bit signed integer element.
 
 		DEPTH_STENCIL,		///< \brief 32-bit format with 1 24-bit depth channel and 1 8-bit typeless channel.
@@ -292,7 +291,7 @@ namespace gi_lib{
 
 	public:
 
-		/// \brief Structure used to create an empty general-purpose texture 2D from an explicit description.
+		/// \brief Structure used to create an empty general-purpose texture 3D from an explicit description.
 		/// \author Raffaele D. Facendola.
 		struct FromDescription {
 
@@ -339,6 +338,64 @@ namespace gi_lib{
 
 	};
 	
+	/// \brief Base interface for general-purpose 3D clipmaps.
+	/// A 3D clipmap is composed by a 3D pyramid and a 3D stack which represents more detailed LODs.
+	/// \author Raffaele D. Facendola.
+	class IGPClipmap3D : public IResource {
+
+	public:
+
+		/// \brief Structure used to create an empty general-purpose 3D clipmap from an explicit description.
+		/// \author Raffaele D. Facendola.
+		struct FromDescription {
+
+			NO_CACHE;
+
+			unsigned int width;			///< \brief Width of the most detailed level of the texture.
+
+			unsigned int height;		///< \brief Height of the most detailed level of the texture.
+
+			unsigned int depth;			///< \brief Depth of the most detailed level of the texture.
+
+			unsigned int stacks;		///< \brief Number of "slices" inside the stack. For a value of 0, a 3D clipmap behaves like a regular 3D Texture.
+
+			TextureFormat format;		///< \brief Format of the texture.
+
+		};
+
+		/// \brief Abstract destructor.
+		virtual ~IGPClipmap3D() = 0 {}
+
+		/// \brief Get the pyramid part of the clipmap.
+		/// \return Returns a pointer to the pyramid part of the clipmap.
+		virtual ObjectPtr<IGPTexture3D> GetPyramid() = 0;
+
+		/// \brief Get the stack part of the clipmap.
+		/// \return Returns a pointer to the stack part of the clipmap.
+		virtual ObjectPtr<IGPTexture3D> GetStack() = 0;
+
+		/// \brief Get the width of the texture.
+		/// \return Returns the width of the texture, in pixel.
+		virtual unsigned int GetWidth() const = 0;
+
+		/// \brief Get the height of the texture.
+		/// \return Returns the height of the texture, in pixel.
+		virtual unsigned int GetHeight() const = 0;
+
+		/// \brief Get the depth of the texture.
+		/// \return Returns the height of the texture, in pixel.
+		virtual unsigned int GetDepth() const = 0;
+
+		/// \brief Get the stack count.
+		/// \return Returns the stack count.
+		virtual unsigned int GetStacks() const = 0;
+
+		/// \brief Get the texture format.
+		/// \return Returns the texture format.
+		virtual TextureFormat GetFormat() const = 0;
+
+	};
+
 }
 
 ////////////////////////////// TEXTURE 2D :: FROM FILE ///////////////////////////////

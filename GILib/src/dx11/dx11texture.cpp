@@ -346,12 +346,35 @@ DX11GPTexture3D::DX11GPTexture3D(const IGPTexture3D::FromDescription& args) {
 
 }
 
+////////////////////////////// DX11 GP CLIPMAP 3D ////////////////////////////////////////
+
+DX11GPClipmap3D::DX11GPClipmap3D(const DX11GPClipmap3D::FromDescription& args) {
+
+	pyramid_ = new DX11GPTexture3D(DX11GPTexture3D::FromDescription{ args.width,
+																	 args.height,
+																	 args.depth,
+																	 0,								// Full MIP chain
+																	 args.format });
+
+	stack_ = new DX11GPTexture3D(DX11GPTexture3D::FromDescription{ args.width,
+																   args.height * args.stacks,		// MIP stored along the Y axis
+																   args.depth,
+																   1,								// No MIP chain required
+																   args.format });
+
+}
+
 ///////////////////////////// FREE FUNCTIONS /////////////////////////////
 
 DXGI_FORMAT gi_lib::dx11::TextureFormatToDXGIFormat(const TextureFormat& texture_format) {
 
+	
 	switch (texture_format) {
 
+	case TextureFormat::RGBA_SHORT:
+
+		return DXGI_FORMAT_R16G16B16A16_SINT;
+		
 	case TextureFormat::RGBA_HALF:
 
 		return DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -396,7 +419,7 @@ DXGI_FORMAT gi_lib::dx11::TextureFormatToDXGIFormat(const TextureFormat& texture
 
 		return DXGI_FORMAT_BC3_UNORM;
 
-	case TextureFormat::HALF:
+	case TextureFormat::R_HALF:
 
 		return DXGI_FORMAT_R16_FLOAT;
 
@@ -411,6 +434,10 @@ DXGI_FORMAT gi_lib::dx11::TextureFormatToDXGIFormat(const TextureFormat& texture
 TextureFormat gi_lib::dx11::DXGIFormatToTextureFormat(const DXGI_FORMAT& texture_format) {
 
 	switch (texture_format) {
+
+	case DXGI_FORMAT_R16G16B16A16_SINT:
+
+		return TextureFormat::RGBA_SHORT;
 
 	case DXGI_FORMAT_R16G16B16A16_FLOAT:
 
@@ -458,7 +485,7 @@ TextureFormat gi_lib::dx11::DXGIFormatToTextureFormat(const DXGI_FORMAT& texture
 
 	case DXGI_FORMAT_R16_FLOAT:
 
-		return TextureFormat::HALF;
+		return TextureFormat::R_HALF;
 
 	default:
 

@@ -300,6 +300,37 @@ namespace gi_lib{
 
 		};
 
+		/// \brief DirectX11 general-purpose 3D clipmap.
+		class DX11GPClipmap3D : public IGPClipmap3D {
+
+		public:
+
+			DX11GPClipmap3D(const DX11GPClipmap3D::FromDescription& args);
+
+			virtual ObjectPtr<IGPTexture3D> GetPyramid() override;
+			
+			virtual ObjectPtr<IGPTexture3D> GetStack() override;
+			
+			virtual unsigned int GetWidth() const override;
+			
+			virtual unsigned int GetHeight() const override;
+			
+			virtual unsigned int GetDepth() const override;
+			
+			virtual unsigned int GetStacks() const override;
+			
+			virtual TextureFormat GetFormat() const override;
+			
+			virtual size_t GetSize() const override;
+
+		private:
+
+			ObjectPtr<DX11GPTexture3D> pyramid_;			///< \brief Pyramid part of the clipmap.
+
+			ObjectPtr<DX11GPTexture3D> stack_;				///< \brief Stack part of the clipmap. MIPS increase along the Y axis.
+
+		};
+
 		/// \brief Downcasts an ITexture2D to the proper concrete type.
 		ObjectPtr<DX11Texture2D> resource_cast(const ObjectPtr<ITexture2D>& resource);
 
@@ -671,6 +702,60 @@ namespace gi_lib{
 
 		}
 		
+		///////////////////////////// DX11 GP CLIPMAP3D //////////////////////////////
+
+		INSTANTIABLE(IGPClipmap3D, DX11GPClipmap3D, IGPClipmap3D::FromDescription);
+
+		inline ObjectPtr<IGPTexture3D> DX11GPClipmap3D::GetPyramid(){
+			
+			return ObjectPtr<IGPTexture3D>(pyramid_);
+
+
+		}
+
+		inline ObjectPtr<IGPTexture3D> DX11GPClipmap3D::GetStack(){
+			
+			return ObjectPtr<IGPTexture3D>(stack_);
+
+		}
+
+		inline unsigned int DX11GPClipmap3D::GetWidth() const{
+			
+			return pyramid_->GetWidth();
+
+		}
+
+		inline unsigned int DX11GPClipmap3D::GetHeight() const{
+
+			return pyramid_->GetHeight();
+
+		}
+
+		inline unsigned int DX11GPClipmap3D::GetDepth() const{
+
+			return pyramid_->GetDepth();
+			
+		}
+
+		inline unsigned int DX11GPClipmap3D::GetStacks() const{
+			
+			return stack_->GetHeight() / pyramid_->GetHeight();
+
+		}
+
+		inline TextureFormat DX11GPClipmap3D::GetFormat() const{
+			
+			return pyramid_->GetFormat();
+
+		}
+
+		inline size_t DX11GPClipmap3D::GetSize() const{
+			
+			return stack_->GetSize() + pyramid_->GetSize();
+
+		}
+
+
 		///////////////////////////// RESOURCE CAST ////////////////////////////////
 
 		inline ObjectPtr<DX11Texture2D> resource_cast(const ObjectPtr<ITexture2D>& resource){
