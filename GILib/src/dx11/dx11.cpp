@@ -37,6 +37,9 @@ const SamplerStateView SamplerStateView::kEmpty;
 
 HRESULT gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width, unsigned int height, ID3D11ShaderResourceView** shader_resource_view, ID3D11DepthStencilView** depth_stencil_view){
 
+	width = max(width, 8u);
+	height = max(height, 8u);
+
 	ID3D11Texture2D* texture = nullptr;
 	ID3D11DepthStencilView* dsv = nullptr;
 	ID3D11ShaderResourceView* srv = nullptr;
@@ -121,6 +124,9 @@ HRESULT gi_lib::dx11::MakeDepthStencil(ID3D11Device& device, unsigned int width,
 
 HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11ShaderResourceView** shader_resource_view, ID3D11RenderTargetView** render_target_view, bool mip_chain){
 
+	width = max(width, 8u);
+	height = max(height, 8u);
+
 	ID3D11Texture2D* texture = nullptr;
 	ID3D11RenderTargetView* rtv = nullptr;
 	ID3D11ShaderResourceView* srv = nullptr;
@@ -193,6 +199,10 @@ HRESULT gi_lib::dx11::MakeRenderTarget(ID3D11Device& device, unsigned int width,
 }
 
 HRESULT gi_lib::dx11::MakeRenderTargetArray(ID3D11Device& device, unsigned int width, unsigned int height, unsigned int count, DXGI_FORMAT format, ID3D11ShaderResourceView** shader_resource_view, std::vector<ID3D11RenderTargetView*>* render_target_view_list, bool mip_chain) {
+
+	width = max(width, 8u);
+	height = max(height, 8u);
+	count = max(count, 1u);
 
 	ID3D11Texture2D* texture = nullptr;
 	vector<ID3D11RenderTargetView*> rtv;
@@ -300,6 +310,9 @@ HRESULT gi_lib::dx11::MakeRenderTargetArray(ID3D11Device& device, unsigned int w
 
 HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int width, unsigned int height, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, unsigned int mips){
 
+	width = max(width, 8u);
+	height = max(height, 8u);
+
 	ID3D11Texture2D* texture = nullptr;
 	ID3D11UnorderedAccessView* uav = nullptr;
 	ID3D11ShaderResourceView* srv = nullptr;
@@ -381,6 +394,10 @@ HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int wi
 
 HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int width, unsigned int height, unsigned int depth, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, unsigned int mips){
 
+	width = max(width, 8u);
+	height = max(height, 8u);
+	depth = max(depth, 8u);
+
 	ID3D11Texture3D* texture = nullptr;
 	ID3D11UnorderedAccessView* uav = nullptr;
 	ID3D11ShaderResourceView* srv = nullptr;
@@ -459,6 +476,10 @@ HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int wi
 }
 
 HRESULT gi_lib::dx11::MakeUnorderedTextureArray(ID3D11Device& device, unsigned int width, unsigned int height, unsigned int count, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, unsigned int mips){
+
+	width = max(width, 8u);
+	height = max(height, 8u);
+	count = max(count, 1u);
 
 	ID3D11Texture2D* texture = nullptr;
 	ID3D11UnorderedAccessView* uav = nullptr;
