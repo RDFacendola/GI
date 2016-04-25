@@ -25,14 +25,22 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	
 	SurfaceData surface = GatherSurfaceData(dispatch_thread_id.xy, inv_view_proj_matrix);
 	
-	float3 reflection_direction = reflect(normalize(camera_position.xyz - surface.position), 
+	float3 reflection_direction = reflect(-normalize(camera_position.xyz - surface.position), 
 										  surface.normal);
 
 	float3 color = 0;
 
-	for (int step = 0; step < 10; ++step) {
+	for (int step = 2; step < 15; ++step) {
 
-		color += SampleVoxelColor(gFilteredSHPyramid, gFilteredSHStack, surface.position - reflection_direction * step * 100.f, reflection_direction);
+		color += SampleVoxelColor(gFilteredSHPyramid, 
+								  gFilteredSHStack, 
+								  surface.position + reflection_direction * step * 100.f, 
+								  -reflection_direction) * surface.specular;
+
+		color += SampleVoxelColor(gFilteredSHPyramid, 
+								  gFilteredSHStack, 
+								  surface.position + surface.normal * step * 100.f,
+								  -surface.normal) * surface.albedo;
 
 	}
 

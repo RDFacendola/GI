@@ -21,6 +21,7 @@ using namespace ::gi_lib::windows;
 using namespace ::gi_lib::dx11;
 
 #undef min
+#undef max
 
 namespace {
 
@@ -789,7 +790,7 @@ void DX11Voxelization::Clear() {
 
 	clear_sh_->Dispatch(device_context,
 						static_cast<unsigned int>(unfiltered_sh_->GetWidth()),
-						static_cast<unsigned int>(unfiltered_sh_->GetHeight() * unfiltered_sh_->GetStacks()),
+						static_cast<unsigned int>(unfiltered_sh_->GetHeight() * std::max(unfiltered_sh_->GetStacks(), 1u)),
 						static_cast<unsigned int>(unfiltered_sh_->GetDepth()));
 
 	graphics.PopEvent();
