@@ -41,11 +41,17 @@ namespace gi_lib {
 
 		public:
 			
-			static const Tag kVoxelAddressTableTag;	///< \brief Tag associated to the structured buffer containing the voxel address table.
+			static const Tag kVoxelAddressTableTag;		///< \brief Tag associated to the structured buffer containing the voxel address table.
 
-			static const Tag kVoxelizationTag;		///< \brief Tag associated to the constant buffer containing the voxelization constants.
+			static const Tag kVoxelizationTag;			///< \brief Tag associated to the constant buffer containing the voxelization constants.
 
-			static const Tag kVoxelSHTag;			///< \brief Tag associated to the 3D texture containing informations about the spherical harmonics stored for each voxel.
+			static const Tag kUnfilteredSHPyramidTag;	///< \brief Tag associated to the pyramid part of the 3D clipmap containing the unfiltered SH coefficients for each voxel.
+
+			static const Tag kUnfilteredSHStackTag;		///< \brief Tag associated to the stack part of the 3D clipmap containing the unfiltered SH coefficients for each voxel.
+
+			static const Tag kFilteredSHPyramidTag;		///< \brief Tag associated to the pyramid part of the 3D clipmap containing the filtered SH coefficients for each voxel.
+
+			static const Tag kFilteredSHStackTag;		///< \brief Tag associated to the stack part of the 3D clipmap containing the filtered SH coefficients for each voxel.
 
 			/// \brief Create a new voxel processor.
 			/// \param voxel_size Size of each voxel in world units.
@@ -74,8 +80,11 @@ namespace gi_lib {
 			/// \brief Get the structure containing the pointers to the actual voxel informations.
 			ObjectPtr<IGPStructuredArray> GetVoxelAddressTable() const;
 
-			/// \brief Get the texture 3D containing the informations about the spherical harmonics stored for each voxel.
-			ObjectPtr<IGPTexture3D> GetVoxelSH() const;
+			/// \brief Get the 3D clipmap containing the unfiltered spherical harmonics coefficients for each voxel.
+			ObjectPtr<IGPClipmap3D> GetUnfilteredSHClipmap() const;
+
+			/// \brief Get the 3D clipmap containing the unfiltered spherical harmonics coefficients for each voxel.
+			ObjectPtr<IGPClipmap3D> GetFilteredSHClipmap() const;
 
 			/// \brief Get the constant buffer containing the voxelization parameters.
 			ObjectPtr<IStructuredBuffer> GetVoxelizationParams() const;
@@ -118,10 +127,13 @@ namespace gi_lib {
 			ObjectPtr<DX11GPStructuredArray> voxel_address_table_;				///< \brief This structure contains the address of each voxel inside the 3D texture of the spherical harmonics. 
 																				///			An address equal to 0 means that the voxel is not present at the specified location.
 
-			ObjectPtr<DX11GPTexture3D> voxel_sh_;								///< \brief Contains the spherical harmonics for each voxel.
-																				///			The coefficients increases along the X axis.
-																				///			The cascades increase along the Y axis.
-																				///			The channels increase along the Z axis.
+			ObjectPtr<IGPClipmap3D> unfiltered_sh_;								///< \brief Unfiltered SH coefficients for each voxel.
+																				/// Coefficients increase along the X axis.
+																				/// Channels increase along the Z axis.
+
+			ObjectPtr<IGPClipmap3D> filtered_sh_;								///< \brief Filtered SH coefficients for each voxel.
+																				/// Coefficients increase along the X axis.
+																				/// Channels increase along the Z axis.
 
 			ObjectPtr<DX11RenderTarget> voxel_render_target_;					///< \brief Render target used during the voxelization. This technically is not needed at all.
 			
@@ -143,12 +155,18 @@ namespace gi_lib {
 
 		////////////////////////////////////////////// DX11 VOXELIZATION //////////////////////////////////////////////
 		
-		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetVoxelSH() const {
+		inline ObjectPtr<IGPClipmap3D> DX11Voxelization::GetUnfilteredSHClipmap() const {
 
-			return ObjectPtr<IGPTexture3D>(voxel_sh_);
+			return unfiltered_sh_;
 
 		}
 
+		inline ObjectPtr<IGPClipmap3D> DX11Voxelization::GetFilteredSHClipmap() const {
+			
+			return filtered_sh_;
+
+		}
+				
 		inline ObjectPtr<IGPStructuredArray> DX11Voxelization::GetVoxelAddressTable() const {
 
 			return ObjectPtr<IGPStructuredArray>(voxel_address_table_);

@@ -4,7 +4,8 @@
 
 StructuredBuffer<VoxelInfo> gVoxelAppendBuffer;				// Append buffer containing the list of voxels in the current frame. (Read Only)
 
-Texture3D<int> gVoxelSH;									// Contains SH infos
+Texture3D<float3> gFilteredSHPyramid;						// Pyramid part of the filtered SH 3D clipmap.
+Texture3D<float3> gFilteredSHStack;							// Stack part of the filtered SH 3D clipmap.
 
 /////////////////////////////////// VERTEX SHADER ///////////////////////////////////////
 
@@ -24,7 +25,7 @@ struct VSIn {
 struct VSOut {
 
 	float4 position_ps : SV_Position;
-	float4 color : Color;
+	float3 color : Color;
 
 };
 
@@ -34,9 +35,12 @@ VSOut VSMain(VSIn input){
 	
 	VSOut output;
 
-	output.color = SampleVoxelColor(gVoxelSH, voxel_info, normalize(input.position.xyz));		// Sampled color of the SH
+	output.color = SampleVoxelColor(gFilteredSHPyramid, 
+									gFilteredSHStack, 
+									voxel_info.center, 
+									normalize(input.position.xyz));
 
-	// The debug draw is applied after the tonemap. Apply Reinhard here
+	// The debug draw is applied after the tonemap so we have to manually tonemap the result. (Reinhard's)
 
 	output.color.rgb = output.color.rgb * rcp(1.f + output.color.rgb);
 
@@ -58,6 +62,6 @@ VSOut VSMain(VSIn input){
 
 float4 PSMain(VSOut input) : SV_Target0{
 
-	return input.color;
+	return float4(input.color, 1.f);
 
 }

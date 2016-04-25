@@ -8,6 +8,8 @@
 
 #define PI 3.14159f
 
+SamplerState gSHSampler;				// Sampler used to sample the SH
+
 cbuffer Voxelization {
 
 	float3 gCenter;						// Center of the voxelization. It is always a corner shared among 8 different voxels.
@@ -76,9 +78,9 @@ float GetMinVoxelSize() {
 }
 
 /// \brief Get the cascade index of a point in world space.
-int GetCascade(float3 position_ws) {
+int GetCascade(float3 position_vs) {
 	
-	float3 abs_position = abs(position_ws);
+	float3 abs_position = abs(position_vs);
 
 	float max_distance = max(abs_position.x, max(abs_position.y, abs_position.z));
 
@@ -90,17 +92,15 @@ int GetCascade(float3 position_ws) {
 
 }
 
-/// \brief Converts a floating point SH coefficient to an integer number.
-int ToIntSHCoefficient(float sh_coefficient) {
+int3 ToIntSH(float3 sh_coefficient) {
 
 	return sh_coefficient * 100;
 
 }
 
-/// \brief Converts an integer SH coefficient to a float number.
-float ToFloatSHCoefficient(int sh_coefficient) {
+float3 ToFloatSH(int3 sh_coefficient) {
 
-	return sh_coefficient / 100;
+	return sh_coefficient * 0.001f;
 
 }
 
@@ -201,113 +201,133 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, float3 position_ws
 
 }
 
-/// \brief Store the first two band of SH coefficients
-void StoreSHCoefficients(RWTexture3D<int> voxel_sh, VoxelInfo voxel_info, float3 sh_coefficients[4]) {
+/// \brief Get the 3D coordinates of the most precise version of the voxel enclosing the specified point.
+/// \param position_ws Position of the point, in world space.
+/// \param coefficient_index Index of the SH coefficient.
+/// \param address If the method succeeds, it contains the address for each of the channels R, G, B.
+/// \return Returns 0 if the voxel couldn't be found, 1 if it was found inside the pyramid part of the clipmap or 2 if it was found inside the stack part of the clipmap.
+int GetSHCoordinates(float3 position_ws, uint coefficient_index, out uint3 address[3]) {
 
-	uint3 sh_address = voxel_info.sh_address;
+	float3 position_vs = position_ws - gCenter;		// Voxel space
 
-	sh_address.y += voxel_info.cascade * gVoxelResolution;			// Move to the correct cascade
+	int cascade = GetCascade(position_vs);			// Most detailed cascade
 
-	uint3 sh_r_address = sh_address + uint3(0, 0, 0 * gVoxelResolution);
-	uint3 sh_g_address = sh_address + uint3(0, 0, 1 * gVoxelResolution);
-	uint3 sh_b_address = sh_address + uint3(0, 0, 2 * gVoxelResolution);
+	float voxel_size = GetVoxelSize(cascade);
 
-	// SH 0
-
-	InterlockedAdd(voxel_sh[sh_r_address], ToIntSHCoefficient(sh_coefficients[0].x));
-	InterlockedAdd(voxel_sh[sh_g_address], ToIntSHCoefficient(sh_coefficients[0].y));
-	InterlockedAdd(voxel_sh[sh_b_address], ToIntSHCoefficient(sh_coefficients[0].z));
-
-	// SH 1
-
-	sh_r_address.x += gVoxelResolution;	
-	sh_g_address.x += gVoxelResolution;
-	sh_b_address.x += gVoxelResolution;
-
-	InterlockedAdd(voxel_sh[sh_r_address], ToIntSHCoefficient(sh_coefficients[1].x));
-	InterlockedAdd(voxel_sh[sh_g_address], ToIntSHCoefficient(sh_coefficients[1].y));
-	InterlockedAdd(voxel_sh[sh_b_address], ToIntSHCoefficient(sh_coefficients[1].z));
-
-	// SH 2
-
-	sh_r_address.x += gVoxelResolution;
-	sh_g_address.x += gVoxelResolution;
-	sh_b_address.x += gVoxelResolution;
-
-	InterlockedAdd(voxel_sh[sh_r_address], ToIntSHCoefficient(sh_coefficients[2].x));
-	InterlockedAdd(voxel_sh[sh_g_address], ToIntSHCoefficient(sh_coefficients[2].y));
-	InterlockedAdd(voxel_sh[sh_b_address], ToIntSHCoefficient(sh_coefficients[2].z));
-
-	// SH 3
-
-	sh_r_address.x += gVoxelResolution;
-	sh_g_address.x += gVoxelResolution;
-	sh_b_address.x += gVoxelResolution;
-
-	InterlockedAdd(voxel_sh[sh_r_address], ToIntSHCoefficient(sh_coefficients[3].x));
-	InterlockedAdd(voxel_sh[sh_g_address], ToIntSHCoefficient(sh_coefficients[3].y));
-	InterlockedAdd(voxel_sh[sh_b_address], ToIntSHCoefficient(sh_coefficients[3].z));
-
-}
-
-/// \brief Get the SH coefficients values of the given voxel.
-/// \param voxel_info Voxel to sample.
-/// \param sh_index Index of the spherical harmonics coefficients.
-/// \return Return the value of the specified spherical harmonic for each color channel.
-float4 GetSHCoefficients(Texture3D<int> voxel_sh, VoxelInfo voxel_info, uint sh_index) {
-
-	// ISSUE: If we keep the SH coefficients together we have better cache locality but we lose hardware filtering among coefficients of adjacent voxels 
-	//		  If we spread out the SH coefficients we have hardware filtering of adjacent voxels but we lose cache locality.
-
-	// IDEA:
-	// We may store the texture as Texture3D<int4> for reading purposes but bind it with an UAV like RWTexture3D<int>.
-	// We have hardware filtering which is even faster as it operates on 4 channels at the same time while mantaining cache locality among them
-	// We waste one int. Maybe we can recycle it for the opacity?
-
-	// int are 32 bits which is way too much for a single SH coefficient. We may pack 2 coefficients for each int giving us the possibility of storing 8 of them.
-	// - R0 16 | R1 16 | G0 16 | G1 16 | B0 16 | B1 16 | <wasted> 32 ?
-
-	float4 coefficients;
-
-	uint3 sh_address = voxel_info.sh_address;
-
-	sh_address.x += sh_index * gVoxelResolution;					// Move to the correct SH
-	sh_address.y += voxel_info.cascade * gVoxelResolution;			// Move to the correct cascade
-							
-	coefficients.r = ToFloatSHCoefficient(voxel_sh[sh_address]);	// Move to the red channel
-		
-	sh_address.z += gVoxelResolution;								// Move to the green channel
-	coefficients.g = ToFloatSHCoefficient(voxel_sh[sh_address]);
-
-	sh_address.z += gVoxelResolution;								// Move to the blue channel
-	coefficients.b = ToFloatSHCoefficient(voxel_sh[sh_address]);
-
-	// Done
+	address[0] = floor(position_vs * rcp(voxel_size)) + (gVoxelResolution * 0.5f);			// Red
 	
-	coefficients.a = 0.f;
+	address[0].x += coefficient_index * gVoxelResolution;				// Move to the correct coefficient
+	address[0].y += sign(cascade) * (cascade - 1) * gVoxelResolution;	// Move to the correct MIP. The sign(.) here is to bypass the instruction if we are already inside the pyramid.
+	
+	address[1] = address[0] + uint3(0, 0, 1 * gVoxelResolution);							// Green
+	address[2] = address[0] + uint3(0, 0, 2 * gVoxelResolution);							// Blue
 
-	return coefficients;
+	return sign(cascade) + 1;		// 0 for cascade < 0
+									// 1 for cascade = 0
+									// 2 for cascade > 0
 
 }
 
-/// \brief Get the SH contribution in a given direction for a particular SH band.
-/// \param voxel_sh Structure containing the SH coefficients.
-/// \param voxel_info Voxel to sample.
-/// \param sh_band Index of the SH band to calculate the contribution of.
-/// \param direction Direction of the sampling.
-float4 GetSHContribution(Texture3D<int> voxel_sh, VoxelInfo voxel_info, uint sh_band, float3 direction) {
+int GetSHCoordinates(float3 position_ws, uint coefficient_index, out float3 address) {
+
+	float3 position_vs = position_ws - gCenter;		// Voxel space
+
+	int cascade = GetCascade(position_vs);			// Most detailed cascade
+
+	float voxel_size = GetVoxelSize(cascade);
+
+	address = position_vs * rcp(voxel_size) + (gVoxelResolution * 0.5f);
+
+	address.x += coefficient_index * gVoxelResolution;					// Move to the correct coefficient
+	address.y += sign(cascade) * (cascade - 1) * gVoxelResolution;		// Move to the correct MIP. The sign(.) here is to bypass the instruction if we are already inside the pyramid.
+
+	return sign(cascade) + 1;		// 0 for cascade < 0
+									// 1 for cascade = 0
+									// 2 for cascade > 0
+
+}
+
+/// \brief Store the first two band of SH coefficients
+void StoreSHCoefficients(RWTexture3D<int> sh_pyramid, RWTexture3D<int> sh_stack, float3 position_ws, uint coefficient_index, float3 sh_coefficients) {
+
+	uint3 address[3];
+
+	int3 coefficients = ToIntSH(sh_coefficients);
+
+	int result = GetSHCoordinates(position_ws, coefficient_index, address);
+
+	if (result == 1) {
+
+		// Pyramid part
+
+		InterlockedAdd(sh_pyramid[address[0]], coefficients.r);
+		InterlockedAdd(sh_pyramid[address[1]], coefficients.g);
+		InterlockedAdd(sh_pyramid[address[2]], coefficients.b);
+
+	}
+	else if (result == 2) {
+
+		// Stack part
+
+		InterlockedAdd(sh_stack[address[0]], coefficients.r);
+		InterlockedAdd(sh_stack[address[1]], coefficients.g);
+		InterlockedAdd(sh_stack[address[2]], coefficients.b);
+
+	}
+
+}
+
+float3 SampleSHCoefficients(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, uint sh_index) {
+
+	float3 address;
+	
+	float3 dimensions;
+
+	int result = GetSHCoordinates(position_ws, sh_index, address);
+
+	if (result == 1) {
+
+		// Pyramid
+		sh_pyramid.GetDimensions(dimensions.x,			// gVoxelResolution * #Coefficients
+								 dimensions.y,			// gVoxelResolution
+								 dimensions.z);			// gVoxelResolution
+
+		float3 sample_location = address / dimensions;
+
+		return sh_pyramid.SampleLevel(gSHSampler, sample_location, 0);
+		
+	}
+	else if (result == 2) {
+		
+		// Stack
+
+		sh_stack.GetDimensions(dimensions.x,			// gVoxelResolution * #Coefficients
+							   dimensions.y,			// gVoxelResolution * #Cascades
+							   dimensions.z);			// gVoxelResolution
+
+		float3 sample_location = address / dimensions;
+
+		return sh_stack.SampleLevel(gSHSampler, sample_location, 0);
+
+	}
+
+	return 0;		// Outside domain
+		
+}
+
+float3 SampleSHContribution(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, uint sh_band, float3 direction) {
 
 	[branch]
 	if (sh_band == 0) {
 
-		return GetSHCoefficients(voxel_sh, voxel_info, 0) * sqrt(1.f / (4.f * PI));
+		return SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 0) * sqrt(1.f / (4.f * PI));
 
 	}
 	else if (sh_band == 1) {
 
-		return (GetSHCoefficients(voxel_sh, voxel_info, 1) * direction.x +
-			    GetSHCoefficients(voxel_sh, voxel_info, 2) * direction.y +
-			    GetSHCoefficients(voxel_sh, voxel_info, 3) * direction.z) * sqrt(3.f / (4.f * PI));
+		return (SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 1) * direction.x +
+				SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 2) * direction.y +
+				SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 3) * direction.z) * sqrt(3.f / (4.f * PI));
 
 	}
 	else {
@@ -318,21 +338,19 @@ float4 GetSHContribution(Texture3D<int> voxel_sh, VoxelInfo voxel_info, uint sh_
 
 }
 
-/// \brief Sample the color of a voxel in the given direction.
-/// \param voxel_sh Structure containing the SH coefficients.
-/// \param voxel_info Voxel to sample.
-/// \param direction Direction of the sampling.
-float4 SampleVoxelColor(Texture3D<int> voxel_sh, VoxelInfo voxel_info, float3 direction) {
+float3 SampleVoxelColor(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, float3 direction) {
 
-	float4 color = 0.f;
+	int cascade = GetCascade(position_ws);
 
-	for (uint sh_band = 0; sh_band < voxel_info.sh_bands; ++sh_band) {
+	float3 color = 0.f;
 
-		color += GetSHContribution(voxel_sh, voxel_info, sh_band, direction);
+	for (uint sh_band = 0; sh_band < GetSHBandCount(cascade); ++sh_band) {
+
+		color += SampleSHContribution(sh_pyramid, sh_stack, position_ws, sh_band, direction);
 
 	}
 
-	return float4(max(0, color.rgb), 1.0f);
+	return max(0, color.rgb);
 
 }
 

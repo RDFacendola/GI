@@ -188,6 +188,8 @@ namespace gi_lib {
 
 			ObjectPtr<DX11StructuredBuffer> cb_point_light_;					///< \brief Constant buffer containing a single point light.
 
+			ObjectPtr<DX11Sampler> sh_sampler_;									///<\ brief Sampler used to sample the spherical harmonics.
+			
 		};
 
 	}

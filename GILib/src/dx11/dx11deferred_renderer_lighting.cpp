@@ -81,12 +81,14 @@ voxelization_(voxelization){
 
 	cb_point_light_ = new DX11StructuredBuffer(sizeof(PointLight));
 	
+	sh_sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
+
 	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
 	light_filtering_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\filter_light.hlsl" });
 
 	indirect_light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\cone_tracing.hlsl" });
-
+	
 	bool check;
 
 	// Light accumulation setup
@@ -120,8 +122,11 @@ voxelization_(voxelization){
 	light_injection_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
 							   voxelization_.GetVoxelAddressTable());
 
-	light_injection_->SetOutput(DX11Voxelization::kVoxelSHTag, 
-								voxelization_.GetVoxelSH());
+	light_injection_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag, 
+								voxelization_.GetUnfilteredSHClipmap()->GetPyramid());
+
+	light_injection_->SetOutput(DX11Voxelization::kUnfilteredSHStackTag, 
+								voxelization_.GetUnfilteredSHClipmap()->GetStack());
 
 	light_injection_->SetInput("PerLight",
 							   ObjectPtr<IStructuredBuffer>(per_light_));
@@ -134,11 +139,17 @@ voxelization_(voxelization){
 	light_filtering_->SetInput(DX11Voxelization::kVoxelizationTag,
 							   voxelization_.GetVoxelizationParams());
 
-	light_filtering_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
-							   voxelization_.GetVoxelAddressTable());
+	light_filtering_->SetInput(DX11Voxelization::kUnfilteredSHPyramidTag,
+							   voxelization_.GetUnfilteredSHClipmap()->GetPyramid()->GetTexture());
+	
+	light_filtering_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
+							   voxelization_.GetUnfilteredSHClipmap()->GetStack()->GetTexture());
 
-	light_filtering_->SetOutput(DX11Voxelization::kVoxelSHTag,
-								voxelization_.GetVoxelSH());
+	light_filtering_->SetOutput(DX11Voxelization::kFilteredSHPyramidTag,
+								voxelization_.GetFilteredSHClipmap()->GetPyramid());
+	
+	light_filtering_->SetOutput(DX11Voxelization::kFilteredSHStackTag,
+								voxelization_.GetFilteredSHClipmap()->GetStack());
 
 	// Indirect lighting
 
@@ -148,8 +159,14 @@ voxelization_(voxelization){
 	indirect_light_shader_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
 									 voxelization_.GetVoxelAddressTable());
 
-	indirect_light_shader_->SetInput(DX11Voxelization::kVoxelSHTag,
-									 voxelization_.GetVoxelSH()->GetTexture());
+	indirect_light_shader_->SetInput(DX11Voxelization::kFilteredSHPyramidTag,
+									 voxelization_.GetFilteredSHClipmap()->GetPyramid()->GetTexture());
+
+	indirect_light_shader_->SetInput(DX11Voxelization::kFilteredSHStackTag,
+									 voxelization_.GetFilteredSHClipmap()->GetStack()->GetTexture());
+
+	indirect_light_shader_->SetInput("gSHSampler",
+									 ObjectPtr<ISampler>(sh_sampler_));
 
 	indirect_light_shader_->SetInput(kLightParametersTag,
 									 ObjectPtr<IStructuredBuffer>(light_accumulation_parameters_));
@@ -230,14 +247,10 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 		graphics_.PushEvent(L"Light filtering");
 
-		// Each threads sample a 2x2x2 region and store the combined result in the upper cascade.
-
-		unsigned int dispatch_size = (voxelization_.GetVoxelResolution()) >> 1;
-
 		light_filtering_->Dispatch(*immediate_context_,
-								   dispatch_size,
-								   dispatch_size,
-								   dispatch_size);
+								   voxelization_.GetVoxelResolution(),
+								   voxelization_.GetVoxelResolution(),
+								   voxelization_.GetVoxelResolution());
 							   
 		graphics_.PopEvent();
 
