@@ -9,7 +9,8 @@ StructuredBuffer<uint> gVoxelAddressTable;					// Contains the "pointers" to the
 Texture3D<float3> gFilteredSHPyramid;						// Pyramid part of the filtered SH 3D clipmap.
 Texture3D<float3> gFilteredSHStack;							// Stack part of the filtered SH 3D clipmap.
 
-RWTexture2D<float4> gLightAccumulation;
+Texture2D<float4> gLightAccumulation;
+RWTexture2D<float4> gIndirectLight;
 
 cbuffer gParameters {
 
@@ -46,6 +47,6 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	// Sum the indirect contribution inside the light accumulation buffer
 
-	gLightAccumulation[dispatch_thread_id.xy] += float4(color.rgb, 1);
+    gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + float4(color.rgb, 1);
 
 }

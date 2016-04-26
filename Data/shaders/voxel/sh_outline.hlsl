@@ -52,7 +52,7 @@ VSOut VSMain(VSIn input){
 	
 	float3 position = (input.position.xyz * voxel_info.size * magnitude) + voxel_info.center;
 	
-	output.position_ps = mul(gViewProjection, float4(position, 1));
+	output.position_ps = mul(gViewProjection, float4(input.position.xyz, 1));
 
 	return output;
 

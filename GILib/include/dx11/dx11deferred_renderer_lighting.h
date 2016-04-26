@@ -140,11 +140,15 @@ namespace gi_lib {
 
 			static const Tag kLightParametersTag;								///< \brief Tag of the constant buffer used to pass light accumulation parameters.
 
+            static const Tag kIndirectLightBufferTag;
+
 			ObjectPtr<IGPTexture2DCache> gp_cache_;								///< \brief Cache of general purpose textures.
 
 			ObjectPtr<IRenderTargetCache> rt_cache_;							///< \brief Cache of the render targets.
 
 			ObjectPtr<IGPTexture2D> light_buffer_;								///< \brief Light buffer.
+
+            ObjectPtr<IGPTexture2D> indirect_light_buffer_;						///< \brief Indirect light buffer.
 
 			ObjectPtr<DX11StructuredArray> point_lights_;						///< \brief Array containing the point lights.
 

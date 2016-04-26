@@ -33,6 +33,7 @@ const Tag DX11DeferredRendererLighting::kDepthStencilTag = "gDepthStencil";
 const Tag DX11DeferredRendererLighting::kPointLightsTag = "gPointLights";
 const Tag DX11DeferredRendererLighting::kDirectionalLightsTag = "gDirectionalLights";
 const Tag DX11DeferredRendererLighting::kLightBufferTag = "gLightAccumulation";
+const Tag DX11DeferredRendererLighting::kIndirectLightBufferTag = "gIndirectLight";
 const Tag DX11DeferredRendererLighting::kLightParametersTag = "gParameters";
 const Tag DX11DeferredRendererLighting::kVSMShadowAtlasTag = "gVSMShadowAtlas";
 const Tag DX11DeferredRendererLighting::kVSMSamplerTag = "gVSMSampler";
@@ -185,11 +186,16 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 	
 	// Light accumulation setup
 
-	gp_cache_->PushToCache(ObjectPtr<IGPTexture2D>(light_buffer_));			// Release the previous light accumulation buffer, in case the resolution changed.
+	gp_cache_->PushToCache(ObjectPtr<IGPTexture2D>(light_buffer_));			        // Release the previous light accumulation buffer, in case the resolution changed.
+    gp_cache_->PushToCache(ObjectPtr<IGPTexture2D>(indirect_light_buffer_));
 
-	light_buffer_ = gp_cache_->PopFromCache(frame_info.width,				// Grab a new light accumulation buffer from the cache.
+	light_buffer_ = gp_cache_->PopFromCache(frame_info.width,				        // Grab a new light accumulation buffer from the cache.
 											frame_info.height,
 											TextureFormat::RGB_FLOAT);
+
+    indirect_light_buffer_ = gp_cache_->PopFromCache(frame_info.width,				// Grab a new light accumulation buffer from the cache.
+											         frame_info.height,
+											         TextureFormat::RGB_FLOAT);
 		
 	// Clear the shadow atlas from any existing shadowmap
 
@@ -307,8 +313,11 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 		check = indirect_light_shader_->SetInput(kDepthStencilTag,
 												 gbuffer->GetDepthBuffer());
 	
-		check = indirect_light_shader_->SetOutput(kLightBufferTag,
-												  ObjectPtr<IGPTexture2D>(light_buffer_));
+		check = indirect_light_shader_->SetInput(kLightBufferTag,
+												 light_buffer_->GetTexture());
+
+        check = indirect_light_shader_->SetOutput(kIndirectLightBufferTag,
+                                                  ObjectPtr<IGPTexture2D>(indirect_light_buffer_));
 
 		indirect_light_shader_->Dispatch(*immediate_context_,
 										 light_buffer_->GetWidth(),
@@ -317,10 +326,15 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 		graphics_.PopEvent();
 
-	}
+        return indirect_light_buffer_->GetTexture();
 
-	return light_buffer_->GetTexture();
+    }
+    else{
 
+	    return light_buffer_->GetTexture();
+
+    }
+    
 }
 
 void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLightComponent& point_light, PointLight& light, PointShadow& shadow, bool light_injection) {
