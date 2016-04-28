@@ -26,27 +26,41 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	
 	SurfaceData surface = GatherSurfaceData(dispatch_thread_id.xy, inv_view_proj_matrix);
 	
-	float3 reflection_direction = reflect(-normalize(camera_position.xyz - surface.position), 
+	float3 eye_direction = normalize(surface.position - camera_position.xyz);	// From the camera to the surface
+
+	float3 reflection_direction = reflect(eye_direction,
 										  surface.normal);
+
+	float fresnel = 1.0f - saturate(dot(reflection_direction, surface.normal));
+
+	fresnel = pow(fresnel, 2.5f);
 
 	float3 color = 0;
 
-	for (int step = 2; step < 15; ++step) {
+	float3 ray = abs(reflection_direction);
+
+	ray *= rcp(max(ray.x, max(ray.y, ray.z)));
+
+	float step_size = length(ray) * gVoxelSize;
+		
+	float sample_distance;
+	float3 sample_location;
+
+	for (int step = 1; step < 10; ++step) {
+
+		sample_distance = step * step_size;
+		sample_location = surface.position + sample_distance * reflection_direction;
 
 		color += SampleVoxelColor(gFilteredSHPyramid, 
 								  gFilteredSHStack, 
-								  surface.position + reflection_direction * step * 100.f, 
-								  -reflection_direction) * surface.specular;
-
-		color += SampleVoxelColor(gFilteredSHPyramid, 
-								  gFilteredSHStack, 
-								  surface.position + surface.normal * step * 100.f,
-								  -surface.normal) * surface.albedo;
+								  sample_location,
+								  -reflection_direction) * surface.specular * fresnel;
 
 	}
 
+	
 	// Sum the indirect contribution inside the light accumulation buffer
 
-    gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + float4(color.rgb, 1);
+    gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + max(0, float4(color.rgb * 1.f, 1));
 
 }
