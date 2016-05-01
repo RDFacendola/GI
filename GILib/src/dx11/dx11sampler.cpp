@@ -12,9 +12,25 @@ namespace{
 
 	D3D11_TEXTURE_ADDRESS_MODE TextureMappingToAddressMode(TextureMapping mapping) {
 
-		return mapping == TextureMapping::CLAMP ?
-						  D3D11_TEXTURE_ADDRESS_CLAMP :
-						  D3D11_TEXTURE_ADDRESS_WRAP;
+		switch (mapping) {
+
+		case TextureMapping::CLAMP:
+
+			return D3D11_TEXTURE_ADDRESS_CLAMP;
+
+		case TextureMapping::WRAP:
+
+			return D3D11_TEXTURE_ADDRESS_WRAP;
+
+		case TextureMapping::COLOR:
+
+			return D3D11_TEXTURE_ADDRESS_BORDER;
+
+		default:
+
+			THROW(L"Unsuppored texture mapping!");
+
+		}
 
 	}
 
@@ -77,7 +93,7 @@ DX11Sampler::DX11Sampler(const FromDescription& description){
 								  TextureMappingToAddressMode(description.texture_mapping),
 								  TextureFilteringToFilter(description.texture_filtering),
 								  description.anisotropy_level,
-								  Vector4f::Zero(),
+								  description.default_color.ToVector4f(),
 								  &sampler_state));
 
 	}

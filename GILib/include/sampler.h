@@ -8,6 +8,7 @@
 #include "tag.h"
 
 #include "resources.h"
+#include "graphics.h"
 
 namespace gi_lib{
 
@@ -19,7 +20,8 @@ namespace gi_lib{
 	enum class TextureMapping : unsigned int{
 
 		WRAP,				///< \brief Repeat the texture for texture coordinates outside the boundary [0;1] every integer.
-		CLAMP				///< \brief Texture coordinates below 0 or above 1 are set to 0 and 1 instead.
+		CLAMP,				///< \brief Texture coordinates below 0 or above 1 are set to 0 and 1 instead.
+		COLOR,				///< \brief Texture coordinates below 0 or above 1 sample a predefined color.
 
 	};
 
@@ -53,6 +55,9 @@ namespace gi_lib{
 
 			/// \brief Anisotropy level, used only when texture_filtering is "ANISOTROPIC".
 			unsigned int anisotropy_level;
+
+			/// \brief Border color, used only when texture_mapping is "COLOR".
+			Color default_color;
 
 			/// \brief Get the cache key associated to the structure.
 			/// \return Returns the cache key associated to the structure.
