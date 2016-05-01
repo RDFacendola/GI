@@ -287,6 +287,9 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 										      ObjectPtr<IStructuredBuffer>(subject_.cb_voxelization_));
 
 	//
+	check = sh_outline_material_->SetInput(DX11Voxelization::kSHSampleTag,
+										   ObjectPtr<ISampler>(subject_.sh_sampler_));
+
 	check = sh_outline_material_->SetInput(DX11Voxelization::kFilteredSHPyramidTag,
 										   subject_.filtered_sh_->GetPyramid()->GetTexture());
 
@@ -569,6 +572,7 @@ const Tag DX11Voxelization::kUnfilteredSHPyramidTag = "gUnfilteredSHPyramid";
 const Tag DX11Voxelization::kUnfilteredSHStackTag = "gUnfilteredSHStack";
 const Tag DX11Voxelization::kFilteredSHPyramidTag = "gFilteredSHPyramid";
 const Tag DX11Voxelization::kFilteredSHStackTag = "gFilteredSHStack";
+const Tag DX11Voxelization::kSHSampleTag = "gSHSampler";
 
 DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_size, unsigned int voxel_resolution, unsigned int cascades) :
 voxel_size_(voxel_size),
@@ -592,6 +596,8 @@ void DX11Voxelization::InitResources() {
 	cb_object_ = new DX11StructuredBuffer(sizeof(CBObject));
 
 	voxel_address_table_ = new DX11GPStructuredArray(IGPStructuredArray::FromElementSize{ GetVoxelCount(), sizeof(unsigned int)});
+
+	sh_sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::TRILINEAR, 0 });
 
 	unfiltered_sh_ = resources.Load<IGPClipmap3D, IGPClipmap3D::FromDescription>({ voxel_resolution_ * 4,						// 4 SH Coefficients
 																				   voxel_resolution_,

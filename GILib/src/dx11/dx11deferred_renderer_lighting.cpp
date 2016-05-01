@@ -82,8 +82,6 @@ voxelization_(voxelization){
 
 	cb_point_light_ = new DX11StructuredBuffer(sizeof(PointLight));
 	
-	sh_sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
-
 	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
 	light_filtering_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\filter_light.hlsl" });
@@ -166,8 +164,8 @@ voxelization_(voxelization){
 	indirect_light_shader_->SetInput(DX11Voxelization::kFilteredSHStackTag,
 									 voxelization_.GetFilteredSHClipmap()->GetStack()->GetTexture());
 
-	indirect_light_shader_->SetInput("gSHSampler",
-									 ObjectPtr<ISampler>(sh_sampler_));
+	indirect_light_shader_->SetInput(DX11Voxelization::kSHSampleTag,
+									 voxelization_.GetSHSampler());
 
 	indirect_light_shader_->SetInput(kLightParametersTag,
 									 ObjectPtr<IStructuredBuffer>(light_accumulation_parameters_));

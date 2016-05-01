@@ -53,6 +53,8 @@ namespace gi_lib {
 
 			static const Tag kFilteredSHStackTag;		///< \brief Tag associated to the stack part of the 3D clipmap containing the filtered SH coefficients for each voxel.
 
+			static const Tag kSHSampleTag;				///< \brief Tag associated to the sampler used to sample the SH data structure.
+
 			/// \brief Create a new voxel processor.
 			/// \param voxel_size Size of each voxel in world units.
 			/// \param voxel_resolution Amount of voxels along each axis for each cascade. Will be approximated to the next power of 2.
@@ -88,6 +90,9 @@ namespace gi_lib {
 
 			/// \brief Get the constant buffer containing the voxelization parameters.
 			ObjectPtr<IStructuredBuffer> GetVoxelizationParams() const;
+
+			/// \brief Get the sampler used to sample the SH data structure.
+			ObjectPtr<ISampler> GetSHSampler() const;
 
 			/// \brief Get the total grid size.
 			float GetGridSize() const;
@@ -135,6 +140,8 @@ namespace gi_lib {
 																				/// Coefficients increase along the X axis.
 																				/// Channels increase along the Z axis.
 
+			ObjectPtr<DX11Sampler> sh_sampler_;									///<\ brief Sampler used to sample the spherical harmonics.
+
 			ObjectPtr<DX11RenderTarget> voxel_render_target_;					///< \brief Render target used during the voxelization. This technically is not needed at all.
 			
 			DX11PipelineState voxelization_state_;								///< \brief Pipeline state for voxelization stage.
@@ -176,6 +183,12 @@ namespace gi_lib {
 		inline ObjectPtr<IStructuredBuffer> DX11Voxelization::GetVoxelizationParams() const {
 
 			return ObjectPtr<IStructuredBuffer>(cb_voxelization_);
+
+		}
+
+		inline ObjectPtr<ISampler> DX11Voxelization::GetSHSampler() const {
+
+			return ObjectPtr<ISampler>(sh_sampler_);
 
 		}
 
