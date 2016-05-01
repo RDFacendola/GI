@@ -21,6 +21,8 @@ namespace gi_lib {
 
 			CameraComponent* camera;
 
+			Matrix4f view_matrix;
+
 			Matrix4f view_proj_matrix;
 
 			unsigned int width;

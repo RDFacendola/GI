@@ -211,6 +211,7 @@ ObjectPtr<ITexture2D> DX11DeferredRenderer::Draw(const Time& time, unsigned int 
 		frame_info.aspect_ratio = static_cast<float>(width) / static_cast<float>(height);
 		frame_info.width = width;
 		frame_info.height = height;
+		frame_info.view_matrix = main_camera->GetViewTransform().matrix();
 		frame_info.view_proj_matrix = GetViewProjectionMatrix(frame_info.aspect_ratio);		// This matrix must be the "real" view projection matrix, regardless of whether the camera is locked or not.
 		frame_info.time_delta = time.GetDeltaSeconds();
 		frame_info.enable_global_illumination = enable_global_illumination_;
