@@ -597,7 +597,7 @@ void DX11Voxelization::InitResources() {
 
 	voxel_address_table_ = new DX11GPStructuredArray(IGPStructuredArray::FromElementSize{ GetVoxelCount(), sizeof(unsigned int)});
 
-	sh_sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::TRILINEAR, 0 });
+	sh_sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::COLOR, TextureFiltering::TRILINEAR, 0, kOpaqueBlack });
 
 	unfiltered_sh_ = resources.Load<IGPClipmap3D, IGPClipmap3D::FromDescription>({ voxel_resolution_ * 4,						// 4 SH Coefficients
 																				   voxel_resolution_,
