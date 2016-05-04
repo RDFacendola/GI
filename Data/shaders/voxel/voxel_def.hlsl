@@ -135,7 +135,7 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out Vo
 	bool is_inside_clipmap = index >= GetClipmapPyramidSize() && 
 							 index < GetClipmapPyramidSize() + GetCascadeSize() * (1 + gCascades);
 
-#define DENSE_VOXEL_INFO
+//#define DENSE_VOXEL_INFO
 
 // Define this MACRO if access of the whole SH structure is needed. This doesn't work if the structure is sparse! Default is NOT DEFINED.
 #ifndef DENSE_VOXEL_INFO
