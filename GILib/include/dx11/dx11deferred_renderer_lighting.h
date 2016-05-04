@@ -186,7 +186,7 @@ namespace gi_lib {
 
 			ObjectPtr<DX11Computation> light_injection_;						///< \brief Shader performing the dynamic voxelization.
 
-			ObjectPtr<DX11Computation> light_filtering_;						///< \brief Shader used to filter the light after photon injection.
+			ObjectPtr<DX11Computation> sh_convert_;								///< \brief Shader used to convert the SH structure to an useful one.
 
 			ObjectPtr<DX11StructuredBuffer> per_light_;							///< \brief Per-light constant buffer using during light injection.
 

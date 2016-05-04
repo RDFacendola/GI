@@ -84,7 +84,7 @@ voxelization_(voxelization){
 	
 	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
-	light_filtering_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\filter_light.hlsl" });
+	sh_convert_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_convert.hlsl" });
 
 	indirect_light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\cone_tracing.hlsl" });
 	
@@ -133,21 +133,21 @@ voxelization_(voxelization){
 	light_injection_->SetInput("CBPointLight",
 							   ObjectPtr<IStructuredBuffer>(cb_point_light_));
 
-	// Light filtering setup
+	// SH Convert setup
 
-	light_filtering_->SetInput(DX11Voxelization::kVoxelizationTag,
+	sh_convert_->SetInput(DX11Voxelization::kVoxelizationTag,
 							   voxelization_.GetVoxelizationParams());
 
-	light_filtering_->SetInput(DX11Voxelization::kUnfilteredSHPyramidTag,
+	sh_convert_->SetInput(DX11Voxelization::kUnfilteredSHPyramidTag,
 							   voxelization_.GetUnfilteredSHClipmap()->GetPyramid()->GetTexture());
 	
-	light_filtering_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
+	sh_convert_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
 							   voxelization_.GetUnfilteredSHClipmap()->GetStack()->GetTexture());
 
-	light_filtering_->SetOutput(DX11Voxelization::kFilteredSHPyramidTag,
+	sh_convert_->SetOutput(DX11Voxelization::kFilteredSHPyramidTag,
 								voxelization_.GetFilteredSHClipmap()->GetPyramid());
 	
-	light_filtering_->SetOutput(DX11Voxelization::kFilteredSHStackTag,
+	sh_convert_->SetOutput(DX11Voxelization::kFilteredSHStackTag,
 								voxelization_.GetFilteredSHClipmap()->GetStack());
 
 	// Indirect lighting
@@ -251,10 +251,18 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 		graphics_.PushEvent(L"Light filtering");
 
-		light_filtering_->Dispatch(*immediate_context_,
-								   voxelization_.GetVoxelResolution(),
-								   voxelization_.GetVoxelResolution(),
-								   voxelization_.GetVoxelResolution());
+		// ...
+							   
+		graphics_.PopEvent();
+
+		// SH conversion
+
+		graphics_.PushEvent(L"SH conversion");
+
+		sh_convert_->Dispatch(*immediate_context_,
+						      voxelization_.GetVoxelResolution(),
+							  voxelization_.GetVoxelResolution(),
+							  voxelization_.GetVoxelResolution());
 							   
 		graphics_.PopEvent();
 
