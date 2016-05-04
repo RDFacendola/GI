@@ -88,7 +88,7 @@ int GetCascade(float3 position_vs) {
 
 	float cascade_distance = floor(voxel_distance * rcp(gVoxelResolution >> 1)) + 1;
 
-	return gCascades - (int)(log2(cascade_distance));
+	return ((int)gCascades) - ceil(log2(cascade_distance));
 
 }
 
@@ -135,7 +135,7 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out Vo
 	bool is_inside_clipmap = index >= GetClipmapPyramidSize() && 
 							 index < GetClipmapPyramidSize() + GetCascadeSize() * (1 + gCascades);
 
-//#define DENSE_VOXEL_INFO
+#define DENSE_VOXEL_INFO
 
 // Define this MACRO if access of the whole SH structure is needed. This doesn't work if the structure is sparse! Default is NOT DEFINED.
 #ifndef DENSE_VOXEL_INFO
@@ -208,7 +208,7 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, float3 position_ws
 /// \return Returns 0 if the voxel couldn't be found, 1 if it was found inside the pyramid part of the clipmap or 2 if it was found inside the stack part of the clipmap.
 int GetSHCoordinates(float3 position_ws, uint coefficient_index, out uint3 address[3]) {
 
-	float3 position_vs = position_ws - gCenter;		// Voxel space
+	float3 position_vs = position_ws - gCenter;		// Voxel space [-R/2; +R/2]
 
 	int cascade = GetCascade(position_vs);			// Most detailed cascade
 
@@ -274,6 +274,11 @@ void StoreSHCoefficients(RWTexture3D<int> sh_pyramid, RWTexture3D<int> sh_stack,
 		InterlockedAdd(sh_stack[address[2]], coefficients.b);
 
 	}
+	else {
+
+		// Outside domain, do nothing
+
+	}
 
 }
 
@@ -310,9 +315,14 @@ float3 SampleSHCoefficients(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_s
 		return sh_stack.SampleLevel(gSHSampler, sample_location, 0);
 
 	}
+	else {
+	
+		// Outside the domain
 
-	return 0;		// Outside domain
-		
+		return 0;		
+
+	}
+			
 }
 
 float3 SampleSHContribution(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, uint sh_band, float3 direction) {
