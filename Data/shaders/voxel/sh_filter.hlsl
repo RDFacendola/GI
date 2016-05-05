@@ -21,9 +21,27 @@ cbuffer SHFilter {
 	
 };
 
-RWTexture3D<int> gUnfilteredSHStack;				// Unfiltered SH stack texture.
+#ifdef SH_STACK
 
-groupshared uint samples[N][N][N];					// Store the samples of the source texture.
+RWTexture3D<int> gUnfilteredSHStack;				// Unfiltered SH stack texture. Source \ Destination.
+
+#define gSource gUnfilteredSHStack
+#define gDestination gUnfilteredSHStack
+
+#endif
+
+#ifdef SH_PYRAMID
+
+RWTexture3D<int> gUnfilteredSHPyramid;				// Unfiltered SH pyramid texture. Destination.
+
+Texture3D<int> gUnfilteredSHStack;					// Unfiltered SH pyramid texture. Source.
+
+#define gSource gUnfilteredSHStack
+#define gDestination gUnfilteredSHPyramid
+
+#endif
+
+groupshared int samples[N][N][N];					// Store the samples of the source texture.
 
 [numthreads(N, N, N)]
 void CSMain(uint3 thread_id : SV_DispatchThreadID) {
@@ -47,7 +65,7 @@ void CSMain(uint3 thread_id : SV_DispatchThreadID) {
 
 			src_offset = uint3(coefficient_index, gSourceCascade, channel_index) * gVoxelResolution;
 
-			samples[thread_id.x][thread_id.y][thread_id.z] = gUnfilteredSHStack[thread_id + src_offset];
+			samples[thread_id.x][thread_id.y][thread_id.z] = gSource[thread_id + src_offset];
 
 			GroupMemoryBarrierWithGroupSync();
 
@@ -59,14 +77,14 @@ void CSMain(uint3 thread_id : SV_DispatchThreadID) {
 
 				dst_offset = quarter_resolution + uint3(coefficient_index, gDestinationCascade, channel_index) * gVoxelResolution;
 				
-				gUnfilteredSHStack[thread_id / 2 + dst_offset] =   samples[thread_id.x + 0][thread_id.y + 0][thread_id.z + 0]
-																 + samples[thread_id.x + 0][thread_id.y + 0][thread_id.z + 1]
-																 + samples[thread_id.x + 0][thread_id.y + 1][thread_id.z + 0]
-																 + samples[thread_id.x + 0][thread_id.y + 1][thread_id.z + 1]
-																 + samples[thread_id.x + 1][thread_id.y + 0][thread_id.z + 0]
-																 + samples[thread_id.x + 1][thread_id.y + 0][thread_id.z + 1]
-																 + samples[thread_id.x + 1][thread_id.y + 1][thread_id.z + 0]
-																 + samples[thread_id.x + 1][thread_id.y + 1][thread_id.z + 1];
+				gDestination[thread_id / 2 + dst_offset] =   samples[thread_id.x + 0][thread_id.y + 0][thread_id.z + 0]
+														   + samples[thread_id.x + 0][thread_id.y + 0][thread_id.z + 1]
+														   + samples[thread_id.x + 0][thread_id.y + 1][thread_id.z + 0]
+														   + samples[thread_id.x + 0][thread_id.y + 1][thread_id.z + 1]
+														   + samples[thread_id.x + 1][thread_id.y + 0][thread_id.z + 0]
+														   + samples[thread_id.x + 1][thread_id.y + 0][thread_id.z + 1]
+														   + samples[thread_id.x + 1][thread_id.y + 1][thread_id.z + 0]
+														   + samples[thread_id.x + 1][thread_id.y + 1][thread_id.z + 1];
 
 			}
 

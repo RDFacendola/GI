@@ -96,7 +96,9 @@ voxelization_(voxelization){
 
 	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
-	sh_stack_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_stack_filter.hlsl" });
+	sh_stack_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_filter.hlsl", { { "SH_STACK" } } });
+
+	sh_pyramid_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_filter.hlsl",{ { "SH_PYRAMID" } } });
 
 	sh_convert_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_convert.hlsl" });
 
@@ -158,6 +160,14 @@ voxelization_(voxelization){
 	sh_stack_filter_->SetInput("SHFilter",
 							   ObjectPtr<IStructuredBuffer>(cb_sh_filter));
 	
+	sh_pyramid_filter_->SetInput(DX11Voxelization::kVoxelizationTag,
+							     voxelization_.GetVoxelizationParams());
+	
+	sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
+								 voxelization_.GetUnfilteredSHClipmap()->GetStack()->GetTexture());
+
+	sh_pyramid_filter_->SetInput("SHFilter",
+							     ObjectPtr<IStructuredBuffer>(cb_sh_filter));
 
 	// SH Convert setup
 
@@ -299,8 +309,23 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 		}
 
-		// The last cascades writes directly inside the pyramid
+		// The last cascade writes directly inside the pyramid's base
 							   
+		sh_filter = cb_sh_filter->Lock<CBSHFilter>();
+
+		sh_filter->source_cascade = 0;
+		sh_filter->destination_cascade = 0;
+
+		cb_sh_filter->Unlock();
+
+		sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
+									  voxelization_.GetUnfilteredSHClipmap()->GetPyramid());
+
+		sh_pyramid_filter_->Dispatch(*immediate_context_,
+								     voxelization_.GetVoxelResolution(),
+								     voxelization_.GetVoxelResolution(),
+								     voxelization_.GetVoxelResolution());
+
 		graphics_.PopEvent();
 
 		// SH conversion
