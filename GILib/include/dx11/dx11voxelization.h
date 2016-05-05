@@ -98,8 +98,11 @@ namespace gi_lib {
 			float GetGridSize() const;
 
 			/// \brief Get the amount of voxel along each axis for each cascade.
-			/// It is a power of two
+			/// It is a power of two.
 			unsigned int GetVoxelResolution() const;
+
+			/// \brief Get the amount of cascades in the SH stack.
+			unsigned int GetVoxelCascades() const;
 
 		private:
 
@@ -195,6 +198,12 @@ namespace gi_lib {
 		inline unsigned int DX11Voxelization::GetVoxelResolution() const {
 
 			return voxel_resolution_;
+
+		}
+
+		inline unsigned int DX11Voxelization::GetVoxelCascades() const {
+
+			return cascades_;
 
 		}
 

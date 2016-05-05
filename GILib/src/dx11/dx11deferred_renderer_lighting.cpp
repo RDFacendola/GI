@@ -27,6 +27,16 @@ struct VSMPerLightCBuffer {
 
 };
 
+struct CBSHFilter {
+
+	unsigned int destination_cascade;
+
+	unsigned int source_cascade;
+
+	unsigned int reserved[2];
+
+};
+
 const Tag DX11DeferredRendererLighting::kAlbedoEmissivityTag = "gAlbedoEmissivity";
 const Tag DX11DeferredRendererLighting::kNormalShininessTag = "gNormalSpecularShininess";
 const Tag DX11DeferredRendererLighting::kDepthStencilTag = "gDepthStencil";
@@ -82,7 +92,11 @@ voxelization_(voxelization){
 
 	cb_point_light_ = new DX11StructuredBuffer(sizeof(PointLight));
 	
+	cb_sh_filter = new DX11StructuredBuffer(sizeof(CBSHFilter));
+
 	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\inject_light.hlsl" });
+
+	sh_stack_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_stack_filter.hlsl" });
 
 	sh_convert_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_convert.hlsl" });
 
@@ -132,6 +146,18 @@ voxelization_(voxelization){
 	
 	light_injection_->SetInput("CBPointLight",
 							   ObjectPtr<IStructuredBuffer>(cb_point_light_));
+
+	// Light filtering
+
+	sh_stack_filter_->SetInput(DX11Voxelization::kVoxelizationTag,
+							   voxelization_.GetVoxelizationParams());
+	
+	sh_stack_filter_->SetOutput(DX11Voxelization::kUnfilteredSHStackTag,
+								voxelization_.GetUnfilteredSHClipmap()->GetStack());
+
+	sh_stack_filter_->SetInput("SHFilter",
+							   ObjectPtr<IStructuredBuffer>(cb_sh_filter));
+	
 
 	// SH Convert setup
 
@@ -251,7 +277,29 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 		graphics_.PushEvent(L"Light filtering");
 
-		// ...
+		CBSHFilter* sh_filter;
+
+		for (unsigned int cascade_index = voxelization_.GetVoxelCascades() - 1; cascade_index > 0; --cascade_index) {
+
+			// Next cascade
+
+			sh_filter = cb_sh_filter->Lock<CBSHFilter>();
+
+			sh_filter->source_cascade = cascade_index;
+			sh_filter->destination_cascade = cascade_index - 1;
+
+			cb_sh_filter->Unlock();
+
+			// Dispatch - works as global sync point
+
+			sh_stack_filter_->Dispatch(*immediate_context_,
+									   voxelization_.GetVoxelResolution(),
+									   voxelization_.GetVoxelResolution(),
+									   voxelization_.GetVoxelResolution());
+
+		}
+
+		// The last cascades writes directly inside the pyramid
 							   
 		graphics_.PopEvent();
 
