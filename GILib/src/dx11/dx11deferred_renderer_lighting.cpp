@@ -282,51 +282,56 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 	graphics_.PopEvent();
 
 	if (frame_info.enable_global_illumination) {
-		
-		// Light filtering
-
-		graphics_.PushEvent(L"Light filtering");
-
-		CBSHFilter* sh_filter;
-
-		for (unsigned int cascade_index = voxelization_.GetVoxelCascades() - 1; cascade_index > 0; --cascade_index) {
-
-			// Next cascade
-
-			sh_filter = cb_sh_filter->Lock<CBSHFilter>();
-
-			sh_filter->source_cascade = cascade_index;
-			sh_filter->destination_cascade = cascade_index - 1;
-
-			cb_sh_filter->Unlock();
-
-			// Dispatch - works as global sync point
-
-			sh_stack_filter_->Dispatch(*immediate_context_,
-									   voxelization_.GetVoxelResolution(),
-									   voxelization_.GetVoxelResolution(),
-									   voxelization_.GetVoxelResolution());
-
-		}
-
-		// The last cascade writes directly inside the pyramid's base
+        
 							   
-		sh_filter = cb_sh_filter->Lock<CBSHFilter>();
+        if (voxelization_.GetVoxelCascades() > 0){
+		
+		    // Light filtering
 
-		sh_filter->source_cascade = 0;
-		sh_filter->destination_cascade = 0;
+		    graphics_.PushEvent(L"Light filtering");
 
-		cb_sh_filter->Unlock();
+		    CBSHFilter* sh_filter;
 
-		sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
-									  voxelization_.GetUnfilteredSHClipmap()->GetPyramid());
+		    for (int cascade_index = voxelization_.GetVoxelCascades() - 1; cascade_index > 0; --cascade_index) {
 
-		sh_pyramid_filter_->Dispatch(*immediate_context_,
-								     voxelization_.GetVoxelResolution(),
-								     voxelization_.GetVoxelResolution(),
-								     voxelization_.GetVoxelResolution());
+			    // Next cascade
 
-		graphics_.PopEvent();
+			    sh_filter = cb_sh_filter->Lock<CBSHFilter>();
+
+			    sh_filter->source_cascade = static_cast<unsigned int>(cascade_index);
+                sh_filter->destination_cascade = sh_filter->source_cascade - 1;
+
+			    cb_sh_filter->Unlock();
+
+			    // Dispatch - works as global sync point
+
+			    sh_stack_filter_->Dispatch(*immediate_context_,
+									       voxelization_.GetVoxelResolution(),
+									       voxelization_.GetVoxelResolution(),
+									       voxelization_.GetVoxelResolution());
+
+		    }
+
+		    // The last cascade writes directly inside the pyramid's base
+
+		    sh_filter = cb_sh_filter->Lock<CBSHFilter>();
+
+		    sh_filter->source_cascade = 0;
+		    sh_filter->destination_cascade = 0;
+
+		    cb_sh_filter->Unlock();
+
+		    sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
+									      voxelization_.GetUnfilteredSHClipmap()->GetPyramid());
+
+		    sh_pyramid_filter_->Dispatch(*immediate_context_,
+								         voxelization_.GetVoxelResolution(),
+								         voxelization_.GetVoxelResolution(),
+								         voxelization_.GetVoxelResolution());
+
+		    graphics_.PopEvent();
+
+        }
 
 		// SH conversion
 
