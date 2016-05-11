@@ -1,6 +1,6 @@
 #include "render_def.hlsl"
 #include "light_def.hlsl"
-#include "phong_def.hlsl"
+#include "pbr_def.hlsl"
 
 #include "shadow_def.hlsl"
 
@@ -30,20 +30,20 @@ void CSMain(int3 thread_id : SV_DispatchThreadID){
 	// Accumulate point lights
 	for (light_index = 0; light_index < point_lights; ++light_index) {
 
-		color += ComputePhong(surface, 
-							  gPointLights[light_index], 
-							  camera_position.xyz, 
-							  ComputeShadow(surface, gPointShadows[light_index]));
+		color += ComputePBR(surface,
+							gPointLights[light_index], 
+							camera_position.xyz, 
+							ComputeShadow(surface, gPointShadows[light_index]));
 
 	}
 
 	// Accumulate directional lights
 	for (light_index = 0; light_index < directional_lights; ++light_index) {
 
-		color += ComputePhong(surface, 
-							  gDirectionalLights[light_index], 
-							  camera_position.xyz, 
-							  ComputeShadow(surface, gDirectionalShadows[light_index]));
+		color += ComputePBR(surface,
+							gDirectionalLights[light_index], 
+							camera_position.xyz, 
+							ComputeShadow(surface, gDirectionalShadows[light_index]));
 
 	}
 

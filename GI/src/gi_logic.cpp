@@ -184,8 +184,8 @@ void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh)
 	auto base_material = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\mat_emissive.hlsl" });
 
 	static std::vector<Color> kLightColors{ Color(5.f, 5.f, 5.f, 1.f),
-											Color(2.f, 2.f, 2.f, 1.f),
-											/*Color(2.5f, 5.f, 2.5f, 1.f),
+											Color(3.5f, 3.5f, 3.5f, 1.f),
+											/*Color(2.f, 2.f, 2.f, 1.f),
 											Color(2.5f, 2.5f, 5.f, 1.f),
 											Color(25.f, 10.f, 25.f, 1.f),
 											Color(10.f, 25.f, 25.f, 1.f)*/};
@@ -201,7 +201,7 @@ void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh)
 
 		// Point light setup
 
-		auto light_component = light_node->AddComponent<PointLightComponent>(light_color, kPointLightRadius);
+		auto light_component = light_node->AddComponent<PointLightComponent>(light_color, 3 * kPointLightRadius);
 		
 		light_component->SetCutoff(0.001f);
 		light_component->EnableShadow(true);

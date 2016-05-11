@@ -341,7 +341,13 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 						      voxelization_.GetVoxelResolution(),
 							  voxelization_.GetVoxelResolution(),
 							  voxelization_.GetVoxelResolution());
-							   
+
+		immediate_context_->GenerateMips(resource_cast(voxelization_.GetFilteredSHClipmap()
+																	->GetPyramid())
+													   ->GetShaderResourceView()
+													   .GetShaderResourceView()
+													   .Get());
+
 		graphics_.PopEvent();
 
 	}

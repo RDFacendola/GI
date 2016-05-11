@@ -1,5 +1,6 @@
 #include "render_def.hlsl"
 #include "voxel\voxel_def.hlsl"
+#include "pbr_def.hlsl"
 
 #define N 16
 #define TOTAL_THREADS (N)
@@ -33,7 +34,7 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	float fresnel = 1.0f - saturate(dot(reflection_direction, surface.normal));
 
-	fresnel = pow(fresnel, 2.5f);
+	fresnel = pow(fresnel, 3.0f);
 
 	float3 color = 0;
 
@@ -41,7 +42,7 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	ray *= rcp(max(ray.x, max(ray.y, ray.z)));
 
-	float step_size = length(ray) * gVoxelSize;
+	float step_size = length(ray) * ((int)(gVoxelSize) >> 0);
 		
 	float sample_distance;
 	float3 sample_location;
@@ -54,13 +55,14 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 		color += SampleVoxelColor(gFilteredSHPyramid, 
 								  gFilteredSHStack, 
 								  sample_location,
-								  -reflection_direction) * surface.specular * fresnel;
+								  -reflection_direction);
 
 	}
 
+	color *= ComputeCookTorrance(reflection_direction, -eye_direction, surface) * 0.7f;
 	
 	// Sum the indirect contribution inside the light accumulation buffer
 
-    gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + max(0, float4(color.rgb * 1.f, 1));
+    gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + max(0, float4(color.rgb, 1));
 
 }

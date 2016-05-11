@@ -419,9 +419,16 @@ HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int wi
 	desc.MipLevels = mips;
 	desc.Format = format;
 	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+	desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;		
 	desc.CPUAccessFlags = 0;
 	desc.MiscFlags = 0;
+	
+	if (mips != 1) {
+
+		desc.BindFlags |= D3D11_BIND_RENDER_TARGET;					// Generate MIPS requires this flag, even if you are not gonna bind it as RT, gawd.
+		desc.MiscFlags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+	}
 
 	RETURN_ON_FAIL(device.CreateTexture3D(&desc,
 										  nullptr,
