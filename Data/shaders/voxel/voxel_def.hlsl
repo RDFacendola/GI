@@ -208,38 +208,19 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, float3 position_ws
 /// \return Returns 0 if the voxel couldn't be found, 1 if it was found inside the pyramid part of the clipmap or 2 if it was found inside the stack part of the clipmap.
 int GetSHCoordinates(float3 position_ws, uint coefficient_index, out uint3 address[3]) {
 
-	float3 position_vs = position_ws - gCenter;		// Voxel space [-R/2; +R/2]
+	float3 position_vs = position_ws - gCenter;
 
-	int cascade = GetCascade(position_vs);			// Most detailed cascade
+	int cascade = GetCascade(position_vs);
 
 	float voxel_size = GetVoxelSize(cascade);
 
 	address[0] = floor(position_vs * rcp(voxel_size)) + (gVoxelResolution * 0.5f);			// Red
 	
-	address[0].x += coefficient_index * gVoxelResolution;				// Move to the correct coefficient
-	address[0].y += sign(cascade) * (cascade - 1) * gVoxelResolution;	// Move to the correct MIP. The sign(.) here is to bypass the instruction if we are already inside the pyramid.
+	address[0].x += coefficient_index * gVoxelResolution;									// Move to the correct coefficient
+	address[0].y += sign(cascade) * (cascade - 1) * gVoxelResolution;						// Move to the correct MIP. The sign(.) here is to bypass the instruction if we are already inside the pyramid.
 	
 	address[1] = address[0] + uint3(0, 0, 1 * gVoxelResolution);							// Green
 	address[2] = address[0] + uint3(0, 0, 2 * gVoxelResolution);							// Blue
-
-	return sign(cascade) + 1;		// 0 for cascade < 0
-									// 1 for cascade = 0
-									// 2 for cascade > 0
-
-}
-
-int GetSHCoordinates(float3 position_ws, uint coefficient_index, out float3 address) {
-
-	float3 position_vs = position_ws - gCenter;		// Voxel space
-
-	int cascade = GetCascade(position_vs);			// Most detailed cascade
-
-	float voxel_size = GetVoxelSize(cascade);
-
-	address = position_vs * rcp(voxel_size) + (gVoxelResolution * 0.5f);
-
-	address.x += coefficient_index * gVoxelResolution;					// Move to the correct coefficient
-	address.y += sign(cascade) * (cascade - 1) * gVoxelResolution;		// Move to the correct MIP. The sign(.) here is to bypass the instruction if we are already inside the pyramid.
 
 	return sign(cascade) + 1;		// 0 for cascade < 0
 									// 1 for cascade = 0
@@ -254,7 +235,9 @@ void StoreSHCoefficients(RWTexture3D<int> sh_pyramid, RWTexture3D<int> sh_stack,
 
 	int3 coefficients = ToIntSH(sh_coefficients);
 
-	int result = GetSHCoordinates(position_ws, coefficient_index, address);
+	int result = GetSHCoordinates(position_ws,
+								  coefficient_index, 
+								  address);
 
 	if (result == 1) {
 
@@ -282,13 +265,35 @@ void StoreSHCoefficients(RWTexture3D<int> sh_pyramid, RWTexture3D<int> sh_stack,
 
 }
 
-float3 SampleSHCoefficients(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, uint sh_index) {
+int GetSHCoordinates(float3 position_vs, uint coefficient_index, int cascade, out float3 address) {
+
+	float voxel_size = GetVoxelSize(cascade);
+
+	address = position_vs * rcp(voxel_size) + (gVoxelResolution * 0.5f);
+
+	address.x += coefficient_index * gVoxelResolution;					// Move to the correct coefficient
+	address.y += sign(cascade) * (cascade - 1) * gVoxelResolution;		// Move to the correct MIP. The sign(.) here is to bypass the instruction if we are already inside the pyramid.
+
+	return sign(cascade) + 1;		// 0 for cascade < 0
+									// 1 for cascade = 0
+									// 2 for cascade > 0
+
+}
+
+float3 SampleSHCoefficients(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, uint sh_index, float radius) {
 
 	float3 address;
 	
 	float3 dimensions;
 
-	int result = GetSHCoordinates(position_ws, sh_index, address);
+	float3 position_vs = position_ws - gCenter;
+
+	int cascade = GetCascade(position_vs);
+
+	int result = GetSHCoordinates(position_vs, 
+								  sh_index, 
+								  cascade,
+								  address);
 
 	if (result == 1) {
 
@@ -325,19 +330,19 @@ float3 SampleSHCoefficients(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_s
 			
 }
 
-float3 SampleSHContribution(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, uint sh_band, float3 direction) {
+float3 SampleSHContribution(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, uint sh_band, float3 direction, float radius) {
 
 	[branch]
 	if (sh_band == 0) {
 
-		return SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 0) * sqrt(1.f / (4.f * PI));
+		return SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 0, radius) * sqrt(1.f / (4.f * PI));
 
 	}
 	else if (sh_band == 1) {
 
-		return (SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 1) * direction.x +
-				SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 2) * direction.y +
-				SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 3) * direction.z) * sqrt(3.f / (4.f * PI));
+		return (SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 1, radius) * direction.x +
+				SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 2, radius) * direction.y +
+				SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 3, radius) * direction.z) * sqrt(3.f / (4.f * PI));
 
 	}
 	else {
@@ -348,7 +353,7 @@ float3 SampleSHContribution(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_s
 
 }
 
-float3 SampleVoxelColor(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, float3 direction) {
+float3 SampleVoxelColor(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, float3 direction, float radius) {
 
 	int cascade = GetCascade(position_ws);
 
@@ -356,11 +361,17 @@ float3 SampleVoxelColor(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack
 
 	for (uint sh_band = 0; sh_band < GetSHBandCount(cascade); ++sh_band) {
 
-		color += SampleSHContribution(sh_pyramid, sh_stack, position_ws, sh_band, direction);
+		color += SampleSHContribution(sh_pyramid, sh_stack, position_ws, sh_band, direction, radius);
 
 	}
 
 	return max(0, color.rgb);
+
+}
+
+float3 SampleCone(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 origin, float3 direction, float angle) {
+
+	float tan_angle = tan(angle);
 
 }
 

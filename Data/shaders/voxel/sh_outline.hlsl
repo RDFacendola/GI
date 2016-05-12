@@ -38,7 +38,8 @@ VSOut VSMain(VSIn input){
 	output.color = SampleVoxelColor(gFilteredSHPyramid, 
 									gFilteredSHStack, 
 									voxel_info.center, 
-									normalize(input.position.xyz));
+									normalize(input.position.xyz),
+									0);
 
 	// The debug draw is applied after the tonemap so we have to manually tonemap the result. (Reinhard's)
 

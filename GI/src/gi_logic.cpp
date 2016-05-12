@@ -233,7 +233,7 @@ void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh)
 
 	}
 	
-	return;
+	//return;
 
 	// Sky contribution
 	{

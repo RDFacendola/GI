@@ -55,7 +55,8 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 		color += SampleVoxelColor(gFilteredSHPyramid, 
 								  gFilteredSHStack, 
 								  sample_location,
-								  -reflection_direction);
+								  -reflection_direction,
+								  0);
 
 	}
 
