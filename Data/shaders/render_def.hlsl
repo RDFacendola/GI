@@ -87,7 +87,7 @@ SurfaceData GatherSurfaceData(uint2 position, float4x4 inv_view_proj_matrix) {
 	surface_data.emissivity = albedo_emissivity.w;
 	surface_data.roughness = 0.4;
 	surface_data.metalness = 0;
-	surface_data.cavity = 1.0f;
+	surface_data.cavity = normal_specular_shininess.z;
 
 	surface_data.ior = float2(1.3, 0);
 	surface_data.kd = 0.6f;

@@ -117,7 +117,7 @@ float3 ComputeCookTorrance(float3 light_direction, float3 view_direction, Surfac
 
 	float denominator = max(0.001f, 4.f * NdotV /** NdotL*/);
 
-	return (numerator /** NdotL*/ * surface.albedo.rgb) / denominator;	// * dL
+	return (numerator /** NdotL*/ * surface.cavity) / denominator;	// * dL
 	
 }
 
@@ -141,7 +141,7 @@ float3 ComputePBR(float3 light_direction, float3 view_direction, SurfaceData sur
 
 	float3 specular = ComputeCookTorrance(light_direction, view_direction, surface);	// Cook-Torrance specular (PBR).
 
-	return (surface.kd * diffuse + surface.ks * specular * surface.cavity) * light_color;
+	return (surface.kd * diffuse + surface.ks * specular) * light_color;
 	
 }
 
