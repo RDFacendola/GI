@@ -117,7 +117,7 @@ float3 ComputeCookTorrance(float3 light_direction, float3 view_direction, Surfac
 
 	float denominator = max(0.001f, 4.f * NdotV /** NdotL*/);
 
-	return (numerator /** NdotL*/ * surface.albedo.rgb) / denominator;	// * dL
+	return (numerator /** NdotL*/) / denominator;	// * dL
 	
 }
 
