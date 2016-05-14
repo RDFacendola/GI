@@ -39,7 +39,7 @@ VSOut VSMain(VSIn input){
 									gFilteredSHStack, 
 									voxel_info.center, 
 									normalize(input.position.xyz),
-									0);
+									voxel_info.size * 0.5f);
 
 	// The debug draw is applied after the tonemap so we have to manually tonemap the result. (Reinhard's)
 

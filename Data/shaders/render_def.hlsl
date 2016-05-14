@@ -31,7 +31,7 @@ struct SurfaceData {
 	float3 albedo;			// Albedo of the surface.
 	float3 normal;			// Normal of the surface in world space.
 
-	//float specular;			// Specular power.
+	//float specular;		// Specular power.
 	//float shininess;		// Shininess for specular factor.
 
 	float emissivity;		// Emissivity of the surface (self-illumination).
@@ -78,9 +78,6 @@ SurfaceData GatherSurfaceData(uint2 position, float4x4 inv_view_proj_matrix) {
 	surface_data.position = ComputeSurfacePosition(uv, depth, inv_view_proj_matrix);
 	surface_data.albedo = albedo_emissivity.xyz;
 	surface_data.normal = DecodeNormals(normal_specular_shininess.xy);
-
-	//surface_data.specular = normal_specular_shininess.z;
-	//surface_data.shininess = normal_specular_shininess.w;
 
 	// TODO: plug the actual values of the surface
 

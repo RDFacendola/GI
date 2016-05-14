@@ -92,6 +92,13 @@ int GetCascade(float3 position_vs) {
 
 }
 
+/// \brief Get the minimum size of a voxel around the specified point.
+float GetMinVoxelSize(float3 position_ws) {
+
+	return GetVoxelSize(GetCascade(position_ws - gCenter));
+
+}
+
 int3 ToIntSH(float3 sh_coefficient) {
 
 	return sh_coefficient * 100;
@@ -282,51 +289,85 @@ int GetSHCoordinates(float3 position_vs, uint coefficient_index, int cascade, ou
 
 float3 SampleSHCoefficients(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, uint sh_index, float radius) {
 
-	float3 address;
-	
 	float3 dimensions;
+	int coefficients;
 
 	float3 position_vs = position_ws - gCenter;
+	
+	float voxel_size = radius * 2.0f;
 
-	int cascade = GetCascade(position_vs);
+	// Assumption: radius is always at least the maximum resolution available for the specified sample location. Avoids multiple GetMinVoxelSize(.)
 
-	int result = GetSHCoordinates(position_vs, 
-								  sh_index, 
-								  cascade,
-								  address);
+	if (voxel_size >= gVoxelSize) {
 
-	if (result == 1) {
+		// Sample directly from the pyramid. 
+		// Optimal case: we rely on the hardware quadrilinear filtering.
 
-		// Pyramid
-		sh_pyramid.GetDimensions(dimensions.x,			// gVoxelResolution * #Coefficients
-								 dimensions.y,			// gVoxelResolution
-								 dimensions.z);			// gVoxelResolution
+		sh_pyramid.GetDimensions(dimensions.x,				// gVoxelResolution * #Coefficients
+								 dimensions.y,				// gVoxelResolution
+								 dimensions.z);				// gVoxelResolution
 
-		float3 sample_location = address / dimensions;
+		coefficients = dimensions.x / gVoxelResolution;		// Number of SH coefficients
 
-		return sh_pyramid.SampleLevel(gSHSampler, sample_location, 0);
+		float3 sample_location = (position_vs / (gVoxelSize * gVoxelResolution)) + 0.5f;	// [0; 1]
+
+		sample_location.x = (sample_location.x + sh_index) / coefficients;					// Move to the correct SH coefficient.
 		
-	}
-	else if (result == 2) {
+		float mip_level = log2(voxel_size / gVoxelSize);
 		
-		// Stack
-
-		sh_stack.GetDimensions(dimensions.x,			// gVoxelResolution * #Coefficients
-							   dimensions.y,			// gVoxelResolution * #Cascades
-							   dimensions.z);			// gVoxelResolution
-
-		float3 sample_location = address / dimensions;
-
-		return sh_stack.SampleLevel(gSHSampler, sample_location, 0);
+		return sh_pyramid.SampleLevel(gSHSampler, sample_location, mip_level);				// Sample & interpolate
 
 	}
 	else {
-	
-		// Outside the domain
 
-		return 0;		
+		// Sample twice from the stack or one time from the stack and the other from the pyramid.
+		// Bad case: we sample twice and perform a linear interpolation in software.
+
+		return float3(1, 0, 1);
 
 	}
+
+	//float3 address;
+	//
+	//int cascade = GetCascade(position_vs);
+
+	//int result = GetSHCoordinates(position_vs, 
+	//							  sh_index, 
+	//							  cascade,
+	//							  address);
+
+	//if (result == 1) {
+
+	//	// Pyramid
+	//	sh_pyramid.GetDimensions(dimensions.x,			// gVoxelResolution * #Coefficients
+	//							 dimensions.y,			// gVoxelResolution
+	//							 dimensions.z);			// gVoxelResolution
+
+	//	float3 sample_location = address / dimensions;
+
+	//	return sh_pyramid.SampleLevel(gSHSampler, sample_location, 0);
+	//	
+	//}
+	//else if (result == 2) {
+	//	
+	//	// Stack
+
+	//	sh_stack.GetDimensions(dimensions.x,			// gVoxelResolution * #Coefficients
+	//						   dimensions.y,			// gVoxelResolution * #Cascades
+	//						   dimensions.z);			// gVoxelResolution
+
+	//	float3 sample_location = address / dimensions;
+
+	//	return sh_stack.SampleLevel(gSHSampler, sample_location, 0);
+
+	//}
+	//else {
+	//
+	//	// Outside the domain
+
+	//	return 0;		
+
+	//}
 			
 }
 
@@ -371,7 +412,34 @@ float3 SampleVoxelColor(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack
 
 float3 SampleCone(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 origin, float3 direction, float angle) {
 
-	float tan_angle = tan(angle);
+	float tan_angle = tan(angle * 0.5f);
+	float radius;
+	
+	float ray_offset = GetMinVoxelSize();
+	float3 color = 0;
+	float3 position = origin;
+
+	// Ray marching
+
+	[flatten]
+	for (int step = 0; step < 5; ++step) {
+
+		radius = max(ray_offset * tan_angle,
+					 GetMinVoxelSize(position) * 0.5f);		// No point in marching with a higher resolution than the available one
+
+		position = origin + (ray_offset + radius) * direction;
+
+		color += SampleVoxelColor(sh_pyramid, 
+								  sh_stack, 
+								  position, 
+								  -direction, 
+								  radius) /* * attenuation*/;
+
+		ray_offset += 2 * radius;
+
+	}
+
+	return color;
 
 }
 

@@ -22,46 +22,62 @@ cbuffer gParameters {
 
 };
 
+float3 SampleSpecularCone(SurfaceData surface, float3 light_direction, float3 view_direction) {
+
+	float3 color = SampleCone(gFilteredSHPyramid,
+							  gFilteredSHStack,
+							  surface.position,
+							  light_direction,
+							  0.24f);
+
+	float3 specular = ComputeCookTorrance(light_direction, view_direction, surface);	// Cook-Torrance specular (PBR).
+
+	return surface.ks * specular * color;
+
+}
+
+float3 SampleDiffuseCone(SurfaceData surface, float3 light_direction, float3 view_direction) {
+
+	float3 color = SampleCone(gFilteredSHPyramid,
+							  gFilteredSHStack,
+							  surface.position,
+							  light_direction,
+							  0.52f);
+
+	float3 diffuse = ComputeLambert(light_direction, view_direction, surface);			// Lambertian diffuse
+
+	return surface.kd * diffuse * color;
+
+}
+
 [numthreads(N, N, 1)]
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	
 	SurfaceData surface = GatherSurfaceData(dispatch_thread_id.xy, inv_view_proj_matrix);
 	
-	float3 eye_direction = normalize(surface.position - camera_position.xyz);	// From the camera to the surface
+	float3 V = normalize(camera_position.xyz - surface.position);	// From the camera to the surface
 
-	float3 reflection_direction = reflect(eye_direction,
-										  surface.normal);
-
-	float fresnel = 1.0f - saturate(dot(reflection_direction, surface.normal));
-
-	fresnel = pow(fresnel, 3.0f);
+	float3 R = reflect(-V,
+					   surface.normal);
 
 	float3 color = 0;
 
-	float3 ray = abs(reflection_direction);
+	color += SampleSpecularCone(surface, R, V);	// Specular
 
-	ray *= rcp(max(ray.x, max(ray.y, ray.z)));
+	float3 x = cross(surface.normal, normalize(float3(1,1,1)));
+	float3 y = cross(surface.normal, x);
 
-	float step_size = length(ray) * ((int)(gVoxelSize) >> 0);
-		
-	float sample_distance;
-	float3 sample_location;
+	x = cross(surface.normal, y);
 
-	for (int step = 1; step < 10; ++step) {
+	x *= 3.f;
+	y *= 3.f;
 
-		sample_distance = step * step_size;
-		sample_location = surface.position + sample_distance * reflection_direction;
+	color += SampleDiffuseCone(surface, surface.normal, V);						// Diffuse Up
+	color += SampleDiffuseCone(surface, normalize(surface.normal + x), V);
+	color += SampleDiffuseCone(surface, normalize(surface.normal - x), V);
+	color += SampleDiffuseCone(surface, normalize(surface.normal + y), V);
+	color += SampleDiffuseCone(surface, normalize(surface.normal - y), V);
 
-		color += SampleVoxelColor(gFilteredSHPyramid, 
-								  gFilteredSHStack, 
-								  sample_location,
-								  -reflection_direction,
-								  0);
-
-	}
-
-	color *= ComputeCookTorrance(reflection_direction, -eye_direction, surface) * 0.7f;
-	
 	// Sum the indirect contribution inside the light accumulation buffer
 
     gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + max(0, float4(color.rgb, 1));
