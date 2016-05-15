@@ -183,6 +183,15 @@ namespace gi_lib{
 		/// \param mips Number of mip maps to generate. If 0 is passed, the full chain is created.
 		HRESULT MakeUnorderedTexture(ID3D11Device& device, unsigned int width, unsigned int height, unsigned int depth, DXGI_FORMAT format, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view, unsigned int mips = 1);
 
+		/// \brief Create an unordered texture pointing to a particular MIP level of a given texture.
+		/// \param device Device used to create the texture.
+		/// \param source Texture used as source for the MIP level.
+		/// \param mip MIP level to get.
+		/// \param unordered_access_view Pointer to the unordered access view. Optional.
+		/// \param shader_resource_view Pointer to the shader resource view. Optional.
+		/// \remarks The resulting texture is restricted to just 1 MIP level of the source texture. No resource is copied.
+		HRESULT MakeUnorderedTexture(ID3D11Device& device, ID3D11Texture3D& source, unsigned int mip, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view);
+
 		/// \brief Create a 2D texture array that can be bound to a compute shader as unordered access.
 		/// \param device Device used to create the texture.
 		/// \param width Width of the texture in pixels.

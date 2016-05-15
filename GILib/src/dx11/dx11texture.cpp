@@ -344,6 +344,55 @@ DX11GPTexture3D::DX11GPTexture3D(const IGPTexture3D::FromDescription& args) {
 
 	unordered_access_view_ << &uav;
 
+	mips_.resize(texture_->GetMIPCount());		// null initialized
+
+}
+
+DX11GPTexture3D::DX11GPTexture3D(DX11GPTexture3D& source, unsigned int mip_index) {
+	
+	ID3D11UnorderedAccessView* uav;
+	ID3D11ShaderResourceView* srv;
+	ID3D11Resource* texture;
+
+	source.unordered_access_view_->GetResource(&texture);
+
+	COM_GUARD(texture);
+
+	auto&& device = *DX11Graphics::GetInstance().GetDevice();
+
+	THROW_ON_FAIL(::MakeUnorderedTexture(device,
+										 *(static_cast<ID3D11Texture3D*>(texture)),
+										 mip_index,
+										 &uav,
+										 &srv));
+
+	texture_ = new DX11Texture3D(COMMove(&srv));
+
+	unordered_access_view_ << &uav;
+
+	mips_.resize(1);
+
+}
+
+ObjectPtr<IGPTexture3D> DX11GPTexture3D::GetMIP(unsigned int mip_index){
+	
+	auto mip = mips_[mip_index];
+
+	if (mip) {
+
+		return mip;
+		
+	}
+	else {
+
+		// Lazy instantiation of the MIP levels
+
+		mips_[mip_index] = ObjectPtr<IGPTexture3D>(new DX11GPTexture3D(*this, mip_index));
+
+		return mips_[mip_index];
+
+	}
+	
 }
 
 ////////////////////////////// DX11 GP CLIPMAP 3D ////////////////////////////////////////

@@ -282,6 +282,8 @@ namespace gi_lib{
 
 			virtual unsigned int GetMIPCount() const override;
 
+			virtual ObjectPtr<IGPTexture3D> GetMIP(unsigned int mip_index) override;
+
 			virtual TextureFormat GetFormat() const override;
 
 			virtual size_t GetSize() const override;
@@ -294,9 +296,13 @@ namespace gi_lib{
 
 		private:
 
+			DX11GPTexture3D(DX11GPTexture3D& source, unsigned int mip_index);
+
 			COMPtr<ID3D11UnorderedAccessView> unordered_access_view_;		///< \brief Pointer to the unordered access view of the texture.
 
 			ObjectPtr<DX11Texture3D> texture_;								///< \brief Underlying texture.
+
+			mutable std::vector<ObjectPtr<IGPTexture3D>> mips_;				///< \brief Texture restricted to each MIP level.
 
 		};
 

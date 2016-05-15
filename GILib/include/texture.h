@@ -316,6 +316,11 @@ namespace gi_lib{
 		/// \return Returns a pointer to the underlying texture.
 		virtual ObjectPtr<ITexture3D> GetTexture() = 0;
 
+		/// \brief Get a particular MIP level as a stand alone texture.
+		/// \param mip_index Index of the MIP level to get.
+		/// \return Returns a pointer to a the specified MIP level.
+		virtual ObjectPtr<IGPTexture3D> GetMIP(unsigned int mip_index) = 0;
+
 		/// \brief Get the width of the texture.
 		/// \return Returns the width of the texture, in pixel.
 		virtual unsigned int GetWidth() const = 0;

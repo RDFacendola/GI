@@ -425,8 +425,8 @@ HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int wi
 	
 	if (mips != 1) {
 
-		desc.BindFlags |= D3D11_BIND_RENDER_TARGET;					// Generate MIPS requires this flag, even if you are not gonna bind it as RT, gawd.
-		desc.MiscFlags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
+		//desc.BindFlags |= D3D11_BIND_RENDER_TARGET;					// Generate MIPS requires this flag, even if you are not gonna bind it as RT, gawd.
+		//desc.MiscFlags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
 	}
 
@@ -475,6 +475,59 @@ HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, unsigned int wi
 #endif
 
 	// Cleanup
+
+	cleanup.Dismiss();
+
+	return S_OK;
+
+}
+
+HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, ID3D11Texture3D& source, unsigned int mip, ID3D11UnorderedAccessView** unordered_access_view, ID3D11ShaderResourceView** shader_resource_view) {
+
+	auto cleanup = make_scope_guard([&unordered_access_view, &shader_resource_view]() {
+
+		if (unordered_access_view)		(*unordered_access_view)->Release();
+		if (shader_resource_view)		(*shader_resource_view)->Release();
+
+		*unordered_access_view = nullptr;
+		*shader_resource_view = nullptr;
+
+	});
+
+	D3D11_TEXTURE3D_DESC desc;
+
+	source.GetDesc(&desc);
+
+	if (shader_resource_view) {
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
+
+		srv_desc.Format = desc.Format;
+		srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
+		srv_desc.Texture3D.MostDetailedMip = mip;
+		srv_desc.Texture3D.MipLevels = 1;
+
+		device.CreateShaderResourceView(&source,
+										&srv_desc,
+										shader_resource_view);
+
+	}
+
+	if (unordered_access_view) {
+
+		D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+
+		uav_desc.Format = desc.Format;
+		uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+		uav_desc.Texture3D.MipSlice = mip;
+		uav_desc.Texture3D.FirstWSlice = 0;
+		uav_desc.Texture3D.WSize = -1;		// Full W range.
+
+		device.CreateUnorderedAccessView(&source,
+										 &uav_desc,
+										 unordered_access_view);
+
+	}
 
 	cleanup.Dismiss();
 
