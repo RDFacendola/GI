@@ -5,11 +5,11 @@
 #define N 8
 #define TOTAL_THREADS (N * N * N)
 
-Texture3D<int> gUnfilteredSHPyramid;							// Pyramid part of the unfiltered SH 3D clipmap.
 Texture3D<int> gUnfilteredSHStack;								// Stack part of the unfiltered SH 3D clipmap.
-
-RWTexture3D<float3> gFilteredSHPyramid;							// Pyramid part of the filtered SH 3D clipmap.
 RWTexture3D<float3> gFilteredSHStack;							// Stack part of the filtered SH 3D clipmap.
+
+Texture3D<int> gUnfilteredSHPyramid;							// Pyramid part of the unfiltered SH 3D clipmap.
+RWTexture3D<float3> gFilteredSHPyramid;							// Pyramid part of the filtered SH 3D clipmap.
 
 /// \brief Gather the int-encoded SH coefficients and write them as RGB float sample inside the given destination.
 void GatherCoefficients(Texture3D<int> source, RWTexture3D<float3> destination, uint3 thread_id, uint coefficient_index, int cascade_index) {

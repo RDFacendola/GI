@@ -519,7 +519,7 @@ void DX11VSMAtlas::DrawShadowmap(const DirectionalShadow& shadow, const vector<V
 
 }
 
-void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int atlas_page, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, ObjectPtr<IRenderTarget>* out_shadow_map, bool tessellable) {
+void DX11VSMAtlas::DrawShadowmap(const AlignedBox2i& boundaries, unsigned int /*atlas_page*/, const vector<VolumeComponent*> nodes, const ObjectPtr<DX11Material>& shadow_material, const Matrix4f& light_transform, ObjectPtr<IRenderTarget>* out_shadow_map, bool tessellable) {
 
 	auto& graphics_ = DX11Graphics::GetInstance();
 

@@ -162,9 +162,6 @@ voxelization_(voxelization){
 	
 	sh_pyramid_filter_->SetInput(DX11Voxelization::kVoxelizationTag,
 							     voxelization_.GetVoxelizationParams());
-	
-	sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-								 voxelization_.GetUnfilteredSHClipmap()->GetStack()->GetTexture());
 
 	sh_pyramid_filter_->SetInput("SHFilter",
 							     ObjectPtr<IStructuredBuffer>(cb_sh_filter));
@@ -206,8 +203,6 @@ voxelization_(voxelization){
 	indirect_light_shader_->SetInput(kLightParametersTag,
 									 ObjectPtr<IStructuredBuffer>(light_accumulation_parameters_));
 
-
-
 }
 
 DX11DeferredRendererLighting::~DX11DeferredRendererLighting(){
@@ -217,22 +212,50 @@ DX11DeferredRendererLighting::~DX11DeferredRendererLighting(){
 }
 
 ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const ObjectPtr<IRenderTarget>& gbuffer, const vector<VolumeComponent*>& lights, const FrameInfo& frame_info) {
-	
-	// Light accumulation setup
-
-	gp_cache_->PushToCache(ObjectPtr<IGPTexture2D>(light_buffer_));			        // Release the previous light accumulation buffer, in case the resolution changed.
-    gp_cache_->PushToCache(ObjectPtr<IGPTexture2D>(indirect_light_buffer_));
-
-	light_buffer_ = gp_cache_->PopFromCache(frame_info.width,				        // Grab a new light accumulation buffer from the cache.
-											frame_info.height,
-											TextureFormat::RGB_FLOAT);
-
-    indirect_light_buffer_ = gp_cache_->PopFromCache(frame_info.width,				// Grab a new light accumulation buffer from the cache.
-											         frame_info.height,
-											         TextureFormat::RGB_FLOAT);
 		
-	// Clear the shadow atlas from any existing shadowmap
+	// Shadowmaps and optional light injection
 
+	unsigned int point_lights_count;
+	unsigned int directional_lights_count;
+
+	UpdateShadowmaps(lights, frame_info, point_lights_count, directional_lights_count);
+	
+	// Shared CB setup
+
+	auto light_accumulation_parameters = light_accumulation_parameters_->Lock<LightAccumulationParameters>();
+
+	light_accumulation_parameters->camera_position = Math::ToVector3(frame_info.view_matrix.inverse().col(3));
+	light_accumulation_parameters->inv_view_proj_matrix = frame_info.view_proj_matrix.inverse();
+	light_accumulation_parameters->point_lights = point_lights_count;
+	light_accumulation_parameters->directional_lights = directional_lights_count;
+
+	light_accumulation_parameters_->Unlock();
+
+	// Direct lighting
+
+	AccumulateDirectLight(gbuffer, frame_info);
+
+	// Indirect lighting
+
+	if (frame_info.enable_global_illumination) {
+        					   
+		FilterIndirectLight();
+		
+		AccumulateIndirectLight(gbuffer, frame_info);
+
+		return indirect_light_buffer_->GetTexture();
+
+	}
+	else {
+
+	    return light_buffer_->GetTexture();
+
+	}
+    
+}
+
+void DX11DeferredRendererLighting::UpdateShadowmaps(const vector<VolumeComponent*>& lights, const FrameInfo &frame_info, unsigned int& point_lights_count, unsigned int& directional_lights_count)
+{
 	graphics_.PushEvent(L"Shadowmaps");
 
 	shadow_atlas_->Reset();
@@ -242,38 +265,42 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 	auto directional_lights = directional_lights_->Lock<DirectionalLight>();
 	auto directional_shadows = directional_shadows_->Lock<DirectionalShadow>();
 
-	unsigned int point_light_index = 0;
-	unsigned int directional_light_index = 0;
+	point_lights_count = 0;
+	directional_lights_count = 0;
 
 	for (auto&& node : lights) {
+
+		// Point lights
 
 		for (auto&& point_light : node->GetComponents<PointLightComponent>()) {
 
 			UpdateLight(*frame_info.scene,
 						point_light,
-						point_lights[point_light_index], 
-						point_shadows[point_light_index],
+						point_lights[point_lights_count],
+						point_shadows[point_lights_count],
 						frame_info.enable_global_illumination);
 
-			++point_light_index;
+			++point_lights_count;
 
 		}
+
+		// Directional lights
 
 		for (auto&& directional_light : node->GetComponents<DirectionalLightComponent>()) {
 
 			UpdateLight(*frame_info.scene,
 						directional_light,
 						frame_info.aspect_ratio,
-						directional_lights[directional_light_index],
-						directional_shadows[directional_light_index],
+						directional_lights[directional_lights_count],
+						directional_shadows[directional_lights_count],
 						frame_info.enable_global_illumination);
 
-			++directional_light_index;
+			++directional_lights_count;
 
 		}
 
 	}
-	
+
 	point_lights_->Unlock();
 	point_shadows_->Unlock();
 	directional_lights_->Unlock();
@@ -281,150 +308,6 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 	graphics_.PopEvent();
 
-	if (frame_info.enable_global_illumination) {
-        
-							   
-        if (voxelization_.GetVoxelCascades() > 0){
-		
-		    // Light filtering
-
-		    graphics_.PushEvent(L"Light filtering");
-
-		    CBSHFilter* sh_filter;
-
-		    for (int cascade_index = voxelization_.GetVoxelCascades() - 1; cascade_index > 0; --cascade_index) {
-
-			    // Next cascade
-
-			    sh_filter = cb_sh_filter->Lock<CBSHFilter>();
-
-			    sh_filter->source_cascade = static_cast<unsigned int>(cascade_index);
-                sh_filter->destination_cascade = sh_filter->source_cascade - 1;
-
-			    cb_sh_filter->Unlock();
-
-			    // Dispatch - works as global sync point
-
-			    sh_stack_filter_->Dispatch(*immediate_context_,
-									       voxelization_.GetVoxelResolution(),
-									       voxelization_.GetVoxelResolution(),
-									       voxelization_.GetVoxelResolution());
-
-		    }
-
-		    // The last cascade writes directly inside the pyramid's base
-
-		    sh_filter = cb_sh_filter->Lock<CBSHFilter>();
-
-		    sh_filter->source_cascade = 0;
-		    sh_filter->destination_cascade = 0;
-
-		    cb_sh_filter->Unlock();
-
-		    sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
-									      voxelization_.GetUnfilteredSHClipmap()->GetPyramid());
-
-		    sh_pyramid_filter_->Dispatch(*immediate_context_,
-								         voxelization_.GetVoxelResolution(),
-								         voxelization_.GetVoxelResolution(),
-								         voxelization_.GetVoxelResolution());
-
-		    graphics_.PopEvent();
-
-        }
-
-		// SH conversion
-
-		graphics_.PushEvent(L"SH conversion");
-
-		sh_convert_->Dispatch(*immediate_context_,
-						      voxelization_.GetVoxelResolution(),
-							  voxelization_.GetVoxelResolution(),
-							  voxelization_.GetVoxelResolution());
-
-		immediate_context_->GenerateMips(resource_cast(voxelization_.GetFilteredSHClipmap()
-																	->GetPyramid())
-													   ->GetShaderResourceView()
-													   .GetShaderResourceView()
-													   .Get());
-
-		graphics_.PopEvent();
-
-	}
-
-	// Light accumulation
-
-	graphics_.PushEvent(L"Direct light accumulation");
-
-	auto light_accumulation_parameters = light_accumulation_parameters_->Lock<LightAccumulationParameters>();
-
-	light_accumulation_parameters->camera_position = Math::ToVector3(frame_info.view_matrix.inverse().col(3));
-	light_accumulation_parameters->inv_view_proj_matrix = frame_info.view_proj_matrix.inverse();
-	light_accumulation_parameters->point_lights = point_light_index;
-	light_accumulation_parameters->directional_lights = directional_light_index;
-	
-	light_accumulation_parameters_->Unlock();
-
-	bool check;
-
-	check = light_shader_->SetInput(kAlbedoEmissivityTag,
-									(*gbuffer)[0]);
-
-	check = light_shader_->SetInput(kNormalShininessTag,
-									(*gbuffer)[1]);
-	
-	check = light_shader_->SetInput(kDepthStencilTag,
-									gbuffer->GetDepthBuffer());
-	
-	check = light_shader_->SetOutput(kLightBufferTag,
-									 ObjectPtr<IGPTexture2D>(light_buffer_));
-
-	// Actual light computation
-
-	light_shader_->Dispatch(*immediate_context_,			// Dispatch one thread for each GBuffer's pixel
-							light_buffer_->GetWidth(),
-							light_buffer_->GetHeight(),
-							1);
-
-	graphics_.PopEvent();
-
-	// Indirect lighting
-
-	if (frame_info.enable_global_illumination) {
-
-		graphics_.PushEvent(L"Indirect light accumulation");
-
-		check = indirect_light_shader_->SetInput(kAlbedoEmissivityTag,
-												 (*gbuffer)[0]);
-
-		check = indirect_light_shader_->SetInput(kNormalShininessTag,
-												 (*gbuffer)[1]);
-	
-		check = indirect_light_shader_->SetInput(kDepthStencilTag,
-												 gbuffer->GetDepthBuffer());
-	
-		check = indirect_light_shader_->SetInput(kLightBufferTag,
-												 light_buffer_->GetTexture());
-
-        check = indirect_light_shader_->SetOutput(kIndirectLightBufferTag,
-                                                  ObjectPtr<IGPTexture2D>(indirect_light_buffer_));
-
-		indirect_light_shader_->Dispatch(*immediate_context_,
-										 light_buffer_->GetWidth(),
-										 light_buffer_->GetHeight(),
-										 1);
-
-		graphics_.PopEvent();
-
-        return indirect_light_buffer_->GetTexture();
-
-    }
-    else{
-
-	    return light_buffer_->GetTexture();
-
-    }
-    
 }
 
 void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const PointLightComponent& point_light, PointLight& light, PointShadow& shadow, bool light_injection) {
@@ -536,5 +419,164 @@ void DX11DeferredRendererLighting::UpdateLight(const Scene& scene, const Directi
 	// Cleanup
 
 	rt_cache_->PushToCache(shadow_map);		// Save the texture for the next frame
+
+}
+
+void DX11DeferredRendererLighting::AccumulateDirectLight(const ObjectPtr<IRenderTarget>& gbuffer, const FrameInfo &frame_info){
+
+	graphics_.PushEvent(L"Direct light accumulation");
+
+	gp_cache_->PushToCache(ObjectPtr<IGPTexture2D>(light_buffer_));			        // Release the previous light accumulation buffer, in case the resolution changed.
+
+	light_buffer_ = gp_cache_->PopFromCache(frame_info.width,				        // Grab a new light accumulation buffer from the cache.
+											frame_info.height,
+											TextureFormat::RGB_FLOAT);
+
+	bool check;
+
+	check = light_shader_->SetInput(kAlbedoEmissivityTag, 
+									(*gbuffer)[0]);
+	
+	check = light_shader_->SetInput(kNormalShininessTag, 
+									(*gbuffer)[1]);
+
+	check = light_shader_->SetInput(kDepthStencilTag, 
+									gbuffer->GetDepthBuffer());
+
+	check = light_shader_->SetOutput(kLightBufferTag, 
+									 ObjectPtr<IGPTexture2D>(light_buffer_));
+
+	// Actual light computation
+
+	light_shader_->Dispatch(*immediate_context_,			// Dispatch one thread for each GBuffer's pixel
+							light_buffer_->GetWidth(),
+							light_buffer_->GetHeight(),
+							1);
+
+	graphics_.PopEvent();
+
+}
+
+void DX11DeferredRendererLighting::AccumulateIndirectLight(const ObjectPtr<IRenderTarget>& gbuffer, const FrameInfo &frame_info) {
+
+	graphics_.PushEvent(L"Indirect light accumulation");
+
+	gp_cache_->PushToCache(ObjectPtr<IGPTexture2D>(indirect_light_buffer_));
+
+	indirect_light_buffer_ = gp_cache_->PopFromCache(frame_info.width,				// Grab a new light accumulation buffer from the cache.
+													 frame_info.height,
+													 TextureFormat::RGB_FLOAT);
+
+	bool check;
+
+	check = indirect_light_shader_->SetInput(kAlbedoEmissivityTag,
+											 (*gbuffer)[0]);
+
+	check = indirect_light_shader_->SetInput(kNormalShininessTag,
+											 (*gbuffer)[1]);	
+
+	check = indirect_light_shader_->SetInput(kDepthStencilTag,
+											 gbuffer->GetDepthBuffer());
+
+	check = indirect_light_shader_->SetInput(kLightBufferTag,
+											 light_buffer_->GetTexture());
+
+	check = indirect_light_shader_->SetOutput(kIndirectLightBufferTag,
+											  ObjectPtr<IGPTexture2D>(indirect_light_buffer_));
+
+	indirect_light_shader_->Dispatch(*immediate_context_,
+									 light_buffer_->GetWidth(),
+									 light_buffer_->GetHeight(),
+									 1);
+
+	graphics_.PopEvent();
+
+}
+
+void DX11DeferredRendererLighting::FilterIndirectLight()
+{
+	// Light filtering
+
+	graphics_.PushEvent(L"Light filtering");
+
+	auto unfiltered_sh_clipmap = voxelization_.GetUnfilteredSHClipmap();
+
+	// Filtering must be performed on the INT surface, since reading from a FLOAT is not supported by older architectures (Kepler and previous)
+
+	if (voxelization_.GetVoxelCascades() > 0) {
+
+		// Stack filtering - Copy the content of the N-th cascade to the (N-1) th one, up to the first one.
+
+		CBSHFilter* sh_filter;
+
+		for (int cascade_index = voxelization_.GetVoxelCascades() - 1; cascade_index > 0; --cascade_index) {
+
+			sh_filter = cb_sh_filter->Lock<CBSHFilter>();
+
+			sh_filter->source_cascade = static_cast<unsigned int>(cascade_index);
+			sh_filter->destination_cascade = sh_filter->source_cascade - 1;
+
+			cb_sh_filter->Unlock();
+
+			sh_stack_filter_->Dispatch(*immediate_context_,
+									   voxelization_.GetVoxelResolution(),
+									   voxelization_.GetVoxelResolution(),
+									   voxelization_.GetVoxelResolution());
+
+		}
+
+		// Stack-to-pyramid filtering - Copy the content of the 1st cascade to the pyramid base.
+
+		sh_filter = cb_sh_filter->Lock<CBSHFilter>();
+
+		sh_filter->source_cascade = 0;
+		sh_filter->destination_cascade = 0;
+
+		cb_sh_filter->Unlock();
+
+		sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
+									 unfiltered_sh_clipmap->GetStack()->GetTexture());
+
+		sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
+									  unfiltered_sh_clipmap->GetPyramid());
+
+		sh_pyramid_filter_->Dispatch(*immediate_context_,
+									 voxelization_.GetVoxelResolution(),
+									 voxelization_.GetVoxelResolution(),
+									 voxelization_.GetVoxelResolution());
+
+	}
+
+	// Pyramid filtering - Downscale the content of the N-th MIP to the (N+1)-th one
+
+	for (unsigned int mip_index = 1; mip_index < unfiltered_sh_clipmap->GetPyramid()->GetMIPCount(); ++mip_index) {
+
+		sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
+									 unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index - 1u)->GetTexture());
+
+		sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
+									  unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index));
+
+		sh_pyramid_filter_->Dispatch(*immediate_context_,
+									 voxelization_.GetVoxelResolution() /*<< (mip_index - 1)*/,
+									 voxelization_.GetVoxelResolution() /*<< (mip_index - 1)*/,
+									 voxelization_.GetVoxelResolution() /*<< (mip_index - 1)*/);
+
+	}
+
+	graphics_.PopEvent();
+
+	// SH conversion - 3xINT32 -> FLOAT3
+
+	graphics_.PushEvent(L"SH conversion");
+
+	sh_convert_->Dispatch(*immediate_context_,
+						  voxelization_.GetVoxelResolution(),
+						  voxelization_.GetVoxelResolution(),
+						  voxelization_.GetVoxelResolution());
+
+	// TODO convert the pyramid mips as well
+
+	graphics_.PopEvent();
 
 }

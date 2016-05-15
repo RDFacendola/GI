@@ -104,8 +104,21 @@ namespace gi_lib {
 			/// \param lights Lights whose contribution needs to be accumulated.
 			/// \param frame_info Information about the frame being rendered.
 			ObjectPtr<ITexture2D> AccumulateLight(const ObjectPtr<IRenderTarget>& gbuffer, const std::vector<VolumeComponent*>& lights, const FrameInfo& frame_info);
-			
+
+			void FilterIndirectLight();
+
+
+
+
+
 		private:
+
+			/// \brief Update the shadowmaps.
+			/// \param lights Shadowcaster lights to update.
+			/// \param frame_info Frame-specific info.
+			/// \param point_lights_count Number of point lights among the provided light nodes.
+			/// \param directional_lights_count Number of directional lights among the provided light nodes.
+			void UpdateShadowmaps(const vector<VolumeComponent*>& lights, const FrameInfo &frame_info, unsigned int& point_lights_count, unsigned int& directional_lights_count);
 
 			/// \brief Write the informations about a point light and its shadow.
 			/// \param point_light Source light.
@@ -119,6 +132,12 @@ namespace gi_lib {
 			/// \param light Contains the informations of the directional light. Output.
 			/// \param shadow Contains the informations of the directional shadow. Output.
 			void UpdateLight(const Scene& scene, const DirectionalLightComponent& directional_light, float aspect_ratio, DirectionalLight& light, DirectionalShadow& shadow, bool light_injection);
+			
+			/// \brief Accumulate direct lighting.
+			void AccumulateDirectLight(const ObjectPtr<IRenderTarget>& gbuffer, const FrameInfo &frame_info);
+
+			/// \brief Accumulate indirect lighting.
+			void AccumulateIndirectLight(const ObjectPtr<IRenderTarget>& gbuffer, const FrameInfo &frame_info);
 
 			windows::COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
 
