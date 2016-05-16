@@ -399,10 +399,14 @@ ObjectPtr<IGPTexture3D> DX11GPTexture3D::GetMIP(unsigned int mip_index){
 
 DX11GPClipmap3D::DX11GPClipmap3D(const DX11GPClipmap3D::FromDescription& args) {
 
+#undef min
+
+	auto mips = static_cast<unsigned int>(std::log2f(static_cast<float>(std::min(std::min(args.width, args.height), args.depth))));
+
 	pyramid_ = new DX11GPTexture3D(DX11GPTexture3D::FromDescription{ args.width,
 																	 args.height,
 																	 args.depth,
-																	 0,								// Full MIP chain
+																	 mips,							// Full MIP chain
 																	 args.format });
 
 	stack_ = new DX11GPTexture3D(DX11GPTexture3D::FromDescription{ args.width,

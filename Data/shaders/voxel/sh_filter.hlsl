@@ -17,7 +17,9 @@ cbuffer SHFilter {
 	
 	uint gSourceCascade;							// Cascade of the source surface hwere the data will be read from.
 
-	uint2 gReserved;								// Padding
+	int gDestinationOffset;							// Offset applied to the destination pixels.
+
+	int gDestinationMIP;							// MIP level of the destination surface.
 	
 };
 
@@ -46,9 +48,6 @@ groupshared int samples[N][N][N];					// Store the samples of the source texture
 [numthreads(N, N, N)]
 void CSMain(uint3 thread_id : SV_DispatchThreadID) {
 
-	int half_resolution = gVoxelResolution >> 1;
-	int quarter_resolution = gVoxelResolution >> 2;
-
 	uint3 dst_offset;
 	uint3 src_offset;
 	uint band_count;
@@ -56,14 +55,14 @@ void CSMain(uint3 thread_id : SV_DispatchThreadID) {
 	[unroll]
 	for (int channel_index = 0; channel_index < 3; ++channel_index) {
 
-		band_count = min(GetSHBandCount(gDestinationCascade),
-						 GetSHBandCount(gSourceCascade));			// We cannot reconstruct bands that do not exists in both cascades of course.
+		// We cannot reconstruct bands that do not exists in both cascades of course.
+		band_count = min(GetSHBandCount(gDestinationCascade), GetSHBandCount(gSourceCascade));			
 
 		for (uint coefficient_index = 0; coefficient_index < band_count * band_count; ++coefficient_index) {
 
 			// Sample everything and store in groupshared memory
 
-			src_offset = uint3(coefficient_index, gSourceCascade, channel_index) * gVoxelResolution;
+			src_offset = uint3(coefficient_index, gSourceCascade, channel_index) * (gVoxelResolution >> (gDestinationMIP - 1));
 
 			samples[thread_id.x][thread_id.y][thread_id.z] = gSource[thread_id + src_offset];
 
@@ -75,7 +74,7 @@ void CSMain(uint3 thread_id : SV_DispatchThreadID) {
 				thread_id.y % 2 == 0 &&
 				thread_id.z % 2 == 0) {
 
-				dst_offset = quarter_resolution + uint3(coefficient_index, gDestinationCascade, channel_index) * gVoxelResolution;
+				dst_offset = gDestinationOffset + uint3(coefficient_index, gDestinationCascade, channel_index) * (gVoxelResolution >> gDestinationMIP);
 				
 				gDestination[thread_id / 2 + dst_offset] =   samples[thread_id.x + 0][thread_id.y + 0][thread_id.z + 0]
 														   + samples[thread_id.x + 0][thread_id.y + 0][thread_id.z + 1]

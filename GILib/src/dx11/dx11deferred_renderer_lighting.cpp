@@ -33,7 +33,9 @@ struct CBSHFilter {
 
 	unsigned int source_cascade;
 
-	unsigned int reserved[2];
+	int destination_offset;
+
+	int destination_mip;
 
 };
 
@@ -495,6 +497,11 @@ void DX11DeferredRendererLighting::AccumulateIndirectLight(const ObjectPtr<IRend
 
 void DX11DeferredRendererLighting::FilterIndirectLight()
 {
+
+	CBSHFilter* cb_filter_params;
+
+	int voxel_resolution = voxelization_.GetVoxelResolution();
+
 	// Light filtering
 
 	graphics_.PushEvent(L"Light filtering");
@@ -507,30 +514,32 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 
 		// Stack filtering - Copy the content of the N-th cascade to the (N-1) th one, up to the first one.
 
-		CBSHFilter* sh_filter;
-
 		for (int cascade_index = voxelization_.GetVoxelCascades() - 1; cascade_index > 0; --cascade_index) {
 
-			sh_filter = cb_sh_filter->Lock<CBSHFilter>();
+			cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-			sh_filter->source_cascade = static_cast<unsigned int>(cascade_index);
-			sh_filter->destination_cascade = sh_filter->source_cascade - 1;
+			cb_filter_params->source_cascade = static_cast<unsigned int>(cascade_index);
+			cb_filter_params->destination_cascade = cb_filter_params->source_cascade - 1;
+			cb_filter_params->destination_offset = voxel_resolution >> 2;	// The destination is centered on the next MIP level, so it's shifted of a quarter along each axis.
+			cb_filter_params->destination_mip = 0;
 
 			cb_sh_filter->Unlock();
 
 			sh_stack_filter_->Dispatch(*immediate_context_,
-									   voxelization_.GetVoxelResolution(),
-									   voxelization_.GetVoxelResolution(),
-									   voxelization_.GetVoxelResolution());
+									   voxel_resolution,
+									   voxel_resolution,
+									   voxel_resolution);
 
 		}
 
 		// Stack-to-pyramid filtering - Copy the content of the 1st cascade to the pyramid base.
 
-		sh_filter = cb_sh_filter->Lock<CBSHFilter>();
+		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-		sh_filter->source_cascade = 0;
-		sh_filter->destination_cascade = 0;
+		cb_filter_params->source_cascade = 0;
+		cb_filter_params->destination_cascade = 0;
+		cb_filter_params->destination_offset = voxel_resolution >> 2;	// The destination is centered on the next MIP level, so it's shifted of a quarter along each axis.
+		cb_filter_params->destination_mip = 0;
 
 		cb_sh_filter->Unlock();
 
@@ -541,15 +550,24 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 									  unfiltered_sh_clipmap->GetPyramid());
 
 		sh_pyramid_filter_->Dispatch(*immediate_context_,
-									 voxelization_.GetVoxelResolution(),
-									 voxelization_.GetVoxelResolution(),
-									 voxelization_.GetVoxelResolution());
+									 voxel_resolution,
+									 voxel_resolution,
+									 voxel_resolution);
 
 	}
 
 	// Pyramid filtering - Downscale the content of the N-th MIP to the (N+1)-th one
 
 	for (unsigned int mip_index = 1; mip_index < unfiltered_sh_clipmap->GetPyramid()->GetMIPCount(); ++mip_index) {
+
+		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
+
+		cb_filter_params->source_cascade = 0;			// No cascades
+		cb_filter_params->destination_cascade = 0;		// No cascades
+		cb_filter_params->destination_offset = 0;		// No offset, full MIP level
+		cb_filter_params->destination_mip = mip_index;	// Target MIP level
+
+		cb_sh_filter->Unlock();
 
 		sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
 									 unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index - 1u)->GetTexture());
@@ -558,9 +576,9 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 									  unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index));
 
 		sh_pyramid_filter_->Dispatch(*immediate_context_,
-									 voxelization_.GetVoxelResolution() /*<< (mip_index - 1)*/,
-									 voxelization_.GetVoxelResolution() /*<< (mip_index - 1)*/,
-									 voxelization_.GetVoxelResolution() /*<< (mip_index - 1)*/);
+									 voxel_resolution >> (mip_index - 1),
+									 voxel_resolution >> (mip_index - 1),
+									 voxel_resolution >> (mip_index - 1));
 
 	}
 
@@ -571,9 +589,9 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 	graphics_.PushEvent(L"SH conversion");
 
 	sh_convert_->Dispatch(*immediate_context_,
-						  voxelization_.GetVoxelResolution(),
-						  voxelization_.GetVoxelResolution(),
-						  voxelization_.GetVoxelResolution());
+						  voxel_resolution,
+						  voxel_resolution,
+						  voxel_resolution);
 
 	// TODO convert the pyramid mips as well
 

@@ -507,9 +507,9 @@ HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, ID3D11Texture3D
 		srv_desc.Texture3D.MostDetailedMip = mip;
 		srv_desc.Texture3D.MipLevels = 1;
 
-		device.CreateShaderResourceView(&source,
-										&srv_desc,
-										shader_resource_view);
+		THROW_ON_FAIL(device.CreateShaderResourceView(&source,
+													  &srv_desc,
+													  shader_resource_view));
 
 	}
 
@@ -521,11 +521,11 @@ HRESULT gi_lib::dx11::MakeUnorderedTexture(ID3D11Device& device, ID3D11Texture3D
 		uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
 		uav_desc.Texture3D.MipSlice = mip;
 		uav_desc.Texture3D.FirstWSlice = 0;
-		uav_desc.Texture3D.WSize = -1;		// Full W range.
+		uav_desc.Texture3D.WSize = UINT_MAX;		// Full W range.
 
-		device.CreateUnorderedAccessView(&source,
-										 &uav_desc,
-										 unordered_access_view);
+		THROW_ON_FAIL(device.CreateUnorderedAccessView(&source,
+													   &uav_desc,
+													   unordered_access_view));
 
 	}
 
