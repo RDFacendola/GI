@@ -600,6 +600,7 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 	int dst_resolution;
 	ObjectPtr<ITexture3D> source_mip;
 	ObjectPtr<ITexture3D> destination_mip = sh_filter_temp_->GetTexture();
+	D3D11_BOX dest_region;
 
 	for (unsigned int mip_index = 0; mip_index < unfiltered_sh_clipmap->GetPyramid()->GetMIPCount(); ++mip_index) {
 
@@ -646,15 +647,6 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 		// The current MIP level must be copied somewhere else since it seems that DX11 doesn't like to have an UAV and a SRV pointing to the same texture
 		// (even if at different MIP levels) at the same time.
 
-		immediate_context_->CopySubresourceRegion(resource_cast(destination_mip)->GetTexture().Get(),
-												  0,
-												  0,
-												  0,
-												  0,
-												  resource_cast(source_mip)->GetTexture().Get(),
-												  mip_index,
-												  nullptr);
-
 		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
 		cb_filter_params->source_cascade = 0;				// No cascades
@@ -665,16 +657,32 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 		cb_sh_filter->Unlock();
 		
 		sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-									 destination_mip);
+									 source_mip);
 
 		sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
-									  unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index + 1));
+									  sh_filter_temp_);
 
 		sh_pyramid_filter_->Dispatch(*immediate_context_,
 									 dst_resolution,
 									 dst_resolution,
 									 dst_resolution);
+
+		dest_region.left = 0u;
+		dest_region.top = 0u;
+		dest_region.front = 0u;
+		dest_region.right = sh_filter_temp_->GetWidth() >> (mip_index + 1);
+		dest_region.bottom = sh_filter_temp_->GetHeight() >> (mip_index + 1);
+		dest_region.back = sh_filter_temp_->GetDepth() >> (mip_index + 1);
 		
+		immediate_context_->CopySubresourceRegion(resource_cast(unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index + 1)->GetTexture())->GetTexture().Get(),
+												  mip_index + 1,
+												  0,
+												  0,
+												  0,
+												  resource_cast(sh_filter_temp_->GetTexture())->GetTexture().Get(),
+												  0,
+												  &dest_region);
+				
 		graphics_.PopEvent();
 		
 	}
