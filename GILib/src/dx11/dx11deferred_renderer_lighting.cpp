@@ -60,6 +60,11 @@ voxelization_(voxelization){
 
 	auto&& device = *graphics_.GetDevice();
 
+	auto sh_unfiltered_pyramid = voxelization_.GetUnfilteredSHClipmap()->GetPyramid();
+	auto sh_unfiltered_stack = voxelization_.GetUnfilteredSHClipmap()->GetStack();
+	auto sh_filtered_pyramid = voxelization_.GetFilteredSHClipmap()->GetPyramid();
+	auto sh_filtered_stack = voxelization_.GetFilteredSHClipmap()->GetStack();
+
 	// Get the immediate rendering context.
 
 	ID3D11DeviceContext* context;
@@ -77,7 +82,13 @@ voxelization_(voxelization){
 	rt_cache_ = resources.Load<IRenderTargetCache, IRenderTargetCache::Singleton>({});
 
 	light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\lighting.hlsl" });
-	
+
+	sh_filter_temp_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>({ sh_unfiltered_pyramid->GetWidth(),
+																					sh_unfiltered_pyramid->GetHeight(),
+																					sh_unfiltered_pyramid->GetDepth(),
+																					1,
+																					sh_unfiltered_pyramid->GetFormat()});
+
 	shadow_atlas_ = make_unique<DX11VSMAtlas>(2048/*, 1*/, true);
 
 	point_lights_ = new DX11StructuredArray(32, sizeof(PointLight));
@@ -140,10 +151,10 @@ voxelization_(voxelization){
 							   voxelization_.GetVoxelAddressTable());
 
 	light_injection_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag, 
-								voxelization_.GetUnfilteredSHClipmap()->GetPyramid());
+								sh_unfiltered_pyramid);
 
 	light_injection_->SetOutput(DX11Voxelization::kUnfilteredSHStackTag, 
-								voxelization_.GetUnfilteredSHClipmap()->GetStack());
+								sh_unfiltered_stack);
 
 	light_injection_->SetInput("PerLight",
 							   ObjectPtr<IStructuredBuffer>(per_light_));
@@ -157,7 +168,7 @@ voxelization_(voxelization){
 							   voxelization_.GetVoxelizationParams());
 	
 	sh_stack_filter_->SetOutput(DX11Voxelization::kUnfilteredSHStackTag,
-								voxelization_.GetUnfilteredSHClipmap()->GetStack());
+								sh_unfiltered_stack);
 
 	sh_stack_filter_->SetInput("SHFilter",
 							   ObjectPtr<IStructuredBuffer>(cb_sh_filter));
@@ -174,16 +185,16 @@ voxelization_(voxelization){
 							   voxelization_.GetVoxelizationParams());
 
 	sh_convert_->SetInput(DX11Voxelization::kUnfilteredSHPyramidTag,
-							   voxelization_.GetUnfilteredSHClipmap()->GetPyramid()->GetTexture());
+						  sh_unfiltered_pyramid->GetTexture());
 	
 	sh_convert_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-							   voxelization_.GetUnfilteredSHClipmap()->GetStack()->GetTexture());
+						  sh_unfiltered_stack->GetTexture());
 
 	sh_convert_->SetOutput(DX11Voxelization::kFilteredSHPyramidTag,
-								voxelization_.GetFilteredSHClipmap()->GetPyramid());
+						   sh_filtered_pyramid);
 	
 	sh_convert_->SetOutput(DX11Voxelization::kFilteredSHStackTag,
-								voxelization_.GetFilteredSHClipmap()->GetStack());
+						   sh_filtered_stack);
 
 	// Indirect lighting
 
@@ -194,10 +205,10 @@ voxelization_(voxelization){
 									 voxelization_.GetVoxelAddressTable());
 
 	indirect_light_shader_->SetInput(DX11Voxelization::kFilteredSHPyramidTag,
-									 voxelization_.GetFilteredSHClipmap()->GetPyramid()->GetTexture());
+									 sh_filtered_pyramid->GetTexture());
 
 	indirect_light_shader_->SetInput(DX11Voxelization::kFilteredSHStackTag,
-									 voxelization_.GetFilteredSHClipmap()->GetStack()->GetTexture());
+									 sh_filtered_stack->GetTexture());
 
 	indirect_light_shader_->SetInput(DX11Voxelization::kSHSampleTag,
 									 voxelization_.GetSHSampler());
@@ -558,7 +569,29 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 
 	// Pyramid filtering - Downscale the content of the N-th MIP to the (N+1)-th one
 
+	int dst_resolution;
+	ObjectPtr<DX11Texture3D> source_mip;
+	ObjectPtr<DX11Texture3D> destination_mip = resource_cast(sh_filter_temp_->GetTexture());
+
 	for (unsigned int mip_index = 1; mip_index < unfiltered_sh_clipmap->GetPyramid()->GetMIPCount(); ++mip_index) {
+
+		// The current MIP level must be copied somewhere else since it seems DX doesn't like to have an UAV and a SRV pointing to the same texture
+		// (even if at different MIP levels) at the same time.
+
+		source_mip = resource_cast(unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index - 1u)->GetTexture());
+
+		immediate_context_->CopySubresourceRegion(destination_mip->GetTexture().Get(),
+												  0,
+												  0,
+												  0,
+												  0,
+												  source_mip->GetTexture().Get(),
+												  mip_index - 1u,
+												  nullptr);
+
+		// Filter the next MIP level
+
+		dst_resolution = voxel_resolution >> (mip_index - 1);
 
 		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
@@ -568,17 +601,17 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 		cb_filter_params->destination_mip = mip_index;	// Target MIP level
 
 		cb_sh_filter->Unlock();
-
+		
 		sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-									 unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index - 1u)->GetTexture());
+									 sh_filter_temp_->GetTexture());
 
 		sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
 									  unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index));
 
 		sh_pyramid_filter_->Dispatch(*immediate_context_,
-									 voxel_resolution >> (mip_index - 1),
-									 voxel_resolution >> (mip_index - 1),
-									 voxel_resolution >> (mip_index - 1));
+									 dst_resolution,
+									 dst_resolution,
+									 dst_resolution);
 
 	}
 
