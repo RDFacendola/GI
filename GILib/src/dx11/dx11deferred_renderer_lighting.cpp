@@ -113,7 +113,9 @@ voxelization_(voxelization){
 
 	sh_pyramid_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_filter.hlsl",{ { "SH_PYRAMID" } } });
 
-	sh_convert_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_convert.hlsl" });
+	sh_stack_convert_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_convert.hlsl",{ { "SH_STACK" } } });
+
+	sh_pyramid_convert_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_convert.hlsl",{ { "SH_PYRAMID" } } });
 
 	indirect_light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\cone_tracing.hlsl" });
 	
@@ -179,23 +181,28 @@ voxelization_(voxelization){
 	sh_pyramid_filter_->SetInput("SHFilter",
 							     ObjectPtr<IStructuredBuffer>(cb_sh_filter));
 
-	// SH Convert setup
+	// SH Convert setup - Stack
 
-	sh_convert_->SetInput(DX11Voxelization::kVoxelizationTag,
-							   voxelization_.GetVoxelizationParams());
-
-	sh_convert_->SetInput(DX11Voxelization::kUnfilteredSHPyramidTag,
-						  sh_unfiltered_pyramid->GetTexture());
+	sh_stack_convert_->SetInput(DX11Voxelization::kVoxelizationTag,
+							    voxelization_.GetVoxelizationParams());
 	
-	sh_convert_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-						  sh_unfiltered_stack->GetTexture());
+	sh_stack_convert_->SetInput("SHFilter",
+								ObjectPtr<IStructuredBuffer>(cb_sh_filter));
 
-	sh_convert_->SetOutput(DX11Voxelization::kFilteredSHPyramidTag,
-						   sh_filtered_pyramid);
+	sh_stack_convert_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
+								sh_unfiltered_stack->GetTexture());
+
+	sh_stack_convert_->SetOutput(DX11Voxelization::kFilteredSHStackTag,
+								 sh_filtered_stack);
 	
-	sh_convert_->SetOutput(DX11Voxelization::kFilteredSHStackTag,
-						   sh_filtered_stack);
+	// SH Convert setup - Pyramid
 
+	sh_pyramid_convert_->SetInput(DX11Voxelization::kVoxelizationTag,
+							      voxelization_.GetVoxelizationParams());
+		
+	sh_pyramid_convert_->SetInput("SHFilter",
+								  ObjectPtr<IStructuredBuffer>(cb_sh_filter));
+	
 	// Indirect lighting
 
 	indirect_light_shader_->SetInput(DX11Voxelization::kVoxelizationTag, 
@@ -518,7 +525,8 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 	graphics_.PushEvent(L"Light filtering");
 
 	auto unfiltered_sh_clipmap = voxelization_.GetUnfilteredSHClipmap();
-
+	auto filtered_sh_clipmap = voxelization_.GetFilteredSHClipmap();
+	
 	// Filtering must be performed on the INT surface, since reading from a FLOAT is not supported by older architectures (Kepler and previous)
 
 	if (voxelization_.GetVoxelCascades() > 0) {
@@ -565,68 +573,111 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 									 voxel_resolution,
 									 voxel_resolution);
 
+		// SH stack conversion (3xINT32 -> FLOAT3)
+		
+		graphics_.PushEvent(L"SH stack conversion");
+
+		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
+
+		cb_filter_params->source_cascade = 0;
+		cb_filter_params->destination_cascade = 0;
+		cb_filter_params->destination_offset = 0;
+		cb_filter_params->destination_mip = 0;
+
+		cb_sh_filter->Unlock();
+
+		sh_stack_convert_->Dispatch(*immediate_context_,
+									voxel_resolution,
+									voxel_resolution,
+									voxel_resolution);
+
+		graphics_.PopEvent();
+
 	}
 
 	// Pyramid filtering - Downscale the content of the N-th MIP to the (N+1)-th one
 
 	int dst_resolution;
-	ObjectPtr<DX11Texture3D> source_mip;
-	ObjectPtr<DX11Texture3D> destination_mip = resource_cast(sh_filter_temp_->GetTexture());
+	ObjectPtr<ITexture3D> source_mip;
+	ObjectPtr<ITexture3D> destination_mip = sh_filter_temp_->GetTexture();
 
-	for (unsigned int mip_index = 1; mip_index < unfiltered_sh_clipmap->GetPyramid()->GetMIPCount(); ++mip_index) {
+	for (unsigned int mip_index = 0; mip_index < unfiltered_sh_clipmap->GetPyramid()->GetMIPCount(); ++mip_index) {
 
-		// The current MIP level must be copied somewhere else since it seems DX doesn't like to have an UAV and a SRV pointing to the same texture
-		// (even if at different MIP levels) at the same time.
+		dst_resolution = voxel_resolution >> mip_index;
 
-		source_mip = resource_cast(unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index - 1u)->GetTexture());
+		source_mip = unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index)->GetTexture();
 
-		immediate_context_->CopySubresourceRegion(destination_mip->GetTexture().Get(),
-												  0,
-												  0,
-												  0,
-												  0,
-												  source_mip->GetTexture().Get(),
-												  mip_index - 1u,
-												  nullptr);
+		// SH pyramid conversion (3xINT32 -> FLOAT3)
 
-		// Filter the next MIP level
-
-		dst_resolution = voxel_resolution >> (mip_index - 1);
+		graphics_.PushEvent(L"SH pyramid conversion");
 
 		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-		cb_filter_params->source_cascade = 0;			// No cascades
-		cb_filter_params->destination_cascade = 0;		// No cascades
-		cb_filter_params->destination_offset = 0;		// No offset, full MIP level
-		cb_filter_params->destination_mip = mip_index;	// Target MIP level
+		cb_filter_params->source_cascade = 0;
+		cb_filter_params->destination_cascade = 0;
+		cb_filter_params->destination_offset = 0;
+		cb_filter_params->destination_mip = mip_index;
+
+		cb_sh_filter->Unlock();
+
+		sh_pyramid_convert_->SetInput(DX11Voxelization::kUnfilteredSHPyramidTag,
+		 							  source_mip);
+
+		sh_pyramid_convert_->SetOutput(DX11Voxelization::kFilteredSHPyramidTag,
+									   filtered_sh_clipmap->GetPyramid()->GetMIP(mip_index));
+
+		sh_pyramid_convert_->Dispatch(*immediate_context_,
+									  dst_resolution,
+									  dst_resolution,
+									  dst_resolution);
+
+		graphics_.PopEvent();
+
+		// Downscale to the next MIP
+
+		if (unfiltered_sh_clipmap->GetPyramid()->GetMIPCount() == mip_index + 1) {
+
+			break;	// The last MIP is not downscaled
+
+		}
+		
+		graphics_.PushEvent(L"SH pyramid downscale");
+
+		// The current MIP level must be copied somewhere else since it seems that DX11 doesn't like to have an UAV and a SRV pointing to the same texture
+		// (even if at different MIP levels) at the same time.
+
+		immediate_context_->CopySubresourceRegion(resource_cast(destination_mip)->GetTexture().Get(),
+												  0,
+												  0,
+												  0,
+												  0,
+												  resource_cast(source_mip)->GetTexture().Get(),
+												  mip_index,
+												  nullptr);
+
+		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
+
+		cb_filter_params->source_cascade = 0;				// No cascades
+		cb_filter_params->destination_cascade = 0;			// No cascades
+		cb_filter_params->destination_offset = 0;			// No offset, full MIP level
+		cb_filter_params->destination_mip = mip_index + 1;	// Target MIP level
 
 		cb_sh_filter->Unlock();
 		
 		sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-									 sh_filter_temp_->GetTexture());
+									 destination_mip);
 
 		sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
-									  unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index));
+									  unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index + 1));
 
 		sh_pyramid_filter_->Dispatch(*immediate_context_,
 									 dst_resolution,
 									 dst_resolution,
 									 dst_resolution);
-
+		
+		graphics_.PopEvent();
+		
 	}
-
-	graphics_.PopEvent();
-
-	// SH conversion - 3xINT32 -> FLOAT3
-
-	graphics_.PushEvent(L"SH conversion");
-
-	sh_convert_->Dispatch(*immediate_context_,
-						  voxel_resolution,
-						  voxel_resolution,
-						  voxel_resolution);
-
-	// TODO convert the pyramid mips as well
 
 	graphics_.PopEvent();
 
