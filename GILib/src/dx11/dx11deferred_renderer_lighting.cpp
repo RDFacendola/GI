@@ -29,13 +29,15 @@ struct VSMPerLightCBuffer {
 
 struct CBSHFilter {
 
-	unsigned int destination_cascade;
+	unsigned int src_voxel_resolution;
 
-	unsigned int source_cascade;
+	unsigned int dst_voxel_resolution;
 
-	int destination_offset;
+	unsigned int dst_offset;
 
-	int destination_mip;
+	unsigned int src_cascade;
+
+	unsigned int dst_cascade;
 
 };
 
@@ -83,9 +85,9 @@ voxelization_(voxelization){
 
 	light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\lighting.hlsl" });
 
-	sh_filter_temp_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>({ sh_unfiltered_pyramid->GetWidth(),
-																					sh_unfiltered_pyramid->GetHeight(),
-																					sh_unfiltered_pyramid->GetDepth(),
+	sh_filter_temp_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>({ sh_unfiltered_pyramid->GetWidth() >> 1,
+																					sh_unfiltered_pyramid->GetHeight() >> 1,
+																					sh_unfiltered_pyramid->GetDepth() >> 1,
 																					1,
 																					sh_unfiltered_pyramid->GetFormat()});
 
@@ -537,10 +539,11 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 
 			cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-			cb_filter_params->source_cascade = static_cast<unsigned int>(cascade_index);
-			cb_filter_params->destination_cascade = cb_filter_params->source_cascade - 1;
-			cb_filter_params->destination_offset = voxel_resolution >> 2;	// The destination is centered on the next MIP level, so it's shifted of a quarter along each axis.
-			cb_filter_params->destination_mip = 0;
+			cb_filter_params->src_voxel_resolution = voxel_resolution;						// Full cascade
+			cb_filter_params->dst_voxel_resolution = voxel_resolution;						// Full cascade
+			cb_filter_params->dst_offset = voxel_resolution >> 2;							// Center the downscaled cascade wrt the center of the next one.
+			cb_filter_params->src_cascade = static_cast<unsigned int>(cascade_index);
+			cb_filter_params->dst_cascade = static_cast<unsigned int>(cascade_index - 1);
 
 			cb_sh_filter->Unlock();
 
@@ -555,10 +558,11 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 
 		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-		cb_filter_params->source_cascade = 0;
-		cb_filter_params->destination_cascade = 0;
-		cb_filter_params->destination_offset = voxel_resolution >> 2;	// The destination is centered on the next MIP level, so it's shifted of a quarter along each axis.
-		cb_filter_params->destination_mip = 0;
+		cb_filter_params->src_voxel_resolution = voxel_resolution;						// Full cascade
+		cb_filter_params->dst_voxel_resolution = voxel_resolution;						// Full cascade
+		cb_filter_params->dst_offset = voxel_resolution >> 2;							// Center the downscaled cascade wrt the center of the next one.
+		cb_filter_params->src_cascade = 0;												// Least detailed level inside the stack.
+		cb_filter_params->dst_cascade = 0;												// Pyramid do not use the cascade, but the MIPs
 
 		cb_sh_filter->Unlock();
 
@@ -579,10 +583,11 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 
 		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-		cb_filter_params->source_cascade = 0;
-		cb_filter_params->destination_cascade = 0;
-		cb_filter_params->destination_offset = 0;
-		cb_filter_params->destination_mip = 0;
+		cb_filter_params->src_voxel_resolution = voxel_resolution;			// Full cascade
+		cb_filter_params->dst_voxel_resolution = voxel_resolution;			// Full cascade
+		cb_filter_params->dst_offset = 0;									// Unused
+		cb_filter_params->src_cascade = 0;									// 
+		cb_filter_params->dst_cascade = 0;									// 
 
 		cb_sh_filter->Unlock();
 
@@ -614,10 +619,11 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 
 		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-		cb_filter_params->source_cascade = 0;
-		cb_filter_params->destination_cascade = 0;
-		cb_filter_params->destination_offset = 0;
-		cb_filter_params->destination_mip = mip_index;
+		cb_filter_params->src_voxel_resolution = dst_resolution;			// Current level resolution
+		cb_filter_params->dst_voxel_resolution = dst_resolution;			// Current level resolution
+		cb_filter_params->dst_offset = 0;									// Unused
+		cb_filter_params->src_cascade = 0;									// 
+		cb_filter_params->dst_cascade = 0;									// 
 
 		cb_sh_filter->Unlock();
 
@@ -649,10 +655,11 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 
 		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-		cb_filter_params->source_cascade = 0;				// No cascades
-		cb_filter_params->destination_cascade = 0;			// No cascades
-		cb_filter_params->destination_offset = 0;			// No offset, full MIP level
-		cb_filter_params->destination_mip = mip_index + 1;	// Target MIP level
+		cb_filter_params->src_voxel_resolution = dst_resolution;			// Current level resolution
+		cb_filter_params->dst_voxel_resolution = dst_resolution >> 1;		// Next level resolution.
+		cb_filter_params->dst_offset = 0;									// MIPs don't need to be centered.
+		cb_filter_params->src_cascade = 0;									// Pyramid do not use the cascade, but the MIPs
+		cb_filter_params->dst_cascade = 0;									// Pyramid do not use the cascade, but the MIPs
 
 		cb_sh_filter->Unlock();
 		
@@ -670,9 +677,9 @@ void DX11DeferredRendererLighting::FilterIndirectLight()
 		dest_region.left = 0u;
 		dest_region.top = 0u;
 		dest_region.front = 0u;
-		dest_region.right = sh_filter_temp_->GetWidth() >> (mip_index + 1);
-		dest_region.bottom = sh_filter_temp_->GetHeight() >> (mip_index + 1);
-		dest_region.back = sh_filter_temp_->GetDepth() >> (mip_index + 1);
+		dest_region.right = sh_filter_temp_->GetWidth() >> mip_index;
+		dest_region.bottom = sh_filter_temp_->GetHeight() >> mip_index;
+		dest_region.back = sh_filter_temp_->GetDepth() >> mip_index;
 		
 		immediate_context_->CopySubresourceRegion(resource_cast(unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index + 1)->GetTexture())->GetTexture().Get(),
 												  mip_index + 1,

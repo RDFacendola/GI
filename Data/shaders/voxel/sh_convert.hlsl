@@ -7,13 +7,15 @@
 
 cbuffer SHFilter {
 
-	uint gDestinationCascade;						// Cascade of the destination surface where the data will be stored.
+	uint gSrcVoxelResolution;						// Resolution of the source. The resolution of the destination is always half that resolution.
 
-	uint gSourceCascade;							// Cascade of the source surface hwere the data will be read from.
+	uint gDstVoxelResolution;						// Resolution of the destination. Either the same dimension of the source, or half that.
 
-	int gDestinationOffset;							// Offset applied to the destination pixels.
+	uint gDstOffset;								// Offset applied to the destination surface.
 
-	int gDestinationMIP;							// MIP level of the destination surface.
+	uint gSrcCascade;								// Cascade of the source.								
+
+	uint gDstCascade;								// Cascade of the destination.
 
 };
 
@@ -40,13 +42,11 @@ RWTexture3D<float3> gFilteredSHPyramid;							// Pyramid part of the filtered SH
 /// \brief Gather the int-encoded SH coefficients and write them as RGB float sample inside the given destination.
 void GatherCoefficients(uint3 thread_id, uint coefficient_index, int cascade_index) {
 
-	int resolution = gVoxelResolution >> gDestinationMIP;
+	uint3 address = thread_id + uint3(coefficient_index, cascade_index, 0) * gSrcVoxelResolution;
 
-	uint3 address = thread_id + uint3(coefficient_index, cascade_index, 0) * resolution;
-
-	gDestination[address] = ToFloatSH(int3(gSource[address + uint3(0, 0, 0 * resolution)],
-										   gSource[address + uint3(0, 0, 1 * resolution)],
-										   gSource[address + uint3(0, 0, 2 * resolution)]));
+	gDestination[address] = ToFloatSH(int3(gSource[address + uint3(0, 0, 0 * gSrcVoxelResolution)],
+										   gSource[address + uint3(0, 0, 1 * gSrcVoxelResolution)],
+										   gSource[address + uint3(0, 0, 2 * gSrcVoxelResolution)]));
 	
 }
 

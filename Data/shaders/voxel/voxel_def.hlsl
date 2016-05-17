@@ -323,7 +323,7 @@ float3 SampleSHCoefficients(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_s
 		// Sample twice from the stack or one time from the stack and the other from the pyramid.
 		// Bad case: we sample twice and perform a linear interpolation in software.
 
-		return float3(1, 0, 1);
+		return float3(0, 0, 0);
 
 	}
 
