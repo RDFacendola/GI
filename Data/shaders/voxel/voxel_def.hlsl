@@ -410,7 +410,7 @@ float3 SampleVoxelColor(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack
 
 }
 
-float3 SampleCone(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 origin, float3 direction, float angle) {
+float3 SampleCone(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 origin, float3 direction, float angle, int steps) {
 
 	float tan_angle = tan(angle * 0.5f);
 	float radius;
@@ -422,7 +422,7 @@ float3 SampleCone(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, floa
 	// Ray marching
 
 	[flatten]
-	for (int step = 0; step < 5; ++step) {
+	for (int step = 0; step < steps; ++step) {
 
 		radius = max(ray_offset * tan_angle,
 					 GetMinVoxelSize(position) * 0.5f);		// No point in marching with a higher resolution than the available one

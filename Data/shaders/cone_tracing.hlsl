@@ -28,7 +28,8 @@ float3 SampleSpecularCone(SurfaceData surface, float3 light_direction, float3 vi
 							  gFilteredSHStack,
 							  surface.position,
 							  light_direction,
-							  0.24f);
+							  0.15f,
+							  10);
 
 	float3 specular = ComputeCookTorrance(light_direction, view_direction, surface);	// Cook-Torrance specular (PBR).
 
@@ -42,11 +43,12 @@ float3 SampleDiffuseCone(SurfaceData surface, float3 light_direction, float3 vie
 							  gFilteredSHStack,
 							  surface.position,
 							  light_direction,
-							  0.52f);
+							  0.30f,
+							  5);
 
 	float3 diffuse = ComputeLambert(light_direction, view_direction, surface);			// Lambertian diffuse
 
-	return surface.kd * diffuse * color;
+	return surface.kd * diffuse * color * 0.5f;
 
 }
 
@@ -73,10 +75,10 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	y *= 3.f;
 
 	color += SampleDiffuseCone(surface, surface.normal, V);						// Diffuse Up
-	color += SampleDiffuseCone(surface, normalize(surface.normal + x), V);
-	color += SampleDiffuseCone(surface, normalize(surface.normal - x), V);
-	color += SampleDiffuseCone(surface, normalize(surface.normal + y), V);
-	color += SampleDiffuseCone(surface, normalize(surface.normal - y), V);
+	//color += SampleDiffuseCone(surface, normalize(surface.normal + x), V);
+	//color += SampleDiffuseCone(surface, normalize(surface.normal - x), V);
+	//color += SampleDiffuseCone(surface, normalize(surface.normal + y), V);
+	//color += SampleDiffuseCone(surface, normalize(surface.normal - y), V);
 
 	// Sum the indirect contribution inside the light accumulation buffer
 
