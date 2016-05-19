@@ -7,11 +7,11 @@
 
 StructuredBuffer<uint> gVoxelAddressTable;					// Contains the "pointers" to the actual voxel infos.
 
-Texture3D<float3> gFilteredSHPyramid;						// Pyramid part of the filtered SH 3D clipmap.
-Texture3D<float3> gFilteredSHStack;							// Stack part of the filtered SH 3D clipmap.
+Texture3D<float4> gFilteredSHPyramid;						// Pyramid part of the filtered SH 3D clipmap.
+Texture3D<float4> gFilteredSHStack;							// Stack part of the filtered SH 3D clipmap.
 
 Texture2D<float4> gLightAccumulation;
-RWTexture2D<float4> gIndirectLight;
+RWTexture2D<float3> gIndirectLight;
 
 cbuffer gParameters {
 
@@ -24,22 +24,22 @@ cbuffer gParameters {
 
 float3 SampleSpecularCone(SurfaceData surface, float3 light_direction, float3 view_direction) {
 
-	float3 color = SampleCone(gFilteredSHPyramid,
+	float4 color = SampleCone(gFilteredSHPyramid,
 							  gFilteredSHStack,
 							  surface.position,
 							  light_direction,
 							  0.15f,
 							  10);
-
+	
 	float3 specular = ComputeCookTorrance(light_direction, view_direction, surface);	// Cook-Torrance specular (PBR).
 
-	return surface.ks * specular * color;
+	return surface.ks * specular * color.rgb * saturate(1.0f - surface.emissivity);
 
 }
 
 float3 SampleDiffuseCone(SurfaceData surface, float3 light_direction, float3 view_direction) {
 
-	float3 color = SampleCone(gFilteredSHPyramid,
+	float4 color = SampleCone(gFilteredSHPyramid,
 							  gFilteredSHStack,
 							  surface.position,
 							  light_direction,
@@ -48,7 +48,7 @@ float3 SampleDiffuseCone(SurfaceData surface, float3 light_direction, float3 vie
 
 	float3 diffuse = ComputeLambert(light_direction, view_direction, surface);			// Lambertian diffuse
 
-	return surface.kd * diffuse * color * 0.5f;
+	return surface.kd * diffuse * color.rgb * saturate(1.0f - surface.emissivity);
 
 }
 
@@ -74,14 +74,14 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	x *= 3.f;
 	y *= 3.f;
 
-	color += SampleDiffuseCone(surface, surface.normal, V);						// Diffuse Up
-	//color += SampleDiffuseCone(surface, normalize(surface.normal + x), V);
-	//color += SampleDiffuseCone(surface, normalize(surface.normal - x), V);
-	//color += SampleDiffuseCone(surface, normalize(surface.normal + y), V);
-	//color += SampleDiffuseCone(surface, normalize(surface.normal - y), V);
+	color += SampleDiffuseCone(surface, surface.normal, V) * 0.1f;						// Diffuse Up
+	color += SampleDiffuseCone(surface, normalize(surface.normal + x), V) * 0.1f;
+	color += SampleDiffuseCone(surface, normalize(surface.normal - x), V) * 0.1f;
+	color += SampleDiffuseCone(surface, normalize(surface.normal + y), V) * 0.1f;
+	color += SampleDiffuseCone(surface, normalize(surface.normal - y), V) * 0.1f;
 
 	// Sum the indirect contribution inside the light accumulation buffer
-
-    gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + max(0, float4(color.rgb, 1));
+	
+    gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + max(0, float4(color, 1));
 
 }

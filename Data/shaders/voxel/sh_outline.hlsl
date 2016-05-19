@@ -4,8 +4,8 @@
 
 StructuredBuffer<VoxelInfo> gVoxelAppendBuffer;				// Append buffer containing the list of voxels in the current frame. (Read Only)
 
-Texture3D<float3> gFilteredSHPyramid;						// Pyramid part of the filtered SH 3D clipmap.
-Texture3D<float3> gFilteredSHStack;							// Stack part of the filtered SH 3D clipmap.
+Texture3D<float4> gFilteredSHPyramid;						// Pyramid part of the filtered SH 3D clipmap.
+Texture3D<float4> gFilteredSHStack;							// Stack part of the filtered SH 3D clipmap.
 
 /////////////////////////////////// VERTEX SHADER ///////////////////////////////////////
 
@@ -39,7 +39,7 @@ VSOut VSMain(VSIn input){
 									gFilteredSHStack, 
 									voxel_info.center, 
 									normalize(input.position.xyz),
-									voxel_info.size * 0.5f);
+									voxel_info.size * 0.5f).rgb;
 
 	// The debug draw is applied after the tonemap so we have to manually tonemap the result. (Reinhard's)
 

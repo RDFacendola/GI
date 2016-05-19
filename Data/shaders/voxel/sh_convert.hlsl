@@ -22,7 +22,7 @@ cbuffer SHFilter {
 #ifdef SH_STACK
 
 Texture3D<int> gUnfilteredSHStack;								// Stack part of the unfiltered SH 3D clipmap.
-RWTexture3D<float3> gFilteredSHStack;							// Stack part of the filtered SH 3D clipmap.
+RWTexture3D<float4> gFilteredSHStack;							// Stack part of the filtered SH 3D clipmap.
 
 #define gSource gUnfilteredSHStack
 #define gDestination gFilteredSHStack
@@ -32,7 +32,7 @@ RWTexture3D<float3> gFilteredSHStack;							// Stack part of the filtered SH 3D 
 #ifdef SH_PYRAMID
 
 Texture3D<int> gUnfilteredSHPyramid;							// Pyramid part of the unfiltered SH 3D clipmap.
-RWTexture3D<float3> gFilteredSHPyramid;							// Pyramid part of the filtered SH 3D clipmap.
+RWTexture3D<float4> gFilteredSHPyramid;							// Pyramid part of the filtered SH 3D clipmap.
 
 #define gSource gUnfilteredSHPyramid
 #define gDestination gFilteredSHPyramid
@@ -44,10 +44,11 @@ void GatherCoefficients(uint3 thread_id, uint coefficient_index, int cascade_ind
 
 	uint3 address = thread_id + uint3(coefficient_index, cascade_index, 0) * gSrcVoxelResolution;
 
-	gDestination[address] = ToFloatSH(int3(gSource[address + uint3(0, 0, 0 * gSrcVoxelResolution)],
+	gDestination[address] = ToFloatSH(int4(gSource[address + uint3(0, 0, 0 * gSrcVoxelResolution)],
 										   gSource[address + uint3(0, 0, 1 * gSrcVoxelResolution)],
-										   gSource[address + uint3(0, 0, 2 * gSrcVoxelResolution)]));
-	
+										   gSource[address + uint3(0, 0, 2 * gSrcVoxelResolution)],
+										   1));			// Opacity
+
 }
 
 [numthreads(N, N, N)]

@@ -101,11 +101,11 @@ float GetMinVoxelSize(float3 position_ws) {
 
 int3 ToIntSH(float3 sh_coefficient) {
 
-	return sh_coefficient * 100;
+	return sh_coefficient * 50;
 
 }
 
-float3 ToFloatSH(int3 sh_coefficient) {
+float4 ToFloatSH(int4 sh_coefficient) {
 
 	return sh_coefficient * 0.001f;
 
@@ -287,7 +287,7 @@ int GetSHCoordinates(float3 position_vs, uint coefficient_index, int cascade, ou
 
 }
 
-float3 SampleSHCoefficients(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, uint sh_index, float radius) {
+float4 SampleSHCoefficients(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, float3 position_ws, uint sh_index, float radius) {
 
 	float3 dimensions;
 	int coefficients;
@@ -323,7 +323,7 @@ float3 SampleSHCoefficients(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_s
 		// Sample twice from the stack or one time from the stack and the other from the pyramid.
 		// Bad case: we sample twice and perform a linear interpolation in software.
 
-		return float3(0, 0, 0);
+		return float4(0, 0, 0, 1);
 
 	}
 
@@ -371,7 +371,7 @@ float3 SampleSHCoefficients(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_s
 			
 }
 
-float3 SampleSHContribution(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, uint sh_band, float3 direction, float radius) {
+float4 SampleSHContribution(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, float3 position_ws, uint sh_band, float3 direction, float radius) {
 
 	[branch]
 	if (sh_band == 0) {
@@ -394,11 +394,11 @@ float3 SampleSHContribution(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_s
 
 }
 
-float3 SampleVoxelColor(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 position_ws, float3 direction, float radius) {
+float4 SampleVoxelColor(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, float3 position_ws, float3 direction, float radius) {
 
 	int cascade = GetCascade(position_ws);
 
-	float3 color = 0.f;
+	float4 color = 0.f;
 
 	for (uint sh_band = 0; sh_band < GetSHBandCount(cascade); ++sh_band) {
 
@@ -406,17 +406,17 @@ float3 SampleVoxelColor(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack
 
 	}
 
-	return max(0, color.rgb);
+	return max(0, color.rgba);
 
 }
 
-float3 SampleCone(Texture3D<float3> sh_pyramid, Texture3D<float3> sh_stack, float3 origin, float3 direction, float angle, int steps) {
+float4 SampleCone(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, float3 origin, float3 direction, float angle, int steps) {
 
 	float tan_angle = tan(angle * 0.5f);
 	float radius;
 	
 	float ray_offset = GetMinVoxelSize();
-	float3 color = 0;
+	float4 color = 0;
 	float3 position = origin;
 
 	// Ray marching

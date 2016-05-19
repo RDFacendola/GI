@@ -609,7 +609,7 @@ void DX11Voxelization::InitResources() {
 																				voxel_resolution_,
 																				voxel_resolution_,
 																				cascades_,
-																				TextureFormat::RGB_FLOAT });
+																				TextureFormat::RGBA_HALF });
 
 	voxel_render_target_ = new DX11RenderTarget(IRenderTarget::FromDescription{ voxel_resolution_, 
 																				voxel_resolution_, 
