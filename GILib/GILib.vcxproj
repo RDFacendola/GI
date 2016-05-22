@@ -179,13 +179,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>$(ProjectName)</TargetName>
-    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)libs\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\libs\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>$(ProjectName)</TargetName>
-    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)libs\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\libs\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
@@ -224,7 +224,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;SUPPRESS_TODOS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
-      <AdditionalIncludeDirectories>$(SolutionDir)GILib\include;$(SolutionDir)Libs\stack_walker\include;$(SolutionDir)Libs\DirectXTK\Inc;$(SolutionDir)Libs\DirectXTex\DirectXTex;$(SolutionDir)Libs\FBX SDK\2015.1\include;$(SolutionDir)Libs\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(SolutionDir)externallibs\stack_walker\include;$(SolutionDir)externallibs\DirectXTK\Inc;$(SolutionDir)externallibs\DirectXTex\DirectXTex;$(SolutionDir)externallibs\FBX SDK\2015.1\include;$(SolutionDir)externallibs\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -273,7 +273,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;SUPPRESS_TODOS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)GILib\include;$(SolutionDir)Libs\stack_walker\include;$(SolutionDir)Libs\DirectXTK\Inc;$(SolutionDir)Libs\DirectXTex\DirectXTex;$(SolutionDir)Libs\FBX SDK\2015.1\include;$(SolutionDir)Libs\Eigen;$(SolutionDir)Libs\rapidjson-0.11\rapidjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(SolutionDir)externallibs\stack_walker\include;$(SolutionDir)externallibs\DirectXTK\Inc;$(SolutionDir)externallibs\DirectXTex\DirectXTex;$(SolutionDir)externallibs\FBX SDK\2015.1\include;$(SolutionDir)externallibs\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
