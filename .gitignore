@@ -166,3 +166,14 @@ GILib/doc/html/
 GI.VC.opendb
 *.opendb
 *.db
+build/
+externallibs/stack_walker/lib/
+externallibs/DirectXTex/Texconv/Release/
+externallibs/DirectXTex/Texconv/Debug/
+externallibs/DirectXTex/DirectXTex/Bin/
+externallibs/DirectXTex/DDSView/Release/
+externallibs/DirectXTK/XWBTool/bin/
+externallibs/DirectXTK/Audio/Bin/
+externallibs/DirectXTK/Bin/
+externallibs/DirectXTK/MakeSpriteFont/obj/
+externallibs/Eigen/debug/
