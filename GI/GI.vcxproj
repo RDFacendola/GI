@@ -75,7 +75,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>$(SolutionDir)libs\$(Configuration)\;$(SolutionDir)externallibs\bin\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)libs\$(Configuration)\;$(SolutionDir)externallibs\stack_walker\lib\$(Configuration);$(SolutionDir)externallibs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)externallibs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)externallibs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)build\bin\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
@@ -88,7 +88,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>$(SolutionDir)libs\$(Configuration)\;$(SolutionDir)externallibs\bin\$(Platform)\$(Configuration)\;%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)libs\$(Configuration)\;$(SolutionDir)externallibs\stack_walker\lib\$(Configuration);$(SolutionDir)externallibs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)externallibs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)externallibs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);%(AdditionalLibraryDirectories);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)bin\</OutDir>
     <IntDir>$(SolutionDir)build\bin\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>

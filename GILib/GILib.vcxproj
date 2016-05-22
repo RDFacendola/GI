@@ -236,7 +236,7 @@
     </Link>
     <Lib>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)Libs\stack_walker\lib\$(Configuration);$(SolutionDir)Libs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)Libs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)Libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)externallibs\stack_walker\lib\$(Configuration);$(SolutionDir)externallibs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)externallibs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)externallibs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>LIBCMT;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Lib>
   </ItemDefinitionGroup>
@@ -292,7 +292,7 @@
     </Link>
     <Lib>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)Libs\stack_walker\lib\$(Configuration);$(SolutionDir)Libs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)Libs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)Libs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)externallibs\stack_walker\lib\$(Configuration);$(SolutionDir)externallibs\DirectXTK\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)externallibs\DirectXTex\DirectXTex\Bin\Desktop_2013\x64\$(Configuration);$(SolutionDir)externallibs\FBX SDK\2015.1\lib\vs2013\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
