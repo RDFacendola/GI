@@ -15,3 +15,4 @@ externallibs/Eigen/debug/
 *.opendb
 *.db
 *.lyx~
+*.opensdf
