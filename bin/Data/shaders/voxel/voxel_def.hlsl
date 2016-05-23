@@ -12,7 +12,7 @@ SamplerState gSHSampler;				// Sampler used to sample the SH
 
 cbuffer Voxelization {
 
-	float3 gCenter;						// Center of the voxelization. It is always a corner shared among 8 different voxels.
+	float3 gCameraCenter;				// Center of the voxelization. Each cascade may snap to a different position.
 
 	float gVoxelSize;					// Size of each voxel in world units for each dimension.
 
@@ -39,6 +39,31 @@ struct VoxelInfo {
 
 };
 
+/// \brief Get the voxel size given its cascade.
+/// \param cascade Cascade the voxel belong to. Negative cascade are inside the clipmap pyramid.
+float GetVoxelSize(int cascade) {
+
+	return gVoxelSize * pow(2.0f, -cascade);
+
+}
+
+/// \brief Get the minimum size of a voxel inside the structure.
+float GetMinVoxelSize() {
+
+	return gVoxelSize / (float)(1 << gCascades);
+
+}
+
+/// \brief Get the voxelization of the given cascade.
+/// \param cascade_index Index of the cascade whose voxel size is requested. The base of the pyramid has index 0, pyramid MIP levels have index < 0, stack part has index > 0.
+float3 GetCascadeCenter(int cascade_index) {
+
+	int3 voxel_size = GetVoxelSize(cascade_index);
+
+	return floor(gCameraCenter / voxel_size) * voxel_size;
+
+}
+
 /// \brief Get the number of SH bands stored for each voxel in a specified cascade.
 uint GetSHBandCount(uint cascade_index) {
 
@@ -62,21 +87,6 @@ uint GetClipmapPyramidSize() {
 
 }
 
-/// \brief Get the voxel size given its cascade.
-/// \param cascade Cascade the voxel belong to. Negative cascade are inside the clipmap pyramid.
-float GetVoxelSize(int cascade) {
-
-	return gVoxelSize * pow(2.0f, -cascade);
-
-}
-
-/// \brief Get the minimum size of a voxel inside the structure.
-float GetMinVoxelSize() {
-
-	return gVoxelSize / (float)(1 << gCascades);
-
-}
-
 /// \brief Get the cascade index of a point in world space.
 int GetCascade(float3 position_vs) {
 	
@@ -95,7 +105,7 @@ int GetCascade(float3 position_vs) {
 /// \brief Get the minimum size of a voxel around the specified point.
 float GetMinVoxelSize(float3 position_ws) {
 
-	return GetVoxelSize(GetCascade(position_ws - gCenter));
+	return GetVoxelSize(GetCascade(position_ws - gCameraCenter));
 
 }
 
@@ -169,7 +179,7 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out Vo
 	
 	voxel_info.size = gVoxelSize / pow(2, voxel_info.cascade);
 	
-	voxel_info.center = (((int3)(voxel_ptr3) - (int)(gVoxelResolution >> 1)) + 0.5f) * voxel_info.size + gCenter;
+	voxel_info.center = (((int3)(voxel_ptr3) - (int)(gVoxelResolution >> 1)) + 0.5f) * voxel_info.size + GetCascadeCenter(voxel_info.cascade);
 
 	voxel_info.sh_address = voxel_ptr3 % gVoxelResolution;
 
@@ -188,7 +198,7 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out Vo
 /// \return Returns true if the point was in the voxelized domain, returns false otherwise.
 bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, float3 position_ws, out VoxelInfo voxel_info) {
 
-	position_ws -= gCenter;				// To voxel-grid space
+	position_ws -= gCameraCenter;				// To voxel-grid space
 
 	voxel_info.cascade = GetCascade(position_ws);
 	
@@ -196,7 +206,7 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, float3 position_ws
 
 	int3 voxel_coordinates = floor(position_ws * rcp(voxel_info.size));		//[-R/2; R/2)
 
-	voxel_info.center = (voxel_coordinates + 0.5f) * voxel_info.size + gCenter;
+	voxel_info.center = (voxel_coordinates + 0.5f) * voxel_info.size + gCameraCenter;
 
 	voxel_info.sh_address = voxel_coordinates + (gVoxelResolution >> 1);
 
@@ -215,7 +225,7 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, float3 position_ws
 /// \return Returns 0 if the voxel couldn't be found, 1 if it was found inside the pyramid part of the clipmap or 2 if it was found inside the stack part of the clipmap.
 int GetSHCoordinates(float3 position_ws, uint coefficient_index, out uint3 address[3]) {
 
-	float3 position_vs = position_ws - gCenter;
+	float3 position_vs = position_ws - gCameraCenter;
 
 	int cascade = GetCascade(position_vs);
 
@@ -292,7 +302,7 @@ float4 SampleSHCoefficients(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_s
 	float3 dimensions;
 	int coefficients;
 
-	float3 position_vs = position_ws - gCenter;
+	float3 position_vs = position_ws - gCameraCenter;
 	
 	float voxel_size = radius * 2.0f;
 

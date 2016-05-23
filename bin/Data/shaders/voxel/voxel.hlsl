@@ -29,14 +29,16 @@ VSOut VSMain(VSIn input){
 	
 	VSOut output;
 
-	float4 pos = mul(gWorld, float4(input.position,1));									// World space
+	float4 pos = mul(gWorld, float4(input.position,1));								// World space
 	
-	float grid_size = gVoxelSize * gVoxelResolution;
-
-	output.position = (pos - float4(gCenter, 0.0f)) * (2.f / grid_size);			// Voxel space [-1;+1]
-
 	output.cascade = input.instance_id;
 
+	float grid_size = gVoxelSize * gVoxelResolution;
+
+	float3 cascade_center = GetCascadeCenter(output.cascade);
+
+	output.position = (pos - float4(cascade_center, 0.0f)) * (2.f / grid_size);		// Cascade space [-1;+1]
+	
 	return output;
 
 }

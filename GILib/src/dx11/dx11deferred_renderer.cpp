@@ -149,7 +149,7 @@ lock_camera_(false){
 	
 	// Voxel setup
 
-	voxelization_ = std::make_unique<DX11Voxelization>(*this, 200.f, 64, 0);
+	voxelization_ = std::make_unique<DX11Voxelization>(*this, 400.f, 64, 3);
 
 	// Lighting setup
 

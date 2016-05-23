@@ -704,13 +704,7 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 
 	// Voxelize the nodes inside the voxelization domain grid
 	
-	Vector3f grid_center = frame_info.camera->GetWorldTransform().translation();		// Center of the voxelization, snapped at voxel boundaries to prevent flickering
-
-	float snap = voxel_size_ / (1 << cascades_);
-
-	grid_center = Vector3f(std::floorf(grid_center(0) / snap) * snap,
-						   std::floorf(grid_center(1) / snap) * snap,
-						   std::floorf(grid_center(2) / snap) * snap);
+	Vector3f grid_center = frame_info.camera->GetWorldTransform().translation();		// Center of the voxelization
 
 	cb_voxelization_->Lock<CBVoxelization>()->center_ = grid_center;
 
@@ -750,8 +744,8 @@ void DX11Voxelization::Update(const FrameInfo& frame_info) {
 					voxel_material_->Commit(device_context);
 
 					mesh->DrawSubset(device_context,
-						subset_index,
-						cascades_ + 1);
+									 subset_index,
+									 cascades_ + 1);
 
 					graphics.PopEvent();
 

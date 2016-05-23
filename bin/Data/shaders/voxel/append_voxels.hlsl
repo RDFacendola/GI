@@ -30,7 +30,7 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	if (GetVoxelInfo(gVoxelAddressTable, dispatch_thread_id.x, voxel_info) &&
 		voxel_info.cascade >= 0) {
 
-		float3 center = abs(voxel_info.center - gCenter);
+		float3 center = abs(voxel_info.center - gCameraCenter);
 		
 #ifndef SHOW_CASCADE
 
