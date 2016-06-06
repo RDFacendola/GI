@@ -43,6 +43,24 @@ struct VoxelInfo {
 
 };
 
+///////////////////////////////////////////////////////////////////////
+/* SHARED															 */
+///////////////////////////////////////////////////////////////////////
+
+/// \brief Converts a floating point color to a fixed point int-encoded one.
+/// This method is needed since InterlockedAdd of floats is not supported.
+int3 ToIntSH(float3 color) {
+
+	return color * 50;
+
+}
+
+float4 ToFloatSH(int4 sh_coefficient) {
+
+	return sh_coefficient * 0.001f;
+
+}
+
 /// \brief Get the voxel size of a given MIP level.
 /// \param mip_index MIP level index.
 /// \return Returns the size of the voxel of the given MIP level in world units.
@@ -53,7 +71,6 @@ float GetVoxelSize(int mip_index) {
 	return ldexp(gVoxelSize, mip_index);		// gVoxelSize * (2 ^ mip_index)
 
 }
-
 
 /// \brief Get the total amount of voxels inside a cascade
 int GetCascadeSize() {
@@ -79,6 +96,72 @@ int GetClipmapPyramidSize() {
 	return (GetCascadeSize() - 1) / 7;
 
 }
+
+/// \brief Get the number of SH bands stored for each voxel in a specified cascade.
+uint GetSHBandCount(uint cascade_index) {
+
+	return 2;		// 2 SH bands, for now
+
+}
+
+/// \brief Get the Chebyshev distance between two points.
+/// \return Returns the Chebyshev distance between two points.
+float GetChebyshevDistance(float3 a, float3 b) {
+
+	float3 ab = abs(a - b);
+
+	return max(ab.x, max(ab.y, ab.z));
+
+}
+
+/// \brief Get the MIP level index of a point in world space.
+/// \param position_ws World space position of the point.
+/// \return Returns the index of MIP level containing the specified point.
+/// \remarks Negative MIP values here mean that the point was outside the domain!
+int GetMIPLevel(float3 position_ws) {
+
+	// TODO: THIS IS DEFINITELY WRONG!!!
+
+	float min_voxel_size = GetVoxelSize(gCascades);
+
+	float3 min_voxel_center = GetMIPCenter(min_voxel_size);
+	float3 max_voxel_center = GetMIPCenter(gVoxelSize);
+
+	float scale_factor = 2.0f * rcp(min_voxel_size * gVoxelResolution);											// Used to scale position to normalized voxel units.
+
+	int voxel_distance = floor(GetChebyshevDistance(position_ws, min_voxel_center) * scale_factor);				// Maximum distance between the position and the center of the most detailed MIP level.
+
+	int cascade_distance = floor(distance(min_voxel_center, max_voxel_center) * scale_factor);					// Distance between the top layer of the stack and the bottom one.
+
+																												// Basic idea: calculate the actual cascade as if the pyramid was not skewed and then compensate.
+																												// The mathematical details are contained inside the notes.
+
+	int cascade_index = ceil(log2(voxel_distance + 1));			// Index of the cascade if the pyramid was not skewed 
+
+																//int r = 1 << max(0, cascade_index - 1);
+
+																//int alpha = cascade_distance % r;
+
+																//int beta = voxel_distance % r;
+
+																//int epsilon = max(0, sign(alpha - beta));
+
+																//cascade_index -= epsilon;
+
+	return ((int)gCascades) - cascade_index;
+
+}
+
+/// \brief Get the minimum size of a voxel around the specified point.
+float GetMinVoxelSize(float3 position_ws) {
+
+	return GetVoxelSize(GetMIPLevel(position_ws));
+
+}
+
+///////////////////////////////////////////////////////////////////////
+/* VOXELIZATION 													 */
+///////////////////////////////////////////////////////////////////////
 
 /// \brief Create a voxel.
 /// \param voxel_address_table Structure containing the pointers to the voxelized scene.
@@ -150,67 +233,15 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, int index, out Vox
 
 }
 
-/// \brief Get the Chebyshev distance between two points.
-/// \return Returns the Chebyshev distance between two points.
-float GetChebyshevDistance(float3 a, float3 b) {
-
-	float3 ab = abs(a - b);
-
-	return max(ab.x, max(ab.y, ab.z));
-
-}
-
-/// \brief Get the MIP level index of a point in world space.
-/// \param position_ws World space position of the point.
-/// \return Returns the index of MIP level containing the specified point.
-/// \remarks Negative MIP values here mean that the point was outside the domain!
-int GetMIPLevel(float3 position_ws) {
-
-	// TODO: THIS IS DEFINITELY WRONG!!!
-
-	float min_voxel_size = GetVoxelSize(gCascades);
-	
-	float3 min_voxel_center = GetMIPCenter(min_voxel_size);
-	float3 max_voxel_center = GetMIPCenter(gVoxelSize);
-
-	float scale_factor = 2.0f * rcp(min_voxel_size * gVoxelResolution);											// Used to scale position to normalized voxel units.
-
-	int voxel_distance = floor(GetChebyshevDistance(position_ws, min_voxel_center) * scale_factor);				// Maximum distance between the position and the center of the most detailed MIP level.
-
-	int cascade_distance = floor(distance(min_voxel_center, max_voxel_center) * scale_factor);					// Distance between the top layer of the stack and the bottom one.
-
-	// Basic idea: calculate the actual cascade as if the pyramid was not skewed and then compensate.
-	// The mathematical details are contained inside the notes.
-
-	int cascade_index = ceil(log2(voxel_distance + 1));			// Index of the cascade if the pyramid was not skewed 
-
-	//int r = 1 << max(0, cascade_index - 1);
-
-	//int alpha = cascade_distance % r;
-
-	//int beta = voxel_distance % r;
-
-	//int epsilon = max(0, sign(alpha - beta));
-
-	//cascade_index -= epsilon;
-
-	return ((int)gCascades) - cascade_index;
-
-}
-
-/// \brief Converts a floating point color to a fixed point int-encoded one.
-/// This method is needed since InterlockedAdd of floats is not supported.
-int3 ToIntSH(float3 color) {
-
-	return color * 50;
-
-}
+///////////////////////////////////////////////////////////////////////
+/* PHOTON INJECTION													 */
+///////////////////////////////////////////////////////////////////////
 
 /// \brief Store the chromatic spherical harmonic contribution for a given position in space.
 /// \param position_ws Position of the contribution in world space.
 /// \param sh_index Linear index of the spherical harmonic coefficient to store.
 /// \param color Color contribution to store.
-void _StoreSHContributions(float3 position_ws, uint sh_index, float3 color) {
+void StoreSHContribution(float3 position_ws, uint sh_index, float3 color) {
 
 	// During light injection it is only possible to fill the MIP levels whose index is 0 or negative.
 	// Having a positive MIP level here means that the sample is outside the voxel domain and should be discarded.
@@ -246,25 +277,9 @@ void _StoreSHContributions(float3 position_ws, uint sh_index, float3 color) {
 
 }
 
-/// \brief Get the number of SH bands stored for each voxel in a specified cascade.
-uint GetSHBandCount(uint cascade_index) {
-
-	return 2;		// 2 SH bands, for now
-
-}
-
-float4 ToFloatSH(int4 sh_coefficient) {
-
-	return sh_coefficient * 0.001f;
-
-}
-
-/// \brief Get the minimum size of a voxel around the specified point.
-float GetMinVoxelSize(float3 position_ws) {
-
-	return GetVoxelSize(GetMIPLevel(position_ws));
-
-}
+///////////////////////////////////////////////////////////////////////
+/* SAMPLING															 */
+///////////////////////////////////////////////////////////////////////
 
 int GetSHCoordinates(float3 position_vs, uint coefficient_index, int cascade, out float3 address) {
 

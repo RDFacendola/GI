@@ -80,11 +80,11 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	// Store the SH contribution
 
 	// SH0
-	_StoreSHContributions(surface_position, 0, sh_coefficients[0]);
+	StoreSHContribution(surface_position, 0, sh_coefficients[0]);
 
 	// SH1
-	_StoreSHContributions(surface_position, 1, sh_coefficients[1]);
-	_StoreSHContributions(surface_position, 2, sh_coefficients[2]);
-	_StoreSHContributions(surface_position, 3, sh_coefficients[3]);
+	StoreSHContribution(surface_position, 1, sh_coefficients[1]);
+	StoreSHContribution(surface_position, 2, sh_coefficients[2]);
+	StoreSHContribution(surface_position, 3, sh_coefficients[3]);
 	
 }
