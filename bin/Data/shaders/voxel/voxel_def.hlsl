@@ -122,7 +122,7 @@ int GetMIPLevel(float3 position_ws) {
 
 	// TODO: THIS IS DEFINITELY WRONG!!!
 
-	float min_voxel_size = GetVoxelSize(gCascades);
+	float min_voxel_size = GetVoxelSize(-(int)gCascades);
 
 	float3 min_voxel_center = GetMIPCenter(min_voxel_size);
 	float3 max_voxel_center = GetMIPCenter(gVoxelSize);
@@ -133,22 +133,22 @@ int GetMIPLevel(float3 position_ws) {
 
 	int cascade_distance = floor(distance(min_voxel_center, max_voxel_center) * scale_factor);					// Distance between the top layer of the stack and the bottom one.
 
-																												// Basic idea: calculate the actual cascade as if the pyramid was not skewed and then compensate.
-																												// The mathematical details are contained inside the notes.
+	// Basic idea: calculate the actual cascade as if the pyramid was not skewed and then compensate.
+	// The mathematical details are contained inside the notes.
 
 	int cascade_index = ceil(log2(voxel_distance + 1));			// Index of the cascade if the pyramid was not skewed 
 
-																//int r = 1 << max(0, cascade_index - 1);
+	//int r = 1 << max(0, cascade_index - 1);
 
-																//int alpha = cascade_distance % r;
+	//int alpha = cascade_distance % r;
 
-																//int beta = voxel_distance % r;
+	//int beta = voxel_distance % r;
 
-																//int epsilon = max(0, sign(alpha - beta));
+	//int epsilon = max(0, sign(alpha - beta));
 
-																//cascade_index -= epsilon;
+	//cascade_index -= epsilon;
 
-	return ((int)gCascades) - cascade_index;
+	return cascade_index - (int)(gCascades);
 
 }
 
@@ -256,12 +256,12 @@ void StoreSHContribution(float3 position_ws, uint sh_index, float3 color) {
 	
 		position_ws -= GetMIPCenter(voxel_size);
 		
-		int3 coords = floor(position_ws * rcp(voxel_size)) + (gVoxelResolution * 0.5f);
+		int3 coords = floor(position_ws * rcp(voxel_size)) + (gVoxelResolution >> 1);
 
 		// Offset - Move to the correct coefficient and MIP level
 		// The top slice of the texture is skipped as it contains the MIP levels > 0
 
-		coords += int3(0, sh_index, 1 - mip_index) * gVoxelResolution;
+		coords += int3(sh_index, 1 - mip_index, 0) * gVoxelResolution;
 
 		// InterlockedAdd of floats is not supported, convert to fixed-precision int
 
