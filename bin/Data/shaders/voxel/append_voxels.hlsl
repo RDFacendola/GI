@@ -21,14 +21,14 @@ cbuffer PerFrame {
 [numthreads(N, 1, 1)]
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
-//#define SHOW_CASCADE 4
+//#define SHOW_CASCADE -2
 
 	VoxelInfo voxel_info;
 
 	uint dummy;
 
 	if (GetVoxelInfo(gVoxelAddressTable, dispatch_thread_id.x, voxel_info) &&
-		voxel_info.cascade >= 0) {
+		voxel_info.cascade <= 0) {
 
 		float3 center = abs(voxel_info.center - gCameraCenter);
 		
@@ -36,8 +36,8 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 		// Append only if the voxel is the most precise available
 
-		if(voxel_info.cascade == (int)gCascades ||
-		   max(center.x, max(center.y, center.z)) > (gVoxelResolution >> (voxel_info.cascade + 2)) * gVoxelSize){
+		if(voxel_info.cascade == -(int)gCascades ||
+		   max(center.x, max(center.y, center.z)) > (gVoxelResolution >> (-voxel_info.cascade + 2)) * gVoxelSize){
 
 #else
 

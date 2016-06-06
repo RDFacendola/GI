@@ -64,7 +64,7 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	float3 color = 0;
 
-	//color += SampleSpecularCone(surface, R, V);	// Specular
+	color += SampleSpecularCone(surface, R, V);	// Specular
 
 	float3 x = cross(surface.normal, normalize(float3(1,1,1)));
 	float3 y = cross(surface.normal, x);
@@ -74,11 +74,11 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	x *= 3.f;
 	y *= 3.f;
 
-	color += SampleDiffuseCone(surface, surface.normal, V) * 0.1f;						// Diffuse Up
-	color += SampleDiffuseCone(surface, normalize(surface.normal + x), V) * 0.1f;
-	color += SampleDiffuseCone(surface, normalize(surface.normal - x), V) * 0.1f;
-	color += SampleDiffuseCone(surface, normalize(surface.normal + y), V) * 0.1f;
-	color += SampleDiffuseCone(surface, normalize(surface.normal - y), V) * 0.1f;
+	//color += SampleDiffuseCone(surface, surface.normal, V) * 0.1f;						// Diffuse Up
+	//color += SampleDiffuseCone(surface, normalize(surface.normal + x), V) * 0.1f;
+	//color += SampleDiffuseCone(surface, normalize(surface.normal - x), V) * 0.1f;
+	//color += SampleDiffuseCone(surface, normalize(surface.normal + y), V) * 0.1f;
+	//color += SampleDiffuseCone(surface, normalize(surface.normal - y), V) * 0.1f;
 
 	// Sum the indirect contribution inside the light accumulation buffer
 	

@@ -105,12 +105,6 @@ namespace gi_lib {
 			/// \param frame_info Information about the frame being rendered.
 			ObjectPtr<ITexture2D> AccumulateLight(const ObjectPtr<IRenderTarget>& gbuffer, const std::vector<VolumeComponent*>& lights, const FrameInfo& frame_info);
 
-			void FilterIndirectLight();
-
-
-
-
-
 		private:
 
 			/// \brief Update the shadowmaps.
@@ -138,6 +132,8 @@ namespace gi_lib {
 
 			/// \brief Accumulate indirect lighting.
 			void AccumulateIndirectLight(const ObjectPtr<IRenderTarget>& gbuffer, const FrameInfo &frame_info);
+
+			void FilterIndirectLight(const FrameInfo &frame_info);
 
 			windows::COMPtr<ID3D11DeviceContext> immediate_context_;			///< \brief Immediate rendering context.
 
@@ -201,8 +197,6 @@ namespace gi_lib {
 
 			DX11Voxelization& voxelization_;									///< \brief Used to perform scene voxelization, hold the lighting acceleration structure.
 
-			ObjectPtr<IGPTexture3D> sh_filter_temp_;							///< \brief Temporary texture using during SH filtering.
-
 			ObjectPtr<DX11Computation> indirect_light_shader_;					///< \brief Shader performing the indirect light accumulation stage.
 
 			ObjectPtr<DX11Computation> light_injection_;						///< \brief Shader performing the dynamic voxelization.
@@ -220,6 +214,8 @@ namespace gi_lib {
 			ObjectPtr<DX11StructuredBuffer> cb_point_light_;					///< \brief Constant buffer containing a single point light.
 
 			ObjectPtr<DX11StructuredBuffer> cb_sh_filter;						///< \brief Constant buffer used to pass parameters to the SH MIP filter shader.
+
+			ObjectPtr<DX11StructuredBuffer> cb_sh_filter_stack_;				///< \brief Constant buffer used to pass parameters to the SH MIP filter shader.
 
 		};
 

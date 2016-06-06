@@ -45,13 +45,13 @@ namespace gi_lib {
 
 			static const Tag kVoxelizationTag;			///< \brief Tag associated to the constant buffer containing the voxelization constants.
 
-			static const Tag kUnfilteredSHPyramidTag;	///< \brief Tag associated to the pyramid part of the 3D clipmap containing the unfiltered SH coefficients for each voxel.
+			static const Tag kRedSHTag;					///< \brief Tag associated to the red spherical harmonics contribution for each voxel.
 
-			static const Tag kUnfilteredSHStackTag;		///< \brief Tag associated to the stack part of the 3D clipmap containing the unfiltered SH coefficients for each voxel.
+			static const Tag kGreenSHTag;				///< \brief Tag associated to the green spherical harmonics contribution for each voxel.
 
-			static const Tag kFilteredSHPyramidTag;		///< \brief Tag associated to the pyramid part of the 3D clipmap containing the filtered SH coefficients for each voxel.
+			static const Tag kBlueSHTag;				///< \brief Tag associated to the blue spherical harmonics contribution for each voxel.
 
-			static const Tag kFilteredSHStackTag;		///< \brief Tag associated to the stack part of the 3D clipmap containing the filtered SH coefficients for each voxel.
+			static const Tag kSHTag;					///< \brief Tag associated to the chromatic spherical harmonics contribution for each voxel.
 
 			static const Tag kSHSampleTag;				///< \brief Tag associated to the sampler used to sample the SH data structure.
 
@@ -82,11 +82,17 @@ namespace gi_lib {
 			/// \brief Get the structure containing the pointers to the actual voxel informations.
 			ObjectPtr<IGPStructuredArray> GetVoxelAddressTable() const;
 
-			/// \brief Get the 3D clipmap containing the unfiltered spherical harmonics coefficients for each voxel.
-			ObjectPtr<IGPClipmap3D> GetUnfilteredSHClipmap() const;
+			/// \brief Get the 3D texture containing the red spherical harmonics contribution.
+			ObjectPtr<IGPTexture3D> GetRedSHContribution() const;
+
+			/// \brief Get the 3D texture containing the red spherical harmonics contribution.
+			ObjectPtr<IGPTexture3D> GetGreenSHContribution() const;
+
+			/// \brief Get the 3D texture containing the red spherical harmonics contribution.
+			ObjectPtr<IGPTexture3D> GetBlueSHContribution() const;
 
 			/// \brief Get the 3D clipmap containing the unfiltered spherical harmonics coefficients for each voxel.
-			ObjectPtr<IGPClipmap3D> GetFilteredSHClipmap() const;
+			ObjectPtr<IGPTexture3D> GetSH() const;
 
 			/// \brief Get the constant buffer containing the voxelization parameters.
 			ObjectPtr<IStructuredBuffer> GetVoxelizationParams() const;
@@ -103,6 +109,9 @@ namespace gi_lib {
 
 			/// \brief Get the amount of cascades in the SH stack.
 			unsigned int GetVoxelCascades() const;
+
+			/// \brief Get the size of the voxel in a given cascade.
+			float GetVoxelSize(unsigned int cascade_index = 0) const;
 
 		private:
 
@@ -134,14 +143,14 @@ namespace gi_lib {
 
 			ObjectPtr<DX11GPStructuredArray> voxel_address_table_;				///< \brief This structure contains the address of each voxel inside the 3D texture of the spherical harmonics. 
 																				///			An address equal to 0 means that the voxel is not present at the specified location.
+			
+			ObjectPtr<IGPTexture3D> red_sh_contribution_;						///< \brief Red spherical harmonics contribution. Used during light injection and filtering.
 
-			ObjectPtr<IGPClipmap3D> unfiltered_sh_;								///< \brief Unfiltered SH coefficients for each voxel.
-																				/// Coefficients increase along the X axis.
-																				/// Channels increase along the Z axis.
+			ObjectPtr<IGPTexture3D> green_sh_contribution_;						///< \brief Green spherical harmonics contribution. Used during light injection and filtering.
 
-			ObjectPtr<IGPClipmap3D> filtered_sh_;								///< \brief Filtered SH coefficients for each voxel.
-																				/// Coefficients increase along the X axis.
-																				/// Channels increase along the Z axis.
+			ObjectPtr<IGPTexture3D> blue_sh_contribution_;						///< \brief Blue spherical harmonics contribution. Used during light injection and filtering.
+			
+			ObjectPtr<IGPTexture3D> sh_contribution_;							///< \brief Chromatic spherical harmonics contribution. Used during indirect light accumulation.
 
 			ObjectPtr<DX11Sampler> sh_sampler_;									///<\ brief Sampler used to sample the spherical harmonics.
 
@@ -165,15 +174,27 @@ namespace gi_lib {
 
 		////////////////////////////////////////////// DX11 VOXELIZATION //////////////////////////////////////////////
 		
-		inline ObjectPtr<IGPClipmap3D> DX11Voxelization::GetUnfilteredSHClipmap() const {
+		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetRedSHContribution() const {
 
-			return unfiltered_sh_;
+			return red_sh_contribution_;
 
 		}
 
-		inline ObjectPtr<IGPClipmap3D> DX11Voxelization::GetFilteredSHClipmap() const {
+		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetGreenSHContribution() const {
+
+			return green_sh_contribution_;
+
+		}
+
+		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetBlueSHContribution() const {
+
+			return blue_sh_contribution_;
+
+		}
+
+		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetSH() const {
 			
-			return filtered_sh_;
+			return sh_contribution_;
 
 		}
 				

@@ -50,6 +50,8 @@ groupshared int samples[N][N][N];					// Store the samples of the source texture
 [numthreads(N, N, N)]
 void CSMain(uint3 thread_id : SV_DispatchThreadID, uint3 group_thread_id : SV_GroupThreadID) {
 
+	//return;
+
 	uint3 dst_offset;
 	uint3 src_offset;
 	uint band_count;
@@ -85,9 +87,9 @@ void CSMain(uint3 thread_id : SV_DispatchThreadID, uint3 group_thread_id : SV_Gr
 														   + samples[group_thread_id.x + 1][group_thread_id.y + 0][group_thread_id.z + 0]
 														   + samples[group_thread_id.x + 1][group_thread_id.y + 0][group_thread_id.z + 1]
 														   + samples[group_thread_id.x + 1][group_thread_id.y + 1][group_thread_id.z + 0]
-														   + samples[group_thread_id.x + 1][group_thread_id.y + 1][group_thread_id.z + 1];
-				;
-
+														   + samples[group_thread_id.x + 1][group_thread_id.y + 1][group_thread_id.z + 1]
+														   + 500;
+				
 			}
 
 			GroupMemoryBarrierWithGroupSync();

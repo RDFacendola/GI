@@ -12,6 +12,39 @@ using namespace ::gi_lib;
 using namespace ::gi_lib::windows;
 using namespace ::gi_lib::dx11;
 
+namespace {
+
+	void FillCascadeOffset(const DX11Voxelization& voxelization, const FrameInfo &frame_info, unsigned int cascade_index, unsigned int(&offset)[3]) {
+
+		Vector3f camera_position = frame_info.camera->GetWorldTransform().translation();
+
+		auto src_voxel_size = voxelization.GetVoxelSize(cascade_index);
+		auto dst_voxel_size = src_voxel_size * 2.f;									// Same as: voxelization.GetVoxelSize(cascade_index - 1u);
+
+		Vector3i src_center(std::floor(camera_position(0) / src_voxel_size),
+							std::floor(camera_position(1) / src_voxel_size),
+							std::floor(camera_position(2) / src_voxel_size));
+
+		Vector3i dst_center(std::floor(camera_position(0) / dst_voxel_size) * 2,
+							std::floor(camera_position(1) / dst_voxel_size) * 2,
+							std::floor(camera_position(2) / dst_voxel_size) * 2);
+
+		// The maximum offset allowed for two consecutive cascades is half the biggest voxel between them (equivalent to the smallest one).
+		// Offset here is expressed in voxel units, so it must be 1, 0 or -1.
+		Vector3i voffset = src_center - dst_center;
+
+		// If the two cascades were aligned perfectly, their offset from the top-left corner would be a quarter of the entire resolution
+
+		int quarter_resolution = voxelization.GetVoxelResolution() >> 2;
+
+		offset[0] = static_cast<unsigned int>(quarter_resolution + voffset(0));
+		offset[1] = static_cast<unsigned int>(quarter_resolution + voffset(1));
+		offset[2] = static_cast<unsigned int>(quarter_resolution + voffset(2));
+		
+	}
+
+}
+
 ///////////////////////////////// DX11 DEFERRED RENDERER //////////////////////////////////
 
 /// \brief Pixel shader constant buffer used to project the fragments to shadow space.
@@ -41,6 +74,14 @@ struct CBSHFilter {
 
 };
 
+struct CBSHFilterStack {
+
+	unsigned int dst_offset[3];							///< \brief Destination offset.
+
+	unsigned int src_cascade;							///< \brief Source cascade.
+
+};
+
 const Tag DX11DeferredRendererLighting::kAlbedoEmissivityTag = "gAlbedoEmissivity";
 const Tag DX11DeferredRendererLighting::kNormalShininessTag = "gNormalSpecularShininess";
 const Tag DX11DeferredRendererLighting::kDepthStencilTag = "gDepthStencil";
@@ -62,11 +103,6 @@ voxelization_(voxelization){
 
 	auto&& device = *graphics_.GetDevice();
 
-	auto sh_unfiltered_pyramid = voxelization_.GetUnfilteredSHClipmap()->GetPyramid();
-	auto sh_unfiltered_stack = voxelization_.GetUnfilteredSHClipmap()->GetStack();
-	auto sh_filtered_pyramid = voxelization_.GetFilteredSHClipmap()->GetPyramid();
-	auto sh_filtered_stack = voxelization_.GetFilteredSHClipmap()->GetStack();
-
 	// Get the immediate rendering context.
 
 	ID3D11DeviceContext* context;
@@ -84,12 +120,6 @@ voxelization_(voxelization){
 	rt_cache_ = resources.Load<IRenderTargetCache, IRenderTargetCache::Singleton>({});
 
 	light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\lighting.hlsl" });
-
-	sh_filter_temp_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>({ sh_unfiltered_pyramid->GetWidth() >> 1,
-																					sh_unfiltered_pyramid->GetHeight() >> 1,
-																					sh_unfiltered_pyramid->GetDepth() >> 1,
-																					1,
-																					sh_unfiltered_pyramid->GetFormat()});
 
 	shadow_atlas_ = make_unique<DX11VSMAtlas>(2048/*, 1*/, true);
 
@@ -109,9 +139,11 @@ voxelization_(voxelization){
 	
 	cb_sh_filter = new DX11StructuredBuffer(sizeof(CBSHFilter));
 
+	cb_sh_filter_stack_ = new DX11StructuredBuffer(sizeof(CBSHFilterStack));
+
 	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
-	sh_stack_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_filter.hlsl", { { "SH_STACK" } } });
+	sh_stack_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_filter_stack.hlsl" });
 
 	sh_pyramid_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_filter.hlsl",{ { "SH_PYRAMID" } } });
 
@@ -154,11 +186,14 @@ voxelization_(voxelization){
 	light_injection_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
 							   voxelization_.GetVoxelAddressTable());
 
-	light_injection_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag, 
-								sh_unfiltered_pyramid);
+	light_injection_->SetOutput(DX11Voxelization::kRedSHTag,
+								voxelization_.GetRedSHContribution());
 
-	light_injection_->SetOutput(DX11Voxelization::kUnfilteredSHStackTag, 
-								sh_unfiltered_stack);
+	light_injection_->SetOutput(DX11Voxelization::kGreenSHTag,
+								voxelization_.GetGreenSHContribution());
+
+	light_injection_->SetOutput(DX11Voxelization::kBlueSHTag,
+								voxelization_.GetBlueSHContribution());
 
 	light_injection_->SetInput("PerLight",
 							   ObjectPtr<IStructuredBuffer>(per_light_));
@@ -171,11 +206,11 @@ voxelization_(voxelization){
 	sh_stack_filter_->SetInput(DX11Voxelization::kVoxelizationTag,
 							   voxelization_.GetVoxelizationParams());
 	
-	sh_stack_filter_->SetOutput(DX11Voxelization::kUnfilteredSHStackTag,
-								sh_unfiltered_stack);
+	//sh_stack_filter_->SetOutput(DX11Voxelization::kUnfilteredSHStackTag,
+	//							sh_unfiltered_stack);
 
-	sh_stack_filter_->SetInput("SHFilter",
-							   ObjectPtr<IStructuredBuffer>(cb_sh_filter));
+	sh_stack_filter_->SetInput("SHFilterStack",
+							   ObjectPtr<IStructuredBuffer>(cb_sh_filter_stack_));
 	
 	sh_pyramid_filter_->SetInput(DX11Voxelization::kVoxelizationTag,
 							     voxelization_.GetVoxelizationParams());
@@ -191,11 +226,11 @@ voxelization_(voxelization){
 	sh_stack_convert_->SetInput("SHFilter",
 								ObjectPtr<IStructuredBuffer>(cb_sh_filter));
 
-	sh_stack_convert_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-								sh_unfiltered_stack->GetTexture());
+	//sh_stack_convert_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
+	//							sh_unfiltered_stack->GetTexture());
 
-	sh_stack_convert_->SetOutput(DX11Voxelization::kFilteredSHStackTag,
-								 sh_filtered_stack);
+	//sh_stack_convert_->SetOutput(DX11Voxelization::kFilteredSHStackTag,
+	//							 sh_filtered_stack);
 	
 	// SH Convert setup - Pyramid
 
@@ -213,11 +248,11 @@ voxelization_(voxelization){
 	indirect_light_shader_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
 									 voxelization_.GetVoxelAddressTable());
 
-	indirect_light_shader_->SetInput(DX11Voxelization::kFilteredSHPyramidTag,
-									 sh_filtered_pyramid->GetTexture());
+	//indirect_light_shader_->SetInput(DX11Voxelization::kFilteredSHPyramidTag,
+	//								 sh_filtered_pyramid->GetTexture());
 
-	indirect_light_shader_->SetInput(DX11Voxelization::kFilteredSHStackTag,
-									 sh_filtered_stack->GetTexture());
+	//indirect_light_shader_->SetInput(DX11Voxelization::kFilteredSHStackTag,
+	//								 sh_filtered_stack->GetTexture());
 
 	indirect_light_shader_->SetInput(DX11Voxelization::kSHSampleTag,
 									 voxelization_.GetSHSampler());
@@ -261,7 +296,7 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 
 	if (frame_info.enable_global_illumination) {
         					   
-		FilterIndirectLight();
+		FilterIndirectLight(frame_info);
 		
 		AccumulateIndirectLight(gbuffer, frame_info);
 
@@ -515,185 +550,189 @@ void DX11DeferredRendererLighting::AccumulateIndirectLight(const ObjectPtr<IRend
 
 }
 
-void DX11DeferredRendererLighting::FilterIndirectLight()
+void DX11DeferredRendererLighting::FilterIndirectLight(const FrameInfo &frame_info)
 {
 
-	CBSHFilter* cb_filter_params;
+	// TODO: Refactor everything in this function
 
-	int voxel_resolution = voxelization_.GetVoxelResolution();
+	//CBSHFilterStack* cb_filter_params_stack;
+	//CBSHFilter* cb_filter_params;
 
-	// Light filtering
+	//int voxel_resolution = voxelization_.GetVoxelResolution();
 
-	graphics_.PushEvent(L"Light filtering");
+	//// Light filtering
 
-	auto unfiltered_sh_clipmap = voxelization_.GetUnfilteredSHClipmap();
-	auto filtered_sh_clipmap = voxelization_.GetFilteredSHClipmap();
-	
-	// Filtering must be performed on the INT surface, since reading from a FLOAT is not supported by older architectures (Kepler and previous)
+	//graphics_.PushEvent(L"Light filtering");
 
-	if (voxelization_.GetVoxelCascades() > 0) {
+	//auto unfiltered_sh_clipmap = voxelization_.GetUnfilteredSHClipmap();
+	//auto filtered_sh_clipmap = voxelization_.GetFilteredSHClipmap();
+	//
+	//// Filtering must be performed on the INT surface, since reading from a FLOAT is not supported by older architectures (Kepler and previous)
 
-		// Stack filtering - Copy the content of the N-th cascade to the (N-1) th one, up to the first one.
+	//if (voxelization_.GetVoxelCascades() > 0) {
 
-		for (int cascade_index = voxelization_.GetVoxelCascades() - 1; cascade_index > 0; --cascade_index) {
+	//	// Stack filtering - Copy the content of the N-th cascade to the (N-1) th one, up to the first one.
 
-			cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
+	//	for (int cascade_index = voxelization_.GetVoxelCascades() - 1; cascade_index > 0; --cascade_index) {
 
-			cb_filter_params->src_voxel_resolution = voxel_resolution;						// Full cascade
-			cb_filter_params->dst_voxel_resolution = voxel_resolution;						// Full cascade
-			cb_filter_params->dst_offset = voxel_resolution >> 2;							// Center the downscaled cascade wrt the center of the next one.
-			cb_filter_params->src_cascade = static_cast<unsigned int>(cascade_index);
-			cb_filter_params->dst_cascade = static_cast<unsigned int>(cascade_index - 1);
+	//		cb_filter_params_stack = cb_sh_filter_stack_->Lock<CBSHFilterStack>();
 
-			cb_sh_filter->Unlock();
+	//		cb_filter_params_stack->src_cascade = cascade_index;
 
-			sh_stack_filter_->Dispatch(*immediate_context_,
-									   voxel_resolution,
-									   voxel_resolution,
-									   voxel_resolution);
+	//		FillCascadeOffset(voxelization_,
+	//						  frame_info,
+	//						  cascade_index,
+	//						  cb_filter_params_stack->dst_offset);
 
-		}
+	//		cb_sh_filter_stack_->Unlock();
 
-		// Stack-to-pyramid filtering - Copy the content of the 1st cascade to the pyramid base.
+	//		sh_stack_filter_->Dispatch(*immediate_context_,
+	//								   voxel_resolution,
+	//								   voxel_resolution,
+	//								   voxel_resolution);
 
-		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
+	//	}
 
-		cb_filter_params->src_voxel_resolution = voxel_resolution;						// Full cascade
-		cb_filter_params->dst_voxel_resolution = voxel_resolution;						// Full cascade
-		cb_filter_params->dst_offset = voxel_resolution >> 2;							// Center the downscaled cascade wrt the center of the next one.
-		cb_filter_params->src_cascade = 0;												// Least detailed level inside the stack.
-		cb_filter_params->dst_cascade = 0;												// Pyramid do not use the cascade, but the MIPs
+	//	// Stack-to-pyramid filtering - Copy the content of the 1st cascade to the pyramid base.
 
-		cb_sh_filter->Unlock();
+	//	cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-		sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-									 unfiltered_sh_clipmap->GetStack()->GetTexture());
+	//	cb_filter_params->src_voxel_resolution = voxel_resolution;						// Full cascade
+	//	cb_filter_params->dst_voxel_resolution = voxel_resolution;						// Full cascade
+	//	cb_filter_params->dst_offset = voxel_resolution >> 2;							// Center the downscaled cascade wrt the center of the next one.
+	//	cb_filter_params->src_cascade = 0;												// Least detailed level inside the stack.
+	//	cb_filter_params->dst_cascade = 0;												// Pyramid do not use the cascade, but the MIPs
 
-		sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
-									  unfiltered_sh_clipmap->GetPyramid());
+	//	cb_sh_filter->Unlock();
 
-		sh_pyramid_filter_->Dispatch(*immediate_context_,
-									 voxel_resolution,
-									 voxel_resolution,
-									 voxel_resolution);
+	//	sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
+	//								 unfiltered_sh_clipmap->GetStack()->GetTexture());
 
-		// SH stack conversion (3xINT32 -> FLOAT3)
-		
-		graphics_.PushEvent(L"SH stack conversion");
+	//	sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
+	//								  unfiltered_sh_clipmap->GetPyramid());
 
-		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
+	//	sh_pyramid_filter_->Dispatch(*immediate_context_,
+	//								 voxel_resolution,
+	//								 voxel_resolution,
+	//								 voxel_resolution);
 
-		cb_filter_params->src_voxel_resolution = voxel_resolution;			// Full cascade
-		cb_filter_params->dst_voxel_resolution = voxel_resolution;			// Full cascade
-		cb_filter_params->dst_offset = 0;									// Unused
-		cb_filter_params->src_cascade = 0;									// 
-		cb_filter_params->dst_cascade = 0;									// 
+	//	// SH stack conversion (3xINT32 -> FLOAT3)
+	//	
+	//	graphics_.PushEvent(L"SH stack conversion");
 
-		cb_sh_filter->Unlock();
+	//	cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-		sh_stack_convert_->Dispatch(*immediate_context_,
-									voxel_resolution,
-									voxel_resolution,
-									voxel_resolution);
+	//	cb_filter_params->src_voxel_resolution = voxel_resolution;			// Full cascade
+	//	cb_filter_params->dst_voxel_resolution = voxel_resolution;			// Full cascade
+	//	cb_filter_params->dst_offset = 0;									// Unused
+	//	cb_filter_params->src_cascade = 0;									// 
+	//	cb_filter_params->dst_cascade = 0;									// 
 
-		graphics_.PopEvent();
+	//	cb_sh_filter->Unlock();
 
-	}
+	//	sh_stack_convert_->Dispatch(*immediate_context_,
+	//								voxel_resolution,
+	//								voxel_resolution,
+	//								voxel_resolution);
 
-	// Pyramid filtering - Downscale the content of the N-th MIP to the (N+1)-th one
+	//	graphics_.PopEvent();
 
-	int dst_resolution;
-	ObjectPtr<ITexture3D> source_mip;
-	ObjectPtr<ITexture3D> destination_mip = sh_filter_temp_->GetTexture();
-	D3D11_BOX dest_region;
+	//}
 
-	for (unsigned int mip_index = 0; mip_index < unfiltered_sh_clipmap->GetPyramid()->GetMIPCount(); ++mip_index) {
+	//// Pyramid filtering - Downscale the content of the N-th MIP to the (N+1)-th one
 
-		dst_resolution = voxel_resolution >> mip_index;
+	//int dst_resolution;
+	//ObjectPtr<ITexture3D> source_mip;
+	//ObjectPtr<ITexture3D> destination_mip = sh_filter_temp_->GetTexture();
+	//D3D11_BOX dest_region;
+	//
+	//for (unsigned int mip_index = 0; mip_index < unfiltered_sh_clipmap->GetPyramid()->GetMIPCount(); ++mip_index) {
 
-		source_mip = unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index)->GetTexture();
+	//	dst_resolution = voxel_resolution >> mip_index;
 
-		// SH pyramid conversion (3xINT32 -> FLOAT3)
+	//	source_mip = unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index)->GetTexture();
 
-		graphics_.PushEvent(L"SH pyramid conversion");
+	//	// SH pyramid conversion (3xINT32 -> FLOAT3)
 
-		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
+	//	graphics_.PushEvent(L"SH pyramid conversion");
 
-		cb_filter_params->src_voxel_resolution = dst_resolution;			// Current level resolution
-		cb_filter_params->dst_voxel_resolution = dst_resolution;			// Current level resolution
-		cb_filter_params->dst_offset = 0;									// Unused
-		cb_filter_params->src_cascade = 0;									// 
-		cb_filter_params->dst_cascade = 0;									// 
+	//	cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-		cb_sh_filter->Unlock();
+	//	cb_filter_params->src_voxel_resolution = dst_resolution;			// Current level resolution
+	//	cb_filter_params->dst_voxel_resolution = dst_resolution;			// Current level resolution
+	//	cb_filter_params->dst_offset = 0;									// Unused
+	//	cb_filter_params->src_cascade = 0;									// 
+	//	cb_filter_params->dst_cascade = 0;									// 
 
-		sh_pyramid_convert_->SetInput(DX11Voxelization::kUnfilteredSHPyramidTag,
-		 							  source_mip);
+	//	cb_sh_filter->Unlock();
 
-		sh_pyramid_convert_->SetOutput(DX11Voxelization::kFilteredSHPyramidTag,
-									   filtered_sh_clipmap->GetPyramid()->GetMIP(mip_index));
+	//	sh_pyramid_convert_->SetInput(DX11Voxelization::kUnfilteredSHPyramidTag,
+	//	 							  source_mip);
 
-		sh_pyramid_convert_->Dispatch(*immediate_context_,
-									  dst_resolution,
-									  dst_resolution,
-									  dst_resolution);
+	//	sh_pyramid_convert_->SetOutput(DX11Voxelization::kFilteredSHPyramidTag,
+	//								   filtered_sh_clipmap->GetPyramid()->GetMIP(mip_index));
 
-		graphics_.PopEvent();
+	//	sh_pyramid_convert_->Dispatch(*immediate_context_,
+	//								  dst_resolution,
+	//								  dst_resolution,
+	//								  dst_resolution);
 
-		// Downscale to the next MIP
+	//	graphics_.PopEvent();
 
-		if (unfiltered_sh_clipmap->GetPyramid()->GetMIPCount() == mip_index + 1) {
+	//	// Downscale to the next MIP
 
-			break;	// The last MIP is not downscaled
+	//	if (unfiltered_sh_clipmap->GetPyramid()->GetMIPCount() == mip_index + 1) {
 
-		}
-		
-		graphics_.PushEvent(L"SH pyramid downscale");
+	//		break;	// The last MIP is not downscaled
 
-		// The current MIP level must be copied somewhere else since it seems that DX11 doesn't like to have an UAV and a SRV pointing to the same texture
-		// (even if at different MIP levels) at the same time.
+	//	}
+	//	
+	//	graphics_.PushEvent(L"SH pyramid downscale");
 
-		cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
+	//	// The current MIP level must be copied somewhere else since it seems that DX11 doesn't like to have an UAV and a SRV pointing to the same texture
+	//	// (even if at different MIP levels) at the same time.
 
-		cb_filter_params->src_voxel_resolution = dst_resolution;			// Current level resolution
-		cb_filter_params->dst_voxel_resolution = dst_resolution >> 1;		// Next level resolution.
-		cb_filter_params->dst_offset = 0;									// MIPs don't need to be centered.
-		cb_filter_params->src_cascade = 0;									// Pyramid do not use the cascade, but the MIPs
-		cb_filter_params->dst_cascade = 0;									// Pyramid do not use the cascade, but the MIPs
+	//	cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
 
-		cb_sh_filter->Unlock();
-		
-		sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-									 source_mip);
+	//	cb_filter_params->src_voxel_resolution = dst_resolution;			// Current level resolution
+	//	cb_filter_params->dst_voxel_resolution = dst_resolution >> 1;		// Next level resolution.
+	//	cb_filter_params->dst_offset = 0;									// MIPs don't need to be centered.
+	//	cb_filter_params->src_cascade = 0;									// Pyramid do not use the cascade, but the MIPs
+	//	cb_filter_params->dst_cascade = 0;									// Pyramid do not use the cascade, but the MIPs
 
-		sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
-									  sh_filter_temp_);
+	//	cb_sh_filter->Unlock();
+	//	
+	//	sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
+	//								 source_mip);
 
-		sh_pyramid_filter_->Dispatch(*immediate_context_,
-									 dst_resolution,
-									 dst_resolution,
-									 dst_resolution);
+	//	sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
+	//								  sh_filter_temp_);
 
-		dest_region.left = 0u;
-		dest_region.top = 0u;
-		dest_region.front = 0u;
-		dest_region.right = sh_filter_temp_->GetWidth() >> mip_index;
-		dest_region.bottom = sh_filter_temp_->GetHeight() >> mip_index;
-		dest_region.back = sh_filter_temp_->GetDepth() >> mip_index;
-		
-		immediate_context_->CopySubresourceRegion(resource_cast(unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index + 1)->GetTexture())->GetTexture().Get(),
-												  mip_index + 1,
-												  0,
-												  0,
-												  0,
-												  resource_cast(sh_filter_temp_->GetTexture())->GetTexture().Get(),
-												  0,
-												  &dest_region);
-				
-		graphics_.PopEvent();
-		
-	}
+	//	sh_pyramid_filter_->Dispatch(*immediate_context_,
+	//								 dst_resolution,
+	//								 dst_resolution,
+	//								 dst_resolution);
 
-	graphics_.PopEvent();
+	//	dest_region.left = 0u;
+	//	dest_region.top = 0u;
+	//	dest_region.front = 0u;
+	//	dest_region.right = sh_filter_temp_->GetWidth() >> mip_index;
+	//	dest_region.bottom = sh_filter_temp_->GetHeight() >> mip_index;
+	//	dest_region.back = sh_filter_temp_->GetDepth() >> mip_index;
+	//	
+	//	immediate_context_->CopySubresourceRegion(resource_cast(unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index + 1)->GetTexture())->GetTexture().Get(),
+	//											  mip_index + 1,
+	//											  0,
+	//											  0,
+	//											  0,
+	//											  resource_cast(sh_filter_temp_->GetTexture())->GetTexture().Get(),
+	//											  0,
+	//											  &dest_region);
+	//			
+	//	graphics_.PopEvent();
+	//	
+	//}
+
+	//graphics_.PopEvent();
 
 }

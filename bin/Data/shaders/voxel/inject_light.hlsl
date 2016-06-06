@@ -14,9 +14,6 @@ Texture2D gVSM;		// Variance shadow map. Contains the first and the second momen
 
 StructuredBuffer<uint> gVoxelAddressTable;						// Contains the "pointers" to the actual voxel infos.
 
-RWTexture3D<int> gUnfilteredSHPyramid;							// Pyramid part of the unfiltered SH 3D clipmap.
-RWTexture3D<int> gUnfilteredSHStack;							// Stack part of the unfiltered SH 3D clipmap.
-
 cbuffer CBPointLight {
 
 	PointLight gPointLight;			// Point light injecting the photons inside the voxel structure.
@@ -82,10 +79,12 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	// Store the SH contribution
 
-	StoreSHCoefficients(gUnfilteredSHPyramid, gUnfilteredSHStack, surface_position, 0, sh_coefficients[0]);
+	// SH0
+	_StoreSHContributions(surface_position, 0, sh_coefficients[0]);
 
-	StoreSHCoefficients(gUnfilteredSHPyramid, gUnfilteredSHStack, surface_position, 1, sh_coefficients[1]);
-	StoreSHCoefficients(gUnfilteredSHPyramid, gUnfilteredSHStack, surface_position, 2, sh_coefficients[2]);
-	StoreSHCoefficients(gUnfilteredSHPyramid, gUnfilteredSHStack, surface_position, 3, sh_coefficients[3]);
+	// SH1
+	_StoreSHContributions(surface_position, 1, sh_coefficients[1]);
+	_StoreSHContributions(surface_position, 2, sh_coefficients[2]);
+	_StoreSHContributions(surface_position, 3, sh_coefficients[3]);
 	
 }

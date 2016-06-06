@@ -8,6 +8,10 @@
 
 #define PI 3.14159f
 
+RWTexture3D<int> gSHRed;				// Unfiltered red spherical harmonics contributions.
+RWTexture3D<int> gSHGreen;				// Unfiltered green spherical harmonics contributions.
+RWTexture3D<int> gSHBlue;				// Unfiltered blue spherical harmonics contributions.
+
 SamplerState gSHSampler;				// Sampler used to sample the SH
 
 cbuffer Voxelization {
@@ -39,47 +43,36 @@ struct VoxelInfo {
 
 };
 
-/// \brief Get the voxel size given its cascade.
-/// \param cascade Cascade the voxel belong to. Negative cascade are inside the clipmap pyramid.
-float GetVoxelSize(int cascade) {
+/// \brief Get the voxel size of a given MIP level.
+/// \param mip_index MIP level index.
+/// \return Returns the size of the voxel of the given MIP level in world units.
+float GetVoxelSize(int mip_index) {
 
-	return gVoxelSize * pow(2.0f, -cascade);
+	// return (gVoxelSize * (1 << (gCascades + mip_index))) / (1 << gCascades);
 
-}
-
-/// \brief Get the minimum size of a voxel inside the structure.
-float GetMinVoxelSize() {
-
-	return gVoxelSize / (float)(1 << gCascades);
+	return ldexp(gVoxelSize, mip_index);		// gVoxelSize * (2 ^ mip_index)
 
 }
 
-/// \brief Get the voxelization of the given cascade.
-/// \param cascade_index Index of the cascade whose voxel size is requested. The base of the pyramid has index 0, pyramid MIP levels have index < 0, stack part has index > 0.
-float3 GetCascadeCenter(int cascade_index) {
-
-	int3 voxel_size = GetVoxelSize(cascade_index);
-
-	return floor(gCameraCenter / voxel_size) * voxel_size;
-
-}
-
-/// \brief Get the number of SH bands stored for each voxel in a specified cascade.
-uint GetSHBandCount(uint cascade_index) {
-
-	return 2;		// 2 SH bands, for now
-
-}
 
 /// \brief Get the total amount of voxels inside a cascade
-uint GetCascadeSize() {
+int GetCascadeSize() {
 
 	return gVoxelResolution * gVoxelResolution * gVoxelResolution;
 
 }
 
+/// \brief Get the center of a MIP level giving its voxel size.
+/// \param voxel_size Size of the voxel belonging to the MIP level.
+/// \return Returns the center of the MIP level whose voxel size is the specified one.
+float3 GetMIPCenter(float voxel_size) {
+
+	return floor(gCameraCenter / voxel_size) * voxel_size;
+
+}
+
 /// \brief Get the total amount of voxels inside the pyramid of the voxel clipmap, without the last level.
-uint GetClipmapPyramidSize() {
+int GetClipmapPyramidSize() {
 
 	// Simplified form of a sum of a geometric series S = (1 - 8^log2(gVoxelResolution)) / (1 - 8)
 
@@ -87,54 +80,20 @@ uint GetClipmapPyramidSize() {
 
 }
 
-/// \brief Get the cascade index of a point in world space.
-int GetCascade(float3 position_vs) {
-	
-	float3 abs_position = abs(position_vs);
-
-	float max_distance = max(abs_position.x, max(abs_position.y, abs_position.z));
-
-	float voxel_distance = max_distance * rcp(GetMinVoxelSize());			// Distance in "voxel" units
-
-	float cascade_distance = floor(voxel_distance * rcp(gVoxelResolution >> 1)) + 1;
-
-	return ((int)gCascades) - ceil(log2(cascade_distance));
-
-}
-
-/// \brief Get the minimum size of a voxel around the specified point.
-float GetMinVoxelSize(float3 position_ws) {
-
-	return GetVoxelSize(GetCascade(position_ws - gCameraCenter));
-
-}
-
-int3 ToIntSH(float3 sh_coefficient) {
-
-	return sh_coefficient * 50;
-
-}
-
-float4 ToFloatSH(int4 sh_coefficient) {
-
-	return sh_coefficient * 0.001f;
-
-}
-
 /// \brief Create a voxel.
 /// \param voxel_address_table Structure containing the pointers to the voxelized scene.
 /// \param voxel_coordinates Coordinates of the voxel to create relative to its own cascade.
 /// \param cascade Index of the cascade the voxel belongs to.
-void Voxelize(RWStructuredBuffer<uint> voxel_address_table, uint3 voxel_coordinates, uint cascade) {
-		
+void Voxelize(RWStructuredBuffer<uint> voxel_address_table, uint3 voxel_coordinates, int cascade) {
+
 	uint linear_coordinates = voxel_coordinates.x +
 							  voxel_coordinates.y * gVoxelResolution +
 							  voxel_coordinates.z * gVoxelResolution * gVoxelResolution;
 
-	uint linear_address = linear_coordinates + GetClipmapPyramidSize() + GetCascadeSize() * cascade;
+	uint linear_address = linear_coordinates + GetClipmapPyramidSize() + GetCascadeSize() * -cascade;
 
 	// WORKAROUND (***) - Fill with the actual address!
-	
+
 	voxel_address_table[linear_address] = 42;
 
 }
@@ -144,13 +103,13 @@ void Voxelize(RWStructuredBuffer<uint> voxel_address_table, uint3 voxel_coordina
 /// \param index Index of the pointer pointing to the voxel whose infos are requested.
 /// \param voxel_info If the method succeeds it contains the requested voxel informations.
 /// \return Returns true if the specified pointer was valid, returns false otherwise.
-bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out VoxelInfo voxel_info) {
+bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, int index, out VoxelInfo voxel_info) {
 
 	// WORKAROUND (***) - Get and translate the actual address
 	// TODO: manage the case where the index is negative!
 
-	bool is_inside_clipmap = index >= GetClipmapPyramidSize() && 
-							 index < GetClipmapPyramidSize() + GetCascadeSize() * (1 + gCascades);
+	bool is_inside_clipmap = index >= (int)GetClipmapPyramidSize() && 
+							 index < (int)(GetClipmapPyramidSize() + GetCascadeSize() * (1 + gCascades));
 
 //#define DENSE_VOXEL_INFO
 
@@ -174,12 +133,12 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out Vo
 						     index / (gVoxelResolution * gVoxelResolution)) % gVoxelResolution;
 	
 	// Fill out the voxel info
+
+	voxel_info.cascade = -(index / GetCascadeSize());
 	
-	voxel_info.cascade = index / GetCascadeSize();
+	voxel_info.size = GetVoxelSize(voxel_info.cascade);
 	
-	voxel_info.size = gVoxelSize / pow(2, voxel_info.cascade);
-	
-	voxel_info.center = (((int3)(voxel_ptr3) - (int)(gVoxelResolution >> 1)) + 0.5f) * voxel_info.size + GetCascadeCenter(voxel_info.cascade);
+	voxel_info.center = (((int3)(voxel_ptr3) - (int)(gVoxelResolution >> 1)) + 0.5f) * voxel_info.size + GetMIPCenter(voxel_info.size);
 
 	voxel_info.sh_address = voxel_ptr3 % gVoxelResolution;
 
@@ -191,94 +150,119 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, uint index, out Vo
 
 }
 
-/// \brief Get the info of a voxel in a given point in space.
-/// \param voxel_address_table Linear array containing the voxel pointer structure.
-/// \param position_ws Coordinates of the point, in world space.
-/// \param voxel_info If the method succeeds it contains the requested voxel informations.
-/// \return Returns true if the point was in the voxelized domain, returns false otherwise.
-bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, float3 position_ws, out VoxelInfo voxel_info) {
+/// \brief Get the Chebyshev distance between two points.
+/// \return Returns the Chebyshev distance between two points.
+float GetChebyshevDistance(float3 a, float3 b) {
 
-	position_ws -= gCameraCenter;				// To voxel-grid space
+	float3 ab = abs(a - b);
 
-	voxel_info.cascade = GetCascade(position_ws);
-	
-	voxel_info.size = GetVoxelSize(voxel_info.cascade);
-
-	int3 voxel_coordinates = floor(position_ws * rcp(voxel_info.size));		//[-R/2; R/2)
-
-	voxel_info.center = (voxel_coordinates + 0.5f) * voxel_info.size + gCameraCenter;
-
-	voxel_info.sh_address = voxel_coordinates + (gVoxelResolution >> 1);
-
-	voxel_info.sh_bands = GetSHBandCount(voxel_info.cascade);
-
-	voxel_info.padding = 0;
-
-	return voxel_info.cascade >= 0;		// A negative cascade means that the provided world position is beyond the voxelized scene
+	return max(ab.x, max(ab.y, ab.z));
 
 }
 
-/// \brief Get the 3D coordinates of the most precise version of the voxel enclosing the specified point.
-/// \param position_ws Position of the point, in world space.
-/// \param coefficient_index Index of the SH coefficient.
-/// \param address If the method succeeds, it contains the address for each of the channels R, G, B.
-/// \return Returns 0 if the voxel couldn't be found, 1 if it was found inside the pyramid part of the clipmap or 2 if it was found inside the stack part of the clipmap.
-int GetSHCoordinates(float3 position_ws, uint coefficient_index, out uint3 address[3]) {
+/// \brief Get the MIP level index of a point in world space.
+/// \param position_ws World space position of the point.
+/// \return Returns the index of MIP level containing the specified point.
+/// \remarks Negative MIP values here mean that the point was outside the domain!
+int GetMIPLevel(float3 position_ws) {
 
-	float3 position_vs = position_ws - gCameraCenter;
+	// TODO: THIS IS DEFINITELY WRONG!!!
 
-	int cascade = GetCascade(position_vs);
-
-	float voxel_size = GetVoxelSize(cascade);
-
-	address[0] = floor(position_vs * rcp(voxel_size)) + (gVoxelResolution * 0.5f);			// Red
+	float min_voxel_size = GetVoxelSize(gCascades);
 	
-	address[0].x += coefficient_index * gVoxelResolution;									// Move to the correct coefficient
-	address[0].y += sign(cascade) * (cascade - 1) * gVoxelResolution;						// Move to the correct MIP. The sign(.) here is to bypass the instruction if we are already inside the pyramid.
-	
-	address[1] = address[0] + uint3(0, 0, 1 * gVoxelResolution);							// Green
-	address[2] = address[0] + uint3(0, 0, 2 * gVoxelResolution);							// Blue
+	float3 min_voxel_center = GetMIPCenter(min_voxel_size);
+	float3 max_voxel_center = GetMIPCenter(gVoxelSize);
 
-	return sign(cascade) + 1;		// 0 for cascade < 0
-									// 1 for cascade = 0
-									// 2 for cascade > 0
+	float scale_factor = 2.0f * rcp(min_voxel_size * gVoxelResolution);											// Used to scale position to normalized voxel units.
+
+	int voxel_distance = floor(GetChebyshevDistance(position_ws, min_voxel_center) * scale_factor);				// Maximum distance between the position and the center of the most detailed MIP level.
+
+	int cascade_distance = floor(distance(min_voxel_center, max_voxel_center) * scale_factor);					// Distance between the top layer of the stack and the bottom one.
+
+	// Basic idea: calculate the actual cascade as if the pyramid was not skewed and then compensate.
+	// The mathematical details are contained inside the notes.
+
+	int cascade_index = ceil(log2(voxel_distance + 1));			// Index of the cascade if the pyramid was not skewed 
+
+	//int r = 1 << max(0, cascade_index - 1);
+
+	//int alpha = cascade_distance % r;
+
+	//int beta = voxel_distance % r;
+
+	//int epsilon = max(0, sign(alpha - beta));
+
+	//cascade_index -= epsilon;
+
+	return ((int)gCascades) - cascade_index;
 
 }
 
-/// \brief Store the first two band of SH coefficients
-void StoreSHCoefficients(RWTexture3D<int> sh_pyramid, RWTexture3D<int> sh_stack, float3 position_ws, uint coefficient_index, float3 sh_coefficients) {
+/// \brief Converts a floating point color to a fixed point int-encoded one.
+/// This method is needed since InterlockedAdd of floats is not supported.
+int3 ToIntSH(float3 color) {
 
-	uint3 address[3];
+	return color * 50;
 
-	int3 coefficients = ToIntSH(sh_coefficients);
+}
 
-	int result = GetSHCoordinates(position_ws,
-								  coefficient_index, 
-								  address);
+/// \brief Store the chromatic spherical harmonic contribution for a given position in space.
+/// \param position_ws Position of the contribution in world space.
+/// \param sh_index Linear index of the spherical harmonic coefficient to store.
+/// \param color Color contribution to store.
+void _StoreSHContributions(float3 position_ws, uint sh_index, float3 color) {
 
-	if (result == 1) {
+	// During light injection it is only possible to fill the MIP levels whose index is 0 or negative.
+	// Having a positive MIP level here means that the sample is outside the voxel domain and should be discarded.
+	
+	int mip_index = GetMIPLevel(position_ws);
 
-		// Pyramid part
+	if (mip_index <= 0) {
 
-		InterlockedAdd(sh_pyramid[address[0]], coefficients.r);
-		InterlockedAdd(sh_pyramid[address[1]], coefficients.g);
-		InterlockedAdd(sh_pyramid[address[2]], coefficients.b);
+		float voxel_size = GetVoxelSize(mip_index);
+		
+		// Texture coordinates
+	
+		position_ws -= GetMIPCenter(voxel_size);
+		
+		int3 coords = floor(position_ws * rcp(voxel_size)) + (gVoxelResolution * 0.5f);
+
+		// Offset - Move to the correct coefficient and MIP level
+		// The top slice of the texture is skipped as it contains the MIP levels > 0
+
+		coords += int3(0, sh_index, 1 - mip_index) * gVoxelResolution;
+
+		// InterlockedAdd of floats is not supported, convert to fixed-precision int
+
+		int3 icolor = ToIntSH(color);
+
+		// Store the color - SH are linear: the sum of different SHs is the sum of their coefficients.
+	
+		InterlockedAdd(gSHRed[coords], icolor.r);
+		InterlockedAdd(gSHGreen[coords], icolor.g);
+		InterlockedAdd(gSHBlue[coords], icolor.b);
 
 	}
-	else if (result == 2) {
 
-		// Stack part
+}
 
-		InterlockedAdd(sh_stack[address[0]], coefficients.r);
-		InterlockedAdd(sh_stack[address[1]], coefficients.g);
-		InterlockedAdd(sh_stack[address[2]], coefficients.b);
+/// \brief Get the number of SH bands stored for each voxel in a specified cascade.
+uint GetSHBandCount(uint cascade_index) {
 
-	}
-	else {
+	return 2;		// 2 SH bands, for now
 
-		// Outside domain, do nothing
+}
 
-	}
+float4 ToFloatSH(int4 sh_coefficient) {
+
+	return sh_coefficient * 0.001f;
+
+}
+
+/// \brief Get the minimum size of a voxel around the specified point.
+float GetMinVoxelSize(float3 position_ws) {
+
+	return GetVoxelSize(GetMIPLevel(position_ws));
 
 }
 
@@ -302,13 +286,13 @@ float4 SampleSHCoefficients(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_s
 	float3 dimensions;
 	int coefficients;
 
-	float3 position_vs = position_ws - gCameraCenter;
-	
 	float voxel_size = radius * 2.0f;
 
 	// Assumption: radius is always at least the maximum resolution available for the specified sample location. Avoids multiple GetMinVoxelSize(.)
 
 	if (voxel_size >= gVoxelSize) {
+
+		float3 position_vs = position_ws - GetMIPCenter(0);
 
 		// Sample directly from the pyramid. 
 		// Optimal case: we rely on the hardware quadrilinear filtering.
@@ -325,60 +309,36 @@ float4 SampleSHCoefficients(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_s
 		
 		float mip_level = log2(voxel_size / gVoxelSize);
 		
-		return sh_pyramid.SampleLevel(gSHSampler, sample_location, mip_level);				// Sample & interpolate
+		//return sh_pyramid.SampleLevel(gSHSampler, sample_location, mip_level);				// Sample & interpolate
+		return 0;
 
 	}
 	else {
 
 		// Sample twice from the stack or one time from the stack and the other from the pyramid.
 		// Bad case: we sample twice and perform a linear interpolation in software.
+		
+		sh_stack.GetDimensions(dimensions.x,				// gVoxelResolution * #Coefficients
+							   dimensions.y,				// gVoxelResolution
+							   dimensions.z);				// gVoxelResolution
 
-		return float4(0, 0, 0, 1);
+		coefficients = dimensions.x / gVoxelResolution;		// Number of SH coefficients
+
+		int cascade = min(GetMIPLevel(position_ws),					// Maximum resolution for the given sample location
+						  floor(log2(gVoxelSize / voxel_size)));	// Requested resolution
+
+		float3 position_vs = position_ws - GetMIPCenter(cascade);
+
+		float3 sample_location = (position_vs / (GetVoxelSize(cascade) * gVoxelResolution)) + 0.5f;	// [0; 1]
+
+		sample_location.x = (sample_location.x + sh_index) / coefficients;					// Move to the correct SH coefficient.
+
+		sample_location.y = (sample_location.y + (cascade - 1)) / gCascades;				// The stack starts from cascade "1"
+		
+		return sh_stack.SampleLevel(gSHSampler, sample_location, 0);						// Sample & interpolate
 
 	}
 
-	//float3 address;
-	//
-	//int cascade = GetCascade(position_vs);
-
-	//int result = GetSHCoordinates(position_vs, 
-	//							  sh_index, 
-	//							  cascade,
-	//							  address);
-
-	//if (result == 1) {
-
-	//	// Pyramid
-	//	sh_pyramid.GetDimensions(dimensions.x,			// gVoxelResolution * #Coefficients
-	//							 dimensions.y,			// gVoxelResolution
-	//							 dimensions.z);			// gVoxelResolution
-
-	//	float3 sample_location = address / dimensions;
-
-	//	return sh_pyramid.SampleLevel(gSHSampler, sample_location, 0);
-	//	
-	//}
-	//else if (result == 2) {
-	//	
-	//	// Stack
-
-	//	sh_stack.GetDimensions(dimensions.x,			// gVoxelResolution * #Coefficients
-	//						   dimensions.y,			// gVoxelResolution * #Cascades
-	//						   dimensions.z);			// gVoxelResolution
-
-	//	float3 sample_location = address / dimensions;
-
-	//	return sh_stack.SampleLevel(gSHSampler, sample_location, 0);
-
-	//}
-	//else {
-	//
-	//	// Outside the domain
-
-	//	return 0;		
-
-	//}
-			
 }
 
 float4 SampleSHContribution(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, float3 position_ws, uint sh_band, float3 direction, float radius) {
@@ -406,7 +366,7 @@ float4 SampleSHContribution(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_s
 
 float4 SampleVoxelColor(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, float3 position_ws, float3 direction, float radius) {
 
-	int cascade = GetCascade(position_ws);
+	int cascade = GetMIPLevel(position_ws);
 
 	float4 color = 0.f;
 
@@ -425,7 +385,7 @@ float4 SampleCone(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, floa
 	float tan_angle = tan(angle * 0.5f);
 	float radius;
 	
-	float ray_offset = GetMinVoxelSize();
+	float ray_offset = gVoxelSize / (1 << gCascades);
 	float4 color = 0;
 	float3 position = origin;
 

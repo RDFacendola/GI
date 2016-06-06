@@ -290,11 +290,11 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 	check = sh_outline_material_->SetInput(DX11Voxelization::kSHSampleTag,
 										   ObjectPtr<ISampler>(subject_.sh_sampler_));
 
-	check = sh_outline_material_->SetInput(DX11Voxelization::kFilteredSHPyramidTag,
-										   subject_.filtered_sh_->GetPyramid()->GetTexture());
-
-	check = sh_outline_material_->SetInput(DX11Voxelization::kFilteredSHStackTag,
-										   subject_.filtered_sh_->GetStack()->GetTexture());
+// 	check = sh_outline_material_->SetInput(DX11Voxelization::kFilteredSHPyramidTag,
+// 										   subject_.filtered_sh_->GetPyramid()->GetTexture());
+// 
+// 	check = sh_outline_material_->SetInput(DX11Voxelization::kFilteredSHStackTag,
+// 										   subject_.filtered_sh_->GetStack()->GetTexture());
 
 	check = sh_outline_material_->SetInput(DebugDrawer::kVoxelAppendBuffer,
 										   ObjectPtr<IGPStructuredArray>(voxel_append_buffer_));
@@ -568,10 +568,10 @@ void DX11Voxelization::DebugDrawer::BuildMeshes() {
 
 const Tag DX11Voxelization::kVoxelAddressTableTag = "gVoxelAddressTable";
 const Tag DX11Voxelization::kVoxelizationTag = "Voxelization";
-const Tag DX11Voxelization::kUnfilteredSHPyramidTag = "gUnfilteredSHPyramid";
-const Tag DX11Voxelization::kUnfilteredSHStackTag = "gUnfilteredSHStack";
-const Tag DX11Voxelization::kFilteredSHPyramidTag = "gFilteredSHPyramid";
-const Tag DX11Voxelization::kFilteredSHStackTag = "gFilteredSHStack";
+const Tag DX11Voxelization::kRedSHTag = "gSHRed";
+const Tag DX11Voxelization::kGreenSHTag = "gSHGreen";
+const Tag DX11Voxelization::kBlueSHTag = "gSHBlue";
+const Tag DX11Voxelization::kSHTag = "gSH";
 const Tag DX11Voxelization::kSHSampleTag = "gSHSampler";
 
 DX11Voxelization::DX11Voxelization(DX11DeferredRenderer& renderer, float voxel_size, unsigned int voxel_resolution, unsigned int cascades) :
@@ -599,18 +599,22 @@ void DX11Voxelization::InitResources() {
 
 	sh_sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::COLOR, TextureFiltering::TRILINEAR, 0, kOpaqueBlack });
 
-	unfiltered_sh_ = resources.Load<IGPClipmap3D, IGPClipmap3D::FromDescription>({ voxel_resolution_ * 4,						// 4 SH Coefficients
-																				   voxel_resolution_,
-																				   voxel_resolution_ * 3,						// 3 channels: R, G, B
-																				   cascades_,
-																				   TextureFormat::R_INT });
+	// Create the texture used to store the SH contribution
+	
+	IGPTexture3D::FromDescription sh_desc_ = { voxel_resolution_ * 4,									// 4 SH coefficients
+											   voxel_resolution_ * (cascades_ + 2),						// 2 levels for the pyramid, the rest for the stack.
+											   voxel_resolution_,
+											   1,
+											   TextureFormat::R_INT };									// Monochromatic contribution
 
-	filtered_sh_= resources.Load<IGPClipmap3D, IGPClipmap3D::FromDescription>({ voxel_resolution_ * 4,							// 4 SH Coefficients
-																				voxel_resolution_,
-																				voxel_resolution_,
-																				cascades_,
-																				TextureFormat::RGBA_HALF });
+	red_sh_contribution_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>(sh_desc_);
+	green_sh_contribution_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>(sh_desc_);
+	blue_sh_contribution_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>(sh_desc_);
 
+	sh_desc_.format = TextureFormat::RGBA_HALF;															// Chromatic contribution
+		
+	sh_contribution_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>(sh_desc_);
+	
 	voxel_render_target_ = new DX11RenderTarget(IRenderTarget::FromDescription{ voxel_resolution_, 
 																				voxel_resolution_, 
 																				{}, 
@@ -660,11 +664,14 @@ void DX11Voxelization::InitShaders() {
 	check = clear_voxel_->SetOutput(kVoxelAddressTableTag,
 									ObjectPtr<IGPStructuredArray>(voxel_address_table_));
 
-	check = clear_sh_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
-								 unfiltered_sh_->GetPyramid());
+	check = clear_sh_->SetOutput(DX11Voxelization::kRedSHTag,
+								 red_sh_contribution_);
 
-	check = clear_sh_->SetOutput(DX11Voxelization::kUnfilteredSHStackTag,
-								 unfiltered_sh_->GetStack());
+	check = clear_sh_->SetOutput(DX11Voxelization::kGreenSHTag,
+								 green_sh_contribution_);
+
+	check = clear_sh_->SetOutput(DX11Voxelization::kBlueSHTag,
+								 blue_sh_contribution_);
 
 }
 
@@ -789,9 +796,9 @@ void DX11Voxelization::Clear() {
 						   1);
 
 	clear_sh_->Dispatch(device_context,
-						static_cast<unsigned int>(unfiltered_sh_->GetWidth()),
-						static_cast<unsigned int>(unfiltered_sh_->GetHeight() * std::max(unfiltered_sh_->GetStacks(), 1u)),
-						static_cast<unsigned int>(unfiltered_sh_->GetDepth()));
+						static_cast<unsigned int>(red_sh_contribution_->GetWidth()),
+						static_cast<unsigned int>(red_sh_contribution_->GetHeight()),
+						static_cast<unsigned int>(red_sh_contribution_->GetDepth()));
 
 	graphics.PopEvent();
 
@@ -821,4 +828,10 @@ unsigned int DX11Voxelization::GetVoxelCount() const {
 
 	return (1 + cascades_) * cascade_size + pyramid_size;
 
+}
+
+float DX11Voxelization::GetVoxelSize(unsigned int cascade_index) const {
+
+	return voxel_size_ * std::powf(2.0f, static_cast<int>(cascade_index) * -1.f);
+	
 }

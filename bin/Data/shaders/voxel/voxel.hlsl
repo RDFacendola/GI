@@ -21,7 +21,7 @@ struct VSOut {
 
 	float4 position : SV_Position;
 
-	uint cascade : Cascade;
+	int cascade : Cascade;
 
 };
 
@@ -31,11 +31,11 @@ VSOut VSMain(VSIn input){
 
 	float4 pos = mul(gWorld, float4(input.position,1));								// World space
 	
-	output.cascade = input.instance_id;
+	output.cascade = -(int)(input.instance_id);										// Cascades have negative MIP level (positive ones are for the downscaled pyramid)
 
 	float grid_size = gVoxelSize * gVoxelResolution;
 
-	float3 cascade_center = GetCascadeCenter(output.cascade);
+	float3 cascade_center = GetMIPCenter(GetVoxelSize(output.cascade));
 
 	output.position = (pos - float4(cascade_center, 0.0f)) * (2.f / grid_size);		// Cascade space [-1;+1]
 	
@@ -51,7 +51,7 @@ struct GSOut {
 
 	unsigned int projection_plane : ProjectionPlane;	// Projection plane. 0: (Right) ZY(-X), 1: (Above) XZ(-Y), 2: (Front) XY(Z)
 
-	unsigned int cascade : Cascade;						// Voxel cascade index.
+	int cascade : Cascade;								// Voxel cascade index.
 
 };
 
@@ -120,7 +120,7 @@ void GSMain(triangle VSOut input[3], inout TriangleStream<GSOut> output_stream) 
 
 		output.cascade = input[vertex_index].cascade;
 
-		output.position_ps.xyz *= (1 << output.cascade);								// Enlarge the primitive according to the cascade it should be written to.
+		output.position_ps.xyz *= (1 << -output.cascade);								// Enlarge the primitive according to the cascade it should be written to.
 
 		output.position_ps.z = output.position_ps.z * 0.5f + 0.5f,						// [ 0;+1]. Will kill geometry outside the Z boundaries
 			
