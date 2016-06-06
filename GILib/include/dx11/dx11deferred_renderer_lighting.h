@@ -205,9 +205,7 @@ namespace gi_lib {
 
 			ObjectPtr<DX11Computation> sh_pyramid_filter_;						///< \brief Shader used to filter the SH pyramid.
 
-			ObjectPtr<DX11Computation> sh_stack_convert_;						///< \brief Shader used to convert the SH stack structure to an useful one.
-
-			ObjectPtr<DX11Computation> sh_pyramid_convert_;						///< \brief Shader used to convert the SH pyramid structure to an useful one.
+			ObjectPtr<DX11Computation> sh_convert_;								///< \brief Shader used to convert the monochromatic SH contribution to its final chromatic version.
 
 			ObjectPtr<DX11StructuredBuffer> per_light_;							///< \brief Per-light constant buffer using during light injection.
 

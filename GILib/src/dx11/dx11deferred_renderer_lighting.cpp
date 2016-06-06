@@ -147,9 +147,7 @@ voxelization_(voxelization){
 
 	sh_pyramid_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_filter.hlsl",{ { "SH_PYRAMID" } } });
 
-	sh_stack_convert_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_convert.hlsl",{ { "SH_STACK" } } });
-
-	sh_pyramid_convert_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_convert.hlsl",{ { "SH_PYRAMID" } } });
+	sh_convert_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_convert.hlsl" });
 
 	indirect_light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\cone_tracing.hlsl" });
 	
@@ -218,27 +216,19 @@ voxelization_(voxelization){
 	sh_pyramid_filter_->SetInput("SHFilter",
 							     ObjectPtr<IStructuredBuffer>(cb_sh_filter));
 
-	// SH Convert setup - Stack
+	// Spherical harmonics conversion
 
-	sh_stack_convert_->SetInput(DX11Voxelization::kVoxelizationTag,
-							    voxelization_.GetVoxelizationParams());
+	sh_convert_->SetInput(DX11Voxelization::kRedSHTag,
+						  voxelization_.GetRedSHContribution()->GetTexture());
+
+	sh_convert_->SetInput(DX11Voxelization::kGreenSHTag,
+						  voxelization_.GetGreenSHContribution()->GetTexture());
+
+	sh_convert_->SetInput(DX11Voxelization::kBlueSHTag,
+								voxelization_.GetBlueSHContribution()->GetTexture());
 	
-	sh_stack_convert_->SetInput("SHFilter",
-								ObjectPtr<IStructuredBuffer>(cb_sh_filter));
-
-	//sh_stack_convert_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-	//							sh_unfiltered_stack->GetTexture());
-
-	//sh_stack_convert_->SetOutput(DX11Voxelization::kFilteredSHStackTag,
-	//							 sh_filtered_stack);
-	
-	// SH Convert setup - Pyramid
-
-	sh_pyramid_convert_->SetInput(DX11Voxelization::kVoxelizationTag,
-							      voxelization_.GetVoxelizationParams());
-		
-	sh_pyramid_convert_->SetInput("SHFilter",
-								  ObjectPtr<IStructuredBuffer>(cb_sh_filter));
+	sh_convert_->SetOutput(DX11Voxelization::kSHTag,
+						   voxelization_.GetSH());
 	
 	// Indirect lighting
 
@@ -687,7 +677,7 @@ void DX11DeferredRendererLighting::FilterIndirectLight(const FrameInfo &frame_in
 
 	//	}
 	//	
-	//	graphics_.PushEvent(L"SH pyramid downscale");
+	
 
 	//	// The current MIP level must be copied somewhere else since it seems that DX11 doesn't like to have an UAV and a SRV pointing to the same texture
 	//	// (even if at different MIP levels) at the same time.
@@ -733,6 +723,13 @@ void DX11DeferredRendererLighting::FilterIndirectLight(const FrameInfo &frame_in
 	//	
 	//}
 
-	//graphics_.PopEvent();
+	graphics_.PushEvent(L"Spherical harmonics conversion");
+
+	sh_convert_->Dispatch(*immediate_context_,
+						  voxelization_.GetSH()->GetWidth(),
+						  voxelization_.GetSH()->GetHeight(),
+						  voxelization_.GetSH()->GetDepth());
+
+	graphics_.PopEvent();
 
 }
