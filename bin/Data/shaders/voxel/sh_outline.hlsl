@@ -4,10 +4,7 @@
 
 StructuredBuffer<VoxelInfo> gVoxelAppendBuffer;				// Append buffer containing the list of voxels in the current frame. (Read Only)
 
-Texture3D<float4> gFilteredSHPyramid;						// Pyramid part of the filtered SH 3D clipmap.
-Texture3D<float4> gFilteredSHStack;							// Stack part of the filtered SH 3D clipmap.
-
-/////////////////////////////////// VERTEX SHADER ///////////////////////////////////////
+															/////////////////////////////////// VERTEX SHADER ///////////////////////////////////////
 
 cbuffer PerFrame {
 
@@ -35,9 +32,7 @@ VSOut VSMain(VSIn input){
 	
 	VSOut output;
 
-	output.color = SampleVoxelColor(gFilteredSHPyramid, 
-									gFilteredSHStack, 
-									voxel_info.center, 
+	output.color = SampleVoxelColor(voxel_info.center, 
 									normalize(input.position.xyz),
 									voxel_info.size * 0.5f).rgb;
 

@@ -238,11 +238,8 @@ voxelization_(voxelization){
 	indirect_light_shader_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
 									 voxelization_.GetVoxelAddressTable());
 
-	//indirect_light_shader_->SetInput(DX11Voxelization::kFilteredSHPyramidTag,
-	//								 sh_filtered_pyramid->GetTexture());
-
-	//indirect_light_shader_->SetInput(DX11Voxelization::kFilteredSHStackTag,
-	//								 sh_filtered_stack->GetTexture());
+	indirect_light_shader_->SetInput(DX11Voxelization::kSHTag,
+									 voxelization_.GetSH()->GetTexture());
 
 	indirect_light_shader_->SetInput(DX11Voxelization::kSHSampleTag,
 									 voxelization_.GetSHSampler());

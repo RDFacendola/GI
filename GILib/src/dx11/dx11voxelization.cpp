@@ -287,14 +287,12 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 										      ObjectPtr<IStructuredBuffer>(subject_.cb_voxelization_));
 
 	//
+
 	check = sh_outline_material_->SetInput(DX11Voxelization::kSHSampleTag,
 										   ObjectPtr<ISampler>(subject_.sh_sampler_));
 
-// 	check = sh_outline_material_->SetInput(DX11Voxelization::kFilteredSHPyramidTag,
-// 										   subject_.filtered_sh_->GetPyramid()->GetTexture());
-// 
-// 	check = sh_outline_material_->SetInput(DX11Voxelization::kFilteredSHStackTag,
-// 										   subject_.filtered_sh_->GetStack()->GetTexture());
+	check = sh_outline_material_->SetInput(DX11Voxelization::kSHTag,
+										   subject_.GetSH()->GetTexture());
 
 	check = sh_outline_material_->SetInput(DebugDrawer::kVoxelAppendBuffer,
 										   ObjectPtr<IGPStructuredArray>(voxel_append_buffer_));

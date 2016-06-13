@@ -7,9 +7,6 @@
 
 StructuredBuffer<uint> gVoxelAddressTable;					// Contains the "pointers" to the actual voxel infos.
 
-Texture3D<float4> gFilteredSHPyramid;						// Pyramid part of the filtered SH 3D clipmap.
-Texture3D<float4> gFilteredSHStack;							// Stack part of the filtered SH 3D clipmap.
-
 Texture2D<float4> gLightAccumulation;
 RWTexture2D<float3> gIndirectLight;
 
@@ -24,9 +21,7 @@ cbuffer gParameters {
 
 float3 SampleSpecularCone(SurfaceData surface, float3 light_direction, float3 view_direction) {
 
-	float4 color = SampleCone(gFilteredSHPyramid,
-							  gFilteredSHStack,
-							  surface.position,
+	float4 color = SampleCone(surface.position,
 							  light_direction,
 							  0.15f,
 							  10);
@@ -39,9 +34,7 @@ float3 SampleSpecularCone(SurfaceData surface, float3 light_direction, float3 vi
 
 float3 SampleDiffuseCone(SurfaceData surface, float3 light_direction, float3 view_direction) {
 
-	float4 color = SampleCone(gFilteredSHPyramid,
-							  gFilteredSHStack,
-							  surface.position,
+	float4 color = SampleCone(surface.position,
 							  light_direction,
 							  0.20f,
 							  5);

@@ -12,6 +12,8 @@ RWTexture3D<int> gSHRed;				// Unfiltered red spherical harmonics contributions.
 RWTexture3D<int> gSHGreen;				// Unfiltered green spherical harmonics contributions.
 RWTexture3D<int> gSHBlue;				// Unfiltered blue spherical harmonics contributions.
 
+Texture3D<float4> gSH;					// Filtered chromatic spherical harmonics contribution.
+
 SamplerState gSHSampler;				// Sampler used to sample the SH
 
 cbuffer Voxelization {
@@ -296,79 +298,63 @@ int GetSHCoordinates(float3 position_vs, uint coefficient_index, int cascade, ou
 
 }
 
-float4 SampleSHCoefficients(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, float3 position_ws, uint sh_index, float radius) {
+float4 SampleSH(float3 position_ws, int sh_index, int mip_level) {
 
 	float3 dimensions;
-	int coefficients;
 
-	float voxel_size = radius * 2.0f;
+	gSH.GetDimensions(dimensions.x,									// gVoxelResolution * #Coefficients
+					  dimensions.y,									// gVoxelResolution * (#Cascades + 2)
+					  dimensions.z);								// gVoxelResolution
 
-	// Assumption: radius is always at least the maximum resolution available for the specified sample location. Avoids multiple GetMinVoxelSize(.)
+	int coefficients = dimensions.x / gVoxelResolution;				// Maximum number of SH coefficients
 
-	if (voxel_size >= gVoxelSize) {
+	float voxel_size = GetVoxelSize(mip_level);
 
-		float3 position_vs = position_ws - GetMIPCenter(0);
+	float3 position_vs = position_ws - GetMIPCenter(voxel_size);
 
-		// Sample directly from the pyramid. 
-		// Optimal case: we rely on the hardware quadrilinear filtering.
+	float scale = 1 << max(0, mip_level);
 
-		sh_pyramid.GetDimensions(dimensions.x,				// gVoxelResolution * #Coefficients
-								 dimensions.y,				// gVoxelResolution
-								 dimensions.z);				// gVoxelResolution
+	float3 sample_location = ((scale * position_vs) / (voxel_size * gVoxelResolution)) + 0.5f;		// [0; 1]
 
-		coefficients = dimensions.x / gVoxelResolution;		// Number of SH coefficients
+	sample_location.x = (sample_location.x + sh_index) / (scale * coefficients);					// Move to the proper SH coefficient
 
-		float3 sample_location = (position_vs / (gVoxelSize * gVoxelResolution)) + 0.5f;	// [0; 1]
-
-		sample_location.x = (sample_location.x + sh_index) / coefficients;					// Move to the correct SH coefficient.
-		
-		float mip_level = log2(voxel_size / gVoxelSize);
-		
-		//return sh_pyramid.SampleLevel(gSHSampler, sample_location, mip_level);				// Sample & interpolate
-		return 0;
-
-	}
-	else {
-
-		// Sample twice from the stack or one time from the stack and the other from the pyramid.
-		// Bad case: we sample twice and perform a linear interpolation in software.
-		
-		sh_stack.GetDimensions(dimensions.x,				// gVoxelResolution * #Coefficients
-							   dimensions.y,				// gVoxelResolution
-							   dimensions.z);				// gVoxelResolution
-
-		coefficients = dimensions.x / gVoxelResolution;		// Number of SH coefficients
-
-		int cascade = min(GetMIPLevel(position_ws),					// Maximum resolution for the given sample location
-						  floor(log2(gVoxelSize / voxel_size)));	// Requested resolution
-
-		float3 position_vs = position_ws - GetMIPCenter(cascade);
-
-		float3 sample_location = (position_vs / (GetVoxelSize(cascade) * gVoxelResolution)) + 0.5f;	// [0; 1]
-
-		sample_location.x = (sample_location.x + sh_index) / coefficients;					// Move to the correct SH coefficient.
-
-		sample_location.y = (sample_location.y + (cascade - 1)) / gCascades;				// The stack starts from cascade "1"
-		
-		return sh_stack.SampleLevel(gSHSampler, sample_location, 0);						// Sample & interpolate
-
-	}
+	sample_location.y = (sample_location.y + 1 - min(mip_level, 0)) / (scale * (gCascades + 2));	// Move to the proper MIP level
+	
+	return gSH.SampleLevel(gSHSampler, sample_location, 0);											// Sample
 
 }
 
-float4 SampleSHContribution(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, float3 position_ws, uint sh_band, float3 direction, float radius) {
+float4 SampleSHCoefficients(float3 position_ws, uint sh_index, float radius) {
+ 
+	// Assumption: radius is always at least the maximum resolution available for the specified sample location. Avoids multiple GetMinVoxelSize(.)
+
+	float voxel_size = radius * 2.0f;
+
+	// Clamp the maximum resolution to the maximum allowed for the specified level
+
+	float mip_level = max(GetMIPLevel(position_ws),
+						  -log2(gVoxelSize / voxel_size));
+
+	float4 f_sample = SampleSH(position_ws, sh_index, floor(mip_level));
+	float4 c_sample = SampleSH(position_ws, sh_index, ceil(mip_level));
+
+	return lerp(c_sample, f_sample, mip_level - floor(mip_level));			// Quadrilinear interpolation between two successive MIP levels
+	
+}
+
+float4 SampleSHContribution(float3 position_ws, uint sh_band, float3 direction, float radius) {
 
 	[branch]
 	if (sh_band == 0) {
 
-		return SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 0, radius) * sqrt(1.f / (4.f * PI));
+		return SampleSHCoefficients(position_ws, 0, radius) * sqrt(1.f / (4.f * PI));
 
 	}
 	else if (sh_band == 1) {
 
-		return (SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 1, radius) * direction.x +
-				SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 2, radius) * direction.y +
-				SampleSHCoefficients(sh_pyramid, sh_stack, position_ws, 3, radius) * direction.z) * sqrt(3.f / (4.f * PI));
+		return (SampleSHCoefficients(position_ws, 1, radius) * direction.x +
+				SampleSHCoefficients(position_ws, 2, radius) * direction.y +
+				SampleSHCoefficients(position_ws, 3, radius) * direction.z) * sqrt(3.f / (4.f * PI));
 
 	}
 	else {
@@ -379,7 +365,7 @@ float4 SampleSHContribution(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_s
 
 }
 
-float4 SampleVoxelColor(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, float3 position_ws, float3 direction, float radius) {
+float4 SampleVoxelColor(float3 position_ws, float3 direction, float radius) {
 
 	int cascade = GetMIPLevel(position_ws);
 
@@ -387,7 +373,7 @@ float4 SampleVoxelColor(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack
 
 	for (uint sh_band = 0; sh_band < GetSHBandCount(cascade); ++sh_band) {
 
-		color += SampleSHContribution(sh_pyramid, sh_stack, position_ws, sh_band, direction, radius);
+		color += SampleSHContribution(position_ws, sh_band, direction, radius);
 
 	}
 
@@ -395,7 +381,7 @@ float4 SampleVoxelColor(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack
 
 }
 
-float4 SampleCone(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, float3 origin, float3 direction, float angle, int steps) {
+float4 SampleCone(float3 origin, float3 direction, float angle, int steps) {
 
 	float tan_angle = tan(angle * 0.5f);
 	float radius;
@@ -414,9 +400,7 @@ float4 SampleCone(Texture3D<float4> sh_pyramid, Texture3D<float4> sh_stack, floa
 
 		position = origin + (ray_offset + radius) * direction;
 
-		color += SampleVoxelColor(sh_pyramid, 
-								  sh_stack, 
-								  position, 
+		color += SampleVoxelColor(position, 
 								  -direction, 
 								  radius) /* * attenuation*/;
 
