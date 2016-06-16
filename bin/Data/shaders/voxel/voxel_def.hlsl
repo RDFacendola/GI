@@ -106,13 +106,21 @@ uint GetSHBandCount(uint cascade_index) {
 
 }
 
-/// \brief Get the Chebyshev distance between two points.
-/// \return Returns the Chebyshev distance between two points.
+/// \brief Get the Chebyshev distance between two 3D points.
+/// \return Returns the Chebyshev distance between two 3D points.
 float GetChebyshevDistance(float3 a, float3 b) {
 
 	float3 ab = abs(a - b);
 
 	return max(ab.x, max(ab.y, ab.z));
+
+}
+
+/// \brief Get the Chebyshev distance between two 1D points.
+/// \return Returns the Chebyshev distance between two 1D points.
+float GetChebyshevDistance(float a, float b) {
+
+	return abs(a - b);
 
 }
 
@@ -122,36 +130,28 @@ float GetChebyshevDistance(float3 a, float3 b) {
 /// \remarks Negative MIP values here mean that the point was outside the domain!
 int GetMIPLevel(float3 position_ws) {
 
-	// TODO: THIS IS DEFINITELY WRONG!!!
+	// TODO: I'm pretty sure there's some formula that avoids the cycle below.
 
-	float min_voxel_size = GetVoxelSize(-(int)gCascades);
+	float3 mip_center;
+	float voxel_size;
+	float distance;
 
-	float3 min_voxel_center = GetMIPCenter(min_voxel_size);
-	float3 max_voxel_center = GetMIPCenter(gVoxelSize);
+	int mip_level = 1;
 
-	float scale_factor = 2.0f * rcp(min_voxel_size * gVoxelResolution);											// Used to scale position to normalized voxel units.
+	do {
 
-	int voxel_distance = floor(GetChebyshevDistance(position_ws, min_voxel_center) * scale_factor);				// Maximum distance between the position and the center of the most detailed MIP level.
+		--mip_level;
 
-	int cascade_distance = floor(distance(min_voxel_center, max_voxel_center) * scale_factor);					// Distance between the top layer of the stack and the bottom one.
+		voxel_size = GetVoxelSize(mip_level);
+		mip_center = GetMIPCenter(voxel_size);
 
-	// Basic idea: calculate the actual cascade as if the pyramid was not skewed and then compensate.
-	// The mathematical details are contained inside the notes.
+		distance = GetChebyshevDistance(position_ws, mip_center) / voxel_size;
+		
+	} while (distance > (gVoxelResolution >> 1) &&
+		     mip_level > (-(int)gCascades));
 
-	int cascade_index = ceil(log2(voxel_distance + 1));			// Index of the cascade if the pyramid was not skewed 
-
-	//int r = 1 << max(0, cascade_index - 1);
-
-	//int alpha = cascade_distance % r;
-
-	//int beta = voxel_distance % r;
-
-	//int epsilon = max(0, sign(alpha - beta));
-
-	//cascade_index -= epsilon;
-
-	return cascade_index - (int)(gCascades);
-
+	return mip_level;
+			
 }
 
 /// \brief Get the minimum size of a voxel around the specified point.

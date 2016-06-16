@@ -67,14 +67,14 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	x *= 3.f;
 	y *= 3.f;
 
-	//color += SampleDiffuseCone(surface, surface.normal, V) * 0.1f;						// Diffuse Up
-	//color += SampleDiffuseCone(surface, normalize(surface.normal + x), V) * 0.1f;
-	//color += SampleDiffuseCone(surface, normalize(surface.normal - x), V) * 0.1f;
-	//color += SampleDiffuseCone(surface, normalize(surface.normal + y), V) * 0.1f;
-	//color += SampleDiffuseCone(surface, normalize(surface.normal - y), V) * 0.1f;
+	color += SampleDiffuseCone(surface, surface.normal, V) * 0.1f;						// Diffuse Up
+	color += SampleDiffuseCone(surface, normalize(surface.normal + x), V) * 0.1f;
+	color += SampleDiffuseCone(surface, normalize(surface.normal - x), V) * 0.1f;
+	color += SampleDiffuseCone(surface, normalize(surface.normal + y), V) * 0.1f;
+	color += SampleDiffuseCone(surface, normalize(surface.normal - y), V) * 0.1f;
 
 	// Sum the indirect contribution inside the light accumulation buffer
 	
-    gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + max(0, float4(color, 1));
+    gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + max(0, 0.075f * float4(color, 1));
 
 }
