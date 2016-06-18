@@ -67,11 +67,11 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	x *= 3.f;
 	y *= 3.f;
 
-	color += SampleDiffuseCone(surface, surface.normal, V) * 0.1f;						// Diffuse Up
-	color += SampleDiffuseCone(surface, normalize(surface.normal + x), V) * 0.1f;
-	color += SampleDiffuseCone(surface, normalize(surface.normal - x), V) * 0.1f;
-	color += SampleDiffuseCone(surface, normalize(surface.normal + y), V) * 0.1f;
-	color += SampleDiffuseCone(surface, normalize(surface.normal - y), V) * 0.1f;
+	//color += SampleDiffuseCone(surface, surface.normal, V) * 0.1f;						// Diffuse Up
+	//color += SampleDiffuseCone(surface, normalize(surface.normal + x), V) * 0.1f;
+	//color += SampleDiffuseCone(surface, normalize(surface.normal - x), V) * 0.1f;
+	//color += SampleDiffuseCone(surface, normalize(surface.normal + y), V) * 0.1f;
+	//color += SampleDiffuseCone(surface, normalize(surface.normal - y), V) * 0.1f;
 
 	// Sum the indirect contribution inside the light accumulation buffer
 	

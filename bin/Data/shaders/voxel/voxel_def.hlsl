@@ -127,10 +127,14 @@ float GetChebyshevDistance(float a, float b) {
 /// \brief Get the MIP level index of a point in world space.
 /// \param position_ws World space position of the point.
 /// \return Returns the index of MIP level containing the specified point.
-/// \remarks Negative MIP values here mean that the point was outside the domain!
+/// \remarks Positive MIP values here mean that the point was outside the domain!
 int GetMIPLevel(float3 position_ws) {
 
 	// TODO: I'm pretty sure there's some formula that avoids the cycle below.
+	// CRITICAL OPTIMIZATION: this function is called during light injection, filtering and light accumulation (per pixel).
+	//						  It KILLS the performances!
+
+	float half_resolution = gVoxelResolution >> 1;
 
 	float3 mip_center;
 	float voxel_size;
@@ -140,17 +144,17 @@ int GetMIPLevel(float3 position_ws) {
 
 	do {
 
-		--mip_level;
+		--mip_level;	// Evaluate next MIP level
 
 		voxel_size = GetVoxelSize(mip_level);
 		mip_center = GetMIPCenter(voxel_size);
 
 		distance = GetChebyshevDistance(position_ws, mip_center) / voxel_size;
-		
-	} while (distance > (gVoxelResolution >> 1) &&
-		     mip_level > (-(int)gCascades));
 
-	return mip_level;
+	} while (distance < half_resolution &&
+		     mip_level >= -(int)gCascades);
+
+	return mip_level + 1;
 			
 }
 
