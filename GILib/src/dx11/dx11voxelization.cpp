@@ -828,8 +828,8 @@ unsigned int DX11Voxelization::GetVoxelCount() const {
 
 }
 
-float DX11Voxelization::GetVoxelSize(unsigned int cascade_index) const {
+float DX11Voxelization::GetVoxelSize(int cascade_index) const {
 
-	return voxel_size_ * std::powf(2.0f, static_cast<int>(cascade_index) * -1.f);
+	return voxel_size_ * std::powf(2.0f, cascade_index);
 	
 }

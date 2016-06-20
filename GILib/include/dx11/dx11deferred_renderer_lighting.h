@@ -201,9 +201,7 @@ namespace gi_lib {
 
 			ObjectPtr<DX11Computation> light_injection_;						///< \brief Shader performing the dynamic voxelization.
 
-			ObjectPtr<DX11Computation> sh_stack_filter_;						///< \brief Shader used to filter the SH stack.
-
-			ObjectPtr<DX11Computation> sh_pyramid_filter_;						///< \brief Shader used to filter the SH pyramid.
+			ObjectPtr<DX11Computation> sh_filter_;								///< \brief Shader used to filter the SH data structure.
 
 			ObjectPtr<DX11Computation> sh_convert_;								///< \brief Shader used to convert the monochromatic SH contribution to its final chromatic version.
 
@@ -212,8 +210,6 @@ namespace gi_lib {
 			ObjectPtr<DX11StructuredBuffer> cb_point_light_;					///< \brief Constant buffer containing a single point light.
 
 			ObjectPtr<DX11StructuredBuffer> cb_sh_filter;						///< \brief Constant buffer used to pass parameters to the SH MIP filter shader.
-
-			ObjectPtr<DX11StructuredBuffer> cb_sh_filter_stack_;				///< \brief Constant buffer used to pass parameters to the SH MIP filter shader.
 
 		};
 

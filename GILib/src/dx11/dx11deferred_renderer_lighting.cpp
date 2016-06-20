@@ -14,32 +14,20 @@ using namespace ::gi_lib::dx11;
 
 namespace {
 
-	void FillCascadeOffset(const DX11Voxelization& voxelization, const FrameInfo &frame_info, unsigned int cascade_index, unsigned int(&offset)[3]) {
+	Vector3i GetCascadeOffset(const Vector3f& center, float src_voxel_size) {
 
-		Vector3f camera_position = frame_info.camera->GetWorldTransform().translation();
+		float dst_voxel_size = 2.0f * src_voxel_size;
 
-		auto src_voxel_size = voxelization.GetVoxelSize(cascade_index);
-		auto dst_voxel_size = src_voxel_size * 2.f;									// Same as: voxelization.GetVoxelSize(cascade_index - 1u);
+		auto src_center = center / src_voxel_size;
+		auto dst_center = center / dst_voxel_size;
 
-		Vector3i src_center(std::floor(camera_position(0) / src_voxel_size),
-							std::floor(camera_position(1) / src_voxel_size),
-							std::floor(camera_position(2) / src_voxel_size));
+		auto offset = Vector3f(std::floor(src_center(0)) * src_voxel_size - std::floor(dst_center(0)) * dst_voxel_size,
+							   std::floor(src_center(1)) * src_voxel_size - std::floor(dst_center(1)) * dst_voxel_size,
+							   std::floor(src_center(2)) * src_voxel_size - std::floor(dst_center(2)) * dst_voxel_size);
 
-		Vector3i dst_center(std::floor(camera_position(0) / dst_voxel_size) * 2,
-							std::floor(camera_position(1) / dst_voxel_size) * 2,
-							std::floor(camera_position(2) / dst_voxel_size) * 2);
-
-		// The maximum offset allowed for two consecutive cascades is half the biggest voxel between them (equivalent to the smallest one).
-		// Offset here is expressed in voxel units, so it must be 1, 0 or -1.
-		Vector3i voffset = src_center - dst_center;
-
-		// If the two cascades were aligned perfectly, their offset from the top-left corner would be a quarter of the entire resolution
-
-		int quarter_resolution = voxelization.GetVoxelResolution() >> 2;
-
-		offset[0] = static_cast<unsigned int>(quarter_resolution + voffset(0));
-		offset[1] = static_cast<unsigned int>(quarter_resolution + voffset(1));
-		offset[2] = static_cast<unsigned int>(quarter_resolution + voffset(2));
+		return Vector3i(std::floor(offset(0) / src_voxel_size),
+						std::floor(offset(1) / src_voxel_size),
+						std::floor(offset(2) / src_voxel_size));
 		
 	}
 
@@ -62,15 +50,17 @@ struct VSMPerLightCBuffer {
 
 struct CBSHFilter {
 
-	unsigned int src_voxel_resolution;
+	Vector3i src_offset;								///< \brief Offset of the surface used as source of the filtering.
 
-	unsigned int dst_voxel_resolution;
+	int src_stride;										///< \brief Horizontal stride for each source SH band coefficient.
 
-	unsigned int dst_offset;
+	Vector3i dst_offset;								///< \brief Offset of the surface used as destination of the filtering.
 
-	unsigned int src_cascade;
+	int dst_stride;										///< \brief Horizontal stride for each destination SH band coefficient.
 
-	unsigned int dst_cascade;
+	Vector3i mip_offset;								///< \brief Offset to apply within a single filtered MIP.
+
+	int padding;										
 
 };
 
@@ -139,13 +129,9 @@ voxelization_(voxelization){
 	
 	cb_sh_filter = new DX11StructuredBuffer(sizeof(CBSHFilter));
 
-	cb_sh_filter_stack_ = new DX11StructuredBuffer(sizeof(CBSHFilterStack));
-
 	light_injection_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\inject_light.hlsl" });
 
-	sh_stack_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_filter_stack.hlsl" });
-
-	sh_pyramid_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_filter.hlsl",{ { "SH_PYRAMID" } } });
+	sh_filter_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_filter.hlsl" });
 
 	sh_convert_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_convert.hlsl" });
 
@@ -199,23 +185,20 @@ voxelization_(voxelization){
 	light_injection_->SetInput("CBPointLight",
 							   ObjectPtr<IStructuredBuffer>(cb_point_light_));
 
-	// Light filtering
+	// Spherical harmonics filtering
 
-	sh_stack_filter_->SetInput(DX11Voxelization::kVoxelizationTag,
-							   voxelization_.GetVoxelizationParams());
+	sh_filter_->SetOutput(DX11Voxelization::kRedSHTag,
+						  voxelization_.GetRedSHContribution());
+
+	sh_filter_->SetOutput(DX11Voxelization::kGreenSHTag,
+						  voxelization_.GetGreenSHContribution());
+
+	sh_filter_->SetOutput(DX11Voxelization::kBlueSHTag,
+						  voxelization_.GetBlueSHContribution());
+
+	sh_filter_->SetInput("SHFilter",
+						 ObjectPtr<IStructuredBuffer>(cb_sh_filter));
 	
-	//sh_stack_filter_->SetOutput(DX11Voxelization::kUnfilteredSHStackTag,
-	//							sh_unfiltered_stack);
-
-	sh_stack_filter_->SetInput("SHFilterStack",
-							   ObjectPtr<IStructuredBuffer>(cb_sh_filter_stack_));
-	
-	sh_pyramid_filter_->SetInput(DX11Voxelization::kVoxelizationTag,
-							     voxelization_.GetVoxelizationParams());
-
-	sh_pyramid_filter_->SetInput("SHFilter",
-							     ObjectPtr<IStructuredBuffer>(cb_sh_filter));
-
 	// Spherical harmonics conversion
 
 	sh_convert_->SetInput(DX11Voxelization::kRedSHTag,
@@ -540,185 +523,57 @@ void DX11DeferredRendererLighting::AccumulateIndirectLight(const ObjectPtr<IRend
 void DX11DeferredRendererLighting::FilterIndirectLight(const FrameInfo &frame_info)
 {
 
-	// TODO: Refactor everything in this function
+	graphics_.PushEvent(L"Spherical harmonics filtering");
 
-	//CBSHFilterStack* cb_filter_params_stack;
-	//CBSHFilter* cb_filter_params;
+	int cascades = voxelization_.GetVoxelCascades();
+	int voxel_resolution = voxelization_.GetVoxelResolution();
 
-	//int voxel_resolution = voxelization_.GetVoxelResolution();
+	Vector3f center = frame_info.camera->GetWorldTransform().translation();		// Center of the voxelization
 
-	//// Light filtering
-
-	//graphics_.PushEvent(L"Light filtering");
-
-	//auto unfiltered_sh_clipmap = voxelization_.GetUnfilteredSHClipmap();
-	//auto filtered_sh_clipmap = voxelization_.GetFilteredSHClipmap();
-	//
-	//// Filtering must be performed on the INT surface, since reading from a FLOAT is not supported by older architectures (Kepler and previous)
-
-	//if (voxelization_.GetVoxelCascades() > 0) {
-
-	//	// Stack filtering - Copy the content of the N-th cascade to the (N-1) th one, up to the first one.
-
-	//	for (int cascade_index = voxelization_.GetVoxelCascades() - 1; cascade_index > 0; --cascade_index) {
-
-	//		cb_filter_params_stack = cb_sh_filter_stack_->Lock<CBSHFilterStack>();
-
-	//		cb_filter_params_stack->src_cascade = cascade_index;
-
-	//		FillCascadeOffset(voxelization_,
-	//						  frame_info,
-	//						  cascade_index,
-	//						  cb_filter_params_stack->dst_offset);
-
-	//		cb_sh_filter_stack_->Unlock();
-
-	//		sh_stack_filter_->Dispatch(*immediate_context_,
-	//								   voxel_resolution,
-	//								   voxel_resolution,
-	//								   voxel_resolution);
-
-	//	}
-
-	//	// Stack-to-pyramid filtering - Copy the content of the 1st cascade to the pyramid base.
-
-	//	cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
-
-	//	cb_filter_params->src_voxel_resolution = voxel_resolution;						// Full cascade
-	//	cb_filter_params->dst_voxel_resolution = voxel_resolution;						// Full cascade
-	//	cb_filter_params->dst_offset = voxel_resolution >> 2;							// Center the downscaled cascade wrt the center of the next one.
-	//	cb_filter_params->src_cascade = 0;												// Least detailed level inside the stack.
-	//	cb_filter_params->dst_cascade = 0;												// Pyramid do not use the cascade, but the MIPs
-
-	//	cb_sh_filter->Unlock();
-
-	//	sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-	//								 unfiltered_sh_clipmap->GetStack()->GetTexture());
-
-	//	sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
-	//								  unfiltered_sh_clipmap->GetPyramid());
-
-	//	sh_pyramid_filter_->Dispatch(*immediate_context_,
-	//								 voxel_resolution,
-	//								 voxel_resolution,
-	//								 voxel_resolution);
-
-	//	// SH stack conversion (3xINT32 -> FLOAT3)
-	//	
-	//	graphics_.PushEvent(L"SH stack conversion");
-
-	//	cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
-
-	//	cb_filter_params->src_voxel_resolution = voxel_resolution;			// Full cascade
-	//	cb_filter_params->dst_voxel_resolution = voxel_resolution;			// Full cascade
-	//	cb_filter_params->dst_offset = 0;									// Unused
-	//	cb_filter_params->src_cascade = 0;									// 
-	//	cb_filter_params->dst_cascade = 0;									// 
-
-	//	cb_sh_filter->Unlock();
-
-	//	sh_stack_convert_->Dispatch(*immediate_context_,
-	//								voxel_resolution,
-	//								voxel_resolution,
-	//								voxel_resolution);
-
-	//	graphics_.PopEvent();
-
-	//}
-
-	//// Pyramid filtering - Downscale the content of the N-th MIP to the (N+1)-th one
-
-	//int dst_resolution;
-	//ObjectPtr<ITexture3D> source_mip;
-	//ObjectPtr<ITexture3D> destination_mip = sh_filter_temp_->GetTexture();
-	//D3D11_BOX dest_region;
-	//
-	//for (unsigned int mip_index = 0; mip_index < unfiltered_sh_clipmap->GetPyramid()->GetMIPCount(); ++mip_index) {
-
-	//	dst_resolution = voxel_resolution >> mip_index;
-
-	//	source_mip = unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index)->GetTexture();
-
-	//	// SH pyramid conversion (3xINT32 -> FLOAT3)
-
-	//	graphics_.PushEvent(L"SH pyramid conversion");
-
-	//	cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
-
-	//	cb_filter_params->src_voxel_resolution = dst_resolution;			// Current level resolution
-	//	cb_filter_params->dst_voxel_resolution = dst_resolution;			// Current level resolution
-	//	cb_filter_params->dst_offset = 0;									// Unused
-	//	cb_filter_params->src_cascade = 0;									// 
-	//	cb_filter_params->dst_cascade = 0;									// 
-
-	//	cb_sh_filter->Unlock();
-
-	//	sh_pyramid_convert_->SetInput(DX11Voxelization::kUnfilteredSHPyramidTag,
-	//	 							  source_mip);
-
-	//	sh_pyramid_convert_->SetOutput(DX11Voxelization::kFilteredSHPyramidTag,
-	//								   filtered_sh_clipmap->GetPyramid()->GetMIP(mip_index));
-
-	//	sh_pyramid_convert_->Dispatch(*immediate_context_,
-	//								  dst_resolution,
-	//								  dst_resolution,
-	//								  dst_resolution);
-
-	//	graphics_.PopEvent();
-
-	//	// Downscale to the next MIP
-
-	//	if (unfiltered_sh_clipmap->GetPyramid()->GetMIPCount() == mip_index + 1) {
-
-	//		break;	// The last MIP is not downscaled
-
-	//	}
-	//	
+	// Stack part
 	
+	for (int mip_index = -cascades; mip_index < 0; ++mip_index) {
 
-	//	// The current MIP level must be copied somewhere else since it seems that DX11 doesn't like to have an UAV and a SRV pointing to the same texture
-	//	// (even if at different MIP levels) at the same time.
+		auto& cb = *cb_sh_filter->Lock<CBSHFilter>();
 
-	//	cb_filter_params = cb_sh_filter->Lock<CBSHFilter>();
+		cb.src_offset = Vector3i(0, (-mip_index + 1) * voxel_resolution, 0);
+		cb.src_stride = voxel_resolution;
+		cb.dst_offset = Vector3i(0, (-mip_index + 0) * voxel_resolution, 0);
+		cb.dst_stride = voxel_resolution;
+		cb.mip_offset = Vector3i(voxel_resolution / 4, voxel_resolution / 4, voxel_resolution / 4) +
+						GetCascadeOffset(center, voxelization_.GetVoxelSize(mip_index));
+		
+		cb_sh_filter->Unlock();
 
-	//	cb_filter_params->src_voxel_resolution = dst_resolution;			// Current level resolution
-	//	cb_filter_params->dst_voxel_resolution = dst_resolution >> 1;		// Next level resolution.
-	//	cb_filter_params->dst_offset = 0;									// MIPs don't need to be centered.
-	//	cb_filter_params->src_cascade = 0;									// Pyramid do not use the cascade, but the MIPs
-	//	cb_filter_params->dst_cascade = 0;									// Pyramid do not use the cascade, but the MIPs
+		sh_filter_->Dispatch(*immediate_context_,
+							 voxelization_.GetSH()->GetWidth(),				// VoxelResolution * #SHCoefficients
+							 voxel_resolution,
+							 voxel_resolution);
 
-	//	cb_sh_filter->Unlock();
-	//	
-	//	sh_pyramid_filter_->SetInput(DX11Voxelization::kUnfilteredSHStackTag,
-	//								 source_mip);
+	}
+	
+	// Pyramid part
+	
+	for (int mip_index = 0; mip_index < std::floor(std::log2(voxel_resolution)); ++mip_index) {
 
-	//	sh_pyramid_filter_->SetOutput(DX11Voxelization::kUnfilteredSHPyramidTag,
-	//								  sh_filter_temp_);
+		auto& cb = *cb_sh_filter->Lock<CBSHFilter>();
 
-	//	sh_pyramid_filter_->Dispatch(*immediate_context_,
-	//								 dst_resolution,
-	//								 dst_resolution,
-	//								 dst_resolution);
+		cb.src_offset = Vector3i(0, voxel_resolution >> mip_index, 0);
+		cb.src_stride = voxel_resolution >> mip_index;
+		cb.dst_offset = Vector3i(0, voxel_resolution >> (mip_index + 1), 0);
+		cb.dst_stride = voxel_resolution >> (mip_index + 1);
+		cb.mip_offset = Vector3i::Zero();
+		
+		cb_sh_filter->Unlock();
 
-	//	dest_region.left = 0u;
-	//	dest_region.top = 0u;
-	//	dest_region.front = 0u;
-	//	dest_region.right = sh_filter_temp_->GetWidth() >> mip_index;
-	//	dest_region.bottom = sh_filter_temp_->GetHeight() >> mip_index;
-	//	dest_region.back = sh_filter_temp_->GetDepth() >> mip_index;
-	//	
-	//	immediate_context_->CopySubresourceRegion(resource_cast(unfiltered_sh_clipmap->GetPyramid()->GetMIP(mip_index + 1)->GetTexture())->GetTexture().Get(),
-	//											  mip_index + 1,
-	//											  0,
-	//											  0,
-	//											  0,
-	//											  resource_cast(sh_filter_temp_->GetTexture())->GetTexture().Get(),
-	//											  0,
-	//											  &dest_region);
-	//			
-	//	graphics_.PopEvent();
-	//	
-	//}
+		sh_filter_->Dispatch(*immediate_context_,
+							 voxelization_.GetSH()->GetWidth() >> mip_index,
+							 voxel_resolution >> mip_index,
+							 voxel_resolution >> mip_index);
+
+	}
+
+	graphics_.PopEvent();
 
 	graphics_.PushEvent(L"Spherical harmonics conversion");
 

@@ -3,99 +3,77 @@
 /// this leaves each MIP with cube (gVoxelResolution\2)^3 empty on the center of that MIP.
 /// Downscales the next MIP level to fill that area up to the base of the pyramid.
 
-
-/// \remarks Difficult to implement as parallel reduction since each MIP in the stack (and the pyramid) have the same dimensions.
-
-#include "voxel_def.hlsl"
-
 #define N 8
 #define TOTAL_THREADS (N * N * N)
 
 cbuffer SHFilter {
 
-	uint gSrcVoxelResolution;						// Resolution of the source. The resolution of the destination is always half that resolution.
+	int3 gSrcOffset;					// Offset of the surface used as source of the filtering.
+	int gSrcStride;						// Horizontal stride for each source SH band coefficient.
 
-	uint gDstVoxelResolution;						// Resolution of the destination. Either the same dimension of the source, or half that.
+	int3 gDstOffset;					// Offset of the surface used as destination of the filtering.	
+	int gDstStride;						// Horizontal stride for each destination SH band coefficient.
 
-	uint gDstOffset;								// Offset applied to the destination surface.
-
-	uint gSrcCascade;								// Cascade of the source.								
-
-	uint gDstCascade;								// Cascade of the destination.
+	int3 gMIPOffset;					// Offset to apply within a single filtered MIP.
+	int padding;						
 		
 };
 
-#ifdef SH_STACK
+RWTexture3D<int> gSHRed;				// Red spherical harmonics contribution to filter.
+RWTexture3D<int> gSHGreen;				// Green spherical harmonics contribution to filter.
+RWTexture3D<int> gSHBlue;				// Blue spherical harmonics contribution to filter.
 
-RWTexture3D<int> gUnfilteredSHStack;				// Unfiltered SH stack texture. Source \ Destination.
+groupshared int samples[N][N][N];		// Store the samples of the source texture.
 
-#define gSource gUnfilteredSHStack
-#define gDestination gUnfilteredSHStack
+void Filter(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
 
-#endif
+	// Sample everything and store in group shared memory
 
-#ifdef SH_PYRAMID
+	samples[group_thread.x][group_thread.y][group_thread.z] = surface[thread + gSrcOffset];
 
-RWTexture3D<int> gUnfilteredSHPyramid;				// Unfiltered SH pyramid texture. Destination.
+	GroupMemoryBarrierWithGroupSync();
 
-Texture3D<int> gUnfilteredSHStack;					// Unfiltered SH pyramid texture. Source.
+	// Filter (downscale)
 
-#define gSource gUnfilteredSHStack
-#define gDestination gUnfilteredSHPyramid
+	if (group_thread.x % 2 == 0 &&
+		group_thread.y % 2 == 0 &&
+		group_thread.z % 2 == 0) {
 
-#endif
+		int sh_coefficient_index = thread.x / gSrcStride;
 
-groupshared int samples[N][N][N];					// Store the samples of the source texture.
+		thread.x %= gSrcStride;
+		
+		int3 dst_offset = gDstOffset + gMIPOffset;
+		
+		dst_offset.x += gDstStride * sh_coefficient_index;
+
+		surface[thread / 2 + dst_offset] =   samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 0]
+										   + samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 1]
+										   + samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 0]
+										   + samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 1]
+										   + samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 0]
+										   + samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 1]
+										   + samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 0]
+										   + samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 1];
+
+	}
+
+}
 
 [numthreads(N, N, N)]
 void CSMain(uint3 thread_id : SV_DispatchThreadID, uint3 group_thread_id : SV_GroupThreadID) {
 
-	//return;
+	// Red
+	Filter(gSHRed, thread_id, group_thread_id);
 
-	uint3 dst_offset;
-	uint3 src_offset;
-	uint band_count;
+	GroupMemoryBarrierWithGroupSync();
 
-	[unroll]
-	for (int channel_index = 0; channel_index < 3; ++channel_index) {
+	// Green
+	Filter(gSHGreen, thread_id, group_thread_id);
 
-		// We cannot reconstruct bands that do not exists in both cascades of course.
-		band_count = min(GetSHBandCount(gDstCascade), GetSHBandCount(gSrcCascade));
+	GroupMemoryBarrierWithGroupSync();
 
-		for (uint coefficient_index = 0; coefficient_index < band_count * band_count; ++coefficient_index) {
-
-			// Sample everything and store in groupshared memory
-
-			src_offset = uint3(coefficient_index, gSrcCascade, channel_index) * gSrcVoxelResolution;
-
-			samples[group_thread_id.x][group_thread_id.y][group_thread_id.z] = gSource[thread_id + src_offset];
-
-			GroupMemoryBarrierWithGroupSync();
-
-			// Store inside the destination surface
-
-			if (group_thread_id.x % 2 == 0 &&
-				group_thread_id.y % 2 == 0 &&
-				group_thread_id.z % 2 == 0) {
-
-				dst_offset = gDstOffset + uint3(coefficient_index, gDstCascade, channel_index) * gDstVoxelResolution;
-
-				gDestination[thread_id / 2 + dst_offset] =   samples[group_thread_id.x + 0][group_thread_id.y + 0][group_thread_id.z + 0]
-														   + samples[group_thread_id.x + 0][group_thread_id.y + 0][group_thread_id.z + 1]
-														   + samples[group_thread_id.x + 0][group_thread_id.y + 1][group_thread_id.z + 0]
-														   + samples[group_thread_id.x + 0][group_thread_id.y + 1][group_thread_id.z + 1]
-														   + samples[group_thread_id.x + 1][group_thread_id.y + 0][group_thread_id.z + 0]
-														   + samples[group_thread_id.x + 1][group_thread_id.y + 0][group_thread_id.z + 1]
-														   + samples[group_thread_id.x + 1][group_thread_id.y + 1][group_thread_id.z + 0]
-														   + samples[group_thread_id.x + 1][group_thread_id.y + 1][group_thread_id.z + 1]
-														   + 500;
-				
-			}
-
-			GroupMemoryBarrierWithGroupSync();
-
-		}
-
-	}
+	// Blue
+	Filter(gSHBlue, thread_id, group_thread_id);
 		
 }

@@ -343,7 +343,7 @@ float4 SampleSHCoefficients(float3 position_ws, uint sh_index, float radius) {
 	float4 c_sample = SampleSH(position_ws, sh_index, ceil(mip_level));
 
 	return lerp(c_sample, f_sample, mip_level - floor(mip_level));			// Quadrilinear interpolation between two successive MIP levels
-	
+
 }
 
 float4 SampleSHContribution(float3 position_ws, uint sh_band, float3 direction, float radius) {
@@ -371,11 +371,18 @@ float4 SampleSHContribution(float3 position_ws, uint sh_band, float3 direction, 
 
 float4 SampleVoxelColor(float3 position_ws, float3 direction, float radius) {
 
-	int cascade = GetMIPLevel(position_ws);
+	int mip_level = GetMIPLevel(position_ws);
+
+	if (mip_level > 0) {
+
+		// The point is outside the domain (which causes the GetMIPLevel method to yield something greater than 0)
+		return 0;
+
+	}
 
 	float4 color = 0.f;
 
-	for (uint sh_band = 0; sh_band < GetSHBandCount(cascade); ++sh_band) {
+	for (uint sh_band = 0; sh_band < GetSHBandCount(mip_level); ++sh_band) {
 
 		color += SampleSHContribution(position_ws, sh_band, direction, radius);
 

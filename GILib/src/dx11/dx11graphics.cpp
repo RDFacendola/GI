@@ -745,16 +745,19 @@ DX11Graphics::DX11Graphics(): Graphics(){
 // 	}
 
 	//DXGI Device
-	THROW_ON_FAIL(D3D11CreateDevice(kDefaultAdapter,
-									D3D_DRIVER_TYPE_HARDWARE,
-									0,
-									device_flags,
-									&kFeatureLevel,
-									1,
-									D3D11_SDK_VERSION,
-									&device,
-									nullptr,
-									nullptr));
+
+	auto hr = D3D11CreateDevice(kDefaultAdapter,
+								D3D_DRIVER_TYPE_HARDWARE,
+								0,
+								device_flags,
+								&kFeatureLevel,
+								1,
+								D3D11_SDK_VERSION,
+								&device,
+								nullptr,
+								nullptr);
+
+	THROW_ON_FAIL(hr);
 
 	// Context
 	device->GetImmediateContext(&context);

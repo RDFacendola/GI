@@ -111,7 +111,7 @@ namespace gi_lib {
 			unsigned int GetVoxelCascades() const;
 
 			/// \brief Get the size of the voxel in a given cascade.
-			float GetVoxelSize(unsigned int cascade_index = 0) const;
+			float GetVoxelSize(int cascade_index = 0) const;
 
 		private:
 
