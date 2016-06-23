@@ -24,7 +24,7 @@ float3 SampleSpecularCone(SurfaceData surface, float3 light_direction, float3 vi
 	float4 color = SampleCone(surface.position,
 							  light_direction,
 							  0.15f,
-							  10);
+							  15);
 	
 	float3 specular = ComputeCookTorrance(light_direction, view_direction, surface);	// Cook-Torrance specular (PBR).
 
@@ -75,6 +75,6 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	// Sum the indirect contribution inside the light accumulation buffer
 	
-    gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + max(0, 0.075f * float4(color, 1));
+    gIndirectLight[dispatch_thread_id.xy] = gLightAccumulation[dispatch_thread_id.xy] + max(0, float4(color, 1));
 
 }

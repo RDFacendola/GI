@@ -318,12 +318,16 @@ float4 SampleSH(float3 position_ws, int sh_index, int mip_level) {
 
 	float scale = 1 << max(0, mip_level);
 
-	float3 sample_location = ((scale * position_vs) / (voxel_size * gVoxelResolution)) + 0.5f;		// [0; 1]
+	position_vs *= scale;
 
-	sample_location.x = (sample_location.x + sh_index) / (scale * coefficients);					// Move to the proper SH coefficient
+	float3 sample_location = (position_vs / (voxel_size * gVoxelResolution)) + 0.5f;				// [0; 1]
 
-	sample_location.y = (sample_location.y + 1 - min(mip_level, 0)) / (scale * (gCascades + 2));	// Move to the proper MIP level
+	sample_location.x = (sample_location.x + sh_index) / coefficients;								// Move to the proper SH coefficient
+
+	sample_location.y = (sample_location.y + 1 - min(mip_level, 0)) / (gCascades + 2);				// Move to the proper MIP level
 	
+	sample_location = sample_location / scale;														// Shrink
+
 	return gSH.SampleLevel(gSHSampler, sample_location, 0);											// Sample
 
 }
@@ -342,7 +346,7 @@ float4 SampleSHCoefficients(float3 position_ws, uint sh_index, float radius) {
 	float4 f_sample = SampleSH(position_ws, sh_index, floor(mip_level));
 	float4 c_sample = SampleSH(position_ws, sh_index, ceil(mip_level));
 
-	return lerp(c_sample, f_sample, mip_level - floor(mip_level));			// Quadrilinear interpolation between two successive MIP levels
+	return lerp(f_sample, c_sample, mip_level - floor(mip_level));			// Quadrilinear interpolation between two successive MIP levels
 
 }
 
