@@ -554,11 +554,16 @@ void DX11DeferredRendererLighting::FilterIndirectLight(const FrameInfo &frame_in
 	
 	// Pyramid part
 	
-	for (int mip_index = 0; mip_index < std::floor(std::log2(voxel_resolution)); ++mip_index) {
+	// #BUG The border's color is wrong since a MIP would require a sample that is outside the boundaries
+	// this causes some indirect color striping.
+	// Remove the two highest MIP levels to reduce this defect.
+
+	for (int mip_index = 0; mip_index < std::floor(std::log2(voxel_resolution)) - 2; ++mip_index) {
 
 		auto& cb = *cb_sh_filter->Lock<CBSHFilter>();
 
-		cb.src_offset = Vector3i(0, voxel_resolution >> mip_index, 0);
+		// Compensate from the source since the destination cascade may be misaligned
+		cb.src_offset = Vector3i(0, voxel_resolution >> mip_index, 0) - GetCascadeOffset(center, voxelization_.GetVoxelSize(mip_index));
 		cb.src_stride = voxel_resolution >> mip_index;
 		cb.dst_offset = Vector3i(0, voxel_resolution >> (mip_index + 1), 0);
 		cb.dst_stride = voxel_resolution >> (mip_index + 1);
