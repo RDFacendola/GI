@@ -536,12 +536,13 @@ void DX11DeferredRendererLighting::FilterIndirectLight(const FrameInfo &frame_in
 
 		auto& cb = *cb_sh_filter->Lock<CBSHFilter>();
 
-		cb.src_offset = Vector3i(0, (-mip_index + 1) * voxel_resolution, 0);
+		auto offset = GetCascadeOffset(center, voxelization_.GetVoxelSize(mip_index));
+
+		cb.src_offset = Vector3i(0, (-mip_index + 1) * voxel_resolution, 0) + offset;
 		cb.src_stride = voxel_resolution;
 		cb.dst_offset = Vector3i(0, (-mip_index + 0) * voxel_resolution, 0);
 		cb.dst_stride = voxel_resolution;
-		cb.mip_offset = Vector3i(voxel_resolution / 4, voxel_resolution / 4, voxel_resolution / 4) +
-						GetCascadeOffset(center, voxelization_.GetVoxelSize(mip_index));
+		cb.mip_offset = Vector3i(voxel_resolution / 4, voxel_resolution / 4, voxel_resolution / 4) + offset;
 		
 		cb_sh_filter->Unlock();
 
