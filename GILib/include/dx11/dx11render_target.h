@@ -312,13 +312,17 @@ namespace gi_lib{
 
 		inline unsigned int DX11RenderTarget::GetWidth() const{
 
-			return render_target_[0]->GetWidth();
+			return render_target_.size() > 0 ?
+				   render_target_[0]->GetWidth() :
+				   depth_stencil_->GetWidth();
 
 		}
 
 		inline unsigned int DX11RenderTarget::GetHeight() const{
 
-			return render_target_[0]->GetHeight();
+			return render_target_.size() > 0 ?
+				   render_target_[0]->GetHeight() :
+				   depth_stencil_->GetHeight();
 
 		}
 
