@@ -86,10 +86,13 @@ const Tag DX11DeferredRendererLighting::kPointShadowsTag = "gPointShadows";
 const Tag DX11DeferredRendererLighting::kDirectionalShadowsTag = "gDirectionalShadows";
 const Tag DX11DeferredRendererLighting::kReflectiveShadowMapTag = "gRSM";
 const Tag DX11DeferredRendererLighting::kVarianceShadowMapTag = "gVSM";
+const Tag DX11DeferredRendererLighting::kOperand1Tag = "gOperand1";
+const Tag DX11DeferredRendererLighting::kOperand2Tag = "gOperand2";
 
 DX11DeferredRendererLighting::DX11DeferredRendererLighting(DX11Voxelization& voxelization) :
 graphics_(DX11Graphics::GetInstance()),
-voxelization_(voxelization){
+voxelization_(voxelization),
+fx_downscale_(fx::FxScale::Parameters{}) {
 
 	auto&& device = *graphics_.GetDevice();
 
@@ -137,6 +140,10 @@ voxelization_(voxelization){
 
 	indirect_light_shader_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\cone_tracing.hlsl" });
 	
+	indirect_light_sum_shader_ = new DX11Material(IMaterial::CompileFromFile{ L"Data\\Shaders\\common\\add_ps.hlsl" });
+
+	sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::CLAMP, TextureFiltering::BILINEAR, 0 });
+
 	bool check;
 
 	// Light accumulation setup
@@ -230,6 +237,11 @@ voxelization_(voxelization){
 	indirect_light_shader_->SetInput(kLightParametersTag,
 									 ObjectPtr<IStructuredBuffer>(light_accumulation_parameters_));
 
+	// Indirect lighting
+
+	indirect_light_sum_shader_->SetInput("gSampler",
+										 ObjectPtr<ISampler>(sampler_));
+
 }
 
 DX11DeferredRendererLighting::~DX11DeferredRendererLighting(){
@@ -270,7 +282,7 @@ ObjectPtr<ITexture2D> DX11DeferredRendererLighting::AccumulateLight(const Object
 		
 		AccumulateIndirectLight(gbuffer, frame_info);
 
-		return indirect_light_buffer_->GetTexture();
+		return (*indirect_light_buffer_)[0];
 
 	}
 	else {
@@ -488,11 +500,11 @@ void DX11DeferredRendererLighting::AccumulateIndirectLight(const ObjectPtr<IRend
 
 	graphics_.PushEvent(L"Indirect light accumulation");
 
-	gp_cache_->PushToCache(ObjectPtr<IGPTexture2D>(indirect_light_buffer_));
+	auto indirect_light_accumulation_buffer_ = gp_cache_->PopFromCache(frame_info.width >> 1,		// Accumulate at half the resolution for performance reasons
+																	   frame_info.height >> 1,
+																	   TextureFormat::RGB_FLOAT);
 
-	indirect_light_buffer_ = gp_cache_->PopFromCache(frame_info.width,				// Grab a new light accumulation buffer from the cache.
-													 frame_info.height,
-													 TextureFormat::RGB_FLOAT);
+	// Perform indirect light accumulation
 
 	bool check;
 
@@ -500,21 +512,51 @@ void DX11DeferredRendererLighting::AccumulateIndirectLight(const ObjectPtr<IRend
 											 (*gbuffer)[0]);
 
 	check = indirect_light_shader_->SetInput(kNormalShininessTag,
-											 (*gbuffer)[1]);	
+											 (*gbuffer)[1]);
 
 	check = indirect_light_shader_->SetInput(kDepthStencilTag,
 											 gbuffer->GetDepthBuffer());
 
-	check = indirect_light_shader_->SetInput(kLightBufferTag,
-											 light_buffer_->GetTexture());
-
 	check = indirect_light_shader_->SetOutput(kIndirectLightBufferTag,
-											  ObjectPtr<IGPTexture2D>(indirect_light_buffer_));
+											  ObjectPtr<IGPTexture2D>(indirect_light_accumulation_buffer_));
 
 	indirect_light_shader_->Dispatch(*immediate_context_,
-									 light_buffer_->GetWidth(),
-									 light_buffer_->GetHeight(),
+									 indirect_light_accumulation_buffer_->GetWidth(),
+									 indirect_light_accumulation_buffer_->GetHeight(),
 									 1);
+
+	// Upscale and add to the light buffer
+	
+	if (indirect_light_buffer_) {
+	
+		rt_cache_->PushToCache(indirect_light_buffer_);
+
+	}
+
+	indirect_light_buffer_ = rt_cache_->PopFromCache(frame_info.width,								// Final image result
+													 frame_info.height,
+													 { TextureFormat::RGB_FLOAT },
+													 false);
+
+	check = indirect_light_sum_shader_->SetInput(kOperand1Tag,
+												 light_buffer_->GetTexture());
+
+	check = indirect_light_sum_shader_->SetInput(kOperand2Tag,
+												 indirect_light_accumulation_buffer_->GetTexture());
+
+	resource_cast(indirect_light_buffer_)->Bind(*immediate_context_);
+
+	indirect_light_sum_shader_->Bind(*immediate_context_);
+
+	// Render a quad
+
+	immediate_context_->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+	immediate_context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	immediate_context_->Draw(6, 0);
+
+	indirect_light_sum_shader_->Unbind(*immediate_context_);
+
+	resource_cast(indirect_light_buffer_)->Unbind(*immediate_context_);
 
 	graphics_.PopEvent();
 

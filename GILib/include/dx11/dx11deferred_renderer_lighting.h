@@ -157,13 +157,17 @@ namespace gi_lib {
 
             static const Tag kIndirectLightBufferTag;
 
+			static const Tag kOperand1Tag;										///< \brief First operand of the light sum shader.
+
+			static const Tag kOperand2Tag;										///< \brief Second operand of the light sum shader.
+
 			ObjectPtr<IGPTexture2DCache> gp_cache_;								///< \brief Cache of general purpose textures.
 
 			ObjectPtr<IRenderTargetCache> rt_cache_;							///< \brief Cache of the render targets.
 
 			ObjectPtr<IGPTexture2D> light_buffer_;								///< \brief Light buffer.
 
-            ObjectPtr<IGPTexture2D> indirect_light_buffer_;						///< \brief Indirect light buffer.
+            ObjectPtr<IRenderTarget> indirect_light_buffer_;					///< \brief Indirect light buffer.
 
 			ObjectPtr<DX11StructuredArray> point_lights_;						///< \brief Array containing the point lights.
 
@@ -204,6 +208,12 @@ namespace gi_lib {
 			ObjectPtr<DX11Computation> sh_filter_;								///< \brief Shader used to filter the SH data structure.
 
 			ObjectPtr<DX11Computation> sh_convert_;								///< \brief Shader used to convert the monochromatic SH contribution to its final chromatic version.
+			
+			DX11FxScale fx_downscale_;											///< \brief Used to perform down scaling.
+
+			ObjectPtr<DX11Sampler> sampler_;									///< \brief Sampler used to upscale the indirect light result.
+
+			ObjectPtr<DX11Material> indirect_light_sum_shader_;					///< \brief Shader performing the sum between the direct and the indirect light buffer.
 
 			ObjectPtr<DX11StructuredBuffer> per_light_;							///< \brief Per-light constant buffer using during light injection.
 
