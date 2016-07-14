@@ -15,6 +15,7 @@
 #include "dx11\dx11.h"
 #include "windows\win_os.h"
 #include "dx11voxelization.h"
+#include "fx\dx11fx_filter.h"
 
 namespace gi_lib {
 
@@ -220,6 +221,10 @@ namespace gi_lib {
 			ObjectPtr<DX11StructuredBuffer> cb_point_light_;					///< \brief Constant buffer containing a single point light.
 
 			ObjectPtr<DX11StructuredBuffer> cb_sh_filter;						///< \brief Constant buffer used to pass parameters to the SH MIP filter shader.
+
+			// Experimental 
+
+			DX11FxGaussianBlur fx_blur_;									///< \brief Filter used to perform a Gaussian blur.
 
 		};
 

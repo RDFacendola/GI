@@ -92,7 +92,8 @@ const Tag DX11DeferredRendererLighting::kOperand2Tag = "gOperand2";
 DX11DeferredRendererLighting::DX11DeferredRendererLighting(DX11Voxelization& voxelization) :
 graphics_(DX11Graphics::GetInstance()),
 voxelization_(voxelization),
-fx_downscale_(fx::FxScale::Parameters{}) {
+fx_downscale_(fx::FxScale::Parameters{}),
+fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ 0.5f, 5 }) {
 
 	auto&& device = *graphics_.GetDevice();
 
@@ -504,6 +505,10 @@ void DX11DeferredRendererLighting::AccumulateIndirectLight(const ObjectPtr<IRend
 																	   frame_info.height >> 1,
 																	   TextureFormat::RGB_FLOAT);
 
+	auto blurred_buffer = gp_cache_->PopFromCache(frame_info.width >> 1,							
+												  frame_info.height >> 1,
+												  TextureFormat::RGB_FLOAT);
+
 	// Perform indirect light accumulation
 
 	bool check;
@@ -525,6 +530,12 @@ void DX11DeferredRendererLighting::AccumulateIndirectLight(const ObjectPtr<IRend
 									 indirect_light_accumulation_buffer_->GetHeight(),
 									 1);
 
+	// Blur the light buffer
+
+	fx_blur_.Blur(indirect_light_accumulation_buffer_->GetTexture(),
+				  blurred_buffer,
+				  Vector2i::Zero());
+
 	// Upscale and add to the light buffer
 	
 	if (indirect_light_buffer_) {
@@ -542,7 +553,7 @@ void DX11DeferredRendererLighting::AccumulateIndirectLight(const ObjectPtr<IRend
 												 light_buffer_->GetTexture());
 
 	check = indirect_light_sum_shader_->SetInput(kOperand2Tag,
-												 indirect_light_accumulation_buffer_->GetTexture());
+												 blurred_buffer->GetTexture());
 
 	resource_cast(indirect_light_buffer_)->Bind(*immediate_context_);
 
@@ -557,6 +568,10 @@ void DX11DeferredRendererLighting::AccumulateIndirectLight(const ObjectPtr<IRend
 	indirect_light_sum_shader_->Unbind(*immediate_context_);
 
 	resource_cast(indirect_light_buffer_)->Unbind(*immediate_context_);
+
+	// Not needed anymore
+
+	gp_cache_->PushToCache(blurred_buffer);
 
 	graphics_.PopEvent();
 

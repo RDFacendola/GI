@@ -105,7 +105,7 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	float3 color = 0;
 
-	color += SampleSpecularCone(surface, R, V);												// Specular
+	color += SampleSpecularCone(surface, R, V) * 0.2;									// Specular
 
 	float3 x = cross(surface.normal, normalize(float3(1,1,1)));
 	float3 y = cross(surface.normal, x);
@@ -123,6 +123,6 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	// Sum the indirect contribution inside the light accumulation buffer
 	
-    gIndirectLight[dispatch_thread_id.xy] = max(0, 0.25f * float4(color, 1));
+    gIndirectLight[dispatch_thread_id.xy] = max(0, 1.0f * float4(color, 1));
 
 }
