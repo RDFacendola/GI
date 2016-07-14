@@ -4,7 +4,7 @@
 
 StructuredBuffer<VoxelInfo> gVoxelAppendBuffer;				// Append buffer containing the list of voxels in the current frame. (Read Only)
 
-															/////////////////////////////////// VERTEX SHADER ///////////////////////////////////////
+/////////////////////////////////// VERTEX SHADER ///////////////////////////////////////
 
 cbuffer PerFrame {
 
@@ -22,7 +22,7 @@ struct VSIn {
 struct VSOut {
 
 	float4 position_ps : SV_Position;
-	float3 color : Color;
+	float4 color : Color;
 
 };
 
@@ -32,9 +32,11 @@ VSOut VSMain(VSIn input){
 	
 	VSOut output;
 
-	output.color = SampleVoxelColor(voxel_info.center, 
+	float4 color = SampleVoxelColor(voxel_info.center, 
 									normalize(input.position.xyz),
-									voxel_info.size * 0.5f).rgb;
+									voxel_info.size * 0.5f);
+
+	output.color = color;
 
 	// The debug draw is applied after the tonemap so we have to manually tonemap the result. (Reinhard's)
 
@@ -58,6 +60,6 @@ VSOut VSMain(VSIn input){
 
 float4 PSMain(VSOut input) : SV_Target0{
 
-	return float4(input.color, 1.f);
+	return input.color;
 
 }

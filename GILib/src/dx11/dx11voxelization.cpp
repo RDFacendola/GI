@@ -569,6 +569,7 @@ const Tag DX11Voxelization::kVoxelizationTag = "Voxelization";
 const Tag DX11Voxelization::kRedSHTag = "gSHRed";
 const Tag DX11Voxelization::kGreenSHTag = "gSHGreen";
 const Tag DX11Voxelization::kBlueSHTag = "gSHBlue";
+const Tag DX11Voxelization::kAlphaSHTag = "gSHAlpha";
 const Tag DX11Voxelization::kSHTag = "gSH";
 const Tag DX11Voxelization::kSHSampleTag = "gSHSampler";
 
@@ -608,6 +609,7 @@ void DX11Voxelization::InitResources() {
 	red_sh_contribution_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>(sh_desc_);
 	green_sh_contribution_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>(sh_desc_);
 	blue_sh_contribution_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>(sh_desc_);
+	alpha_sh_contribution_ = resources.Load<IGPTexture3D, IGPTexture3D::FromDescription>(sh_desc_);
 
 	sh_desc_.format = TextureFormat::RGBA_HALF;															// Chromatic contribution
 		
@@ -652,24 +654,30 @@ void DX11Voxelization::InitShaders() {
 	check = voxel_material_->SetOutput(kVoxelAddressTableTag,
 									   ObjectPtr<IGPStructuredArray>(voxel_address_table_));
 	
+	check = voxel_material_->SetOutput(kAlphaSHTag,
+									   alpha_sh_contribution_);
+
 	check = voxel_material_->SetInput("PerObject",
 									  ObjectPtr<IStructuredBuffer>(cb_object_));
 
 	check = voxel_material_->SetInput(kVoxelizationTag,
 									  ObjectPtr<IStructuredBuffer>(cb_voxelization_));
-		
+	
 
 	check = clear_voxel_->SetOutput(kVoxelAddressTableTag,
 									ObjectPtr<IGPStructuredArray>(voxel_address_table_));
 
-	check = clear_sh_->SetOutput(DX11Voxelization::kRedSHTag,
+	check = clear_sh_->SetOutput(kRedSHTag,
 								 red_sh_contribution_);
 
-	check = clear_sh_->SetOutput(DX11Voxelization::kGreenSHTag,
+	check = clear_sh_->SetOutput(kGreenSHTag,
 								 green_sh_contribution_);
 
-	check = clear_sh_->SetOutput(DX11Voxelization::kBlueSHTag,
+	check = clear_sh_->SetOutput(kBlueSHTag,
 								 blue_sh_contribution_);
+
+	check = clear_sh_->SetOutput(kAlphaSHTag,
+								 alpha_sh_contribution_);
 
 }
 

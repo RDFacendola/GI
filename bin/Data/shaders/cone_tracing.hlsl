@@ -71,8 +71,8 @@ float3 SampleSpecularCone(SurfaceData surface, float3 light_direction, float3 vi
 
 	float4 color = SampleCone(surface.position,
 							  light_direction,
-							  0.15f,
-							  15);
+							  0.05f,
+							  20);
 	
 	float3 specular = ComputeCookTorrance(light_direction, view_direction, surface);	// Cook-Torrance specular (PBR).
 
@@ -84,8 +84,8 @@ float3 SampleDiffuseCone(SurfaceData surface, float3 light_direction, float3 vie
 
 	float4 color = SampleCone(surface.position,
 							  light_direction,
-							  0.20f,
-							  5);
+							  0.25f,
+							  10);
 
 	float3 diffuse = ComputeLambert(light_direction, view_direction, surface);			// Lambertian diffuse
 
@@ -105,24 +105,24 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
 	float3 color = 0;
 
-	color += SampleSpecularCone(surface, R, V) * 0.2;									// Specular
+	color += SampleSpecularCone(surface, R, V);												// Specular
 
-	float3 x = cross(surface.normal, normalize(float3(1,1,1)));
-	float3 y = cross(surface.normal, x);
+	float3 t = cross(surface.normal, normalize(float3(1,1,1)));
+	float3 b = cross(surface.normal, t);
 
-	x = cross(surface.normal, y);
+	t = cross(surface.normal, b);
 
-	x *= 3.f;
-	y *= 3.f;
+	t *= 2.f;
+	b *= 2.f;
 
-	//color += SampleDiffuseCone(surface, surface.normal, V) * 0.1f;						// Diffuse Up
-	//color += SampleDiffuseCone(surface, normalize(surface.normal + x), V) * 0.1f;
-	//color += SampleDiffuseCone(surface, normalize(surface.normal - x), V) * 0.1f;
-	//color += SampleDiffuseCone(surface, normalize(surface.normal + y), V) * 0.1f;
-	//color += SampleDiffuseCone(surface, normalize(surface.normal - y), V) * 0.1f;
+	//color += SampleDiffuseCone(surface, surface.normal, V) * 0.2f;						// Diffuse Up
+	//color += SampleDiffuseCone(surface, normalize(surface.normal + t), V) * 0.2f;
+	//color += SampleDiffuseCone(surface, normalize(surface.normal - t), V) * 0.2f;
+	//color += SampleDiffuseCone(surface, normalize(surface.normal + b), V) * 0.2f;
+	//color += SampleDiffuseCone(surface, normalize(surface.normal - b), V) * 0.2f;
 
 	// Sum the indirect contribution inside the light accumulation buffer
 	
-    gIndirectLight[dispatch_thread_id.xy] = max(0, 1.0f * float4(color, 1));
+    gIndirectLight[dispatch_thread_id.xy] = max(0, float4(color, 1));
 
 }

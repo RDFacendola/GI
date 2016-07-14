@@ -6,6 +6,9 @@
 #define N 8
 #define TOTAL_THREADS (N * N * N)
 
+
+#include "voxel_def.hlsl"
+
 cbuffer SHFilter {
 
 	int3 gSrcOffset;					// Offset of the surface used as source of the filtering.
@@ -19,13 +22,9 @@ cbuffer SHFilter {
 		
 };
 
-RWTexture3D<int> gSHRed;				// Red spherical harmonics contribution to filter.
-RWTexture3D<int> gSHGreen;				// Green spherical harmonics contribution to filter.
-RWTexture3D<int> gSHBlue;				// Blue spherical harmonics contribution to filter.
-
 groupshared int samples[N][N][N];		// Store the samples of the source texture.
 
-void Filter(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
+void FilterSum(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
 
 	// Sample everything and store in group shared memory
 
@@ -60,20 +59,62 @@ void Filter(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
 
 }
 
+void FilterAvg(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
+
+	// Sample everything and store in group shared memory
+
+	samples[group_thread.x][group_thread.y][group_thread.z] = surface[thread + gSrcOffset];
+
+	GroupMemoryBarrierWithGroupSync();
+
+	// Filter (downscale)
+
+	if (group_thread.x % 2 == 0 &&
+		group_thread.y % 2 == 0 &&
+		group_thread.z % 2 == 0) {
+
+		int sh_coefficient_index = thread.x / gSrcStride;
+
+		thread.x %= gSrcStride;
+		
+		int3 dst_offset = gDstOffset + gMIPOffset;
+		
+		dst_offset.x += gDstStride * sh_coefficient_index;
+
+		surface[thread / 2 + dst_offset] = (  samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 0]
+										    + samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 1]
+										    + samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 0]
+										    + samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 1]
+										    + samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 0]
+										    + samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 1]
+										    + samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 0]
+										    + samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 1]) >> 3;
+
+	}
+
+}
+
 [numthreads(N, N, N)]
 void CSMain(uint3 thread_id : SV_DispatchThreadID, uint3 group_thread_id : SV_GroupThreadID) {
 
 	// Red
-	Filter(gSHRed, thread_id, group_thread_id);
+	FilterSum(gSHRed, thread_id, group_thread_id);
 
 	GroupMemoryBarrierWithGroupSync();
 
 	// Green
-	Filter(gSHGreen, thread_id, group_thread_id);
+	FilterSum(gSHGreen, thread_id, group_thread_id);
 
 	GroupMemoryBarrierWithGroupSync();
 
 	// Blue
-	Filter(gSHBlue, thread_id, group_thread_id);
-		
+	FilterSum(gSHBlue, thread_id, group_thread_id);
+	
+	GroupMemoryBarrierWithGroupSync();
+
+	// Opacity
+	FilterAvg(gSHAlpha, thread_id, group_thread_id);
+
+	//GroupMemoryBarrierWithGroupSync();
+
 }

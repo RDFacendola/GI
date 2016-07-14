@@ -6,6 +6,7 @@
 Texture3D<int> gSHRed;				// Unfiltered red spherical harmonics contribution.
 Texture3D<int> gSHGreen;			// Unfiltered green spherical harmonics contribution.
 Texture3D<int> gSHBlue;				// Unfiltered blue spherical harmonics contribution.
+Texture3D<int> gSHAlpha;			// Bitmask containing anisotropic voxel opacity
 
 RWTexture3D<float4> gSH;			// Filtered chromatic spherical harmonics contribution.
 
@@ -21,9 +22,9 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	float4 color = ToFloatSH(int4(gSHRed[dispatch_thread_id],
 								  gSHGreen[dispatch_thread_id],
 								  gSHBlue[dispatch_thread_id],
-								  0));
+								  0.0f));
 
-	color.a = 1.0f;
+	color.a = gSHAlpha[dispatch_thread_id] / 1000.0f;
 
 	gSH[dispatch_thread_id] = color;
 	

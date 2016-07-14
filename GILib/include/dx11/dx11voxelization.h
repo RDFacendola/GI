@@ -51,6 +51,8 @@ namespace gi_lib {
 
 			static const Tag kBlueSHTag;				///< \brief Tag associated to the blue spherical harmonics contribution for each voxel.
 
+			static const Tag kAlphaSHTag;				///< \brief Tag associated to the anisotropic opacity of the voxel.
+
 			static const Tag kSHTag;					///< \brief Tag associated to the chromatic spherical harmonics contribution for each voxel.
 
 			static const Tag kSHSampleTag;				///< \brief Tag associated to the sampler used to sample the SH data structure.
@@ -90,6 +92,9 @@ namespace gi_lib {
 
 			/// \brief Get the 3D texture containing the red spherical harmonics contribution.
 			ObjectPtr<IGPTexture3D> GetBlueSHContribution() const;
+
+			/// \brief Get the 3D texture containing the anisotropic opacity of each voxel encoded as a bitmask.
+			ObjectPtr<IGPTexture3D> GetAlphaSHContribution() const;
 
 			/// \brief Get the 3D clipmap containing the unfiltered spherical harmonics coefficients for each voxel.
 			ObjectPtr<IGPTexture3D> GetSH() const;
@@ -150,6 +155,8 @@ namespace gi_lib {
 
 			ObjectPtr<IGPTexture3D> blue_sh_contribution_;						///< \brief Blue spherical harmonics contribution. Used during light injection and filtering.
 			
+			ObjectPtr<IGPTexture3D> alpha_sh_contribution_;						///< \brief Bitmask containing the anisotropic opacity of the voxel. Using during voxelization and filtering.
+
 			ObjectPtr<IGPTexture3D> sh_contribution_;							///< \brief Chromatic spherical harmonics contribution. Used during indirect light accumulation.
 
 			ObjectPtr<DX11Sampler> sh_sampler_;									///<\ brief Sampler used to sample the spherical harmonics.
@@ -189,6 +196,13 @@ namespace gi_lib {
 		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetBlueSHContribution() const {
 
 			return blue_sh_contribution_;
+
+		}
+
+
+		inline ObjectPtr<IGPTexture3D> DX11Voxelization::GetAlphaSHContribution() const {
+
+			return alpha_sh_contribution_;
 
 		}
 

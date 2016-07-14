@@ -11,6 +11,7 @@
 RWTexture3D<int> gSHRed;				// Unfiltered red spherical harmonics contributions.
 RWTexture3D<int> gSHGreen;				// Unfiltered green spherical harmonics contributions.
 RWTexture3D<int> gSHBlue;				// Unfiltered blue spherical harmonics contributions.
+RWTexture3D<int> gSHAlpha;				// Bitmask containing anisotropic voxel opacity.
 
 Texture3D<float4> gSH;					// Filtered chromatic spherical harmonics contribution.
 
@@ -184,6 +185,8 @@ void Voxelize(RWStructuredBuffer<uint> voxel_address_table, uint3 voxel_coordina
 	// WORKAROUND (***) - Fill with the actual address!
 
 	voxel_address_table[linear_address] = 42;
+
+	gSHAlpha[voxel_coordinates + int3(0, 1 - cascade, 0) * gVoxelResolution] = 3.55f * 1000.0f;	//sqrt(1/4pi)^-1
 
 }
 
@@ -392,6 +395,8 @@ float4 SampleVoxelColor(float3 position_ws, float3 direction, float radius) {
 
 	}
 
+	color.a = saturate(abs(color.a));
+
 	return max(0, color.rgba);
 
 }
@@ -402,9 +407,13 @@ float4 SampleCone(float3 origin, float3 direction, float angle, int steps) {
 	float radius;
 	
 	float ray_offset = gVoxelSize / (1 << gCascades);
-	float4 color = 0;
 	float3 position = origin;
 
+	float4 cumulative_color = 0;
+	float cumulative_alpha = 1.0f;
+
+	float4 color;
+	
 	// Ray marching
 
 	[flatten]
@@ -415,15 +424,21 @@ float4 SampleCone(float3 origin, float3 direction, float angle, int steps) {
 
 		position = origin + (ray_offset + radius) * direction;
 
-		color += SampleVoxelColor(position, 
-								  -direction, 
-								  radius) /* * attenuation*/;
+		color = SampleVoxelColor(position,
+								 -direction, 
+								 radius)/* * attenuation*/;
 
+		// Perform cumulative alphablending
+
+		cumulative_color += cumulative_alpha * color * color.a;
+
+		cumulative_alpha *= (1 - color.a);
+		
 		ray_offset += 2 * radius;
 
 	}
 
-	return color;
+	return cumulative_color;
 
 }
 

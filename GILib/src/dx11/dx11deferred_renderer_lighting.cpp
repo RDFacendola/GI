@@ -204,6 +204,9 @@ fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ 0.5f, 5 }) {
 	sh_filter_->SetOutput(DX11Voxelization::kBlueSHTag,
 						  voxelization_.GetBlueSHContribution());
 
+	sh_filter_->SetOutput(DX11Voxelization::kAlphaSHTag,
+						  voxelization_.GetAlphaSHContribution());
+	
 	sh_filter_->SetInput("SHFilter",
 						 ObjectPtr<IStructuredBuffer>(cb_sh_filter));
 	
@@ -218,6 +221,9 @@ fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ 0.5f, 5 }) {
 	sh_convert_->SetInput(DX11Voxelization::kBlueSHTag,
 								voxelization_.GetBlueSHContribution()->GetTexture());
 	
+	sh_convert_->SetInput(DX11Voxelization::kAlphaSHTag,
+	 					  voxelization_.GetAlphaSHContribution()->GetTexture());
+
 	sh_convert_->SetOutput(DX11Voxelization::kSHTag,
 						   voxelization_.GetSH());
 	
