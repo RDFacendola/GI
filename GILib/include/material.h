@@ -110,6 +110,13 @@ namespace gi_lib{
 		/// \param keep_initial_count Whether the initial count of the buffer should be kept. This has a meaning only if the structured array is an Append/Consume buffer.
 		/// \return Returns true if the resource was set successfully, returns false otherwise.
 		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array, bool keep_initial_count = true) = 0;
+		
+		/// \brief Set a texture resource as an input/output for the material.
+		/// The GPU has both read and write permissions.
+		/// \param tag Tag of the input/output texture to set.
+		/// \param gp_texture_3D Pointer to the general-purpose 3D texture to bind.
+		/// \return Returns true if the resource was set successfully, returns false otherwise.
+		virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture3D>& gp_texture_3D) = 0;
 
 		/// \brief Create a new copy of this material.
 		/// Use this material to create a new material instance which shares common states with other instances.

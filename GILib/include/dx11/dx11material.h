@@ -75,6 +75,8 @@ namespace gi_lib{
 
 			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPStructuredArray>& gp_structured_array, bool keep_initial_count = true) override;
 
+			virtual bool SetOutput(const Tag& tag, const ObjectPtr<IGPTexture3D>& gp_texture_3D) override;
+
 			virtual ObjectPtr<IMaterial> Instantiate() override;
 
 		protected:
@@ -221,6 +223,13 @@ namespace gi_lib{
 			return shader_composite_->SetUnorderedAccess(tag,
 														 resource_cast(gp_structured_array),
 														 keep_initial_count);
+
+		}
+
+		inline bool DX11Material::SetOutput(const Tag& tag, const ObjectPtr<IGPTexture3D>& gp_texture_3D){
+
+			return shader_composite_->SetUnorderedAccess(tag,
+														 resource_cast(gp_texture_3D));
 
 		}
 		
