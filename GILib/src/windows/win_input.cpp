@@ -9,48 +9,48 @@ using namespace gi_lib::windows;
 
 namespace{
 
-	/// \brief To use along with the RegisterRawInputDevices function.
-	const unsigned short kHIDUsagePageGeneric = 0x01;
+    /// \brief To use along with the RegisterRawInputDevices function.
+    const unsigned short kHIDUsagePageGeneric = 0x01;
 
-	/// \brief Identifies a mouse. To use along with the RegisterRawInputDevices function.
-	const unsigned short kHIDUsageMouse = 0x02;
+    /// \brief Identifies a mouse. To use along with the RegisterRawInputDevices function.
+    const unsigned short kHIDUsageMouse = 0x02;
 
-	/// \brief Identifies a keyboard. To use along with the RegisterRawInputDevices function.
-	const unsigned short kHIDUsageKeyboard = 0x06;
+    /// \brief Identifies a keyboard. To use along with the RegisterRawInputDevices function.
+    const unsigned short kHIDUsageKeyboard = 0x06;
 
-	/// \brief Get the current input data size.
-	/// The method query for the size of the current input packet.
-	/// \return Return the current input data size in bytes.
-	unsigned int GetInputDataSize(LPARAM lparameter){
+    /// \brief Get the current input data size.
+    /// The method query for the size of the current input packet.
+    /// \return Return the current input data size in bytes.
+    unsigned int GetInputDataSize(LPARAM lparameter){
 
-		unsigned int input_data_size;
-		
-		GetRawInputData(reinterpret_cast<HRAWINPUT>(lparameter), 
-						RID_INPUT, 
-						nullptr, 
-						&input_data_size,
-						sizeof(RAWINPUTHEADER));
+        unsigned int input_data_size;
+        
+        GetRawInputData(reinterpret_cast<HRAWINPUT>(lparameter), 
+                        RID_INPUT, 
+                        nullptr, 
+                        &input_data_size,
+                        sizeof(RAWINPUTHEADER));
 
-		return input_data_size;
+        return input_data_size;
 
-	}
+    }
 
-	/// \brief Read the current input data.
-	/// \param buffer Buffer containing the raw input data. Output parameter.
-	/// \return Returns true if data were read, returns false otherwise.
-	bool ReadInputData(LPARAM lparameter, vector<char>& buffer){
+    /// \brief Read the current input data.
+    /// \param buffer Buffer containing the raw input data. Output parameter.
+    /// \return Returns true if data were read, returns false otherwise.
+    bool ReadInputData(LPARAM lparameter, vector<char>& buffer){
 
-		auto size = GetInputDataSize(lparameter);
+        auto size = GetInputDataSize(lparameter);
 
-		buffer.resize(size);
+        buffer.resize(size);
 
-		return GetRawInputData(reinterpret_cast<HRAWINPUT>(lparameter),
-							   RID_INPUT,
-							   &buffer[0],
-							   &size,
-							   sizeof(RAWINPUTHEADER)) == size;
+        return GetRawInputData(reinterpret_cast<HRAWINPUT>(lparameter),
+                               RID_INPUT,
+                               &buffer[0],
+                               &size,
+                               sizeof(RAWINPUTHEADER)) == size;
 
-	}
+    }
 
 }
 
@@ -58,40 +58,40 @@ namespace{
 
 bool Input::ReceiveMessage(unsigned int message_id, WPARAM, LPARAM lparameter, LRESULT& result){
 
-	if (message_id == WM_INPUT){
+    if (message_id == WM_INPUT){
 
-		std::vector<char> input_buffer;
-		
-		if (ReadInputData(lparameter, input_buffer)){
+        std::vector<char> input_buffer;
+        
+        if (ReadInputData(lparameter, input_buffer)){
 
-			// Find the correct type input and dispatch to the proper peripheral.
+            // Find the correct type input and dispatch to the proper peripheral.
 
-			RAWINPUT& raw_input = *reinterpret_cast<RAWINPUT*>(&input_buffer[0]);
+            RAWINPUT& raw_input = *reinterpret_cast<RAWINPUT*>(&input_buffer[0]);
 
-			if (raw_input.header.dwType == RIM_TYPEMOUSE){
+            if (raw_input.header.dwType == RIM_TYPEMOUSE){
 
-				mouse_.UpdateStatus(raw_input.data.mouse);
+                mouse_.UpdateStatus(raw_input.data.mouse);
 
-				result = 0;
+                result = 0;
 
-				return true;
+                return true;
 
-			}
-			else if (raw_input.header.dwType == RIM_TYPEKEYBOARD){
+            }
+            else if (raw_input.header.dwType == RIM_TYPEKEYBOARD){
 
-				keyboard_.UpdateStatus(raw_input.data.keyboard);
+                keyboard_.UpdateStatus(raw_input.data.keyboard);
 
-				result = 0;
+                result = 0;
 
-				return true;
+                return true;
 
-			}
+            }
 
-		}
-			
-	}
+        }
+            
+    }
 
-	return false;
+    return false;
 
 }
 
@@ -99,149 +99,153 @@ bool Input::ReceiveMessage(unsigned int message_id, WPARAM, LPARAM lparameter, L
 
 Mouse::Mouse(){
 
-	//Mouse registration
+    //Mouse registration
 
-	RAWINPUTDEVICE input_device[1];
+    RAWINPUTDEVICE input_device[1];
 
-	input_device[0].usUsagePage = ::kHIDUsagePageGeneric;
-	input_device[0].usUsage = ::kHIDUsageMouse;
-	input_device[0].dwFlags = 0;
-	input_device[0].hwndTarget = 0;
+    input_device[0].usUsagePage = ::kHIDUsagePageGeneric;
+    input_device[0].usUsage = ::kHIDUsageMouse;
+    input_device[0].dwFlags = 0;
+    input_device[0].hwndTarget = 0;
 
-	if (!RegisterRawInputDevices(input_device, 
-								 1, 
-								 sizeof(input_device[0]))){
+    if (!RegisterRawInputDevices(input_device, 
+                                 1, 
+                                 sizeof(input_device[0]))){
 
-		THROW(L"Unable to register the mouse handler");
+        THROW(L"Unable to register the mouse handler");
 
-	}
+    }
 
 }
 
 void Mouse::UpdateStatus(const RAWMOUSE& mouse_status){
 
-	// Buttons 
+    // Buttons 
 
-	static unsigned short down_flags[] = { RI_MOUSE_BUTTON_1_DOWN, RI_MOUSE_BUTTON_2_DOWN, RI_MOUSE_BUTTON_3_DOWN, RI_MOUSE_BUTTON_4_DOWN, RI_MOUSE_BUTTON_5_DOWN };
-	static unsigned short up_flags[] = { RI_MOUSE_BUTTON_1_UP, RI_MOUSE_BUTTON_2_UP, RI_MOUSE_BUTTON_3_UP, RI_MOUSE_BUTTON_4_UP, RI_MOUSE_BUTTON_5_UP };
+    ButtonCode button_code;
 
-	for (unsigned short button_index = 0; button_index < sizeof(down_flags) / sizeof(unsigned short); ++button_index){
+    static unsigned short down_flags[] = { RI_MOUSE_BUTTON_1_DOWN, RI_MOUSE_BUTTON_2_DOWN, RI_MOUSE_BUTTON_3_DOWN, RI_MOUSE_BUTTON_4_DOWN, RI_MOUSE_BUTTON_5_DOWN };
+    static unsigned short up_flags[] = { RI_MOUSE_BUTTON_1_UP, RI_MOUSE_BUTTON_2_UP, RI_MOUSE_BUTTON_3_UP, RI_MOUSE_BUTTON_4_UP, RI_MOUSE_BUTTON_5_UP };
 
-		if (mouse_status.usButtonFlags & down_flags[button_index]){
+    for (unsigned short button_index = 0; button_index < sizeof(down_flags) / sizeof(unsigned short); ++button_index){
 
-			down_buttons_.insert(button_index);
+        button_code = static_cast<ButtonCode>(button_index);
 
-			pressed_buttons_.insert(button_index);
+        if (mouse_status.usButtonFlags & down_flags[button_index]){
 
-		}
-		
-		if (mouse_status.usButtonFlags & up_flags[button_index]){
+            down_buttons_.insert(button_code);
 
-			down_buttons_.erase(button_index);
+            pressed_buttons_.insert(button_code);
 
-			released_buttons_.insert(button_index);
+        }
+        
+        if (mouse_status.usButtonFlags & up_flags[button_index]){
 
-		}
-		
-	}
+            down_buttons_.erase(button_code);
 
-	// Wheel
+            released_buttons_.insert(button_code);
 
-	if (mouse_status.usButtonFlags & RI_MOUSE_WHEEL){
+        }
+        
+    }
+
+    // Wheel
+
+    if (mouse_status.usButtonFlags & RI_MOUSE_WHEEL){
 
 
-		wheel_delta_ += reinterpret_cast<const short&>(mouse_status.usButtonData);
+        wheel_delta_ += reinterpret_cast<const short&>(mouse_status.usButtonData);
 
-	}
+    }
 
-	// Cursor movement
+    // Cursor movement
 
-	if (!(mouse_status.usFlags & MOUSE_MOVE_ABSOLUTE)){
+    if (!(mouse_status.usFlags & MOUSE_MOVE_ABSOLUTE)){
 
-		movement_ += Vector2i(mouse_status.lLastX,
-							  mouse_status.lLastY);
+        movement_ += Vector2i(mouse_status.lLastX,
+                              mouse_status.lLastY);
 
-	}
-	
-	// Cursor position
+    }
+    
+    // Cursor position
 
-	POINT position;
+    POINT position;
 
-	if (GetCursorPos(&position)){
+    if (GetCursorPos(&position)){
 
-		position_ = Vector2i(position.x,
-							 position.y);
+        position_ = Vector2i(position.x,
+                             position.y);
 
-	}
+    }
 
 }
 
 void Mouse::Flush(){
 
-	// Pressed and released button states are temporary.
+    // Pressed and released button states are temporary.
 
-	released_buttons_.clear();
-	pressed_buttons_.clear();
+    released_buttons_.clear();
+    pressed_buttons_.clear();
 
-	// Zero-out every delta
+    // Zero-out every delta
 
-	wheel_delta_ = 0.0f;
-	movement_ = Vector2i::Zero();
-	
+    wheel_delta_ = 0.0f;
+    movement_ = Vector2i::Zero();
+    
 }
 
 /////////////////////////// KEYBOARD //////////////////////////////
 
 Keyboard::Keyboard(){
 
-	// Keyboard registration
+    // Keyboard registration
 
-	RAWINPUTDEVICE input_device[1];
+    RAWINPUTDEVICE input_device[1];
 
-	input_device[0].usUsagePage = ::kHIDUsagePageGeneric;
-	input_device[0].usUsage = ::kHIDUsageKeyboard;
-	input_device[0].dwFlags = 0;
-	input_device[0].hwndTarget = 0;
+    input_device[0].usUsagePage = ::kHIDUsagePageGeneric;
+    input_device[0].usUsage = ::kHIDUsageKeyboard;
+    input_device[0].dwFlags = 0;
+    input_device[0].hwndTarget = 0;
 
-	if (!RegisterRawInputDevices(input_device, 
-								 1, 
-								 sizeof(input_device[0]))){
+    if (!RegisterRawInputDevices(input_device, 
+                                 1, 
+                                 sizeof(input_device[0]))){
 
-		THROW(L"Unable to register the keyboard handler");
+        THROW(L"Unable to register the keyboard handler");
 
-	}
+    }
 
 }
 
 void Keyboard::UpdateStatus(const RAWKEYBOARD& keyboard_status){
 
-	auto key_code = keyboard_status.MakeCode;
+    KeyCode key_code = static_cast<KeyCode>(keyboard_status.MakeCode);
 
-	if (keyboard_status.Flags & RI_KEY_BREAK){
+    if (keyboard_status.Flags & RI_KEY_BREAK){
 
-		// The key was released
-		down_keys_.erase(key_code);
+        // The key was released
+        down_keys_.erase(key_code);
 
-		released_keys_.insert(key_code);
+        released_keys_.insert(key_code);
 
-	}
-	else{
+    }
+    else{
 
-		// The key was pressed
-		down_keys_.insert(key_code);
+        // The key was pressed
+        down_keys_.insert(key_code);
 
-		pressed_keys_.insert(key_code);
+        pressed_keys_.insert(key_code);
 
-	}
-	
+    }
+    
 }
 
 void Keyboard::Flush(){
 
-	// Pressed and released key states are temporary.
+    // Pressed and released key states are temporary.
 
-	released_keys_.clear();
-	pressed_keys_.clear();
+    released_keys_.clear();
+    pressed_keys_.clear();
 
 }
 

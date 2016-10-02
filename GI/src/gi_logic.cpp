@@ -262,7 +262,7 @@ void GILogic::Update(const Time & time){
 	
 	// "P": toggle pause
 
-	if (input_->GetKeyboardStatus().IsPressed(25)){		
+	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_P)){		
 
 		paused_ = !paused_;
 
@@ -270,7 +270,7 @@ void GILogic::Update(const Time & time){
 
 	// "F": toggle post processing
 
-	if (input_->GetKeyboardStatus().IsPressed(33)) {
+	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_F)) {
 
 		enable_postprocess_ = !enable_postprocess_;
 
@@ -278,7 +278,7 @@ void GILogic::Update(const Time & time){
 
 	// "I": toggle GI
 
-	if (input_->GetKeyboardStatus().IsPressed(23)) {
+	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_I)) {
 
 		enable_global_illumination_ = !enable_global_illumination_;
 
@@ -288,7 +288,7 @@ void GILogic::Update(const Time & time){
 
 	// "V": toggle debug voxel drawing
 
-	if (input_->GetKeyboardStatus().IsPressed(47)) {
+	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_V)) {
 
 		enable_voxel_draw_ = !enable_voxel_draw_;
 
@@ -296,7 +296,7 @@ void GILogic::Update(const Time & time){
 
 	// "H": toggle debug SH drawing
 
-	if (input_->GetKeyboardStatus().IsPressed(35)) {
+	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_H)) {
 
 		enable_sh_draw_ = !enable_sh_draw_;
 
@@ -304,7 +304,7 @@ void GILogic::Update(const Time & time){
 
 	// "X": toggle xray
 
-	if (input_->GetKeyboardStatus().IsPressed(45)) {
+	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_X)) {
 
 		enable_xray_ = !enable_xray_;
 
@@ -312,7 +312,7 @@ void GILogic::Update(const Time & time){
 
 	// "C": toggle lock camera
 
-	if (input_->GetKeyboardStatus().IsPressed(46)) {
+	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_L)) {
 
 		lock_camera_ = !lock_camera_;
 		
