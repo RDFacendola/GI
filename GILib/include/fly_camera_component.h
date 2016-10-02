@@ -10,41 +10,45 @@
 
 namespace gi_lib{
 
-	class TransformComponent;
+    class TransformComponent;
 
-	/// \brief Component used to move an aerial camera.
-	/// \author Raffaele D. Facendola
-	class FlyCameraComponent : public Component{
+    /// \brief Component used to move an aerial camera.
+    /// \author Raffaele D. Facendola
+    class FlyCameraComponent : public Component{
 
-	public:
+    public:
 
-		FlyCameraComponent(const IInput& input);
+        FlyCameraComponent(const IInput& input);
 
-		/// \brief No copy constructor.
-		FlyCameraComponent(const FlyCameraComponent&) = delete;
+        /// \brief No copy constructor.
+        FlyCameraComponent(const FlyCameraComponent&) = delete;
 
-		/// \brief Destructor.
-		virtual ~FlyCameraComponent();
+        /// \brief Destructor.
+        virtual ~FlyCameraComponent();
 
-		/// \brief Update the component.
-		/// \param time Application time.
-		void Update(const Time& time);
+        /// \brief Update the component.
+        /// \param time Application time.
+        void Update(const Time& time);
 
-		virtual TypeSet GetTypes() const override;
+        virtual TypeSet GetTypes() const override;
 
-	protected:
+    protected:
 
-		virtual void Initialize() override;
+        virtual void Initialize() override;
 
-		virtual void Finalize() override;
+        virtual void Finalize() override;
 
-	private:
+    private:
 
-		const IInput& input_;						///< \brief Input reader.
+        const IInput& input_;						///< \brief Input reader.
 
-		TransformComponent* camera_transform_;		///< \brief Transform component associated to the camera.
+        TransformComponent* camera_transform_;		///< \brief Transform component associated to the camera.
 
-	};
+        Vector3f speed_;                            ///< \brief Current camera speed.
+
+        Vector2f rotation_speed_;					///< \brief Current angular speed.
+
+    };
 
 
 }

@@ -175,6 +175,10 @@ namespace gi_lib{
 		/// \remarks If the normal vector is not normalized the result is undefined.
 		static Vector4f MakePlane(const Vector3f& normal, const Vector3f& point);
 
+        /// \brief Interpolates towards a target value in a given amount of time.
+		template <typename T>
+        static T InterpolateTo(const T& current, const T& target, float delta_time, float speed);
+
 	};
 
 	//////////////////////////////// MATH ////////////////////////
@@ -248,6 +252,17 @@ namespace gi_lib{
 						normal(1),
 						normal(2),
 						-normal.dot(point));
+
+	}
+
+	template <typename T>
+	T Math::InterpolateTo(const T& current, const T& target, float delta_time, float speed) {
+
+		float alpha = delta_time * speed;
+
+		alpha = std::min(std::max(alpha, 0.0f), 1.0f);
+
+		return current * (1 - alpha) + target * alpha;
 
 	}
 

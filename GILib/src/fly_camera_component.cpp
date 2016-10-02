@@ -52,58 +52,57 @@ namespace{
 
         }
 
+        if (direction.squaredNorm() > 0) {
+
+            direction.normalize();
+
+        }
+
         return direction;
 
     }
 
 }
 
-FlyCameraComponent::FlyCameraComponent(const IInput& input) :
-input_(input){}
+FlyCameraComponent::FlyCameraComponent(const IInput& input)
+    : input_(input)
+    , speed_(Vector3f::Zero())
+    , rotation_speed_(Vector2f::Zero()){}
 
 FlyCameraComponent::~FlyCameraComponent(){}
 
 void FlyCameraComponent::Update(const Time& time){
 
     // Camera strafe
+    
+    auto delta_time = time.GetDeltaSeconds();
 
-    auto strafe_direction = GetStrafeDirection(input_.GetKeyboardStatus(),
-                                               *camera_transform_);
+    Vector3f target_speed = GetStrafeDirection(input_.GetKeyboardStatus(),
+                                               *camera_transform_) * 750.0f;
 
-    if (strafe_direction.squaredNorm() > 0){
+    speed_ = Math::InterpolateTo(speed_, target_speed, delta_time, 5.0f);
 
-        strafe_direction.normalize();
+    Vector3f translation = camera_transform_->GetTranslation().vector() + speed_ * delta_time;
 
-        Vector3f translation = camera_transform_->GetTranslation().vector();
-
-        translation += strafe_direction * time.GetDeltaSeconds() * 500.0f;
-
-        camera_transform_->SetTranslation(Translation3f(translation));
-
-    }
+    camera_transform_->SetTranslation(Translation3f(translation));
 
     // Camera rotation
 
     auto& mb = input_.GetMouseStatus();
 
-    if (mb.IsDown(ButtonCode::RIGHT_BUTTON)){
+    Vector2i movement = mb.IsDown(ButtonCode::RIGHT_BUTTON) ? mb.GetMovement() : Vector2i::Zero();
 
-        auto movement = mb.GetMovement();
+    rotation_speed_ = Math::InterpolateTo(rotation_speed_, Vector2f(movement(0), movement(1)), delta_time, 25.0f);
 
-        auto speed = Vector2f(movement(0) * time.GetDeltaSeconds(),
-                              movement(1) * time.GetDeltaSeconds());
+    auto up = Vector3f(0.0f, 1.0f, 0.0f);
 
-        auto up = Vector3f(0.0f, 1.0f, 0.0f);
+    auto right = camera_transform_->GetRight();
 
-        auto right = camera_transform_->GetRight();
+    auto vrotation = Quaternionf(AngleAxisf(rotation_speed_(1) * delta_time, right));
 
-        auto vrotation = Quaternionf(AngleAxisf(speed(1), right));
+    auto hrotation = Quaternionf(AngleAxisf(rotation_speed_(0) * delta_time * 3.14159f, up));
 
-        auto hrotation = Quaternionf(AngleAxisf(speed(0) * 3.14159f, up));
-
-        camera_transform_->SetRotation(hrotation * vrotation * camera_transform_->GetRotation());
-
-    }
+    camera_transform_->SetRotation(hrotation * vrotation * camera_transform_->GetRotation());
 
 }
 
