@@ -276,7 +276,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(SolutionDir)externallibs\stack_walker\include;$(SolutionDir)externallibs\DirectXTK\Inc;$(SolutionDir)externallibs\DirectXTex\DirectXTex;$(SolutionDir)externallibs\FBX SDK\2015.1\include;$(SolutionDir)externallibs\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <OpenMPSupport>true</OpenMPSupport>
       <MinimalRebuild>true</MinimalRebuild>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>

@@ -27,7 +27,7 @@ struct VSOut {
 };
 
 VSOut VSMain(VSIn input){
-
+  
 	VoxelInfo voxel_info = gVoxelAppendBuffer[input.instance_id];
 	
 	VSOut output;
@@ -36,7 +36,8 @@ VSOut VSMain(VSIn input){
 									normalize(input.position.xyz),
 									voxel_info.size * 0.5f);
 
-	output.color = color;
+	output.color = color.a;
+	//output.color.a = 1.0f;
 
 	// The debug draw is applied after the tonemap so we have to manually tonemap the result. (Reinhard's)
 
@@ -46,7 +47,8 @@ VSOut VSMain(VSIn input){
 
 	// Deformation of the SH mesh
 
-	float magnitude = (max(output.color.r, max(output.color.g, output.color.b)) + min(output.color.r, min(output.color.g, output.color.b))) * 0.5f;
+	//float magnitude = (max(output.color.r, max(output.color.g, output.color.b)) + min(output.color.r, min(output.color.g, output.color.b))) * 0.5f;
+	float magnitude = color.a * 0.3f;
 	
 	float3 position = (input.position.xyz * voxel_info.size * magnitude) + voxel_info.center;
 	
@@ -60,6 +62,6 @@ VSOut VSMain(VSIn input){
 
 float4 PSMain(VSOut input) : SV_Target0{
 
-	return input.color;
+	return float4(input.color.rgb, 1.0f);
 
 }

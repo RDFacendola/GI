@@ -1,3 +1,4 @@
+
 #include "dx11/dx11deferred_renderer.h"
 
 #include "gimath.h"
@@ -149,7 +150,7 @@ lock_camera_(false){
 	
 	// Voxel setup
 
-	voxelization_ = std::make_unique<DX11Voxelization>(*this, 800.f, 32, 2);
+	voxelization_ = std::make_unique<DX11Voxelization>(*this, 200.f, 64, 0);
 
 	// Lighting setup
 

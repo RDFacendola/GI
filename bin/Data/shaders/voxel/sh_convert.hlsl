@@ -24,7 +24,7 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 								  gSHBlue[dispatch_thread_id],
 								  0.0f));
 
-	color.a = gSHAlpha[dispatch_thread_id] / 1000.0f;
+	color.a = gSHAlpha[dispatch_thread_id] / 1024.0f;
 
 	gSH[dispatch_thread_id] = color;
 	

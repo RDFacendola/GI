@@ -160,6 +160,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)GI\include;$(SolutionDir)GILib\include;$(SolutionDir)externallibs\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

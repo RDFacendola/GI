@@ -11,110 +11,157 @@
 
 cbuffer SHFilter {
 
-	int3 gSrcOffset;					// Offset of the surface used as source of the filtering.
-	int gSrcStride;						// Horizontal stride for each source SH band coefficient.
+    int3 gSrcOffset;					// Offset of the surface used as source of the filtering.
+    int gSrcStride;						// Horizontal stride for each source SH band coefficient.
 
-	int3 gDstOffset;					// Offset of the surface used as destination of the filtering.	
-	int gDstStride;						// Horizontal stride for each destination SH band coefficient.
+    int3 gDstOffset;					// Offset of the surface used as destination of the filtering.	
+    int gDstStride;						// Horizontal stride for each destination SH band coefficient.
 
-	int3 gMIPOffset;					// Offset to apply within a single filtered MIP.
-	int padding;						
-		
+    int3 gMIPOffset;					// Offset to apply within a single filtered MIP.
+    int padding;						
+        
 };
 
 groupshared int samples[N][N][N];		// Store the samples of the source texture.
 
 void FilterSum(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
 
-	// Sample everything and store in group shared memory
+    // Sample everything and store in group shared memory
 
-	samples[group_thread.x][group_thread.y][group_thread.z] = surface[thread + gSrcOffset];
+    samples[group_thread.x][group_thread.y][group_thread.z] = surface[thread + gSrcOffset];
 
-	GroupMemoryBarrierWithGroupSync();
+    GroupMemoryBarrierWithGroupSync();
 
-	// Filter (downscale)
+    // Filter (downscale)
 
-	if (group_thread.x % 2 == 0 &&
-		group_thread.y % 2 == 0 &&
-		group_thread.z % 2 == 0) {
+    if (group_thread.x % 2 == 0 &&
+        group_thread.y % 2 == 0 &&
+        group_thread.z % 2 == 0) {
 
-		int sh_coefficient_index = thread.x / gSrcStride;
+        int sh_coefficient_index = thread.x / gSrcStride;
 
-		thread.x %= gSrcStride;
-		
-		int3 dst_offset = gDstOffset + gMIPOffset;
-		
-		dst_offset.x += gDstStride * sh_coefficient_index;
+        thread.x %= gSrcStride;
+        
+        int3 dst_offset = gDstOffset + gMIPOffset;
+        
+        dst_offset.x += gDstStride * sh_coefficient_index;
 
-		surface[thread / 2 + dst_offset] =   samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 0]
-										   + samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 1]
-										   + samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 0]
-										   + samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 1]
-										   + samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 0]
-										   + samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 1]
-										   + samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 0]
-										   + samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 1];
+        surface[thread / 2 + dst_offset] =   samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 0]
+                                           + samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 1]
+                                           + samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 0]
+                                           + samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 1]
+                                           + samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 0]
+                                           + samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 1]
+                                           + samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 0]
+                                           + samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 1];
 
-	}
+    }
 
 }
 
-void FilterAvg(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
+/// \brief Performs alpha multiplication, considering that the opacity is stored in 1024th.
+int AlphaMul(int a, int b) {
 
-	// Sample everything and store in group shared memory
+    return (a * b) >> 10;
 
-	samples[group_thread.x][group_thread.y][group_thread.z] = surface[thread + gSrcOffset];
+}
 
-	GroupMemoryBarrierWithGroupSync();
+void FilterOpacity(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
 
-	// Filter (downscale)
+    // Sample everything and store in group shared memory
 
-	if (group_thread.x % 2 == 0 &&
-		group_thread.y % 2 == 0 &&
-		group_thread.z % 2 == 0) {
+    samples[group_thread.x][group_thread.y][group_thread.z] = surface[thread + gSrcOffset];
 
-		int sh_coefficient_index = thread.x / gSrcStride;
+    GroupMemoryBarrierWithGroupSync();
 
-		thread.x %= gSrcStride;
-		
-		int3 dst_offset = gDstOffset + gMIPOffset;
-		
-		dst_offset.x += gDstStride * sh_coefficient_index;
+    // Filter (downscale)
 
-		surface[thread / 2 + dst_offset] = (  samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 0]
-										    + samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 1]
-										    + samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 0]
-										    + samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 1]
-										    + samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 0]
-										    + samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 1]
-										    + samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 0]
-										    + samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 1]) >> 3;
+    if (group_thread.x % 2 == 0 &&
+        group_thread.y % 2 == 0 &&
+        group_thread.z % 2 == 0) {
 
-	}
+        int sh_coefficient_index = thread.x / gSrcStride;
+
+        thread.x %= gSrcStride;
+        
+        int3 dst_offset = gDstOffset + gMIPOffset;
+        
+        dst_offset.x += gDstStride * sh_coefficient_index;
+
+        if (thread.x < gVoxelResolution * 1) {
+
+            // Isotropic opacity
+
+            surface[thread / 2 + dst_offset] = 0;	// Unused
+
+        }
+        else if (thread.x < gVoxelResolution * 2) {
+
+            // Opacity along X
+            surface[thread / 2 + dst_offset] = (   AlphaMul( samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 0],
+                                                             samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 0] )
+                                                 + AlphaMul( samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 1],
+                                                             samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 1] )
+                                                 + AlphaMul( samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 0],
+                                                             samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 0] )
+                                                 + AlphaMul( samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 1],
+                                                             samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 1] ) ) >> 2;
+
+        }
+        else if (thread.x < gVoxelResolution * 3) {
+
+            // Opacity along Y
+
+            surface[thread / 2 + dst_offset] = (   AlphaMul( samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 0],
+                                                             samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 0] )
+                                                 + AlphaMul( samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 1],
+                                                             samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 1] )
+                                                 + AlphaMul( samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 0],
+                                                             samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 0] )
+                                                 + AlphaMul( samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 1],
+                                                             samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 1] ) ) >> 2;
+
+        }
+        else {
+
+            // Opacity along Z
+
+            surface[thread / 2 + dst_offset] = (   AlphaMul( samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 0],
+                                                             samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 1] )
+                                                 + AlphaMul( samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 0],
+                                                             samples[group_thread.x + 0][group_thread.y + 1][group_thread.z + 1] )
+                                                 + AlphaMul( samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 0],
+                                                             samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 1] )
+                                                 + AlphaMul( samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 0],
+                                                             samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 1] ) ) >> 2;
+
+        }
+
+    }
 
 }
 
 [numthreads(N, N, N)]
 void CSMain(uint3 thread_id : SV_DispatchThreadID, uint3 group_thread_id : SV_GroupThreadID) {
 
-	// Red
-	FilterSum(gSHRed, thread_id, group_thread_id);
+    // Red
+    FilterSum(gSHRed, thread_id, group_thread_id);
 
-	GroupMemoryBarrierWithGroupSync();
+    GroupMemoryBarrierWithGroupSync();
 
-	// Green
-	FilterSum(gSHGreen, thread_id, group_thread_id);
+    // Green
+    FilterSum(gSHGreen, thread_id, group_thread_id);
 
-	GroupMemoryBarrierWithGroupSync();
+    GroupMemoryBarrierWithGroupSync();
 
-	// Blue
-	FilterSum(gSHBlue, thread_id, group_thread_id);
-	
-	GroupMemoryBarrierWithGroupSync();
+    // Blue
+    FilterSum(gSHBlue, thread_id, group_thread_id);
+    
+    GroupMemoryBarrierWithGroupSync();
 
-	// Opacity
-	FilterAvg(gSHAlpha, thread_id, group_thread_id);
+    // Opacity
+    FilterOpacity(gSHAlpha, thread_id, group_thread_id);
 
-	//GroupMemoryBarrierWithGroupSync();
+    //GroupMemoryBarrierWithGroupSync();
 
 }
