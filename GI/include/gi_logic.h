@@ -64,8 +64,6 @@ namespace gi{
 
 		bool enable_sh_draw_;					///< \brief Whether to draw spherical harmonics or not.
 
-		bool enable_xray_;						///< \brief Whether to enable x-ray for debug draw.
-
 		bool lock_camera_;						///< \brief Whether the camera is locked or not.
 
 	};

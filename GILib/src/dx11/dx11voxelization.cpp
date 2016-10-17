@@ -91,9 +91,9 @@ public:
 	/// \brief Invalidate the current debug infos.
 	void Invalidate();
 
-	ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool xray);
+	ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection);
 
-	ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool xray);
+	ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection);
 
 private:
 
@@ -339,7 +339,7 @@ void DX11Voxelization::DebugDrawer::Refresh(const Matrix4f& view_projection) {
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool xray) {
+ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection) {
 
 	Refresh(view_projection);
 
@@ -369,11 +369,9 @@ ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<
 	
 	voxel_output_->ClearDepth(device_context);
 
-	if (!xray) {
-	
-		DrawVoxelDepth(voxel_prepass_state_);
+	// ZPrepass
 
-	}
+	DrawVoxelDepth(voxel_prepass_state_);
 
 	// Draw - Draw the actual voxels
 
@@ -402,7 +400,7 @@ ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool xray){
+ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection){
 
 	Refresh(view_projection);
 
@@ -431,12 +429,6 @@ ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawSH(const ObjectPtr<ITex
 	sh_output_->Bind(device_context);
 	
 	sh_output_->ClearDepth(device_context);
-
-	if (!xray) {
-	
-		DrawVoxelDepth(sh_prepass_state_);
-
-	}
 
 	// Draw - Draw the actual spherical harmonics
 
@@ -810,19 +802,17 @@ void DX11Voxelization::Clear() {
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& image, bool xray) {
+ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& image) {
 	
 	return debug_drawer_->DrawVoxels(image,
-									 renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())),
-									 xray);
+									 renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())));
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DrawSH(const ObjectPtr<ITexture2D>& image, bool xray) {
+ObjectPtr<ITexture2D> DX11Voxelization::DrawSH(const ObjectPtr<ITexture2D>& image) {
 	
 	return debug_drawer_->DrawSH(image,
-							     renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())),
-								 xray);
+							     renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())));
 
 }
 
@@ -841,3 +831,4 @@ float DX11Voxelization::GetVoxelSize(int cascade_index) const {
 	return voxel_size_ * std::powf(2.0f, cascade_index);
 	
 }
+

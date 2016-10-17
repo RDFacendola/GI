@@ -102,7 +102,7 @@ void FlyCameraComponent::Update(const Time& time){
 
     auto vrotation = Quaternionf(AngleAxisf(rotation_speed_(1) * delta_time, right));
 
-    auto hrotation = Quaternionf(AngleAxisf(rotation_speed_(0) * delta_time * 3.14159f, up));
+    auto hrotation = Quaternionf(AngleAxisf(rotation_speed_(0) * delta_time, up));
 
     camera_transform_->SetRotation(hrotation * vrotation * camera_transform_->GetRotation());
 

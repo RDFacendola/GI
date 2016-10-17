@@ -76,10 +76,10 @@ namespace gi_lib{
 		virtual void EnableGlobalIllumination(bool enable = true) = 0;
 
 		/// \brief Overlay the voxel structure on top of a given image.
-		virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, bool xray) = 0;
+		virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image) = 0;
 
 		/// \brief Overlay the SH data on top of a given image.
-		virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool xray) = 0;
+		virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image) = 0;
 
 		/// \brief Lock or unlock the camera. Debug method.
 		/// Locking a camera may be useful to analyze the behavior of camera-dependent aspect of the scene, such as frustum culling

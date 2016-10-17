@@ -160,7 +160,6 @@ void GILogic::Initialize(Window& window){
 	enable_postprocess_ = true;
 	enable_voxel_draw_ = false;
 	enable_sh_draw_ = false;
-	enable_xray_ = false;
 	lock_camera_ = false;
 
 }
@@ -302,14 +301,6 @@ void GILogic::Update(const Time & time){
 
 	}
 
-	// "X": toggle xray
-
-	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_X)) {
-
-		enable_xray_ = !enable_xray_;
-
-	}
-
 	// "C": toggle lock camera
 
 	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_L)) {
@@ -394,13 +385,13 @@ void GILogic::Update(const Time & time){
 
 	if (enable_voxel_draw_ && enable_global_illumination_) {
 
-		next_frame = deferred_renderer_->DrawVoxels(next_frame, false);
+		next_frame = deferred_renderer_->DrawVoxels(next_frame);
 
 	}
 	
 	if (enable_sh_draw_ && enable_global_illumination_) {
 
-		next_frame = deferred_renderer_->DrawSH(next_frame, enable_xray_);
+		next_frame = deferred_renderer_->DrawSH(next_frame);
 
 	}
 
