@@ -77,7 +77,7 @@ namespace gi_lib {
 
 			/// \brief Draw the SH data. Debug function.
 			/// \param output Surface the SH will be drawn onto.
-			ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image);
+			ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode);
 
 			/// \brief Get the structure containing the pointers to the actual voxel informations.
 			ObjectPtr<IGPStructuredArray> GetVoxelAddressTable() const;

@@ -79,7 +79,8 @@ namespace gi_lib{
 		virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image) = 0;
 
 		/// \brief Overlay the SH data on top of a given image.
-		virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image) = 0;
+		/// \param alpha_mode Whether to draw voxel's opacity (true) or color (false)
+		virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode) = 0;
 
 		/// \brief Lock or unlock the camera. Debug method.
 		/// Locking a camera may be useful to analyze the behavior of camera-dependent aspect of the scene, such as frustum culling

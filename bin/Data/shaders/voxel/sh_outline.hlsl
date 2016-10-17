@@ -12,6 +12,12 @@ cbuffer PerFrame {
 
 };
 
+cbuffer Arguments {
+
+	int gMode;									// Draw mode. 0: Color, 1: Opacity
+
+};
+
 struct VSIn {
 
 	float3 position : SV_Position;
@@ -36,8 +42,19 @@ VSOut VSMain(VSIn input){
 									normalize(input.position.xyz),
 									voxel_info.size * 0.5f);
 
-	output.color = color.a;
-	//output.color.a = 1.0f;
+	if (gMode == 0){
+
+		// Color mode
+		output.color = color;
+		output.color.a = 1.0f;
+
+	}
+	else{
+
+		// Alpha mode
+		output.color = color.a;
+
+	}
 
 	// The debug draw is applied after the tonemap so we have to manually tonemap the result. (Reinhard's)
 
@@ -47,9 +64,21 @@ VSOut VSMain(VSIn input){
 
 	// Deformation of the SH mesh
 
-	//float magnitude = (max(output.color.r, max(output.color.g, output.color.b)) + min(output.color.r, min(output.color.g, output.color.b))) * 0.5f;
-	float magnitude = color.a * 0.5f;
-	
+	float magnitude;
+
+	if (gMode == 0){
+
+		// Color mode
+		magnitude = (max(output.color.r, max(output.color.g, output.color.b)) + min(output.color.r, min(output.color.g, output.color.b))) * 0.5f;
+
+	}
+	else{
+
+		// Alpha mode
+		magnitude = color.a * 0.5f;
+
+	}
+		
 	float3 position = (input.position.xyz * voxel_info.size * magnitude) + voxel_info.center;
 	
 	output.position_ps = mul(gViewProjection, float4(position, 1));

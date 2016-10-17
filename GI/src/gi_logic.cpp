@@ -159,7 +159,7 @@ void GILogic::Initialize(Window& window){
 	enable_global_illumination_ = true;
 	enable_postprocess_ = true;
 	enable_voxel_draw_ = false;
-	enable_sh_draw_ = false;
+	debug_sh_draw_mode_ = DebugSHDrawMode::kNone;
 	lock_camera_ = false;
 
 }
@@ -293,11 +293,11 @@ void GILogic::Update(const Time & time){
 
 	}
 
-	// "H": toggle debug SH drawing
+	// "H": cycle SH debug drawing mode
 
 	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_H)) {
 
-		enable_sh_draw_ = !enable_sh_draw_;
+		debug_sh_draw_mode_ = static_cast<DebugSHDrawMode>((static_cast<unsigned int>(debug_sh_draw_mode_) + 1) % static_cast<unsigned int>(DebugSHDrawMode::kMax));
 
 	}
 
@@ -389,9 +389,10 @@ void GILogic::Update(const Time & time){
 
 	}
 	
-	if (enable_sh_draw_ && enable_global_illumination_) {
+	if (debug_sh_draw_mode_ != DebugSHDrawMode::kNone) {
 
-		next_frame = deferred_renderer_->DrawSH(next_frame);
+		next_frame = deferred_renderer_->DrawSH(next_frame, 
+												debug_sh_draw_mode_ == DebugSHDrawMode::kAlpha);
 
 	}
 

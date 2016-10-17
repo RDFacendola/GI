@@ -53,7 +53,14 @@ namespace {
 	/// \brief Constant buffer containing the per-frame constants.
 	struct CBFrame{
 
-		Matrix4f view_projection;							///< \brief View-projection matrix.
+		Matrix4f view_projection;					///< \brief View-projection matrix.
+
+	};
+
+	/// \brief Constant buffer containing the per-frame constants.
+	struct CBSHOutline{
+
+		int mode;									///< \brief Draw mode. 0: SH color, 1: SH opacity
 
 	};
 
@@ -86,6 +93,8 @@ public:
 
 	static const Tag kPerFrameTag;					///< \brief Tag associated to the buffer containing the arguments used to draw the voxels.
 
+	static const Tag kArguments;					///< \brief Tag associated to shader-specific arguments.
+
 	DebugDrawer(DX11Voxelization& voxelization);
 
 	/// \brief Invalidate the current debug infos.
@@ -93,7 +102,7 @@ public:
 
 	ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection);
 
-	ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection);
+	ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool alpha_mode);
 
 private:
 
@@ -129,12 +138,14 @@ private:
 
 	ObjectPtr<DX11StructuredBuffer> cb_frame_;							///< \brief Per-frame constant buffer used during voxel draw.
 
+	ObjectPtr<DX11StructuredBuffer> cb_sh_outline_;						///< \brief Per-frame constant buffer used to pass additional arguments to the SH outline shader.
+
 	DX11PipelineState voxel_prepass_state_;								///< \brief Pipeline state for voxel prepass stage.
 
 	DX11PipelineState sh_prepass_state_;								///< \brief Pipeline state for spherical harmonic prepass stage.
 	
 	DX11PipelineState sh_alphablend_state_;								///< \brief Pipeline state for spherical harmonic debug draw.
-
+	
 	// Shader
 
 	ObjectPtr<DX11Material> voxel_depth_only_material_;					///< \brief Used to draw instanced voxels on the depth buffer.
@@ -173,6 +184,7 @@ const Tag DX11Voxelization::DebugDrawer::kVoxelAppendBuffer= "gVoxelAppendBuffer
 const Tag DX11Voxelization::DebugDrawer::kVoxelDrawIndirectArgs = "gVoxelIndirectArguments";
 const Tag DX11Voxelization::DebugDrawer::kSHDrawIndirectArgs = "gSHIndirectArguments";
 const Tag DX11Voxelization::DebugDrawer::kPerFrameTag = "PerFrame";
+const Tag DX11Voxelization::DebugDrawer::kArguments = "Arguments";
 
 DX11Voxelization::DebugDrawer::DebugDrawer(DX11Voxelization& voxelization) :
 subject_(voxelization),
@@ -198,6 +210,8 @@ void DX11Voxelization::DebugDrawer::InitResources() {
 
 	cb_frame_ = new DX11StructuredBuffer(sizeof(CBFrame));
 	
+	cb_sh_outline_ = new DX11StructuredBuffer(sizeof(CBSHOutline));
+
 	render_target_cache_ = resources.Load<IRenderTargetCache, IRenderTargetCache::Singleton>({});
 
 	// Pipeline states
@@ -303,6 +317,9 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 	check = sh_outline_material_->SetInput(DX11Voxelization::kVoxelizationTag,
 										   ObjectPtr<IStructuredBuffer>(subject_.cb_voxelization_));
 
+	check = sh_outline_material_->SetInput(DebugDrawer::kArguments,
+										   ObjectPtr<IStructuredBuffer>(cb_sh_outline_));
+
 }
 
 void DX11Voxelization::DebugDrawer::Refresh(const Matrix4f& view_projection) {
@@ -400,7 +417,7 @@ ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection){
+ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool alpha_mode){
 
 	Refresh(view_projection);
 
@@ -420,6 +437,14 @@ ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawSH(const ObjectPtr<ITex
 													true);
 
 	graphics_.PushEvent(L"Spherical harmonics overlay");
+
+	// Arguments
+
+	auto buffer = cb_sh_outline_->Lock<CBSHOutline>();
+
+	buffer->mode = alpha_mode ? 1 : 0;
+
+	cb_sh_outline_->Unlock();
 
 	// Dispatch the draw call of the voxels
 
@@ -809,10 +834,11 @@ ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& 
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DrawSH(const ObjectPtr<ITexture2D>& image) {
+ObjectPtr<ITexture2D> DX11Voxelization::DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode) {
 	
 	return debug_drawer_->DrawSH(image,
-							     renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())));
+							     renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())),
+								 alpha_mode);
 
 }
 

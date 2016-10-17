@@ -17,6 +17,15 @@ namespace gi_lib{
 
 }
 
+enum class DebugSHDrawMode : unsigned int{
+
+	kNone,
+	kColor,
+	kAlpha,
+	kMax = 3,
+
+};
+
 namespace gi{
 
 	///Application's logic
@@ -62,8 +71,8 @@ namespace gi{
 
 		bool enable_voxel_draw_;				///< \brief Whether to draw voxels or not.
 
-		bool enable_sh_draw_;					///< \brief Whether to draw spherical harmonics or not.
-
+		DebugSHDrawMode debug_sh_draw_mode_;	///< \brief Debug spherical harmonics draw mode.
+		
 		bool lock_camera_;						///< \brief Whether the camera is locked or not.
 
 	};

@@ -100,7 +100,7 @@ namespace gi_lib{
 
 			virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image) override;
 
-			virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image) override;
+			virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode) override;
 
 			virtual void LockCamera(bool lock) override;
 
@@ -193,9 +193,9 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<ITexture2D> DX11DeferredRenderer::DrawSH(const ObjectPtr<ITexture2D>& image) {
+		inline ObjectPtr<ITexture2D> DX11DeferredRenderer::DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode) {
 
-			return voxelization_->DrawSH(image);
+			return voxelization_->DrawSH(image, alpha_mode);
 
 		}
 
