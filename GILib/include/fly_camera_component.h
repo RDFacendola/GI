@@ -11,6 +11,7 @@
 namespace gi_lib{
 
     class TransformComponent;
+    class CameraComponent;
 
     /// \brief Component used to move an aerial camera.
     /// \author Raffaele D. Facendola
@@ -43,6 +44,8 @@ namespace gi_lib{
         const IInput& input_;						///< \brief Input reader.
 
         TransformComponent* camera_transform_;		///< \brief Transform component associated to the camera.
+
+        CameraComponent* camera_component_;         ///< \brief Camera component associated to the camera.
 
         Vector3f speed_;                            ///< \brief Current camera speed.
 

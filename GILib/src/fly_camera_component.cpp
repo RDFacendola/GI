@@ -73,14 +73,16 @@ FlyCameraComponent::~FlyCameraComponent(){}
 
 void FlyCameraComponent::Update(const Time& time){
 
+    static const float kMaxSpeed = 750.0f;
+
     // Camera strafe
     
     auto delta_time = time.GetDeltaSeconds();
 
     Vector3f target_speed = GetStrafeDirection(input_.GetKeyboardStatus(),
-                                               *camera_transform_) * 750.0f;
+                                               *camera_transform_) * kMaxSpeed;
 
-    speed_ = Math::InterpolateTo(speed_, target_speed, delta_time, 5.0f);
+    speed_ = Math::Lerp(speed_, target_speed, delta_time * 5.0f);
 
     Vector3f translation = camera_transform_->GetTranslation().vector() + speed_ * delta_time;
 
@@ -92,7 +94,7 @@ void FlyCameraComponent::Update(const Time& time){
 
     Vector2i movement = mb.IsDown(ButtonCode::RIGHT_BUTTON) ? mb.GetMovement() : Vector2i::Zero();
 
-    rotation_speed_ = Math::InterpolateTo(rotation_speed_, Vector2f(movement(0), movement(1)), delta_time, 25.0f);
+    rotation_speed_ = Math::Lerp(rotation_speed_, Vector2f(movement(0), movement(1)), delta_time * 25.0f);
 
     auto up = Vector3f(0.0f, 1.0f, 0.0f);
 
@@ -103,6 +105,12 @@ void FlyCameraComponent::Update(const Time& time){
     auto hrotation = Quaternionf(AngleAxisf(rotation_speed_(0) * delta_time * 3.14159f, up));
 
     camera_transform_->SetRotation(hrotation * vrotation * camera_transform_->GetRotation());
+
+    // Camera FOV
+
+//     camera_component_->SetFieldOfView(Math::Lerp(Math::DegToRad(90.0f), 
+//                                                  Math::DegToRad(92.5f),
+//                                                  speed_.norm() / kMaxSpeed));
 
 }
 
@@ -119,11 +127,13 @@ FlyCameraComponent::TypeSet FlyCameraComponent::GetTypes() const{
 void FlyCameraComponent::Initialize(){
 
     camera_transform_ = GetComponent<TransformComponent>();
+    camera_component_ = GetComponent<CameraComponent>();
 
 }
 
 void FlyCameraComponent::Finalize(){
 
     camera_transform_ = nullptr;
+    camera_component_ = nullptr;
 
 }
