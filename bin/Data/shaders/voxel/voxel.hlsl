@@ -132,8 +132,6 @@ void GSMain(triangle VSOut input[3], inout TriangleStream<GSOut> output_stream) 
 
 /////////////////////////////////// PIXEL SHADER ///////////////////////////////////////
 
-RWStructuredBuffer<uint> gVoxelAddressTable;			///< \brief Clipmap containing the address of the data stored for each voxel.
-
 void PSMain(GSOut input){
 
 	uint linear_coordinate;		// Linear coordinate of the voxel within its cascade.
@@ -158,8 +156,8 @@ void PSMain(GSOut input){
 		
 	}
 	
-	// Store a new empty voxel
+	// Store a new opaque black voxel
 
-	Voxelize(gVoxelAddressTable, (uint3) input.position_ps, input.cascade);
+	Voxelize((uint3) input.position_ps, input.cascade);
 	
 }

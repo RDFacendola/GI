@@ -55,6 +55,8 @@ namespace {
 
 		Matrix4f view_projection;					///< \brief View-projection matrix.
 
+        int mip;                                    ///< \brief Limits the MIP debug visualization
+
 	};
 
 	/// \brief Constant buffer containing the per-frame constants.
@@ -100,14 +102,14 @@ public:
 	/// \brief Invalidate the current debug infos.
 	void Invalidate();
 
-	ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection);
+	ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, int mip);
 
-	ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool alpha_mode);
+	ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool alpha_mode, int mip);
 
 private:
 
 	/// \brief Refresh the debug infos if dirty.
-	void Refresh(const Matrix4f& view_projection);
+	void Refresh(const Matrix4f& view_projection, int mip);
 
 	/// \brief Draw the voxel depth on top of the provided output surface.
 	/// \param pipeline_state Pipeline state to use while drawing the voxel depth.
@@ -252,9 +254,6 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 
 	bool check;
 	
-	check = append_voxel_info_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
-										 ObjectPtr<IGPStructuredArray>(subject_.voxel_address_table_));
-
 	check = append_voxel_info_->SetOutput(DebugDrawer::kVoxelAppendBuffer,
 										  ObjectPtr<IGPStructuredArray>(voxel_append_buffer_),
 										  false);														// Reset the initial count whenever the UAV is bound
@@ -270,6 +269,9 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 
     check = append_voxel_info_->SetInput(DebugDrawer::kPerFrameTag,
 										 ObjectPtr<IStructuredBuffer>(cb_frame_));
+
+    check = append_voxel_info_->SetInput(DX11Voxelization::kAlphaSHTag,
+                                         subject_.GetAlphaSHContribution()->GetTexture());
 
 	//
 
@@ -322,7 +324,7 @@ void DX11Voxelization::DebugDrawer::InitShaders() {
 
 }
 
-void DX11Voxelization::DebugDrawer::Refresh(const Matrix4f& view_projection) {
+void DX11Voxelization::DebugDrawer::Refresh(const Matrix4f& view_projection, int mip) {
 
 	// Accumulate from the voxel address table inside the append buffer - Once per frame
 
@@ -332,7 +334,10 @@ void DX11Voxelization::DebugDrawer::Refresh(const Matrix4f& view_projection) {
 
 		// Refresh per-frame parameters
 
-		cb_frame_->Lock<CBFrame>()->view_projection = view_projection;
+        auto buffer = cb_frame_->Lock<CBFrame>();
+        
+        buffer->view_projection = view_projection;
+        buffer->mip = mip;
 
 		cb_frame_->Unlock();
 
@@ -345,10 +350,14 @@ void DX11Voxelization::DebugDrawer::Refresh(const Matrix4f& view_projection) {
 												  1,
 												  1);
 
+        auto resolution = subject_.GetVoxelResolution();
+        auto cascades = subject_.GetVoxelCascades();
+        auto dispatch_y = (mip == DeferredRenderer::kMIPAuto) ? (resolution * (cascades + 1)) : (resolution >> std::min(mip, 0));
+
 		append_voxel_info_->Dispatch(device_context, 
-									 static_cast<unsigned int>(subject_.voxel_address_table_->GetCount()), 
-									 1, 
-									 1);
+									 resolution,
+									 dispatch_y,
+									 resolution);
 	
 		graphics_.PopEvent();	// Setup
 
@@ -356,9 +365,9 @@ void DX11Voxelization::DebugDrawer::Refresh(const Matrix4f& view_projection) {
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection) {
+ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, int mip) {
 
-	Refresh(view_projection);
+	Refresh(view_projection, mip);
 
 	auto& context = graphics_.GetContext();
 	auto& device_context = *context_.GetImmediateContext();
@@ -417,9 +426,9 @@ ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawVoxels(const ObjectPtr<
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool alpha_mode){
+ObjectPtr<ITexture2D> DX11Voxelization::DebugDrawer::DrawSH(const ObjectPtr<ITexture2D>& image, const Matrix4f& view_projection, bool alpha_mode, int mip){
 
-	Refresh(view_projection);
+	Refresh(view_projection, mip);
 
 	auto& context = graphics_.GetContext();
 	auto& device_context = *context.GetImmediateContext();
@@ -581,7 +590,6 @@ void DX11Voxelization::DebugDrawer::BuildMeshes() {
 
 /////////////////////////////////// DX11 VOXELIZATION ///////////////////////////////////
 
-const Tag DX11Voxelization::kVoxelAddressTableTag = "gVoxelAddressTable";
 const Tag DX11Voxelization::kVoxelizationTag = "Voxelization";
 const Tag DX11Voxelization::kRedSHTag = "gSHRed";
 const Tag DX11Voxelization::kGreenSHTag = "gSHGreen";
@@ -610,8 +618,6 @@ void DX11Voxelization::InitResources() {
 	cb_voxelization_ = new DX11StructuredBuffer(sizeof(CBVoxelization));
 
 	cb_object_ = new DX11StructuredBuffer(sizeof(CBObject));
-
-	voxel_address_table_ = new DX11GPStructuredArray(IGPStructuredArray::FromElementSize{ GetVoxelCount(), sizeof(unsigned int)});
 
 	sh_sampler_ = new DX11Sampler(ISampler::FromDescription{ TextureMapping::COLOR, TextureFiltering::TRILINEAR, 0, kOpaqueBlack });
 
@@ -660,16 +666,11 @@ void DX11Voxelization::InitShaders() {
 
 	voxel_material_ = new DX11Material(IMaterial::CompileFromFile{ L"Data\\Shaders\\voxel\\voxel.hlsl" });
 
-	clear_voxel_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\voxel_clear.hlsl" });
-
 	clear_sh_ = resources.Load<IComputation, IComputation::CompileFromFile>({ L"Data\\Shaders\\voxel\\sh_clear.hlsl" });
 
 	// Shader setup
 
 	bool check;
-
-	check = voxel_material_->SetOutput(kVoxelAddressTableTag,
-									   ObjectPtr<IGPStructuredArray>(voxel_address_table_));
 	
 	check = voxel_material_->SetOutput(kAlphaSHTag,
 									   alpha_sh_contribution_);
@@ -679,10 +680,6 @@ void DX11Voxelization::InitShaders() {
 
 	check = voxel_material_->SetInput(kVoxelizationTag,
 									  ObjectPtr<IStructuredBuffer>(cb_voxelization_));
-	
-
-	check = clear_voxel_->SetOutput(kVoxelAddressTableTag,
-									ObjectPtr<IGPStructuredArray>(voxel_address_table_));
 
 	check = clear_sh_->SetOutput(kRedSHTag,
 								 red_sh_contribution_);
@@ -813,11 +810,6 @@ void DX11Voxelization::Clear() {
 
 	graphics.PushEvent(L"Clear");
 
-	clear_voxel_->Dispatch(device_context,
-						   static_cast<unsigned int>(voxel_address_table_->GetCount()),
-						   1,
-						   1);
-
 	clear_sh_->Dispatch(device_context,
 						static_cast<unsigned int>(red_sh_contribution_->GetWidth()),
 						static_cast<unsigned int>(red_sh_contribution_->GetHeight()),
@@ -827,18 +819,20 @@ void DX11Voxelization::Clear() {
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& image) {
+ObjectPtr<ITexture2D> DX11Voxelization::DrawVoxels(const ObjectPtr<ITexture2D>& image, int mip) {
 	
 	return debug_drawer_->DrawVoxels(image,
-									 renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())));
+									 renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())),
+                                     mip);
 
 }
 
-ObjectPtr<ITexture2D> DX11Voxelization::DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode) {
+ObjectPtr<ITexture2D> DX11Voxelization::DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode, int mip) {
 	
 	return debug_drawer_->DrawSH(image,
 							     renderer_.GetViewProjectionMatrix(static_cast<float>(image->GetWidth()) / static_cast<float>(image->GetHeight())),
-								 alpha_mode);
+								 alpha_mode,
+                                 mip);
 
 }
 

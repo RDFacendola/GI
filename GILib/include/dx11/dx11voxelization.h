@@ -40,8 +40,6 @@ namespace gi_lib {
 		class DX11Voxelization {
 
 		public:
-			
-			static const Tag kVoxelAddressTableTag;		///< \brief Tag associated to the structured buffer containing the voxel address table.
 
 			static const Tag kVoxelizationTag;			///< \brief Tag associated to the constant buffer containing the voxelization constants.
 
@@ -73,14 +71,11 @@ namespace gi_lib {
 
 			/// \brief Draw the voxel structure. Debug function.
 			/// \param output Surface the structure will be drawn onto.
-			ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image);
+			ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, int mip);
 
 			/// \brief Draw the SH data. Debug function.
 			/// \param output Surface the SH will be drawn onto.
-			ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode);
-
-			/// \brief Get the structure containing the pointers to the actual voxel informations.
-			ObjectPtr<IGPStructuredArray> GetVoxelAddressTable() const;
+			ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode, int mip);
 
 			/// \brief Get the 3D texture containing the red spherical harmonics contribution.
 			ObjectPtr<IGPTexture3D> GetRedSHContribution() const;
@@ -143,9 +138,6 @@ namespace gi_lib {
 			ObjectPtr<DX11StructuredBuffer> cb_voxelization_;					///< \brief Constant parameters for voxelization.
 
 			ObjectPtr<DX11StructuredBuffer> cb_object_;							///< \brief Per-object constant buffer.
-
-			ObjectPtr<DX11GPStructuredArray> voxel_address_table_;				///< \brief This structure contains the address of each voxel inside the 3D texture of the spherical harmonics. 
-																				///			An address equal to 0 means that the voxel is not present at the specified location.
 			
 			ObjectPtr<IGPTexture3D> red_sh_contribution_;						///< \brief Red spherical harmonics contribution. Used during light injection and filtering.
 
@@ -166,8 +158,6 @@ namespace gi_lib {
 			// Shaders
 
 			ObjectPtr<DX11Material> voxel_material_;							///< \brief Material used to voxelize the scene.
-
-			ObjectPtr<DX11Computation> clear_voxel_;							///< \brief Compute shader used to clear the voxel address table.
 
 			ObjectPtr<DX11Computation> clear_sh_;								///< \brief Compute shader used to clear the spherical harmonics structure
 						
@@ -210,12 +200,6 @@ namespace gi_lib {
 
 		}
 				
-		inline ObjectPtr<IGPStructuredArray> DX11Voxelization::GetVoxelAddressTable() const {
-
-			return ObjectPtr<IGPStructuredArray>(voxel_address_table_);
-
-		}
-
 		inline ObjectPtr<IStructuredBuffer> DX11Voxelization::GetVoxelizationParams() const {
 
 			return ObjectPtr<IStructuredBuffer>(cb_voxelization_);

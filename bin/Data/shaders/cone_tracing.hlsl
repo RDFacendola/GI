@@ -5,8 +5,6 @@
 #define N 16
 #define TOTAL_THREADS (N)
 
-StructuredBuffer<uint> gVoxelAddressTable;					// Contains the "pointers" to the actual voxel infos.
-
 RWTexture2D<float3> gIndirectLight;
 
 cbuffer gParameters {

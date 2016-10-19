@@ -46,6 +46,11 @@ namespace gi_lib{
         KEY_N = 49,
         KEY_M = 50,
 
+        KEY_UP_ARROW = 72,
+        KEY_LEFT_ARROW = 75,
+        KEY_DOWN_ARROW = 80,
+        KEY_RIGHT_ARROW = 77
+
     };
 
     /// \brief Button-codes for mouse inputs.

@@ -8,10 +8,19 @@
 
 #define PI 3.14159f
 
+#ifndef SH_READ_ONLY
+// Read-write
 RWTexture3D<int> gSHRed;				// Unfiltered red spherical harmonics contributions.
 RWTexture3D<int> gSHGreen;				// Unfiltered green spherical harmonics contributions.
 RWTexture3D<int> gSHBlue;				// Unfiltered blue spherical harmonics contributions.
 RWTexture3D<int> gSHAlpha;				// Bitmask containing anisotropic voxel opacity.
+#else
+// Read-only
+Texture3D<int> gSHRed;				    // Unfiltered red spherical harmonics contributions.
+Texture3D<int> gSHGreen;				// Unfiltered green spherical harmonics contributions.
+Texture3D<int> gSHBlue;				    // Unfiltered blue spherical harmonics contributions.
+Texture3D<int> gSHAlpha;				// Bitmask containing anisotropic voxel opacity.
+#endif
 
 Texture3D<float4> gSH;					// Filtered chromatic spherical harmonics contribution.
 
@@ -170,21 +179,11 @@ float GetMinVoxelSize(float3 position_ws) {
 /* VOXELIZATION 													 */
 ///////////////////////////////////////////////////////////////////////
 
+#ifndef SH_READ_ONLY
 /// \brief Create a voxel.
-/// \param voxel_address_table Structure containing the pointers to the voxelized scene.
 /// \param voxel_coordinates Coordinates of the voxel to create relative to its own cascade.
 /// \param cascade Index of the cascade the voxel belongs to.
-void Voxelize(RWStructuredBuffer<uint> voxel_address_table, uint3 voxel_coordinates, int cascade) {
-
-    uint linear_coordinates = voxel_coordinates.x +
-                              voxel_coordinates.y * gVoxelResolution +
-                              voxel_coordinates.z * gVoxelResolution * gVoxelResolution;
-
-    uint linear_address = linear_coordinates + GetClipmapPyramidSize() + GetCascadeSize() * -cascade;
-
-    // WORKAROUND (***) - Fill with the actual address!
-
-    voxel_address_table[linear_address] = 42;
+void Voxelize(uint3 voxel_coordinates, int cascade) {
 
     // Store opacity as alpha inside the 1 SH band
 
@@ -193,55 +192,52 @@ void Voxelize(RWStructuredBuffer<uint> voxel_address_table, uint3 voxel_coordina
     gSHAlpha[voxel_coordinates + int3(3, 1 - cascade, 0) * gVoxelResolution] = 1024;		//Z-axis opacity (in 1024th)
 
 }
-
-/// \brief Get the voxel info given a voxel pointer.
-/// \param voxel_address_table Linear array containing the voxel pointer structure.
-/// \param index Index of the pointer pointing to the voxel whose infos are requested.
-/// \param voxel_info If the method succeeds it contains the requested voxel informations.
-/// \return Returns true if the specified pointer was valid, returns false otherwise.
-bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, int index, out VoxelInfo voxel_info) {
-
-    // WORKAROUND (***) - Get and translate the actual address
-    // TODO: manage the case where the index is negative!
-
-    bool is_inside_clipmap = index >= (int)GetClipmapPyramidSize() && 
-                             index < (int)(GetClipmapPyramidSize() + GetCascadeSize() * (1 + gCascades));
-
-//#define DENSE_VOXEL_INFO
-
-// Define this MACRO if access of the whole SH structure is needed. This doesn't work if the structure is sparse! Default is NOT DEFINED.
-#ifndef DENSE_VOXEL_INFO
-
-    is_inside_clipmap = is_inside_clipmap && (voxel_address_table[index] != 0);
-
 #endif
 
-    if (!is_inside_clipmap) {
+/// \brief Get the voxel info given a voxel coordinate and its coordinates.
+/// \param voxel_coordinates Coordinates of the voxel relative to its own cascade.
+/// \param cascade Index of the cascade the voxel belongs to.
+/// \return Returns true if the method succeeded, returns false otherwise.
+bool GetVoxelInfo(uint3 voxel_coordinates, int cascade, out VoxelInfo voxel_info) {
 
-        return false;		// The voxel is not present inside the hierarchy or it is outside its bounds
+    uint resolution = gVoxelResolution >> min(cascade, 0);
+
+    // Boundary conditions
+
+    if (cascade < -(int)gCascades ||                            // Too many cascades
+        resolution == 0u ||                                     // MIP too high
+        voxel_coordinates.x >= resolution ||                    // Outside texture boundaries
+        voxel_coordinates.y >= resolution ||
+        voxel_coordinates.z >= resolution) {
+
+        return false;
 
     }
 
-    index -= GetClipmapPyramidSize();
+    // Discard voxel with no opacity
 
-    uint3 voxel_ptr3 = uint3(index,
-                             index / gVoxelResolution,
-                             index / (gVoxelResolution * gVoxelResolution)) % gVoxelResolution;
-    
-    // Fill out the voxel info
+    if ((gSHAlpha[voxel_coordinates + int3(1, 1 - cascade, 0) * resolution] +
+         gSHAlpha[voxel_coordinates + int3(2, 1 - cascade, 0) * resolution] +
+         gSHAlpha[voxel_coordinates + int3(3, 1 - cascade, 0) * resolution]) == 0) {
 
-    voxel_info.cascade = -(index / GetCascadeSize());
-    
-    voxel_info.size = GetVoxelSize(voxel_info.cascade);
-    
-    voxel_info.center = (((int3)(voxel_ptr3) - (int)(gVoxelResolution >> 1)) + 0.5f) * voxel_info.size + GetMIPCenter(voxel_info.size);
+        return false;
 
-    voxel_info.sh_address = voxel_ptr3 % gVoxelResolution;
+    }
+
+    // Fill voxel infos
+
+    voxel_info.cascade = cascade;
+    
+    voxel_info.size = GetVoxelSize(cascade);
+    
+    voxel_info.center = (((int3)(voxel_coordinates) - (int)(gVoxelResolution >> 1)) + 0.5f) * voxel_info.size + GetMIPCenter(voxel_info.size);
+
+    voxel_info.sh_address = voxel_coordinates;
 
     voxel_info.sh_bands = 2;		// 2 bands, for now
 
     voxel_info.padding = 0;
-
+    
     return true;
 
 }
@@ -250,6 +246,7 @@ bool GetVoxelInfo(StructuredBuffer<uint> voxel_address_table, int index, out Vox
 /* PHOTON INJECTION													 */
 ///////////////////////////////////////////////////////////////////////
 
+#ifndef SH_READ_ONLY
 /// \brief Store the chromatic spherical harmonic contribution for a given position in space.
 /// \param position_ws Position of the contribution in world space.
 /// \param sh_index Linear index of the spherical harmonic coefficient to store.
@@ -289,6 +286,7 @@ void StoreSHContribution(float3 position_ws, uint sh_index, float3 color) {
     }
 
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////////
 /* SAMPLING															 */

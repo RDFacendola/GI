@@ -175,9 +175,6 @@ fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ 0.5f, 5 }) {
     light_injection_->SetInput(DX11Voxelization::kVoxelizationTag, 
                                voxelization_.GetVoxelizationParams());
 
-    light_injection_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
-                               voxelization_.GetVoxelAddressTable());
-
     light_injection_->SetOutput(DX11Voxelization::kRedSHTag,
                                 voxelization_.GetRedSHContribution());
 
@@ -231,9 +228,6 @@ fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ 0.5f, 5 }) {
 
     indirect_light_shader_->SetInput(DX11Voxelization::kVoxelizationTag, 
                                      voxelization_.GetVoxelizationParams());
-
-    indirect_light_shader_->SetInput(DX11Voxelization::kVoxelAddressTableTag,
-                                     voxelization_.GetVoxelAddressTable());
 
     indirect_light_shader_->SetInput(DX11Voxelization::kSHTag,
                                      voxelization_.GetSH()->GetTexture());

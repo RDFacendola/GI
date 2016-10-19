@@ -45,6 +45,9 @@ namespace gi{
 		
 	private:
 
+        static const int kVoxelResolution = 64;
+        static const int kVoxelCascades = 0;
+
 		void SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh);
 
 		std::vector<TransformComponent*> point_lights;
@@ -73,6 +76,8 @@ namespace gi{
 
 		DebugSHDrawMode debug_sh_draw_mode_;	///< \brief Debug spherical harmonics draw mode.
 		
+        int debug_mip_;                         ///< \brief MIP to show during debug visualization. Negative values identifies clipmap cascades. If equal to -kVoxelCascades - 1, enables normal visualization.
+
 		bool lock_camera_;						///< \brief Whether the camera is locked or not.
 
 	};

@@ -12,8 +12,6 @@
 Texture2D gRSM;		// Reflective shadow map. Contains the albedo of the surface and its normal.
 Texture2D gVSM;		// Variance shadow map. Contains the first and the second moment of the depth distribution of the scene as seen from the light.
 
-StructuredBuffer<uint> gVoxelAddressTable;						// Contains the "pointers" to the actual voxel infos.
-
 cbuffer CBPointLight {
 
 	PointLight gPointLight;			// Point light injecting the photons inside the voxel structure.

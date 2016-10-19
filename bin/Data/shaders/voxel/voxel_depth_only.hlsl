@@ -7,7 +7,8 @@ StructuredBuffer<VoxelInfo> gVoxelAppendBuffer;				// Append buffer containing t
 
 cbuffer PerFrame {
 
-	float4x4 gViewProjection;					// View-projection matrix
+	float4x4 gViewProjection;                               // View-projection matrix
+    int gMIP;                                               // MIP limit
 
 };
 

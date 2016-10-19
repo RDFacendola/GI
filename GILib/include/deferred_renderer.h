@@ -53,7 +53,9 @@ namespace gi_lib{
 	class DeferredRenderer : public IRenderer{
 
 	public:
-				
+
+        static const int kMIPAuto = 1000;
+
 		/// \brief Create a new tiled deferred renderer.
 		/// \param scene Scene assigned to the renderer.
 		DeferredRenderer(Scene& scene);
@@ -76,11 +78,11 @@ namespace gi_lib{
 		virtual void EnableGlobalIllumination(bool enable = true) = 0;
 
 		/// \brief Overlay the voxel structure on top of a given image.
-		virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image) = 0;
+		virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, int mip = kMIPAuto) = 0;
 
 		/// \brief Overlay the SH data on top of a given image.
 		/// \param alpha_mode Whether to draw voxel's opacity (true) or color (false)
-		virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode) = 0;
+		virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode, int mip = kMIPAuto) = 0;
 
 		/// \brief Lock or unlock the camera. Debug method.
 		/// Locking a camera may be useful to analyze the behavior of camera-dependent aspect of the scene, such as frustum culling

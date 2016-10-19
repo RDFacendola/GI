@@ -25,7 +25,7 @@
 
 #include "gpgpu.h"
 
-#include <Windows.h>
+//#include <Windows.h>
 
 
 using namespace ::std;
@@ -124,7 +124,7 @@ void GILogic::Initialize(Window& window){
 
 	wavefront::ObjImporter obj_importer(resources);
 		
-#if 1
+#ifdef GI_RELEASE
 
 	obj_importer.ImportScene(app.GetDirectory() + L"Data\\assets\\Sponza\\SponzaNoFlag.obj",
 							 *root,
@@ -160,6 +160,7 @@ void GILogic::Initialize(Window& window){
 	enable_postprocess_ = true;
 	enable_voxel_draw_ = false;
 	debug_sh_draw_mode_ = DebugSHDrawMode::kNone;
+    debug_mip_ = DeferredRenderer::kMIPAuto;
 	lock_camera_ = false;
 
 }
@@ -259,9 +260,11 @@ void GILogic::Update(const Time & time){
 
 	fly_camera->Update(time);
 	
+    auto& keyboard = input_->GetKeyboardStatus();
+
 	// "P": toggle pause
 
-	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_P)){		
+	if (keyboard.IsPressed(KeyCode::KEY_P)){
 
 		paused_ = !paused_;
 
@@ -269,7 +272,7 @@ void GILogic::Update(const Time & time){
 
 	// "F": toggle post processing
 
-	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_F)) {
+	if (keyboard.IsPressed(KeyCode::KEY_F)) {
 
 		enable_postprocess_ = !enable_postprocess_;
 
@@ -277,7 +280,7 @@ void GILogic::Update(const Time & time){
 
 	// "I": toggle GI
 
-	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_I)) {
+	if (keyboard.IsPressed(KeyCode::KEY_I)) {
 
 		enable_global_illumination_ = !enable_global_illumination_;
 
@@ -287,7 +290,7 @@ void GILogic::Update(const Time & time){
 
 	// "V": toggle debug voxel drawing
 
-	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_V)) {
+	if (keyboard.IsPressed(KeyCode::KEY_V)) {
 
 		enable_voxel_draw_ = !enable_voxel_draw_;
 
@@ -295,7 +298,7 @@ void GILogic::Update(const Time & time){
 
 	// "H": cycle SH debug drawing mode
 
-	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_H)) {
+	if (keyboard.IsPressed(KeyCode::KEY_H)) {
 
 		debug_sh_draw_mode_ = static_cast<DebugSHDrawMode>((static_cast<unsigned int>(debug_sh_draw_mode_) + 1) % static_cast<unsigned int>(DebugSHDrawMode::kMax));
 
@@ -303,16 +306,57 @@ void GILogic::Update(const Time & time){
 
 	// "C": toggle lock camera
 
-	if (input_->GetKeyboardStatus().IsPressed(KeyCode::KEY_L)) {
+	if (keyboard.IsPressed(KeyCode::KEY_L)) {
 
 		lock_camera_ = !lock_camera_;
 		
 		paused_ = true;
 
 		deferred_renderer_->LockCamera(lock_camera_);
-
-
+        
 	}
+
+    // "UP": Increase MIP
+    
+    if (keyboard.IsPressed(KeyCode::KEY_UP_ARROW)) {
+
+        if (debug_mip_ == DeferredRenderer::kMIPAuto) {
+
+            debug_mip_ = -kVoxelCascades;
+
+        }
+        else {
+
+            debug_mip_ = std::min(debug_mip_ + 1, static_cast<int>(std::floor(std::log2(kVoxelResolution))));
+
+        }
+
+    }
+
+    // "DOWN": Decrease MIP
+
+    if (keyboard.IsPressed(KeyCode::KEY_DOWN_ARROW)) {
+
+        if (debug_mip_ == DeferredRenderer::kMIPAuto) {
+
+            debug_mip_ = static_cast<int>(std::floor(std::log2(kVoxelResolution)));
+
+        }
+        else {
+
+            debug_mip_ = std::max(debug_mip_ - 1, -kVoxelCascades);
+
+        }
+        
+    }
+
+    // "UP" + "DOWN": Reset MIP
+
+    if (keyboard.IsDown(KeyCode::KEY_DOWN_ARROW) && keyboard.IsDown(KeyCode::KEY_UP_ARROW)) {
+
+        debug_mip_ = DeferredRenderer::kMIPAuto;
+
+    }
 	
 	if (!paused_) {
 
@@ -385,14 +429,16 @@ void GILogic::Update(const Time & time){
 
 	if (enable_voxel_draw_ && enable_global_illumination_) {
 
-		next_frame = deferred_renderer_->DrawVoxels(next_frame);
+		next_frame = deferred_renderer_->DrawVoxels(next_frame,
+                                                    debug_mip_);
 
 	}
 	
 	if (debug_sh_draw_mode_ != DebugSHDrawMode::kNone) {
 
 		next_frame = deferred_renderer_->DrawSH(next_frame, 
-												debug_sh_draw_mode_ == DebugSHDrawMode::kAlpha);
+												debug_sh_draw_mode_ == DebugSHDrawMode::kAlpha,
+                                                debug_mip_);
 
 	}
 

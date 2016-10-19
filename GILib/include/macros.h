@@ -25,10 +25,12 @@ while(0)
 #if defined(_MSC_VER) && defined(_DEBUG)
 
 #define DEBUG_ONLY(x) x
+#define GI_DEBUG
 
 #else
 
 #define DEBUG_ONLY(x)
+#define GI_RELEASE
 
 #endif
 

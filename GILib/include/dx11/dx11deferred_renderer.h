@@ -98,9 +98,9 @@ namespace gi_lib{
 			
 			Matrix4f GetViewProjectionMatrix(float aspect_ratio) const;
 
-			virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image) override;
+			virtual ObjectPtr<ITexture2D> DrawVoxels(const ObjectPtr<ITexture2D>& image, int mip) override;
 
-			virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode) override;
+			virtual ObjectPtr<ITexture2D> DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode, int mip) override;
 
 			virtual void LockCamera(bool lock) override;
 
@@ -187,15 +187,15 @@ namespace gi_lib{
 
 		}
 
-		inline ObjectPtr<ITexture2D> DX11DeferredRenderer::DrawVoxels(const ObjectPtr<ITexture2D>& image) {
+		inline ObjectPtr<ITexture2D> DX11DeferredRenderer::DrawVoxels(const ObjectPtr<ITexture2D>& image, int mip) {
 
-			return voxelization_->DrawVoxels(image);
+			return voxelization_->DrawVoxels(image, mip);
 
 		}
 
-		inline ObjectPtr<ITexture2D> DX11DeferredRenderer::DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode) {
+		inline ObjectPtr<ITexture2D> DX11DeferredRenderer::DrawSH(const ObjectPtr<ITexture2D>& image, bool alpha_mode, int mip) {
 
-			return voxelization_->DrawSH(image, alpha_mode);
+			return voxelization_->DrawSH(image, alpha_mode, mip);
 
 		}
 
