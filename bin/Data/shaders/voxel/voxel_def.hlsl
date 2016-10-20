@@ -200,7 +200,7 @@ void Voxelize(uint3 voxel_coordinates, int cascade) {
 /// \return Returns true if the method succeeded, returns false otherwise.
 bool GetVoxelInfo(uint3 voxel_coordinates, int cascade, out VoxelInfo voxel_info) {
 
-    uint resolution = gVoxelResolution >> min(cascade, 0);
+    uint resolution = gVoxelResolution >> max(cascade, 0);
 
     // Boundary conditions
 
@@ -216,9 +216,9 @@ bool GetVoxelInfo(uint3 voxel_coordinates, int cascade, out VoxelInfo voxel_info
 
     // Discard voxel with no opacity
 
-    if ((gSHAlpha[voxel_coordinates + int3(1, 1 - cascade, 0) * resolution] +
-         gSHAlpha[voxel_coordinates + int3(2, 1 - cascade, 0) * resolution] +
-         gSHAlpha[voxel_coordinates + int3(3, 1 - cascade, 0) * resolution]) == 0) {
+    if ((gSHAlpha[voxel_coordinates + int3(1, max(1, 1 - cascade), 0) * resolution] +
+         gSHAlpha[voxel_coordinates + int3(2, max(1, 1 - cascade), 0) * resolution] +
+         gSHAlpha[voxel_coordinates + int3(3, max(1, 1 - cascade), 0) * resolution]) == 0) {
 
         return false;
 
@@ -230,7 +230,7 @@ bool GetVoxelInfo(uint3 voxel_coordinates, int cascade, out VoxelInfo voxel_info
     
     voxel_info.size = GetVoxelSize(cascade);
     
-    voxel_info.center = (((int3)(voxel_coordinates) - (int)(gVoxelResolution >> 1)) + 0.5f) * voxel_info.size + GetMIPCenter(voxel_info.size);
+    voxel_info.center = (((int3)(voxel_coordinates) - (int)(resolution >> 1)) + 0.5f) * voxel_info.size + GetMIPCenter(voxel_info.size);
 
     voxel_info.sh_address = voxel_coordinates;
 

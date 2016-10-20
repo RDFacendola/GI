@@ -352,11 +352,16 @@ void DX11Voxelization::DebugDrawer::Refresh(const Matrix4f& view_projection, int
 
         auto resolution = subject_.GetVoxelResolution();
         auto cascades = subject_.GetVoxelCascades();
-        auto dispatch_y = (mip == DeferredRenderer::kMIPAuto) ? (resolution * (cascades + 1)) : (resolution >> std::min(mip, 0));
+
+        if (mip != DeferredRenderer::kMIPAuto){
+
+            resolution = resolution >> std::max(mip, 0);        // Shrink resolution for positive MIP index
+
+        }
 
 		append_voxel_info_->Dispatch(device_context, 
-									 resolution,
-									 dispatch_y,
+                                     resolution,
+									 (mip == DeferredRenderer::kMIPAuto) ? (resolution * (cascades + 1)) : resolution,
 									 resolution);
 	
 		graphics_.PopEvent();	// Setup

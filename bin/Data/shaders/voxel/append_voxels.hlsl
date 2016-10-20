@@ -39,7 +39,9 @@ void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
     }
 
-	if (GetVoxelInfo(dispatch_thread_id % gVoxelResolution, cascade, voxel_info)) {
+    uint resolution = gVoxelResolution >> max(cascade, 0);
+
+	if (GetVoxelInfo(dispatch_thread_id % resolution, cascade, voxel_info)) {
 
 		float3 center = abs(voxel_info.center - gCameraCenter);
 		            
