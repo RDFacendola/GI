@@ -192,6 +192,9 @@ fx_blur_(gi_lib::fx::FxGaussianBlur::Parameters{ 0.5f, 5 }) {
 
     // Spherical harmonics filtering
 
+    sh_filter_->SetInput(DX11Voxelization::kVoxelizationTag,
+                         voxelization_.GetVoxelizationParams());
+
     sh_filter_->SetOutput(DX11Voxelization::kRedSHTag,
                           voxelization_.GetRedSHContribution());
 

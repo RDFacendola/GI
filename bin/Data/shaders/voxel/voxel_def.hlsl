@@ -136,6 +136,16 @@ float GetChebyshevDistance(int3 a, int3 b) {
 
 }
 
+/// \brief Get the Manhattan distance between two 3D points.
+/// \return Returns the Manhattan distance between two 3D points.
+float GetManhattanDistance(float3 a, float3 b) {
+
+    float3 ab = abs(a - b);
+
+    return ab.x + ab.y + ab.z;
+
+}
+
 /// \brief Get the Chebyshev distance between two 1D points.
 /// \return Returns the Chebyshev distance between two 1D points.
 float GetChebyshevDistance(float a, float b) {
@@ -385,8 +395,12 @@ float4 SampleSHContribution(float3 position_ws, uint sh_band, float3 direction, 
                        sh2 * direction.y + 
                        sh3 * direction.z ;
 
+        float3 abs_direction = abs(direction);
+
+        float alpha = sh1.a * abs_direction.x + sh2.a * abs_direction.y + sh3.a * abs_direction.z;
+
         return float4(color.rgb * sqrt(3.f / (4.f * PI)),
-                      color.a / (direction.x + direction.y + direction.z));
+                      alpha / GetManhattanDistance(direction, 0));
 
     }
     else {

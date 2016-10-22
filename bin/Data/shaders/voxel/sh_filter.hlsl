@@ -62,7 +62,9 @@ void FilterSum(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
 /// \brief Performs alpha multiplication, considering that the opacity is stored in 1024th.
 int AlphaMul(int a, int b) {
 
-    return (a * b) >> 10;
+    float fa = a / 1024.0f;
+    
+    return a + (1.0f - fa) * b;
 
 }
 
@@ -88,14 +90,7 @@ void FilterOpacity(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
         
         dst_offset.x += gDstStride * sh_coefficient_index;
 
-        if (thread.x < gVoxelResolution * 1) {
-
-            // Isotropic opacity
-
-            surface[thread / 2 + dst_offset] = 0;	// Unused
-
-        }
-        else if (thread.x < gVoxelResolution * 2) {
+        if (sh_coefficient_index == 1) {
 
             // Opacity along X
             surface[thread / 2 + dst_offset] = (   AlphaMul( samples[group_thread.x + 0][group_thread.y + 0][group_thread.z + 0],
@@ -108,7 +103,7 @@ void FilterOpacity(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
                                                              samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 1] ) ) >> 2;
 
         }
-        else if (thread.x < gVoxelResolution * 3) {
+        else if (sh_coefficient_index == 2) {
 
             // Opacity along Y
 
@@ -122,7 +117,7 @@ void FilterOpacity(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
                                                              samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 1] ) ) >> 2;
 
         }
-        else {
+        else if(sh_coefficient_index == 3){
 
             // Opacity along Z
 
@@ -134,6 +129,13 @@ void FilterOpacity(RWTexture3D<int> surface, int3 thread, int3 group_thread) {
                                                              samples[group_thread.x + 1][group_thread.y + 0][group_thread.z + 1] )
                                                  + AlphaMul( samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 0],
                                                              samples[group_thread.x + 1][group_thread.y + 1][group_thread.z + 1] ) ) >> 2;
+
+        }
+        else {
+
+            // Isotropic opacity. Not used.
+
+            surface[thread / 2 + dst_offset] = 0;
 
         }
 
