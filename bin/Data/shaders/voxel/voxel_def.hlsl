@@ -126,6 +126,16 @@ float GetChebyshevDistance(float3 a, float3 b) {
 
 }
 
+/// \brief Get the Chebyshev distance between two 3D integer points.
+/// \return Returns the Chebyshev distance between two 3D integer points.
+float GetChebyshevDistance(int3 a, int3 b) {
+
+    int3 ab = abs(a - b);
+
+    return max(ab.x, max(ab.y, ab.z));
+
+}
+
 /// \brief Get the Chebyshev distance between two 1D points.
 /// \return Returns the Chebyshev distance between two 1D points.
 float GetChebyshevDistance(float a, float b) {

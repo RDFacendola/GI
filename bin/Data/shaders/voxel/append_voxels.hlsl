@@ -24,24 +24,26 @@ cbuffer PerFrame {
 [numthreads(N, N, N)]
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 
-	VoxelInfo voxel_info;
+    VoxelInfo voxel_info;
 
-    int cascade;
-    
-    if (gMIP == MIP_AUTO){
-
-        cascade = -(int)(dispatch_thread_id.y / gVoxelResolution);
-
-    }
-    else {
-
-        cascade = gMIP;
-
-    }
+    int cascade = (gMIP == MIP_AUTO) ?
+                  -(int)(dispatch_thread_id.y / gVoxelResolution) :
+                  gMIP;
 
     uint resolution = gVoxelResolution >> max(cascade, 0);
+    uint3 voxel_coordinates = dispatch_thread_id % resolution;
 
-	if (GetVoxelInfo(dispatch_thread_id % resolution, cascade, voxel_info)) {
+    // Reject if there's a more detailed cascade (AUTO mode only)
+
+    if (gMIP == MIP_AUTO &&
+        cascade > -(int)(gCascades) &&
+        GetChebyshevDistance((int3)(voxel_coordinates), (int3)(resolution >> 1)) <= (resolution >> 2)) {
+
+        return;
+
+    }
+
+	if (GetVoxelInfo(voxel_coordinates, cascade, voxel_info)) {
 
 		float3 center = abs(voxel_info.center - gCameraCenter);
 		            

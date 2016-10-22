@@ -48,273 +48,273 @@ FlyCameraComponent* fly_camera;
 Window* g_window;
 
 GILogic::GILogic() :
-	graphics_(Graphics::GetAPI(API::DIRECTX_11)),
-	input_(nullptr),
-	paused_(false){
+    graphics_(Graphics::GetAPI(API::DIRECTX_11)),
+    input_(nullptr),
+    paused_(false){
 
-	scene_ = make_unique<Scene>(make_unique<UniformTree>(AABB{ Vector3f::Zero(),							// Mesh hierarchy
-															   kDomainSize * Vector3f::Ones() },
-														 kDomainSubdivisions * Vector3i::Ones()),
-								make_unique<UniformTree>(AABB{ Vector3f::Zero(),							// Light hierarchy
-															   kDomainSize * Vector3f::Ones() },
-														 kDomainSubdivisions * Vector3i::Ones()));
+    scene_ = make_unique<Scene>(make_unique<UniformTree>(AABB{ Vector3f::Zero(),							// Mesh hierarchy
+                                                               kDomainSize * Vector3f::Ones() },
+                                                         kDomainSubdivisions * Vector3i::Ones()),
+                                make_unique<UniformTree>(AABB{ Vector3f::Zero(),							// Light hierarchy
+                                                               kDomainSize * Vector3f::Ones() },
+                                                         kDomainSubdivisions * Vector3i::Ones()));
 
 }
 
 GILogic::~GILogic(){
 
-	scene_ = nullptr;
+    scene_ = nullptr;
 
-	output_ = nullptr;
+    output_ = nullptr;
 
-	deferred_renderer_ = nullptr;
-	
+    deferred_renderer_ = nullptr;
+    
 }
 
 void GILogic::Initialize(Window& window){
 
-	// Graphics setup
-	g_window = &window;
+    // Graphics setup
+    g_window = &window;
 
-	window.SetTitle(kWindowTitle);
+    window.SetTitle(kWindowTitle);
 
-	window.Show();
-	
-	// Create the output window
+    window.Show();
+    
+    // Create the output window
 
-	output_ = graphics_.CreateOutput(window, 
-									 graphics_.GetAdapterProfile().video_modes[0]);
+    output_ = graphics_.CreateOutput(window, 
+                                     graphics_.GetAdapterProfile().video_modes[0]);
 
-	// Create the renderers
+    // Create the renderers
 
-	deferred_renderer_ = std::move(graphics_.CreateRenderer<DeferredRenderer>(*scene_));
+    deferred_renderer_ = std::move(graphics_.CreateRenderer<DeferredRenderer>(*scene_));
 
-	// Camera setup
+    // Camera setup
 
-	auto camera_transform = scene_->CreateNode(L"MainCamera",
-											   Translation3f(0.0f, 300.0f, 0.0f),
-											   Quaternionf::Identity(),
-											   AlignedScaling3f(1.0f, 1.0f, 1.0f));
+    auto camera_transform = scene_->CreateNode(L"MainCamera",
+                                               Translation3f(0.0f, 300.0f, 0.0f),
+                                               Quaternionf::Identity(),
+                                               AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
-	auto camera = camera_transform->AddComponent<CameraComponent>();
+    auto camera = camera_transform->AddComponent<CameraComponent>();
 
-	camera->SetProjectionType(ProjectionType::Perspective);
-	camera->SetMinimumDistance(1.0f);
-	camera->SetMaximumDistance(10000.0f);
-	camera->SetFieldOfView(Math::DegToRad(90.0f));
+    camera->SetProjectionType(ProjectionType::Perspective);
+    camera->SetMinimumDistance(1.0f);
+    camera->SetMaximumDistance(10000.0f);
+    camera->SetFieldOfView(Math::DegToRad(90.0f));
 
-	scene_->SetMainCamera(camera);
+    scene_->SetMainCamera(camera);
 
-	input_ = &window.GetInput();
+    input_ = &window.GetInput();
 
-	fly_camera = camera->AddComponent<FlyCameraComponent>(*input_);
+    fly_camera = camera->AddComponent<FlyCameraComponent>(*input_);
 
-	// Scene import
+    // Scene import
 
-	auto root = scene_->CreateNode(L"root", 
-								   Translation3f(Vector3f(0.0f, 0.0f, 0.0f)),
-								   Quaternionf::Identity(), 
-								   AlignedScaling3f(Vector3f::Ones() * 3.0f));
+    auto root = scene_->CreateNode(L"root", 
+                                   Translation3f(Vector3f(0.0f, 0.0f, 0.0f)),
+                                   Quaternionf::Identity(), 
+                                   AlignedScaling3f(Vector3f::Ones() * 3.0f));
 
-	auto& resources = graphics_.GetResources();
+    auto& resources = graphics_.GetResources();
 
-	auto& app = Application::GetInstance();
+    auto& app = Application::GetInstance();
 
-	MtlMaterialImporter material_importer(resources);
+    MtlMaterialImporter material_importer(resources);
 
-	wavefront::ObjImporter obj_importer(resources);
-		
+    wavefront::ObjImporter obj_importer(resources);
+        
 #ifdef GI_RELEASE
 
-	obj_importer.ImportScene(app.GetDirectory() + L"Data\\assets\\Sponza\\SponzaNoFlag.obj",
-							 *root,
-							 material_importer);
-	
+    obj_importer.ImportScene(app.GetDirectory() + L"Data\\assets\\Sponza\\SponzaNoFlag.obj",
+                             *root,
+                             material_importer);
+    
 #endif
 
-	auto skybox = scene_->CreateNode(L"skybox",
-									 Translation3f(Vector3f::Zero()),
-									 Quaternionf::Identity(),
-									 AlignedScaling3f(Vector3f::Ones() * 500.0f));
+    auto skybox = scene_->CreateNode(L"skybox",
+                                     Translation3f(Vector3f::Zero()),
+                                     Quaternionf::Identity(),
+                                     AlignedScaling3f(Vector3f::Ones() * 500.0f));
 
-	obj_importer.ImportScene(app.GetDirectory() + L"Data\\assets\\Skybox\\Skybox.obj",
-							 *skybox,
-							 material_importer);
+    obj_importer.ImportScene(app.GetDirectory() + L"Data\\assets\\Skybox\\Skybox.obj",
+                             *skybox,
+                             material_importer);
 
-	// Lights setup 
+    // Lights setup 
 
-	SetupLights(*scene_, 
-				obj_importer.ImportMesh(app.GetDirectory() + L"Data\\assets\\Light\\Sphere.obj", "Icosphere"));
-	
-	// GI setup
+    SetupLights(*scene_, 
+                obj_importer.ImportMesh(app.GetDirectory() + L"Data\\assets\\Light\\Sphere.obj", "Icosphere"));
+    
+    // GI setup
 
-	deferred_renderer_->EnableGlobalIllumination(enable_global_illumination_);
+    deferred_renderer_->EnableGlobalIllumination(enable_global_illumination_);
 
-	// Post process setup
+    // Post process setup
 
-	postprocess_ = make_unique<Postprocess>(resources, graphics_);
+    postprocess_ = make_unique<Postprocess>(resources, graphics_);
 
-	// Commad setup
+    // Commad setup
 
-	enable_global_illumination_ = true;
-	enable_postprocess_ = true;
-	enable_voxel_draw_ = false;
-	debug_sh_draw_mode_ = DebugSHDrawMode::kNone;
+    enable_global_illumination_ = true;
+    enable_postprocess_ = true;
+    enable_voxel_draw_ = false;
+    debug_sh_draw_mode_ = DebugSHDrawMode::kNone;
     debug_mip_ = DeferredRenderer::kMIPAuto;
-	lock_camera_ = false;
+    lock_camera_ = false;
 
 }
 
 void GILogic::SetupLights(Scene& scene, ObjectPtr<IStaticMesh> point_light_mesh) {
 
-	// Disable light's shadowcasting
-	
-	point_light_mesh->SetFlags(MeshFlags::kNone);
+    // Disable light's shadowcasting
+    
+    point_light_mesh->SetFlags(MeshFlags::kNone);
 
-	// Point lights
+    // Point lights
 
-	struct PerPointLight {
+    struct PerPointLight {
 
-		Vector4f gColor;			// Point light emissive color
+        Vector4f gColor;			// Point light emissive color
 
-	};
+    };
 
-	auto& resources = graphics_.GetResources();
+    auto& resources = graphics_.GetResources();
 
-	auto base_material = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\mat_emissive.hlsl" });
+    auto base_material = resources.Load<DeferredRendererMaterial, DeferredRendererMaterial::CompileFromFile>({ Application::GetInstance().GetDirectory() + L"Data\\Shaders\\mat_emissive.hlsl" });
 
-	static std::vector<Color> kLightColors{ Color(5.f, 5.f, 5.f, 1.f),
-											Color(3.5f, 3.5f, 3.5f, 1.f),
-											/*Color(2.f, 2.f, 2.f, 1.f),
-											Color(2.5f, 2.5f, 5.f, 1.f),
-											Color(25.f, 10.f, 25.f, 1.f),
-											Color(10.f, 25.f, 25.f, 1.f)*/};
+    static std::vector<Color> kLightColors{ Color(5.f, 5.f, 5.f, 1.f),
+                                            Color(3.5f, 3.5f, 3.5f, 1.f),
+                                            /*Color(2.f, 2.f, 2.f, 1.f),
+                                            Color(2.5f, 2.5f, 5.f, 1.f),
+                                            Color(25.f, 10.f, 25.f, 1.f),
+                                            Color(10.f, 25.f, 25.f, 1.f)*/};
 
-	static float kPointLightRadius = 250.0f;
+    static float kPointLightRadius = 250.0f;
 
-	for (auto&& light_color : kLightColors) {
+    for (auto&& light_color : kLightColors) {
 
-		auto light_node = scene_->CreateNode(L"PointLight",
-											 Translation3f::Identity(),
-											 Quaternionf::Identity(),
-											 AlignedScaling3f(kPointLightRadius, kPointLightRadius, kPointLightRadius));
+        auto light_node = scene_->CreateNode(L"PointLight",
+                                             Translation3f::Identity(),
+                                             Quaternionf::Identity(),
+                                             AlignedScaling3f(kPointLightRadius, kPointLightRadius, kPointLightRadius));
 
-		// Point light setup
+        // Point light setup
 
-		auto light_component = light_node->AddComponent<PointLightComponent>(light_color, 3 * kPointLightRadius);
-		
-		light_component->SetCutoff(0.001f);
-		light_component->EnableShadow(true);
-		light_component->SetShadowMapSize(Vector2i(1024, 512));
+        auto light_component = light_node->AddComponent<PointLightComponent>(light_color, 3 * kPointLightRadius);
+        
+        light_component->SetCutoff(0.001f);
+        light_component->EnableShadow(true);
+        light_component->SetShadowMapSize(Vector2i(1024, 512));
 
-		point_lights.push_back(light_node);
-		
-		// Light mesh
+        point_lights.push_back(light_node);
+        
+        // Light mesh
 
-		auto mesh_component = light_node->AddComponent<MeshComponent>(point_light_mesh);
+        auto mesh_component = light_node->AddComponent<MeshComponent>(point_light_mesh);
 
-		// Light material
+        // Light material
 
-		auto deferred_component = light_node->AddComponent<AspectComponent<DeferredRendererMaterial>>(*mesh_component);
+        auto deferred_component = light_node->AddComponent<AspectComponent<DeferredRendererMaterial>>(*mesh_component);
 
-		auto material_instance = base_material->Instantiate();
+        auto material_instance = base_material->Instantiate();
 
-		deferred_component->SetMaterial(0, material_instance);
+        deferred_component->SetMaterial(0, material_instance);
 
-		auto per_point_light = resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(PerPointLight) });
+        auto per_point_light = resources.Load<IStructuredBuffer, IStructuredBuffer::FromSize>({ sizeof(PerPointLight) });
 
-		auto& buffer = *per_point_light->Lock<PerPointLight>();
+        auto& buffer = *per_point_light->Lock<PerPointLight>();
 
-		buffer.gColor = light_color.ToVector4f();
+        buffer.gColor = light_color.ToVector4f();
 
-		per_point_light->Unlock();
+        per_point_light->Unlock();
 
-		material_instance->GetMaterial()->SetInput("PerMaterial", ObjectPtr<IStructuredBuffer>(per_point_light));
+        material_instance->GetMaterial()->SetInput("PerMaterial", ObjectPtr<IStructuredBuffer>(per_point_light));
 
-	}
-	
-	return;
+    }
+    
+    return;
 
-	// Sky contribution
-	{
-		
-		auto light_node = scene_->CreateNode(L"DirectionalLight",
-											 Translation3f(0.0f, 0.0f, 0.0f),
-											 Quaternionf(AngleAxisf(Math::DegToRad(90.f), Vector3f(0, 1, 0)) *
-														 AngleAxisf(Math::DegToRad(45.f), Vector3f(1, 0, 0))),
-											 AlignedScaling3f(1.0f, 1.0f, 1.0f));
+    // Sky contribution
+    {
+        
+        auto light_node = scene_->CreateNode(L"DirectionalLight",
+                                             Translation3f(0.0f, 0.0f, 0.0f),
+                                             Quaternionf(AngleAxisf(Math::DegToRad(90.f), Vector3f(0, 1, 0)) *
+                                                         AngleAxisf(Math::DegToRad(45.f), Vector3f(1, 0, 0))),
+                                             AlignedScaling3f(1.0f, 1.0f, 1.0f));
 
-		auto light_component = light_node->AddComponent<DirectionalLightComponent>(Color(1.1f, 1.1f, 1.1f, 1.0f));
+        auto light_component = light_node->AddComponent<DirectionalLightComponent>(Color(1.1f, 1.1f, 1.1f, 1.0f));
 
-		light_component->EnableShadow(true);
-		light_component->SetShadowMapSize(Vector2i(1024, 1024));
+        light_component->EnableShadow(true);
+        light_component->SetShadowMapSize(Vector2i(1024, 1024));
 
-		directional_lights.push_back(light_node);
+        directional_lights.push_back(light_node);
 
-	}
-	
+    }
+    
 
 }
 
 void GILogic::Update(const Time & time){
 
-	fly_camera->Update(time);
-	
+    fly_camera->Update(time);
+    
     auto& keyboard = input_->GetKeyboardStatus();
 
-	// "P": toggle pause
+    // "P": toggle pause
 
-	if (keyboard.IsPressed(KeyCode::KEY_P)){
+    if (keyboard.IsPressed(KeyCode::KEY_P)){
 
-		paused_ = !paused_;
+        paused_ = !paused_;
 
-	}
+    }
 
-	// "F": toggle post processing
+    // "F": toggle post processing
 
-	if (keyboard.IsPressed(KeyCode::KEY_F)) {
+    if (keyboard.IsPressed(KeyCode::KEY_F)) {
 
-		enable_postprocess_ = !enable_postprocess_;
+        enable_postprocess_ = !enable_postprocess_;
 
-	}
+    }
 
-	// "I": toggle GI
+    // "I": toggle GI
 
-	if (keyboard.IsPressed(KeyCode::KEY_I)) {
+    if (keyboard.IsPressed(KeyCode::KEY_I)) {
 
-		enable_global_illumination_ = !enable_global_illumination_;
+        enable_global_illumination_ = !enable_global_illumination_;
 
-	}
-		
-	deferred_renderer_->EnableGlobalIllumination(enable_global_illumination_);
-
-	// "V": toggle debug voxel drawing
-
-	if (keyboard.IsPressed(KeyCode::KEY_V)) {
-
-		enable_voxel_draw_ = !enable_voxel_draw_;
-
-	}
-
-	// "H": cycle SH debug drawing mode
-
-	if (keyboard.IsPressed(KeyCode::KEY_H)) {
-
-		debug_sh_draw_mode_ = static_cast<DebugSHDrawMode>((static_cast<unsigned int>(debug_sh_draw_mode_) + 1) % static_cast<unsigned int>(DebugSHDrawMode::kMax));
-
-	}
-
-	// "C": toggle lock camera
-
-	if (keyboard.IsPressed(KeyCode::KEY_L)) {
-
-		lock_camera_ = !lock_camera_;
-		
-		paused_ = true;
-
-		deferred_renderer_->LockCamera(lock_camera_);
+    }
         
-	}
+    deferred_renderer_->EnableGlobalIllumination(enable_global_illumination_);
+
+    // "V": toggle debug voxel drawing
+
+    if (keyboard.IsPressed(KeyCode::KEY_V)) {
+
+        enable_voxel_draw_ = !enable_voxel_draw_;
+
+    }
+
+    // "H": cycle SH debug drawing mode
+
+    if (keyboard.IsPressed(KeyCode::KEY_H)) {
+
+        debug_sh_draw_mode_ = static_cast<DebugSHDrawMode>((static_cast<unsigned int>(debug_sh_draw_mode_) + 1) % static_cast<unsigned int>(DebugSHDrawMode::kMax));
+
+    }
+
+    // "C": toggle lock camera
+
+    if (keyboard.IsPressed(KeyCode::KEY_L)) {
+
+        lock_camera_ = !lock_camera_;
+        
+        paused_ = true;
+
+        deferred_renderer_->LockCamera(lock_camera_);
+        
+    }
 
     // "UP": Increase MIP
     
@@ -357,93 +357,93 @@ void GILogic::Update(const Time & time){
         debug_mip_ = DeferredRenderer::kMIPAuto;
 
     }
-	
-	if (!paused_) {
+    
+    if (!paused_) {
 
-		static const float xRadius = 2000.0f;
-		static const float yRadius = 750.0f;
-		static const float zRadius = 400.0f;
-	
-		static const float angular_speed = Math::kPi / 16.0f;
-		static const float oscillation_speed = Math::kPi / 6.0f;
+        static const float xRadius = 2000.0f;
+        static const float yRadius = 750.0f;
+        static const float zRadius = 400.0f;
+    
+        static const float angular_speed = Math::kPi / 16.0f;
+        static const float oscillation_speed = Math::kPi / 6.0f;
 
-		static float game_time = 0.0f;
+        static float game_time = 0.0f;
 
-		game_time += time.GetDeltaSeconds();
+        game_time += time.GetDeltaSeconds();
 
-		float light_index = 0.0f;
-		float light_angle;
+        float light_index = 0.0f;
+        float light_angle;
 
-		for (auto&& point_light : point_lights) {
+        for (auto&& point_light : point_lights) {
 
-			light_angle = light_index / point_lights.size();
-			light_angle *= Math::kPi * 2.0f;
+            light_angle = light_index / point_lights.size();
+            light_angle *= Math::kPi * 2.0f;
 
 
- 			point_light->SetTranslation(Translation3f(std::cosf(light_angle + game_time * angular_speed) * xRadius - 150.f,
- 													  std::cosf(light_angle + game_time * oscillation_speed) * yRadius + 1000.f,
- 													  std::sinf(light_angle + game_time * angular_speed) * zRadius - 150.f));
+            point_light->SetTranslation(Translation3f(std::cosf(light_angle + game_time * angular_speed) * xRadius - 150.f,
+                                                      std::cosf(light_angle + game_time * oscillation_speed) * yRadius + 1000.f,
+                                                      std::sinf(light_angle + game_time * angular_speed) * zRadius - 150.f));
 
 /*
-			point_light->SetTranslation(Translation3f(0,
- 													  200,
- 													  0));*/
+            point_light->SetTranslation(Translation3f(0,
+                                                      200,
+                                                      0));*/
 
-			++light_index;
+            ++light_index;
 
-		}
+        }
 
-		light_index = 0.0f;
+        light_index = 0.0f;
 
-		//for (auto&&directional_light : directional_lights) {
+        //for (auto&&directional_light : directional_lights) {
 
-		//	light_angle = light_index / directional_lights.size();
-		//	light_angle *= Math::kPi * 2.0f;
-		//	
-		//	directional_light->SetRotation(Quaternionf(AngleAxisf(Math::DegToRad(90.f), Vector3f(1.f, 0.f, 0.f))) *
-		//								   Quaternionf(AngleAxisf(game_time * angular_speed, Vector3f(0.f, 1.f, 0.f))));
-		//	
-		//	auto forward = directional_light->GetForward();
+        //	light_angle = light_index / directional_lights.size();
+        //	light_angle *= Math::kPi * 2.0f;
+        //	
+        //	directional_light->SetRotation(Quaternionf(AngleAxisf(Math::DegToRad(90.f), Vector3f(1.f, 0.f, 0.f))) *
+        //								   Quaternionf(AngleAxisf(game_time * angular_speed, Vector3f(0.f, 1.f, 0.f))));
+        //	
+        //	auto forward = directional_light->GetForward();
 
-		//	++light_index;
+        //	++light_index;
 
-		//}
+        //}
 
-	}
+    }
 
-	// Render the next frame
+    // Render the next frame
 
-	auto next_frame = deferred_renderer_->Draw(time,
-											   output_->GetVideoMode().horizontal_resolution,
-											   output_->GetVideoMode().vertical_resolution);
+    auto next_frame = deferred_renderer_->Draw(time,
+                                               output_->GetVideoMode().horizontal_resolution,
+                                               output_->GetVideoMode().vertical_resolution);
 
-	// Post processing
+    // Post processing
 
-	if (enable_postprocess_) {
+    if (enable_postprocess_) {
 
-		next_frame = postprocess_->Execute(next_frame, time);
+        next_frame = postprocess_->Execute(next_frame, time);
 
-	}
+    }
 
-	// Debug draw after post processing. We don't want to tonemap the debug info, don't we?
+    // Debug draw after post processing. We don't want to tonemap the debug info, don't we?
 
-	if (enable_voxel_draw_ && enable_global_illumination_) {
+    if (enable_voxel_draw_) {
 
-		next_frame = deferred_renderer_->DrawVoxels(next_frame,
+        next_frame = deferred_renderer_->DrawVoxels(next_frame,
                                                     debug_mip_);
 
-	}
-	
-	if (debug_sh_draw_mode_ != DebugSHDrawMode::kNone) {
+    }
+    
+    if (debug_sh_draw_mode_ != DebugSHDrawMode::kNone) {
 
-		next_frame = deferred_renderer_->DrawSH(next_frame, 
-												debug_sh_draw_mode_ == DebugSHDrawMode::kAlpha,
+        next_frame = deferred_renderer_->DrawSH(next_frame, 
+                                                debug_sh_draw_mode_ == DebugSHDrawMode::kAlpha,
                                                 debug_mip_);
 
-	}
+    }
 
-	// Display the image at last
+    // Display the image at last
 
-	output_->Display(next_frame);
+    output_->Display(next_frame);
 
 }
