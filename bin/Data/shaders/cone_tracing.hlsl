@@ -33,14 +33,19 @@ SurfaceData SampleSurfaceData4(uint2 position, float4x4 inv_view_proj_matrix) {
 	// Sample the raw surface infos from the GBuffer
 
 	float4 albedo_emissivity = gAlbedoEmissivity.SampleLevel(gSHSampler, uv, 0);
-	float4 normal_specular_shininess = gNormalSpecularShininess.SampleLevel(gSHSampler, uv, 0);
-	
-	float4 depths = float4(gDepthStencil[position + int2(0, 0)].x,
-						   gDepthStencil[position + int2(0, 1)].x,
-						   gDepthStencil[position + int2(1, 0)].x,
-						   gDepthStencil[position + int2(1, 1)].x);
 
-	float depth = min(depths.x, min(depths.y, min(depths.z, depths.w)));
+    // NOTE: Encoded normals do not work well with downsampling. Either keep that like this or find a better way to interpolate among the 4 pixels.
+    //float4 normal_specular_shininess = gNormalSpecularShininess.SampleLevel(gSHSampler, uv, 0);
+    float4 normal_specular_shininess = gNormalSpecularShininess[position];
+	
+	// float4 depths = float4(gDepthStencil[position + int2(0, 0)].x,
+	//                        gDepthStencil[position + int2(0, 1)].x,
+	//                        gDepthStencil[position + int2(1, 0)].x,
+	//                        gDepthStencil[position + int2(1, 1)].x);
+
+	//float depth = min(depths.x, min(depths.y, min(depths.z, depths.w)));
+
+    float depth = gDepthStencil[position].x;
 
 	// Store the surface data
 
@@ -95,6 +100,7 @@ float3 SampleDiffuseCone(SurfaceData surface, float3 light_direction, float3 vie
 void CSMain(uint3 dispatch_thread_id : SV_DispatchThreadID) {
 	
 	SurfaceData surface = SampleSurfaceData4(dispatch_thread_id.xy * 2 + uint2(1, 1), inv_view_proj_matrix);
+    //SurfaceData surface = GatherSurfaceData(dispatch_thread_id.xy, inv_view_proj_matrix);
 	
 	float3 V = normalize(camera_position.xyz - surface.position);	// From the camera to the surface
 

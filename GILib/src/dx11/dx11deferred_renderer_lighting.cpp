@@ -504,12 +504,15 @@ void DX11DeferredRendererLighting::AccumulateIndirectLight(const ObjectPtr<IRend
 
     graphics_.PushEvent(L"Indirect light accumulation");
 
-    auto indirect_light_accumulation_buffer_ = gp_cache_->PopFromCache(frame_info.width >> 1,		// Accumulate at half the resolution for performance reasons
-                                                                       frame_info.height >> 1,
+    auto target_width = frame_info.width >> 1;
+    auto target_height = frame_info.height >> 1;
+
+    auto indirect_light_accumulation_buffer_ = gp_cache_->PopFromCache(target_width,
+                                                                       target_height,
                                                                        TextureFormat::RGB_FLOAT);
 
-    auto blurred_buffer = gp_cache_->PopFromCache(frame_info.width >> 1,							
-                                                  frame_info.height >> 1,
+    auto blurred_buffer = gp_cache_->PopFromCache(target_width,
+                                                  target_height,
                                                   TextureFormat::RGB_FLOAT);
 
     // Perform indirect light accumulation
