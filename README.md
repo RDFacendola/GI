@@ -1,4 +1,4 @@
 GI
 ==
 
-Master thesis - Global illumination
+No longer in development :(
